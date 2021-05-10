@@ -1,0 +1,3 @@
+*.pyc
+www/
+etc_not_in_repo/
