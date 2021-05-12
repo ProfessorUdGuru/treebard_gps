@@ -180,6 +180,11 @@ select_all_place_images = '''
             ON image.image_id = images_entities.image_id 
 '''
 
+select_all_places = '''
+    SELECT places
+    FROM place
+'''
+
 select_all_source_images = '''
     SELECT citations, images, caption, main_image, sources
     FROM images_entities

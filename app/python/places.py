@@ -46,7 +46,8 @@ class ValidatePlace:
         #    wrong to use nested places for this as it's not what nested_places
         #    was designed to do and it's too flaky, hard to understand, and 
         #    taking on too much with too little to go on, and too complicated.
-        print('57 self.place_input is', self.place_input)
+        # LATER: above is true but actually need to refactor from scratch using sets and maybe RE if it fits. Since I didn't know anything about sets or regular expressions when I wrote the various preceding versions of this duplicate place name detection code, it needs to be deleted and written over from scratch. Haven't worked on it in a week or more so as I recall, there's a place_dicts collection which is a list of dicts. Each ordered element is a dict representing one comma-delimited string from user input. The goal is to detect strings like "Paris" which exist in the list of all name strings more than once. Then w/out opening a dialog, try to figure out which Paris the user intends. Only if this can't be figured out, open a duplicate place dialog so the user can tell treebard which place was intended or treebard can suggest making a new place if there is no match. This shd include inserting a township for example between a city and a county if the other places are already there. I have so many copies of the old versions I will just delete everything I've commented out and start fresh from the goal statement and the working code.
+        print('50 self.place_input is', self.place_input)
 
         def find_right_place_id(dkt, multiples, idx):
             '''
@@ -54,59 +55,9 @@ class ValidatePlace:
                 for the right one and put it in the dict.
             '''
 
-            print('57 dkt, multiples, idx is', dkt, multiples, idx)
+            print('58 dkt, multiples, idx is', dkt, multiples, idx)
 
-            # new_places = 0
-            # for d in self.place_dicts:
-                # if d['id'][0] is None:
-                    # new_places += 1
-            # length = len(self.place_dicts) - new_places
-            # eligibles = []
-            # for nest in nested_place_ids:
-                # if len(nest) == length:
-                    # eligibles.append(nest)
-            # # print('68 eligibles is', eligibles)
-            # deletables = []
-            # print('70 self.singles is', self.singles)
-# # HAVE TO REDEFINE self.singles BY ADDING NEW SINGLES TO IT AS THEY ARE FOUND AND THEN RERUNNING THE CODE TO FILTER OUT ELIGIBLES AGAIN, MAYBE RUN IT IN A LOOP FOR EACH DICT WHRE THERE ARE MULTIPLES, TRY JUST HARD-CODEDLY RUNNING THE FILTER ONE MORE TIME EG WHEN THERE'S ONLY ONE ITEM IN self.singles THE FIRST TIME THRU EG USA/8. IOW WHATEVER WAS DONE TO FILTER DOWN TO OHIO/125, DO IT AGAIN FOR WASHINGTON COUNTY/None. ONE PROBLEM IS THAT WASHINGTON COUNTY WAS DONE FIRST. IT'S NOT ADJACENT TO ANYTHING IN self.singles SO ELIGIBLES WASN'T WEEDED OUT RELEVANT TO WASHINTON CO THE FIRST TIME THRU. IT MIGHT HELP IF THE NEST NEAREST THE ITEM IN SELF.SINGLES IS RUN FIRST AND THE SINGULAR RESULT FROM THAT RUN THEN ADDED TO SELF.SINGLES, THEN ON THE NEXT RUN IT SHD CATCH THE NEXT MULTIPLES AND GET NONE FOR THIS EXAMPLE. THAT SHD WORK BUT MAYBE BETTER TO MOTHBALL THIS VERSION AND TRY INSTEAD TO REFACTOR THIS SEARCH PROCESS USING PAIRS FROM places_places INSTEAD OF STRINGS FROM nested_places AND IF THAT PROVES WORSE THEN COME BACK TO THIS VERSION AND DO AS SUGGESTED ABOVE BUT i THINK I'M TRYING TO DO IT THE HARD WAY HERE, SHD BE COMPARING PAIRS ONLY. THE PAIRS ARE THE SOURCE OF THE NESTINGS ANYWAY.
-            # for num in self.singles:
-                # for nest in eligibles:
-                    # if num not in nest:
-                        # if nest not in deletables:
-                            # deletables.append(nest)
-            # for nest in deletables:
-                # eligibles.remove(nest)
-            # print('77 eligibles is', eligibles)
-            # filtered_multiples = []
-            # for nest in eligibles:
-                # for num in multiples:
-                    # if num in nest and num not in filtered_multiples:
-                        # filtered_multiples.append(num)
-            # if len(filtered_multiples) == 1:
-                # dkt['id'] = filtered_multiples
-            # else:
-                # print('81 self.place_dicts is', self.place_dicts)
-                # sort_parent_child_same_name(filtered_multiples, eligibles, idx)
-
-        # def sort_parent_child_same_name(filtered_multiples, eligibles, idx):
-            # '''
-                # When a nest is in a parent by the same name as itself, this
-                # determines which is child, which is parent. If the filtered 
-                # multiples aren't all in the same nesting, the nesting doesn't 
-                # fall in this category.
-            # '''
-
-            # filtered = []
-            # for nest in eligibles:
-                # keep = True
-                # for num in filtered_multiples:
-                    # if num not in nest:
-                        # keep = False
-                # if keep is True:
-                    # filtered.append(nest)
-            # if len(filtered) == 0: # i.e. multiples aren't in the same nesting
-                # return
-            # dkt['id'] = [filtered[0][idx]]
+ 
 
         def make_place_dicts(j, name):
             cur.execute(select_place_id, (name,))
@@ -121,8 +72,8 @@ class ValidatePlace:
             self.place_dicts[j]['input'] = name            
 
         def insert_new_place_db(new_place):
-            print('339 new_place is', new_place)
-            print('340 self.place_dicts is', self.place_dicts)
+            print('75 new_place is', new_place)
+            print('76 self.place_dicts is', self.place_dicts)
 
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -132,15 +83,13 @@ class ValidatePlace:
             self.place_dicts.append({})
             make_place_dicts(j, name)
             j += 1
-        # print('124 self.place_dicts is', self.place_dicts)
 
         for dkt in self.place_dicts:
             if dkt['id'] == [None]:
                 continue
-            length = len(dkt['id'])
+            length = len(dkt['id']) # goal is to filter this down to 1 id
             if length == 1:
                 self.singles.append(dkt['id'][0])
-        # print('132 self.place_dicts is', self.place_dicts)
 
         idx = 0
         for dkt in self.place_dicts:
@@ -148,51 +97,15 @@ class ValidatePlace:
             multiples = []
             if length > 1:
                 multiples.extend(dkt['id'])
-                find_right_place_id(dkt, multiples, idx) 
+                find_right_place_id(dkt, multiples, idx) # ********** DO THIS NOW
                 idx =+ 1
-        # print('142 self.place_dicts is', self.place_dicts)
 
         for dkt in self.place_dicts:
             if dkt['id'][0] is None:
                 insert_new_place_db(dkt['input'])
-        print('147 self.place_dicts is', self.place_dicts)
-
-        reverse_place_dicts = list(reversed(self.place_dicts))
-        e = 0
-        for dkt in reverse_place_dicts:
-
-            for num in dkt['id']:
-                if num is not None:
-                    cur.execute(
-                        '''
-                            SELECT place_id1
-                            FROM places_places
-                            WHERE place_id2 = ?
-                        ''',
-                        (num,))
-                    childs = cur.fetchall()
-                    childs = [i[0] for i in childs]
-                    print('175 childs is', childs)
-
-                    for num2 in childs:
-                        print("179 reverse_place_dicts[e + 1]['id'] is", reverse_place_dicts[e + 1]['id'])
-                        if num2 in reverse_place_dicts[e + 1]['id']:
-                            print('180 num2 is', num2)
-                            cur.execute(
-                                '''
-                                    SELECT place_id1
-                                    FROM places_places
-                                    WHERE place_id2 = ?
-                                ''',
-                                (num2,))
-                            childs = cur.fetchall()
-                            print('186 childs is', childs)
-                            break
-
-                else:
-                    print('177 num is', num)
-                    # check for inserting new level and updating nestings
-            e += 1
+        print('106 self.place_dicts is', self.place_dicts)
+# deleted a section here that was trying to start the search from the end (eg USA) and use pairs from places_places instead of nestings, moved the code below, it wasn't doing anything. Isn't that supposed to be done in find_right_place_id() anyway
+# 
 
         for dkt in self.place_dicts:
             '''
@@ -205,13 +118,13 @@ class ValidatePlace:
 # Wrongly opens when inputting "Washington County, Ohio, USA".
         
             if len(dkt['id']) > 1:
-                print('154 dkt is', dkt)
-                print('155 self.place_dicts is', self.place_dicts)
+                print('121 dkt is', dkt)
+                print('122 self.place_dicts is', self.place_dicts)
                 selection_message = DuplicatePlaceDialog(
                     self.view,
                     self.place_input,
                     'Duplicate place names have been stored. Use which one?', 
-                    'Duplicate Place Names Selection',
+                    'Duplicate Place Names Dialog',
                     ('OK', 'Cancel'),
                     self.treebard,
                     do_on_ok=self.input_places_to_db,
@@ -221,7 +134,7 @@ class ValidatePlace:
 
     def input_places_to_db(self):
         return # REMOVE WHEN READY TO RUN THIS CODE
-        print('165 self.place_dicts is', self.place_dicts)
+        print('137 self.place_dicts is', self.place_dicts)
         def input_new_place(place):
             cur.execute(insert_place_new, (place,))
             conn.commit()
@@ -346,21 +259,8 @@ class DuplicatePlaceDialog():
         self.got_row = 0
 
         self.make_widgets()
-            # self.parent, 
-            # self.title,
-            # message,
-            # self.button_labels, 
-            # self.treebard,
-            # do_on_ok=self.do_on_ok)
 
     def make_widgets(self):
-        # self,
-        # parent, 
-        # title, 
-        # message, 
-        # button_labels, 
-        # treebard, 
-        # do_on_ok=None):
 
         def show_message():
 
@@ -789,3 +689,95 @@ input where only the highest place eg USA is known: there's no way to slim down 
         This is now ready to submit to the database, with IDs autogenerated for the new places and instantly used for all three database tables where they're needed. I don't think the 'widget' and 'final' keys will be used but I'm not done yet so who knows.
 
 '''
+
+           # new_places = 0
+            # for d in self.place_dicts:
+                # if d['id'][0] is None:
+                    # new_places += 1
+            # length = len(self.place_dicts) - new_places
+            # eligibles = []
+            # for nest in nested_place_ids:
+                # if len(nest) == length:
+                    # eligibles.append(nest)
+            # # print('68 eligibles is', eligibles)
+            # deletables = []
+            # print('70 self.singles is', self.singles)
+# # HAVE TO REDEFINE self.singles BY ADDING NEW SINGLES TO IT AS THEY ARE FOUND AND THEN RERUNNING THE CODE TO FILTER OUT ELIGIBLES AGAIN, MAYBE RUN IT IN A LOOP FOR EACH DICT WHRE THERE ARE MULTIPLES, TRY JUST HARD-CODEDLY RUNNING THE FILTER ONE MORE TIME EG WHEN THERE'S ONLY ONE ITEM IN self.singles THE FIRST TIME THRU EG USA/8. IOW WHATEVER WAS DONE TO FILTER DOWN TO OHIO/125, DO IT AGAIN FOR WASHINGTON COUNTY/None. ONE PROBLEM IS THAT WASHINGTON COUNTY WAS DONE FIRST. IT'S NOT ADJACENT TO ANYTHING IN self.singles SO ELIGIBLES WASN'T WEEDED OUT RELEVANT TO WASHINTON CO THE FIRST TIME THRU. IT MIGHT HELP IF THE NEST NEAREST THE ITEM IN SELF.SINGLES IS RUN FIRST AND THE SINGULAR RESULT FROM THAT RUN THEN ADDED TO SELF.SINGLES, THEN ON THE NEXT RUN IT SHD CATCH THE NEXT MULTIPLES AND GET NONE FOR THIS EXAMPLE. THAT SHD WORK BUT MAYBE BETTER TO MOTHBALL THIS VERSION AND TRY INSTEAD TO REFACTOR THIS SEARCH PROCESS USING PAIRS FROM places_places INSTEAD OF STRINGS FROM nested_places AND IF THAT PROVES WORSE THEN COME BACK TO THIS VERSION AND DO AS SUGGESTED ABOVE BUT i THINK I'M TRYING TO DO IT THE HARD WAY HERE, SHD BE COMPARING PAIRS ONLY. THE PAIRS ARE THE SOURCE OF THE NESTINGS ANYWAY.
+            # for num in self.singles:
+                # for nest in eligibles:
+                    # if num not in nest:
+                        # if nest not in deletables:
+                            # deletables.append(nest)
+            # for nest in deletables:
+                # eligibles.remove(nest)
+            # print('77 eligibles is', eligibles)
+            # filtered_multiples = []
+            # for nest in eligibles:
+                # for num in multiples:
+                    # if num in nest and num not in filtered_multiples:
+                        # filtered_multiples.append(num)
+            # if len(filtered_multiples) == 1:
+                # dkt['id'] = filtered_multiples
+            # else:
+                # print('81 self.place_dicts is', self.place_dicts)
+                # sort_parent_child_same_name(filtered_multiples, eligibles, idx)
+
+        # def sort_parent_child_same_name(filtered_multiples, eligibles, idx):
+            # '''
+                # When a nest is in a parent by the same name as itself, this
+                # determines which is child, which is parent. If the filtered 
+                # multiples aren't all in the same nesting, the nesting doesn't 
+                # fall in this category.
+            # '''
+
+            # filtered = []
+            # for nest in eligibles:
+                # keep = True
+                # for num in filtered_multiples:
+                    # if num not in nest:
+                        # keep = False
+                # if keep is True:
+                    # filtered.append(nest)
+            # if len(filtered) == 0: # i.e. multiples aren't in the same nesting
+                # return
+            # dkt['id'] = [filtered[0][idx]]
+
+
+# this is the part to try and use sets for instead of making this part actually work
+# # I think this was a random stab at an idea, just starting over, nothing to keep here
+        # reverse_place_dicts = list(reversed(self.place_dicts))
+        # e = 0
+        # for dkt in reverse_place_dicts:
+
+            # for num in dkt['id']:
+                # if num is not None:
+                    # cur.execute(
+                        # '''
+                            # SELECT place_id1
+                            # FROM places_places
+                            # WHERE place_id2 = ?
+                        # ''',
+                        # (num,))
+                    # children = cur.fetchall()
+                    # children = [i[0] for i in children]
+                    # print('123 children is', children)
+
+                    # for num2 in children:
+                        # print("126 reverse_place_dicts[e + 1]['id'] is", reverse_place_dicts[e + 1]['id'])
+                        # if num2 in reverse_place_dicts[e + 1]['id']:
+                            # print('128 num2 is', num2)
+                            # cur.execute(
+                                # '''
+                                    # SELECT place_id1
+                                    # FROM places_places
+                                    # WHERE place_id2 = ?
+                                # ''',
+                                # (num2,))
+                            # children = cur.fetchall()
+                            # print('186 children is', children)
+                            # break
+
+                # else:
+                    # print('141 num is', num)
+                    # # check for inserting new level and updating nestings
+            # e += 1

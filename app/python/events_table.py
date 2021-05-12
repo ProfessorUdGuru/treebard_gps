@@ -777,6 +777,8 @@ if __name__ == '__main__':
 
 # DO LIST
 
+# refactor duplicate place dialog to use sets, do it in a git branch
+
 # Have to make one permanent edit row and ungrid it on close, this is because I learned last time since there is only ever one of them it's better to grid_remove instead of destroy it.
 
 # When dlg opens, the entry is a label showing the hint. Add an edit button after the hint like the one on the roles dialog. The edit button turns the hint field into an entry and adds Merge, Delete, and Cancel buttons. On Merge, Delete or cancel the buttons are destroyed and turn back into a label and an Edit button. The place edit thing might be a class so it can also be used in the places tab.
@@ -819,6 +821,7 @@ if __name__ == '__main__':
 # add menubar, ribbon menu, footer
 # add picture and attrib table
 # IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys.
+# refactor dates validation to use regular expressions
 
 # dev docs, new place dialog:
 
