@@ -457,7 +457,7 @@ def get_string_with_id(num):
 
 place_strings = make_autofill_strings()
 nested_place_ids = get_autofill_places()
-
+print('460 nested_place_ids is', nested_place_ids)
 
 
 '''
