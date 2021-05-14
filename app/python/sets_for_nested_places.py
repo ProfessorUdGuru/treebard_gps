@@ -19,27 +19,27 @@ Terminology:
 -- leaf, root, node: Paris is the smallest place, it is the leaf; France is the largest place, it is the root; the other nodes (nests) are between them.
 
 Assumptions: 
--- If there's only one stored nesting that exactly matches user input, it's the right one, IDs won't be checked.
+-- If there's exactly one stored nesting that exactly matches user input, it's the right one, IDs won't be checked. That means no nest in the nesting can have a duplicate  (e.g. if one of the nests is Paris, this won't apply here.)
 
 Design Features:
--- The place lists are gotten from the database once on load, not each time they're needed. 
--- The place lists are updated and reloaded each time the database place tables change, so always current.
+-- The big place lists are gotten from the database once on load, not each time they're needed. 
+-- The big place lists are updated and reloaded each time the database place tables change, so always current.
 
 Traits of nested place strings aka nested places aka nestings aka input:
 -- length (number of nests in a nesting input)
--- same_out : multiple, single, or zero=new (length of id list; nests whose spelling is unique/not unique/missing from db)
+-- same_out : single, multiple, or zero=new (length of id list; nests whose spelling is unique/not unique/missing from db)
 -- nest_index (leaf=0, 1, 2, n, root=length of nesting - 1)
 -- same_in (two or more nests within a single nesting are spelled the same)
--- id (from db, a list of IDs matching nest; goal is to filter list down to one and it has to be the one the user intended, so if filtered down to none, it has to mean the user intends to enter a new nest)
+-- id (from db, a list of IDs matching nest; goal is to filter list down to one and it has to be the one the user intended, so if itfilters down to none, it has to mean the user intends to enter a new nest)
 
 Things that are always true (so maybe too many traits are defined):
 -- same_in <= same_out, so if same_out == 1, don't check same_in, it's irrelevant
 -- if id == [], same_out = 0 and same_in = 1
 
-Cases to detect re: nests within the input nesting (one or more case can be true of a nesting) starting with the simplest case:
-a) no nests are known or duplicated
-b) right nesting is obvious, exactly the same as input, and already in the database
-c) one or more largest ancestor(s) known, one or more descendants unknown; no gaps or duplicates
+Cases to detect re: nests within the input nesting; one or more case can be true of a nesting so the simplest cases are eliminated first; 0 = no matches so the nest is absent from the database; 1 = exactly one match so in some simple cases this means the ID is known. Starting from the simplest case:
+a) no nests are known or duplicated, e.g. (0, 0, 0) or (0) or (0, 0) etc.
+b) right nesting is obvious, exactly the same as input, and already in the database, e.g. (1, 1, 1, 1, 1) or (1) or (1, 1) etc.
+c) one or more largest ancestor(s) known, one or more descendant(s) unknown; no gaps or duplicates; e.g. (0, 0, 0, 1), (0, 1, 1), (0, 0, 1) etc. but not (0, 1, 0) or (0, 0, 1, 0, 1) etc.
 
 b) right nesting is obvious, parts are the same as input, but other nests are being inserted to it
 c) right nesting is obvious, parts are the same as input, but nest(s) have been omitted from it
@@ -103,9 +103,10 @@ k = "Paris" # DON'T ALLOW THIS?
 l = "Seadrift, Calhoun County, Texas, USA"
 m = "Hawaii, USA"
 n = "Jakarta, Java, Indonesia"
+o = "Old Town, Sacramento, California, New Spain, USA"
 
 
-place_input = m
+place_input = l
 
 class ValidatePlace():
 
@@ -175,7 +176,7 @@ class ValidatePlace():
             right_nesting = tuple([dkt["id"][0] for dkt in self.place_dicts])
             self.pass_known_place(right_nesting)
         else:
-            print('174 get_obvious_nestings() is False')
+            # print('174 get_obvious_nestings() is False')
             new_places = []
             for dkt in self.place_dicts:
                 if dkt["same_out"] != 0:
@@ -186,18 +187,59 @@ class ValidatePlace():
             if len(new_places) == self.nest_depth:
                 return self.add_all_new_places(new_places)
             self.sift_place_input()
+
+    def detect_0_1_series(self):
+        all = [dkt["same_out"] for dkt in self.place_dicts]
+        for num in all:
+            if num not in (0, 1):
+                return
+        if self.place_dicts[0]["same_out"] != 0:
+            return
+        if self.place_dicts[self.nest_depth - 1]["same_out"] != 1:
+            return
+        if self.nest_depth == 2:
+            return self.handle_0_1_series()
+        mids = [dkt["same_out"] for dkt in self.place_dicts[1:-1]]
+        print("199 mids is", mids)
+        zeros = True
+        for num in mids:
+            if num == 1:
+                zeros = False
+            if zeros is False:
+                if num == 0:
+                    print('too bad')
+                    return
+        self.handle_0_1_series()
         
     def sift_place_input(self):
-        print("188 self.place_dicts", self.place_dicts)
-        g = 0
-        last_nest = self.nest_depth - 1
-        for dkt in self.place_dicts:
-            if (g == 0 and dkt["same_out"] == 0 and 
-                    self.place_dicts[last_nest]["same_out"] == 1):
-                print('194 dkt is', dkt) # SET A BOOLEAN found_zero = True
-                g += 1
-            else:
-                print('200 keep sifting')
+        print("216 self.place_dicts is", self.place_dicts)
+        self.detect_0_1_series()
+
+
+    def handle_0_1_series(self):
+        '''
+            When one or more new nests precede one or more obvious existing
+            places, e.g. (0, 0, 0, 1, 1).
+        '''
+
+        print('225 running')
+            
+            
+
+
+
+
+
+
+        # g = 0
+        # last_nest = self.nest_depth - 1
+        # for dkt in self.place_dicts:
+            # if (g == 0 and dkt["same_out"] == 0 and 
+                    # self.place_dicts[last_nest]["same_out"] == 1):
+                # print('194 dkt is', dkt) # SET A BOOLEAN found_zero = True
+                # g += 1
+            # else:
+                # print('200 keep sifting')
 
     def add_all_new_places(self, new_places):
         print('193 new_places is', new_places)
@@ -206,7 +248,7 @@ class ValidatePlace():
 
 
     def pass_known_place(self, right_nesting):
-        print("right_nesting is", right_nesting)
+        print("229 right_nesting is", right_nesting)
             
 
 final = ValidatePlace()
