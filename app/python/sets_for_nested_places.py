@@ -84,7 +84,6 @@ all_place_names = [i[0] for i in cur.fetchall()]
 cur.close()
 conn.close()
 
-# this could be gotten with a SELECT UNIQUE if the first list won't be needed
 unique_place_names = set(all_place_names)
 
 print(len(unique_place_names), len(all_place_names))
@@ -98,9 +97,9 @@ e = "Paris, Precinct 5, Lamar County, Texas, USA"
 f = "Maine, Maine, USA"
 g = "Glenwood Springs, Garfield County, Colorado, USA"
 h = "Paris, France"
-i = "Glenwood Springs, USA" # DON'T ALLOW THIS?
-j = "Paris, USA" # DON'T ALLOW THIS?
-k = "Paris" # DON'T ALLOW THIS?
+i = "Glenwood Springs, USA" # allow this 
+j = "Paris, USA" # allow this but the duplicate's ID is unguessable so there will be a dialog
+k = "Paris" # ditto
 l = "Seadrift, Calhoun County, Texas, USA"
 m = "Hawaii, USA"
 n = "Jakarta, Java, Indonesia"
@@ -117,6 +116,19 @@ class ValidatePlace():
         self.place_dicts = []
         self.all_same_out = []
         self.next_depth = 0
+        self.duplicates = False
+        self.insert_first = False
+        self.insert_last = False
+        self.insert_multi = False
+        self.insert_juxta = False
+        
+    def sift_place_input(self):
+        '''
+            Runs when place_dicts is complete if right nesting is not known.
+        '''
+        self.detect_0_1_series()
+        self.detect_insertions()
+
 
     def make_place_dicts(self, place_input):
         '''
@@ -146,6 +158,7 @@ class ValidatePlace():
             cur.execute(select_place_id, (nest,))
             ids = cur.fetchall()
             ids = [i[0] for i in ids]
+            if len(ids) > 1: self.duplicates = True
             return ids
 
         def get_obvious_nestings():
@@ -153,19 +166,6 @@ class ValidatePlace():
                 if dkt['same_out'] != 1:
                     return False
             return True
-# better but look at children/parents in dict something still wrong
-# don't confuse kids/parents in the INPUT with kids/parents in the DB
-        # def get_adjacents(prev, nexxt):
-            # print('158 prev, nexxt is', prev, nexxt)
-            # children = None
-            # parents = None
-            # if nexxt:
-                # cur.execute(select_place_id1, nexxt)
-                # children = [i[0] for i in cur.fetchall()]
-            # if prev:
-                # cur.execute(select_place_id2, prev)
-                # parents = [i[0] for i in cur.fetchall()]
-            # return children, parents
 
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -184,35 +184,19 @@ class ValidatePlace():
                     "same_in" : place_list.count(x)}) 
             for w, x in enumerate(place_list)]
 
-        u = 0
-        for dkt in self.place_dicts:
-            children = None
-            parents = None
-            if u != 0:
-                children = tuple(self.place_dicts[u-1]["id"])
-            if u != self.place_dicts[self.nest_depth-1]["nest_index"]:
-                parents = tuple(self.place_dicts[u+1]["id"])
-            # children, parents = get_adjacents(children, parents)
-            dkt["children"] = children
-            dkt["parents"] = parents
-
-
-            u += 1
-                
+        if self.duplicates is True:
+            self.filter_duplicates()
+        self.finish_making_dict()
 
         cur.close()
         conn.close()
 
-        # self.nest_depth = len(self.place_dicts)
-
         self.all_same_out = [dkt["same_out"] for dkt in self.place_dicts]
 
         if get_obvious_nestings() is True:
-            print('210 get_obvious_nestings() is True')
             right_nesting = tuple([dkt["id"][0] for dkt in self.place_dicts])
             self.pass_known_place(right_nesting)
         else:
-            # print('174 get_obvious_nestings() is False')
             new_places = []
             for dkt in self.place_dicts:
                 if dkt["same_out"] != 0:
@@ -224,8 +208,29 @@ class ValidatePlace():
                 return self.add_all_new_places(new_places)
             self.sift_place_input()
 
+    def filter_duplicates(self):
+        print("204 self.place_dicts is", self.place_dicts)
+
+    def finish_making_dict(self):
+        '''
+            Can't be done till duplicates are filtered down to one and the
+            correct place_id for each duplicate is known, even if a duplicate
+            place dialog has to open first.
+        '''
+        print("212 self.place_dicts is", self.place_dicts)
+        u = 0
+        for dkt in self.place_dicts:
+            child = None
+            parent = None
+            if u != 0:
+                child = tuple(self.place_dicts[u-1]["id"])
+            if u != self.place_dicts[self.nest_depth-1]["nest_index"]:
+                parent = tuple(self.place_dicts[u+1]["id"])
+            dkt["child"] = child
+            dkt["parent"] = parent
+            u += 1 
+
     def detect_0_1_series(self):
-        # all = [dkt["same_out"] for dkt in self.place_dicts]
         for num in self.all_same_out:
             if num not in (0, 1):
                 return
@@ -245,135 +250,113 @@ class ValidatePlace():
                     return
         self.handle_0_1_series()
 
-    def detect_insertions(
-            self, 
-            insert_first=False, 
-            insert_last=False, 
-            insert_multi=False,
-            insert_juxta=False):
+    def detect_insertions(self):
         '''
             Nesting contains only obvious matches and new places (1s and 0s), 
             with one or more new place inserted between obvious matches, e.g. 
-            list of same_outs: (1, 0, 1, 1), (0, 0, 1, 1, 1), (1, 0, 1, 0, 1), 
-            (0, 1, 1, 0) etc. 
+            lists of same_outs that fit this criteria: (1, 0, 1, 1), 
+            (0, 1, 0, 1, 1, 1), (1, 0, 1, 0, 1), (0, 1, 1, 0) etc. 
 
-            Special case insert_first is when nest0 is a new place (a zero). 
-            Special case insert_last is when the last nest is a new place 
+            Special case `insert_first` is when nest0 is a new place 
+                (dkt["same_out"] = 0). 
+            Special case `insert_last` is when the last nest is a new place 
                 (largest place is being added). 
-            Special case insert_multi is when there are more than one single 
+            Special case `insert_multi` is when there are more than one single 
                 zeros e.g. (1, 0, 1, 0, 1). 
-            Special case insert_juxta is when two or more nests are inserted 
+            Special case `insert_juxta` is when two or more nests are inserted 
                 next to each other e.g. (1, 0, 0, 1).
         '''
 
         all = self.all_same_out
-        if all.count(0) > 1: insert_multi = True
-        if all[0] == 0: insert_first = True
-        if all[len(all)-1] == 0: insert_last = True
+        if all.count(0) > 1: self.insert_multi = True
+        elif all.count(0) == 1: insert_one = True
+        if all[0] == 0: self.insert_first = True
+        if all[len(all)-1] == 0: self.insert_last = True
         all_strings = [str(i) for i in all]
-        if "00" in "".join(all_strings): insert_juxta = True
+        if "00" in "".join(all_strings): self.insert_juxta = True
 
-        self.handle_insertions(
-            insert_first, 
-            insert_last, 
-            insert_multi,
-            insert_juxta)
-        
-    def sift_place_input(self):
-        # print("215 self.place_dicts is", self.place_dicts)
-        self.detect_0_1_series()
-        self.detect_insertions()
+        if (    self.insert_first is False and
+                self.insert_last is False and
+                self.insert_multi is False and
+                self.insert_juxta is False): 
+            if insert_one is True:
+                self.handle_insertions()
+            # return    
 
+        # self.handle_insertions()
 
     def handle_0_1_series(self):
         '''
-            When one or more new nests precede one or more obvious existing
-            places, e.g. (0, 0, 0, 1, 1).
+            One or more new nests (dkt["same_out"] = 0) precede one or 
+            more obvious existing places (dkt["same_out"] = 1) with no gaps 
+            between existing places, e.g. (0, 0, 0, 1, 1).
         '''
-        print("222 self.place_dicts is", self.place_dicts)
+        print("285 self.place_dicts is", self.place_dicts)
 
-    def handle_insertions(
-            self, 
-            insert_first, 
-            insert_last, 
-            insert_multi,
-            insert_juxta):
-        print("300 self.place_dicts is", self.place_dicts)
-  
-        if insert_multi is False:
-            # new_place_id, pos = insert_one_nest()
-            # print('288 new_place_id, pos is', new_place_id, pos)
+    def handle_insertions(self):
+        '''
+            "Paris, Texas, USA" is already in the database but user input is
+            "Paris, Lamar County, Texas, USA". To insert "Lamar County", three
+            database tables have to be updated, but before that, other input
+            traits have to be detected.
+        '''
+
+        if self.insert_multi is False:
+            print("302 running")
             self.insert_one_nest()
-# IS THIS GOING IN THE WRONG DIRECTION? IT SHD NOT STOP AND SUDDENLY START STUFFING THINGS INTO THE DB. MAYBE JUST UPDATE THE DICT WITH A parent AND children KEYS. THE METHOD FOR UPDATING THE DB IS ALREADY FINISHED AND WORKS.
+            # return
+        elif (self.insert_juxta is True and 
+                self.insert_first is False and self.insert_last is False):
+            self.insert_adjacent_nests()
+            # return            
+        elif self.insert_first is True:
+            self.insert_first_nest_plus()
+            # return
+        elif self.insert_last is True:
+            self.insert_last_nest_plus()
+            # return
+        else:
+            print("insertion not needed or not handled")
+
     def insert_one_nest(self):
-        pass
-        # print("281 self.place_dicts is", self.place_dicts)
-        # # all = [dkt["same_out"] for dkt in self.place_dicts]
-        # e = 0
-        # for num in self.all_same_out:
-            # if num == 0:
-                # new_place_id = self.add_new_place(self.place_dicts[e]["input"])
-                # prev = self.place_dicts[pos - 1]["id"]
-                # nexxt = self.place_dicts[pos + 1]["id"]
-                # break
-            # e += 1
-        # print('292 prev, nexxt is', prev, nexxt)
-        # conn = sqlite3.connect(current_file)
-        # conn.execute('PRAGMA foreign_keys = 1')
-        # cur = conn.cursor()
+        '''
+            Only one nest has no match.
+        '''
 
-        # cur.execute(select_place_id1 (nexxt))
-        # left = [i[0] for i in cur.fetchall()]
+        if self.insert_first is True:
+            print("317 self.place_dicts is", self.place_dicts)
+        elif self.insert_last is True:
+            print("319 self.place_dicts is", self.place_dicts)
+        else:
+            print("321 self.place_dicts is", self.place_dicts)
 
-        # cur.execute(select_place_id2, (prev))
-        # right = [i[0] for i in cur.fetchall()]
+    def insert_first_nest_plus(self):
+        '''
+            First nest and other nest(s) have no match.
+        '''
 
-# # zip or something so left and right are one place_id each
+        if self.insert_juxta is True:
+            print("329 self.place_dicts is", self.place_dicts)
+        else:
+            print("331 self.place_dicts is", self.place_dicts)
 
-        # for i, j in left, right:
-            # cur.execute(
-                # '''
-                    # SELECT places_places_id
-                    # FROM places_places
-                    # WHERE place_id1 = ?
-                        # AND place_id2 = ?
-                # ''',
-                # (left, right))
-            # if cur.fetchone():
-                # sandwich = cur.fetchone()[0]
-                # break
-                
-        # print('313 sandwich is', sandwich)
-        # cur.execute(
-            # '''
-                # INSERT INTO places_places (place_id1, place_id2)
-                # VALUES (?, ?)
-            # ''',
-            # (left, new_place_id))
-        # conn.commit()
+    def insert_last_nest_plus(self):
+        '''
+            Last nest and other nest(s) have no match.
+        '''
 
-        # cur.execute(
-            # '''
-                # INSERT INTO places_places (place_id1, place_id2)
-                # VALUES (?, ?)
-            # ''',
-            # (new_place_id, right))
-        # conn.commit()
+        if self.insert_juxta is True:
+            print("339 self.place_dicts is", self.place_dicts)
+        else:
+            print("341 self.place_dicts is", self.place_dicts)
 
-        # cur.execute(
-            # '''
-                # DELETE FROM places_places
-                # WHERE places_places_id = ?
-            # ''',
-            # (sandwich,))
-        # conn.commit()
+    def insert_adjacent_nests(self):
+        '''
+            Two or more adjacent nests have no match.
+        '''
 
-        # cur.execute(
-            # '''
-                # SELECT 
-            # ''',
-            # (,))
-        # nestings = cur.fetchall()
+        print("348 self.place_dicts is", self.place_dicts)
+        
         
 
 
@@ -422,13 +405,13 @@ class ValidatePlace():
         
 
     def add_all_new_places(self, new_places):
-        print('193 new_places is', new_places)
+        print('398 new_places is', new_places)
 
 
 
 
     def pass_known_place(self, right_nesting):
-        print("229 right_nesting is", right_nesting)
+        print("404 right_nesting is", right_nesting)
             
 
 final = ValidatePlace()
