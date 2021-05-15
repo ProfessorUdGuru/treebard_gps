@@ -111,10 +111,11 @@ s = "Maine, Iowa, USA"
 t = "Sassari, Sassari, Sardegna, Italy"
 u = "McDonalds, Paris, Lamar County, Texas, USA"
 v = "McDonalds, Paris, Bear Lake County, Idaho, USA"
-w = "McDonalds, Sacramento, California, USA"
+w = "McDonalds, Sacramento, California, USA" # this one exists
+x = "McDonalds, Blossom, Lamar County, Texas, USA" # this one doesn't exist
 
 
-place_input = w
+place_input = w # w # x
 
 class ValidatePlace():
 
@@ -230,36 +231,73 @@ class ValidatePlace():
         for dkt in self.place_dicts:
             if dkt["same_out"] > 1 and dkt["same_in"] > 1:
                 if dkt["same_out"] > dkt["same_in"]:
-                    self.handle_duplex_dupes(dkt)
+                    self.handle_duplex_dupes()
+                    break
                 elif dkt["same_out"] == dkt["same_in"]:
-                    self.handle_dupes_within_nest(dkt)
+                    self.handle_dupes_within_nest()
+                    break
             elif len(dkt["id"]) == 0:
-                self.handle_dupes_and_new_place(dkt)
+                self.handle_dupes_and_new_place()
+                break
             elif len(dupes) > 1:
-                self.handle_multiple_dupes(dkt)
+                self.handle_multiple_dupes()
+                break
             elif len(dupes) == 1:
-                self.handle_one_dupe(dkt)
+                self.handle_one_dupe()
+                break
             else:
                 print("something else not handled", dkt)
+        # for dkt in self.place_dicts:
+            # if dkt["same_out"] > 1 and dkt["same_in"] > 1:
+                # if dkt["same_out"] > dkt["same_in"]:
+                    # self.handle_duplex_dupes(dkt)
+                # elif dkt["same_out"] == dkt["same_in"]:
+                    # self.handle_dupes_within_nest(dkt)
+            # elif len(dkt["id"]) == 0:
+                # self.handle_dupes_and_new_place(dkt)
+            # elif len(dupes) > 1:
+                # self.handle_multiple_dupes(dkt)
+            # elif len(dupes) == 1:
+                # self.handle_one_dupe(dkt)
+            # else:
+                # print("something else not handled", dkt)
 
-    def handle_one_dupe(self, dkt):
-        print('246 dkt is', dkt)
+    def handle_one_dupe(self):
 
-    def handle_multiple_dupes(self, dkt):
-        print('249 dkt is', dkt)
+# w = "McDonalds, Sacramento, California, USA" # this one exists
+# x = "McDonalds, Blossom, Lamar County, Texas, USA" # this one doesn't exist
+        print('269 self.place_dicts is', self.place_dicts)
+# 269 self.place_dicts is [{'nest_index': 0, 'id': [795, 796, 797], 'input': 'McDonalds', 'same_out': 3, 'same_in': 1}, {'nest_index': 1, 'id': [216], 'input': 'Sacramento', 'same_out': 1, 'same_in': 1}, {'nest_index': 2, 'id': [128], 'input': 'California', 'same_out': 1, 'same_in': 1}, {'nest_index': 3, 'id': [8], 'input': 'USA', 'same_out': 1, 'same_in': 1}]
+        for dkt in self.place_dicts:
+            if len(dkt["id"]) > 1 and dkt["nest_index"] < self.nest_depth - 1:
+                id1 = dkt["id"]
+                id2 = self.place_dicts[dkt["nest_index"] + 1]["id"]
+                break
+        print('276 id1, id2 is', id1, id2)
+        
+        
 
-    def handle_dupes_and_new_place(self, dkt):
-        print('252 dkt is', dkt)
 
-    def handle_duplex_dupes(self, dkt):
+
+
+
+
+
+    def handle_multiple_dupes(self):
+        print('249 self.place_dicts is', self.place_dicts)
+
+    def handle_dupes_and_new_place(self):
+        print('252 self.place_dicts is', self.place_dicts)
+
+    def handle_duplex_dupes(self):
         '''
             One or more matches is in database besides the two or more matches
             within the nesting that was input.
         '''
-        print('259 dkt is', dkt)
+        print('259 self.place_dicts is', self.place_dicts)
 
-    def handle_dupes_within_nest(self, dkt):
-        print('262 dkt is', dkt)
+    def handle_dupes_within_nest(self):
+        print('262 self.place_dicts is', self.place_dicts)
 
     def finish_making_dict(self):
         '''
@@ -331,9 +369,6 @@ class ValidatePlace():
                 self.insert_juxta is False): 
             if insert_one is True:
                 self.handle_insertions()
-            # return    
-
-        # self.handle_insertions()
 
     def handle_0_1_series(self):
         '''
@@ -341,7 +376,7 @@ class ValidatePlace():
             more obvious existing places (dkt["same_out"] = 1) with no gaps 
             between existing places, e.g. (0, 0, 0, 1, 1).
         '''
-        print("285 self.place_dicts is", self.place_dicts)
+        print("341 self.place_dicts is", self.place_dicts)
 
     def handle_insertions(self):
         '''
@@ -352,19 +387,15 @@ class ValidatePlace():
         '''
 
         if self.insert_multi is False:
-            print("302 running")
+            print("352 running")
             self.insert_one_nest()
-            # return
         elif (self.insert_juxta is True and 
                 self.insert_first is False and self.insert_last is False):
             self.insert_adjacent_nests()
-            # return            
         elif self.insert_first is True:
             self.insert_first_nest_plus()
-            # return
         elif self.insert_last is True:
             self.insert_last_nest_plus()
-            # return
         else:
             print("insertion not needed or not handled")
 
@@ -374,11 +405,11 @@ class ValidatePlace():
         '''
 
         if self.insert_first is True:
-            print("317 self.place_dicts is", self.place_dicts)
+            print("370 self.place_dicts is", self.place_dicts)
         elif self.insert_last is True:
-            print("319 self.place_dicts is", self.place_dicts)
+            print("372 self.place_dicts is", self.place_dicts)
         else:
-            print("321 self.place_dicts is", self.place_dicts)
+            print("374 self.place_dicts is", self.place_dicts)
 
     def insert_first_nest_plus(self):
         '''
@@ -386,9 +417,9 @@ class ValidatePlace():
         '''
 
         if self.insert_juxta is True:
-            print("329 self.place_dicts is", self.place_dicts)
+            print("382 self.place_dicts is", self.place_dicts)
         else:
-            print("331 self.place_dicts is", self.place_dicts)
+            print("384 self.place_dicts is", self.place_dicts)
 
     def insert_last_nest_plus(self):
         '''
@@ -396,44 +427,15 @@ class ValidatePlace():
         '''
 
         if self.insert_juxta is True:
-            print("339 self.place_dicts is", self.place_dicts)
+            print("392 self.place_dicts is", self.place_dicts)
         else:
-            print("341 self.place_dicts is", self.place_dicts)
+            print("394 self.place_dicts is", self.place_dicts)
 
     def insert_adjacent_nests(self):
         '''
             Two or more adjacent nests have no match.
         '''
-
-        print("348 self.place_dicts is", self.place_dicts)
-        
-        
-
-
-
-
-
-
-
-
-
-
-
-
-# sqlite> select place_id1 from places_places where place_id2 = 78;
-# place_id1
-# 30
-# 792
-# 793
-# sqlite> select place_id2 from places_places where place_id1 = 793;
-# place_id2
-# 78
-
-        # cur.close()
-        # conn.close()
-        
-
-
+        print("400 self.place_dicts is", self.place_dicts)
 
     def add_new_place(self, nest):
 
@@ -450,18 +452,13 @@ class ValidatePlace():
         cur.close()
         conn.close()
         
-        return new_place_id
-        
-        
+        return new_place_id  
 
     def add_all_new_places(self, new_places):
-        print('398 new_places is', new_places)
-
-
-
+        print('420 new_places is', new_places)
 
     def pass_known_place(self, right_nesting):
-        print("404 right_nesting is", right_nesting)
+        print("423 right_nesting is", right_nesting)
             
 
 final = ValidatePlace()
