@@ -154,17 +154,18 @@ class ValidatePlace():
                     return False
             return True
 # better but look at children/parents in dict something still wrong
-        def get_adjacents(prev, nexxt):
-            print('158 prev, nexxt is', prev, nexxt)
-            children = None
-            parents = None
-            if nexxt:
-                cur.execute(select_place_id1, nexxt)
-                children = [i[0] for i in cur.fetchall()]
-            if prev:
-                cur.execute(select_place_id2, prev)
-                parents = [i[0] for i in cur.fetchall()]
-            return children, parents
+# don't confuse kids/parents in the INPUT with kids/parents in the DB
+        # def get_adjacents(prev, nexxt):
+            # print('158 prev, nexxt is', prev, nexxt)
+            # children = None
+            # parents = None
+            # if nexxt:
+                # cur.execute(select_place_id1, nexxt)
+                # children = [i[0] for i in cur.fetchall()]
+            # if prev:
+                # cur.execute(select_place_id2, prev)
+                # parents = [i[0] for i in cur.fetchall()]
+            # return children, parents
 
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -176,25 +177,25 @@ class ValidatePlace():
         self.place_dicts = [
             (
                 {
-                    "nest_index" : i, 
+                    "nest_index" : w, 
                     "id" : get_matching_ids(x),
                     "input" : x,
                     "same_out" : all_place_names.count(x),
                     "same_in" : place_list.count(x)}) 
-            for i, x in enumerate(place_list)]
+            for w, x in enumerate(place_list)]
 
         u = 0
         for dkt in self.place_dicts:
-            prev = None
-            nexxt = None
+            children = None
+            parents = None
             if u != 0:
-                prev = tuple(self.place_dicts[u-1]["id"])
-            print('192 self.place_dicts[self.nest_depth-1] is', self.place_dicts[self.nest_depth-1])
+                children = tuple(self.place_dicts[u-1]["id"])
             if u != self.place_dicts[self.nest_depth-1]["nest_index"]:
-                nexxt = tuple(self.place_dicts[u+1]["id"])
-            children, parents = get_adjacents(prev, nexxt)
+                parents = tuple(self.place_dicts[u+1]["id"])
+            # children, parents = get_adjacents(children, parents)
             dkt["children"] = children
             dkt["parents"] = parents
+
 
             u += 1
                 
@@ -207,7 +208,7 @@ class ValidatePlace():
         self.all_same_out = [dkt["same_out"] for dkt in self.place_dicts]
 
         if get_obvious_nestings() is True:
-            print('170 get_obvious_nestings() is True')
+            print('210 get_obvious_nestings() is True')
             right_nesting = tuple([dkt["id"][0] for dkt in self.place_dicts])
             self.pass_known_place(right_nesting)
         else:
@@ -264,7 +265,7 @@ class ValidatePlace():
             Special case insert_juxta is when two or more nests are inserted 
                 next to each other e.g. (1, 0, 0, 1).
         '''
-        print("213 self.place_dicts is", self.place_dicts)
+
         all = self.all_same_out
         if all.count(0) > 1: insert_multi = True
         if all[0] == 0: insert_first = True
@@ -297,18 +298,16 @@ class ValidatePlace():
             insert_last, 
             insert_multi,
             insert_juxta):
-
-
-
-        print("267 self.place_dicts is", self.place_dicts)
-   
+        print("300 self.place_dicts is", self.place_dicts)
+  
         if insert_multi is False:
             # new_place_id, pos = insert_one_nest()
             # print('288 new_place_id, pos is', new_place_id, pos)
             self.insert_one_nest()
 # IS THIS GOING IN THE WRONG DIRECTION? IT SHD NOT STOP AND SUDDENLY START STUFFING THINGS INTO THE DB. MAYBE JUST UPDATE THE DICT WITH A parent AND children KEYS. THE METHOD FOR UPDATING THE DB IS ALREADY FINISHED AND WORKS.
     def insert_one_nest(self):
-        print("281 self.place_dicts is", self.place_dicts)
+        pass
+        # print("281 self.place_dicts is", self.place_dicts)
         # # all = [dkt["same_out"] for dkt in self.place_dicts]
         # e = 0
         # for num in self.all_same_out:
