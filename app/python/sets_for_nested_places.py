@@ -106,9 +106,15 @@ n = "Jakarta, Java, Indonesia"
 o = "Old Town, Sacramento, California, New Spain, USA"
 p = "Blossom, Lamar County, Texas, USA"
 q = "Blossom, Precinct 1, Lamar County, Texas, USA"
+r = "Paris, Maine, Maine, USA"
+s = "Maine, Iowa, USA"
+t = "Sassari, Sassari, Sardegna, Italy"
+u = "McDonalds, Paris, Lamar County, Texas, USA"
+v = "McDonalds, Paris, Bear Lake County, Idaho, USA"
+w = "McDonalds, Sacramento, California, USA"
 
 
-place_input = q
+place_input = w
 
 class ValidatePlace():
 
@@ -184,14 +190,13 @@ class ValidatePlace():
                     "same_in" : place_list.count(x)}) 
             for w, x in enumerate(place_list)]
 
+        self.all_same_out = [dkt["same_out"] for dkt in self.place_dicts]
         if self.duplicates is True:
             self.filter_duplicates()
         self.finish_making_dict()
 
         cur.close()
         conn.close()
-
-        self.all_same_out = [dkt["same_out"] for dkt in self.place_dicts]
 
         if get_obvious_nestings() is True:
             right_nesting = tuple([dkt["id"][0] for dkt in self.place_dicts])
@@ -209,7 +214,52 @@ class ValidatePlace():
             self.sift_place_input()
 
     def filter_duplicates(self):
-        print("204 self.place_dicts is", self.place_dicts)
+        '''
+            Case 1: find ID when there is also a duplicate nest inside the 
+                nesting i.e. dkt["same_in"] > 1 besides a duplicate nest 
+                outside the nesting i.e. dkt["same_out"] > 1.
+            Case 2: find ID when the duplicate place is also duplicated 
+                inside the nesting i.e. dkt["same_out"] > dkt["same_in"]
+            Case 3: find ID when there are new places to input.
+            Case 4: find IDs of more than one duplicate place.
+            Case 5: find ID when there are no new places to input except a 
+                single duplicate place name whose ID is not known because it's
+                a duplicate string.
+        '''
+        dupes = [num for num in self.all_same_out if num > 1]
+        for dkt in self.place_dicts:
+            if dkt["same_out"] > 1 and dkt["same_in"] > 1:
+                if dkt["same_out"] > dkt["same_in"]:
+                    self.handle_duplex_dupes(dkt)
+                elif dkt["same_out"] == dkt["same_in"]:
+                    self.handle_dupes_within_nest(dkt)
+            elif len(dkt["id"]) == 0:
+                self.handle_dupes_and_new_place(dkt)
+            elif len(dupes) > 1:
+                self.handle_multiple_dupes(dkt)
+            elif len(dupes) == 1:
+                self.handle_one_dupe(dkt)
+            else:
+                print("something else not handled", dkt)
+
+    def handle_one_dupe(self, dkt):
+        print('246 dkt is', dkt)
+
+    def handle_multiple_dupes(self, dkt):
+        print('249 dkt is', dkt)
+
+    def handle_dupes_and_new_place(self, dkt):
+        print('252 dkt is', dkt)
+
+    def handle_duplex_dupes(self, dkt):
+        '''
+            One or more matches is in database besides the two or more matches
+            within the nesting that was input.
+        '''
+        print('259 dkt is', dkt)
+
+    def handle_dupes_within_nest(self, dkt):
+        print('262 dkt is', dkt)
 
     def finish_making_dict(self):
         '''
@@ -217,7 +267,7 @@ class ValidatePlace():
             correct place_id for each duplicate is known, even if a duplicate
             place dialog has to open first.
         '''
-        print("212 self.place_dicts is", self.place_dicts)
+        print("270 self.place_dicts is", self.place_dicts)
         u = 0
         for dkt in self.place_dicts:
             child = None
@@ -266,7 +316,7 @@ class ValidatePlace():
             Special case `insert_juxta` is when two or more nests are inserted 
                 next to each other e.g. (1, 0, 0, 1).
         '''
-
+        insert_one = False
         all = self.all_same_out
         if all.count(0) > 1: self.insert_multi = True
         elif all.count(0) == 1: insert_one = True
@@ -442,26 +492,53 @@ final.make_place_dicts(place_input)
 lists = []
 for stg in (a, b, c):
     lst = stg.split(", ")
-    # print(lst)
+    print(lst)
     lists.append(lst)
 
-l = len(set(lists[0]).intersection(lists[1]))
-# print(l)
-l = len(set(lists[0]).intersection(lists[1], lists[2]))
-# print(l)
+ll = len(set(lists[0]).intersection(lists[1]))
+print(ll)
+ll = len(set(lists[0]).intersection(lists[1], lists[2]))
+print(ll)
 
-f = ["Paris", "Ile-de-France", "France"]
+ff = ["Paris", "Ile-de-France", "France", "Oceania"]
 
-new_places = set(f).difference(unique_place_names)
-# print(new_places)
+new_places = set(ff).difference(unique_place_names)
+print(new_places)
 
-a = ["Maine", "Maine", "USA"]
-# if len(a) != len(set(a)):
-    # print("Places with same name in single nesting.")
+aa = ["Maine", "Maine", "USA"]
+if len(aa) != len(set(aa)):
+    print("Places with same name in single nesting.")
 
-b = ["Sassari", "Sassari", "Sardegna", "Italy"]
-c = ["Sassari", "Sardegna", "Italy"]
+bb = ["Sassari", "Sassari", "Sardegna", "Italy"]
+cc = ["Sassari", "Sardegna", "Italy"]
 
-# print(c in b)
-# print(c == b[1:])
+print(cc in bb)
+print(cc == bb[1:])
 # If applicable, above can be used to rewrite the insert query to nested_places with maybe one line of code?
+
+
+'''
+
+
+Cities named Maine in America.	
+Maine - North Carolina
+Maine - New York
+Maine - Minnesota
+Maine - Maine
+Maine - Iowa
+Maine - Arizona
+
+Cities named Maine in Chad.	
+Maïné - Guera
+
+Cities named Maine in Pakistan.	
+Maine - North-West Frontier
+
+Cities named Maine in Niger.	
+Maïné - Maradi
+
+Cities named Maine in France.	
+Maine - Poitou-Charentes
+
+
+'''
