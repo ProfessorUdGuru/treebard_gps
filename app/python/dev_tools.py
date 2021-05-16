@@ -3,6 +3,22 @@
 from inspect import stack
 from datetime import datetime
 from shutil import copy2
+import inspect as iii
+
+looky = iii.getframeinfo
+seeline = iii.currentframe
+# to use:
+# print(looky(seeline()).lineno)
+# to get the real line no. do this:
+# x = 66;print("line", looky(seeline()).lineno, "is", x)
+# so made a macro that types 
+#     ;print("line", look(see()).lineno, "is", 
+#     at the insertion cursor; just finish by typing the value and closing parenthesis.
+# the macro is called print_a_line and its keyboard shortcut is CTRL+SHIFT+F5
+
+
+# ****************************************************************
+
 
 '''
 	Made this module for the rollback tool since the tool didn't

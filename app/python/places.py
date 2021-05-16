@@ -1,434 +1,83 @@
-# places.py
+# sets_for_nested_places
 
-import tkinter as tk
-import sqlite3
-from files import get_current_file
-from window_border import Border
-from styles import ThemeStyles, make_formats_dict
-from widgets import (
-    Toplevel, Frame, Button, LabelH3, Label, RadiobuttonBig, MessageHilited, 
-    LabelH3, Entry, ButtonQuiet, Separator)
-from scrolling import (
-    Combobox, Scrollbar, resize_scrolled_content, MousewheelScrolling)
 from query_strings import (
-    select_all_nested_places, select_place, select_place_id,
-    select_nested_places_same, select_place_id1, select_place_id2,
-    select_related_places, insert_place_new, insert_nested_places,
-    select_all_nested_pairs, insert_nested_pair, update_finding_nested_places,
-    select_nested_places_id, select_count_places, select_place_nickname)
-
+    select_place_id, select_all_places, select_place_id1, select_place_id2,
+    select_all_places_places, select_all_nested_places, select_place, )
+from files import get_current_file
 import dev_tools as dt
+from dev_tools import looky, seeline
+import sqlite3
 
 
+'''
+call this "Regular Places" emulating "Regular Expressions". A new string will be generated (or list or some readable code) in place of user input, and when user input is completely replaced by readable code, the user input can be correctly stored. "Readable Code" will probably be an ordered list of place ID numbers. Maybe intermediately using a list of dicts with the dict storing trait codes or just a code string, whichever is easier to understand. Performance isn't important because only one place input is done at a time and existing places will have been detected first so this modal dialog won't run much code while open.
 
-formats = make_formats_dict()
-ST = ThemeStyles
+Goal: to pinpoint the distinguishing traits of one nested place string input so these traits can be coded, searched, and responded to by algorithms that have to tell one nesting from the other without knowing beforehand the unique ID numbers of the nests (nests) or the ID of the nesting itself, if any. User is typing a few characters, autofill is doing or not doing the rest, and user is not expected to know or look up the right ID numbers when entering a nested place, even if there is a duplicate nest such as the Paris in "Paris, France" and "Paris, Tennessee".
+
+Terminology:
+-- nest: single place e.g. "Paris" in "Paris, Ile-de-France, France"
+-- nesting, nested place, nested place string: e.g. "Paris, Ile-de-France, France"
+-- parent, child, ancestor: Paris is child of Ile-de-France and descendant of France (means the same as Paris is nested in Ile-de-France)
+-- leaf, root, node: Paris is the smallest place, it is the leaf; France is the largest place, it is the root; the other nodes (nests) are between them.
+
+Assumptions: 
+-- If there's exactly one stored nesting that exactly matches user input, it's the right one, IDs won't be checked. That means no nest in the nesting can have a duplicate  (e.g. if one of the nests is Paris, this won't apply here.)
+
+Design Features:
+-- The big place lists are gotten from the database once on load, not each time they're needed. 
+-- The big place lists are updated and reloaded each time the database place tables change, so always current.
+
+Traits of nested place strings aka nested places aka nestings aka input:
+-- length (number of nests in a nesting input)
+-- same_out : single, multiple, or zero=new (length of id list; nests whose spelling is unique/not unique/missing from db)
+-- nest_index (leaf=0, 1, 2, n, root=length of nesting - 1)
+-- same_in (two or more nests within a single nesting are spelled the same)
+-- id (from db, a list of IDs matching nest; goal is to filter list down to one and it has to be the one the user intended, so if itfilters down to none, it has to mean the user intends to enter a new nest)
+
+Things that are always true (so maybe too many traits are defined):
+-- same_in <= same_out, so if same_out == 1, don't check same_in, it's irrelevant
+-- if id == [], same_out = 0 and same_in = 1
+-- if insert_juxta is True, insert_multi is also True
+
+Cases to detect re: nests within the input nesting; one or more case can be true of a nesting so the simplest cases are eliminated first; 0 = no matches so the nest is absent from the database; 1 = exactly one match so in some simple cases this means the ID is known. Starting from the simplest case:
+a) no nests are known or duplicated, e.g. (0, 0, 0) or (0) or (0, 0) etc.
+b) right nesting is obvious, exactly the same as input, and already in the database, e.g. (1, 1, 1, 1, 1) or (1) or (1, 1) etc.
+c) one or more largest ancestor(s) known, one or more descendant(s) unknown; no gaps or duplicates; e.g. (0, 0, 0, 1), (0, 1, 1), (0, 0, 1) etc. but not (0, 1, 0) or (0, 0, 1, 0, 1) or (0, 2, 1) etc.
+d) right nesting is obvious, parts are the same as input, but other nests are being inserted to it
+
+c) right nesting is obvious, parts are the same as input, but nest(s) have been omitted from it
+d) one or more nests are known
+e) one or more nests are new
+f) one or more nests are in the database by duplicate spellings so right ID(s) are unknown
+g) two or more nests within the nesting are spelled the same
+h) all nests except the largest ancestor are unknown
+i) all nests except the two largest ancestors are unknown
+j) one or more nests are known but the largest ancestor is unknown
+i) only one nest is input and it's known
+j) only one nest is input and it's duplicate
+k) only one nest is input and it's unknown
+l) a parent has two children by the same name
+
+The strategy is to know what traits the nesting has and what cases it represents before doing any work on it. If its match in the database is obvious, don't do any work on it. The goal is to know which nesting (in the database) is matched or partly matched so nestings in the database can  be edited, added or deleted.
+
+There are three tables in the database re: places:
+1) place table stores place_id and nest (the place string)
+2) places_places table stores child-parent pairs. A nest can have more than one parent.
+3) nested_places stores nestings. Goal is to not look at this table at all as its reason to exist is to provide autofill strings for place inputs. Since it's build from data in the first two tables, it would be best if the goals of this module could be met by referencing only the first two tables.
+
+Starting from the simplest case (case a), validation only runs till the right nesting is found. If the right nesting can't be found, a Duplicate Place Name dialog or other dialog will open to request user confirmation or additional input. The goal is to almost never open such a dialog.
+
+Autofill places are key to our design. Allowing only good data up front is important so user will not have to split and merge places when he finds later that bad data has been allowed in. But the validation process should be invisible to the user almost always, unless he's doing something really unusual in which case he can expect to see dialogs.
+
+The nested_places table is important. I don't think it denormalizes anything, because 1) each cell contains one value, 2) no data input is repeated except as foreign keys, and 3) in spite of the fact that the columns in the nested_places table are meant to provide ordered values--i.e. the order of the columns is important--it's the most normalized way I could think of to store an autofill string comprised of various concatenated data, so I made the table and it works.
+
+We should pre-populate the database only with currently existing countries, continents and major oceans, and let the user provide the places he actually needs. The places he enters can be used in all his trees.
+
+The only way to leave out the largest place (e.g. "USA" if user doesn't want to see it on every nested place string) is for the user to not enter it. Treebard disapproves so we shouldn't encourage it. Short versions of country names will be input for USA and USSR only, with their full versions input as a.k.a. All other place names should be spelled out.
+
+'''
+
 current_file = get_current_file()[0]
-
-class ValidatePlace:
-    def __init__(self, master, treebard, finding, place_input, findings, widg):
-
-        self.view = master
-        self.treebard = treebard
-        self.finding = finding
-        self.place_input = place_input
-        self.findings = findings
-        self.widg = widg
-
-        self.place_dicts = []
-        self.singles = []
-        self.places_entered = []
-        self.labels = []
-
-    def sift_place_input(self):
-
-        # NEED TO REFACTOR THIS METHOD TO USE PAIRS FROM places_places. It's
-        #    wrong to use nested places for this as it's not what nested_places
-        #    was designed to do and it's too flaky, hard to understand, and 
-        #    taking on too much with too little to go on, and too complicated.
-        # LATER: above is true but actually need to refactor from scratch using sets and maybe RE if it fits. Since I didn't know anything about sets or regular expressions when I wrote the various preceding versions of this duplicate place name detection code, it needs to be deleted and written over from scratch. Haven't worked on it in a week or more so as I recall, there's a place_dicts collection which is a list of dicts. Each ordered element is a dict representing one comma-delimited string from user input. The goal is to detect strings like "Paris" which exist in the list of all name strings more than once. Then w/out opening a dialog, try to figure out which Paris the user intends. Only if this can't be figured out, open a duplicate place dialog so the user can tell treebard which place was intended or treebard can suggest making a new place if there is no match. This shd include inserting a township for example between a city and a county if the other places are already there. I have so many copies of the old versions I will just delete everything I've commented out and start fresh from the goal statement and the working code.
-        print('50 self.place_input is', self.place_input)
-
-        def find_right_place_id(dkt, multiples, idx):
-            '''
-                If there's more than one place by the same name, get the id
-                for the right one and put it in the dict.
-            '''
-
-            print('58 dkt, multiples, idx is', dkt, multiples, idx)
-
- 
-
-        def make_place_dicts(j, name):
-            cur.execute(select_place_id, (name,))
-            match = cur.fetchall()
-            match = [i[0] for i in match]
-           
-            if len(match) == 0:
-                self.place_dicts[j]['id'] = [None]
-            else:
-                self.place_dicts[j]['id'] = match 
- 
-            self.place_dicts[j]['input'] = name            
-
-        def insert_new_place_db(new_place):
-            print('75 new_place is', new_place)
-            print('76 self.place_dicts is', self.place_dicts)
-
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-
-        j = 0
-        for name in self.place_input.split(', '):
-            self.place_dicts.append({})
-            make_place_dicts(j, name)
-            j += 1
-
-        for dkt in self.place_dicts:
-            if dkt['id'] == [None]:
-                continue
-            length = len(dkt['id']) # goal is to filter this down to 1 id
-            if length == 1:
-                self.singles.append(dkt['id'][0])
-
-        idx = 0
-        for dkt in self.place_dicts:
-            length = len(dkt['id'])
-            multiples = []
-            if length > 1:
-                multiples.extend(dkt['id'])
-                find_right_place_id(dkt, multiples, idx) # ********** DO THIS NOW
-                idx =+ 1
-
-        for dkt in self.place_dicts:
-            if dkt['id'][0] is None:
-                insert_new_place_db(dkt['input'])
-        print('106 self.place_dicts is', self.place_dicts)
-# deleted a section here that was trying to start the search from the end (eg USA) and use pairs from places_places instead of nestings, moved the code below, it wasn't doing anything. Isn't that supposed to be done in find_right_place_id() anyway
-# 
-
-        for dkt in self.place_dicts:
-            '''
-                Before putting any more time into this dialog, try to come up 
-                with a practical use for it. Does it do anything besides 
-                detecting identical place strings? There are easier ways to do 
-                that. EDIT: came up with a good use right away. During development
-                this is badly needed to alert me if I'm not catching something.
-            '''
-# Wrongly opens when inputting "Washington County, Ohio, USA".
-        
-            if len(dkt['id']) > 1:
-                print('121 dkt is', dkt)
-                print('122 self.place_dicts is', self.place_dicts)
-                selection_message = DuplicatePlaceDialog(
-                    self.view,
-                    self.place_input,
-                    'Duplicate place names have been stored. Use which one?', 
-                    'Duplicate Place Names Dialog',
-                    ('OK', 'Cancel'),
-                    self.treebard,
-                    do_on_ok=self.input_places_to_db,
-                    selection=dkt['id'])
-        cur.close()
-        conn.close()
-
-    def input_places_to_db(self):
-        return # REMOVE WHEN READY TO RUN THIS CODE
-        print('137 self.place_dicts is', self.place_dicts)
-        def input_new_place(place):
-            cur.execute(insert_place_new, (place,))
-            conn.commit()
-
-            cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'place'")
-            new_place_id = cur.fetchone()[0]
-            input_this.append(new_place_id)            
-
-        def input_old_place(place):
-            input_this.append(place)
-
-        def input_nest_to_db(nest):
-            len_nest = len(nest)
-            new_place_string = tuple(nest + [None] * (9 - len_nest))
-            if new_place_string[0]:
-                cur.execute(insert_nested_places, new_place_string)
-            conn.commit()
-
-            cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'nested_places'")
-            new_place_string_id = cur.fetchone()[0]
-            return new_place_string_id
-
-        input_this = []
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
-        for place in self.places_entered:
-            place_type = type(place)
-            if place_type is str:
-                if len(place) == 0:
-                    continue
-                input_new_place(place)
-            elif place_type is int:
-                input_old_place(place)
-        if len(input_this) == 1:
-            input_this.append(None)
-
-        for i in range(len(input_this) - 1):
-            pair = (input_this[i], input_this[i+1])
-            cur.execute(select_all_nested_pairs)
-            all_pairs = cur.fetchall()
-            if pair not in all_pairs:
-                cur.execute(insert_nested_pair, (pair))
-                conn.commit()
-
-        nestings = []
-        old_nestings = []
-        for f in range(len(input_this)):
-            nestings.append(input_this[f:])
-        if len(nestings) > 0:
-            old_nestings = get_autofill_places()
-        else:
-            pass
-        if len(old_nestings) > 0:
-            r = 0
-            for nest in nestings:
-                if nest not in old_nestings:
-                    new_place_string_id = input_nest_to_db(nest)
-                    if r == 0:
-                        right_nest = new_place_string_id 
-                    r += 1
-                else:
-                    if r == 0:
-                        lacking_nulls = 9 - len(nest)        
-                        nest = tuple(nest + [None] * lacking_nulls)
-                        cur.execute(select_nested_places_id, nest)
-                        right_nest = cur.fetchone()[0]
-                    r += 1
-            self.do_place_update(right_nest)
-
-        place_strings = make_autofill_strings()
-        for row in self.findings:
-            widg = row[2][0]
-            widg.values = place_strings
-
-        place_string = []
-        for num in nestings[0]:
-            if num:
-                cur.execute(select_place, (num,))
-                stg = cur.fetchone()[0]
-                place_string.append(stg)
-            else:
-                break
-        place_string = ', '.join(place_string)
-        self.widg.delete(0, 'end')
-        self.widg.insert(0, place_string)
-        cur.close()
-        conn.close()
-
-    def do_place_update(self, right_nest):
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-        cur.execute(
-            update_finding_nested_places, 
-            (right_nest, self.finding))
-        conn.commit()
-        cur.close()
-        conn.close()
-
-class DuplicatePlaceDialog():
-    def __init__(
-            self,
-            parent, 
-            place_input,
-            message, 
-            title,
-            button_labels,
-            treebard,
-            do_on_ok=None,
-            selection=None
-):
-
-        self.parent = parent
-        self.place_input = place_input
-        self.message = message
-        self.title = title
-        self.button_labels = button_labels
-        self.treebard = treebard
-        self.do_on_ok = do_on_ok
-        self.selection = selection
-
-        self.got_row = 0
-
-        self.make_widgets()
-
-    def make_widgets(self):
-
-        def show_message():
-
-            window.columnconfigure(1, weight=1)
-            window.rowconfigure(1, weight=1)
-            lab = MessageHilited(window, text=self.message, justify='left', aspect=1200)
-            lab.grid(column=1, row=1, sticky='news', padx=3, pady=3)
-
-        def ok():
-            if self.do_on_ok:
-                self.do_on_ok()
-            cancel()
-
-        def cancel():
-            selection_dialog.destroy()
-
-        selection_dialog = Toplevel(self.parent)
-        selection_dialog.columnconfigure(1, weight=1)
-        selection_dialog.rowconfigure(4, weight=1)
-        canvas = Border(selection_dialog, size=3) # size shd not be hard-coded            
-        canvas.title_1.config(text=self.title)
-        canvas.title_2.config(text='')
-
-        window = Frame(canvas)
-        canvas.create_window(0, 0, anchor='nw', window=window)
-        scridth = 16
-        scridth_n = Frame(window, height=scridth)
-        scridth_w = Frame(window, width=scridth)
-        scridth_n.grid(column=0, row=0, sticky='ew')
-        scridth_w.grid(column=0, row=1, sticky='ns')
-
-        self.treebard.scroll_mouse.append_to_list([canvas, window])
-        self.treebard.scroll_mouse.configure_mousewheel_scrolling()
-
-        window.vsb = Scrollbar(
-            selection_dialog, 
-            hideable=True, 
-            command=canvas.yview,
-            width=scridth)
-        window.hsb = Scrollbar(
-            selection_dialog, 
-            hideable=True, 
-            width=scridth, 
-            orient='horizontal',
-            command=canvas.xview)
-        canvas.config(
-            xscrollcommand=window.hsb.set, 
-            yscrollcommand=window.vsb.set)
-        window.vsb.grid(column=2, row=4, sticky='ns')
-        window.hsb.grid(column=1, row=5, sticky='ew')
-
-        buttonbox = Frame(window)
-        b1 = Button(buttonbox, text=self.button_labels[0], width=7, command=ok)
-        b2 = Button(buttonbox, text=self.button_labels[1], width=7, command=cancel)
-
-        scridth_n.grid(column=0, row=0, sticky='ew')
-        scridth_w.grid(column=0, row=1, sticky='ns')
-        window.columnconfigure(2, weight=1)
-        window.rowconfigure(1, minsize=60)
-        minsize = len(self.selection) * 96
-        window.rowconfigure(2, weight=1, minsize=minsize)
-        window.rowconfigure(3, minsize=48)
-        buttonbox.grid(column=1, row=3, sticky='se')
-
-        b1.grid(column=0, row=0)
-        b2.grid(column=1, row=0, padx=(2,0))
-
-        self.frm = Frame(window)
-        self.frm.grid(column=1, row=2, sticky='news')
-
-        show_message()
-        self.show_choices()
-        self.make_edit_row()
-
-        resize_scrolled_content(selection_dialog, canvas, window)
-
-        selection_dialog.focus_set()
-
-    def make_edit_row(self):
-        self.edit_row = Frame(self.frm)
-
-        self.ent = Entry(self.edit_row, width=60)
-
-        merge_butt = Button( 
-            self.edit_row, 
-            text='Merge',
-            # command=get_edit_state
-)
-        cancel_butt = Button(
-            self.edit_row,
-            text='Cancel',
-            command=self.remove_edit_row
-)
-        delete_butt = Button(
-            self.edit_row,
-            text='Delete',
-            # command=delete_role
-)
-        self.edit_row.grid(column=0, row=self.got_row, columnspan=4, sticky='ew')
-        self.ent.grid(column=0, row=0, padx=3, pady=3)
-        merge_butt.grid(column=2, row=0, padx=6, pady=6)
-        cancel_butt.grid(column=3, row=0, padx=6, pady=6)
-        delete_butt.grid(column=4, row=0, padx=6, pady=6)
-        self.edit_row.grid_remove()
-
-    def remove_edit_row(self):
-        self.edit_row.grid_forget()
-        # resize_scrollbar()
-        # resize_window()
-
-    def grid_edit_row(self):
-        self.edit_row.grid(column=0, row=self.got_row, columnspan=4, sticky='ew')
-        for child in self.frm.winfo_children():
-            if child.grid_info()['column'] == 1 and child.grid_info()['row'] == self.got_row:
-                nickname = child.cget('text')
-        self.ent.delete(0, 'end')
-        self.ent.insert(0, nickname)
-        self.ent.focus_set()
-
-    def get_clicked_row(self, evt):
-        self.got_row = evt.widget.grid_info()['row'] 
-
-    def on_hover(self, evt):
-        evt.widget.config(text='Edit') 
-
-    def on_unhover(self, evt):
-        evt.widget.config(text='')
-
-    def show_choices(self):
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-
-        var = tk.IntVar()
-        d = 0
-        for place_id in self.selection:
-
-            cur.execute(select_place_nickname, (place_id,))
-            nickname = cur.fetchone()[0]
-
-            place_string = 'Place ID #{}: {}'.format(place_id, self.place_input)
-
-            rad = RadiobuttonBig(self.frm, variable=var, text=place_string)
-            rad.grid(column=0, row=d, columnspan=2)
-            if d == 0:
-                rad.focus_set()
-
-            lab = Label(self.frm, text='Duplicate place name hint:')
-            lab.grid(column=0, row=d+1, sticky='w')
-
-            hint = Label(self.frm, text=nickname)
-            hint.grid(column=1, row=d+1, sticky='w', padx=(0,3))
-
-            sep = Separator(self.frm, 3)
-            sep.grid(column=0, row=d+2, sticky='ew', columnspan=3, pady=(3,0))
-
-            editx = ButtonQuiet(self.frm, width=2, command=self.grid_edit_row)
-            editx.grid(column=2, row=d+1)
-            editx.bind('<Enter>', self.on_hover)
-            editx.bind('<Leave>', self.on_unhover)
-            editx.bind('<Button-1>', self.get_clicked_row)
-            editx.bind('<space>', self.get_clicked_row)
-            editx.bind('<FocusIn>', self.on_hover)
-            editx.bind('<FocusOut>', self.on_unhover)
-
-            d += 3
-
-        cur.close()
-        conn.close()
 
 def get_autofill_places():
 
@@ -455,329 +104,509 @@ def get_string_with_id(num):
     conn.close()
     return stg
 
+def get_all_places_places():
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    cur.execute(select_all_places_places)
+    places_places = cur.fetchall()
+    cur.close()
+    conn.close()
+    return places_places
+
 place_strings = make_autofill_strings()
 nested_place_ids = get_autofill_places()
-print('460 nested_place_ids is', nested_place_ids)
+places_places = get_all_places_places()
+
+conn = sqlite3.connect(current_file)
+cur = conn.cursor()
+cur.execute(select_all_places)
+all_place_names = [i[0] for i in cur.fetchall()]
+cur.close()
+conn.close()
+
+unique_place_names = set(all_place_names)
+
+print(len(unique_place_names), len(all_place_names))
+
+# sample inputs in lieu of widgets:
+a = "114 Main Street, Paris, Lamar County, Texas, USA"
+b = "114 Main Street, Paris, Bear Lake County, Idaho, USA"
+c = "Paris, Tennessee, USA"
+d = "Paris, Texas, USA"
+e = "Paris, Precinct 5, Lamar County, Texas, USA"
+f = "Maine, Maine, USA"
+g = "Glenwood Springs, Garfield County, Colorado, USA"
+h = "Paris, France"
+i = "Glenwood Springs, USA" # allow this 
+j = "Paris, USA" # allow this but the duplicate's ID is unguessable so there will be a dialog
+k = "Paris" # ditto
+l = "Seadrift, Calhoun County, Texas, USA"
+m = "Hawaii, USA"
+n = "Jakarta, Java, Indonesia"
+o = "Old Town, Sacramento, California, New Spain, USA"
+p = "Blossom, Lamar County, Texas, USA"
+q = "Blossom, Precinct 1, Lamar County, Texas, USA"
+r = "Paris, Maine, Maine, USA"
+s = "Maine, Iowa, USA"
+t = "Sassari, Sassari, Sardegna, Italy"
+u = "McDonalds, Paris, Lamar County, Texas, USA"
+v = "McDonalds, Paris, Bear Lake County, Idaho, USA"
+w = "McDonalds, Sacramento, California, USA" # this one exists
+x = "McDonalds, Blossom, Lamar County, Texas, USA" # this one doesn't exist
+y = "Jerusalem, Israel"
+z = "Masada, Israel"
+aaa = "Israel"
+bbb = "USA"
 
 
-'''
+place_input = bbb # w # x
 
-240 self.place_dict is {0: {'input': 'Portland', 'id': [146, 788, 791]}, 1: {'input': 'New Twp', 'id': [None]}, 2: {'input': 'Meigs County', 'id': [787]}, 3: {'input': 'Ohio', 'id': [125, 782, 785]}, 4: {'input': 'USA', 'id': [8]}}
+class ValidatePlace():
 
-input where only the highest place eg USA is known: there's no way to slim down the multiples bec most of them are in the US so most of them don't get removed during the sifting process. Probably going to have to open a new place dialog any time there's only one known place? Test.
+    def __init__(self):
+        self.place_dicts = []
+        self.all_same_out = []
+        self.next_depth = 0
+        self.duplicates = False
+        self.insert_first = False
+        self.insert_last = False
+        self.insert_multi = False
+        self.insert_juxta = False
+        
+    def sift_place_input(self):
+        '''
+            Runs when place_dicts is complete if right nesting is not known.
+        '''
+        self.detect_0_1_series()
+        self.detect_insertions()
 
-269 self.place_dict is {0: {'input': 'Portland', 'id': [146, 788, 791]}, 1: {'input': 'New County', 'id': [None]}, 2: {'input': 'Maine', 'id': [682, 683]}, 3: {'input': 'USA', 'id': [8]}}
 
-199 self.place_dict is {0: {'input': 'Dupe', 'id': [206, 207]}, 1: {'input': 'A Co', 'id': [208, 208]}, 2: {'input': 'Colorado', 'id': [7]}, 3: {'input': 'USA', 'id': [8]}}
+    def make_place_dicts(self, place_input):
+        '''
+        User must separate nests with a comma and any number of spaces including 
+        no spaces. Nestings will be stored correctly with a comma and one space
+        separating nests, and autofill relies on places being typed this way,
+        but the validation process doesn't care about spaces, just the comma.
 
-            Terminology:
-            nested place, nested place string, nesting: 'Florida, United States'
-            nest, place: 'Florida' or 'United States'
-            parent: larger containing nest
-            child: smaller contained nest
-            match: a nest matching user-input is in the database so has an ID
+        This method systematically stores the traits of each nest before anything 
+        else is done, instead of haphazardly swatting at a moving target with a bunch of
+        conditional tests. For example, it might seem lame to store the index when the
+        index could be detected at any time, but if it's stored up front then the
+        detection procedure won't interrupt the procedure for doing something
+        with the nestings based on the detected traits. This lets us change the
+        position of the nest within the nesting later (e.g. if a new nest is inserted),
+        without changing the list of dicts, by changing the value of dkt['index'].
 
-            Most need for a new place dialog was illusional. TEST THIS BY INPUTTING REAL DATA ABOUT REAL PLACES THAT CHANGED PARENTS, NAMES, BORDERS ETC. INCLUDE THE SPAN OF TIME FIELD.
+        The traits of a nesting are:
+            "nest_index" : position of a nest within the nesting, 
+            "id" : list of place IDs whose nest string matches nest input,
+            "input" : nest string input,
+            "same_out" : how many nests are stored with the same spelling,
+            "same_in" : how many nests in this nesting are spelled the same as input 
+        '''
 
-            Handle these cases: SEE DO LIST @ bottom of events_table.py for more cases
-            if no matches for at least one nest in a nested place:
-                if at least one match for one nest in that nesting:
-                    get known ids, don't open new place dialog
-                elif no matches for any nest in that nesting:
-                    create new ids, don't open new place dialog;
-            elif exactly one match in every nest: 
-                all the place nests already exist unambiguously, so 
-                    don't open new place dialog;
-            elif more than one match in at least one nest: 
-                if two or more places by the same name have the same parent: 
-                    open new place dialog; SEE BELOW*
+        def get_matching_ids(nest):
+            cur.execute(select_place_id, (nest,))
+            ids = cur.fetchall()
+            ids = [i[0] for i in ids]
+            if len(ids) > 1: self.duplicates = True
+            return ids
+
+        def get_obvious_nestings():
+            for dkt in self.place_dicts:
+                if dkt['same_out'] != 1:
+                    return False
+            return True
+
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+
+        place_list = place_input.split(",")
+        place_list = [place_list[i].strip() for i in range(len(place_list))]
+        self.nest_depth = len(place_list)
+
+        self.place_dicts = [
+            (
+                {
+                    "nest_index" : w, 
+                    "id" : get_matching_ids(x),
+                    "input" : x,
+                    "same_out" : all_place_names.count(x),
+                    "same_in" : place_list.count(x)}) 
+            for w, x in enumerate(place_list)]
+
+        self.all_same_out = [dkt["same_out"] for dkt in self.place_dicts]
+        if self.duplicates is True:
+            self.filter_duplicates()
+        self.finish_making_dict()
+
+        cur.close()
+        conn.close()
+
+        if get_obvious_nestings() is True:
+            right_nesting = tuple([dkt["id"][0] for dkt in self.place_dicts])
+            self.pass_known_place(right_nesting)
+        else:
+            new_places = []
+            for dkt in self.place_dicts:
+                if dkt["same_out"] != 0:
+                    break
                 else:
-                    don't open new place dialog
+                    new_places.append(dkt["input"])
 
-            Opening a dialog all the time (or ever?) for user confirmation is wrong. Multiple matches can almost always be weeded down to exactly one. This is because a nested place is almost always unique. There may be dozens of places named "Paris", but how many of these places are nested in a larger place called "Ile-de-France", which is in turn nested in an even larger place called "France"? Exactly one. The same strategy works for Paris, Texas. In very few cases it won't work to identify a place by its nesting, and in those cases a new place dialog can open for user confirmation. I'm no longer sure there is such a case. If so, it would probably have to do with historical border changes, name changes and jurisdiction changes.
+            if len(new_places) == self.nest_depth:
+                return self.add_all_new_places(new_places)
+            self.sift_place_input()
 
-            *In the extremely rare case of two different
-            places by the same name having different parents by the same name,
-            an error message will direct the user to input unique names for one
-            of the pairs. The sample database contains two different places 
-            named 'Dupe, A Co, Colorado, USA' for testing this case, so code can
-            be written eventually to deal with it properly. The user should never
-            have to nickname a place, though by doing research he'd probably find
-            a suitable distinguishing historical nickname anyway. It's possible
-            that no such edge case actually exists where there is not a unique
-            nickname for each place, since nearby places were named uniquely
-            for practical purposes before computer genealogy came along. The
-            real problem is when the places aren't close to each other, in which
-            case historically they didn't need to be distinguished from each other.
-            The primary key does this for the simple purposes of the database, but
-            in our case there are nested strings to deal with and the user enters
-            these strings, not place IDs; then the code has to figure out what
-            place is intended. So if the places aren't close to each other, there's still not a problem because one will be nested in Africa and the other in Greece. In any case this one is not an emergency and I doubt it will ever be needed.
+    def filter_duplicates(self):
+        '''
+            Case 1: find ID when there is also a duplicate nest inside the 
+                nesting i.e. dkt["same_in"] > 1 besides a duplicate nest 
+                outside the nesting i.e. dkt["same_out"] > 1.
+            Case 2: find ID when the duplicate place is also duplicated 
+                inside the nesting i.e. dkt["same_out"] > dkt["same_in"]
+            Case 3: find ID when there are new places to input.
+            Case 4: find IDs of more than one duplicate place.
+            Case 5: find ID when there are no new places to input except a 
+                single duplicate place name whose ID is not known because it's
+                a duplicate string.
+        '''
+        dupes = [num for num in self.all_same_out if num > 1]
+        print("line", looky(seeline()).lineno, "is", dupes)
+        for dkt in self.place_dicts:
+            if dkt["same_out"] > 1 and dkt["same_in"] > 1:
+                if dkt["same_out"] > dkt["same_in"]:
+                    self.handle_duplex_dupes()
+                    break
+                elif dkt["same_out"] == dkt["same_in"]:
+                    self.handle_dupes_within_nest()
+                    break
+            elif len(dkt["id"]) == 0:
+                self.handle_dupes_and_new_place()
+                break
+            elif len(dupes) > 1:
+                self.handle_multiple_dupes()
+                break
+            elif len(dupes) == 1:
+                self.handle_one_dupe()
+                break
+            else:
+                print("something else not handled", dkt)
 
-            The new goal is to handle all data in a single nested 
-            dictionary, with one dict for each place entered into the events 
-            table place column autofill. The keys can't be the entered
-            data because that's a string and you can have place names
-            repeated in a nesting, e.g. "Sassari, Sassari, Sardegna, Italy" but dict keys
-            can't be repeated without extra code. You'd think that the ID should be the dict key. But if the id
-            is not known then in the case where there are already two or more
-            places by the same name in the database, the dict key could be a 
-            list of possible ids. But in the case where there is not yet any place
-            by the name entered, a quick insert to the database to get an ID
-            is wrong because the user might change his mind about entering the
-            place, so the right thing to use as the index is the
-            index of the dict as if it were within the list of dicts. This seems to make the
-            idea of using a dict instead of a list of dicts beside the point but it's still easier to use
-            a dict for this than a bunch of complex indexing in a list of lists. If it doesn't help I might go back to a list of dicts but for now I'll try a single nested dict for each user input on tabbing out of the place field.
-            Here is the intended list of dicts for 
-                Paris, Linn County, Iowa, USA
-            There are multiple Parises and multiple Linn Counties in the database 
-            so it will test the code well:
+    def handle_one_dupe(self):
+        '''
+            Duplicate countries? Israel for example. Two different epochs, 
+            two different countries. They could technically be named
+            somewhat differently but some users aren't that technically
+            inclined.
+        '''
+
+        def get_child_parent(id1, id2, side):
+            '''
+                Normally duplicate place name input is clarified by finding the 
+                ID of the ambiguous place's parent, but in the rare case when 
+                the last/largest nest is a duplicate, the ambiguous place has 
+                no parent so its child's ID has to be found. The variable 
+                `side` refers to the left index (0) of the child/parent pair or 
+                the right index (1). Set intersection is used to filter out 
+                unmatching pairs from the places_places table. Sets are 
+                unordered but it doesn't matter because we already know what 
+                order the nests are in.
+            '''
+
+            combos = [set([num1, num2]) for num1 in id1 for num2 in id2]
+            right_pair = None
+            for st in combos:
+                for pair in places_places:
+                    isect = st.intersection(pair)
+                    if len(isect) > 1: 
+                        right_pair = pair
+                        print("line", looky(seeline()).lineno, "is", right_pair)
+            if right_pair:
+                id1 = [right_pair[side]]
+                right_dkt["id"] = id1
+            else:
+                right_dkt["id"] = []
+                if dkt["nest_index"] == 0: self.insert_first = True
+                self.insert_one_nest()
+
+        print("line", looky(seeline()).lineno, "is", self.nest_depth)
+        for dkt in self.place_dicts:
+           
+            if len(dkt["id"]) <= 1:
+                continue
+            elif dkt["nest_index"] < self.nest_depth - 1:
+                id1 = dkt["id"]
+                id2 = self.place_dicts[dkt["nest_index"] + 1]["id"]
+                right_dkt = dkt
+                get_child_parent(id1, id2, 0)
+                break
+            elif self.nest_depth > 1 and dkt["nest_index"] == self.nest_depth - 1:
+                id1 = self.place_dicts[dkt["nest_index"] - 1]["id"]
+                id2 = dkt["id"]
+                right_dkt = dkt
+                get_child_parent(id1, id2, 1)
+                break
+            elif self.nest_depth == 1:
+                if len(dkt["id"]) == 1:
+                    right_nesting = (dkt["id"],)
+                    self.pass_known_place(right_nesting)
+                else:
+                    print("line", looky(seeline()).lineno, "is", dkt["id"])
+            else:
+                print("some condition not handled")
+
+
+ 
+
+
+
+
+
+# w = "McDonalds, Sacramento, California, USA" # this one exists
+# x = "McDonalds, Blossom, Lamar County, Texas, USA" # this one doesn't exist
+
+
+    def handle_multiple_dupes(self):
+        print('249 self.place_dicts is', self.place_dicts)
+
+    def handle_dupes_and_new_place(self):
+        print('252 self.place_dicts is', self.place_dicts)
+
+    def handle_duplex_dupes(self):
+        '''
+            One or more matches is in database besides the two or more matches
+            within the nesting that was input.
+        '''
+        print('259 self.place_dicts is', self.place_dicts)
+
+    def handle_dupes_within_nest(self):
+        print('262 self.place_dicts is', self.place_dicts)
+
+    def finish_making_dict(self):
+        '''
+            Can't be done till duplicates are filtered down to one and the
+            correct place_id for each duplicate is known, even if a duplicate
+            place dialog has to open first.
+        '''
+
+        u = 0
+        for dkt in self.place_dicts:
+            child = None
+            parent = None
+            if u != 0:
+                child = tuple(self.place_dicts[u-1]["id"])
+            if u != self.place_dicts[self.nest_depth-1]["nest_index"]:
+                parent = tuple(self.place_dicts[u+1]["id"])
+            dkt["child"] = child
+            dkt["parent"] = parent
+            u += 1 
+        print("line", looky(seeline()).lineno, "is", self.place_dicts)
+
+    def detect_0_1_series(self):
+        for num in self.all_same_out:
+            if num not in (0, 1):
+                return
+        if self.place_dicts[0]["same_out"] != 0:
+            return
+        if self.place_dicts[self.nest_depth - 1]["same_out"] != 1:
+            return
+        if self.nest_depth == 2:
+            return self.handle_0_1_series()
+        mids = [dkt["same_out"] for dkt in self.place_dicts[1:-1]]
+        zeros = True
+        for num in mids:
+            if num == 1: zeros = False 
+            if zeros is False:
+                if num == 0:
+                    print('too bad')
+                    return
+        self.handle_0_1_series()
+
+    def detect_insertions(self):
+        '''
+            Nesting contains only obvious matches and new places (1s and 0s), 
+            with one or more new place inserted between obvious matches, e.g. 
+            lists of same_outs that fit this criteria: (1, 0, 1, 1), 
+            (0, 1, 0, 1, 1, 1), (1, 0, 1, 0, 1), (0, 1, 1, 0) etc. 
+
+            Special case `insert_first` is when nest0 is a new place 
+                (dkt["same_out"] = 0). 
+            Special case `insert_last` is when the last nest is a new place 
+                (largest place is being added). 
+            Special case `insert_multi` is when there are more than one single 
+                zeros e.g. (1, 0, 1, 0, 1). 
+            Special case `insert_juxta` is when two or more nests are inserted 
+                next to each other e.g. (1, 0, 0, 1).
+        '''
+        insert_one = False
+        all = self.all_same_out
+        if all.count(0) > 1: self.insert_multi = True
+        elif all.count(0) == 1: insert_one = True
+        if all[0] == 0: self.insert_first = True
+        if all[len(all)-1] == 0: self.insert_last = True
+        all_strings = [str(i) for i in all]
+        if "00" in "".join(all_strings): self.insert_juxta = True
+
+        if (    self.insert_first is False and
+                self.insert_last is False and
+                self.insert_multi is False and
+                self.insert_juxta is False): 
+            if insert_one is True:
+                self.handle_insertions()
+
+    def handle_0_1_series(self):
+        '''
+            One or more new nests (dkt["same_out"] = 0) precede one or 
+            more obvious existing places (dkt["same_out"] = 1) with no gaps 
+            between existing places, e.g. (0, 0, 0, 1, 1).
+        '''
+        print("341 self.place_dicts is", self.place_dicts)
+
+    def handle_insertions(self):
+        '''
+            "Paris, Texas, USA" is already in the database but user input is
+            "Paris, Lamar County, Texas, USA". To insert "Lamar County", three
+            database tables have to be updated, but before that, other input
+            traits have to be detected.
+        '''
+
+        if self.insert_multi is False:
+            print("352 running")
+            self.insert_one_nest()
+        elif (self.insert_juxta is True and 
+                self.insert_first is False and self.insert_last is False):
+            self.insert_adjacent_nests()
+        elif self.insert_first is True:
+            self.insert_first_nest_plus()
+        elif self.insert_last is True:
+            self.insert_last_nest_plus()
+        else:
+            print("insertion not needed or not handled")
+
+    def insert_one_nest(self):
+        '''
+            Only one nest has no match.
+        '''
+
+        if self.insert_first is True:
+            print("445 self.place_dicts is", self.place_dicts)
+        elif self.insert_last is True:
+            print("447 self.place_dicts is", self.place_dicts)
+        else:
+            print("449 self.place_dicts is", self.place_dicts)
+
+    def insert_first_nest_plus(self):
+        '''
+            First nest and other nest(s) have no match.
+        '''
+
+        if self.insert_juxta is True:
+            print("382 self.place_dicts is", self.place_dicts)
+        else:
+            print("384 self.place_dicts is", self.place_dicts)
+
+    def insert_last_nest_plus(self):
+        '''
+            Last nest and other nest(s) have no match.
+        '''
+
+        if self.insert_juxta is True:
+            print("392 self.place_dicts is", self.place_dicts)
+        else:
+            print("394 self.place_dicts is", self.place_dicts)
+
+    def insert_adjacent_nests(self):
+        '''
+            Two or more adjacent nests have no match.
+        '''
+        print("400 self.place_dicts is", self.place_dicts)
+
+    def add_new_place(self, nest):
+
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+
+        cur.execute(insert_place_new, (nest,))
+        conn.commit()
+
+        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "place"')
+        new_place_id = cur.fetchone()[0]
+
+        cur.close()
+        conn.close()
+        
+        return new_place_id  
+
+    def add_all_new_places(self, new_places):
+        print('420 new_places is', new_places)
+
+    def pass_known_place(self, right_nesting):
+        print("543 right_nesting is", right_nesting)
+
+    def open_duplicate_places_dialog(self):
+        '''
+            If Treebard can't guess what nesting the user intended based on user
+            input, open a dialog for clarification. (Move the class here from the
+            superceded places.py module and rename this module places.py.)
+        '''
+        print("line", looky(seeline()).lineno, "is", "opening dupe places dlg")
             
-            self.place_dict = {
-                0 : {'input' : 'Paris', 'id' : [30, 32, 34, 684, 685, etc.]} ,
-                1 : {'input' : 'Linn County', 'id' : [743, 758]},
-                2 : {'input' : 'Iowa', 'id' : [116]}
-                3 : {'input' : 'USA', 'id' : [8]}
-            }
 
-            TRIED THAT and it shows potential but now I have hard-coded dict keys that started life as list indexes and it's getting complicated because so before proceeding I have to change the dict of dicts to a list of dicts instead of using indexes as dict keys. The goal is now to save each nest as a dict in a list where the outer list index is the nesting order. Using place_id as primary key starts out looking like this...
+final = ValidatePlace()
+final.make_place_dicts(place_input)
 
-            self.place_dicts = [
-                (30, 32, 34, 684, 685, etc.) : {
-                    'input' : 'Paris', 
-                    'widget' : '', 
-                    'final' : ''},
-                (743, 758) : {
-                    'input' : 'Linn County', 
-                    'widget' : '', 
-                    'final' : ''},
-                (116) : {
-                    'input' : 'Iowa', 
-                    'widget' : '', 
-                    'final' : ''},
-                (8) : {
-                    'input' : 'USA', 
-                    'widget' : '', 
-                    'final' : ''},
-            ]
-    
-            ...and gets filtered down to this:
 
-            self.place_dicts = [
-                (684) : {
-                    'input' : 'Paris', 
-                    'widget' : '', 
-                    'final' : ''},
-                (743) : {
-                    'input' : 'Linn County', 
-                    'widget' : '', 
-                    'final' : ''},
-                (116) : {
-                    'input' : 'Iowa', 
-                    'widget' : '', 
-                    'final' : ''},
-                (8) : {
-                    'input' : 'USA', 
-                    'widget' : '', 
-                    'final' : ''},
-            ]
 
-            But this won't work either, because for new places the key will start out as [None], and [None] == [None], so the keys aren't unique and I can't have more than one new place in a nesting that way. 
 
-            What if all new places were instantly given an ID and put into the dict that way instead of having Nones hanging out causing trouble? Is there any question when new input exists that a new place needs to be made? No. The reason I hadn't wanted to make a new place immediately is that I'd hoped to avoid miscellaneous hits on the db and do input all at once after everything is validated, but really if there is no doubt that a place is a new place, then it can just be created immed. But I was thinking, what if the user hits Cancel? Well there's no cancel button. When he tabs out the places are going to be created anyway, and if he changes his mind he'll just have to delete or edit the place in the places tab. Actually when there's a new place dialog there will be a cancel button in which case the new places would have to be deleted. Also the multiple hits on the db problem was about needing to update 3 db tables when creating one place. So it's still better not to make new places till all is validated or it will get messy. One alternative is to fool around with assigning temp names when id is None, to be used for dict keys. Another is to use itermediatry collections until the validation is complete but in that case there's no reason to use a dict at all.
 
-            So if inserting two new places the temporary keys will be strings made from the list indexes. The collection will look like this and by the time the temp keys need to be replaced with real db table IDs, the dict will be ready to discard anyway:
 
-            self.place_dicts = [
-                ['0'] : {
-                    'input' : 'Union Station Depot', 
-                    'widget' : '', 
-                    'final' : ''},
-                [684] : {
-                    'input' : 'Paris', 
-                    'widget' : '', 
-                    'final' : ''},
-                ['2'] : {
-                    'input' : 'Sandbag Township', 
-                    'widget' : '', 
-                    'final' : ''},
-                [743] : {
-                    'input' : 'Linn County', 
-                    'widget' : '', 
-                    'final' : ''},
-                [116] : {
-                    'input' : 'Iowa', 
-                    'widget' : '', 
-                    'final' : ''},
-                [8] : {
-                    'input' : 'USA', 
-                    'widget' : '', 
-                    'final' : ''},
-            ]
 
-        But this is hard to loop over or else it's just hard for me personally to understand it and the reason is that it's more complex than necessary. There's no reason for it to be a NESTED dict. I already have a reference to the dicts, which are the outer list indices. What's needed is just a simple dict for each place nest at a position within the list. Go back to having a key called ['id']. This is the final form, including two new places which will now automatically have a reference to their position since it's a LIST of dicts instead of a DICT of dicts:
 
-            self.place_dicts = [
-                {
-                    'id' : [None],
-                    'input' : 'Union Station Cafe', 
-                    'widget' : '', 
-                    'final' : ''},
-                {
-                    'id' : [30, 32, 34, 684, 685, etc.],
-                    'input' : 'Paris', 
-                    'widget' : '', 
-                    'final' : ''},
-                {
-                    'id' : [None],
-                    'input' : 'Southwell Township', 
-                    'widget' : '', 
-                    'final' : ''},
-                {
-                    'id' : [743, 758],
-                    'input' : 'Linn County', 
-                    'widget' : '', 
-                    'final' : ''},
-                {
-                    'id' : [116],
-                    'input' : 'Iowa', 
-                    'widget' : '', 
-                    'final' : ''},
-                {
-                    'id' : [8],
-                    'input' : 'USA', 
-                    'widget' : '', 
-                    'final' : ''},
-            ]
-    
-            ...and gets filtered down to this:
 
-            self.place_dicts = [
-                {
-                    'id' : [None],
-                    'input' : 'Union Station Cafe', 
-                    'widget' : '', 
-                    'final' : ''},
-                {
-                    'id' : [684],
-                    'input' : 'Paris', 
-                    'widget' : '', 
-                    'final' : ''},
-                {
-                    'id' : [None],
-                    'input' : 'Southwell Township', 
-                    'widget' : '', 
-                    'final' : ''},
-                {
-                    'id' : [743],
-                    'input' : 'Linn County', 
-                    'widget' : '', 
-                    'final' : ''},
-                {
-                    'id' : [116],
-                    'input' : 'Iowa', 
-                    'widget' : '', 
-                    'final' : ''},
-                {
-                    'id' : [8],
-                    'input' : 'USA', 
-                    'widget' : '', 
-                    'final' : ''},
-            ]
 
-        This is now ready to submit to the database, with IDs autogenerated for the new places and instantly used for all three database tables where they're needed. I don't think the 'widget' and 'final' keys will be used but I'm not done yet so who knows.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 '''
 
-           # new_places = 0
-            # for d in self.place_dicts:
-                # if d['id'][0] is None:
-                    # new_places += 1
-            # length = len(self.place_dicts) - new_places
-            # eligibles = []
-            # for nest in nested_place_ids:
-                # if len(nest) == length:
-                    # eligibles.append(nest)
-            # # print('68 eligibles is', eligibles)
-            # deletables = []
-            # print('70 self.singles is', self.singles)
-# # HAVE TO REDEFINE self.singles BY ADDING NEW SINGLES TO IT AS THEY ARE FOUND AND THEN RERUNNING THE CODE TO FILTER OUT ELIGIBLES AGAIN, MAYBE RUN IT IN A LOOP FOR EACH DICT WHRE THERE ARE MULTIPLES, TRY JUST HARD-CODEDLY RUNNING THE FILTER ONE MORE TIME EG WHEN THERE'S ONLY ONE ITEM IN self.singles THE FIRST TIME THRU EG USA/8. IOW WHATEVER WAS DONE TO FILTER DOWN TO OHIO/125, DO IT AGAIN FOR WASHINGTON COUNTY/None. ONE PROBLEM IS THAT WASHINGTON COUNTY WAS DONE FIRST. IT'S NOT ADJACENT TO ANYTHING IN self.singles SO ELIGIBLES WASN'T WEEDED OUT RELEVANT TO WASHINTON CO THE FIRST TIME THRU. IT MIGHT HELP IF THE NEST NEAREST THE ITEM IN SELF.SINGLES IS RUN FIRST AND THE SINGULAR RESULT FROM THAT RUN THEN ADDED TO SELF.SINGLES, THEN ON THE NEXT RUN IT SHD CATCH THE NEXT MULTIPLES AND GET NONE FOR THIS EXAMPLE. THAT SHD WORK BUT MAYBE BETTER TO MOTHBALL THIS VERSION AND TRY INSTEAD TO REFACTOR THIS SEARCH PROCESS USING PAIRS FROM places_places INSTEAD OF STRINGS FROM nested_places AND IF THAT PROVES WORSE THEN COME BACK TO THIS VERSION AND DO AS SUGGESTED ABOVE BUT i THINK I'M TRYING TO DO IT THE HARD WAY HERE, SHD BE COMPARING PAIRS ONLY. THE PAIRS ARE THE SOURCE OF THE NESTINGS ANYWAY.
-            # for num in self.singles:
-                # for nest in eligibles:
-                    # if num not in nest:
-                        # if nest not in deletables:
-                            # deletables.append(nest)
-            # for nest in deletables:
-                # eligibles.remove(nest)
-            # print('77 eligibles is', eligibles)
-            # filtered_multiples = []
-            # for nest in eligibles:
-                # for num in multiples:
-                    # if num in nest and num not in filtered_multiples:
-                        # filtered_multiples.append(num)
-            # if len(filtered_multiples) == 1:
-                # dkt['id'] = filtered_multiples
-            # else:
-                # print('81 self.place_dicts is', self.place_dicts)
-                # sort_parent_child_same_name(filtered_multiples, eligibles, idx)
 
-        # def sort_parent_child_same_name(filtered_multiples, eligibles, idx):
-            # '''
-                # When a nest is in a parent by the same name as itself, this
-                # determines which is child, which is parent. If the filtered 
-                # multiples aren't all in the same nesting, the nesting doesn't 
-                # fall in this category.
-            # '''
+Cities named Maine in America.	
+Maine - North Carolina
+Maine - New York
+Maine - Minnesota
+Maine - Maine
+Maine - Iowa
+Maine - Arizona
 
-            # filtered = []
-            # for nest in eligibles:
-                # keep = True
-                # for num in filtered_multiples:
-                    # if num not in nest:
-                        # keep = False
-                # if keep is True:
-                    # filtered.append(nest)
-            # if len(filtered) == 0: # i.e. multiples aren't in the same nesting
-                # return
-            # dkt['id'] = [filtered[0][idx]]
+Cities named Maine in Chad.	
+Maïné - Guera
+
+Cities named Maine in Pakistan.	
+Maine - North-West Frontier
+
+Cities named Maine in Niger.	
+Maïné - Maradi
+
+Cities named Maine in France.	
+Maine - Poitou-Charentes
 
 
-# this is the part to try and use sets for instead of making this part actually work
-# # I think this was a random stab at an idea, just starting over, nothing to keep here
-        # reverse_place_dicts = list(reversed(self.place_dicts))
-        # e = 0
-        # for dkt in reverse_place_dicts:
+'''
 
-            # for num in dkt['id']:
-                # if num is not None:
-                    # cur.execute(
-                        # '''
-                            # SELECT place_id1
-                            # FROM places_places
-                            # WHERE place_id2 = ?
-                        # ''',
-                        # (num,))
-                    # children = cur.fetchall()
-                    # children = [i[0] for i in children]
-                    # print('123 children is', children)
+# DO LIST
 
-                    # for num2 in children:
-                        # print("126 reverse_place_dicts[e + 1]['id'] is", reverse_place_dicts[e + 1]['id'])
-                        # if num2 in reverse_place_dicts[e + 1]['id']:
-                            # print('128 num2 is', num2)
-                            # cur.execute(
-                                # '''
-                                    # SELECT place_id1
-                                    # FROM places_places
-                                    # WHERE place_id2 = ?
-                                # ''',
-                                # (num2,))
-                            # children = cur.fetchall()
-                            # print('186 children is', children)
-                            # break
-
-                # else:
-                    # print('141 num is', num)
-                    # # check for inserting new level and updating nestings
-            # e += 1
+# search each of the dict keys and delete the ones that are tracked but not being used. First get everything working right.

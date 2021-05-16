@@ -185,6 +185,11 @@ select_all_places = '''
     FROM place
 '''
 
+select_all_places_places = '''
+    SELECT place_id1, place_id2
+    FROM places_places
+'''
+
 select_all_source_images = '''
     SELECT citations, images, caption, main_image, sources
     FROM images_entities
