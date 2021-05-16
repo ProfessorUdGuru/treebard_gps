@@ -159,7 +159,7 @@ aaa = "Israel"
 bbb = "USA"
 
 
-place_input = bbb # w # x
+place_input = v # u # v
 
 class ValidatePlace():
 
@@ -276,24 +276,24 @@ class ValidatePlace():
         for dkt in self.place_dicts:
             if dkt["same_out"] > 1 and dkt["same_in"] > 1:
                 if dkt["same_out"] > dkt["same_in"]:
-                    self.handle_duplex_dupes()
+                    self.handle_duplex_duplicates()
                     break
                 elif dkt["same_out"] == dkt["same_in"]:
-                    self.handle_dupes_within_nest()
+                    self.handle_duplicates_within_nest()
                     break
             elif len(dkt["id"]) == 0:
-                self.handle_dupes_and_new_place()
+                self.handle_duplicates_and_new_place()
                 break
             elif len(dupes) > 1:
-                self.handle_multiple_dupes()
+                self.handle_multiple_duplicates()
                 break
             elif len(dupes) == 1:
-                self.handle_one_dupe()
+                self.handle_one_duplicate()
                 break
             else:
                 print("something else not handled", dkt)
 
-    def handle_one_dupe(self):
+    def handle_one_duplicate(self):
         '''
             Duplicate countries? Israel for example. Two different epochs, 
             two different countries. They could technically be named
@@ -321,7 +321,6 @@ class ValidatePlace():
                     isect = st.intersection(pair)
                     if len(isect) > 1: 
                         right_pair = pair
-                        print("line", looky(seeline()).lineno, "is", right_pair)
             if right_pair:
                 id1 = [right_pair[side]]
                 right_dkt["id"] = id1
@@ -330,15 +329,14 @@ class ValidatePlace():
                 if dkt["nest_index"] == 0: self.insert_first = True
                 self.insert_one_nest()
 
-        print("line", looky(seeline()).lineno, "is", self.nest_depth)
-        for dkt in self.place_dicts:
-           
+        for dkt in self.place_dicts:           
             if len(dkt["id"]) <= 1:
                 continue
             elif dkt["nest_index"] < self.nest_depth - 1:
                 id1 = dkt["id"]
                 id2 = self.place_dicts[dkt["nest_index"] + 1]["id"]
                 right_dkt = dkt
+                print("line", looky(seeline()).lineno, "is", id1, id2)
                 get_child_parent(id1, id2, 0)
                 break
             elif self.nest_depth > 1 and dkt["nest_index"] == self.nest_depth - 1:
@@ -352,35 +350,50 @@ class ValidatePlace():
                     right_nesting = (dkt["id"],)
                     self.pass_known_place(right_nesting)
                 else:
-                    print("line", looky(seeline()).lineno, "is", dkt["id"])
+                    self.open_duplicate_places_dialog()
             else:
                 print("some condition not handled")
 
+    def handle_multiple_duplicates(self):
+        '''
+            Figure out which duplicate nest has a known parent; if neither, 
+            look for a known child; the one w/ known parent or child is done 
+            first. If neither have a known parent or child, open dialog.
+        '''
+    
+        def find_next_known_id(dkt):
+            print("line", looky(seeline()).lineno, "is", dkt["nest_index"])
+            
+            next_dict = dkt["nest_index"] + 1
 
- 
 
+        print("line", looky(seeline()).lineno, "is", self.place_dicts)
 
+        single_idx = None
+        single_id = None
+        dupes = [len(dkt["id"]) for dkt in self.place_dicts]#line 372 is [3, 22, 1, 1, 1]
+        right_idx = dupes.index(1);print("line", looky(seeline()).lineno, "is", right_idx)
+        left_idx = right_idx - 1
+        magic_pair = (self.place_dicts[left_idx]["id"], self.place_dicts[right_idx]["id"])
+# line 377 is ([30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], [35])
+        
+        for num in magic_pair[0]:
+            for tup in places_places:
+                isect = set([num, magic_pair[1][0]]).intersection(tup)
+                if len(isect) > 1:
+                    print("384 isect is", isect) # THIS IS THE RIGHT ANSWER
 
-
-
-# w = "McDonalds, Sacramento, California, USA" # this one exists
-# x = "McDonalds, Blossom, Lamar County, Texas, USA" # this one doesn't exist
-
-
-    def handle_multiple_dupes(self):
-        print('249 self.place_dicts is', self.place_dicts)
-
-    def handle_dupes_and_new_place(self):
+    def handle_duplicates_and_new_place(self):
         print('252 self.place_dicts is', self.place_dicts)
 
-    def handle_duplex_dupes(self):
+    def handle_duplex_duplicates(self):
         '''
             One or more matches is in database besides the two or more matches
             within the nesting that was input.
         '''
         print('259 self.place_dicts is', self.place_dicts)
 
-    def handle_dupes_within_nest(self):
+    def handle_duplicates_within_nest(self):
         print('262 self.place_dicts is', self.place_dicts)
 
     def finish_making_dict(self):
