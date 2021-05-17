@@ -30,7 +30,6 @@ Design Features:
 Traits of nested place strings aka nested places aka nestings aka input:
 -- length (number of nests in a nesting input)
 -- same_out : single, multiple, or zero=new (length of id list; nests whose spelling is unique/not unique/missing from db)
--- nest_index (leaf=0, 1, 2, n, root=length of nesting - 1)
 -- same_in (two or more nests within a single nesting are spelled the same)
 -- id (from db, a list of IDs matching nest; goal is to filter list down to one and it has to be the one the user intended, so if itfilters down to none, it has to mean the user intends to enter a new nest)
 
@@ -167,7 +166,6 @@ class ValidatePlace():
         self.place_dicts = []
         self.all_same_out = []
         self.next_depth = 0
-        self.duplicates = False
         self.insert_first = False
         self.insert_last = False
         self.insert_multi = False
@@ -197,8 +195,7 @@ class ValidatePlace():
         position of the nest within the nesting later (e.g. if a new nest is inserted),
         without changing the list of dicts, by changing the value of dkt['index'].
 
-        The traits of a nesting are:
-            "nest_index" : position of a nest within the nesting, 
+        The traits of a nesting are: 
             "id" : list of place IDs whose nest string matches nest input,
             "input" : nest string input,
             "same_out" : how many nests are stored with the same spelling,
@@ -209,7 +206,6 @@ class ValidatePlace():
             cur.execute(select_place_id, (nest,))
             ids = cur.fetchall()
             ids = [i[0] for i in ids]
-            if len(ids) > 1: self.duplicates = True
             return ids
 
         def get_obvious_nestings():
@@ -223,21 +219,26 @@ class ValidatePlace():
 
         place_list = place_input.split(",")
         place_list = [place_list[i].strip() for i in range(len(place_list))]
-        self.nest_depth = len(place_list)
+        self.length = len(place_list)
 
         self.place_dicts = [
             (
-                {
-                    "nest_index" : w, 
+                { 
                     "id" : get_matching_ids(x),
                     "input" : x,
                     "same_out" : all_place_names.count(x),
                     "same_in" : place_list.count(x)}) 
             for w, x in enumerate(place_list)]
 
-        self.all_same_out = [dkt["same_out"] for dkt in self.place_dicts]
-        if self.duplicates is True:
-            self.filter_duplicates()
+        self.all_same_out = [dkt["same_out"] for dkt in self.place_dicts]#line 238 is [3, 22, 1, 1, 1]
+        self.duplicates = 0
+        for num in self.all_same_out:
+            if num > 1:
+                self.duplicates += 1
+        for num in self.all_same_out:
+            if num > 1:
+                self.filter_duplicates()
+                break
         self.finish_making_dict()
 
         cur.close()
@@ -254,7 +255,7 @@ class ValidatePlace():
                 else:
                     new_places.append(dkt["input"])
 
-            if len(new_places) == self.nest_depth:
+            if len(new_places) == self.length:
                 return self.add_all_new_places(new_places)
             self.sift_place_input()
 
@@ -271,8 +272,7 @@ class ValidatePlace():
                 single duplicate place name whose ID is not known because it's
                 a duplicate string.
         '''
-        dupes = [num for num in self.all_same_out if num > 1]
-        print("line", looky(seeline()).lineno, "is", dupes)
+        j = 0
         for dkt in self.place_dicts:
             if dkt["same_out"] > 1 and dkt["same_in"] > 1:
                 if dkt["same_out"] > dkt["same_in"]:
@@ -284,24 +284,25 @@ class ValidatePlace():
             elif len(dkt["id"]) == 0:
                 self.handle_duplicates_and_new_place()
                 break
-            elif len(dupes) > 1:
+            elif self.duplicates > 1:
                 self.handle_multiple_duplicates()
                 break
-            elif len(dupes) == 1:
-                self.handle_one_duplicate()
+            elif self.duplicates == 1:
+                self.handle_one_duplicate(dkt, j)                
                 break
             else:
                 print("something else not handled", dkt)
+            j += 1
 
-    def handle_one_duplicate(self):
+
+    def handle_one_duplicate(self, dkt, j):
         '''
             Duplicate countries? Israel for example. Two different epochs, 
-            two different countries. They could technically be named
-            somewhat differently but some users aren't that technically
-            inclined.
+            two different countries. The two should technically be named
+            differently but not all users are that technically inclined.
         '''
 
-        def get_child_parent(id1, id2, side):
+        def get_child_parent(combos, side):
             '''
                 Normally duplicate place name input is clarified by finding the 
                 ID of the ambiguous place's parent, but in the rare case when 
@@ -313,8 +314,6 @@ class ValidatePlace():
                 unordered but it doesn't matter because we already know what 
                 order the nests are in.
             '''
-
-            combos = [set([num1, num2]) for num1 in id1 for num2 in id2]
             right_pair = None
             for st in combos:
                 for pair in places_places:
@@ -322,37 +321,36 @@ class ValidatePlace():
                     if len(isect) > 1: 
                         right_pair = pair
             if right_pair:
-                id1 = [right_pair[side]]
-                right_dkt["id"] = id1
+                dkt["id"] = [right_pair[side]]
             else:
-                right_dkt["id"] = []
-                if dkt["nest_index"] == 0: self.insert_first = True
+                dkt["id"] = []
+                if j == 0: self.insert_first = True
                 self.insert_one_nest()
 
-        for dkt in self.place_dicts:           
-            if len(dkt["id"]) <= 1:
-                continue
-            elif dkt["nest_index"] < self.nest_depth - 1:
+        def assign_vars_to_pair(last=False, idx=0):
+            if last is False:
                 id1 = dkt["id"]
-                id2 = self.place_dicts[dkt["nest_index"] + 1]["id"]
-                right_dkt = dkt
-                print("line", looky(seeline()).lineno, "is", id1, id2)
-                get_child_parent(id1, id2, 0)
-                break
-            elif self.nest_depth > 1 and dkt["nest_index"] == self.nest_depth - 1:
-                id1 = self.place_dicts[dkt["nest_index"] - 1]["id"]
-                id2 = dkt["id"]
-                right_dkt = dkt
-                get_child_parent(id1, id2, 1)
-                break
-            elif self.nest_depth == 1:
-                if len(dkt["id"]) == 1:
-                    right_nesting = (dkt["id"],)
-                    self.pass_known_place(right_nesting)
-                else:
-                    self.open_duplicate_places_dialog()
+                id2 = self.place_dicts[j + 1]["id"]                
             else:
-                print("some condition not handled")
+                id1 = self.place_dicts[j - 1]["id"]
+                id2 = dkt["id"]
+            combos = [set([p, q]) for p in id1 for q in id2]
+            get_child_parent(combos, idx)    
+
+        if j < self.length - 1:
+            assign_vars_to_pair()
+        elif self.length > 1 and j == self.length - 1:
+            assign_vars_to_pair(last=True, idx=1)
+        elif self.length == 1:
+            if self.all_same_out[j] == 1:
+                right_nesting = (dkt["id"],)
+                self.pass_known_place(right_nesting)
+            else:
+                self.open_duplicate_places_dialog()
+                j += 1
+        else:
+            print("some condition not handled")
+            j += 1 
 
     def handle_multiple_duplicates(self):
         '''
@@ -360,28 +358,50 @@ class ValidatePlace():
             look for a known child; the one w/ known parent or child is done 
             first. If neither have a known parent or child, open dialog.
         '''
-    
-        def find_next_known_id(dkt):
-            print("line", looky(seeline()).lineno, "is", dkt["nest_index"])
-            
-            next_dict = dkt["nest_index"] + 1
+        def seek_unique_and_multiple():
+            nonlocal single
+            print('362 num is', num)
+            multidx = None
+            prev = profile[single - 1];print("line", looky(seeline()).lineno, "is", prev)
+            nekst = profile[single + 1];print("line", looky(seeline()).lineno, "is", nekst)
+            if nekst > 1:
+                print('374')
+                multidx = single + 1
+                print("line", looky(seeline()).lineno, "is", single, multidx)
+                return single-1, multidx-1
+            elif prev > 1:
+                print('378')
+                multidx = single - 1
+                print("line", looky(seeline()).lineno, "is", multidx, single)
+                return multidx-1, single-1
 
 
-        print("line", looky(seeline()).lineno, "is", self.place_dicts)
+        # goal:
+        # find first unique id
+        # see if it has a multiple next to it
+        # if not, find the next unique
+        # after finding the first multiple that's next to a unique, find the next unique (etc)
 
-        single_idx = None
-        single_id = None
-        dupes = [len(dkt["id"]) for dkt in self.place_dicts]#line 372 is [3, 22, 1, 1, 1]
-        right_idx = dupes.index(1);print("line", looky(seeline()).lineno, "is", right_idx)
-        left_idx = right_idx - 1
-        magic_pair = (self.place_dicts[left_idx]["id"], self.place_dicts[right_idx]["id"])
-# line 377 is ([30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], [35])
-        
-        for num in magic_pair[0]:
-            for tup in places_places:
-                isect = set([num, magic_pair[1][0]]).intersection(tup)
-                if len(isect) > 1:
-                    print("384 isect is", isect) # THIS IS THE RIGHT ANSWER
+
+        profile = list(self.all_same_out)
+        profile.append(0)
+        profile.insert(0, 0);print("line", looky(seeline()).lineno, "is", profile)
+        single = 0
+        for num in profile:
+            if num != 1:
+                single += 1
+                continue
+            else:
+                pair = seek_unique_and_multiple()
+                print("line", looky(seeline()).lineno, "is", pair)
+                print("line", looky(seeline()).lineno, "is", self.place_dicts[pair[0]]["id"], self.place_dicts[pair[1]]["id"])
+                # self.handle_one_duplicate(self.place_dicts[single], multidx)
+            single += 1 
+# TRY TO fix handle_one_duplicate() to PASS THE PAIR OF IDs TO handle_one_duplicate() , NOTHING ELSE
+# because that's what I have here
+
+
+     
 
     def handle_duplicates_and_new_place(self):
         print('252 self.place_dicts is', self.place_dicts)
@@ -402,14 +422,13 @@ class ValidatePlace():
             correct place_id for each duplicate is known, even if a duplicate
             place dialog has to open first.
         '''
-
         u = 0
         for dkt in self.place_dicts:
             child = None
             parent = None
             if u != 0:
                 child = tuple(self.place_dicts[u-1]["id"])
-            if u != self.place_dicts[self.nest_depth-1]["nest_index"]:
+            if u != self.length - 1:
                 parent = tuple(self.place_dicts[u+1]["id"])
             dkt["child"] = child
             dkt["parent"] = parent
@@ -422,9 +441,9 @@ class ValidatePlace():
                 return
         if self.place_dicts[0]["same_out"] != 0:
             return
-        if self.place_dicts[self.nest_depth - 1]["same_out"] != 1:
+        if self.place_dicts[self.length - 1]["same_out"] != 1:
             return
-        if self.nest_depth == 2:
+        if self.length == 2:
             return self.handle_0_1_series()
         mids = [dkt["same_out"] for dkt in self.place_dicts[1:-1]]
         zeros = True
