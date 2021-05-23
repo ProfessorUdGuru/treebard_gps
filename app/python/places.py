@@ -170,7 +170,7 @@ bbb = "USA"
 ccc = "Dupes, Dupes, Dupes"
 
 
-place_input = r # r # t # f # ccc
+place_input = f # r # t # f # ccc
 
 class ValidatePlace():
 
@@ -240,6 +240,14 @@ class ValidatePlace():
 
 
     def make_new_places(self):
+        '''
+            The place IDs should be decided for new places before anything
+            else is done. This way, there will be consistency and it's all
+            being done at once. Otherwise, when a procedure is interrupted
+            because a place ID is needed, if the ID were made on the fly
+            at that time, it would require an extra hit to the database and
+            the code would be more confusing due to a scattered procedure.
+        '''
 
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -248,7 +256,7 @@ class ValidatePlace():
 
         for dkt in self.place_dicts:
             if len(dkt["id"]) == 0:
-                print("line", looky(seeline()).lineno, "is", dkt)                
+                # print("line", looky(seeline()).lineno, "is", dkt)                
                 dkt["temp_id"] = new_id
                 new_id += 1
             else:
@@ -257,7 +265,7 @@ class ValidatePlace():
 
         cur.close()
         conn.close()
-        print("line", looky(seeline()).lineno, "is", self.place_dicts)                
+        # print("line", looky(seeline()).lineno, "is", self.place_dicts)                
 
     def handle_inner_duplicates(self):
         '''
@@ -272,6 +280,12 @@ class ValidatePlace():
 
         def handle_non_contiguous_dupes():
             print("line", looky(seeline()).lineno, "is", inner_dupes_idx)
+            # this shd not be needed, 
+            # just delete the return after the call, 
+            # prob delete the func, maybe set a bool
+            # just leave this here for now in case it's needed
+            # if so then likely it needs to be run later
+            # after right_pair is known
 
         inner_dupes_idx = []
         i = 0
@@ -286,27 +300,32 @@ class ValidatePlace():
             i += 1
         if len(inner_dupes_idx) == 0:
             return
-        print("line", looky(seeline()).lineno, "is", inner_dupes_idx)
-        if abs(inner_dupes_idx[0] - inner_dupes_idx[1]) != 1:
+        if abs(inner_dupes_idx[0] - inner_dupes_idx[1]) != 1:# not needed?
             handle_non_contiguous_dupes()
-            return
-        # inner_dupes = [dkt["id"] for dkt in self.place_dicts if dkt["input"] == same]
+            # return
 
         inner_dupes = []
         for dkt in self.place_dicts:
             if dkt["input"] == same:
                 inner_dupes.extend(dkt["id"])
-                break # only need one; they're the same
-
-
-        print("line", looky(seeline()).lineno, "is", inner_dupes)
-        # pairs = [(i, j) for i in self.place_list for j in self.place_list if i != j]
+                break
         pairs = [(i, j) for i in inner_dupes for j in inner_dupes if i != j]
-        print("line", looky(seeline()).lineno, "is", pairs)
         right_pair = set(pairs).intersection(places_places)
-        print("line", looky(seeline()).lineno, "is", right_pair)
-        
 
+        for tup in right_pair: # there's only one
+            right_pair = tup
+        print("line", looky(seeline()).lineno, "is", right_pair)
+        print("line", looky(seeline()).lineno, "is", inner_dupes_idx)
+        selected_ids = tuple(zip(inner_dupes_idx, right_pair))
+        print("line", looky(seeline()).lineno, "is", selected_ids)
+        b = 0
+        for dkt in self.place_dicts:
+            for tup in selected_ids:
+                if tup[0] == b:
+                    dkt["id"] = tup[1]
+            b += 1
+
+        print("line", looky(seeline()).lineno, "is", self.place_dicts)
     def handle_outer_duplicates(self):
         pass
             
