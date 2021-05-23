@@ -1,5 +1,6 @@
 # sets_for_nested_places
 
+import tkinter as tk
 from query_strings import (
     select_place_id, select_all_places, select_place_id1, select_place_id2,
     select_all_places_places, select_all_nested_places, select_place, )
@@ -13,6 +14,13 @@ import sqlite3
 
 
 '''
+New Doc Strings 20210523
+TERMINOLOGY
+nest: "Paris" or "France" in "Paris, France"
+nesting, nested places, nested place string: "Paris, France"
+inner duplicate: "Maine" in "Maine, Maine, USA"
+outer duplicate: "Paris" in "Paris, France" and "Paris, Texas"
+*********
 call this "Regular Places" emulating "Regular Expressions". A new string will be generated (or list or some readable code) in place of user input, and when user input is completely replaced by readable code, the user input can be correctly stored. "Readable Code" will probably be an ordered list of place ID numbers. Maybe intermediately using a list of dicts with the dict storing trait codes or just a code string, whichever is easier to understand. Performance isn't important because only one place input is done at a time and existing places will have been detected first so this modal dialog won't run much code while open.
 
 Goal: to pinpoint the distinguishing traits of one nested place string input so these traits can be coded, searched, and responded to by algorithms that have to tell one nesting from the other without knowing beforehand the unique ID numbers of the nests (nests) or the ID of the nesting itself, if any. User is typing a few characters, autofill is doing or not doing the rest, and user is not expected to know or look up the right ID numbers when entering a nested place, even if there is a duplicate nest such as the Paris in "Paris, France" and "Paris, Tennessee".
@@ -21,7 +29,7 @@ Terminology:
 -- nest: single place e.g. "Paris" in "Paris, Ile-de-France, France"
 -- nesting, nested place, nested place string: e.g. "Paris, Ile-de-France, France"
 -- parent, child, ancestor: Paris is child of Ile-de-France and descendant of France (means the same as Paris is nested in Ile-de-France)
--- leaf, root, node: Paris is the smallest place, it is the leaf; France is the largest place, it is the root; the other nodes (nests) are between them.
+-- leaf, view, node: Paris is the smallest place, it is the leaf; France is the largest place, it is the view; the other nodes (nests) are between them.
 
 Assumptions: 
 -- If there's exactly one stored nesting that exactly matches user input, it's the right one, IDs won't be checked. That means no nest in the nesting can have a duplicate  (e.g. if one of the nests is Paris, this won't apply here.)
@@ -148,7 +156,7 @@ n = "Jakarta, Java, Indonesia"
 o = "Old Town, Sacramento, California, New Spain, USA"
 p = "Blossom, Lamar County, Texas, USA"
 q = "Blossom, Precinct 1, Lamar County, Texas, USA"
-r = "Paris, Maine, Maine, USA"
+r = "Maine, Aroostook County, Maine, USA"
 s = "Maine, Iowa, USA"
 t = "Sassari, Sassari, Sardegna, Italy"
 u = "McDonalds, Paris, Lamar County, Texas, USA"
@@ -159,14 +167,16 @@ y = "Jerusalem, Israel"
 z = "Masada, Israel"
 aaa = "Israel"
 bbb = "USA"
+ccc = "Dupes, Dupes, Dupes"
 
 
-place_input = a
+place_input = r # r # t # f # ccc
 
 class ValidatePlace():
 
-    def __init__(self, place_input):
+    def __init__(self, view, place_input):
 
+        self.view = view
         self.place_input = place_input
         # print("line", looky(seeline()).lineno, "is", self.place_input)
 # line 171 is 114 Main Street, Paris, Lamar County, Texas, USA
@@ -175,6 +185,8 @@ class ValidatePlace():
         self.temp_places_places = []
         self.make_place_dicts()
         self.make_new_places()
+        self.handle_inner_duplicates()
+        self.handle_outer_duplicates()
 
 
 
@@ -210,9 +222,9 @@ class ValidatePlace():
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
 
-        place_list = self.place_input.split(",")
-        place_list = [place_list[i].strip() for i in range(len(place_list))]
-        self.length = len(place_list)
+        self.place_list = self.place_input.split(",")
+        self.place_list = [self.place_list[i].strip() for i in range(len(self.place_list))]
+        self.length = len(self.place_list)
 
         self.place_dicts = [
             (
@@ -220,8 +232,7 @@ class ValidatePlace():
                     "id" : get_matching_ids(x),
                     "input" : x
 }) 
-            for x in place_list]
-            # for w, x in enumerate(place_list)]
+            for x in self.place_list]
 
         cur.close()
         conn.close()
@@ -248,10 +259,77 @@ class ValidatePlace():
         conn.close()
         print("line", looky(seeline()).lineno, "is", self.place_dicts)                
 
+    def handle_inner_duplicates(self):
+        '''
+            This will handle one pair of inner duplicates. If there are three
+            nests in the same nesting with exactly the same name, the code can
+            be extended. If there is more than one pair of inner duplicates
+            in the same nesting, the code can be extended. For now, tell the
+            user to find some historically correct names for the places that
+            aren't exactly the same. Open a dialog if too many duplicates, 
+            and make no changes to the database.
+        '''
 
+        def handle_non_contiguous_dupes():
+            print("line", looky(seeline()).lineno, "is", inner_dupes_idx)
+
+        inner_dupes_idx = []
+        i = 0
+        for nest in self.place_list:
+            if self.place_list.count(nest) > 1:
+                same = nest
+                inner_dupes_idx.append(i)
+                if len(inner_dupes_idx) > 2:
+                    duplicate_error = Toplevel(self.view)
+                    duplicate_error.title("Too many duplicates, find unique names.")
+                    return
+            i += 1
+        if len(inner_dupes_idx) == 0:
+            return
+        print("line", looky(seeline()).lineno, "is", inner_dupes_idx)
+        if abs(inner_dupes_idx[0] - inner_dupes_idx[1]) != 1:
+            handle_non_contiguous_dupes()
+            return
+        # inner_dupes = [dkt["id"] for dkt in self.place_dicts if dkt["input"] == same]
+
+        inner_dupes = []
+        for dkt in self.place_dicts:
+            if dkt["input"] == same:
+                inner_dupes.extend(dkt["id"])
+                break # only need one; they're the same
+
+
+        print("line", looky(seeline()).lineno, "is", inner_dupes)
+        # pairs = [(i, j) for i in self.place_list for j in self.place_list if i != j]
+        pairs = [(i, j) for i in inner_dupes for j in inner_dupes if i != j]
+        print("line", looky(seeline()).lineno, "is", pairs)
+        right_pair = set(pairs).intersection(places_places)
+        print("line", looky(seeline()).lineno, "is", right_pair)
+        
+
+    def handle_outer_duplicates(self):
+        pass
             
 
-final = ValidatePlace(place_input)
+if __name__ == "__main__":
+
+    from widgets import Toplevel, Label
+
+    view = tk.Tk()
+
+    final = ValidatePlace(view, place_input)
+    j = 0
+    for dkt in final.place_dicts:
+        lab = Label(
+            view,
+            text='{} id#{}'.format(
+                final.place_dicts[j]["input"], final.place_dicts[j]["id"]))
+        lab.grid()
+        j += 1
+    
+    view.mainloop()
+
+    
 
 
 
@@ -305,6 +383,10 @@ Maine - Poitou-Charentes
 '''
 
 # DO LIST
+
+# New thoughts 20210523
+# Don't use the temp lists, the info is already stored in dict, make key for child and parent
+# Deal with edge cases immediately as soon as there's an ID for each nest
 
 # Starting over 20210518, it's still too complicated to finish
 # Take care of one nest at a time. Define each nest completely. 
