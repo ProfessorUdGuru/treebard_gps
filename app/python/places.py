@@ -170,14 +170,15 @@ bbb = "USA"
 ccc = "Dupes, Dupes, Dupes"
 
 
-place_input = f # r # t # f # ccc
-
+place_input = u # u # v
 class ValidatePlace():
 
     def __init__(self, view, place_input):
 
         self.view = view
         self.place_input = place_input
+        self.single = None
+        self.multiple = None
         # print("line", looky(seeline()).lineno, "is", self.place_input)
 # line 171 is 114 Main Street, Paris, Lamar County, Texas, USA
         self.place_dicts = []
@@ -314,10 +315,7 @@ class ValidatePlace():
 
         for tup in right_pair: # there's only one
             right_pair = tup
-        print("line", looky(seeline()).lineno, "is", right_pair)
-        print("line", looky(seeline()).lineno, "is", inner_dupes_idx)
         selected_ids = tuple(zip(inner_dupes_idx, right_pair))
-        print("line", looky(seeline()).lineno, "is", selected_ids)
         b = 0
         for dkt in self.place_dicts:
             for tup in selected_ids:
@@ -325,9 +323,54 @@ class ValidatePlace():
                     dkt["id"] = tup[1]
             b += 1
 
-        print("line", looky(seeline()).lineno, "is", self.place_dicts)
     def handle_outer_duplicates(self):
-        pass
+
+        def seek_identifiable_pair(outer_dupes):
+            seek_single(outer_dupes)
+            if self.try_again is True:
+                seek_identifiable_pair(outer_dupes[self.single_index + 1:])
+            pair = (self.single, self.multiple)
+            print("line", looky(seeline()).lineno, "self.single", self.single)
+            print("line", looky(seeline()).lineno, "pair", pair)
+
+        def seek_single(outer_dupes):        
+            print("line", looky(seeline()).lineno, "seek_single() running; outer_dupes", outer_dupes)
+            
+            d = 0
+            for id_list in outer_dupes:
+                if len(id_list) != 1:
+                    d += 1
+                    continue
+                else:
+                    self.single = id_list[0]
+                    self.single_index = d
+                    outer_dupes = outer_dupes[d:]
+                    seek_multiple(outer_dupes)
+
+
+        def seek_multiple(outer_dupes):
+            c = 0
+            for id_list in outer_dupes:
+                print("line", looky(seeline()).lineno, "id_list", id_list)
+                if len(id_list) > 1:
+                    self.multiple = id_list
+                    break
+                else:
+                    if c < len(outer_dupes): # change to while loop
+                        self.try_again = True
+                        # seek_identifiable_pair(outer_dupes[self.single_index + 1:])
+
+        self.try_again = False
+        outer_dupes = list(self.place_dicts)
+        outer_dupes.reverse()
+        outer_dupes = [dkt["id"] for dkt in outer_dupes]
+        seek_identifiable_pair(outer_dupes)
+
+            
+
+            
+        
+        
             
 
 if __name__ == "__main__":
