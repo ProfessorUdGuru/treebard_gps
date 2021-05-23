@@ -15,7 +15,6 @@ class Main(Frame):
 
         self.master = master # the main canvas (instance of Border class)
         self.view = view
-        # self.view = master.master
         self.treebard = treebard
         # print('19 self.view is', self.view)
         self.make_widgets()

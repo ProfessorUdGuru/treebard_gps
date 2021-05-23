@@ -168,7 +168,8 @@ class ValidatePlace():
     def __init__(self, place_input):
 
         self.place_input = place_input
-
+        # print("line", looky(seeline()).lineno, "is", self.place_input)
+# line 171 is 114 Main Street, Paris, Lamar County, Texas, USA
         self.place_dicts = []
         self.temp_places = []
         self.temp_places_places = []
@@ -219,7 +220,8 @@ class ValidatePlace():
                     "id" : get_matching_ids(x),
                     "input" : x
 }) 
-            for w, x in enumerate(place_list)]
+            for x in place_list]
+            # for w, x in enumerate(place_list)]
 
         cur.close()
         conn.close()
@@ -231,15 +233,15 @@ class ValidatePlace():
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute("SELECT MAX(place_id) FROM place")
-        max_id = cur.fetchone()[0] + 1
+        new_id = cur.fetchone()[0] + 1
 
         for dkt in self.place_dicts:
             if len(dkt["id"]) == 0:
                 print("line", looky(seeline()).lineno, "is", dkt)                
-                dkt["temp_id"] = max_id
-                max_id += 1
+                dkt["temp_id"] = new_id
+                new_id += 1
             else:
-                pass
+                print("line", looky(seeline()).lineno, "is", dkt)
                  
 
         cur.close()
