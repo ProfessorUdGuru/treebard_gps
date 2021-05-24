@@ -177,8 +177,6 @@ class ValidatePlace():
 
         self.view = view
         self.place_input = place_input
-        self.single = None
-        self.multiple = None
         self.place_dicts = []
         self.temp_places = []
         self.temp_places_places = []
@@ -323,52 +321,47 @@ class ValidatePlace():
 
     def handle_outer_duplicates(self):
 
-        def seek_identifiable_pair():
-            if self.single_found is False:
-                seek_single()
-            elif self.multiple_found is False:
-                seek_multiple()
-            else:
-                redefine_duplicate()
-
-        def seek_single():
-            print("line", looky(seeline()).lineno, "self.ids_reversed[self.idx]", self.ids_reversed[self.idx])
-            if len(self.ids_reversed[self.idx]) == 1:
-                self.single = self.ids_reversed[self.idx]
-                self.single_found = True
-                self.idx += 1
-                seek_identifiable_pair()
-            
-
-        def seek_multiple():
-            print("line", looky(seeline()).lineno, "self.ids_reversed[self.idx:]", self.ids_reversed[self.idx])
-            if len(self.ids_reversed[self.idx]) > 1:
-                self.multiple = self.ids_reversed[self.idx]
-                self.multiple_found = True
-                seek_identifiable_pair()
-            else:
-                self.idx += 1
-                self.single_found = False
-                seek_identifiable_pair()
-
-
-        def redefine_duplicate():
-            print("line", looky(seeline()).lineno, "self.single, self.multiple", self.single, self.multiple)
-
-        self.idx = 0
-        self.single_found = False
-        self.multiple_found = False
-        self.ids_reversed = list(self.place_dicts)
-        self.ids_reversed.reverse()
-        self.ids_reversed = [dkt["id"] for dkt in self.ids_reversed]
-        seek_identifiable_pair()
-
-            
-
-            
+        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+# line 324 self.place_dicts [{'id': [795, 796, 797], 'input': 'McDonalds'}, {'id': [30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], 'input': 'Paris'}, {'id': [78], 'input': 'Lamar County'}, {'id': [29], 'input': 'Texas'}, {'id': [8], 'input': 'USA'}]
+        # In this version there's no looping or incrementing. Just make all the possible pairs and filter them down with sets based on what's in places_places
         
         
-            
+        pairs = []
+        for dkt in self.place_dicts:
+            pairs.append(dkt["id"])
+        pairs_pairs = []
+        for i in range(len(pairs)-1):            
+            pairs_pairs.append([pairs[i], pairs[i+1]])  
+        for pair in pairs_pairs:
+            if len(pair[0]) > 1 or len(pair[1]) > 1:
+                all_pairs = [(i, j) for i in pair[0] for j in pair[1]]
+
+                st = set(all_pairs).intersection(places_places)
+                print("line", looky(seeline()).lineno, "st", st)
+                tup = tuple(st);print("line", looky(seeline()).lineno, "is",tup)
+        print("line", looky(seeline()).lineno, "pairs_pairs", pairs_pairs)
+# line 341 pairs [[795, 796, 797], [30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], [78], [29], [8]]
+
+# line 341 pairs_pairs [
+# [[795, 796, 797], [30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755]], 
+# [[30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], [78]], 
+# [[78], [29]], 
+# [[29], [8]]]       
+
+# line 357 st {(796, 30), (795, 34)}
+
+# line 357 st {(30, 78)}
+# NEXT: MAKE A NEW LIST WITH THEse tups substituted for the lists in pairs_pairs
+
+# >>> for tup in x:
+# ...     for tupp in y:
+# ...             print(tup, tupp)
+# ...
+# (796, 30) (30, 78)
+# (795, 34) (30, 78)
+
+
+
 
 if __name__ == "__main__":
 
