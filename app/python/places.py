@@ -179,8 +179,6 @@ class ValidatePlace():
         self.place_input = place_input
         self.single = None
         self.multiple = None
-        # print("line", looky(seeline()).lineno, "is", self.place_input)
-# line 171 is 114 Main Street, Paris, Lamar County, Texas, USA
         self.place_dicts = []
         self.temp_places = []
         self.temp_places_places = []
@@ -325,46 +323,45 @@ class ValidatePlace():
 
     def handle_outer_duplicates(self):
 
-        def seek_identifiable_pair(outer_dupes):
-            seek_single(outer_dupes)
-            if self.try_again is True:
-                seek_identifiable_pair(outer_dupes[self.single_index + 1:])
-            pair = (self.single, self.multiple)
-            print("line", looky(seeline()).lineno, "self.single", self.single)
-            print("line", looky(seeline()).lineno, "pair", pair)
+        def seek_identifiable_pair():
+            if self.single_found is False:
+                seek_single()
+            elif self.multiple_found is False:
+                seek_multiple()
+            else:
+                redefine_duplicate()
 
-        def seek_single(outer_dupes):        
-            print("line", looky(seeline()).lineno, "seek_single() running; outer_dupes", outer_dupes)
+        def seek_single():
+            print("line", looky(seeline()).lineno, "self.ids_reversed[self.idx]", self.ids_reversed[self.idx])
+            if len(self.ids_reversed[self.idx]) == 1:
+                self.single = self.ids_reversed[self.idx]
+                self.single_found = True
+                self.idx += 1
+                seek_identifiable_pair()
             
-            d = 0
-            for id_list in outer_dupes:
-                if len(id_list) != 1:
-                    d += 1
-                    continue
-                else:
-                    self.single = id_list[0]
-                    self.single_index = d
-                    outer_dupes = outer_dupes[d:]
-                    seek_multiple(outer_dupes)
+
+        def seek_multiple():
+            print("line", looky(seeline()).lineno, "self.ids_reversed[self.idx:]", self.ids_reversed[self.idx])
+            if len(self.ids_reversed[self.idx]) > 1:
+                self.multiple = self.ids_reversed[self.idx]
+                self.multiple_found = True
+                seek_identifiable_pair()
+            else:
+                self.idx += 1
+                self.single_found = False
+                seek_identifiable_pair()
 
 
-        def seek_multiple(outer_dupes):
-            c = 0
-            for id_list in outer_dupes:
-                print("line", looky(seeline()).lineno, "id_list", id_list)
-                if len(id_list) > 1:
-                    self.multiple = id_list
-                    break
-                else:
-                    if c < len(outer_dupes): # change to while loop
-                        self.try_again = True
-                        # seek_identifiable_pair(outer_dupes[self.single_index + 1:])
+        def redefine_duplicate():
+            print("line", looky(seeline()).lineno, "self.single, self.multiple", self.single, self.multiple)
 
-        self.try_again = False
-        outer_dupes = list(self.place_dicts)
-        outer_dupes.reverse()
-        outer_dupes = [dkt["id"] for dkt in outer_dupes]
-        seek_identifiable_pair(outer_dupes)
+        self.idx = 0
+        self.single_found = False
+        self.multiple_found = False
+        self.ids_reversed = list(self.place_dicts)
+        self.ids_reversed.reverse()
+        self.ids_reversed = [dkt["id"] for dkt in self.ids_reversed]
+        seek_identifiable_pair()
 
             
 
