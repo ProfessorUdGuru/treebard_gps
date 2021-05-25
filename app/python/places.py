@@ -324,41 +324,36 @@ class ValidatePlace():
         # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
 # line 324 self.place_dicts [{'id': [795, 796, 797], 'input': 'McDonalds'}, {'id': [30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], 'input': 'Paris'}, {'id': [78], 'input': 'Lamar County'}, {'id': [29], 'input': 'Texas'}, {'id': [8], 'input': 'USA'}]
         # In this version there's no looping or incrementing. Just make all the possible pairs and filter them down with sets based on what's in places_places
-        
+        def pair_up(child, parent):
+            pair = []
+            for tup in child:
+                for tupp in parent:
+                    pair.append((tup, tupp))
+            return pair
         
         pairs = []
         for dkt in self.place_dicts:
             pairs.append(dkt["id"])
         pairs_pairs = []
         for i in range(len(pairs)-1):            
-            pairs_pairs.append([pairs[i], pairs[i+1]])  
+            pairs_pairs.append([pairs[i], pairs[i+1]])
+        pair_us_up = []
         for pair in pairs_pairs:
             if len(pair[0]) > 1 or len(pair[1]) > 1:
                 all_pairs = [(i, j) for i in pair[0] for j in pair[1]]
-
                 st = set(all_pairs).intersection(places_places)
-                print("line", looky(seeline()).lineno, "st", st)
-                tup = tuple(st);print("line", looky(seeline()).lineno, "is",tup)
-        print("line", looky(seeline()).lineno, "pairs_pairs", pairs_pairs)
-# line 341 pairs [[795, 796, 797], [30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], [78], [29], [8]]
+                tup = tuple(st)
+                pair_us_up.append(tup)
+        paired_up = []
+        for w in range(len(pair_us_up) - 1):
+            child = pair_us_up[w]
+            parent = pair_us_up[w + 1]
+            x = pair_up(child, parent)
+            paired_up.extend(x)
+        print("line", looky(seeline()).lineno, "paired_up", paired_up)
+# line 359 paired_up [((796, 30), (30, 78)), ((795, 34), (30, 78))]
+# make sure this works with three multiples in one nesting
 
-# line 341 pairs_pairs [
-# [[795, 796, 797], [30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755]], 
-# [[30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], [78]], 
-# [[78], [29]], 
-# [[29], [8]]]       
-
-# line 357 st {(796, 30), (795, 34)}
-
-# line 357 st {(30, 78)}
-# NEXT: MAKE A NEW LIST WITH THEse tups substituted for the lists in pairs_pairs
-
-# >>> for tup in x:
-# ...     for tupp in y:
-# ...             print(tup, tupp)
-# ...
-# (796, 30) (30, 78)
-# (795, 34) (30, 78)
 
 
 
