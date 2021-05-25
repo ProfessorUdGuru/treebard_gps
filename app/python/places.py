@@ -322,163 +322,178 @@ class ValidatePlace():
             b += 1
 
     def handle_outer_duplicates(self):
-
         # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
-# line 324 self.place_dicts [{'id': [795, 796, 797], 'input': 'McDonalds'}, {'id': [30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], 'input': 'Paris'}, {'id': [78], 'input': 'Lamar County'}, {'id': [29], 'input': 'Texas'}, {'id': [8], 'input': 'USA'}]
-        # In this version there's no looping or incrementing. Just make all the possible pairs and filter them down with sets based on what's in places_places
-        def pair_up(child, parent):
-            pair = []
-            for tup in child:
-                for tupp in parent:
-                    pair.append((tup, tupp))
-            return pair
-        
-        pairs = []
-        for dkt in self.place_dicts:
-            pairs.append(dkt["id"])
-        # print("line", looky(seeline()).lineno, "pairs", pairs)
-# line 339 pairs [[802, 803], [795, 796, 797], [30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], [78], [29], [8]]
-# INSTEAD OF MAKING ANOTHER LIST, IMMED REPLACE ELEMS IN pairs WITH MULTIPLES USED BELOW
+# line 325 self.place_dicts [{'id': [795, 796, 797], 'input': 'McDonalds'}, {'id': [30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], 'input': 'Paris'}, {'id': [78], 'input': 'Lamar County'}, {'id': [29], 'input': 'Texas'}, {'id': [8], 'input': 'USA'}]
 
-        for i in range(len(pairs)-1):
-            # print(pairs[i])
-            if len(pairs[i]) > 1:
-                pairs[i] = [pairs[i], pairs[i+1]]
+        def pinpoint_child(parent, children):
+            print("line", looky(seeline()).lineno, "children", children)
+            print("line", looky(seeline()).lineno, "parent", parent)
+            conn = sqlite3.connect(current_file)
+            cur = conn.cursor()
+
+            cur.execute(
+                '''
+                    SELECT place_id1
+                    FROM places_places
+                    WHERE place_id2 = ?
+                ''',
+                (parent,))
+            possible_children = [i[0] for i in cur.fetchall()]
+            
+            cur.close()
+            conn.close()
+
+            st = set(possible_children).intersection(children)
+            print("line", looky(seeline()).lineno, "st", st)
+            child = list(st)
+
+            return child
+
+        def seek_child():
+            u = 0
+            parent = None
+            child = None
+            for dkt in self.place_dicts:
+                if len(dkt["id"]) == 1:
+                    parent = dkt["id"][0]
+                else:
+                    u += 1
+                    continue
+
+                if parent is not None and len(self.place_dicts[u - 1]["id"]) != 1:
+                    children = tuple(self.place_dicts[u - 1]["id"])
+                    child = pinpoint_child(parent, children)
+                    print("line", looky(seeline()).lineno, "child", child)
+                    self.place_dicts[u - 1]["id"] = child
+                    print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+                    return
+                else:
+                    u += 1
+                    continue
+            print("line", looky(seeline()).lineno, "child", child)
+
+        for dkt in self.place_dicts:
+            seek_child()
+
+            
+
+
+
+
+
+
+
+
+        # def pair_up(child, parent):
+            # pair = []
+            # for tup in child:
+                # for tupp in parent:
+                    # pair.append((tup, tupp))
+            # return pair
+        
+        # pairs = []
+        # for dkt in self.place_dicts:
+            # pairs.append(dkt["id"])
+
+        # for i in range(len(pairs)-1):
+            # if len(pairs[i]) > 1:
+                # pairs[i] = [pairs[i], pairs[i+1]]
+        # p = 0
+        # for pair in pairs:
+            # if len(pair) == 1:
+                # continue
+            # elif len(pair[0]) > 1 or len(pair[1]) > 1:
+                # all_pairs = [(i, j) for i in pair[0] for j in pair[1]]
+                # st = set(all_pairs).intersection(places_places)
+                # tup = list(st)
+                # pairs[p] = tup
+            # p += 1  
+        # y = 0
+        # for pair in pairs:
+            # if len(pair) == 1:
+                # continue
+            # else:
+                # child = pairs[y]
+                # parent = pairs[y + 1]
+                # x = pair_up(child, parent)
+                # pairs[y] = x
+            # y += 1 
+
+        # deletables = []
+        # for lst in pairs:
+            # if len(lst) == 1:
+                # deletables.append([])
+            # else:
+                # bad = []
+                # h = 0
+                # for pair in lst:
+                    # if pair[0][1] != pair[1][0]:
+                        # bad.append(h)
+                    # h += 1
+                # deletables.append(bad)
+        # copy = []
+        # q = 0
+        # for lst in pairs:
+            # if len(lst) == 1:
+                # copy.append(lst)
+            # else:
+                # ok = []
+                # p = 0
+                # for pair in lst:
+                    # if p not in deletables[q]:
+                        # ok.append(pair)
+                    # p += 1
+                # copy.append(ok)
+            # q += 1
+        # pairs = copy
+
         # # print("line", looky(seeline()).lineno, "pairs", pairs)
-# # line 347 pairs [
-# # [[802, 803], [795, 796, 797]], 
-# # [[795, 796, 797], [30, 32, 34, 684, 685, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755]], 
-# # [[30, 32, 34, 684, 685, 729, 731, 732, 733, 745, 746, 748, 750, 752, 753, 754, 755], [78]], 
+# # line 390 pairs [
+# # [((803, 796), (796, 30)), ((802, 795), (795, 34))], 
+# # [((796, 30), (30, 78))], 
+# # [(30, 78)], 
+# # [78], ITEM 0 == ITEM [0][1] ONE UP
+# # [29], 
+# # [8]]
+        # def filter_down(pairs):
+            # filtered = []
+            # for lst in pairs:
+                # filtered.append([])
+            # z = 0
+            # for lst in pairs:
+                # if type(lst[0]) is int:
+                    # filtered[z] = lst
+                # elif type(lst[0][0]) is int:
+                    # for k in lst:
+                        # if type(k[0]) is int:
+                            # filtered[z] = [k[0]]
+                # elif type(lst[0][0][0]) is int:
+                    # for m in lst:
+                        # if type(m[0][0]) is int:
+                            # filtered[z] = [m[0][0]]
+      
+                # z += 1
+
+            # print("line", looky(seeline()).lineno, "filtered", filtered)
+                        
+                    
+               
+
+        # for i in pairs:
+            # if len(i) > 1:
+                # filter_down(pairs)
+        
+# # line 423 pairs [[(803, 796), ((802, 795), (795, 34))], [(796, 30)], [30], [78], [29], [8]]
+# # have to loop backwards bec based on parent not child
+        # print("line", looky(seeline()).lineno, "pairs", pairs)
+# # line 415 pairs [
+# # [(803, 796), (802, 795)], 
+# # [(796, 30)], 
+# # [30], 
 # # [78], 
 # # [29], 
 # # [8]]
-        # pairs_pairs = []
-        # for i in range(len(pairs)-1):            
-            # pairs_pairs.append([pairs[i], pairs[i+1]])
-        # # print("line", looky(seeline()).lineno, "pairs_pairs", pairs_pairs)
-# # line 342 pairs_pairs [
-# # [[802, 803], [795, 796, 797]], 
-# # [[795, 796, 797], [30, 32, 34, 684, 685,9, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755]], 
-# # [[30, 32, 34, 684, 685, 729, 731, 732, 733, 746, 748, 750, 752, 753, 754, 755], [78]], 
-# # [[78], [29]], 
-# # [[29], [8]]]
-        p = 0
-        for pair in pairs:
-            # print("line", looky(seeline()).lineno, "pair", pair)
-            if len(pair) == 1:
-                continue
-            elif len(pair[0]) > 1 or len(pair[1]) > 1:
-                all_pairs = [(i, j) for i in pair[0] for j in pair[1]]
-                st = set(all_pairs).intersection(places_places)
-                tup = list(st)
-                pairs[p] = tup
-            p += 1    
-        # print("line", looky(seeline()).lineno, "pairs", pairs)
-# line 376 pairs [
-# ((803, 796), (802, 795)), 
-# ((796, 30), (795, 34)), 
-# ((30, 78),), 
-# [78], 
-# [29], 
-# [8]]
-        # pair_us_up = []
-        # for pair in pairs_pairs:
-            # if len(pair[0]) > 1 or len(pair[1]) > 1:
-                # all_pairs = [(i, j) for i in pair[0] for j in pair[1]]
-                # st = set(all_pairs).intersection(places_places)
-                # tup = tuple(st)
-                # pair_us_up.append(tup)
-            # else:
-                # pair_us_up.append(None)
-        # print("line", looky(seeline()).lineno, "pair_us_up", pair_us_up)
-# line 351 pair_us_up [((803, 796), (802, 795)), ((796, 30), (795, 34)), ((30, 78),)]
-        y = 0
-        for pair in pairs:
-            if len(pair) == 1:
-                continue
-            else:
-                child = pairs[y]
-                parent = pairs[y + 1]
-                x = pair_up(child, parent)
-                print("line", looky(seeline()).lineno, "x", x)
-                pairs[y] = x
-            y += 1    
-  
-        # print("line", looky(seeline()).lineno, "pairs", pairs)
-
-        # paired_up = []
-        # for w in range(len(pair_us_up) - 1):
-            # child = pair_us_up[w]
-            # parent = pair_us_up[w + 1]
-            # x = pair_up(child, parent)
-            # paired_up.extend(x)
-
-        deletables = []
-        for lst in pairs:
-            if len(lst) == 1:
-                deletables.append([])
-            else:
-                bad = []
-                h = 0
-                for pair in lst:
-                    if pair[0][1] != pair[1][0]:
-                        bad.append(h)
-                    h += 1
-                deletables.append(bad)
-
-        # print("line", looky(seeline()).lineno, "deletables", deletables)
-# line 436 deletables [[1, 2], [1], [], [], [], []]
-# line 406 pairs [
-# [((803, 796), (796, 30)), ((803, 796), (795, 34)), ((802, 795), (796, 30)), ((802, 795), (795, 34))], 
-# [((796, 30), (30, 78)), ((795, 34), (30, 78))], 
-# [(30, 78)], 
-# [78], 
-# [29], 
-# [8]]
-        copy = []
-        q = 0
-        for lst in pairs:
-            if len(lst) == 1:
-                copy.append(lst)
-            else:
-                ok = []
-                p = 0
-                for pair in lst:
-                    if p not in deletables[q]:
-                        ok.append(pair)
-                    p += 1
-                copy.append(ok)
-            q += 1
-        pairs = copy
-
-
-        # print("line", looky(seeline()).lineno, "pairs", pairs)
-# line 455 pairs [
-# [((803, 796), (796, 30)), ((802, 795), (795, 34))], 
-# [((796, 30), (30, 78))], 
-# [(30, 78)], 
-# [78], 
-# [29], 
-# [8]]
-        # deletables = []
-        # g = 0
-        # for pair in paired_up:
-            # if pair[0][1] != pair[1][0]:
-                # deletables.append(g)
-            # g += 1
-        # copy = []
-        # p = 0
-        # for pair in paired_up:
-            # if p not in deletables:
-                # copy.append(pair)
-            # p += 1
-        # paired_up = copy
-        # print("line", looky(seeline()).lineno, "paired_up", paired_up)
-
-
-# ABOVE GETS RIGHT ANSWER(S) BUT NEEDS OTHER NESTS TO FILTER DOWN TO ONE RIGHT ANSWER
-# line 369 paired_up [((803, 796), (796, 30)), ((802, 795), (795, 34)), ((796, 30), (30, 78))]
-# not quite right bec the 3 tups are equals, solution is to not put them into paired up but to substitute them into id_nests while in the right index IF they are matched to each other
+                  
 
 if __name__ == "__main__":
 
