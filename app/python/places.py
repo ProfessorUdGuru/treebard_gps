@@ -162,7 +162,7 @@ t = "Sassari, Sassari, Sardegna, Italy"
 u = "McDonalds, Paris, Lamar County, Texas, USA"
 v = "McDonalds, Paris, Bear Lake County, Idaho, USA"
 w = "McDonalds, Sacramento, California, USA" # this one exists
-x = "McDonalds, Blossom, Lamar County, Texas, USA" # this one doesn't exist
+x = "McDonalds, Blossom, Lamar County, Texas, USA" # this McDonalds doesn't exist
 y = "Jerusalem, Israel"
 z = "Masada, Israel"
 aaa = "Israel"
@@ -172,7 +172,7 @@ ddd = "table 5, McDonalds, Paris, Lamar County, Texas, USA"
 eee = "table 5, McDonalds, Paris, Bear Lake County, Idaho, USA"
 
 # ADD A THIRD MULTIPLE TO a and b
-place_input = ddd # u # v # ddd # eee
+place_input = r # r # f
 class ValidatePlace():
 
     def __init__(self, view, place_input):
@@ -182,12 +182,13 @@ class ValidatePlace():
         self.place_dicts = []
         self.temp_places = []
         self.temp_places_places = []
+
+        self.new_places = False
+        self.inner_duplicates = False
+        self.outer_duplicates = False
+
         self.make_place_dicts()
-        self.make_new_places()
-        self.handle_inner_duplicates()
-        self.handle_outer_duplicates()
-
-
+        self.see_whats_needed()
 
     def make_place_dicts(self):
         '''
@@ -236,7 +237,40 @@ class ValidatePlace():
         cur.close()
         conn.close()
 
+        n = 0
+        for dkt in self.place_dicts:
+            if len(dkt["id"]) > 1:
+                name = dkt["input"]
+                if self.place_list.count(name) > 1:
+                    dkt["inner_dupe"] = True
+                else:
+                    dkt["inner_dupe"] = False
+            n += 1
 
+
+    def see_whats_needed(self):
+        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+        for dkt in self.place_dicts:
+            if len(dkt["id"]) == 0:
+                self.new_places = True
+            elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is False:
+                self.outer_duplicates = True
+            elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is True:
+                self.inner_duplicates = True
+        # for nest in self.place_list:
+            # if self.place_list.count(nest) > 1:
+                # self.inner_duplicates = True
+
+        if self.new_places is True:
+            self.make_new_places()
+        if self.inner_duplicates is True:
+            self.handle_inner_duplicates()
+        if self.outer_duplicates is True:
+            self.handle_outer_duplicates()
+
+        print("line", looky(seeline()).lineno, "self.new_places", self.new_places)
+        print("line", looky(seeline()).lineno, "self.inner_duplicates", self.inner_duplicates)
+        print("line", looky(seeline()).lineno, "self.outer_duplicates", self.outer_duplicates)
 
     def make_new_places(self):
         '''
@@ -254,17 +288,16 @@ class ValidatePlace():
         new_id = cur.fetchone()[0] + 1
 
         for dkt in self.place_dicts:
-            if len(dkt["id"]) == 0:
-                # print("line", looky(seeline()).lineno, "is", dkt)                
+            if len(dkt["id"]) == 0:              
                 dkt["temp_id"] = new_id
                 new_id += 1
             else:
-                print("line", looky(seeline()).lineno, "is", dkt)
+                print("line", looky(seeline()).lineno, "existing place dkt:", dkt)
                  
 
         cur.close()
         conn.close()
-        # print("line", looky(seeline()).lineno, "is", self.place_dicts)                
+        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
 
     def handle_inner_duplicates(self):
         '''
@@ -272,9 +305,9 @@ class ValidatePlace():
             nests in the same nesting with exactly the same name, the code can
             be extended. If there is more than one pair of inner duplicates
             in the same nesting, the code can be extended. For now, tell the
-            user to find some historically correct names for the places that
-            aren't exactly the same. Open a dialog if too many duplicates, 
-            and make no changes to the database.
+            user to find unique historically correct names for the places. 
+            Open a dialog if too many duplicates, and make no changes to the 
+            database.
         '''
 
         def handle_non_contiguous_dupes():
@@ -285,7 +318,7 @@ class ValidatePlace():
             # just leave this here for now in case it's needed
             # if so then likely it needs to be run later
             # after right_pair is known
-
+        print("line", looky(seeline()).lineno, "is running")
         inner_dupes_idx = []
         i = 0
         for nest in self.place_list:
@@ -320,6 +353,7 @@ class ValidatePlace():
                 if tup[0] == b:
                     dkt["id"] = tup[1]
             b += 1
+        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
 
     def handle_outer_duplicates(self):
         # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
@@ -373,127 +407,9 @@ class ValidatePlace():
             print("line", looky(seeline()).lineno, "child", child)
 
         for dkt in self.place_dicts:
-            seek_child()
+            # seek_child() # UNCOMMENT THIS
+            pass
 
-            
-
-
-
-
-
-
-
-
-        # def pair_up(child, parent):
-            # pair = []
-            # for tup in child:
-                # for tupp in parent:
-                    # pair.append((tup, tupp))
-            # return pair
-        
-        # pairs = []
-        # for dkt in self.place_dicts:
-            # pairs.append(dkt["id"])
-
-        # for i in range(len(pairs)-1):
-            # if len(pairs[i]) > 1:
-                # pairs[i] = [pairs[i], pairs[i+1]]
-        # p = 0
-        # for pair in pairs:
-            # if len(pair) == 1:
-                # continue
-            # elif len(pair[0]) > 1 or len(pair[1]) > 1:
-                # all_pairs = [(i, j) for i in pair[0] for j in pair[1]]
-                # st = set(all_pairs).intersection(places_places)
-                # tup = list(st)
-                # pairs[p] = tup
-            # p += 1  
-        # y = 0
-        # for pair in pairs:
-            # if len(pair) == 1:
-                # continue
-            # else:
-                # child = pairs[y]
-                # parent = pairs[y + 1]
-                # x = pair_up(child, parent)
-                # pairs[y] = x
-            # y += 1 
-
-        # deletables = []
-        # for lst in pairs:
-            # if len(lst) == 1:
-                # deletables.append([])
-            # else:
-                # bad = []
-                # h = 0
-                # for pair in lst:
-                    # if pair[0][1] != pair[1][0]:
-                        # bad.append(h)
-                    # h += 1
-                # deletables.append(bad)
-        # copy = []
-        # q = 0
-        # for lst in pairs:
-            # if len(lst) == 1:
-                # copy.append(lst)
-            # else:
-                # ok = []
-                # p = 0
-                # for pair in lst:
-                    # if p not in deletables[q]:
-                        # ok.append(pair)
-                    # p += 1
-                # copy.append(ok)
-            # q += 1
-        # pairs = copy
-
-        # # print("line", looky(seeline()).lineno, "pairs", pairs)
-# # line 390 pairs [
-# # [((803, 796), (796, 30)), ((802, 795), (795, 34))], 
-# # [((796, 30), (30, 78))], 
-# # [(30, 78)], 
-# # [78], ITEM 0 == ITEM [0][1] ONE UP
-# # [29], 
-# # [8]]
-        # def filter_down(pairs):
-            # filtered = []
-            # for lst in pairs:
-                # filtered.append([])
-            # z = 0
-            # for lst in pairs:
-                # if type(lst[0]) is int:
-                    # filtered[z] = lst
-                # elif type(lst[0][0]) is int:
-                    # for k in lst:
-                        # if type(k[0]) is int:
-                            # filtered[z] = [k[0]]
-                # elif type(lst[0][0][0]) is int:
-                    # for m in lst:
-                        # if type(m[0][0]) is int:
-                            # filtered[z] = [m[0][0]]
-      
-                # z += 1
-
-            # print("line", looky(seeline()).lineno, "filtered", filtered)
-                        
-                    
-               
-
-        # for i in pairs:
-            # if len(i) > 1:
-                # filter_down(pairs)
-        
-# # line 423 pairs [[(803, 796), ((802, 795), (795, 34))], [(796, 30)], [30], [78], [29], [8]]
-# # have to loop backwards bec based on parent not child
-        # print("line", looky(seeline()).lineno, "pairs", pairs)
-# # line 415 pairs [
-# # [(803, 796), (802, 795)], 
-# # [(796, 30)], 
-# # [30], 
-# # [78], 
-# # [29], 
-# # [8]]
-                  
 
 if __name__ == "__main__":
 
@@ -512,43 +428,7 @@ if __name__ == "__main__":
         j += 1
     
     view.mainloop()
-
-# DO LIST
-
-# test it with non-contiguous multiples eg:
-#   aaa, bbb, ccc, ddd, eee
-#   aaa, xxx, ccc, fff, ggg
-# in which aaa and ccc are not next to each other
-# when entering a single place there will always be a dialog unless the place is new to the db    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 '''
-
-
 Cities named Maine in America.	
 Maine - North Carolina
 Maine - New York
@@ -572,7 +452,16 @@ Maine - Poitou-Charentes
 
 '''
 
+
+
 # DO LIST
+
+# inner multiples not working, see case r SOLUTION: before running inner/outer funcs in init, detect which of the 2 are needed and set booleans. If both are needed, update db after the first and recreate dict. Otherwise make sure only one of them runs.
+# test it with non-contiguous multiples eg:
+#   aaa, bbb, ccc, ddd, eee
+#   aaa, xxx, ccc, fff, ggg
+# in which aaa and ccc are not next to each other
+# when entering a single place there will always be a dialog unless the place is new to the db    
 
 # New thoughts 20210523
 # Don't use the temp lists, the info is already stored in dict, make key for child and parent
