@@ -15,11 +15,62 @@ import sqlite3
 
 '''
 New Doc Strings 20210523
-TERMINOLOGY
+Treebard compares user-input place strings to place strings stored in
+the database to try and figure out which place the user intended.
+
+PLACE STRING TERMINOLOGY
 nest: "Paris" or "France" in "Paris, France"
 nesting, nested places, nested place string: "Paris, France"
+single: a nest that occurs in the database in one record only
 inner duplicate: "Maine" in "Maine, Maine, USA"
 outer duplicate: "Paris" in "Paris, France" and "Paris, Texas"
+known: this string exists as a single in the database e.g.
+    "Timbuktu", so if user enters "Timbuktu", depending on 
+    the context in the nesting, Treebard might guess with   
+    reasonable certainty that this is Timbuktu, Mali since
+    there's only nest called "Timbuktu" in the database: Timbuktu, Mali. But if
+    the user also enters another place by the same name (e.g.
+    the crater on Mars named Timbuktu), then "Timbuktu" will
+    no longer be treated as a known, and Treebard will have
+    to try to figure out which Timbuktu is intended each
+    time the user enters the name. Depending on what other 
+    nests are in the nesting, a dialog might open for the
+    user to explicitly state which Timbuktu to use.
+
+EXPECTATIONS
+The goal is to open a duplicate place name dialog for user clarification
+but to do so as seldom as possible within reason. Here's an example of
+"within reason". User inputs "Paris, Precinct 5, Lamar County, Texas, USA".
+Paris is an outer duplicate, Precinct 5 is a new place, and the last three
+nests are known. It seems pretty obvious to the user which Paris is meant:
+the one he's already entered in Lamar County, Texas. And we could write 
+the code to make that guess, but the more complicated the code gets, the
+greater will be our self-loathing at some point in the future when an even
+more complicated bit of code has to be added for an even more convoluted
+imagined necessity. We don't like to open R U Sure or anything like it,
+but entering new places is done all the time because Treebard will not and
+should not come pre-loaded with everything that Google Maps has ever heard
+of. Portability is important and we have only contempt for the kind of
+genealogy that is supposed to be all done by machine logic without the user
+having to do any research. The internet is filling up with bad data invented
+by smarty-pants software. And we don't like bloated, unmaintainable code.
+Part of the reason for Treebard to exist is that the code should be usable
+by amateur programmers. So for these reasons and others, it is my decision
+at this point (after literally months spent writing and re-writing the code
+for the duplicate places dialog) that the right thing to do is to draw the
+line slightly early rather than slightly late. Short version: Treebard will
+ask for user clarification slightly more often than some users would like,
+in cases where new places are inserted into existing nestings which also 
+contain duplicate place names such as any place string containing "Paris"
+assuming the user has entered two or more different places named "Paris.
+But I failed to mention the most important reason for not trying to guess
+which Paris is intended in the above example: Treebard might guess wrong, 
+whereas if we give the user a chance to input the new place correctly,
+in the long run the user will be happier about it. The underlying notion
+is that we can't predict every eventuality in a misguided attempt to make
+the user's decisions for him. But it would also be wrong to allow free
+entry of any misbegotten place name. Some place in the middle of the two
+extremes is being chosen as carefully as possible.
 *********
 call this "Regular Places" emulating "Regular Expressions". A new string will be generated (or list or some readable code) in place of user input, and when user input is completely replaced by readable code, the user input can be correctly stored. "Readable Code" will probably be an ordered list of place ID numbers. Maybe intermediately using a list of dicts with the dict storing trait codes or just a code string, whichever is easier to understand. Performance isn't important because only one place input is done at a time and existing places will have been detected first so this modal dialog won't run much code while open.
 
@@ -161,7 +212,7 @@ s = "Maine, Iowa, USA"
 t = "Sassari, Sassari, Sardegna, Italy"
 u = "McDonalds, Paris, Lamar County, Texas, USA"
 v = "McDonalds, Paris, Bear Lake County, Idaho, USA"
-w = "McDonalds, Sacramento, California, USA" # this one exists
+w = "McDonalds, Sacramento, Sacramento County, California, USA" # this one exists
 x = "McDonalds, Blossom, Lamar County, Texas, USA" # this McDonalds doesn't exist
 y = "Jerusalem, Israel"
 z = "Masada, Israel"
@@ -171,8 +222,8 @@ ccc = "Dupes, Dupes, Dupes"
 ddd = "table 5, McDonalds, Paris, Lamar County, Texas, USA"
 eee = "table 5, McDonalds, Paris, Bear Lake County, Idaho, USA"
 
-# ADD A THIRD MULTIPLE TO a and b
-place_input = r # r # f
+place_input = x
+
 class ValidatePlace():
 
     def __init__(self, view, place_input):
@@ -189,6 +240,7 @@ class ValidatePlace():
 
         self.make_place_dicts()
         self.see_whats_needed()
+        self.open_duplicate_places_dialog()
 
     def make_place_dicts(self):
         '''
@@ -218,6 +270,56 @@ class ValidatePlace():
             ids = cur.fetchall()
             ids = [i[0] for i in ids]
             return ids
+    
+        def flag_inner_dupes():
+            n = 0
+            for dkt in self.place_dicts:
+                if len(dkt["id"]) > 1:
+                    name = dkt["input"]
+                    if self.place_list.count(name) > 1:
+                        dkt["inner_dupe"] = True
+                    else:
+                        dkt["inner_dupe"] = False
+                n += 1
+
+        def catch_new_dupes():
+            '''
+                In case a new place is intended when a same-named place exists
+                once in the database; so the existing place won't be used
+                if a new place was intended. Compares existing singles to
+                entered nests.
+            '''
+# THE ONLY PROBLEM WITH THIS IS THAT IT'S RUNNING AT ALL, IT SHD NOT RUN FOR NO NEW PLACES
+
+            b = 0
+            for dkt in self.place_dicts:
+                if b == len(self.place_dicts) - 1:
+                    print("line", looky(seeline()).lineno, "b, len(self.place_dicts) - 1", b, len(self.place_dicts) - 1)
+                    return                 
+                if len(dkt["id"]) == 1:
+                    child = dkt["id"][0]         
+                    parents = self.place_dicts[b + 1]["id"] # [78]
+                    print("line", looky(seeline()).lineno, "child, parents", child, parents)
+                    cur.execute(
+                        '''
+                            SELECT place_id2 
+                            FROM places_places
+                            WHERE place_id1 = ?
+                        ''',
+                        (child,))
+                    parent_list = [i[0] for i in cur.fetchall()]
+                    print("line", looky(seeline()).lineno, "parent_list", parent_list)
+                    print("line", looky(seeline()).lineno, "parents", parents)
+                    ok = False
+                    for i in parent_list:
+                        for j in parents:
+                            if i == j:
+                                ok = True
+                    if ok is False:
+                        dkt["id"] = []
+                    print("line", looky(seeline()).lineno, "ok", ok)
+                b += 1
+            print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
 
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -230,26 +332,17 @@ class ValidatePlace():
             (
                 { 
                     "id" : get_matching_ids(x),
-                    "input" : x
-}) 
+                    "input" : x}) 
             for x in self.place_list]
 
+        flag_inner_dupes()
+# line 328 self.place_dicts [{'id': [795, 796, 797], 'input': 'McDonalds', 'inner_dupe': False}, {'id': [216], 'input': 'Sacramento'}, {'id': [128], 'input': 'California'}, {'id': [8], 'input': 'USA'}]
+        catch_new_dupes()
+# line 330 self.place_dicts [{'id': [795, 796, 797], 'input': 'McDonalds', 'inner_dupe': False}, {'id': [], 'input': 'Sacramento'}, {'id': [128], 'input': 'California'}, {'id': [8], 'input': 'USA'}]
         cur.close()
         conn.close()
 
-        n = 0
-        for dkt in self.place_dicts:
-            if len(dkt["id"]) > 1:
-                name = dkt["input"]
-                if self.place_list.count(name) > 1:
-                    dkt["inner_dupe"] = True
-                else:
-                    dkt["inner_dupe"] = False
-            n += 1
-
-
     def see_whats_needed(self):
-        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
         for dkt in self.place_dicts:
             if len(dkt["id"]) == 0:
                 self.new_places = True
@@ -257,9 +350,6 @@ class ValidatePlace():
                 self.outer_duplicates = True
             elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is True:
                 self.inner_duplicates = True
-        # for nest in self.place_list:
-            # if self.place_list.count(nest) > 1:
-                # self.inner_duplicates = True
 
         if self.new_places is True:
             self.make_new_places()
@@ -267,10 +357,6 @@ class ValidatePlace():
             self.handle_inner_duplicates()
         if self.outer_duplicates is True:
             self.handle_outer_duplicates()
-
-        print("line", looky(seeline()).lineno, "self.new_places", self.new_places)
-        print("line", looky(seeline()).lineno, "self.inner_duplicates", self.inner_duplicates)
-        print("line", looky(seeline()).lineno, "self.outer_duplicates", self.outer_duplicates)
 
     def make_new_places(self):
         '''
@@ -285,19 +371,17 @@ class ValidatePlace():
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute("SELECT MAX(place_id) FROM place")
-        new_id = cur.fetchone()[0] + 1
+        temp_id = cur.fetchone()[0] + 1
 
         for dkt in self.place_dicts:
             if len(dkt["id"]) == 0:              
-                dkt["temp_id"] = new_id
-                new_id += 1
-            else:
-                print("line", looky(seeline()).lineno, "existing place dkt:", dkt)
-                 
-
+                dkt["temp_id"] = temp_id
+                temp_id += 1
+            # else:
+                # print("line", looky(seeline()).lineno, "existing place dkt:", dkt)
         cur.close()
         conn.close()
-        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
 
     def handle_inner_duplicates(self):
         '''
@@ -311,14 +395,10 @@ class ValidatePlace():
         '''
 
         def handle_non_contiguous_dupes():
-            print("line", looky(seeline()).lineno, "is", inner_dupes_idx)
-            # this shd not be needed, 
-            # just delete the return after the call, 
-            # prob delete the func, maybe set a bool
             # just leave this here for now in case it's needed
-            # if so then likely it needs to be run later
-            # after right_pair is known
-        print("line", looky(seeline()).lineno, "is running")
+            pass
+
+        # print("line", looky(seeline()).lineno, "is running")
         inner_dupes_idx = []
         i = 0
         for nest in self.place_list:
@@ -332,9 +412,8 @@ class ValidatePlace():
             i += 1
         if len(inner_dupes_idx) == 0:
             return
-        if abs(inner_dupes_idx[0] - inner_dupes_idx[1]) != 1:# not needed?
+        if abs(inner_dupes_idx[0] - inner_dupes_idx[1]) != 1:
             handle_non_contiguous_dupes()
-            # return
 
         inner_dupes = []
         for dkt in self.place_dicts:
@@ -349,19 +428,16 @@ class ValidatePlace():
         selected_ids = tuple(zip(inner_dupes_idx, right_pair))
         b = 0
         for dkt in self.place_dicts:
+            print("line", looky(seeline()).lineno, "dkt", dkt)
             for tup in selected_ids:
                 if tup[0] == b:
-                    dkt["id"] = tup[1]
+                    dkt["id"] = [tup[1]]
             b += 1
-        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
 
     def handle_outer_duplicates(self):
-        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
-# line 325 self.place_dicts [{'id': [795, 796, 797], 'input': 'McDonalds'}, {'id': [30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], 'input': 'Paris'}, {'id': [78], 'input': 'Lamar County'}, {'id': [29], 'input': 'Texas'}, {'id': [8], 'input': 'USA'}]
 
         def pinpoint_child(parent, children):
-            print("line", looky(seeline()).lineno, "children", children)
-            print("line", looky(seeline()).lineno, "parent", parent)
             conn = sqlite3.connect(current_file)
             cur = conn.cursor()
 
@@ -378,7 +454,6 @@ class ValidatePlace():
             conn.close()
 
             st = set(possible_children).intersection(children)
-            print("line", looky(seeline()).lineno, "st", st)
             child = list(st)
 
             return child
@@ -393,22 +468,34 @@ class ValidatePlace():
                 else:
                     u += 1
                     continue
+                # print("line", looky(seeline()).lineno, "parent", parent)
 
                 if parent is not None and len(self.place_dicts[u - 1]["id"]) != 1:
                     children = tuple(self.place_dicts[u - 1]["id"])
                     child = pinpoint_child(parent, children)
-                    print("line", looky(seeline()).lineno, "child", child)
+                    # print("line", looky(seeline()).lineno, "child", child)
                     self.place_dicts[u - 1]["id"] = child
-                    print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
                     return
                 else:
                     u += 1
                     continue
-            print("line", looky(seeline()).lineno, "child", child)
 
         for dkt in self.place_dicts:
-            # seek_child() # UNCOMMENT THIS
-            pass
+            seek_child()
+
+    def open_duplicate_places_dialog(self):
+        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+        for dkt in self.place_dicts:
+            print("line", looky(seeline()).lineno, "dkt['id']", dkt["id"])
+            print("line", looky(seeline()).lineno, "dkt.get('temp_id')", dkt.get('temp_id'))
+            if len(dkt["id"]) != 1:
+                if dkt.get("temp_id") is None:
+                    print("line", looky(seeline()).lineno, "dkt['id']", dkt["id"])
+                    Toplevel(self.view)
+                else:
+                    print("line", looky(seeline()).lineno, "dkt.get('temp_id')", dkt.get("temp_id")) 
+
+        
 
 
 if __name__ == "__main__":
@@ -456,11 +543,10 @@ Maine - Poitou-Charentes
 
 # DO LIST
 
-# inner multiples not working, see case r SOLUTION: before running inner/outer funcs in init, detect which of the 2 are needed and set booleans. If both are needed, update db after the first and recreate dict. Otherwise make sure only one of them runs.
-# test it with non-contiguous multiples eg:
-#   aaa, bbb, ccc, ddd, eee
-#   aaa, xxx, ccc, fff, ggg
-# in which aaa and ccc are not next to each other
+
+# ADD A THIRD MULTIPLE TO a and b and other possibilities to test such as non-contiguous multiples, test all before starting on the dialog; dialog should open for new places unless the new places are not duplicates and there are no complicating factors
+# move query strings to module
+
 # when entering a single place there will always be a dialog unless the place is new to the db    
 
 # New thoughts 20210523
