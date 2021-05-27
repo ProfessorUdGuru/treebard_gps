@@ -1,10 +1,15 @@
 # sets_for_nested_places
 
 import tkinter as tk
+from widgets import (
+    Toplevel, Frame, Button, Label, RadiobuttonBig, MessageHilited, 
+    Entry, ButtonQuiet, Separator)
 from query_strings import (
-    select_place_id, select_all_places, select_place_id1, select_place_id2,
-    select_all_places_places, select_all_nested_places, select_place, )
+    select_all_nested_places, select_place, select_place_id, 
+    select_place_nickname, select_all_places, select_all_places_places, )
 from files import get_current_file
+from window_border import Border
+from scrolling import Scrollbar, resize_scrolled_content
 import dev_tools as dt
 from dev_tools import looky, seeline
 import sqlite3
@@ -44,13 +49,12 @@ but to do so as seldom as possible within reason. Here's an example of
 Paris is an outer duplicate, Precinct 5 is a new place, and the last three
 nests are known. It seems pretty obvious to the user which Paris is meant:
 the one he's already entered in Lamar County, Texas. And we could write 
-the code to make that guess, but the more complicated the code gets, the
+the code to guess that's what he meant, but the more complicated the code gets, the
 greater will be our self-loathing at some point in the future when an even
 more complicated bit of code has to be added for an even more convoluted
 imagined necessity. We don't like to open R U Sure or anything like it,
-but entering new places is done all the time because Treebard will not and
-should not come pre-loaded with everything that Google Maps has ever heard
-of. Portability is important and we have only contempt for the kind of
+but entering new places is done all the time because Treebard should not come pre-loaded with everything that Google Maps has ever heard
+of. Portability is important and we have only a bored snort of contempt for the kind of
 genealogy that is supposed to be all done by machine logic without the user
 having to do any research. The internet is filling up with bad data invented
 by smarty-pants software. And we don't like bloated, unmaintainable code.
@@ -58,19 +62,16 @@ Part of the reason for Treebard to exist is that the code should be usable
 by amateur programmers. So for these reasons and others, it is my decision
 at this point (after literally months spent writing and re-writing the code
 for the duplicate places dialog) that the right thing to do is to draw the
-line slightly early rather than slightly late. Short version: Treebard will
+line for opening a dialog slightly early rather than slightly late. Treebard will
 ask for user clarification slightly more often than some users would like,
-in cases where new places are inserted into existing nestings which also 
-contain duplicate place names such as any place string containing "Paris"
-assuming the user has entered two or more different places named "Paris.
+in cases where new places are inserted into existing nested place strings which also 
+contain duplicate place names.
 But I failed to mention the most important reason for not trying to guess
-which Paris is intended in the above example: Treebard might guess wrong, 
-whereas if we give the user a chance to input the new place correctly,
-in the long run the user will be happier about it. The underlying notion
-is that we can't predict every eventuality in a misguided attempt to make
+which place out of a set of duplicates is intended: due to circumstances that we can't always predict, Treebard might guess wrong. Whereas if we give the user a chance to input the new place correctly,
+in the long run the user will be happier about it. We shouldn't try to predict every eventuality in a misguided attempt to make
 the user's decisions for him. But it would also be wrong to allow free
-entry of any misbegotten place name. Some place in the middle of the two
-extremes is being chosen as carefully as possible.
+entry of just any old misbegotten place name such as mis-spellings and true duplicates. Somewhere between the two
+extremes of "do what you want" and "do what I say", a sane middle-ground is being groped-in-the-dark for as fastidiously as possible.
 *********
 call this "Regular Places" emulating "Regular Expressions". A new string will be generated (or list or some readable code) in place of user input, and when user input is completely replaced by readable code, the user input can be correctly stored. "Readable Code" will probably be an ordered list of place ID numbers. Maybe intermediately using a list of dicts with the dict storing trait codes or just a code string, whichever is easier to understand. Performance isn't important because only one place input is done at a time and existing places will have been detected first so this modal dialog won't run much code while open.
 
@@ -210,7 +211,7 @@ q = "Blossom, Precinct 1, Lamar County, Texas, USA"
 r = "Maine, Aroostook County, Maine, USA"
 s = "Maine, Iowa, USA"
 t = "Sassari, Sassari, Sardegna, Italy"
-u = "McDonalds, Paris, Lamar County, Texas, USA"
+u = "McDonalds, Paris, Precinct 5, Lamar County, Texas, USA"
 v = "McDonalds, Paris, Bear Lake County, Idaho, USA"
 w = "McDonalds, Sacramento, Sacramento County, California, USA" # this one exists
 x = "McDonalds, Blossom, Lamar County, Texas, USA" # this McDonalds doesn't exist
@@ -221,14 +222,17 @@ bbb = "USA"
 ccc = "Dupes, Dupes, Dupes"
 ddd = "table 5, McDonalds, Paris, Lamar County, Texas, USA"
 eee = "table 5, McDonalds, Paris, Bear Lake County, Idaho, USA"
+fff = "table 5, McDonalds, Paris, Precinct 5, Lamar County, Texas, USA"
+ggg = "McDonalds, Gee Whiz Mall, Maine, Arizona, USA"
 
-place_input = x
+place_input = a # fff # u # e
 
 class ValidatePlace():
 
-    def __init__(self, view, place_input):
+    def __init__(self, view, treebard, place_input):
 
         self.view = view
+        self.treebard = treebard
         self.place_input = place_input
         self.place_dicts = []
         self.temp_places = []
@@ -289,17 +293,14 @@ class ValidatePlace():
                 if a new place was intended. Compares existing singles to
                 entered nests.
             '''
-# THE ONLY PROBLEM WITH THIS IS THAT IT'S RUNNING AT ALL, IT SHD NOT RUN FOR NO NEW PLACES
 
             b = 0
             for dkt in self.place_dicts:
                 if b == len(self.place_dicts) - 1:
-                    print("line", looky(seeline()).lineno, "b, len(self.place_dicts) - 1", b, len(self.place_dicts) - 1)
                     return                 
                 if len(dkt["id"]) == 1:
                     child = dkt["id"][0]         
                     parents = self.place_dicts[b + 1]["id"] # [78]
-                    print("line", looky(seeline()).lineno, "child, parents", child, parents)
                     cur.execute(
                         '''
                             SELECT place_id2 
@@ -308,8 +309,6 @@ class ValidatePlace():
                         ''',
                         (child,))
                     parent_list = [i[0] for i in cur.fetchall()]
-                    print("line", looky(seeline()).lineno, "parent_list", parent_list)
-                    print("line", looky(seeline()).lineno, "parents", parents)
                     ok = False
                     for i in parent_list:
                         for j in parents:
@@ -317,9 +316,7 @@ class ValidatePlace():
                                 ok = True
                     if ok is False:
                         dkt["id"] = []
-                    print("line", looky(seeline()).lineno, "ok", ok)
                 b += 1
-            print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
 
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -336,9 +333,7 @@ class ValidatePlace():
             for x in self.place_list]
 
         flag_inner_dupes()
-# line 328 self.place_dicts [{'id': [795, 796, 797], 'input': 'McDonalds', 'inner_dupe': False}, {'id': [216], 'input': 'Sacramento'}, {'id': [128], 'input': 'California'}, {'id': [8], 'input': 'USA'}]
         catch_new_dupes()
-# line 330 self.place_dicts [{'id': [795, 796, 797], 'input': 'McDonalds', 'inner_dupe': False}, {'id': [], 'input': 'Sacramento'}, {'id': [128], 'input': 'California'}, {'id': [8], 'input': 'USA'}]
         cur.close()
         conn.close()
 
@@ -377,11 +372,8 @@ class ValidatePlace():
             if len(dkt["id"]) == 0:              
                 dkt["temp_id"] = temp_id
                 temp_id += 1
-            # else:
-                # print("line", looky(seeline()).lineno, "existing place dkt:", dkt)
         cur.close()
         conn.close()
-        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
 
     def handle_inner_duplicates(self):
         '''
@@ -395,10 +387,9 @@ class ValidatePlace():
         '''
 
         def handle_non_contiguous_dupes():
-            # just leave this here for now in case it's needed
+            # leave this here for now in case it's needed
             pass
 
-        # print("line", looky(seeline()).lineno, "is running")
         inner_dupes_idx = []
         i = 0
         for nest in self.place_list:
@@ -433,7 +424,6 @@ class ValidatePlace():
                 if tup[0] == b:
                     dkt["id"] = [tup[1]]
             b += 1
-        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
 
     def handle_outer_duplicates(self):
 
@@ -468,12 +458,10 @@ class ValidatePlace():
                 else:
                     u += 1
                     continue
-                # print("line", looky(seeline()).lineno, "parent", parent)
 
                 if parent is not None and len(self.place_dicts[u - 1]["id"]) != 1:
                     children = tuple(self.place_dicts[u - 1]["id"])
                     child = pinpoint_child(parent, children)
-                    # print("line", looky(seeline()).lineno, "child", child)
                     self.place_dicts[u - 1]["id"] = child
                     return
                 else:
@@ -484,16 +472,256 @@ class ValidatePlace():
             seek_child()
 
     def open_duplicate_places_dialog(self):
-        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+        open_dialog = False
+        dialog_values = []
         for dkt in self.place_dicts:
-            print("line", looky(seeline()).lineno, "dkt['id']", dkt["id"])
-            print("line", looky(seeline()).lineno, "dkt.get('temp_id')", dkt.get('temp_id'))
             if len(dkt["id"]) != 1:
                 if dkt.get("temp_id") is None:
                     print("line", looky(seeline()).lineno, "dkt['id']", dkt["id"])
-                    Toplevel(self.view)
+                    dialog_values.append([dkt["input"], dkt["id"]])
+                    open_dialog = True
+
                 else:
-                    print("line", looky(seeline()).lineno, "dkt.get('temp_id')", dkt.get("temp_id")) 
+                    known = 0
+                    nests = 0
+                    new = None
+                    for dkt in self.place_dicts:
+                        if len(dkt["id"]) == 1:
+                            known += 1
+                        elif len(dkt["id"]) == 0:
+                            new = nests
+                        nests += 1
+                    if known > nests - 2:
+                        # self.make_new_place(new, self.place_dicts)
+                        open_dialog = True
+                
+        if open_dialog is True:
+            new_place_dialog = NewPlaceDialog(
+                self.view,
+                self.place_input,
+                'Duplicate place names have been stored. Use which one?', 
+                'Duplicate Place Names Dialog',
+                ('OK', 'Cancel'),
+                self.treebard,
+                do_on_ok=self.input_places_to_db,
+                selection=dkt['id'])
+
+
+            for val in dialog_values:
+                lab = Label(new_place_dialog, text=val)
+                lab.grid()
+
+    def input_places_to_db(self):
+        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+
+
+    def make_new_place(self, position, nesting):
+        '''
+            Add one new nest to the database if there's only one new place to make.
+            Always add places one at a time, passing the updated dict each time.
+            So if more than one new place is to be made, run this function over
+            with the dict updated first to reflect what's actually in the database
+            at that moment.
+        '''
+
+        print("line", looky(seeline()).lineno, "position, nesting", position, nesting)
+        # line 506 position, nesting 0 [{'id': [], 'input': '114 Main Street', 'temp_id': 808}, {'id': [30], 'input': 'Paris', 'inner_dupe': False}, {'id': [78], 'input': 'Lamar County'}, {'id': [29], 'input': 'Texas'}, {'id': [8], 'input': 'USA'}]    
+
+class NewPlaceDialog():
+    def __init__(
+            self,
+            parent, 
+            place_input,
+            message, 
+            title,
+            button_labels,
+            treebard,
+            do_on_ok=None,
+            selection=None
+):
+
+        self.parent = parent
+        self.place_input = place_input
+        self.message = message
+        self.title = title
+        self.button_labels = button_labels
+        self.treebard = treebard
+        self.do_on_ok = do_on_ok
+        self.selection = selection
+
+        self.got_row = 0
+
+        self.make_widgets()
+
+    def make_widgets(self):
+
+        def show_message():
+
+            window.columnconfigure(1, weight=1)
+            window.rowconfigure(1, weight=1)
+            lab = MessageHilited(window, text=self.message, justify='left', aspect=1200)
+            lab.grid(column=1, row=1, sticky='news', padx=3, pady=3)
+
+        def ok():
+            if self.do_on_ok:
+                self.do_on_ok()
+            cancel()
+
+        def cancel():
+            selection_dialog.destroy()
+
+        selection_dialog = Toplevel(self.parent)
+        selection_dialog.columnconfigure(1, weight=1)
+        selection_dialog.rowconfigure(4, weight=1)
+        canvas = Border(selection_dialog, size=3) # size shd not be hard-coded            
+        canvas.title_1.config(text=self.title)
+        canvas.title_2.config(text='')
+
+        window = Frame(canvas)
+        canvas.create_window(0, 0, anchor='nw', window=window)
+        scridth = 16
+        scridth_n = Frame(window, height=scridth)
+        scridth_w = Frame(window, width=scridth)
+        scridth_n.grid(column=0, row=0, sticky='ew')
+        scridth_w.grid(column=0, row=1, sticky='ns')
+        # DO NOT DELETE THESE LINES, UNCOMMENT IN REAL APP
+        # self.treebard.scroll_mouse.append_to_list([canvas, window])
+        # self.treebard.scroll_mouse.configure_mousewheel_scrolling()
+
+        window.vsb = Scrollbar(
+            selection_dialog, 
+            hideable=True, 
+            command=canvas.yview,
+            width=scridth)
+        window.hsb = Scrollbar(
+            selection_dialog, 
+            hideable=True, 
+            width=scridth, 
+            orient='horizontal',
+            command=canvas.xview)
+        canvas.config(
+            xscrollcommand=window.hsb.set, 
+            yscrollcommand=window.vsb.set)
+        window.vsb.grid(column=2, row=4, sticky='ns')
+        window.hsb.grid(column=1, row=5, sticky='ew')
+
+        buttonbox = Frame(window)
+        b1 = Button(buttonbox, text=self.button_labels[0], width=7, command=ok)
+        b2 = Button(buttonbox, text=self.button_labels[1], width=7, command=cancel)
+
+        scridth_n.grid(column=0, row=0, sticky='ew')
+        scridth_w.grid(column=0, row=1, sticky='ns')
+        window.columnconfigure(2, weight=1)
+        window.rowconfigure(1, minsize=60)
+        minsize = len(self.selection) * 96
+        window.rowconfigure(2, weight=1, minsize=minsize)
+        window.rowconfigure(3, minsize=48)
+        buttonbox.grid(column=1, row=3, sticky='se')
+
+        b1.grid(column=0, row=0)
+        b2.grid(column=1, row=0, padx=(2,0))
+
+        self.frm = Frame(window)
+        self.frm.grid(column=1, row=2, sticky='news')
+
+        show_message()
+        self.show_choices()
+        self.make_edit_row()
+
+        resize_scrolled_content(selection_dialog, canvas, window)
+
+        selection_dialog.focus_set()
+
+    def make_edit_row(self):
+        self.edit_row = Frame(self.frm)
+
+        self.ent = Entry(self.edit_row, width=60)
+
+        merge_butt = Button( 
+            self.edit_row, 
+            text='Merge',
+            # command=get_edit_state
+)
+        cancel_butt = Button(
+            self.edit_row,
+            text='Cancel',
+            command=self.remove_edit_row
+)
+        delete_butt = Button(
+            self.edit_row,
+            text='Delete',
+            # command=delete_role
+)
+        self.edit_row.grid(column=0, row=self.got_row, columnspan=4, sticky='ew')
+        self.ent.grid(column=0, row=0, padx=3, pady=3)
+        merge_butt.grid(column=2, row=0, padx=6, pady=6)
+        cancel_butt.grid(column=3, row=0, padx=6, pady=6)
+        delete_butt.grid(column=4, row=0, padx=6, pady=6)
+        self.edit_row.grid_remove()
+
+    def remove_edit_row(self):
+        self.edit_row.grid_forget()
+        # resize_scrollbar()
+        # resize_window()
+
+    def grid_edit_row(self):
+        self.edit_row.grid(column=0, row=self.got_row, columnspan=4, sticky='ew')
+        for child in self.frm.winfo_children():
+            if child.grid_info()['column'] == 1 and child.grid_info()['row'] == self.got_row:
+                nickname = child.cget('text')
+        self.ent.delete(0, 'end')
+        self.ent.insert(0, nickname)
+        self.ent.focus_set()
+
+    def get_clicked_row(self, evt):
+        self.got_row = evt.widget.grid_info()['row'] 
+
+    def on_hover(self, evt):
+        evt.widget.config(text='Edit') 
+
+    def on_unhover(self, evt):
+        evt.widget.config(text='')
+
+    def show_choices(self):
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+
+        var = tk.IntVar()
+        d = 0
+        for place_id in self.selection:
+
+            cur.execute(select_place_nickname, (place_id,))
+            nickname = cur.fetchone()[0]
+
+            place_string = 'Place ID #{}: {}'.format(place_id, self.place_input)
+
+            rad = RadiobuttonBig(self.frm, variable=var, text=place_string)
+            rad.grid(column=0, row=d, columnspan=2)
+            if d == 0:
+                rad.focus_set()
+
+            lab = Label(self.frm, text='Duplicate place name hint:')
+            lab.grid(column=0, row=d+1, sticky='w')
+
+            hint = Label(self.frm, text=nickname)
+            hint.grid(column=1, row=d+1, sticky='w', padx=(0,3))
+
+            sep = Separator(self.frm, 3)
+            sep.grid(column=0, row=d+2, sticky='ew', columnspan=3, pady=(3,0))
+
+            editx = ButtonQuiet(self.frm, width=2, command=self.grid_edit_row)
+            editx.grid(column=2, row=d+1)
+            editx.bind('<Enter>', self.on_hover)
+            editx.bind('<Leave>', self.on_unhover)
+            editx.bind('<Button-1>', self.get_clicked_row)
+            editx.bind('<space>', self.get_clicked_row)
+            editx.bind('<FocusIn>', self.on_hover)
+            editx.bind('<FocusOut>', self.on_unhover)
+
+            d += 3
+
+        cur.close()
+        conn.close()
 
         
 
@@ -503,8 +731,9 @@ if __name__ == "__main__":
     from widgets import Toplevel, Label
 
     view = tk.Tk()
+    treebard = view # mockup; this isn't what really happens
 
-    final = ValidatePlace(view, place_input)
+    final = ValidatePlace(view, treebard, place_input)
     j = 0
     for dkt in final.place_dicts:
         lab = Label(
@@ -543,8 +772,9 @@ Maine - Poitou-Charentes
 
 # DO LIST
 
+# dlg shd open for case a-- new place followed by an outer dupe followed by knowns
 
-# ADD A THIRD MULTIPLE TO a and b and other possibilities to test such as non-contiguous multiples, test all before starting on the dialog; dialog should open for new places unless the new places are not duplicates and there are no complicating factors
+# test all cases before starting on the dialog; dialog should open for new places unless the new places are not duplicates and there are no complicating factors in which case the new place should just be made silently
 # move query strings to module
 
 # when entering a single place there will always be a dialog unless the place is new to the db    
