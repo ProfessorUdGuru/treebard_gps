@@ -224,8 +224,10 @@ ddd = "table 5, McDonalds, Paris, Lamar County, Texas, USA"
 eee = "table 5, McDonalds, Paris, Bear Lake County, Idaho, USA"
 fff = "table 5, McDonalds, Paris, Precinct 5, Lamar County, Texas, USA"
 ggg = "McDonalds, Gee Whiz Mall, Maine, Arizona, USA"
+hhh = "Paris, Precinct 5, Lamar County, Texas, USA"
+iii = "Precinct 5, Lamar County, Texas, USA"
 
-place_input = a # fff # u # e
+place_input = u # fff # u # e
 
 class ValidatePlace():
 
@@ -244,7 +246,7 @@ class ValidatePlace():
 
         self.make_place_dicts()
         self.see_whats_needed()
-        self.open_duplicate_places_dialog()
+        self.open_new_places_dialog()
 
     def make_place_dicts(self):
         '''
@@ -471,14 +473,11 @@ class ValidatePlace():
         for dkt in self.place_dicts:
             seek_child()
 
-    def open_duplicate_places_dialog(self):
+    def open_new_places_dialog(self):
         open_dialog = False
-        dialog_values = []
         for dkt in self.place_dicts:
             if len(dkt["id"]) != 1:
                 if dkt.get("temp_id") is None:
-                    print("line", looky(seeline()).lineno, "dkt['id']", dkt["id"])
-                    dialog_values.append([dkt["input"], dkt["id"]])
                     open_dialog = True
 
                 else:
@@ -492,24 +491,21 @@ class ValidatePlace():
                             new = nests
                         nests += 1
                     if known > nests - 2:
-                        # self.make_new_place(new, self.place_dicts)
                         open_dialog = True
                 
         if open_dialog is True:
             new_place_dialog = NewPlaceDialog(
                 self.view,
-                self.place_input,
-                'Duplicate place names have been stored. Use which one?', 
-                'Duplicate Place Names Dialog',
-                ('OK', 'Cancel'),
+                self.place_dicts,
+                "Clarify place selections where there is not exactly one ID. "
+                "Press the EDIT button to add or edit hints for duplicate place "
+                "names so you won't have to look up place IDs. If you are "
+                "entering a new place name that has no duplicates, an ID number "
+                "has been assigned which you can just OK.", 
+                "New and Duplicate Places Dialog",
+                ("OK", "Cancel"),
                 self.treebard,
-                do_on_ok=self.input_places_to_db,
-                selection=dkt['id'])
-
-
-            for val in dialog_values:
-                lab = Label(new_place_dialog, text=val)
-                lab.grid()
+                do_on_ok=self.input_places_to_db)
 
     def input_places_to_db(self):
         print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
@@ -531,7 +527,8 @@ class NewPlaceDialog():
     def __init__(
             self,
             parent, 
-            place_input,
+            # place_input,
+            place_dicts,
             message, 
             title,
             button_labels,
@@ -541,13 +538,14 @@ class NewPlaceDialog():
 ):
 
         self.parent = parent
-        self.place_input = place_input
+        # self.place_input = place_input
+        self.place_dicts = place_dicts
         self.message = message
         self.title = title
         self.button_labels = button_labels
         self.treebard = treebard
         self.do_on_ok = do_on_ok
-        self.selection = selection
+        # self.selection = selection
 
         self.got_row = 0
 
@@ -559,8 +557,8 @@ class NewPlaceDialog():
 
             window.columnconfigure(1, weight=1)
             window.rowconfigure(1, weight=1)
-            lab = MessageHilited(window, text=self.message, justify='left', aspect=1200)
-            lab.grid(column=1, row=1, sticky='news', padx=3, pady=3)
+            lab = MessageHilited(window, text=self.message, justify='left', aspect=500)
+            lab.grid(column=1, row=1, sticky='news', padx=6, pady=6)
 
         def ok():
             if self.do_on_ok:
@@ -568,12 +566,12 @@ class NewPlaceDialog():
             cancel()
 
         def cancel():
-            selection_dialog.destroy()
+            self.new_places_dialog.destroy()
 
-        selection_dialog = Toplevel(self.parent)
-        selection_dialog.columnconfigure(1, weight=1)
-        selection_dialog.rowconfigure(4, weight=1)
-        canvas = Border(selection_dialog, size=3) # size shd not be hard-coded            
+        self.new_places_dialog = Toplevel(self.parent)
+        self.new_places_dialog.columnconfigure(1, weight=1)
+        self.new_places_dialog.rowconfigure(4, weight=1)
+        canvas = Border(self.new_places_dialog, size=3) # size shd not be hard-coded            
         canvas.title_1.config(text=self.title)
         canvas.title_2.config(text='')
 
@@ -589,12 +587,12 @@ class NewPlaceDialog():
         # self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
         window.vsb = Scrollbar(
-            selection_dialog, 
+            self.new_places_dialog, 
             hideable=True, 
             command=canvas.yview,
             width=scridth)
         window.hsb = Scrollbar(
-            selection_dialog, 
+            self.new_places_dialog, 
             hideable=True, 
             width=scridth, 
             orient='horizontal',
@@ -613,13 +611,17 @@ class NewPlaceDialog():
         scridth_w.grid(column=0, row=1, sticky='ns')
         window.columnconfigure(2, weight=1)
         window.rowconfigure(1, minsize=60)
-        minsize = len(self.selection) * 96
-        window.rowconfigure(2, weight=1, minsize=minsize)
-        window.rowconfigure(3, minsize=48)
-        buttonbox.grid(column=1, row=3, sticky='se')
+        # minsize = len(self.place_dicts) * 96
+        # minsize = len(self.selection) * 96
+        # window.rowconfigure(2, weight=1, minsize=minsize)
+        # window.rowconfigure(3, minsize=48)
+        buttonbox.grid(column=1, row=3, sticky='se', pady=6)
 
         b1.grid(column=0, row=0)
         b2.grid(column=1, row=0, padx=(2,0))
+
+        # lab = Label(window, text='Add or edit a hint for duplicate place names:')
+        # lab.grid(column=1, row=2, sticky='w')
 
         self.frm = Frame(window)
         self.frm.grid(column=1, row=2, sticky='news')
@@ -628,9 +630,9 @@ class NewPlaceDialog():
         self.show_choices()
         self.make_edit_row()
 
-        resize_scrolled_content(selection_dialog, canvas, window)
+        resize_scrolled_content(self.new_places_dialog, canvas, window)
 
-        selection_dialog.focus_set()
+        self.new_places_dialog.focus_set()
 
     def make_edit_row(self):
         self.edit_row = Frame(self.frm)
@@ -661,8 +663,6 @@ class NewPlaceDialog():
 
     def remove_edit_row(self):
         self.edit_row.grid_forget()
-        # resize_scrollbar()
-        # resize_window()
 
     def grid_edit_row(self):
         self.edit_row.grid(column=0, row=self.got_row, columnspan=4, sticky='ew')
@@ -686,22 +686,40 @@ class NewPlaceDialog():
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
 
-        var = tk.IntVar()
+        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+        # var = tk.IntVar()
         d = 0
-        for place_id in self.selection:
+        e = len(self.place_dicts)
+        # format place_id for query
+        for dkt in self.place_dicts:
+            if len(dkt["id"]) == 1:                
+                place_id = (dkt["id"][0],)
+            elif len(dkt["id"]) > 1:
+                place_id = (dkt["id"])
+            elif dkt.get("temp_id") is None:
+                place_id = ("none",)
+            elif dkt.get("temp_id"):
+                place_id = dkt["temp_id"]
+            print("line", looky(seeline()).lineno, "place_id", place_id)
+            nickname = ''
+            # for num in place_id:            
+                # cur.execute(select_place_nickname, (place_id))
+                # if cur.fetchone():
+                    # nickname = cur.fetchone()[0]
+            # reformat place_id for display
+            if type(place_id) is int:
+                pass
+            elif len(place_id) == 1:
+                place_id = place_id[0]
+            place_input = dkt["input"]
+            place_string = '{}: {}, place id #{}'.format(e, place_input, place_id)
 
-            cur.execute(select_place_nickname, (place_id,))
-            nickname = cur.fetchone()[0]
-
-            place_string = 'Place ID #{}: {}'.format(place_id, self.place_input)
-
-            rad = RadiobuttonBig(self.frm, variable=var, text=place_string)
-            rad.grid(column=0, row=d, columnspan=2)
-            if d == 0:
-                rad.focus_set()
-
-            lab = Label(self.frm, text='Duplicate place name hint:')
-            lab.grid(column=0, row=d+1, sticky='w')
+            # rad = RadiobuttonBig(self.frm, variable=var, text=place_string)
+            # rad.grid(column=0, row=d, columnspan=2)
+            # if d == 0:
+                # rad.focus_set()
+            lab = Label(self.frm, text=place_string)
+            lab.grid(column=0, row=d, sticky='w')
 
             hint = Label(self.frm, text=nickname)
             hint.grid(column=1, row=d+1, sticky='w', padx=(0,3))
@@ -719,6 +737,7 @@ class NewPlaceDialog():
             editx.bind('<FocusOut>', self.on_unhover)
 
             d += 3
+            e -= 1
 
         cur.close()
         conn.close()
@@ -795,4 +814,20 @@ Maine - Poitou-Charentes
 # Start another minified model and keep it minified.
 # Edge cases should make it easier, not harder, to find matches. How many places are there named "Maine, Maine"? Do them first.
 # When a single ID or temp_id exists for each nest, stop. Test after each id assignment.
+
+# McDonalds,
+    # Gee Whiz Mall,
+        # Maine,
+            # Arizona,
+                # USA
+                                            
+# McDonalds   Gee Whiz Mall   Maine   Arizona USA
+
+#5 McDonalds,
+#4 Gee Whiz Mall,
+#3 Maine,
+#2 Arizona,
+#1 USA
+
+
 
