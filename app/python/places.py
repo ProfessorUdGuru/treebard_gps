@@ -6,7 +6,8 @@ from widgets import (
     Entry, ButtonQuiet, Separator)
 from query_strings import (
     select_all_nested_places, select_place, select_place_id, 
-    select_place_nickname, select_all_places, select_all_places_places, )
+    select_place_hint, select_all_places, select_all_places_places, 
+    select_first_nested_place, update_place_hint, )
 from files import get_current_file
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
@@ -195,7 +196,7 @@ a = "114 Main Street, Paris, Lamar County, Texas, USA"
 b = "114 Main Street, Paris, Bear Lake County, Idaho, USA"
 c = "Paris, Tennessee, USA"
 d = "Paris, Texas, USA"
-e = "Paris, Precinct 5, Lamar County, Texas, USA"
+e = "Paris"
 f = "Maine, Maine, USA"
 g = "Glenwood Springs, Garfield County, Colorado, USA"
 h = "Paris, France"
@@ -227,7 +228,7 @@ ggg = "McDonalds, Gee Whiz Mall, Maine, Arizona, USA"
 hhh = "Paris, Precinct 5, Lamar County, Texas, USA"
 iii = "Precinct 5, Lamar County, Texas, USA"
 
-place_input = u # fff # u # e
+place_input = e # f # r # t # ccc
 
 class ValidatePlace():
 
@@ -391,7 +392,7 @@ class ValidatePlace():
         def handle_non_contiguous_dupes():
             # leave this here for now in case it's needed
             pass
-
+        print("line", looky(seeline()).lineno, "inner dupes running")
         inner_dupes_idx = []
         i = 0
         for nest in self.place_list:
@@ -497,9 +498,9 @@ class ValidatePlace():
             new_place_dialog = NewPlaceDialog(
                 self.view,
                 self.place_dicts,
-                "Clarify place selections where there is not exactly one ID. "
+                "Clarify place selections where there is not exactly one ID.\n\n"
                 "Press the EDIT button to add or edit hints for duplicate place "
-                "names so you won't have to look up place IDs. If you are "
+                "names so you won't have to look up place IDs.\n\nIf you're "
                 "entering a new place name that has no duplicates, an ID number "
                 "has been assigned which you can just OK.", 
                 "New and Duplicate Places Dialog",
@@ -548,6 +549,8 @@ class NewPlaceDialog():
         # self.selection = selection
 
         self.got_row = 0
+        self.edit_hint_id = 0
+        self.hint_to_edit = None
 
         self.make_widgets()
 
@@ -558,7 +561,7 @@ class NewPlaceDialog():
             window.columnconfigure(1, weight=1)
             window.rowconfigure(1, weight=1)
             lab = MessageHilited(window, text=self.message, justify='left', aspect=500)
-            lab.grid(column=1, row=1, sticky='news', padx=6, pady=6)
+            lab.grid(column=1, row=1, sticky='news', ipady=18)
 
         def ok():
             if self.do_on_ok:
@@ -567,8 +570,9 @@ class NewPlaceDialog():
 
         def cancel():
             self.new_places_dialog.destroy()
-
+        size = (self.parent.winfo_screenwidth(), self.parent.winfo_screenheight())
         self.new_places_dialog = Toplevel(self.parent)
+        self.new_places_dialog.maxsize(width=int(size[0] * 0.66), height=int(size[1] * 0.66))
         self.new_places_dialog.columnconfigure(1, weight=1)
         self.new_places_dialog.rowconfigure(4, weight=1)
         canvas = Border(self.new_places_dialog, size=3) # size shd not be hard-coded            
@@ -611,20 +615,13 @@ class NewPlaceDialog():
         scridth_w.grid(column=0, row=1, sticky='ns')
         window.columnconfigure(2, weight=1)
         window.rowconfigure(1, minsize=60)
-        # minsize = len(self.place_dicts) * 96
-        # minsize = len(self.selection) * 96
-        # window.rowconfigure(2, weight=1, minsize=minsize)
-        # window.rowconfigure(3, minsize=48)
         buttonbox.grid(column=1, row=3, sticky='se', pady=6)
 
         b1.grid(column=0, row=0)
         b2.grid(column=1, row=0, padx=(2,0))
 
-        # lab = Label(window, text='Add or edit a hint for duplicate place names:')
-        # lab.grid(column=1, row=2, sticky='w')
-
         self.frm = Frame(window)
-        self.frm.grid(column=1, row=2, sticky='news')
+        self.frm.grid(column=1, row=2, sticky='news', pady=12)
 
         show_message()
         self.show_choices()
@@ -634,43 +631,58 @@ class NewPlaceDialog():
 
         self.new_places_dialog.focus_set()
 
+    def ok_hint(self):
+        # current_id = 32 # DELETE
+        # print("line", looky(seeline()).lineno, "is", self.ent.get())
+        new_hint = self.ent.get()
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(update_place_hint, ((new_hint, self.edit_hint_id)))
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        self.hint_to_edit.config(text="      hint: {}".format(new_hint))
+        self.remove_edit_row()
+
     def make_edit_row(self):
-        self.edit_row = Frame(self.frm)
+        self.edit_row = Frame(self.hint_frm)
 
-        self.ent = Entry(self.edit_row, width=60)
+        self.ent = Entry(self.edit_row, width=36)
 
-        merge_butt = Button( 
-            self.edit_row, 
-            text='Merge',
-            # command=get_edit_state
-)
+        ok_butt = Button(
+            self.edit_row,
+            text='OK',
+            command=self.ok_hint)
+
         cancel_butt = Button(
             self.edit_row,
-            text='Cancel',
-            command=self.remove_edit_row
-)
-        delete_butt = Button(
-            self.edit_row,
-            text='Delete',
-            # command=delete_role
-)
+            text='CANCEL',
+            command=self.remove_edit_row)
+
         self.edit_row.grid(column=0, row=self.got_row, columnspan=4, sticky='ew')
         self.ent.grid(column=0, row=0, padx=3, pady=3)
-        merge_butt.grid(column=2, row=0, padx=6, pady=6)
+        ok_butt.grid(column=2, row=0, padx=6, pady=6)
         cancel_butt.grid(column=3, row=0, padx=6, pady=6)
-        delete_butt.grid(column=4, row=0, padx=6, pady=6)
         self.edit_row.grid_remove()
 
     def remove_edit_row(self):
         self.edit_row.grid_forget()
 
-    def grid_edit_row(self):
+    def grid_edit_row(self, hint):
         self.edit_row.grid(column=0, row=self.got_row, columnspan=4, sticky='ew')
-        for child in self.frm.winfo_children():
-            if child.grid_info()['column'] == 1 and child.grid_info()['row'] == self.got_row:
-                nickname = child.cget('text')
+        # place_hint = ''
+        for child in self.hint_frm.winfo_children():
+            if child.grid_info()['column'] == 0:
+                if child.grid_info()['row'] == self.got_row - 1:
+                    self.edit_hint_id = int(child.cget('text').split(': ')[0])
+                elif child.grid_info()['row'] == self.got_row:
+                    print("line", looky(seeline()).lineno, "child", child)
+                    if child.winfo_class() == 'Label':
+                        self.hint_to_edit = child
+        # place_hint = hint
         self.ent.delete(0, 'end')
-        self.ent.insert(0, nickname)
+        self.ent.insert(0, hint)
         self.ent.focus_set()
 
     def get_clicked_row(self, evt):
@@ -687,32 +699,43 @@ class NewPlaceDialog():
         cur = conn.cursor()
 
         print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
-        # var = tk.IntVar()
+
         d = 0
-        e = len(self.place_dicts)
-        # format place_id for query
+        bullet = len(self.place_dicts)
+        # configure place_id for query
         for dkt in self.place_dicts:
-            if len(dkt["id"]) == 1:                
+            if len(dkt["id"]) == 1: 
+                print('=1')
                 place_id = (dkt["id"][0],)
             elif len(dkt["id"]) > 1:
-                place_id = (dkt["id"])
-            elif dkt.get("temp_id") is None:
+                place_id = dkt["id"]
+                print('>1', place_id)
+            elif dkt.get("temp_id") is None: 
+                print('no temp id')
                 place_id = ("none",)
-            elif dkt.get("temp_id"):
+            elif dkt.get("temp_id"): 
+                print('temp id')
                 place_id = dkt["temp_id"]
             print("line", looky(seeline()).lineno, "place_id", place_id)
-            nickname = ''
-            # for num in place_id:            
-                # cur.execute(select_place_nickname, (place_id))
-                # if cur.fetchone():
-                    # nickname = cur.fetchone()[0]
-            # reformat place_id for display
+            place_hints = []
+            for num in place_id:            
+                cur.execute(select_place_hint, (num,)) 
+                # print("line", looky(seeline()).lineno, "is", cur.fetchone())
+                place_hint = cur.fetchone()
+                
+                if place_hint[0] is None:
+                    place_hint = ''
+                else: 
+                    print("line", looky(seeline()).lineno, "place_hint", place_hint)
+                    place_hint = place_hint[0]
+                place_hints.append(place_hint)
+            # reconfigure place_id for display
             if type(place_id) is int:
                 pass
             elif len(place_id) == 1:
                 place_id = place_id[0]
             place_input = dkt["input"]
-            place_string = '{}: {}, place id #{}'.format(e, place_input, place_id)
+            place_string = '{}: {}, place id #{}'.format(bullet, place_input, place_id)
 
             # rad = RadiobuttonBig(self.frm, variable=var, text=place_string)
             # rad.grid(column=0, row=d, columnspan=2)
@@ -721,23 +744,54 @@ class NewPlaceDialog():
             lab = Label(self.frm, text=place_string)
             lab.grid(column=0, row=d, sticky='w')
 
-            hint = Label(self.frm, text=nickname)
-            hint.grid(column=1, row=d+1, sticky='w', padx=(0,3))
+            self.hint_frm = Frame(self.frm)
+            self.hint_frm.grid(column=0, row=d+1, sticky='w', padx=(0,3))
+            self.hint_frm.columnconfigure(0, minsize=448)
+            self.hint_frm.columnconfigure(1, minsize=54)
+            # self.hint_frm.rowconfigure(0, minsize=24)
+            self.var = tk.IntVar(None, 0)
+            # self.choice = tk.IntVar(None, 1)
+            h = 0
+            row = 0
+            for hint in place_hints:
+                current_id = dkt["id"][h] # HAS TO SET RIGHT ID FOR UPDATING HINT ok_hint
+                cur.execute(select_first_nested_place, (current_id,))
+                nesting = cur.fetchone()
+                # print("line", looky(seeline()).lineno, "nesting", nesting)
+                nesting = [i for i in nesting if i]
+                nesting = ", ".join(nesting)
+                # rad_string = "place ID #{} (e.g. {})".format(current_id, nesting)
+                rad_string = "{}: {}".format(current_id, nesting)
+                rad = RadiobuttonBig(
+                    self.hint_frm, 
+                    variable=self.var,
+                    value=h,
+                    text=rad_string, 
+                    anchor="w")
+                rad.grid(column=0, row=row, sticky='we')
+                lab = Label(
+                    self.hint_frm, 
+                    text="      hint: {}".format(hint),
+                    anchor='w')
+                lab.grid(column=0, row=row+1, sticky='ew')
+                editx = ButtonQuiet(
+                    self.hint_frm, 
+                    width=2, 
+                    command=lambda hint=hint: self.grid_edit_row(hint))
+                editx.grid(column=1, row=row+1, pady=(0,3))
+                editx.bind('<Enter>', self.on_hover)
+                editx.bind('<Leave>', self.on_unhover)
+                editx.bind('<Button-1>', self.get_clicked_row)
+                editx.bind('<space>', self.get_clicked_row)
+                editx.bind('<FocusIn>', self.on_hover)
+                editx.bind('<FocusOut>', self.on_unhover)
+                h += 1
+                row += 2
 
             sep = Separator(self.frm, 3)
             sep.grid(column=0, row=d+2, sticky='ew', columnspan=3, pady=(3,0))
-
-            editx = ButtonQuiet(self.frm, width=2, command=self.grid_edit_row)
-            editx.grid(column=2, row=d+1)
-            editx.bind('<Enter>', self.on_hover)
-            editx.bind('<Leave>', self.on_unhover)
-            editx.bind('<Button-1>', self.get_clicked_row)
-            editx.bind('<space>', self.get_clicked_row)
-            editx.bind('<FocusIn>', self.on_hover)
-            editx.bind('<FocusOut>', self.on_unhover)
-
             d += 3
-            e -= 1
+            bullet -= 1
 
         cur.close()
         conn.close()
@@ -761,6 +815,8 @@ if __name__ == "__main__":
                 final.place_dicts[j]["input"], final.place_dicts[j]["id"]))
         lab.grid()
         j += 1
+
+    # print(dt.get_screensize()) # 1920x1080
     
     view.mainloop()
 '''
@@ -791,7 +847,13 @@ Maine - Poitou-Charentes
 
 # DO LIST
 
-# dlg shd open for case a-- new place followed by an outer dupe followed by knowns
+# show_choices too long
+# display hint next to button when no edit row
+# show radio buttons if id is multiple or none
+# ccc shd open dlg
+# add a search box for ids by name or name by ids
+# add a tooltip to edit button showing the whole nesting
+# input temp_id for new places
 
 # test all cases before starting on the dialog; dialog should open for new places unless the new places are not duplicates and there are no complicating factors in which case the new place should just be made silently
 # move query strings to module

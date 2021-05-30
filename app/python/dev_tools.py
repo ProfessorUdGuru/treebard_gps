@@ -4,6 +4,14 @@ from inspect import stack
 from datetime import datetime
 from shutil import copy2
 import inspect as iii
+import tkinter as tk
+
+def get_screensize():
+    r = tk.Tk()
+    x = r.winfo_screenwidth()
+    y = r.winfo_screenheight()
+    return x, y
+    
 
 looky = iii.getframeinfo
 seeline = iii.currentframe

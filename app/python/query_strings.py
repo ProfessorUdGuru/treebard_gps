@@ -408,6 +408,22 @@ select_nested_place_string = '''
     WHERE nested_places_id = ? 
 '''
 
+select_first_nested_place = '''
+    SELECT a.places, b.places, c.places, d.places, 
+        e.places, f.places, g.places, h.places, i.places
+    FROM nested_places
+    LEFT JOIN place a ON a.place_id = nested_places.nest0
+    LEFT JOIN place b ON b.place_id = nested_places.nest1
+    LEFT JOIN place c ON c.place_id = nested_places.nest2
+    LEFT JOIN place d ON d.place_id = nested_places.nest3
+    LEFT JOIN place e ON e.place_id = nested_places.nest4
+    LEFT JOIN place f ON f.place_id = nested_places.nest5
+    LEFT JOIN place g ON g.place_id = nested_places.nest6
+    LEFT JOIN place h ON h.place_id = nested_places.nest7
+    LEFT JOIN place i ON i.place_id = nested_places.nest8             
+    WHERE nest0 = ? 
+'''
+
 select_nested_places_id = '''
     SELECT nested_places_id
     FROM nested_places
@@ -514,8 +530,8 @@ select_place_id2 = '''
     WHERE place_id1 = ?
 '''
 
-select_place_nickname = '''
-    SELECT nickname
+select_place_hint = '''
+    SELECT hint
     FROM place
     WHERE place_id = ?
 '''
@@ -673,6 +689,12 @@ update_note_subtopic = '''
     UPDATE note 
     SET subtopic = ? 
     WHERE note_id = ? 
+'''
+
+update_place_hint = '''
+    UPDATE place 
+    SET hint = ?
+    WHERE place_id = ?
 '''
 
 
