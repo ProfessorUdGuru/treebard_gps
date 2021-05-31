@@ -221,14 +221,15 @@ z = "Masada, Israel"
 aaa = "Israel"
 bbb = "USA"
 ccc = "Dupes, Dupes, Dupes"
-ddd = "table 5, McDonalds, Paris, Lamar County, Texas, USA"
+ddd = "table 5, McDonalds, Paris, Precinct 5, Lamar County, Texas, USA"
 eee = "table 5, McDonalds, Paris, Bear Lake County, Idaho, USA"
 fff = "table 5, McDonalds, Paris, Precinct 5, Lamar County, Texas, USA"
 ggg = "McDonalds, Gee Whiz Mall, Maine, Arizona, USA"
 hhh = "Paris, Precinct 5, Lamar County, Texas, USA"
 iii = "Precinct 5, Lamar County, Texas, USA"
+jjj = "Dupe, Dupe, Dupe"
 
-place_input = e # f # r # t # ccc
+place_input = jjj # ddd # e # ggg # ccc
 
 class ValidatePlace():
 
@@ -334,7 +335,7 @@ class ValidatePlace():
                     "id" : get_matching_ids(x),
                     "input" : x}) 
             for x in self.place_list]
-
+        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
         flag_inner_dupes()
         catch_new_dupes()
         cur.close()
@@ -392,6 +393,7 @@ class ValidatePlace():
         def handle_non_contiguous_dupes():
             # leave this here for now in case it's needed
             pass
+
         print("line", looky(seeline()).lineno, "inner dupes running")
         inner_dupes_idx = []
         i = 0
@@ -461,19 +463,24 @@ class ValidatePlace():
                 else:
                     u += 1
                     continue
-
+                print("line", looky(seeline()).lineno, "parent, u", parent, u)
+                # case: single known parent and multiple/no child?
                 if parent is not None and len(self.place_dicts[u - 1]["id"]) != 1:
+                    print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
                     children = tuple(self.place_dicts[u - 1]["id"])
+                    print("line", looky(seeline()).lineno, "children", children)
                     child = pinpoint_child(parent, children)
+                    print("line", looky(seeline()).lineno, "child", child)
                     self.place_dicts[u - 1]["id"] = child
                     return
                 else:
+                    print("line", looky(seeline()).lineno, "unhandled case")
                     u += 1
                     continue
-
+            print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
         for dkt in self.place_dicts:
             seek_child()
-
+# re: ddd = "table 5, McDonalds, Paris, Lamar County, Texas, USA"
     def open_new_places_dialog(self):
         open_dialog = False
         for dkt in self.place_dicts:
@@ -549,6 +556,7 @@ class NewPlaceDialog():
         # self.selection = selection
 
         self.got_row = 0
+        self.got_nest = None
         self.edit_hint_id = 0
         self.hint_to_edit = None
 
@@ -632,8 +640,6 @@ class NewPlaceDialog():
         self.new_places_dialog.focus_set()
 
     def ok_hint(self):
-        # current_id = 32 # DELETE
-        # print("line", looky(seeline()).lineno, "is", self.ent.get())
         new_hint = self.ent.get()
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -664,14 +670,14 @@ class NewPlaceDialog():
         self.ent.grid(column=0, row=0, padx=3, pady=3)
         ok_butt.grid(column=2, row=0, padx=6, pady=6)
         cancel_butt.grid(column=3, row=0, padx=6, pady=6)
-        self.edit_row.grid_remove()
+        self.edit_row.grid_forget()
 
     def remove_edit_row(self):
         self.edit_row.grid_forget()
 
     def grid_edit_row(self, hint):
+        print("line", looky(seeline()).lineno, "self.got_nest", self.got_nest)
         self.edit_row.grid(column=0, row=self.got_row, columnspan=4, sticky='ew')
-        # place_hint = ''
         for child in self.hint_frm.winfo_children():
             if child.grid_info()['column'] == 0:
                 if child.grid_info()['row'] == self.got_row - 1:
@@ -680,13 +686,14 @@ class NewPlaceDialog():
                     print("line", looky(seeline()).lineno, "child", child)
                     if child.winfo_class() == 'Label':
                         self.hint_to_edit = child
-        # place_hint = hint
         self.ent.delete(0, 'end')
         self.ent.insert(0, hint)
         self.ent.focus_set()
 
     def get_clicked_row(self, evt):
         self.got_row = evt.widget.grid_info()['row'] 
+        print("line", looky(seeline()).lineno, "evt.widget.master", evt.widget.master)
+        self.got_nest = evt.widget.master
 
     def on_hover(self, evt):
         evt.widget.config(text='Edit') 
@@ -698,35 +705,25 @@ class NewPlaceDialog():
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
 
-        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
-
         d = 0
         bullet = len(self.place_dicts)
         # configure place_id for query
         for dkt in self.place_dicts:
-            if len(dkt["id"]) == 1: 
-                print('=1')
+            if len(dkt["id"]) == 1:
                 place_id = (dkt["id"][0],)
             elif len(dkt["id"]) > 1:
                 place_id = dkt["id"]
-                print('>1', place_id)
-            elif dkt.get("temp_id") is None: 
-                print('no temp id')
+            elif dkt.get("temp_id") is None:
                 place_id = ("none",)
-            elif dkt.get("temp_id"): 
-                print('temp id')
+            elif dkt.get("temp_id"):
                 place_id = dkt["temp_id"]
-            print("line", looky(seeline()).lineno, "place_id", place_id)
             place_hints = []
-            for num in place_id:            
-                cur.execute(select_place_hint, (num,)) 
-                # print("line", looky(seeline()).lineno, "is", cur.fetchone())
-                place_hint = cur.fetchone()
-                
+            for num in place_id: 
+                cur.execute(select_place_hint, (num,))
+                place_hint = cur.fetchone()                
                 if place_hint[0] is None:
                     place_hint = ''
                 else: 
-                    print("line", looky(seeline()).lineno, "place_hint", place_hint)
                     place_hint = place_hint[0]
                 place_hints.append(place_hint)
             # reconfigure place_id for display
@@ -735,32 +732,25 @@ class NewPlaceDialog():
             elif len(place_id) == 1:
                 place_id = place_id[0]
             place_input = dkt["input"]
-            place_string = '{}: {}, place id #{}'.format(bullet, place_input, place_id)
+            place_string = '{}: {}, place id #{}'.format(
+                bullet, place_input, place_id)
 
-            # rad = RadiobuttonBig(self.frm, variable=var, text=place_string)
-            # rad.grid(column=0, row=d, columnspan=2)
-            # if d == 0:
-                # rad.focus_set()
             lab = Label(self.frm, text=place_string)
             lab.grid(column=0, row=d, sticky='w')
 
-            self.hint_frm = Frame(self.frm)
+            self.hint_frm = Frame(self.frm, name="nest{}".format(bullet-1))
             self.hint_frm.grid(column=0, row=d+1, sticky='w', padx=(0,3))
             self.hint_frm.columnconfigure(0, minsize=448)
             self.hint_frm.columnconfigure(1, minsize=54)
-            # self.hint_frm.rowconfigure(0, minsize=24)
             self.var = tk.IntVar(None, 0)
-            # self.choice = tk.IntVar(None, 1)
             h = 0
             row = 0
             for hint in place_hints:
-                current_id = dkt["id"][h] # HAS TO SET RIGHT ID FOR UPDATING HINT ok_hint
+                current_id = dkt["id"][h]
                 cur.execute(select_first_nested_place, (current_id,))
                 nesting = cur.fetchone()
-                # print("line", looky(seeline()).lineno, "nesting", nesting)
                 nesting = [i for i in nesting if i]
                 nesting = ", ".join(nesting)
-                # rad_string = "place ID #{} (e.g. {})".format(current_id, nesting)
                 rad_string = "{}: {}".format(current_id, nesting)
                 rad = RadiobuttonBig(
                     self.hint_frm, 
@@ -847,49 +837,18 @@ Maine - Poitou-Charentes
 
 # DO LIST
 
+# in case of more than one nest, edit row is opening in the right row of the wrong nest (last one)
+# finish duplicate_error and if it opens eg @ jjj, the clarification dlg shd not also open
 # show_choices too long
-# display hint next to button when no edit row
-# show radio buttons if id is multiple or none
 # ccc shd open dlg
 # add a search box for ids by name or name by ids
-# add a tooltip to edit button showing the whole nesting
 # input temp_id for new places
-
-# test all cases before starting on the dialog; dialog should open for new places unless the new places are not duplicates and there are no complicating factors in which case the new place should just be made silently
+# test all cases
 # move query strings to module
 
-# when entering a single place there will always be a dialog unless the place is new to the db    
+# DEV DOCS
 
-# New thoughts 20210523
-# Don't use the temp lists, the info is already stored in dict, make key for child and parent
-# Deal with edge cases immediately as soon as there's an ID for each nest
-
-# Starting over 20210518, it's still too complicated to finish
-# Take care of one nest at a time. Define each nest completely. 
-# Make new places FIRST like this:
-#   Get max ID from places table, increment for each new place
-#   populate a temp_new_places list, a temp_places_places list, and a temp_nested_places list if needed
-#   If a CANCEL button is clicked on a dialog the temp lists have done no harm
-#   otherwise the three place tables can be updated on SUBMIT. 
-#   Make dict key temp_id so empty id key can still trigger db update.
-# Don't deal with duplicates till everything is known about every nest in the nesting.
-# Start another minified model and keep it minified.
-# Edge cases should make it easier, not harder, to find matches. How many places are there named "Maine, Maine"? Do them first.
-# When a single ID or temp_id exists for each nest, stop. Test after each id assignment.
-
-# McDonalds,
-    # Gee Whiz Mall,
-        # Maine,
-            # Arizona,
-                # USA
-                                            
-# McDonalds   Gee Whiz Mall   Maine   Arizona USA
-
-#5 McDonalds,
-#4 Gee Whiz Mall,
-#3 Maine,
-#2 Arizona,
-#1 USA
-
+# nested places a.k.a. nested place strings a.k.a. nestings:
+# Incomplete nestings get correct but incomplete results. When testing a nesting, if wrong results are obtained, before ripping into the deceptively simple code (which took over 3 months to write), check your nesting. If a nest is missing from a hard-coded test nesting, or if the data in places_places or nested_places is incomplete or incorrect, the good code will give incomplete results. Example: "Paris, Lamar County, Texas, USA" looks right but it's missing "Precinct 5" between Paris and Lamar County (assuming that nest has been previously input), so it won't work up to par. Instead of correctly guessing all the nests, it will open a dialog because it won't be able to guess which "Paris" is intended. In practice, if the user has to have a nesting that doesn't include Precinct 5, he can add it just as easily as the complete nesting. The autofill might not work as conveniently--he might have to type more characters to get to a unique string that will autofill--but it will work. Generally the right way is to use complete nestings if possible, that's how Treebard is designed to work because Autofill and Potentially Multiple Parents for places are integral parts of the Treebard philosophy on how places should work so that place input will be historically accurate yet still convenient and intuitive for the user to do.
 
 
