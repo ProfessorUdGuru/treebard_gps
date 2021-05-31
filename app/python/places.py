@@ -3,7 +3,7 @@
 import tkinter as tk
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, MessageHilited, 
-    Entry, ButtonQuiet, Separator, Framex)
+    Entry, ButtonQuiet, Separator)
 from query_strings import (
     select_all_nested_places, select_place, select_place_id, 
     select_place_hint, select_all_places, select_all_places_places, 
@@ -192,7 +192,7 @@ unique_place_names = set(all_place_names)
 print(len(unique_place_names), len(all_place_names))
 
 # sample inputs in lieu of widgets:
-a = "114 Main Street, Paris, Lamar County, Texas, USA"
+a = "114 Main Street, Paris, Precinct 5, Lamar County, Texas, USA"
 b = "114 Main Street, Paris, Bear Lake County, Idaho, USA"
 c = "Paris, Tennessee, USA"
 d = "Paris, Texas, USA"
@@ -228,8 +228,10 @@ ggg = "McDonalds, Gee Whiz Mall, Maine, Arizona, USA"
 hhh = "Paris, Precinct 5, Lamar County, Texas, USA"
 iii = "Precinct 5, Lamar County, Texas, USA"
 jjj = "Dupe, Dupe, Dupe"
+kkk = "Transylvania"
+lll = "Blossom, Elma, Erie County, New York, USA"
 
-place_input = jjj # ddd # e # ggg # ccc
+place_input = x # q # x # ccc
 
 class ValidatePlace():
 
@@ -245,6 +247,7 @@ class ValidatePlace():
         self.outer_duplicates = False
 
         self.make_place_dicts()
+        self.detect_duplicates_without_matches()
         self.see_whats_needed()
         self.open_new_places_dialog()
 
@@ -333,21 +336,48 @@ class ValidatePlace():
                     "id" : get_matching_ids(x),
                     "input" : x}) 
             for x in self.place_list]
-        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
         flag_inner_dupes()
         catch_new_dupes()
         cur.close()
         conn.close()
 
-    def see_whats_needed(self):
+    def detect_duplicates_without_matches(self):
+        '''
+            If there are duplicate matching nests, but none have a matching
+            parent, delete the matching IDs.
+        '''
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        y = 0
         for dkt in self.place_dicts:
+            if len(dkt["id"]) > 1 and y != len(self.place_dicts) - 1:
+                children = dkt["id"]
+                parents = self.place_dicts[y + 1]["id"]
+                pairs = [(i, j) for i in children for j in parents]
+                print("line", looky(seeline()).lineno, "pairs", pairs)
+                st = set(pairs).intersection(places_places)
+                print("line", looky(seeline()).lineno, "st", st)
+                if len(st) == 0:
+                    dkt["id"] = []
+            y += 1
+
+        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+        cur.close()
+        conn.close()
+# dkt is right but rad strings are all the same now
+        # test this with contiguous dupes e.g. if there were 2 Blossoms
+
+    def see_whats_needed(self):
+        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+        for dkt in self.place_dicts:
+            print("line", looky(seeline()).lineno, "is", dkt["id"])
             if len(dkt["id"]) == 0:
                 self.new_places = True
             elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is False:
                 self.outer_duplicates = True
             elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is True:
                 self.inner_duplicates = True
-
+        print("line", looky(seeline()).lineno, "self.new_places", self.new_places)
         if self.new_places is True:
             self.make_new_places()
         if self.inner_duplicates is True:
@@ -392,7 +422,6 @@ class ValidatePlace():
             # leave this here for now in case it's needed
             pass
 
-        print("line", looky(seeline()).lineno, "inner dupes running")
         inner_dupes_idx = []
         i = 0
         for nest in self.place_list:
@@ -422,7 +451,6 @@ class ValidatePlace():
         selected_ids = tuple(zip(inner_dupes_idx, right_pair))
         b = 0
         for dkt in self.place_dicts:
-            print("line", looky(seeline()).lineno, "dkt", dkt)
             for tup in selected_ids:
                 if tup[0] == b:
                     dkt["id"] = [tup[1]]
@@ -461,24 +489,17 @@ class ValidatePlace():
                 else:
                     u += 1
                     continue
-                print("line", looky(seeline()).lineno, "parent, u", parent, u)
-                # case: single known parent and multiple/no child?
                 if parent is not None and len(self.place_dicts[u - 1]["id"]) != 1:
-                    print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
                     children = tuple(self.place_dicts[u - 1]["id"])
-                    print("line", looky(seeline()).lineno, "children", children)
                     child = pinpoint_child(parent, children)
-                    print("line", looky(seeline()).lineno, "child", child)
                     self.place_dicts[u - 1]["id"] = child
                     return
                 else:
-                    print("line", looky(seeline()).lineno, "unhandled case")
                     u += 1
                     continue
-            print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
         for dkt in self.place_dicts:
             seek_child()
-# re: ddd = "table 5, McDonalds, Paris, Lamar County, Texas, USA"
+
     def open_new_places_dialog(self):
         open_dialog = False
         for dkt in self.place_dicts:
@@ -503,11 +524,12 @@ class ValidatePlace():
             new_place_dialog = NewPlaceDialog(
                 self.view,
                 self.place_dicts,
-                "Clarify place selections where there is not exactly one ID.\n\n"
-                "Press the EDIT button to add or edit hints for duplicate place "
-                "names so you won't have to look up place IDs.\n\nIf you're "
-                "entering a new place name that has no duplicates, an ID number "
-                "has been assigned which you can just OK.", 
+                "Clarify place selections where there is not exactly one ID "
+                "number.\n\nPress the EDIT button to add or edit hints for "
+                "duplicate place names so you won't have to look up place "
+                "IDs.\n\nIf you're entering a new place name that has no "
+                "duplicates, an ID number has been assigned which you can "
+                "just OK.", 
                 "New and Duplicate Places Dialog",
                 ("OK", "Cancel"),
                 self.treebard,
@@ -527,7 +549,6 @@ class ValidatePlace():
         '''
 
         print("line", looky(seeline()).lineno, "position, nesting", position, nesting)
-        # line 506 position, nesting 0 [{'id': [], 'input': '114 Main Street', 'temp_id': 808}, {'id': [30], 'input': 'Paris', 'inner_dupe': False}, {'id': [78], 'input': 'Lamar County'}, {'id': [29], 'input': 'Texas'}, {'id': [8], 'input': 'USA'}]    
 
 class NewPlaceDialog():
     def __init__(
@@ -632,7 +653,6 @@ class NewPlaceDialog():
 
         show_message()
         self.show_choices()
-        # self.make_edit_row()
 
         resize_scrolled_content(self.new_places_dialog, canvas, window)
 
@@ -648,7 +668,7 @@ class NewPlaceDialog():
         cur.close()
         conn.close()
         
-        self.hint_to_edit.config(text="      hint: {}".format(new_hint))
+        self.hint_to_edit.config(text="hint: {}".format(new_hint))
         edit_row.remove_edit_row()
 
     def make_edit_row(self, parent, row=None):
@@ -656,17 +676,14 @@ class NewPlaceDialog():
         self.edit_rows[parent] = edit_row
 
     def grid_edit_row(self, hint):
-        print("line", looky(seeline()).lineno, "self.got_nest", self.got_nest)
         edit_row = self.edit_rows[self.got_nest]
-        edit_row.grid(column=0, row=self.got_row, sticky='ew')#columnspan=4, 
+        edit_row.grid(column=0, row=self.got_row, sticky='ew', columnspan=2)
         edit_row.lift()
         for child in self.got_nest.winfo_children():
-            print("line", looky(seeline()).lineno, "child", child)
-            if child.grid_info()['column'] == 0:
+            if child.grid_info()['column'] == 1:
                 if child.grid_info()['row'] == self.got_row - 1:
                     self.edit_hint_id = int(child.cget('text').split(': ')[0])
                 elif child.grid_info()['row'] == self.got_row:
-                    print("line", looky(seeline()).lineno, "child", child)
                     if child.winfo_class() == 'Label':
                         self.hint_to_edit = child
         edit_row.ent.delete(0, 'end')
@@ -675,7 +692,6 @@ class NewPlaceDialog():
 
     def get_clicked_row(self, evt):
         self.got_row = evt.widget.grid_info()['row'] 
-        print("line", looky(seeline()).lineno, "evt.widget.master", evt.widget.master)
         self.got_nest = evt.widget.master
 
     def on_hover(self, evt):
@@ -692,6 +708,7 @@ class NewPlaceDialog():
         bullet = len(self.place_dicts)
         # configure place_id for query
         for dkt in self.place_dicts:
+            place_hints = []
             if len(dkt["id"]) == 1:
                 place_id = (dkt["id"][0],)
             elif len(dkt["id"]) > 1:
@@ -699,62 +716,75 @@ class NewPlaceDialog():
             elif dkt.get("temp_id") is None:
                 place_id = ("none",)
             elif dkt.get("temp_id"):
-                place_id = dkt["temp_id"]
-            place_hints = []
-            for num in place_id: 
-                cur.execute(select_place_hint, (num,))
-                place_hint = cur.fetchone()                
-                if place_hint[0] is None:
-                    place_hint = ''
-                else: 
-                    place_hint = place_hint[0]
-                place_hints.append(place_hint)
+                place_id = dkt["temp_id"] # place id will be int type which marks it as a new place
+
+            if type(place_id) is int:
+                place_hints.append('')
+            else:
+                for num in place_id:
+                    if num == "none":
+                        place_hints.append('')
+                    else:
+                        print("line", looky(seeline()).lineno, "num", num)
+                        cur.execute(select_place_hint, (num,))
+                        place_hint = cur.fetchone()
+                        if place_hint[0] is None:
+                            place_hint = ''
+                        else: 
+                            place_hint = place_hint[0]
+                        place_hints.append(place_hint)
             # reconfigure place_id for display
             if type(place_id) is int:
                 pass
             elif len(place_id) == 1:
                 place_id = place_id[0]
             place_input = dkt["input"]
-            place_string = '{}: {}, place id #{}'.format(
+            place_string = '{}: {}, place ID #{}'.format(
                 bullet, place_input, place_id)
 
             lab = Label(self.frm, text=place_string)
             lab.grid(column=0, row=d, sticky='w')
 
             self.hint_frm = Frame(self.frm, name="nest{}".format(bullet-1))
-            self.hint_frm.grid(column=0, row=d+1, sticky='w', padx=(0,3))
-            self.hint_frm.columnconfigure(0, minsize=448)
-            self.hint_frm.columnconfigure(1, minsize=54)
+            self.hint_frm.grid(column=0, row=d+1, sticky='w', padx=(0,3), columnspan=2)
+            self.hint_frm.columnconfigure(0, minsize=48)
 
             self.make_edit_row(self.hint_frm)
-
             self.var = tk.IntVar(None, 0)
             h = 0
             row = 0
             for hint in place_hints:
-                current_id = dkt["id"][h]
-                cur.execute(select_first_nested_place, (current_id,))
-                nesting = cur.fetchone()
-                nesting = [i for i in nesting if i]
-                nesting = ", ".join(nesting)
-                rad_string = "{}: {}".format(current_id, nesting)
+                print("line", looky(seeline()).lineno, "hint is", hint)
+                if dkt.get("temp_id") is not None:
+                    current_id = dkt["temp_id"]
+                    rad_string = "{}: {}".format(current_id, dkt["input"])
+                else:
+                    current_id = dkt["id"][h]
+                    cur.execute(select_first_nested_place, (current_id,))
+                    nesting = cur.fetchone()
+                    nesting = [i for i in nesting if i]
+                    nesting = ", ".join(nesting)
+                    rad_string = "{}: {}".format(current_id, nesting)
                 rad = RadiobuttonBig(
                     self.hint_frm, 
                     variable=self.var,
                     value=h,
                     text=rad_string, 
                     anchor="w")
-                rad.grid(column=0, row=row, sticky='we')
                 lab = Label(
                     self.hint_frm, 
-                    text="      hint: {}".format(hint),
-                    anchor='w')
-                lab.grid(column=0, row=row+1, sticky='ew')
+                    text="hint: {}".format(hint),
+                    anchor='w', bg='red')
                 editx = ButtonQuiet(
                     self.hint_frm, 
                     width=2, 
                     command=lambda hint=hint: self.grid_edit_row(hint))
-                editx.grid(column=1, row=row+1, pady=(0,3))
+
+                self.hint_frm.columnconfigure(1, weight=1)
+                rad.grid(column=0, row=row, sticky='we', columnspan=2)
+                editx.grid(column=0, row=row+1, pady=(0,3), sticky='e')
+                lab.grid(column=1, row=row+1, sticky='w', padx=6)
+
                 editx.bind('<Enter>', self.on_hover)
                 editx.bind('<Leave>', self.on_unhover)
                 editx.bind('<Button-1>', self.get_clicked_row)
@@ -777,6 +807,7 @@ class EditRow(Frame):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.ent = Entry(self, width=36)
+        spacer = Label(self, width=3)
 
         ok_butt = Button(
             self,
@@ -787,8 +818,9 @@ class EditRow(Frame):
             self,
             text='CANCEL',
             command=self.remove_edit_row)
-
-        self.ent.grid(column=0, row=0, padx=3, pady=3)
+        
+        spacer.grid(column=0, row=0)
+        self.ent.grid(column=1, row=0, padx=3, pady=3)
         ok_butt.grid(column=2, row=0, padx=6, pady=6)
         cancel_butt.grid(column=3, row=0, padx=6, pady=6)
 
@@ -812,8 +844,6 @@ if __name__ == "__main__":
                 final.place_dicts[j]["input"], final.place_dicts[j]["id"]))
         lab.grid()
         j += 1
-
-    # print(dt.get_screensize()) # 1920x1080
     
     view.mainloop()
 '''
@@ -844,10 +874,11 @@ Maine - Poitou-Charentes
 
 # DO LIST
 
-# in case of more than one nest, edit row is opening in the right row of the wrong nest (last one)
+# add "(new place and new place ID)" after the existing rad string for new places so user doesn't have to figure it out
+# only the last radio is preselecting the first radio (case x--there's only one in each)
+# ccc and q shd open dlg
+# move the EDIT button to column 0 and the hint to column 1 so the buttons line up with each other no matter what length the hint is
 # finish duplicate_error and if it opens eg @ jjj, the clarification dlg shd not also open
-# show_choices too long
-# ccc shd open dlg
 # add a search box for ids by name or name by ids
 # input temp_id for new places
 # test all cases
