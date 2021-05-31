@@ -3,7 +3,7 @@
 import tkinter as tk
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, MessageHilited, 
-    Entry, ButtonQuiet, Separator)
+    Entry, ButtonQuiet, Separator, Framex)
 from query_strings import (
     select_all_nested_places, select_place, select_place_id, 
     select_place_hint, select_all_places, select_all_places_places, 
@@ -239,8 +239,6 @@ class ValidatePlace():
         self.treebard = treebard
         self.place_input = place_input
         self.place_dicts = []
-        self.temp_places = []
-        self.temp_places_places = []
 
         self.new_places = False
         self.inner_duplicates = False
@@ -559,6 +557,7 @@ class NewPlaceDialog():
         self.got_nest = None
         self.edit_hint_id = 0
         self.hint_to_edit = None
+        self.edit_rows = {}
 
         self.make_widgets()
 
@@ -633,14 +632,15 @@ class NewPlaceDialog():
 
         show_message()
         self.show_choices()
-        self.make_edit_row()
+        # self.make_edit_row()
 
         resize_scrolled_content(self.new_places_dialog, canvas, window)
 
         self.new_places_dialog.focus_set()
 
     def ok_hint(self):
-        new_hint = self.ent.get()
+        edit_row = self.edit_rows[self.got_nest]
+        new_hint = edit_row.ent.get()
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(update_place_hint, ((new_hint, self.edit_hint_id)))
@@ -649,36 +649,19 @@ class NewPlaceDialog():
         conn.close()
         
         self.hint_to_edit.config(text="      hint: {}".format(new_hint))
-        self.remove_edit_row()
+        edit_row.remove_edit_row()
 
-    def make_edit_row(self):
-        self.edit_row = Frame(self.hint_frm)
-
-        self.ent = Entry(self.edit_row, width=36)
-
-        ok_butt = Button(
-            self.edit_row,
-            text='OK',
-            command=self.ok_hint)
-
-        cancel_butt = Button(
-            self.edit_row,
-            text='CANCEL',
-            command=self.remove_edit_row)
-
-        self.edit_row.grid(column=0, row=self.got_row, columnspan=4, sticky='ew')
-        self.ent.grid(column=0, row=0, padx=3, pady=3)
-        ok_butt.grid(column=2, row=0, padx=6, pady=6)
-        cancel_butt.grid(column=3, row=0, padx=6, pady=6)
-        self.edit_row.grid_forget()
-
-    def remove_edit_row(self):
-        self.edit_row.grid_forget()
+    def make_edit_row(self, parent, row=None):
+        edit_row = EditRow(parent, self.ok_hint)
+        self.edit_rows[parent] = edit_row
 
     def grid_edit_row(self, hint):
         print("line", looky(seeline()).lineno, "self.got_nest", self.got_nest)
-        self.edit_row.grid(column=0, row=self.got_row, columnspan=4, sticky='ew')
-        for child in self.hint_frm.winfo_children():
+        edit_row = self.edit_rows[self.got_nest]
+        edit_row.grid(column=0, row=self.got_row, sticky='ew')#columnspan=4, 
+        edit_row.lift()
+        for child in self.got_nest.winfo_children():
+            print("line", looky(seeline()).lineno, "child", child)
             if child.grid_info()['column'] == 0:
                 if child.grid_info()['row'] == self.got_row - 1:
                     self.edit_hint_id = int(child.cget('text').split(': ')[0])
@@ -686,9 +669,9 @@ class NewPlaceDialog():
                     print("line", looky(seeline()).lineno, "child", child)
                     if child.winfo_class() == 'Label':
                         self.hint_to_edit = child
-        self.ent.delete(0, 'end')
-        self.ent.insert(0, hint)
-        self.ent.focus_set()
+        edit_row.ent.delete(0, 'end')
+        edit_row.ent.insert(0, hint)
+        edit_row.ent.focus_set()
 
     def get_clicked_row(self, evt):
         self.got_row = evt.widget.grid_info()['row'] 
@@ -742,6 +725,9 @@ class NewPlaceDialog():
             self.hint_frm.grid(column=0, row=d+1, sticky='w', padx=(0,3))
             self.hint_frm.columnconfigure(0, minsize=448)
             self.hint_frm.columnconfigure(1, minsize=54)
+
+            self.make_edit_row(self.hint_frm)
+
             self.var = tk.IntVar(None, 0)
             h = 0
             row = 0
@@ -786,7 +772,28 @@ class NewPlaceDialog():
         cur.close()
         conn.close()
 
-        
+class EditRow(Frame):
+    def __init__(self, master, command, *args, **kwargs):
+        Frame.__init__(self, master, *args, **kwargs)
+
+        self.ent = Entry(self, width=36)
+
+        ok_butt = Button(
+            self,
+            text='OK',
+            command=command)
+
+        cancel_butt = Button(
+            self,
+            text='CANCEL',
+            command=self.remove_edit_row)
+
+        self.ent.grid(column=0, row=0, padx=3, pady=3)
+        ok_butt.grid(column=2, row=0, padx=6, pady=6)
+        cancel_butt.grid(column=3, row=0, padx=6, pady=6)
+
+    def remove_edit_row(self):
+        self.grid_forget()       
 
 
 if __name__ == "__main__":
