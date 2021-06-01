@@ -7,14 +7,13 @@ from widgets import (
 from query_strings import (
     select_all_nested_places, select_place, select_place_id, 
     select_place_hint, select_all_places, select_all_places_places, 
-    select_first_nested_place, update_place_hint, )
+    select_first_nested_place, update_place_hint, select_place_id2, )
 from files import get_current_file
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
 import dev_tools as dt
 from dev_tools import looky, seeline
 import sqlite3
-
 
 
 
@@ -55,14 +54,14 @@ greater will be our self-loathing at some point in the future when an even
 more complicated bit of code has to be added for an even more convoluted
 imagined necessity. We don't like to open R U Sure or anything like it,
 but entering new places is done all the time because Treebard should not come pre-loaded with everything that Google Maps has ever heard
-of. Portability is important and we have only a bored snort of contempt for the kind of
+of. Portability is important and we have only a wee snort of contempt for the kind of
 genealogy that is supposed to be all done by machine logic without the user
 having to do any research. The internet is filling up with bad data invented
 by smarty-pants software. And we don't like bloated, unmaintainable code.
 Part of the reason for Treebard to exist is that the code should be usable
 by amateur programmers. So for these reasons and others, it is my decision
 at this point (after literally months spent writing and re-writing the code
-for the duplicate places dialog) that the right thing to do is to draw the
+for the new and duplicate places dialog) that the right thing to do is to draw the
 line for opening a dialog slightly early rather than slightly late. Treebard will
 ask for user clarification slightly more often than some users would like,
 in cases where new places are inserted into existing nested place strings which also 
@@ -192,46 +191,47 @@ unique_place_names = set(all_place_names)
 print(len(unique_place_names), len(all_place_names))
 
 # sample inputs in lieu of widgets:
-a = "114 Main Street, Paris, Precinct 5, Lamar County, Texas, USA"
-b = "114 Main Street, Paris, Bear Lake County, Idaho, USA"
-c = "Paris, Tennessee, USA"
-d = "Paris, Texas, USA"
-e = "Paris"
-f = "Maine, Maine, USA"
-g = "Glenwood Springs, Garfield County, Colorado, USA"
-h = "Paris, France"
-i = "Glenwood Springs, USA" # allow this 
-j = "Paris, USA" # allow this but the duplicate's ID is unguessable so there will be a dialog
-k = "Paris" # ditto
-l = "Seadrift, Calhoun County, Texas, USA"
-m = "Hawaii, USA"
-n = "Jakarta, Java, Indonesia"
-o = "Old Town, Sacramento, California, New Spain, USA"
-p = "Blossom, Lamar County, Texas, USA"
-q = "Blossom, Precinct 1, Lamar County, Texas, USA"
-r = "Maine, Aroostook County, Maine, USA"
-s = "Maine, Iowa, USA"
-t = "Sassari, Sassari, Sardegna, Italy"
-u = "McDonalds, Paris, Precinct 5, Lamar County, Texas, USA"
-v = "McDonalds, Paris, Bear Lake County, Idaho, USA"
-w = "McDonalds, Sacramento, Sacramento County, California, USA" # this one exists
-x = "McDonalds, Blossom, Lamar County, Texas, USA" # this McDonalds doesn't exist
-y = "Jerusalem, Israel"
-z = "Masada, Israel"
-aaa = "Israel"
-bbb = "USA"
-ccc = "Dupes, Dupes, Dupes"
-ddd = "table 5, McDonalds, Paris, Precinct 5, Lamar County, Texas, USA"
-eee = "table 5, McDonalds, Paris, Bear Lake County, Idaho, USA"
-fff = "table 5, McDonalds, Paris, Precinct 5, Lamar County, Texas, USA"
-ggg = "McDonalds, Gee Whiz Mall, Maine, Arizona, USA"
-hhh = "Paris, Precinct 5, Lamar County, Texas, USA"
-iii = "Precinct 5, Lamar County, Texas, USA"
-jjj = "Dupe, Dupe, Dupe"
-kkk = "Transylvania"
-lll = "Blossom, Elma, Erie County, New York, USA"
+# a = "114 Main Street, Paris, Precinct 5, Lamar County, Texas, USA"
+# b = "114 Main Street, Paris, Bear Lake County, Idaho, USA"
+# c = "Paris, Tennessee, USA"
+# d = "Paris, Texas, USA"
+# e = "Paris"
+# f = "Maine, Maine, USA"
+# g = "Glenwood Springs, Garfield County, Colorado, USA"
+# h = "Paris, France"
+# i = "Glenwood Springs, USA" # allow this 
+# j = "Paris, USA" # allow this but the duplicate's ID is unguessable so there will be a dialog
+# k = "Paris" # ditto
+# l = "Seadrift, Calhoun County, Texas, USA"
+# m = "Hawaii, USA"
+# n = "Jakarta, Java, Indonesia"
+# o = "Old Town, Sacramento, California, New Spain, USA"
+# p = "Blossom, Lamar County, Texas, USA"
+# q = "Blossom, Precinct 1, Lamar County, Texas, USA"
+# r = "Maine, Aroostook County, Maine, USA"
+# s = "Maine, Iowa, USA"
+# t = "Sassari, Sassari, Sardegna, Italy"
+# u = "McDonalds, Paris, Precinct 5, Lamar County, Texas, USA"
+# v = "McDonalds, Paris, Bear Lake County, Idaho, USA"
+# w = "McDonalds, Sacramento, Sacramento County, California, USA" # this one exists
+# x = "McDonalds, Blossom, Lamar County, Texas, USA" # this McDonalds doesn't exist
+# y = "Jerusalem, Israel"
+# z = "Masada, Israel"
+# aaa = "Israel"
+# bbb = "USA"
+# ccc = "Dupes, Dupes, Dupes"
+# ddd = "table 5, McDonalds, Paris, Precinct 5, Lamar County, Texas, USA"
+# eee = "table 5, McDonalds, Paris, Bear Lake County, Idaho, USA"
+# fff = "table 5, McDonalds, Paris, Precinct 5, Lamar County, Texas, USA"
+# ggg = "McDonalds, Gee Whiz Mall, Maine, Arizona, USA"
+# hhh = "Paris, Precinct 5, Lamar County, Texas, USA"
+# iii = "Precinct 5, Lamar County, Texas, USA"
+# jjj = "Dupe, Dupe, Dupe"
+# kkk = "Transylvania"
+# lll = "Blossom, Elma, Erie County, New York, USA"
+# mmm = "Calhoun County, Texas, USA"
 
-place_input = x # q # x # ccc
+
 
 class ValidatePlace():
 
@@ -247,7 +247,8 @@ class ValidatePlace():
         self.outer_duplicates = False
 
         self.make_place_dicts()
-        self.detect_duplicates_without_matches()
+        # self.detect_duplicates_without_matches()
+        self.id_orphans()
         self.see_whats_needed()
         self.open_new_places_dialog()
 
@@ -290,38 +291,15 @@ class ValidatePlace():
                     else:
                         dkt["inner_dupe"] = False
                 n += 1
+# TRY TO HAVE CASES WHERE ID AND TEMP ID BOTH EXIST
+# SO USER CAN BE SHOWN BOTH OPTIONS AND ALSO TRY TO GET RID OF THIS METHOD ALTOGETHER
+# THE LAST 2 LINES (COMMENTED) MESS THINGS UP BY CAUSEING THE REAL ID TO BE DELETED
+# AND THEN IF THERE IS NO ID A TEMP ID WILL BE MADE RETHINK THIS IN TERMS OF GIVING MORE CHOICES
+# IN DIALOG SO USER CAN CHOOSE A NEW ID OR AN EXISTING ID
+                
 
-        def catch_new_dupes():
-            '''
-                In case a new place is intended when a same-named place exists
-                once in the database; so the existing place won't be used
-                if a new place was intended. Compares existing singles to
-                entered nests.
-            '''
 
-            b = 0
-            for dkt in self.place_dicts:
-                if b == len(self.place_dicts) - 1:
-                    return                 
-                if len(dkt["id"]) == 1:
-                    child = dkt["id"][0]         
-                    parents = self.place_dicts[b + 1]["id"] # [78]
-                    cur.execute(
-                        '''
-                            SELECT place_id2 
-                            FROM places_places
-                            WHERE place_id1 = ?
-                        ''',
-                        (child,))
-                    parent_list = [i[0] for i in cur.fetchall()]
-                    ok = False
-                    for i in parent_list:
-                        for j in parents:
-                            if i == j:
-                                ok = True
-                    if ok is False:
-                        dkt["id"] = []
-                b += 1
+
 
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -337,47 +315,123 @@ class ValidatePlace():
                     "input" : x}) 
             for x in self.place_list]
         flag_inner_dupes()
-        catch_new_dupes()
+        # catch_new_dupes()
+        # id_orphans()
         cur.close()
         conn.close()
 
-    def detect_duplicates_without_matches(self):
+    def id_orphans(self):
         '''
-            If there are duplicate matching nests, but none have a matching
-            parent, delete the matching IDs.
+            If a nest by an input spelling exists (single or duplicate), 
+            and is not the largest nest in the nesting, and the next nest in the nesting is not its parent, create a temp_id
+            for it in case the user intends to create a new place instead
+            of using an existing place by that name. For orphans there will
+            be both an id and a temp_id in the dict.
         '''
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        y = 0
+        w = 0
         for dkt in self.place_dicts:
-            if len(dkt["id"]) > 1 and y != len(self.place_dicts) - 1:
-                children = dkt["id"]
-                parents = self.place_dicts[y + 1]["id"]
-                pairs = [(i, j) for i in children for j in parents]
-                print("line", looky(seeline()).lineno, "pairs", pairs)
-                st = set(pairs).intersection(places_places)
-                print("line", looky(seeline()).lineno, "st", st)
-                if len(st) == 0:
-                    dkt["id"] = []
-            y += 1
+            orphan = False
+            if len(dkt["id"]) > 0 and w != len(self.place_dicts) - 1:
+                for num in dkt["id"]:
+                    cur.execute(select_place_id2, (num,))
+                    parents = [i[0] for i in cur.fetchall()]
+                    for num in parents:
+                        if num not in self.place_dicts[w + 1]["id"]:
+                            orphan = True
+            elif w == len(self.place_dicts) - 1:
+                if len(self.place_dicts) == 1:
+                    dkt["temp_id"] = 0
+            if orphan is True:
+                dkt["temp_id"] = 0
 
+            w += 1
         print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
         cur.close()
         conn.close()
-# dkt is right but rad strings are all the same now
-        # test this with contiguous dupes e.g. if there were 2 Blossoms
+
+    # # def detect_duplicates_without_matches(self):
+        # '''
+            # If there are duplicate matching nests, but none have a matching
+            # parent, delete the matching IDs. BAD IDEA CAN THIS BE COMBINED WITH ID_ORPHANS?
+        # '''
+
+        # def detect_new_place_insertion():
+            # '''
+                # Case: a nesting `793, 78, 29, 8` already exists in the database.
+                # User inputs what appears to be `793, new, 78, 29, 8`, but
+                # there 793 has a duplicate nest; there are two different places named "Blossom". Treebard's policy
+                # is to not guess that 793 is the right place out of the set of duplicates. But the opportunity for the user to select 
+                # the right place himself will be nullified if 
+                # detect_duplicates_without_matches() is allowed to run. So an
+                # insertion of a new place between two existing places still has
+                # to be detected in order to keep from assuming that none of the
+                # existing places are the right one for the first nest in a case
+                # like this.
+            # '''
+            # insertion = False
+            # pairs = []
+            # f = 0
+            # for dkt in self.place_dicts:
+                # if len(dkt["id"]) == 0:
+                    # if f == 0 or f == len(self.place_dicts) - 1:
+                        # continue
+                    # else:
+                        # left = self.place_dicts[f - 1]["id"] # get items this is a list
+                        # right = self.place_dicts[f + 1]["id"]
+                        # pair = (left, right)
+                        # pairs.append(pair)
+                # f += 1 
+            # combinations = []
+            # for pair in pairs:
+                # p = []
+                # combo = [(i, j) for i in pair[0] for j in pair[1] if i != j]
+                # p.append(combo)
+                # combinations.extend(p)
+            # for lst in combinations:
+                # tup = tuple(lst)
+                # st = set(tup).intersection(places_places)
+                # if len(st) != 0:
+                    # insertion = True
+            # return insertion
+
+        # conn = sqlite3.connect(current_file)
+        # cur = conn.cursor()
+
+        # insertion = detect_new_place_insertion()
+        # if insertion is True:
+            # return
+
+        # y = 0
+        # for dkt in self.place_dicts:
+            # if len(dkt["id"]) > 1 and y != len(self.place_dicts) - 1:
+                # children = dkt["id"]
+                # parents = self.place_dicts[y + 1]["id"]
+                # pairs = [(i, j) for i in children for j in parents]
+                # st = set(pairs).intersection(places_places)
+                # if len(st) == 0:
+                    # dkt["id"] = []
+            # y += 1
+
+        # cur.close()
+        # conn.close()
 
     def see_whats_needed(self):
-        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
         for dkt in self.place_dicts:
-            print("line", looky(seeline()).lineno, "is", dkt["id"])
             if len(dkt["id"]) == 0:
+                print("line", looky(seeline()).lineno, "running")
                 self.new_places = True
+            elif len(dkt["id"]) > 0:
+                if dkt.get("temp_id") is not None:
+                    print("line", looky(seeline()).lineno, "running")
+                    self.new_places = True
             elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is False:
+                print("line", looky(seeline()).lineno, "running")
                 self.outer_duplicates = True
             elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is True:
+                print("line", looky(seeline()).lineno, "running")
                 self.inner_duplicates = True
-        print("line", looky(seeline()).lineno, "self.new_places", self.new_places)
         if self.new_places is True:
             self.make_new_places()
         if self.inner_duplicates is True:
@@ -399,13 +453,15 @@ class ValidatePlace():
         cur = conn.cursor()
         cur.execute("SELECT MAX(place_id) FROM place")
         temp_id = cur.fetchone()[0] + 1
-
         for dkt in self.place_dicts:
-            if len(dkt["id"]) == 0:              
+            if (
+                (dkt.get("id") is not None and dkt.get("temp_id") is not None) 
+                    or len(dkt["id"]) == 0):
                 dkt["temp_id"] = temp_id
                 temp_id += 1
         cur.close()
         conn.close()
+        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
 
     def handle_inner_duplicates(self):
         '''
@@ -499,37 +555,129 @@ class ValidatePlace():
                     continue
         for dkt in self.place_dicts:
             seek_child()
-
+# d h j shd open--paris is assigned a new number but is that right? that leaves it to the user to catch the process and cancel so a new place won't be made instead of selecting among existing places
+# i shd open instead of making a new number--one option shd be a new place, other option shd be the single that exists PROBLEM AT line 322 ```if ok is False: dkt["id"] = []``` where Gwd Spgs is being detected as an attempt to make a new place with the same name as an existing place, therefore the id is being changed to [] and a temp_id is being made
+        # 'd' : "Paris, Texas, USA",
+        # 'h' : "Paris, France",
+        # 'j' : "Paris, USA",
+        # 'i' : "Glenwood Springs, USA",
+# line 553 self.place_dicts [{'id': [], 'input': 'Paris', 'inner_dupe': False, 'temp_id': 811}, {'id': [29], 'input': 'Texas'}, {'id': [8], 'input': 'USA'}]
+# line 553 self.place_dicts [{'id': [], 'input': 'Paris', 'inner_dupe': False, 'temp_id': 811}, {'id': [31], 'input': 'France'}]
+# line 553 self.place_dicts [{'id': [], 'input': 'Glenwood Springs', 'temp_id': 811}, {'id': [8], 'input': 'USA'}]
+# line 553 self.place_dicts [{'id': [], 'input': 'Paris', 'inner_dupe': False, 'temp_id': 811}, {'id': [8], 'input': 'USA'}]
+# o shd open--making all new IDs for existing places
+# y and z shd open--highest place is a dupe but no temp_id was assigned
     def open_new_places_dialog(self):
-        open_dialog = False
-        for dkt in self.place_dicts:
-            if len(dkt["id"]) != 1:
-                if dkt.get("temp_id") is None:
-                    open_dialog = True
+        '''
+            Open dialog by default. If one case is found which needs the dialog 
+            open, break the loop or return to stop looking through the cases. 
+        '''
+        open_dialog = True
 
+        z = 0
+        for dkt in self.place_dicts:
+            print("line", looky(seeline()).lineno, "is", len(dkt["id"]))
+            # if all nests are new, don't open dialog
+            if dkt.get("temp_id") is not None and len(dkt["id"]) == 0:
+                if z != len(self.place_dicts) - 1:
+                    z += 1
+                    continue
                 else:
-                    known = 0
-                    nests = 0
-                    new = None
-                    for dkt in self.place_dicts:
-                        if len(dkt["id"]) == 1:
-                            known += 1
-                        elif len(dkt["id"]) == 0:
-                            new = nests
-                        nests += 1
-                    if known > nests - 2:
-                        open_dialog = True
-                
+                    print("line", looky(seeline()).lineno, "running")
+                    return
+
+            if len(dkt["id"]) != 1:
+                if len(dkt["id"]) > 1:
+                    break
+  
+                # if len(dkt["id"]) > 1:
+                    # if dkt.get("temp_id") is None:
+                        # break
+                    # else:
+                        # z += 1
+                        # continue
+                elif len(dkt["id"]) == 0:
+                    print("line", looky(seeline()).lineno, "running")
+                    break
+            else:
+                open_dialog = False
+            z += 1
+
+        # open_dialog = False
+        # for dkt in self.place_dicts:
+            # print("line", looky(seeline()).lineno, "dkt", dkt)
+            # if len(dkt["id"]) != 1:
+                # print("line", looky(seeline()).lineno, "is", dkt["id"], dkt.get("temp_id"))
+                # if dkt.get("temp_id") is None:
+                    # '''
+                        # This opens dialog if len(nesting) == 1 and it's a duplicate.
+                    # '''
+                    # print("line", looky(seeline()).lineno, "lacking temp id")
+                    # open_dialog = True
+                # elif dkt.get("temp_id"):
+                    # '''
+                        # I don't remember why I did this but when I changed it from
+                        # "if known > nests - 2" to "if known > nests - 3"
+                        # it made this case work: "Seadrift, Calhoun County, Texas, USA"
+                        # i.e. "new, new, known, known".
+                        # ... if there is a temp_id and at least 2 knowns 
+                            # ...then open dialog
+                        # But when I change it to "if known >=2" the dialog no longer
+                        # opens for "Paris, France", which works right for
+                        # "if known > nests - 3" as does "Seadrift...".
+                        # Will refactor this whole method since it's arcane and a lot
+                        # of things have changed since I first got it to start working.
+                        # This will be the rollback 202106011600 but I plan to start over
+                        # on this method only. The plan is to allow everything to open the
+                        # dialog and then as I encounter cases that should not open it, I
+                        # will figure out how to detect that case and use it to set 
+                        # open_dialog to False. But open_dialog will be True by default.
+                        # That should help because instead of trying to detect the most
+                        # complicated cases to change it to false, I'll be detecting the
+                        # simplest cases to change it to true.
+                    # '''
+
+                    # known = 0
+                    # nests = 0
+                    # for dkt in self.place_dicts:
+                        # if len(dkt["id"]) == 1:
+                            # known += 1
+                        # elif len(dkt["id"]) == 0:
+                            # pass
+                        # nests += 1
+                    # if known > nests - 3:
+                        # open_dialog = True
+        # # open_dialog = False
+        # # for dkt in self.place_dicts:
+            # # print("line", looky(seeline()).lineno, "dkt", dkt)
+            # # if len(dkt["id"]) != 1:
+                # # if dkt.get("temp_id") is None:
+                    # # open_dialog = True
+                # # else:
+                    # # known = 0
+                    # # nests = 0
+                    # # for dkt in self.place_dicts:
+                        # # if len(dkt["id"]) == 1:
+                            # # known += 1
+                        # # elif len(dkt["id"]) == 0:
+                            # # pass
+                        # # nests += 1
+                    # # if known > nests - 2:
+                        # # open_dialog = True
+        print("line", looky(seeline()).lineno, "open_dialog", open_dialog)     
         if open_dialog is True:
             new_place_dialog = NewPlaceDialog(
                 self.view,
                 self.place_dicts,
                 "Clarify place selections where there is not exactly one ID "
                 "number.\n\nPress the EDIT button to add or edit hints for "
-                "duplicate place names so you won't have to look up place "
-                "IDs.\n\nIf you're entering a new place name that has no "
-                "duplicates, an ID number has been assigned which you can "
-                "just OK.", 
+                "duplicate place names (or any place name) so you won't have "
+                "to look up place IDs.\n\nIf you're entering a new place name "
+                "that has no duplicates, an ID number has been assigned which "
+                "you can just OK.\n\nIf there is no correct option for even one "
+                "of the levels in your nested place, press CANCEL and use the "
+                "Places Tab inputs to custom-create the desired nested place "
+                "before trying to use it.", 
                 "New and Duplicate Places Dialog",
                 ("OK", "Cancel"),
                 self.treebard,
@@ -680,10 +828,11 @@ class NewPlaceDialog():
         edit_row.grid(column=0, row=self.got_row, sticky='ew', columnspan=2)
         edit_row.lift()
         for child in self.got_nest.winfo_children():
-            if child.grid_info()['column'] == 1:
+            if child.grid_info()['column'] == 0:
                 if child.grid_info()['row'] == self.got_row - 1:
                     self.edit_hint_id = int(child.cget('text').split(': ')[0])
-                elif child.grid_info()['row'] == self.got_row:
+            elif child.grid_info()['column'] == 1:
+                if child.grid_info()['row'] == self.got_row:
                     if child.winfo_class() == 'Label':
                         self.hint_to_edit = child
         edit_row.ent.delete(0, 'end')
@@ -704,7 +853,13 @@ class NewPlaceDialog():
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
 
+        self.radvars = []
+        for dd in self.place_dicts:
+            self.var = tk.IntVar(None, 0)
+            self.radvars.append(self.var)
+
         d = 0
+        t = 0
         bullet = len(self.place_dicts)
         # configure place_id for query
         for dkt in self.place_dicts:
@@ -725,7 +880,6 @@ class NewPlaceDialog():
                     if num == "none":
                         place_hints.append('')
                     else:
-                        print("line", looky(seeline()).lineno, "num", num)
                         cur.execute(select_place_hint, (num,))
                         place_hint = cur.fetchone()
                         if place_hint[0] is None:
@@ -750,14 +904,13 @@ class NewPlaceDialog():
             self.hint_frm.columnconfigure(0, minsize=48)
 
             self.make_edit_row(self.hint_frm)
-            self.var = tk.IntVar(None, 0)
             h = 0
             row = 0
             for hint in place_hints:
-                print("line", looky(seeline()).lineno, "hint is", hint)
                 if dkt.get("temp_id") is not None:
                     current_id = dkt["temp_id"]
-                    rad_string = "{}: {}".format(current_id, dkt["input"])
+                    rad_string = "{}: {} (new place and new place ID)".format(
+                        current_id, dkt["input"])
                 else:
                     current_id = dkt["id"][h]
                     cur.execute(select_first_nested_place, (current_id,))
@@ -767,7 +920,7 @@ class NewPlaceDialog():
                     rad_string = "{}: {}".format(current_id, nesting)
                 rad = RadiobuttonBig(
                     self.hint_frm, 
-                    variable=self.var,
+                    variable=self.radvars[t],
                     value=h,
                     text=rad_string, 
                     anchor="w")
@@ -797,6 +950,7 @@ class NewPlaceDialog():
             sep = Separator(self.frm, 3)
             sep.grid(column=0, row=d+2, sticky='ew', columnspan=3, pady=(3,0))
             d += 3
+            t += 1
             bullet -= 1
 
         cur.close()
@@ -832,18 +986,78 @@ if __name__ == "__main__":
 
     from widgets import Toplevel, Label
 
+    trials = {
+        'a' : "114 Main Street, Paris, Precinct 5, Lamar County, Texas, USA",
+        'b' : "114 Main Street, Paris, Bear Lake County, Idaho, USA",
+        'c' : "Paris, Tennessee, USA",
+        'd' : "Paris, Texas, USA",
+        'e' : "Paris",
+        'f' : "Maine, Maine, USA",
+        'g' : "Glenwood Springs, Garfield County, Colorado, USA",
+        'h' : "Paris, France",
+        'i' : "Glenwood Springs, USA",
+        'j' : "Paris, USA",
+        'k' : "Paris",
+        'l' : "Seadrift, Calhoun County, Texas, USA",
+        'm' : "Hawaii, USA",
+        'n' : "Jakarta, Java, Indonesia",
+        'o' : "Old Town, Sacramento, California, New Spain, USA",
+        'p' : "Blossom, Lamar County, Texas, USA",
+        'q' : "Blossom, Precinct 1, Lamar County, Texas, USA",
+        'r' : "Maine, Aroostook County, Maine, USA",
+        's' : "Maine, Iowa, USA",
+        't' : "Sassari, Sassari, Sardegna, Italy",
+        'u' : "McDonalds, Paris, Precinct 5, Lamar County, Texas, USA",
+        'v' : "McDonalds, Paris, Bear Lake County, Idaho, USA",
+        'w' : "McDonalds, Sacramento, Sacramento County, California, USA",
+        'x' : "McDonalds, Blossom, Lamar County, Texas, USA",
+        'y' : "Jerusalem, Israel",
+        'z' : "Masada, Israel",
+        'aaa' : "Israel",
+        'bbb' : "USA",
+        'ccc' : "Dupes, Dupes, Dupes",
+        'ddd' : "table 5, McDonalds, Paris, Precinct 5, Lamar County, Texas, USA",
+        'eee' : "table 5, McDonalds, Paris, Bear Lake County, Idaho, USA",
+        'fff' : "table 5, McDonalds, Paris, Precinct 5, Lamar County, Texas, USA",
+        'ggg' : "McDonalds, Gee Whiz Mall, Maine, Arizona, USA",
+        'hhh' : "Paris, Precinct 5, Lamar County, Texas, USA",
+        'iii' : "Precinct 5, Lamar County, Texas, USA",
+        'jjj' : "Dupe, Dupe, Dupe",
+        'kkk' : "Transylvania",
+        'lll' : "Blossom, Elma, Erie County, New York, USA",
+        'mmm' : "Calhoun County, Texas, USA",
+    }
+
+    def validate(evt):
+
+        entry_input = evt.widget.get()
+        for k,v in trials.items():
+            if entry_input == k:
+                place_input = v
+        for child in frame.winfo_children():
+            child.destroy()
+        final = ValidatePlace(view, treebard, place_input)
+        j = 0
+        for dkt in final.place_dicts:
+            lab = Label(
+                frame,
+                text='{} id#{}'.format(
+                    final.place_dicts[j]["input"], final.place_dicts[j]["id"]))
+            lab.grid()
+            j += 1
+
     view = tk.Tk()
     treebard = view # mockup; this isn't what really happens
 
-    final = ValidatePlace(view, treebard, place_input)
-    j = 0
-    for dkt in final.place_dicts:
-        lab = Label(
-            view,
-            text='{} id#{}'.format(
-                final.place_dicts[j]["input"], final.place_dicts[j]["id"]))
-        lab.grid()
-        j += 1
+    entry = Entry(view)
+    entry.grid()
+    entry.focus_set()
+    entry.bind('<FocusOut>', validate)
+    traverse = Entry(view)
+    traverse.grid()
+    frame = Frame(view)
+    frame.grid()
+
     
     view.mainloop()
 '''
@@ -874,15 +1088,31 @@ Maine - Poitou-Charentes
 
 # DO LIST
 
-# add "(new place and new place ID)" after the existing rad string for new places so user doesn't have to figure it out
-# only the last radio is preselecting the first radio (case x--there's only one in each)
-# ccc and q shd open dlg
-# move the EDIT button to column 0 and the hint to column 1 so the buttons line up with each other no matter what length the hint is
+# bad: # ccc # o # y # z # n
+# concoct a case where there are 
+#   2 contiguous insertions not at first or last 
+#   2 contiguous insertions at first
+#   2 contiguous insertions at last
+#   2 non-contiguous insertions not at first or last 
+#   2 non-contiguous insertions at first
+#   2 non-contiguous insertions at last
+#   1 new place and nothing else
+#   2 new places and nothing else
+#   3 new places and nothing else
+#   1 new place and it's last
+#   2 new places and they're both last
+#   2 new places and they're not contiguous and one is last
+#   inner duplicates as well as outer duplicates
+#   inner duplicates as well as outer duplicates as well as orphans
+#   inner duplicates as well as new places
+#   etc.
+# make "new place and new place ID" in italics
 # finish duplicate_error and if it opens eg @ jjj, the clarification dlg shd not also open
 # add a search box for ids by name or name by ids
 # input temp_id for new places
 # test all cases
 # move query strings to module
+# in the real one, if CANCEL is pressed, the table cell that triggered this procedure should be cleared out so user can start fresh and not get the procedure auto-triggered again from the old data he input.
 
 # DEV DOCS
 
