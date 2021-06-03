@@ -238,9 +238,6 @@ class ValidatePlace():
             of using an existing place by that name. For orphans there will
             be both an id and a temp_id in the dict. All temp_ids have to be assigned at the same time so they are unique, therefore a temp_id of 0 is created here. Later on any temp_id of 0 will be given its real value.
         '''
-        # print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
-# line 285 self.place_dicts: [{'id': [30, 32, 34, 684, 685, 729, 731, 732, 733, 735, 737, 739, 742, 744, 745, 746, 748, 750, 752, 753, 754, 755], 'input': 'Paris', 'inner_dupe': False}, {'id': [114], 'input': 'Tennessee'}, {'id': [8], 'input': 'USA'}]
-
         def seek_parent_ids(ids, parent_ids):
             orphan = False
             pairs_in_db = []
@@ -249,25 +246,16 @@ class ValidatePlace():
             for num in ids:
                 cur.execute(select_place_id2, (num,))
                 parent_id_in_db = [i[0] for i in cur.fetchall()]
-                # print("line", looky(seeline()).lineno, "parent_id_in_db:", parent_id_in_db)
                 for iD in parent_id_in_db:
                     pairs_in_db.append((num, iD))
                 for iD in parent_ids:
                     pairs_in_input.append((num, iD))
                 pairs = tuple(pairs_in_db)
-            print("line", looky(seeline()).lineno, "pairs_in_input:", pairs_in_input)
-            print("line", looky(seeline()).lineno, "pairs_in_db:", pairs_in_db)
             if pairs:
                 st = set(pairs).intersection(pairs_in_input)
-                print("line", looky(seeline()).lineno, "len(st):", len(st))
                 if len(st) == 0:
                     orphan = True
             return orphan
-# line 299 pairs_in_input: [(30, 114), (32, 114), (34, 114), (684, 114), (685, 114), (729, 114), (731, 114), (732, 114), (733, 114), (735, 114), (737, 114), (739, 114), (742, 114), (744, 114), (745, 114), (746, 114), (748, 114), (750, 114), (752, 114), (753, 114), (754, 114), (755, 114)]
-# line 300 pairs_in_db: [(30, 804), (32, 37), (34, 35), (684, 114), (685, 686), (729, 730), (731, 200), (732, 683), (733, 734), (735, 736), (737, 738), (739, 740), (742, 743), (744, 122), (745, 110), (746, 747), (748, 749), (750, 751), (752, 148), (753, 107), (754, 171), (755, 756)]
-
-                
-                
 
         orphans = []
 
@@ -275,22 +263,16 @@ class ValidatePlace():
         cur = conn.cursor()
 
         x = 0
-        #instead of detecting final nest just don't loop that far
         for dkt in self.place_dicts[0:-1]:
-            # orphan = False
             ids = dkt["id"]
             parent_ids = self.place_dicts[x + 1]["id"]
             parent_len = len(parent_ids)
-            print("line", looky(seeline()).lineno, "parent_len:", parent_len)
             if parent_len == 0:
                 orphan = True
             else:
-                orphan = seek_parent_ids(ids, parent_ids)
-            
+                orphan = seek_parent_ids(ids, parent_ids)            
             orphans.append(orphan)
-
             x += 1
-        print("line", looky(seeline()).lineno, "orphans:", orphans)
 
         cur.close()
         conn.close()
@@ -299,34 +281,29 @@ class ValidatePlace():
         for dkt in self.place_dicts[0:-1]:
             if orphans[s] is True:
                 dkt["temp_id"] = 0
-            s += 1
-            
+            s += 1            
 
     def see_whats_needed(self):
-        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+        # print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
         for dkt in self.place_dicts:
             if len(dkt["id"]) == 0:
-                print("line", looky(seeline()).lineno, "running")
+                # print("line", looky(seeline()).lineno, "running")
                 self.new_places = True
             elif len(dkt["id"]) > 0:
-                print("line", looky(seeline()).lineno, "dkt.get('temp_id'):", dkt.get('temp_id'))
+                # print("line", looky(seeline()).lineno, "dkt.get('temp_id'):", dkt.get('temp_id'))
                 if dkt.get("temp_id") is not None:
-                    print("line", looky(seeline()).lineno, "running")
+                    # print("line", looky(seeline()).lineno, "running")
                     self.new_places = True
                 elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is False:
-                    print("line", looky(seeline()).lineno, "running")
+                    # print("line", looky(seeline()).lineno, "dkt['id']:", dkt['id'])
                     self.outer_duplicates = True
                 elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is True:
-                    print("line", looky(seeline()).lineno, "running")
+                    # print("line", looky(seeline()).lineno, "running")
                     self.inner_duplicates = True
+                elif len(dkt["id"]) == 1:
+                    pass
                 else:
-                    print("line", looky(seeline()).lineno, "case not handled")
-            # elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is False:
-                # print("line", looky(seeline()).lineno, "running")
-                # self.outer_duplicates = True
-            # elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is True:
-                # print("line", looky(seeline()).lineno, "running")
-                # self.inner_duplicates = True
+                    print("line", looky(seeline()).lineno, "case not handled", dkt['id'])
             else:
                 print("line", looky(seeline()).lineno, "case not handled")
         if self.new_places is True:
@@ -335,6 +312,7 @@ class ValidatePlace():
             self.handle_inner_duplicates()
         if self.outer_duplicates is True:
             self.handle_outer_duplicates()
+        # print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
 
     def make_new_places(self):
         '''
@@ -345,7 +323,7 @@ class ValidatePlace():
             occur which insert to any of the place tables till these temp IDs
             are either used or discarded.
         '''
-        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute("SELECT MAX(place_id) FROM place")
@@ -358,7 +336,7 @@ class ValidatePlace():
                 temp_id += 1
         cur.close()
         conn.close()
-        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
 
     def handle_inner_duplicates(self):
         '''
@@ -434,25 +412,25 @@ class ValidatePlace():
 
         def seek_child():
             u = 0
-            parent = None
+            known = None
             child = None
-            # for dkt in self.place_dicts[1:]:
             for dkt in self.place_dicts:
-                # find the first known, call it "parent"
                 if len(dkt["id"]) == 1:
-                    parent = dkt["id"][0]
+                    known = dkt["id"][0]
                 else:
                     u += 1
                     continue
-                print("line", looky(seeline()).lineno, "parent:", parent)
-                if parent is not None and len(self.place_dicts[u - 1]["id"]) != 1:
-                    children = tuple(self.place_dicts[u - 1]["id"])
-                    child = pinpoint_child(parent, children)
-                    self.place_dicts[u - 1]["id"] = child
-                    return
-                else:
-                    u += 1
-                    continue
+                # u - 1 will refer to the last item if u == 0, don't allow that:
+                if u != 0:
+                    if known is not None and len(self.place_dicts[u - 1]["id"]) != 1:
+                        children = tuple(self.place_dicts[u - 1]["id"])
+                        child = pinpoint_child(known, children)
+                        self.place_dicts[u - 1]["id"] = child
+                        return
+                    else:
+                        u += 1
+                        continue
+        
         for dkt in self.place_dicts:
             seek_child()
 
@@ -463,7 +441,7 @@ class ValidatePlace():
         '''                   
 
         def test_for_all_new():
-            print("line", looky(seeline()).lineno, "running")
+            # print("line", looky(seeline()).lineno, "running")
             z = 0
             for dkt in self.place_dicts:
                 if dkt.get("temp_id") is not None and len(dkt["id"]) == 0:
@@ -471,27 +449,23 @@ class ValidatePlace():
                         z += 1
                         continue
                     else:
-                        print("line", looky(seeline()).lineno, "running")
+                        # print("line", looky(seeline()).lineno, "running")
                         self.open_dialog = False
                         return
 
         def test_for_all_known():
-            print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+            known = 0
             z = 0
             for dkt in self.place_dicts:
-                if len(dkt["id"]) != 1 or dkt.get("temp_id") is not None: 
-                    print("line", looky(seeline()).lineno, "running")   
-                    return
+                if len(dkt["id"]) != 1 or dkt.get("temp_id") is not None:
+                    pass
                 elif len(dkt["id"]) == 1 and dkt.get("temp_id") is None:
-                    if z == len(dkt["id"]) - 1: 
-                        print("line", looky(seeline()).lineno, "running")   
-                        self.open_dialog = False
-                    else: 
-                        print("line", looky(seeline()).lineno, "running")                       
-                        z += 1
+                    known += 1
+                z += 1
+            # print("line", looky(seeline()).lineno, "z, known:", z, known)
+            if z == known: self.open_dialog = False
 
         def test_for_new_plus_known():
-            print("line", looky(seeline()).lineno, "running")
             new = 0
             known = 0
             z = 0
@@ -504,22 +478,24 @@ class ValidatePlace():
                     known += 1
                     new += 1
                 elif len(dkt["id"]) == 0 and dkt.get("temp_id") is None:
-                    print("code is lacking")
+                    print("line", looky(seeline()).lineno, "case not handled")
                 elif len(dkt["id"]) == 0 and dkt.get("temp_id") is not None:
                     new += 1
                 else:
-                    print("case not handled")                    
+                    print("line", looky(seeline()).lineno, "case not handled")                    
                 z += 1
+            # print("line", looky(seeline()).lineno, "new, known:", new, known)
             if  new == 0 and known == 0:
                 self.open_dialog = False
 
         # test_for_any_duplicates()
         test_for_all_new()
+        # print("line", looky(seeline()).lineno, "self.open_dialog:", self.open_dialog)
         test_for_all_known()
         test_for_new_plus_known()
         # test_for_any_new_or_known()
         # test_for_any_new_or_dupl()
-        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+        # print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
 
 # The code works by filtering away duplicates to try to make them singles thus 
 #   knowns. The goal is to prevent the dialog from opening unnecessarily.
@@ -613,7 +589,7 @@ class NewPlaceDialog():
         self.edit_hint_id = 0
         self.hint_to_edit = None
         self.edit_rows = {}
-
+        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
         self.make_widgets()
 
     def make_widgets(self):
@@ -749,17 +725,23 @@ class NewPlaceDialog():
         bullet = len(self.place_dicts)
         # configure place_id for query
         for dkt in self.place_dicts:
+            add_new_place_option = False
             place_hints = []
             if len(dkt["id"]) == 1:
                 place_id = (dkt["id"][0],)
             elif len(dkt["id"]) > 1:
+                if dkt.get("temp_id") is not None:
+                    add_new_place_option = True
                 place_id = dkt["id"]
             elif dkt.get("temp_id") is None:
                 place_id = ("none",)
             elif dkt.get("temp_id"):
                 place_id = dkt["temp_id"] # place id will be int type which marks it as a new place
-
+            else:
+                print("line", looky(seeline()).lineno, "case not handled")
+            print("line", looky(seeline()).lineno, "place_id:", place_id)
             if type(place_id) is int:
+                print("line", looky(seeline()).lineno, "running")
                 place_hints.append('')
             else:
                 for num in place_id:
@@ -774,10 +756,17 @@ class NewPlaceDialog():
                             place_hint = place_hint[0]
                         place_hints.append(place_hint)
             # reconfigure place_id for display
+            print("line", looky(seeline()).lineno, "add_new_place_option:", add_new_place_option)
+            print("line", looky(seeline()).lineno, "place_id:", place_id)
             if type(place_id) is int:
                 pass
+            elif add_new_place_option is True:
+                print("line", looky(seeline()).lineno, "running")
+                place_hints.append('')
             elif len(place_id) == 1:
                 place_id = place_id[0]
+            else:
+                print("line", looky(seeline()).lineno, "case not handled")
             place_input = dkt["input"]
             place_string = '{}: {}, place ID #{}'.format(
                 bullet, place_input, place_id)
@@ -790,13 +779,51 @@ class NewPlaceDialog():
             self.hint_frm.columnconfigure(0, minsize=48)
 
             self.make_edit_row(self.hint_frm)
+            print("line", looky(seeline()).lineno, "place_hints:", place_hints)
+
+            print("line", looky(seeline()).lineno, "len(place_hints):", len(place_hints))
+
             h = 0
             row = 0
             for hint in place_hints:
-                if dkt.get("temp_id") is not None:
+
+
+
+
+                if dkt.get("temp_id") is not None and len(dkt["id"]) > 0:
+                    # user will choose between a new ID or one of the existing IDs
+                    new_id = dkt["temp_id"]
+                    
+
+
+                    last_idx = len(dkt["id"])
+                    if h == last_idx:
+                        current_id = new_id
+                        rad_string = "{}: {} (new place and new place ID)".format(
+                            current_id, dkt["input"])
+                    else:
+                        current_id = dkt["id"][h]
+                        cur.execute(select_first_nested_place, (current_id,))
+                        nesting = cur.fetchone()
+                        nesting = [i for i in nesting if i]
+                        nesting = ", ".join(nesting)
+                        rad_string = "{}: {}".format(current_id, nesting)
+
+
+
+                elif dkt.get("temp_id") is not None and len(dkt["id"]) == 0:
+                    # user will OK or CANCEL new ID
                     current_id = dkt["temp_id"]
                     rad_string = "{}: {} (new place and new place ID)".format(
                         current_id, dkt["input"])
+
+
+
+
+                # if dkt.get("temp_id") is not None:
+                    # current_id = dkt["temp_id"]
+                    # rad_string = "{}: {} (new place and new place ID)".format(
+                        # current_id, dkt["input"])
                 else:
                     current_id = dkt["id"][h]
                     cur.execute(select_first_nested_place, (current_id,))
@@ -804,6 +831,11 @@ class NewPlaceDialog():
                     nesting = [i for i in nesting if i]
                     nesting = ", ".join(nesting)
                     rad_string = "{}: {}".format(current_id, nesting)
+
+
+
+
+
                 rad = RadiobuttonBig(
                     self.hint_frm, 
                     variable=self.radvars[t],
@@ -976,7 +1008,6 @@ Maine - Poitou-Charentes
 
 # handle the gui case for when user can choose an existing place or a new id. currently the right number of existing places are displayed but with all the newly generated id instead of their own.
 
-# bad: # ccc # o # y # z 
 # concoct a case where there are 
 #   2 contiguous insertions not at first or last 
 #   2 contiguous insertions at first
@@ -995,7 +1026,6 @@ Maine - Poitou-Charentes
 #   inner duplicates as well as new places
 #   etc.
 # find every place I tried to detect whether in final nest and instead just don't loop that far ie for x in lst[0:-1]
-# make "new place and new place ID" in italics
 # finish duplicate_error and if it opens eg @ jjj, the clarification dlg shd not also open
 # add a search box for ids by name or name by ids
 # input temp_id for new places
