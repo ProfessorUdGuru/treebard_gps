@@ -589,7 +589,7 @@ class NewPlaceDialog():
         self.edit_hint_id = 0
         self.hint_to_edit = None
         self.edit_rows = {}
-        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+        # print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
         self.make_widgets()
 
     def make_widgets(self):
@@ -728,7 +728,11 @@ class NewPlaceDialog():
             add_new_place_option = False
             place_hints = []
             if len(dkt["id"]) == 1:
-                place_id = (dkt["id"][0],)
+                if dkt.get("temp_id") is None:
+                    place_id = (dkt["id"][0],)
+                else:
+                    place_id = (dkt["id"][0])
+                    add_new_place_option = True
             elif len(dkt["id"]) > 1:
                 if dkt.get("temp_id") is not None:
                     add_new_place_option = True
@@ -739,7 +743,7 @@ class NewPlaceDialog():
                 place_id = dkt["temp_id"] # place id will be int type which marks it as a new place
             else:
                 print("line", looky(seeline()).lineno, "case not handled")
-            print("line", looky(seeline()).lineno, "place_id:", place_id)
+            # print("line", looky(seeline()).lineno, "place_id:", place_id)
             if type(place_id) is int:
                 print("line", looky(seeline()).lineno, "running")
                 place_hints.append('')
@@ -759,7 +763,10 @@ class NewPlaceDialog():
             print("line", looky(seeline()).lineno, "add_new_place_option:", add_new_place_option)
             print("line", looky(seeline()).lineno, "place_id:", place_id)
             if type(place_id) is int:
-                pass
+                print("line", looky(seeline()).lineno, "add_new_place_option:", add_new_place_option)
+                if dkt["temp_id"] is not None and len(dkt["id"]) > 0:
+                    print("line", looky(seeline()).lineno, "dkt['id']:", dkt["id"])
+                    place_hints.append('')
             elif add_new_place_option is True:
                 print("line", looky(seeline()).lineno, "running")
                 place_hints.append('')
@@ -779,9 +786,6 @@ class NewPlaceDialog():
             self.hint_frm.columnconfigure(0, minsize=48)
 
             self.make_edit_row(self.hint_frm)
-            print("line", looky(seeline()).lineno, "place_hints:", place_hints)
-
-            print("line", looky(seeline()).lineno, "len(place_hints):", len(place_hints))
 
             h = 0
             row = 0
@@ -818,12 +822,6 @@ class NewPlaceDialog():
                         current_id, dkt["input"])
 
 
-
-
-                # if dkt.get("temp_id") is not None:
-                    # current_id = dkt["temp_id"]
-                    # rad_string = "{}: {} (new place and new place ID)".format(
-                        # current_id, dkt["input"])
                 else:
                     current_id = dkt["id"][h]
                     cur.execute(select_first_nested_place, (current_id,))
@@ -947,7 +945,6 @@ if __name__ == "__main__":
     }
 
     def validate(evt):
-
         entry_input = evt.widget.get()
         for k,v in trials.items():
             if entry_input == k:
@@ -955,6 +952,7 @@ if __name__ == "__main__":
         for child in frame.winfo_children():
             child.destroy()
         final = ValidatePlace(view, treebard, place_input)
+        print("line", looky(seeline()).lineno, "final.place_dicts:", final.place_dicts)
         j = 0
         for dkt in final.place_dicts:
             lab = Label(
@@ -1007,6 +1005,7 @@ Maine - Poitou-Charentes
 # DO LIST
 
 # handle the gui case for when user can choose an existing place or a new id. currently the right number of existing places are displayed but with all the newly generated id instead of their own.
+
 
 # concoct a case where there are 
 #   2 contiguous insertions not at first or last 
