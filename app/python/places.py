@@ -8,7 +8,8 @@ from query_strings import (
     select_all_nested_places, select_place, select_place_id, 
     select_place_hint, select_all_places, select_all_places_places, 
     select_first_nested_place, update_place_hint, select_place_id2, 
-    select_max_place_id, select_place_id1, )
+    select_max_place_id, select_place_id1, update_finding_nested_places,
+    )
 from files import get_current_file
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
@@ -30,12 +31,14 @@ def get_autofill_places():
     nested_place_ids = cur.fetchall()
     cur.close()
     conn.close()
-    nested_place_ids = [[i for i in lst if i] for lst in [list(j) for j in nested_place_ids]]
+    nested_place_ids = [[i for i in lst if i] 
+        for lst in [list(j) for j in nested_place_ids]]
     return nested_place_ids
 
 def make_autofill_strings():
     nested_place_ids = get_autofill_places()
-    strings = [', '.join([get_string_with_id(num) for num in lsst]) for lsst in nested_place_ids]
+    strings = [', '.join([get_string_with_id(num) 
+        for num in lsst]) for lsst in nested_place_ids]
     return strings
 
 def get_string_with_id(num):
@@ -55,6 +58,17 @@ def get_all_places_places():
     cur.close()
     conn.close()
     return places_places
+
+def do_place_update(right_nest, finding):
+    print("line", looky(seeline()).lineno, "right_nest, finding:", right_nest, finding)
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    cur.execute(
+        update_finding_nested_places, 
+        (right_nest, finding))
+    conn.commit()
+    cur.close()
+    conn.close()
 
 place_strings = make_autofill_strings()
 nested_place_ids = get_autofill_places()
@@ -379,7 +393,7 @@ class ValidatePlace():
         test_for_new_plus_known()
  
         if self.open_dialog is True:
-            new_place_dialog = NewPlaceDialog(
+            self.new_place_dialog = NewPlaceDialog(
                 self.view,
                 self.place_dicts,
                 "Clarify place selections where there is not exactly one ID "
@@ -392,12 +406,38 @@ class ValidatePlace():
                 "the Places Tab inputs to custom-create the desired nested "
                 "place before trying to use it.", 
                 "New and Duplicate Places Dialog",
-                ("OK", "Cancel"),
+                ("OK", "CANCEL"),
                 self.treebard,
-                do_on_ok=self.input_places_to_db)
+                do_on_ok=self.collect_place_ids)
 
-    def input_places_to_db(self):
+    def collect_place_ids(self):
         print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+        ids = []
+        r = 0
+        for dkt in self.place_dicts:
+            new_id = None
+            if len(dkt["id"]) == 0:
+                if dkt.get("temp_id") is None:
+                    print("line", looky(seeline()).lineno, "something is wrong")
+                    return
+                else:
+                    new_id = dkt["temp_id"]
+            elif len(dkt["id"]) > 1:
+                print("line", looky(seeline()).lineno, "there are still duplicates")
+            elif len(dkt["id"]) == 1:
+                if dkt.get("temp_id") is None:
+                    print("line", looky(seeline()).lineno, "place is already in database")
+                    new_id = dkt["id"][0]
+                elif dkt.get("temp_id") is not None:
+                    new_id = self.new_place_dialog.radvars[r].get()
+                else:
+                    print("line", looky(seeline()).lineno, "case not handled")
+            else:
+                print("line", looky(seeline()).lineno, "case not handled")
+            ids.append(new_id)
+            print("line", looky(seeline()).lineno, "ids:", ids)
+            print("line", looky(seeline()).lineno, "self.new_place_dialog.radvars[r].get():", self.new_place_dialog.radvars[r].get())
+            r += 1
 
 class NewPlaceDialog():
     def __init__(
@@ -737,19 +777,19 @@ if __name__ == "__main__":
         'r' : "Maine, Aroostook County, Maine, USA",
         's' : "Maine, Iowa, USA",
         't' : "Sassari, Sassari, Sardegna, Italy",
-        'u' : "McDonalds, Paris, Precinct 5, Lamar County, Texas, USA",
-        'v' : "McDonalds, Paris, Bear Lake County, Idaho, USA",
-        'w' : "McDonalds, Sacramento, Sacramento County, California, USA",
-        'x' : "McDonalds, Blossom, Lamar County, Texas, USA",
+        'u' : "Elks Lodge, Paris, Precinct 5, Lamar County, Texas, USA",
+        'v' : "Elks Lodge, Paris, Bear Lake County, Idaho, USA",
+        'w' : "Elks Lodge, Sacramento, Sacramento County, California, USA",
+        'x' : "Elks Lodge, Blossom, Lamar County, Texas, USA",
         'y' : "Jerusalem, Israel",
         'z' : "Masada, Israel",
         'aaa' : "Israel",
         'bbb' : "USA",
         'ccc' : "Dupes, Dupes, Dupes",
-        'ddd' : "table 5, McDonalds, Paris, Precinct 5, Lamar County, Texas, USA",
-        'eee' : "table 5, McDonalds, Paris, Bear Lake County, Idaho, USA",
-        'fff' : "table 5, McDonalds, Paris, Precinct 5, Lamar County, Texas, USA",
-        'ggg' : "McDonalds, Gee Whiz Mall, Maine, Arizona, USA",
+        'ddd' : "table 5, Elks Lodge, Paris, Precinct 5, Lamar County, Texas, USA",
+        'eee' : "table 5, Elks Lodge, Paris, Bear Lake County, Idaho, USA",
+        'fff' : "table 5, Elks Lodge, Paris, Precinct 5, Lamar County, Texas, USA",
+        'ggg' : "Elks Lodge, Gee Whiz Mall, Maine, Arizona, USA",
         'hhh' : "Paris, Precinct 5, Lamar County, Texas, USA",
         'iii' : "Precinct 5, Lamar County, Texas, USA",
         'jjj' : "Dupe, Dupe, Dupe",
@@ -774,18 +814,10 @@ if __name__ == "__main__":
             # self.update_db(widg, col_num)
         update_db(widg) # will need (widg, col_num) in real one
 
-    # def validate(evt):
     def update_db(widg):
-        # entry_input = evt.widget.get()
-        # for k,v in trials.items():
-            # if entry_input == k:
         final = widg.get()
-        # for k,v in trials.items():
-            # if final == k:
-                # place_input = v
         for child in frame.winfo_children():
             child.destroy()
-        # final = ValidatePlace(view, treebard, place_input)
         final = ValidatePlace(view, treebard, final)
         j = 0
         for dkt in final.place_dicts:
@@ -807,25 +839,12 @@ if __name__ == "__main__":
     entry.autofill = True
     entry.grid()
     entry.focus_set()
-    # entry.bind('<FocusOut>', validate)
     entry.bind("<FocusOut>", get_final)
-
-
-    # auto = EntryAutofill(root, width=50)
-    # auto.config(textvariable=auto.var)
-    # strings = make_autofill_strings()
-    # # auto.values = short_values
-    # auto.values = strings
-    # auto.autofill = True
-    # auto.focus_set()  
-
 
     traverse = Entry(view)
     traverse.grid()
     frame = Frame(view)
     frame.grid()
-
-
     
     view.mainloop()
 

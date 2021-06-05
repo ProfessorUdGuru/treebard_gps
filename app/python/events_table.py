@@ -26,7 +26,7 @@ from query_strings import (
     select_findings_details_offspring, select_all_findings_roles_ids, 
     select_finding_ids_offspring, select_all_findings_notes_ids,
     select_count_finding_id_sources, 
-    # update_finding_nested_places,
+    update_finding_nested_places,
     select_nestings_and_ids, select_place, update_finding_particulars,
     update_finding_age, update_current_person,
     # insert_place_new, insert_nested_places,
@@ -57,16 +57,16 @@ def get_current_person():
     conn.close()
     return current_person
 
-# def do_place_update(right_nest, finding):
-    # print('55 right_nest, finding is', right_nest, finding)
-    # conn = sqlite3.connect(current_file)
-    # cur = conn.cursor()
-    # cur.execute(
-        # update_finding_nested_places, 
-        # (right_nest, finding))
-    # conn.commit()
-    # cur.close()
-    # conn.close()
+def do_place_update(right_nest, finding):
+    print('61 right_nest, finding is', right_nest, finding)
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    cur.execute(
+        update_finding_nested_places, 
+        (right_nest, finding))
+    conn.commit()
+    cur.close()
+    conn.close()
 
 def get_findings():
 
