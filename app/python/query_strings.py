@@ -424,6 +424,8 @@ select_first_nested_place = '''
     WHERE nest0 = ? 
 '''
 
+select_max_place_id = ''' SELECT MAX(place_id) FROM place '''
+
 select_nested_places_id = '''
     SELECT nested_places_id
     FROM nested_places

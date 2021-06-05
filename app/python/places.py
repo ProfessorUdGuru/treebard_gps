@@ -3,11 +3,12 @@
 import tkinter as tk
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, MessageHilited, 
-    Entry, ButtonQuiet, Separator)
+    Entry, ButtonQuiet, Separator, EntryAutofill)
 from query_strings import (
     select_all_nested_places, select_place, select_place_id, 
     select_place_hint, select_all_places, select_all_places_places, 
-    select_first_nested_place, update_place_hint, select_place_id2, )
+    select_first_nested_place, update_place_hint, select_place_id2, 
+    select_max_place_id, select_place_id1, )
 from files import get_current_file
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
@@ -18,92 +19,6 @@ import sqlite3
 
 
 
-'''
-New Doc Strings 20210523
-Treebard compares user-input nested place strings to place strings stored in
-the database to try and figure out which place the user intended. Since the
-main goal was to not open the New & Duplicate Places Dialog unnecessarily,
-it was late in the game when a major simplification to the code occurred
-to me: open the dialog by default and then find simple reasons not to.
-Instead of trying to do what had kept me confused till then, which was
-to keep the dialog closed by default and test for complicated conditions
-which should cause the dialog to open.
-
-PLACE STRING TERMINOLOGY
-nest: "Paris" or "France" in "Paris, France"
-new nest: a nest that's not in the database yet
-single: a nest that occurs in the database in one record only
-nesting, nested places, nested place string: "Paris, France"
-child: "Paris" in "Paris, France"
-parent: "France" in "Paris, France"
-orphan: "Paris" in "Paris, Linn County, Iowa" if Linn County is not in the database
-inner duplicate: "Maine" in "Maine, Maine, USA"
-outer duplicate, duplicate: "Paris" in "Paris, France" and "Paris, Texas"
-known: this string exists as a single in the database e.g.
-    "Timbuktu", so if user enters "Timbuktu", depending on 
-    the context in the nesting, Treebard might guess with   
-    reasonable certainty that this is Timbuktu, Mali since
-    there's only nest called "Timbuktu" in the database: Timbuktu, Mali. But if
-    the user also enters another place by the same name (e.g.
-    the crater on Mars named Timbuktu), then "Timbuktu" will
-    no longer be treated as a known, and Treebard will have
-    to try to figure out which Timbuktu is intended each
-    time the user enters the name. Depending on what other 
-    nests are in the nesting, a dialog might open for the
-    user to explicitly state which Timbuktu to use.
-
-EXPECTATIONS
-The goal is to open a duplicate place name dialog for user clarification
-but to do so as seldom as possible within reason. Here's an example of
-"within reason". User inputs "Paris, Precinct 5, Lamar County, Texas, USA".
-Paris is an outer duplicate, Precinct 5 is a new place, and the last three
-nests are known. It seems pretty obvious to the user which Paris is meant:
-the one he's already entered in Lamar County, Texas. And we could write 
-the code to guess that's what he meant, but the more complicated the code gets, the
-greater will be our self-loathing at some point in the future when an even
-more complicated bit of code has to be added for an even more convoluted
-imagined necessity. We don't like to open R U Sure or anything like it,
-but entering new places is done all the time because Treebard should not come pre-loaded with everything that Google Maps has ever heard
-of. Portability is important and we have only a wee snort of contempt for the kind of
-genealogy that is supposed to be all done by machine logic without the user
-having to do any research. The internet is filling up with bad data invented
-by smarty-pants software. And we don't like bloated, unmaintainable code.
-Part of the reason for Treebard to exist is that the code should be usable
-by amateur programmers. So for these reasons and others, it is my decision
-at this point (after literally months spent writing and re-writing the code
-for the new and duplicate places dialog) that the right thing to do is to draw the
-line for opening a dialog slightly early rather than slightly late. Treebard will
-ask for user clarification slightly more often than some users would like,
-in cases where new places are inserted into existing nested place strings which also 
-contain duplicate place names.
-But I failed to mention the most important reason for not trying to guess
-which place out of a set of duplicates is intended: due to circumstances that we can't always predict, Treebard might guess wrong. Whereas if we give the user a chance to input the new place correctly,
-in the long run the user will be happier about it. We shouldn't try to predict every eventuality in a misguided attempt to make
-the user's decisions for him. But it would also be wrong to allow free
-entry of just any old misbegotten place name such as mis-spellings and true duplicates. Somewhere between the two
-extremes of "do what you want" and "do what I say", a sane middle-ground is being groped-in-the-dark for as fastidiously as possible.
-For example, when entering a new place nested among existing places, the user will be shown a dialog in which the new place has been assigned an ID and barring other complex input, all he has to do is press OK. This dialog seems superfluous depending on your point of view, but from Treebard's stance, the user should have a chance to review and cancel most new place input. The only time Treebard doesn't open a dialog for new place input is when within the nesting that's being input, all of the nests are new input, for example: "Antarctica" or "Pen Hill, Dichotomy County, Fellows Island, North Sea" or "back seat, Geronimo's Cadillac, Indian Territory, The New World" etc.
-
-Design Features:
--- The big place lists are gotten from the database once on load, not each time they're needed. 
--- The big place lists are updated and reloaded each time the database place tables change, so always current.
-
-There are three tables in the database re: places:
-1) place table stores place_id and places i.e. the nest (the place string)
-2) places_places table stores child-parent pairs. A nest can have more than one parent, and this is a unique feature of Treebard which makes its places data storage and manipulation historically accurate and complex.
-3) nested_places stores nestings. Goal is to not look at this table at all for data manipulation in this module, as its reason to exist is to provide autofill strings for place inputs. Since nested_places is a junction table built from data in the first two tables, it would be best if the goals of this module could be met by referencing only the first two tables.
-
-Autofill places are key to our design. Allowing only good data up front is important so user will not have to split and merge places when he finds later that bad data has been allowed into the database. But the validation process should be invisible to the user almost always, unless he's doing something really unusual in which case he can expect to see dialogs. In very unusual cases, the user will want to cancel the dialog and instead input the place nesting manually in the places tab.
-
-Unfortunately, Treebard can't accept place names that contain a comma. Few of these exist, and if a user wants to enter one, he'll have to change the comma to a hyphen or something. We more or less have to use commas to delimit nests within nestings, I don't think there's any way around it, and place names containing commas won't work.
-
-The nested_places table is important. I don't think it denormalizes anything, because 1) each cell contains one value, 2) no data input is repeated except as foreign keys, and 3) in spite of the fact that the columns in the nested_places table are meant to provide ordered values--i.e. the order of the columns is important--it's the most normalized way I could think of to store an autofill string comprised of various concatenated data, so I made the table and it works. You could, if you wanted, use the data in any order you wanted, because there's only one piece of data per table cell. So I don't think it's actually denormalized.
-
-We should pre-populate the database only with currently existing countries, continents and major oceans, and let the user provide the places he actually needs. The places he enters can be used in all his trees. Possibly there should be a global places list for places he wants to use in every tree and a per-tree places list, but I don't want to deal with this. It shouldn't be a problem because the autofill place list will be manipulated to first show recently used places. So if the user has input Zuneida Resort and uses it a lot, it will show up before Albuquerque. If a place called "Aababaca" had to be input to one tree and used once, it can remain harmlessly in a global places table because Treebard will show Albuquerque first if Albuquerque has been used more recently.
-
-The only way to leave out the largest place (e.g. "USA" if user doesn't want to see it on every nested place string) is for the user to not enter it. Treebard disapproves so we shouldn't encourage it. Short versions of country names will be input for USA and USSR only, with their full versions input as a.k.a. All other place names should be spelled out. If some kinda silly official country names like "The Redundant Republic of Featherduster" are input as "Featherduster", it's OK because even if the capitol of Featherduster is called "Featherduster" too, Treebard can tell them apart. So for the most part, the user has a lot of flexibility.
-
-'''
 
 current_file = get_current_file()[0]
 
@@ -284,21 +199,15 @@ class ValidatePlace():
             s += 1            
 
     def see_whats_needed(self):
-        # print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
         for dkt in self.place_dicts:
             if len(dkt["id"]) == 0:
-                # print("line", looky(seeline()).lineno, "running")
                 self.new_places = True
             elif len(dkt["id"]) > 0:
-                # print("line", looky(seeline()).lineno, "dkt.get('temp_id'):", dkt.get('temp_id'))
                 if dkt.get("temp_id") is not None:
-                    # print("line", looky(seeline()).lineno, "running")
                     self.new_places = True
                 elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is False:
-                    # print("line", looky(seeline()).lineno, "dkt['id']:", dkt['id'])
                     self.outer_duplicates = True
                 elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is True:
-                    # print("line", looky(seeline()).lineno, "running")
                     self.inner_duplicates = True
                 elif len(dkt["id"]) == 1:
                     pass
@@ -312,7 +221,6 @@ class ValidatePlace():
             self.handle_inner_duplicates()
         if self.outer_duplicates is True:
             self.handle_outer_duplicates()
-        # print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
 
     def make_new_places(self):
         '''
@@ -323,10 +231,9 @@ class ValidatePlace():
             occur which insert to any of the place tables till these temp IDs
             are either used or discarded.
         '''
-        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        cur.execute("SELECT MAX(place_id) FROM place")
+        cur.execute(select_max_place_id)
         temp_id = cur.fetchone()[0] + 1
         for dkt in self.place_dicts:
             if (
@@ -336,21 +243,15 @@ class ValidatePlace():
                 temp_id += 1
         cur.close()
         conn.close()
-        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
 
     def handle_inner_duplicates(self):
         '''
-            This will handle one pair of inner duplicates. If there are three
-            nests in the same nesting with exactly the same name, the code can
-            be extended. If there is more than one pair of inner duplicates
-            in the same nesting, the code can be extended. For now, tell the
-            user to find unique historically correct names for the places. 
-            Open a dialog if too many duplicates, and make no changes to the 
-            database.
+            This will handle one pair of inner duplicates. Otherwise, tell the
+            user to find unique historically correct names for some places.
         '''
 
         def handle_non_contiguous_dupes():
-            # leave this here for now in case it's needed
+            # apparently this won't be needed
             pass
 
         inner_dupes_idx = []
@@ -359,10 +260,6 @@ class ValidatePlace():
             if self.place_list.count(nest) > 1:
                 same = nest
                 inner_dupes_idx.append(i)
-                if len(inner_dupes_idx) > 2:
-                    duplicate_error = Toplevel(self.view)
-                    duplicate_error.title("Too many duplicates, find unique names.")
-                    return
             i += 1
         if len(inner_dupes_idx) == 0:
             return
@@ -392,14 +289,7 @@ class ValidatePlace():
         def pinpoint_child(parent, children):
             conn = sqlite3.connect(current_file)
             cur = conn.cursor()
-
-            cur.execute(
-                '''
-                    SELECT place_id1
-                    FROM places_places
-                    WHERE place_id2 = ?
-                ''',
-                (parent,))
+            cur.execute(select_place_id1, (parent,))
             possible_children = [i[0] for i in cur.fetchall()]
             
             cur.close()
@@ -441,7 +331,6 @@ class ValidatePlace():
         '''                   
 
         def test_for_all_new():
-            # print("line", looky(seeline()).lineno, "running")
             z = 0
             for dkt in self.place_dicts:
                 if dkt.get("temp_id") is not None and len(dkt["id"]) == 0:
@@ -449,7 +338,6 @@ class ValidatePlace():
                         z += 1
                         continue
                     else:
-                        # print("line", looky(seeline()).lineno, "running")
                         self.open_dialog = False
                         return
 
@@ -462,7 +350,6 @@ class ValidatePlace():
                 elif len(dkt["id"]) == 1 and dkt.get("temp_id") is None:
                     known += 1
                 z += 1
-            # print("line", looky(seeline()).lineno, "z, known:", z, known)
             if z == known: self.open_dialog = False
 
         def test_for_new_plus_known():
@@ -484,52 +371,12 @@ class ValidatePlace():
                 else:
                     print("line", looky(seeline()).lineno, "case not handled")                    
                 z += 1
-            # print("line", looky(seeline()).lineno, "new, known:", new, known)
             if  new == 0 and known == 0:
                 self.open_dialog = False
 
-        # test_for_any_duplicates()
         test_for_all_new()
-        # print("line", looky(seeline()).lineno, "self.open_dialog:", self.open_dialog)
         test_for_all_known()
         test_for_new_plus_known()
-        # test_for_any_new_or_known()
-        # test_for_any_new_or_dupl()
-        # print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
-
-# The code works by filtering away duplicates to try to make them singles thus 
-#   knowns. The goal is to prevent the dialog from opening unnecessarily.
-# I.e. if len(id)>1 the code tries to get it down to 1.
-# Or if len(id)==0 a temp_id is made since it's a new nest.
-# Also a temp_id is made for an orphan in case it's a new nest.
-# When place_dicts is in its final form, its id key(s) are evaluated
-#   to see whether or not to open the New & Duplicate Places dialog for user 
-#   clarification.
-
-# CASES TO TEST FOR (self.open_dialog = True by default):
-#   each test has to be done for each nest:
-#   len(id)     temp_id exists        nest state    self.open_dialog
-#       0            yes                new            false
-#       0             no              undefined (code is lacking)            
-#       1            yes             known-or-new       true
-#       1             no                known          false
-#       >1           yes              dupl-or-new       true
-#       >1            no                 dupl          false
-
-# WHAT TO DO ABOUT IT depends on the profile of the whole nesting
-#   profile                    self.open_dialog (final)
-#   all new                    false
-#   all known                  false
-#   any dupl                   true
-#   some new, some known       false
-#   any known-or-new           true
-#   any dupl-or-new            true
-
-# Since self.open_dialog is True by default, the only tests that
-#   have to be done are those that would change it to False.
-#   So we only test for "all new", "all known" and "some new, some known".
-#   Instead of setting the boolean default to False and checking for
-#   complicated conditions, we set it to True and check for simple stuff.
  
         if self.open_dialog is True:
             new_place_dialog = NewPlaceDialog(
@@ -551,17 +398,6 @@ class ValidatePlace():
 
     def input_places_to_db(self):
         print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
-
-    def make_new_place(self, position, nesting):
-        '''
-            Add one new nest to the database if there's only one new place to make.
-            Always add places one at a time, passing the updated dict each time.
-            So if more than one new place is to be made, run this function over
-            with the dict updated first to reflect what's actually in the database
-            at that moment.
-        '''
-
-        print("line", looky(seeline()).lineno, "position, nesting", position, nesting)
 
 class NewPlaceDialog():
     def __init__(
@@ -598,7 +434,8 @@ class NewPlaceDialog():
 
             window.columnconfigure(1, weight=1)
             window.rowconfigure(1, weight=1)
-            lab = MessageHilited(window, text=self.message, justify='left', aspect=500)
+            lab = MessageHilited(
+                window, text=self.message, justify='left', aspect=500)
             lab.grid(column=1, row=1, sticky='news', ipady=18)
 
         def ok():
@@ -608,12 +445,15 @@ class NewPlaceDialog():
 
         def cancel():
             self.new_places_dialog.destroy()
-        size = (self.parent.winfo_screenwidth(), self.parent.winfo_screenheight())
+        size = (
+            self.parent.winfo_screenwidth(), self.parent.winfo_screenheight())
         self.new_places_dialog = Toplevel(self.parent)
-        self.new_places_dialog.maxsize(width=int(size[0] * 0.66), height=int(size[1] * 0.66))
+        self.new_places_dialog.geometry("+84+84")
+        self.new_places_dialog.maxsize(
+            width=int(size[0] * 0.85), height=int(size[1] * 0.95))
         self.new_places_dialog.columnconfigure(1, weight=1)
         self.new_places_dialog.rowconfigure(4, weight=1)
-        canvas = Border(self.new_places_dialog, size=3) # size shd not be hard-coded            
+        canvas = Border(self.new_places_dialog, size=3) # don't hard-code size            
         canvas.title_1.config(text=self.title)
         canvas.title_2.config(text='')
 
@@ -740,12 +580,11 @@ class NewPlaceDialog():
             elif dkt.get("temp_id") is None:
                 place_id = ("none",)
             elif dkt.get("temp_id"):
-                place_id = dkt["temp_id"] # place id will be int type which marks it as a new place
+                # place id will be int type which marks it as a new place
+                place_id = dkt["temp_id"]
             else:
                 print("line", looky(seeline()).lineno, "case not handled")
-            # print("line", looky(seeline()).lineno, "place_id:", place_id)
             if type(place_id) is int:
-                print("line", looky(seeline()).lineno, "running")
                 place_hints.append('')
             else:
                 for num in place_id:
@@ -760,15 +599,10 @@ class NewPlaceDialog():
                             place_hint = place_hint[0]
                         place_hints.append(place_hint)
             # reconfigure place_id for display
-            print("line", looky(seeline()).lineno, "add_new_place_option:", add_new_place_option)
-            print("line", looky(seeline()).lineno, "place_id:", place_id)
             if type(place_id) is int:
-                print("line", looky(seeline()).lineno, "add_new_place_option:", add_new_place_option)
                 if dkt["temp_id"] is not None and len(dkt["id"]) > 0:
-                    print("line", looky(seeline()).lineno, "dkt['id']:", dkt["id"])
                     place_hints.append('')
             elif add_new_place_option is True:
-                print("line", looky(seeline()).lineno, "running")
                 place_hints.append('')
             elif len(place_id) == 1:
                 place_id = place_id[0]
@@ -790,16 +624,9 @@ class NewPlaceDialog():
             h = 0
             row = 0
             for hint in place_hints:
-
-
-
-
                 if dkt.get("temp_id") is not None and len(dkt["id"]) > 0:
                     # user will choose between a new ID or one of the existing IDs
                     new_id = dkt["temp_id"]
-                    
-
-
                     last_idx = len(dkt["id"])
                     if h == last_idx:
                         current_id = new_id
@@ -812,16 +639,11 @@ class NewPlaceDialog():
                         nesting = [i for i in nesting if i]
                         nesting = ", ".join(nesting)
                         rad_string = "{}: {}".format(current_id, nesting)
-
-
-
                 elif dkt.get("temp_id") is not None and len(dkt["id"]) == 0:
                     # user will OK or CANCEL new ID
                     current_id = dkt["temp_id"]
                     rad_string = "{}: {} (new place and new place ID)".format(
                         current_id, dkt["input"])
-
-
                 else:
                     current_id = dkt["id"][h]
                     cur.execute(select_first_nested_place, (current_id,))
@@ -829,11 +651,6 @@ class NewPlaceDialog():
                     nesting = [i for i in nesting if i]
                     nesting = ", ".join(nesting)
                     rad_string = "{}: {}".format(current_id, nesting)
-
-
-
-
-
                 rad = RadiobuttonBig(
                     self.hint_frm, 
                     variable=self.radvars[t],
@@ -895,12 +712,9 @@ class EditRow(Frame):
         cancel_butt.grid(column=3, row=0, padx=6, pady=6)
 
     def remove_edit_row(self):
-        self.grid_forget()       
-
+        self.grid_forget()
 
 if __name__ == "__main__":
-
-    from widgets import Toplevel, Label
 
     trials = {
         'a' : "114 Main Street, Paris, Precinct 5, Lamar County, Texas, USA",
@@ -944,15 +758,35 @@ if __name__ == "__main__":
         'mmm' : "Calhoun County, Texas, USA",
     }
 
-    def validate(evt):
-        entry_input = evt.widget.get()
-        for k,v in trials.items():
-            if entry_input == k:
-                place_input = v
+    def get_final(evt):
+        widg = evt.widget
+        # final = widg.get()
+        # if final != self.initial:
+            # self.final = final
+            # for row in self.findings:
+                # c = 0
+                # for col in row[0:-1]:
+                    # if col[0] == widg:
+                        # self.finding = row[9]
+                        # col_num = c
+                    # c += 1
+        
+            # self.update_db(widg, col_num)
+        update_db(widg) # will need (widg, col_num) in real one
+
+    # def validate(evt):
+    def update_db(widg):
+        # entry_input = evt.widget.get()
+        # for k,v in trials.items():
+            # if entry_input == k:
+        final = widg.get()
+        # for k,v in trials.items():
+            # if final == k:
+                # place_input = v
         for child in frame.winfo_children():
             child.destroy()
-        final = ValidatePlace(view, treebard, place_input)
-        print("line", looky(seeline()).lineno, "final.place_dicts:", final.place_dicts)
+        # final = ValidatePlace(view, treebard, place_input)
+        final = ValidatePlace(view, treebard, final)
         j = 0
         for dkt in final.place_dicts:
             lab = Label(
@@ -962,20 +796,67 @@ if __name__ == "__main__":
             lab.grid()
             j += 1
 
+    finding = 1
+
     view = tk.Tk()
     treebard = view # mockup; this isn't what really happens
 
-    entry = Entry(view)
+    entry = EntryAutofill(view, width=50)
+    entry.config(textvariable=entry.var)
+    entry.values = place_strings
+    entry.autofill = True
     entry.grid()
     entry.focus_set()
-    entry.bind('<FocusOut>', validate)
+    # entry.bind('<FocusOut>', validate)
+    entry.bind("<FocusOut>", get_final)
+
+
+    # auto = EntryAutofill(root, width=50)
+    # auto.config(textvariable=auto.var)
+    # strings = make_autofill_strings()
+    # # auto.values = short_values
+    # auto.values = strings
+    # auto.autofill = True
+    # auto.focus_set()  
+
+
     traverse = Entry(view)
     traverse.grid()
     frame = Frame(view)
     frame.grid()
 
+
     
     view.mainloop()
+
+
+
+# DO LIST
+
+# input to db
+# add a search box for ids by name or name by ids
+# test all cases and make more cases to test
+    # concoct a case where there are 
+    #   2 contiguous insertions not at first or last 
+    #   2 contiguous insertions at first
+    #   2 contiguous insertions at last
+    #   2 non-contiguous insertions not at first or last 
+    #   2 non-contiguous insertions at first
+    #   2 non-contiguous insertions at last
+    #   1 new place and nothing else
+    #   2 new places and nothing else
+    #   3 new places and nothing else
+    #   1 new place and it's last
+    #   2 new places and they're both last
+    #   2 new places and they're not contiguous and one is last
+    #   inner duplicates as well as outer duplicates
+    #   inner duplicates as well as outer duplicates as well as orphans
+    #   inner duplicates as well as new places
+    #   etc.
+# in the real one, if CANCEL is pressed, the table cell that triggered this procedure should be cleared out so user can start fresh and not get the procedure auto-triggered again from the old data he input.
+
+
+
 '''
 Cities named Maine in America.	
 Maine - North Carolina
@@ -1000,41 +881,133 @@ Maine - Poitou-Charentes
 
 '''
 
-
-
-# DO LIST
-
-# handle the gui case for when user can choose an existing place or a new id. currently the right number of existing places are displayed but with all the newly generated id instead of their own.
-
-
-# concoct a case where there are 
-#   2 contiguous insertions not at first or last 
-#   2 contiguous insertions at first
-#   2 contiguous insertions at last
-#   2 non-contiguous insertions not at first or last 
-#   2 non-contiguous insertions at first
-#   2 non-contiguous insertions at last
-#   1 new place and nothing else
-#   2 new places and nothing else
-#   3 new places and nothing else
-#   1 new place and it's last
-#   2 new places and they're both last
-#   2 new places and they're not contiguous and one is last
-#   inner duplicates as well as outer duplicates
-#   inner duplicates as well as outer duplicates as well as orphans
-#   inner duplicates as well as new places
-#   etc.
-# find every place I tried to detect whether in final nest and instead just don't loop that far ie for x in lst[0:-1]
-# finish duplicate_error and if it opens eg @ jjj, the clarification dlg shd not also open
-# add a search box for ids by name or name by ids
-# input temp_id for new places
-# test all cases
-# move query strings to module
-# in the real one, if CANCEL is pressed, the table cell that triggered this procedure should be cleared out so user can start fresh and not get the procedure auto-triggered again from the old data he input.
-
 # DEV DOCS
+
+
+
+
+'''
+New Doc Strings 20210523
+Treebard compares user-input nested place strings to place strings stored in
+the database to try and figure out which place the user intended. Since the
+main goal was to not open the New & Duplicate Places Dialog unnecessarily,
+it was late in the game when a major simplification to the code occurred
+to me: open the dialog by default and then find simple reasons not to.
+Instead of trying to do what had kept me confused till then, which was
+to keep the dialog closed by default and test for complicated conditions
+which should cause the dialog to open.
+
+PLACE STRING TERMINOLOGY
+nest: "Paris" or "France" in "Paris, France"
+new nest: a nest that's not in the database yet
+single: a nest that occurs in the database in one record only
+nesting, nested places, nested place string: "Paris, France"
+child: "Paris" in "Paris, France"
+parent: "France" in "Paris, France"
+orphan: "Paris" in "Paris, Linn County, Iowa" if Linn County is not in the database
+inner duplicate: "Maine" in "Maine, Maine, USA"
+outer duplicate, duplicate: "Paris" in "Paris, France" and "Paris, Texas"
+known: this string exists as a single in the database e.g.
+    "Timbuktu", so if user enters "Timbuktu", depending on 
+    the context in the nesting, Treebard might guess with   
+    reasonable certainty that this is Timbuktu, Mali since
+    there's only nest called "Timbuktu" in the database: Timbuktu, Mali. But if
+    the user also enters another place by the same name (e.g.
+    the crater on Mars named Timbuktu), then "Timbuktu" will
+    no longer be treated as a known, and Treebard will have
+    to try to figure out which Timbuktu is intended each
+    time the user enters the name. Depending on what other 
+    nests are in the nesting, a dialog might open for the
+    user to explicitly state which Timbuktu to use.
+
+EXPECTATIONS
+The goal is to open a duplicate place name dialog for user clarification
+but to do so as seldom as possible within reason. Here's an example of
+"within reason". User inputs "Paris, Precinct 5, Lamar County, Texas, USA".
+Paris is an outer duplicate, Precinct 5 is a new place, and the last three
+nests are known. It seems pretty obvious to the user which Paris is meant:
+the one he's already entered in Lamar County, Texas. And we could write 
+the code to guess that's what he meant, but the more complicated the code gets, the
+greater will be our self-loathing at some point in the future when an even
+more complicated bit of code has to be added for an even more convoluted
+imagined necessity. We don't like to open R U Sure or anything like it,
+but entering new places is done all the time because Treebard should not come pre-loaded with everything that Google Maps has ever heard
+of. Portability is important and we have only a wee snort of contempt for the kind of
+genealogy that is supposed to be all done by machine logic without the user
+having to do any research. The internet is filling up with bad data invented
+by smarty-pants software. And we don't like bloated, unmaintainable code.
+Part of the reason for Treebard to exist is that the code should be usable
+by amateur programmers. So for these reasons and others, it is my decision
+at this point (after literally months spent writing and re-writing the code
+for the new and duplicate places dialog) that the right thing to do is to draw the
+line for opening a dialog slightly early rather than slightly late. Treebard will
+ask for user clarification slightly more often than some users would like,
+in cases where new places are inserted into existing nested place strings which also 
+contain duplicate place names.
+But I failed to mention the most important reason for not trying to guess
+which place out of a set of duplicates is intended: due to circumstances that we can't always predict, Treebard might guess wrong. Whereas if we give the user a chance to input the new place correctly,
+in the long run the user will be happier about it. We shouldn't try to predict every eventuality in a misguided attempt to make
+the user's decisions for him. But it would also be wrong to allow free
+entry of just any old misbegotten place name such as mis-spellings and true duplicates. Somewhere between the two
+extremes of "do what you want" and "do what I say", a sane middle-ground is being groped-in-the-dark for as fastidiously as possible.
+For example, when entering a new place nested among existing places, the user will be shown a dialog in which the new place has been assigned an ID and barring other complex input, all he has to do is press OK. This dialog seems superfluous depending on your point of view, but from Treebard's stance, the user should have a chance to review and cancel most new place input. The only time Treebard doesn't open a dialog for new place input is when within the nesting that's being input, all of the nests are new input, for example: "Antarctica" or "Pen Hill, Dichotomy County, Fellows Island, North Sea" or "back seat, Geronimo's Cadillac, Indian Territory, The New World" etc.
+
+Design Features:
+-- The big place lists are gotten from the database once on load, not each time they're needed. 
+-- The big place lists are updated and reloaded each time the database place tables change, so always current.
+
+There are three tables in the database re: places:
+1) place table stores place_id and places i.e. the nest (the place string)
+2) places_places table stores child-parent pairs. A nest can have more than one parent, and this is a unique feature of Treebard which makes its places data storage and manipulation historically accurate and complex.
+3) nested_places stores nestings. Goal is to not look at this table at all for data manipulation in this module, as its reason to exist is to provide autofill strings for place inputs. Since nested_places is a junction table built from data in the first two tables, it would be best if the goals of this module could be met by referencing only the first two tables.
+
+Autofill places are key to our design. Allowing only good data up front is important so user will not have to split and merge places when he finds later that bad data has been allowed into the database. But the validation process should be invisible to the user almost always, unless he's doing something really unusual in which case he can expect to see dialogs. In very unusual cases, the user will want to cancel the dialog and instead input the place nesting manually in the places tab.
+
+Unfortunately, Treebard can't accept place names that contain a comma. Few of these exist, and if a user wants to enter one, he'll have to change the comma to a hyphen or something. We more or less have to use commas to delimit nests within nestings, I don't think there's any way around it, and place names containing commas won't work.
+
+The nested_places table is important. I don't think it denormalizes anything, because 1) each cell contains one value, 2) no data input is repeated except as foreign keys, and 3) in spite of the fact that the columns in the nested_places table are meant to provide ordered values--i.e. the order of the columns is important--it's the most normalized way I could think of to store an autofill string comprised of various concatenated data, so I made the table and it works. You could, if you wanted, use the data in any order you wanted, because there's only one piece of data per table cell. So I don't think it's actually denormalized.
+
+We should pre-populate the database only with currently existing countries, continents and major oceans, and let the user provide the places he actually needs. The places he enters can be used in all his trees. Possibly there should be a global places list for places he wants to use in every tree and a per-tree places list, but I don't want to deal with this. It shouldn't be a problem because the autofill place list will be manipulated to first show recently used places. So if the user has input Zuneida Resort and uses it a lot, it will show up before Albuquerque. If a place called "Aababaca" had to be input to one tree and used once, it can remain harmlessly in a global places table because Treebard will show Albuquerque first if Albuquerque has been used more recently.
+
+The only way to leave out the largest place (e.g. "USA" if user doesn't want to see it on every nested place string) is for the user to not enter it. Treebard disapproves so we shouldn't encourage it. Short versions of country names will be input for USA and USSR only, with their full versions input as a.k.a. All other place names should be spelled out. If some kinda silly official country names like "The Redundant Republic of Featherduster" are input as "Featherduster", it's OK because even if the capitol of Featherduster is called "Featherduster" too, Treebard can tell them apart. So for the most part, the user has a lot of flexibility.
+
+'''
 
 # nested places a.k.a. nested place strings a.k.a. nestings:
 # Incomplete nestings get correct but incomplete results. When testing a nesting, if wrong results are obtained, before ripping into the deceptively simple code (which took over 3 months to write), check your nesting. If a nest is missing from a hard-coded test nesting, or if the data in places_places or nested_places is incomplete or incorrect, the good code will give incomplete results. Example: "Paris, Lamar County, Texas, USA" looks right but it's missing "Precinct 5" between Paris and Lamar County (assuming that nest has been previously input), so it won't work up to par. Instead of correctly guessing all the nests, it will open a dialog because it won't be able to guess which "Paris" is intended. In practice, if the user has to have a nesting that doesn't include Precinct 5, he can add it just as easily as the complete nesting. The autofill might not work as conveniently--he might have to type more characters to get to a unique string that will autofill--but it will work. Generally the right way is to use complete nestings if possible, that's how Treebard is designed to work because Autofill and Potentially Multiple Parents for places are integral parts of the Treebard philosophy on how places should work so that place input will be historically accurate yet still convenient and intuitive for the user to do.
+
+# The code works by filtering away duplicates to try to make them singles thus 
+#   knowns. The goal is to prevent the dialog from opening unnecessarily.
+# I.e. if len(id)>1 the code tries to get it down to 1.
+# Or if len(id)==0 a temp_id is made since it's a new nest.
+# Also a temp_id is made for an orphan in case it's a new nest.
+# When place_dicts is in its final form, its id key(s) are evaluated
+#   to see whether or not to open the New & Duplicate Places dialog for user 
+#   clarification.
+
+# CASES TO TEST FOR (self.open_dialog = True by default):
+#   each test has to be done for each nest:
+#   len(id)     temp_id exists        nest state    self.open_dialog
+#       0            yes                new            false
+#       0             no              undefined (code is lacking)            
+#       1            yes             known-or-new       true
+#       1             no                known          false
+#       >1           yes              dupl-or-new       true
+#       >1            no                 dupl          false
+
+# WHAT TO DO ABOUT IT depends on the profile of the whole nesting
+#   profile                    self.open_dialog (final)
+#   all new                    false
+#   all known                  false
+#   any dupl                   true
+#   some new, some known       false
+#   any known-or-new           true
+#   any dupl-or-new            true
+
+# Since self.open_dialog is True by default, the only tests that
+#   have to be done are those that would change it to False.
+#   So we only test for "all new", "all known" and "some new, some known".
+#   Instead of setting the boolean default to False and checking for
+#   complicated conditions, we set it to True and check for simple stuff.
 
 
