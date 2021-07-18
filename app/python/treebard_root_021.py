@@ -1,10 +1,6 @@
-# treebard_root_020.py
+# treebard_root_021.py
 
-# _19 was doing well but then I realized that because of not using the Windows border, the app doesn't get an icon on the taskbar. So restructuring again. Keep it the same (Treebard class is not a widget) but add a new pseudo-root, a Toplevel widget called view which is what's actually seen. The flyout image for the Windows taskbar on hover is an image on the real root. The root has the windows taskbar and that flyout image, nothing else. The pseudo-root has all the capabilities of root and follows the root when withdrawn or deiconified.
-
-# Also in this restructuring I want to pay more attention to providing easy reference to base classes such as root, treebard, view, main, etc as the various parts are added. I want to pass basic references and never go master.master.master to get what I want.
-
-# To avoid confusion I will change "root" to "icon" and use "view" for the new root, the visible app. So the Tk instance will now be called "icon" because that's what it's being used for.
+# _20 replaced root with icon which was used only for a taskbar icon, and view which became the new root but was really an ordinary toplevel. It worked but it was too much trouble for too little wonderfulness so I will roll this back to the normal root way of doing things. Also planning to move all the Toykinter widgets out of widgets.py into another module toykinter_widgets.py and manually compare and synchronize them with the toykinter modules which are now ahead of these, having been just now used together in a demo app so there have been lots of changes to make them work. Also planning to get rid of all ttk widgets now, having proved it can be done. All that is for _21.
 
 import tkinter as tk
 from PIL import Image, ImageTk
