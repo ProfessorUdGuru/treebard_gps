@@ -14,7 +14,7 @@ from right_click_menu import make_rc_menus, RightClickMenu
 from message_strings import note_dlg_msg
 from utes import center_window, create_tooltip
 from custom_listbox_widget import Listbox
-from files import get_current_file
+from files import get_current_file, current_file
 from query_strings import (
     update_note, select_count_subtopic, insert_note, insert_findings_notes,
     select_notes_refresh, update_note_private, update_note_subtopic,
@@ -28,7 +28,7 @@ import dev_tools as dt
 
 
 formats = make_formats_dict()
-current_file = get_current_file()[0]
+# current_file = get_current_file()[0]
 ST = ThemeStyles()
 
 class NotesDialog(Toplevel):

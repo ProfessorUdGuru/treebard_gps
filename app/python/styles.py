@@ -3,12 +3,16 @@ import tkinter as tk
 from tkinter import ttk
 import sqlite3
 from tkinter import font
-from files import conn_fig
+# from files import conn_fig
+# from files import get_current_file
+from files import current_file
 from query_strings import(
     select_opening_settings, select_all_color_schemes,
     select_all_color_schemes_plus
 )
 import dev_tools as dt
+from dev_tools import looky, seeline
+# current_file = get_current_file()[0]
 
 MAX_WINDOW_HEIGHT = 0.95
 MAX_WINDOW_WIDTH = 0.995
@@ -622,7 +626,8 @@ class ThemeStyles:
 '''
 
 def get_opening_settings():
-    conn = sqlite3.connect(conn_fig)
+    conn = sqlite3.connect(current_file)
+    # conn = sqlite3.connect(conn_fig)
     cur = conn.cursor()
     cur.execute(select_opening_settings)
     # cur.execute('''
@@ -714,7 +719,8 @@ formats = make_formats_dict()
 # print('formats is', formats)
 
 def get_color_schemes():
-    conn = sqlite3.connect(conn_fig)
+    conn = sqlite3.connect(current_file)
+    # conn = sqlite3.connect(conn_fig)
     cur=conn.cursor()
     cur.execute(select_all_color_schemes)
     schemes = cur.fetchall()
@@ -723,7 +729,8 @@ def get_color_schemes():
     return schemes
 
 def get_color_schemes_plus():
-    conn = sqlite3.connect(conn_fig)
+    # conn = sqlite3.connect(conn_fig)
+    conn = sqlite3.connect(current_file)
     cur=conn.cursor()
     cur.execute(select_all_color_schemes_plus)
     schemes = cur.fetchall()

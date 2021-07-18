@@ -7,7 +7,7 @@ import sqlite3
 from widgets import (
     Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay)
 from styles import get_color_schemes, get_color_schemes_plus, make_formats_dict, ThemeStyles
-from files import get_current_file
+from files import current_file
 from query_strings import (
     color_scheme, delete_color_scheme, select_color_scheme_current, 
     update_color_scheme_null, insert_color_scheme, 
@@ -17,7 +17,7 @@ import dev_tools as dt
 PORTWIDTH = 840 # make this bigger if tab gets bigger for ex. if another tab gets bigger this one will too; if it doesn't work out, get rid of move_right & move_left, just a toy not important; if something user can do has the power to make the tabs bigger, then this won't work or at least has to be made into a class or something
 
 formats = make_formats_dict()
-current_file = get_current_file()[0]
+# current_file = get_current_file()[0]
 
 class Colorizer(Frame):
     def __init__(self, parent, notebook, root, right_panel, *args, **kwargs):

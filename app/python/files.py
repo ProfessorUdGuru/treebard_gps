@@ -1,5 +1,5 @@
 # files (import as files)
-
+from sys import argv
 from os import path, rename
 from shutil import copy2
 import tkinter as tk
@@ -9,12 +9,55 @@ from PIL import Image, ImageTk
 import sqlite3
 from query_strings import (select_current_tree, update_current_tree)
 import dev_tools as dt
+from dev_tools import looky, seeline
 
-root_drive = '{}{}'.format(path.abspath('.').split(path.sep)[0], path.sep)
-conn_fig = '{}treebard_gps/data/sample_tree/sample_tree.tbd'.format(root_drive)
+# *********************************************************
+# KEEP THIS SECTION INCLUDING COMMENTED FOR FUTURE REFERENCE
+# BEFORE THE root_drive WAS BEING USED IN LIEU OF BOTHERING TO FIGURE OUT
+# HOW TO FIND THE ACTUAL DRIVE BEING USED. conn_fig HAS BEEN CHANGED
+# TO current_database 
+# WHEN ALL HAS BEEN TESTED (SINCE I MOVED ALL FILES TO D: DRIVE), THEN
+# IT'S OK TO DELETE THE COMMENTED LINES BELOW
+# POSSIBLE root_drive OR conn_fig HAS BEEN REFERENCED SOMEWHERE SO THEY'D
+# HAVE TO BE CHANGED TO current_drive AND current_database
+# for some reason the relative paths used throughout the app no lonter work
+# since these changes but all I've had to do to fix it is to import project_path
+# from files and add it to the relative paths with another {} in the format string
+
+# root_drive = '{}{}'.format(path.abspath('.').split(path.sep)[0], path.sep)
+# conn_fig = '{}treebard_gps/data/sample_tree/sample_tree.tbd'.format(root_drive)
+# print("root_drive", root_drive)
+# print("conn_fig", conn_fig)
+
+current_path = argv[0]
+print("current_path", current_path)
+split_path = path.splitdrive(current_path)
+current_drive = '{}\\'.format(split_path[0])
+current_database = '{}treebard_gps/data/sample_tree/sample_tree.tbd'.format(current_drive)
+project_path = '{}treebard_gps/app/python/'.format(current_drive)
+print("split_path[0]", split_path[0])
+print("argv", argv)
+print("argv[0]", argv[0])
+print("current_drive", current_drive)
+print("current_database", current_database)
+print("project_path", project_path)
+# OUTPUT:
+# root_drive C:\
+# conn_fig C:\treebard_gps/data/sample_tree/sample_tree.tbd
+# current_path D:\treebard_gps\app\python\treebard_root_020.py
+# split_path[0] D:
+# argv ['D:\\treebard_gps\\app\\python\\treebard_root_020.py']
+# argv[0] D:\treebard_gps\app\python\treebard_root_020.py
+# current_drive D:\
+# current_database D:\treebard_gps/data/sample_tree/sample_tree.tbd
+
+# ****************************************************************
+# i THINK THAT ALL INSTANCES OF root_drive IN THIS FILE NEED TO BE
+#   REPLACED WITH current_drive?????????????????????????????????
 
 def get_current_file():
-    conn = sqlite3.connect(conn_fig)
+    # conn = sqlite3.connect(conn_fig)
+    conn = sqlite3.connect(current_database)
     cur = conn.cursor()
     cur.execute(select_current_tree)
     cur_tup = cur.fetchone()
@@ -32,7 +75,8 @@ def get_current_file():
     elif len(cur_tup) > 0:
         current_dir = cur_tup.rstrip('.tbd')
         current_file = '{}treebard_gps/data/{}/{}'.format(
-            root_drive, current_dir, cur_tup)
+            # root_drive, current_dir, cur_tup)
+            current_drive, current_dir, cur_tup)
     else:
         current_file = ''
     cur.close()
@@ -48,11 +92,14 @@ def get_current_file():
         current_dir = '{}treebard_gps/data/settings'.format(
             root_drive)
     return current_file, current_dir
+current_file, current_dir = get_current_file()
+
 
 def set_current_file(new_current_file):
     if new_current_file.strip() != '':
         current_file = new_current_file
-        conn = sqlite3.connect(conn_fig)
+        # conn = sqlite3.connect(conn_fig)
+        conn = sqlite3.connect(current_database)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         cur.execute(update_current_tree, (current_file,))

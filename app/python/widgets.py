@@ -7,12 +7,14 @@ The docstring was so out-of-date that I just deleted it.
 import tkinter as tk
 from tkinter import ttk
 import sqlite3
+from files import current_drive, project_path
 from tkinter import messagebox
 from styles import make_formats_dict, NEUTRAL_COLOR
 from PIL import Image, ImageTk
 from utes import create_tooltip
 from query_strings import select_current_person_id    
 import dev_tools as dt
+from dev_tools import looky, seeline
 
 
 
@@ -1568,8 +1570,11 @@ class Sizer(Label):
         self.master = master
         self.click_x = 0
         self.click_y = 0
-
-        file = 'images/icons/{}.png'.format(icon)
+# D:\treebard_gps\app\python\images\icons
+        print("line", looky(seeline()).lineno, "current_drive:", current_drive)
+        print("line", looky(seeline()).lineno, "project_path:", project_path)
+        file = '{}images/icons/{}.png'.format(project_path, icon)
+        print("line", looky(seeline()).lineno, "file:", file)
         img = Image.open(file)
         self.tk_img = ImageTk.PhotoImage(img)
 

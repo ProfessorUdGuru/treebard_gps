@@ -3,13 +3,13 @@
 import tkinter as tk
 from tkinter import ttk
 import sqlite3
-import files
+from files import current_file
 from widgets import EntryAutofill
 from query_strings import (
    select_place_id2, select_count_place_id, select_place)
 import dev_tools as dt
 
-current_file = files.get_current_file()[0]
+# current_file = files.get_current_file()[0]
 
 '''
     Terminology: "uppers" is a collection of a

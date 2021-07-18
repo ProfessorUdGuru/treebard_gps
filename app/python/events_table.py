@@ -2,7 +2,7 @@
 
 import tkinter as tk
 import sqlite3
-from files import get_current_file
+from files import current_file
 from window_border import Border 
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, 
@@ -41,7 +41,7 @@ import dev_tools as dt
 
 formats = make_formats_dict()
 ST = ThemeStyles()
-current_file = get_current_file()[0]
+# current_file = get_current_file()[0]
 # findings_export = []
 
 FINDING_TABLE_HEADS = (
@@ -776,6 +776,8 @@ if __name__ == '__main__':
 
 
 # DO LIST
+
+# refactor kin column so that if there are two parents, instead of showing a mother button and a father button, show a single button with "parents" on it and on hover, show two tooltips, one for each parent
 
 # refactor duplicate place dialog to use sets, do it in a git branch
 

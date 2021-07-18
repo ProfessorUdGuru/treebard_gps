@@ -2,7 +2,7 @@
 
 import tkinter as tk
 import sqlite3
-from files import get_current_file
+from files import get_current_file, current_file
 from widgets import (
     Frame, Label, ClearableReadonlyCombobox, ClickAnywhereCombo, Button, 
     LabelMovable, LabelH3, Entry, StatusbarTooltips, run_statusbar_tooltips)
@@ -18,7 +18,7 @@ import dev_tools as dt
 
 
 
-current_file = get_current_file()[0]
+# current_file = get_current_file()[0]
 
 GENDER_TYPES = ('unknown (default if left blank)', 'female', 'male', 'other')
 

@@ -1,7 +1,6 @@
 # dates
 
 import os
-import files
 import tkinter as tk
 from tkinter import ttk
 import sqlite3
@@ -15,7 +14,7 @@ import files
     flexible input formats and user-selected output formats.
     Only non-ambiguous output formats are available.
 '''
- 
+# why is this being called five times? just import current file from files
 current_file = files.get_current_file()[0]
 
 date_pref_combos = {}

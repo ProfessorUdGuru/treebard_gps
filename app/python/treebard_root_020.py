@@ -9,11 +9,13 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 import tkinter as tk
+from files import project_path
 from window_border import Border
 from scrolling import MousewheelScrolling
 from main import Main
 from widgets import Toplevel
 import dev_tools as dt
+from dev_tools import looky, seeline
 
 
 
@@ -64,7 +66,9 @@ def main():
     def make_taskbar_flyout_image():
         width = 600
         height = 300
-        flyout_pic_file = 'images/minstrels_o_beverley_16th_cent_england.gif'
+        flyout_pic_file = '{}images/minstrels_o_beverley_16th_cent_england.gif'.format(
+            project_path)
+        # flyout_pic_file = 'images/minstrels_o_beverley_16th_cent_england.gif'
         pil_img = Image.open(flyout_pic_file)
         tk_img = ImageTk.PhotoImage(pil_img)
         flyout_canvas = tk.Canvas(icon, height=height, width=width)
@@ -78,7 +82,7 @@ def main():
         icon.geometry('600x300+-2500+0')
         icon.focus_set() # so one click on taskbar icon gets result
         icon.attributes("-alpha", 0.0)
-        icon.iconbitmap(default='favicon.ico') 
+        icon.iconbitmap(default='{}favicon.ico'.format(project_path)) 
         icon.bind("<Unmap>", withdraw_new_root)
         icon.bind("<Map>", show_new_root)
 

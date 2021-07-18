@@ -6,13 +6,13 @@ from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
 from widgets import (Toplevel, Label, Button, Frame)
 from styles import ThemeStyles
-from files import get_current_file
+from files import current_file
 import dev_tools as dt
 
 
 
 
-current_file = get_current_file()[0]
+# current_file = get_current_file()[0]
 ST = ThemeStyles()
 
 def open_error_message(parent, message, title, buttlab):

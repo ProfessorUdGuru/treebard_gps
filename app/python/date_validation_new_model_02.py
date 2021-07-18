@@ -23,10 +23,10 @@
 import widgets as wdg
 import styles as st
 import sqlite3
-import files
+from files import current_file
 
 ST = st.ThemeStyles()
-current_file = files.get_current_file()[0]
+# current_file = files.get_current_file()[0]
 
 mock_date_from_db = 'est-1846-oc-14-ad-to-abt-1855-no-12-ad'
 

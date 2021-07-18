@@ -2,19 +2,20 @@
 
 import tkinter as tk
 from scrolling import Scrollbar
-from files import get_current_file
+from files import current_file, project_path
 from widgets import (
     LabelButtonImage, Frame, FrameTitleBar, LabelTitleBar, 
     StatusbarTooltips, run_statusbar_tooltips, Toplevel, Canvas)
 from styles import make_formats_dict, ThemeStyles, NEUTRAL_COLOR
 from PIL import Image, ImageTk
 import dev_tools as dt
+from dev_tools import looky, seeline
 
 
 
 formats = make_formats_dict()
 ST = ThemeStyles()
-current_file = get_current_file()[0]
+# current_file = get_current_file()[0]
 
 def close(evt):
     dlg = evt.widget.winfo_toplevel()
@@ -394,11 +395,11 @@ class TitleBarButton(LabelButtonImage):
         '''
 
         font_icon_file = {
-            'tiny' : (10, 'images/icons/{}_{}.png'.format(icon, 12)), 
-            'small' : (12, 'images/icons/{}_{}.png'.format(icon, 17)), 
-            'medium' : (14, 'images/icons/{}_{}.png'.format(icon, 21)), 
-            'large' : (18, 'images/icons/{}_{}.png'.format(icon, 32))}
-
+            'tiny' : (10, '{}images/icons/{}_{}.png'.format(project_path, icon, 12)), 
+            'small' : (12, '{}images/icons/{}_{}.png'.format(project_path, icon, 17)), 
+            'medium' : (14, '{}images/icons/{}_{}.png'.format(project_path, icon, 21)), 
+            'large' : (18, '{}images/icons/{}_{}.png'.format(project_path, icon, 32))}
+# file = '{}images/icons/{}.png'.format(project_path, icon)
         for k,v in font_icon_file.items():
             if icon_size == k:
                 icon_size = v[0]

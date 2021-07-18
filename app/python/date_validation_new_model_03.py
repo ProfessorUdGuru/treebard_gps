@@ -24,10 +24,10 @@ import widgets as wdg
 import styles as st
 import sqlite3
 import utes
-import files
+from files import current_file
 
 ST = st.ThemeStyles()
-current_file = files.get_current_file()[0]
+# current_file = files.get_current_file()[0]
 
 class DateError(wdg.Toplevel):
     def __init__(self, message, widg, *args, **kwargs):

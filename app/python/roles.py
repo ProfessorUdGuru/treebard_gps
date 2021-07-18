@@ -2,7 +2,7 @@
 
 import tkinter as tk
 import sqlite3
-from files import get_current_file
+from files import current_file
 from widgets import(
     Toplevel, Canvas, Frame, LabelH3, ClickAnywhereCombo, 
     EntryAutofillHilited, Button, StatusbarTooltips, run_statusbar_tooltips, 
@@ -26,7 +26,7 @@ import dev_tools as dt
 
 formats = make_formats_dict()
 ST = ThemeStyles()
-current_file = get_current_file()[0]
+# current_file = get_current_file()[0]
 
 class RolesDialog(Toplevel):
     def __init__(
