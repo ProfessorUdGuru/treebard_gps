@@ -100,7 +100,21 @@ class Main(Frame):
 
 
 
+# DO LIST BEFORE STARTING ON PLACES AGAIN
 
+# separate toykinter widgets from widgets.py
+
+# incorporate changes made recently by comparing toykinter modules and copying changes to treebard_gps modules without breaking the events table
+
+# get rid of icon/view complications
+
+# post forum re repos
+
+# make blog v. 0
+
+# finish gps thru table and push to repo
+
+# move to v. 0 exclusively announce on blog(s)
 
 
 
