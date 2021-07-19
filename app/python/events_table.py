@@ -55,7 +55,6 @@ def get_current_person():
     return current_person
 
 def do_place_update(right_nest, finding):
-    print('61 right_nest, finding is', right_nest, finding)
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(

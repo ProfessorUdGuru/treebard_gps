@@ -1,4 +1,4 @@
-# utilities (import as utes)
+# utes.py
 
 import tkinter as tk
 from styles import make_formats_dict
@@ -44,7 +44,7 @@ def center_dialog(dlg, frame=None):
 
 formats = make_formats_dict()
 
-#   -   -   -   -   -   -   standard tooltips   -   -   -   -   -   -   #
+#   -   -   -   see widgets.py for statusbar tooltips   -   -   -   #
 
 class ToolTip(object):
     '''
@@ -105,7 +105,7 @@ def create_tooltip(widget, text):
     widget.bind('<Enter>', enter)
     widget.bind('<Leave>', leave)
 
-    # return toolTip # added mbw 20210314 so tooltip can be manually destroyed
+#   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   #
 
 # make a canvas scroll with mousewheel
 def scroll_on_mousewheel(evt, canvas):

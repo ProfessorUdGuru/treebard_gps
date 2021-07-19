@@ -14,24 +14,23 @@ from dev_tools import looky, seeline
 
 # *********************************************************
 # KEEP THIS SECTION INCLUDING COMMENTED FOR FUTURE REFERENCE
-# BEFORE THE root_drive WAS BEING USED IN LIEU OF BOTHERING TO FIGURE OUT
+# BEFORE THE current_drive WAS BEING USED IN LIEU OF BOTHERING TO FIGURE OUT
 # HOW TO FIND THE ACTUAL DRIVE BEING USED. conn_fig HAS BEEN CHANGED
 # TO current_database 
 # WHEN ALL HAS BEEN TESTED (SINCE I MOVED ALL FILES TO D: DRIVE), THEN
 # IT'S OK TO DELETE THE COMMENTED LINES BELOW
-# POSSIBLE root_drive OR conn_fig HAS BEEN REFERENCED SOMEWHERE SO THEY'D
+# POSSIBLE current_drive OR conn_fig HAS BEEN REFERENCED SOMEWHERE SO THEY'D
 # HAVE TO BE CHANGED TO current_drive AND current_database
 # for some reason the relative paths used throughout the app no lonter work
 # since these changes but all I've had to do to fix it is to import project_path
 # from files and add it to the relative paths with another {} in the format string
 
-# root_drive = '{}{}'.format(path.abspath('.').split(path.sep)[0], path.sep)
-# conn_fig = '{}treebard_gps/data/sample_tree/sample_tree.tbd'.format(root_drive)
-# print("root_drive", root_drive)
+# current_drive = '{}{}'.format(path.abspath('.').split(path.sep)[0], path.sep)
+# conn_fig = '{}treebard_gps/data/sample_tree/sample_tree.tbd'.format(current_drive)
+# print("current_drive", current_drive)
 # print("conn_fig", conn_fig)
 
 current_path = argv[0]
-print("current_path", current_path)
 split_path = path.splitdrive(current_path)
 current_drive = '{}\\'.format(split_path[0])
 current_database = '{}treebard_gps/data/sample_tree/sample_tree.tbd'.format(current_drive)
@@ -43,7 +42,7 @@ print("current_drive", current_drive)
 print("current_database", current_database)
 print("project_path", project_path)
 # OUTPUT:
-# root_drive C:\
+# current_drive C:\
 # conn_fig C:\treebard_gps/data/sample_tree/sample_tree.tbd
 # current_path D:\treebard_gps\app\python\treebard_root_020.py
 # split_path[0] D:
@@ -53,11 +52,10 @@ print("project_path", project_path)
 # current_database D:\treebard_gps/data/sample_tree/sample_tree.tbd
 
 # ****************************************************************
-# i THINK THAT ALL INSTANCES OF root_drive IN THIS FILE NEED TO BE
+# i THINK THAT ALL INSTANCES OF current_drive IN THIS FILE NEED TO BE
 #   REPLACED WITH current_drive?????????????????????????????????
 
 def get_current_file():
-    # conn = sqlite3.connect(conn_fig)
     conn = sqlite3.connect(current_database)
     cur = conn.cursor()
     cur.execute(select_current_tree)
@@ -71,12 +69,11 @@ def get_current_file():
     if cur_tup == 'default_new_tree.db':
         current_file = cur_tup
         current_dir = '{}treebard_gps/data/settings'.format(
-            root_drive)
+            current_drive)
 
     elif len(cur_tup) > 0:
         current_dir = cur_tup.rstrip('.tbd')
         current_file = '{}treebard_gps/data/{}/{}'.format(
-            # root_drive, current_dir, cur_tup)
             current_drive, current_dir, cur_tup)
     else:
         current_file = ''
@@ -89,17 +86,15 @@ def get_current_file():
         #    so don't let sqlite make a blank db by that name
         set_current_file(valid_dummy)
         current_file = '{}treebard_gps/data/settings/{}'.format(
-            root_drive, valid_dummy)
+            current_drive, valid_dummy)
         current_dir = '{}treebard_gps/data/settings'.format(
-            root_drive)
+            current_drive)
     return current_file, current_dir
 current_file, current_dir = get_current_file()
-
 
 def set_current_file(new_current_file):
     if new_current_file.strip() != '':
         current_file = new_current_file
-        # conn = sqlite3.connect(conn_fig)
         conn = sqlite3.connect(current_database)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -176,8 +171,8 @@ def get_opening_dir():
     '''detects root drive of current working directory, 
         e.g. if running from flash drive or hard drive
         then detects user's save directory'''
-    # init_dir = root_drive + 'treebard_gps/data' # later
-    init_dir = root_drive + 'treebard_gps/data/sample_tree' # during dev
+    # init_dir = current_drive + 'treebard_gps/data' # later
+    init_dir = current_drive + 'treebard_gps/data/sample_tree' # during dev
     return init_dir
 
 def make_tree(parent, dialog=None):
@@ -185,7 +180,7 @@ def make_tree(parent, dialog=None):
     def get_default_db():
         '''detects root drive of current working directory, 
            e.g. if running from partitioned hd or USB'''
-        root_drive_local = root_drive.replace('\\', '/')
+        root_drive_local = current_drive.replace('\\', '/')
         init_file = '{}treebard_permanent/default_new_tree.db'.format(
             root_drive_local)
         return init_file
