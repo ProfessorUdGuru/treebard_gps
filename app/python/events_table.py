@@ -1,4 +1,4 @@
-# events_table [import as evts]
+# events_table
 
 import tkinter as tk
 import sqlite3
@@ -7,7 +7,7 @@ from window_border import Border
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, 
     KinTip, EntryAutofill, Separator, LabelH3, Button)
-from styles import make_formats_dict, ThemeStyles
+from styles import make_formats_dict, config_generic
 from names import get_name_with_id
 from roles import RolesDialog
 from notes import NotesDialog
@@ -40,9 +40,6 @@ import dev_tools as dt
 
 
 formats = make_formats_dict()
-ST = ThemeStyles()
-# current_file = get_current_file()[0]
-# findings_export = []
 
 FINDING_TABLE_HEADS = (
     'Event', 'Date', 'Place', 'Particulars', 'Age', 

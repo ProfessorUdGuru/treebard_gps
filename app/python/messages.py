@@ -1,12 +1,12 @@
 # messages.py (import as msg)
 
 import tkinter as tk
-from styles import ThemeStyles
+from styles import config_generic
 from widgets import Frame, Label, LabelItalic, Button, Entry
 from winsound import PlaySound, SND_ASYNC
 import dev_tools as dt
 
-ST = ThemeStyles()
+
 
 class Toplevelx(tk.Toplevel):
 
@@ -170,7 +170,7 @@ class AltInputMessage(MessageModel):
         self.edit.grid()
         self.cancel_all.grid()
 
-        ST.config_generic(self)
+        config_generic(self)
 
     def show(self):
         self.wm_deiconify()
@@ -192,7 +192,7 @@ class YesNoMessage(MessageModel):
         self.done.grid()
         self.stop.grid()
 
-        ST.config_generic(self)
+        config_generic(self)
 
     def on_ok(self):
         self.parent.focus_set()
@@ -219,7 +219,7 @@ class ErrorMessage(MessageModel):
 
         self.done.config(command=self.cancel)
 
-        ST.config_generic(self)
+        config_generic(self)
 
     def cancel(self):
         self.destroy()

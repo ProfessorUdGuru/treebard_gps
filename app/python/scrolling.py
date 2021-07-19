@@ -3,7 +3,7 @@
 import tkinter as tk
 from widgets import (Canvas, FrameHilited3, Entry, ToplevelHilited, Text,
     LabelHilited, ButtonFlatHilited, LabelTip2, CanvasHilited, Framex, Frame)
-from styles import ThemeStyles, make_formats_dict
+from styles import make_formats_dict, config_generic
 import dev_tools as dt
 
 
@@ -175,8 +175,6 @@ import dev_tools as dt
 '''
 
 formats = make_formats_dict()
-ST = ThemeStyles()
-
 
 def resize_scrolled_content(toplevel, canvas, window): 
     '''
@@ -328,7 +326,7 @@ class Scrollbar(Canvas):
         self.first_x = 0
 
         self.slidercolor = formats['bg']
-        self.troughcolor = formats['table_head_bg']
+        self.troughcolor = formats['head_bg']
 
         if orient == 'vertical':
             self.config(width=width)
@@ -441,7 +439,7 @@ class Scrollbar(Canvas):
     def colorize(self):
         formats = make_formats_dict()
         self.slidercolor = formats['bg']
-        self.troughcolor = formats['table_head_bg']
+        self.troughcolor = formats['head_bg']
         self.config(bg=self.troughcolor)
 
 class Combobox(FrameHilited3):
@@ -575,7 +573,7 @@ class Combobox(FrameHilited3):
 
         self.config_values(self.values)
         
-        ST.config_generic(self.drop)
+        config_generic(self.drop)
 
     def unbind_combo_parts(self, evt):
         self.master.unbind_all('<ButtonRelease-1>')
@@ -676,7 +674,7 @@ class Combobox(FrameHilited3):
             tip.destroy() 
 
     def highlight_arrow(self, evt):
-        self.arrow.config(bg=formats['table_head_bg'])
+        self.arrow.config(bg=formats['head_bg'])
 
     def unhighlight_arrow(self, evt):
         self.arrow.config(bg=formats['highlight_bg'])
@@ -1135,6 +1133,6 @@ if __name__ == '__main__':
     scroll_mouse.append_to_list(canvas3, resizable=False)
     scroll_mouse.configure_mousewheel_scrolling(in_root=True)
     
-    ST.config_generic(root)
+    config_generic(root)
     root.mainloop()
 

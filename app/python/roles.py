@@ -8,7 +8,7 @@ from widgets import(
     EntryAutofillHilited, Button, StatusbarTooltips, run_statusbar_tooltips, 
     Label, ButtonQuiet)
 from scrolling import Scrollbar
-from styles import make_formats_dict, ThemeStyles
+from styles import make_formats_dict, config_generic
 from names import get_all_persons, get_name_with_id, PersonAdd
 from right_click_menu import RightClickMenu, make_rc_menus
 from message_strings import role_dlg_msg, gen_edit_role_rows
@@ -25,8 +25,6 @@ import dev_tools as dt
 
 
 formats = make_formats_dict()
-ST = ThemeStyles()
-# current_file = get_current_file()[0]
 
 class RolesDialog(Toplevel):
     def __init__(
@@ -216,7 +214,7 @@ class RolesDialog(Toplevel):
 
         self.role_canvas.create_window(
             0, 0, anchor=tk.NW, window=self.role_content)
-        ST.config_generic(self) 
+        config_generic(self) 
         self.resize_window()
         self.resize_scrollbar() 
 
@@ -468,7 +466,7 @@ class RolesDialog(Toplevel):
 
         self.new_role_person_dialog.protocol("WM_DELETE_WINDOW", close_dialog)
         self.person_add.gender_input.focus_set()
-        ST.config_generic(self.new_role_person_dialog)
+        config_generic(self.new_role_person_dialog)
         self.new_role_person_dialog.wait_window()
         self.persons = get_all_persons() 
 

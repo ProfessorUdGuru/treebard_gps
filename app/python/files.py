@@ -1,4 +1,5 @@
-# files (import as files)
+# files
+
 from sys import argv
 from os import path, rename
 from shutil import copy2

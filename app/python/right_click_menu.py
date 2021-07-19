@@ -1,12 +1,12 @@
 # right_click_menu (import as rcm)
 
 import tkinter as tk
-from styles import ThemeStyles
+from styles import config_generic
 from widgets import Toplevel, LabelStylable, Button
 from message_strings import make_header_roles_notes
 import dev_tools as dt
 
-ST = ThemeStyles()
+
 
 def make_rc_menus(
         rcm_widgets, 
@@ -88,7 +88,7 @@ class RightClickMenu(tk.Menu):
         text.insert('end', self.message)
         off = Button(help, text='Done', command=help.destroy)
         off.grid(padx=24, pady=24, sticky='e')
-        ST.config_generic(help)
+        config_generic(help)
         off.focus_set()
 
     def attach_rt_clk_menu(self, evt):

@@ -2,13 +2,12 @@
 
 import tkinter as tk
 from widgets import Canvas
-from styles import make_formats_dict, ThemeStyles
+from styles import make_formats_dict, config_generic
 from right_click_menu import make_rc_menus, RightClickMenu
 from message_strings import pedigree_person_tab_msg
 import dev_tools as dt
 
 formats = make_formats_dict()
-ST = ThemeStyles()
 
 class PedigreeChart(Canvas):
     
@@ -133,5 +132,5 @@ class PedigreeChart(Canvas):
             self.rc_menu,
             pedigree_person_tab_msg)
 
-        ST.config_generic(self)
+        config_generic(self)
 

@@ -6,13 +6,12 @@ import tkinter as tk
 from widgets import (FrameHilited3, Entry, ToplevelHilited, 
     LabelHilited, ButtonFlatHilited, LabelTip)
 from scrolling import CanvasScrolledBG2
-from styles import ThemeStyles, make_formats_dict
+from styles import config_generic, make_formats_dict
 import dev_tools as dt
 
 
 
 formats = make_formats_dict()
-ST = ThemeStyles()    
 
 class Bilbobox(FrameHilited3):
     hive = []
@@ -105,7 +104,7 @@ class Bilbobox(FrameHilited3):
             frm.bind('<FocusOut>', self.unhighlight_arrow)
 
         self.config_values(self.values)
-        ST.config_generic(self.drop)
+        config_generic(self.drop)
 
     def detect_enter(self, evt):
         '''
@@ -190,7 +189,7 @@ class Bilbobox(FrameHilited3):
             tip.destroy() 
 
     def highlight_arrow(self, evt):
-        self.arrow.config(bg=formats['table_head_bg'])
+        self.arrow.config(bg=formats['head_bg'])
 
     def unhighlight_arrow(self, evt):
         self.arrow.config(bg=formats['highlight_bg'])

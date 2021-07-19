@@ -22,7 +22,7 @@ formats = make_formats_dict()
 
 # print('formats is', formats)
 # formats is {
-    # 'bg': '#232931', 'highlight_bg': '#393e46', 'table_head_bg': '#2E5447', 
+    # 'bg': '#232931', 'highlight_bg': '#393e46', 'head_bg': '#2E5447', 
     # 'fg': '#eeeeee', 'output_font': ('courier', 14), 'input_font': ('tahoma', 14), 
     # 'heading1': ('courier', 28, 'bold'), 'heading2': ('courier', 21, 'bold'), 
     # 'heading3': ('courier', 15, 'bold'), 'heading4': ('courier', 11, 'bold'), 
@@ -115,7 +115,7 @@ class FrameHilited2(Framex):
 
     def __init__(self, master, *args, **kwargs):
         Framex.__init__(self, master, *args, **kwargs)
-        self.config(bg=formats['table_head_bg'])
+        self.config(bg=formats['head_bg'])
 
 class FrameHilited3(Framex):
     ''' 
@@ -202,7 +202,7 @@ class Separator(Framex):
 
     def __init__(
         self, master, height, 
-        color1=formats['table_head_bg'], 
+        color1=formats['head_bg'], 
         color2=formats['highlight_bg'], 
         color3=formats['bg'], *args, **kwargs):
         Framex.__init__(self, master, *args, **kwargs)
@@ -251,7 +251,7 @@ class Separator(Framex):
 
     def colorize(self):
         formats = make_formats_dict()
-        self.color1=formats['table_head_bg'], 
+        self.color1=formats['head_bg'], 
         self.color2=formats['highlight_bg'], 
         self.color3=formats['bg']
         if self.height > 0:
@@ -329,7 +329,7 @@ class LabelItalicHilited(Labelx):
         Labelx.__init__(self, master, *args, **kwargs)
         self.config(
             font=formats['show_font'],
-            bg=formats['table_head_bg'])
+            bg=formats['head_bg'])
 
 class LabelHilited(Label):
     ''' 
@@ -346,7 +346,7 @@ class LabelHilited2(Label):
     def __init__(self, master, *args, **kwargs):
         Label.__init__(self, master, *args, **kwargs)
 
-        self.config(bg=formats['table_head_bg'])
+        self.config(bg=formats['head_bg'])
 
 class LabelTip(LabelHilited):
     ''' 
@@ -480,7 +480,7 @@ class LabelTitleBar(Labelx):
         Labelx.__init__(self, master, *args, **kwargs)
 
         # self.config(
-            # bg=formats['table_head_bg'], fg=formats['fg'])
+            # bg=formats['head_bg'], fg=formats['fg'])
 
         self.config(
             bg=NEUTRAL_COLOR, fg=formats['fg'])
@@ -534,7 +534,7 @@ class LabelMenuBar(Labelx):
     def __init__(self, master, size='tiny', *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
 
-        self.config(bg=formats['table_head_bg'])
+        self.config(bg=formats['head_bg'])
 
         if size == 'tiny':
             self.config(font=formats['titlebar_hilited_0'])
@@ -600,7 +600,7 @@ class LabelButtonImage(Labelx):
 
     def on_press(self, evt):
         formats = make_formats_dict()
-        self.config(relief='sunken', bg=formats['table_head_bg'])
+        self.config(relief='sunken', bg=formats['head_bg'])
 
     def on_release(self, evt):
         formats = make_formats_dict()
@@ -822,7 +822,7 @@ class LabelMovable(LabelHilited):
             widg.lift()        
 
     def highlight_on_focus(self, evt):        
-        evt.widget.config(bg=self.formats['table_head_bg'])
+        evt.widget.config(bg=self.formats['head_bg'])
 
     def unhighlight_on_unfocus(self, evt):        
         evt.widget.config(bg=self.formats['highlight_bg'])
@@ -851,7 +851,7 @@ class Button(Buttonx):
         self.config(
             font=(formats['output_font']),
             overrelief=tk.GROOVE, 
-            activebackground=formats['table_head_bg'],
+            activebackground=formats['head_bg'],
             bg=formats['bg'],
             fg=formats['fg'])
 
@@ -881,7 +881,7 @@ class ButtonQuiet(Buttonx):
             text='',
             width=3,
             overrelief=tk.GROOVE, 
-            activebackground=formats['table_head_bg'],
+            activebackground=formats['head_bg'],
             bg=formats['bg'],  
             fg=formats['fg'])
 
@@ -893,7 +893,7 @@ class ButtonPlain(Buttonx):
         self.config(
             font=(formats['input_font']),
             bd=0, 
-            activebackground=formats['table_head_bg'],
+            activebackground=formats['head_bg'],
             bg=formats['bg'],  
             fg=formats['fg'])
         self.bind('<Enter>', self.highlight)
@@ -1018,7 +1018,7 @@ class EntryDefaultText(Entry):
         var = tk.StringVar()
         var.set(self.default_text)
         self.config(
-            fg=self.formats['table_head_bg'],
+            fg=self.formats['head_bg'],
             bg=self.formats['highlight_bg'], 
             font=self.formats['show_font'], 
             textvariable=var)
@@ -1048,12 +1048,12 @@ class EntryDefaultText(Entry):
             self.insert(0, self.default_text)
             self.config(
                 font=self.formats['show_font'], 
-                fg=formats['table_head_bg'])
+                fg=formats['head_bg'])
         self.select_clear()
 
     def replace_default_text(self):
         self.insert(0, self.default_text) 
-        self.config(fg=formats['table_head_bg'], font=self.formats['show_font'])         
+        self.config(fg=formats['head_bg'], font=self.formats['show_font'])         
 
 class LabelCopiable(Entryx):
     ''' 
@@ -1918,7 +1918,7 @@ class GromboReadonly(ClearableReadonlyCombobox):
         var = tk.StringVar()
         var.set(self.default_text)
         self.config(
-            foreground=formats['table_head_bg'],
+            foreground=formats['head_bg'],
             font=formats['show_font'], 
             textvariable=var)
         self.textvariable = var
@@ -1962,7 +1962,7 @@ class Grombo(ClickAnywhereCombo):
         var = tk.StringVar()
         var.set(self.default_text)
         self.config(
-            foreground=formats['table_head_bg'],
+            foreground=formats['head_bg'],
             font=formats['show_font'], 
             textvariable=var)
         self.textvariable = var

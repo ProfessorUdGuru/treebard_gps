@@ -27,13 +27,12 @@ import tkinter as tk
 from widgets import (FrameHilited3, Entry, ToplevelHilited, 
     LabelHilited, ButtonFlatHilited, LabelTip2)
 from scrolling import CanvasScrolledBG2
-from styles import ThemeStyles, make_formats_dict
+from styles import config_generic, make_formats_dict
 import dev_tools as dt
 
 
 
 formats = make_formats_dict()
-ST = ThemeStyles()    
 
 class Combobox(FrameHilited3):
     hive = []
@@ -140,7 +139,7 @@ class Combobox(FrameHilited3):
         self.drop.bind('<FocusIn>', self.focus_dropdown)
 
         self.config_values(self.values)
-        ST.config_generic(self.drop)
+        config_generic(self.drop)
 
     def config_values(self, values):
         b = ButtonFlatHilited(self.canvas.content, text='Sample')
@@ -216,7 +215,7 @@ class Combobox(FrameHilited3):
             tip.destroy() 
 
     def highlight_arrow(self, evt):
-        self.arrow.config(bg=formats['table_head_bg'])
+        self.arrow.config(bg=formats['head_bg'])
 
     def unhighlight_arrow(self, evt):
         self.arrow.config(bg=formats['highlight_bg'])

@@ -4,7 +4,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import sqlite3
 from files import get_current_file
-from styles import root_drive, make_formats_dict, ThemeStyles
+from styles import root_drive, make_formats_dict, set_window_max_size
 from widgets import (
     Frame, Canvas, Button, Label, Radiobutton, 
     LabelH3, MessageCopiable, LabelStay)
@@ -40,8 +40,7 @@ class Gallery(Frame):
 
         self.current_person = get_current_person()[0]
 
-        ST = ThemeStyles(app=self.root)
-        ST.set_window_max_size(self.parent)
+        set_window_max_size(self.parent)
         self.filter_pix_data()
         self.make_widgets()        
 

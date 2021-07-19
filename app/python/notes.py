@@ -8,7 +8,7 @@ from widgets import (
     run_statusbar_tooltips, LabelMovable)
 from scrolling import ScrolledText
 from messages import ErrorMessage
-from styles import make_formats_dict, ThemeStyles
+from styles import make_formats_dict, config_generic
 from names import get_name_with_id
 from right_click_menu import make_rc_menus, RightClickMenu
 from message_strings import note_dlg_msg
@@ -28,8 +28,6 @@ import dev_tools as dt
 
 
 formats = make_formats_dict()
-# current_file = get_current_file()[0]
-ST = ThemeStyles()
 
 class NotesDialog(Toplevel):
     def __init__(
@@ -203,7 +201,7 @@ class NotesDialog(Toplevel):
             # header=self.header, 
             # which_dlg='notes')
 
-        ST.config_generic(self) 
+        config_generic(self) 
         center_window(self)
 
     def open_links_dialog(self):
