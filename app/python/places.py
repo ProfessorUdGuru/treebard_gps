@@ -3,7 +3,8 @@
 import tkinter as tk
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, MessageHilited, 
-    Entry, ButtonQuiet, Separator, EntryAutofill)
+    Entry, ButtonQuiet, EntryAutofill)
+from toykinter_widgets import Separator
 from query_strings import (
     select_all_nested_places, select_place, select_place_id, 
     select_place_hint, select_all_places, select_all_places_places, 

@@ -5,7 +5,8 @@ import sqlite3
 from files import get_current_file, current_file
 from widgets import (
     Frame, Label, ClearableReadonlyCombobox, ClickAnywhereCombo, Button, 
-    LabelMovable, LabelH3, Entry, StatusbarTooltips, run_statusbar_tooltips)
+    LabelMovable, LabelH3, Entry)
+from toykinter_widgets import StatusbarTooltips, run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from message_strings import person_add_msg
 from query_strings import (

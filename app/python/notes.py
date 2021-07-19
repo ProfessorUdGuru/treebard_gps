@@ -4,8 +4,8 @@ import tkinter as tk
 import sqlite3
 from widgets import (
     LabelButtonText, Toplevel, LabelH3, Button, Frame, LabelFrame, 
-    Radiobutton, Entry, Label, StatusbarTooltips,
-    run_statusbar_tooltips, LabelMovable)
+    Radiobutton, Entry, Label, LabelMovable)
+from toykinter_widgets import  StatusbarTooltips, run_statusbar_tooltips
 from scrolling import ScrolledText
 from messages import ErrorMessage
 from styles import make_formats_dict, config_generic

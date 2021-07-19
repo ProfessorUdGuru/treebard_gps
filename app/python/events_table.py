@@ -6,7 +6,8 @@ from files import current_file
 from window_border import Border 
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, 
-    KinTip, EntryAutofill, Separator, LabelH3, Button)
+    KinTip, EntryAutofill, LabelH3, Button)
+from toykinter_widgets import Separator
 from styles import make_formats_dict, config_generic
 from names import get_name_with_id
 from roles import RolesDialog

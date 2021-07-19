@@ -5,8 +5,8 @@ import sqlite3
 from files import current_file
 from widgets import(
     Toplevel, Canvas, Frame, LabelH3, ClickAnywhereCombo, 
-    EntryAutofillHilited, Button, StatusbarTooltips, run_statusbar_tooltips, 
-    Label, ButtonQuiet)
+    EntryAutofillHilited, Button, Label, ButtonQuiet)
+from toykinter_widgets import StatusbarTooltips, run_statusbar_tooltips
 from scrolling import Scrollbar
 from styles import make_formats_dict, config_generic
 from names import get_all_persons, get_name_with_id, PersonAdd

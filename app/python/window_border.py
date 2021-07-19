@@ -4,8 +4,8 @@ import tkinter as tk
 from scrolling import Scrollbar
 from files import current_file, project_path
 from widgets import (
-    LabelButtonImage, Frame, FrameTitleBar, LabelTitleBar, 
-    StatusbarTooltips, run_statusbar_tooltips, Toplevel, Canvas)
+    LabelButtonImage, Frame, FrameTitleBar, LabelTitleBar, Toplevel, Canvas) 
+from toykinter_widgets import StatusbarTooltips, run_statusbar_tooltips
 from styles import make_formats_dict, NEUTRAL_COLOR, config_generic
 from PIL import Image, ImageTk
 import dev_tools as dt
