@@ -3,15 +3,16 @@
 import tkinter as tk
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, MessageHilited, 
-    Entry, ButtonQuiet, EntryAutofill)
+    Entry, ButtonQuiet)
+from place_autofill import EntryAuto
 from toykinter_widgets import Separator
 from query_strings import (
     select_all_nested_places, select_place, select_place_id, 
     select_place_hint, select_all_places, select_all_places_places, 
     select_first_nested_place, update_place_hint, select_place_id2, 
     select_max_place_id, select_place_id1, update_finding_nested_places,
-    )
-from files import get_current_file
+    insert_place_new_with_id, insert_nested_pair, insert_nested_places)
+from files import current_file
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
 import dev_tools as dt
@@ -22,7 +23,7 @@ import sqlite3
 
 
 
-current_file = get_current_file()[0]
+
 
 def get_autofill_places():
 
@@ -60,16 +61,16 @@ def get_all_places_places():
     conn.close()
     return places_places
 
-def do_place_update(right_nest, finding):
-    print("line", looky(seeline()).lineno, "right_nest, finding:", right_nest, finding)
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(
-        update_finding_nested_places, 
-        (right_nest, finding))
-    conn.commit()
-    cur.close()
-    conn.close()
+# def do_place_update(right_nest, finding):
+    # print("line", looky(seeline()).lineno, "right_nest, finding:", right_nest, finding)
+    # conn = sqlite3.connect(current_file)
+    # cur = conn.cursor()
+    # cur.execute(
+        # update_finding_nested_places, 
+        # (right_nest, finding))
+    # conn.commit()
+    # cur.close()
+    # conn.close()
 
 place_strings = make_autofill_strings()
 nested_place_ids = get_autofill_places()
@@ -84,11 +85,20 @@ conn.close()
 
 unique_place_names = set(all_place_names)
 
+            # self.final = ValidatePlace(
+                # self.root, 
+                # self.treebard, 
+                # self.finding, 
+                # self.final,
+                # self.findings,
+                # widg)
+
 class ValidatePlace():
 
-    def __init__(self, view, treebard, place_input):
+    # def __init__(self, root, treebard, place_input, finding):
+    def __init__(self, root, treebard, place_input):
 
-        self.view = view
+        self.root = root
         self.treebard = treebard
         self.place_input = place_input
         self.place_dicts = []
@@ -97,6 +107,8 @@ class ValidatePlace():
         self.inner_duplicates = False
         self.outer_duplicates = False
         self.open_dialog = True
+        self.all_new = False
+        self.all_known = False
 
         self.make_place_dicts()
         self.id_orphans()
@@ -354,6 +366,7 @@ class ValidatePlace():
                         continue
                     else:
                         self.open_dialog = False
+                        self.all_new = True
                         return
 
         def test_for_all_known():
@@ -365,7 +378,9 @@ class ValidatePlace():
                 elif len(dkt["id"]) == 1 and dkt.get("temp_id") is None:
                     known += 1
                 z += 1
-            if z == known: self.open_dialog = False
+            if z == known: 
+                self.open_dialog = False
+                self.all_known = True
 
         def test_for_new_plus_known():
             new = 0
@@ -386,7 +401,7 @@ class ValidatePlace():
                 else:
                     print("line", looky(seeline()).lineno, "case not handled")                    
                 z += 1
-            if  new == 0 and known == 0:
+            if new == 0 and known == 0:
                 self.open_dialog = False
 
         test_for_all_new()
@@ -395,7 +410,7 @@ class ValidatePlace():
  
         if self.open_dialog is True:
             self.new_place_dialog = NewPlaceDialog(
-                self.view,
+                self.root,
                 self.place_dicts,
                 "Clarify place selections where there is not exactly one ID "
                 "number.\n\nPress the EDIT button to add or edit hints for "
@@ -410,6 +425,82 @@ class ValidatePlace():
                 ("OK", "CANCEL"),
                 self.treebard,
                 do_on_ok=self.collect_place_ids)
+        else:
+            print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+            print("line", looky(seeline()).lineno, "self.all_new:", self.all_new)
+            print("line", looky(seeline()).lineno, "self.all_known:", self.all_known)
+            if self.all_new is True:
+                self.update_new_places()
+            elif self.all_known is True:
+                self.update_known_places()
+            else:
+                self.update_mixed_places()
+
+    def update_new_places(self):
+        conn = sqlite3.connect(current_file)
+        conn.execute("PRAGMA foreign_keys = 1")
+        cur = conn.cursor()
+        places = []
+        places_places = []
+        nested_places = []
+        # insert new places
+        for dkt in self.place_dicts: 
+            new_id = dkt["temp_id"]
+            (place_id, place_name) = (new_id, dkt["input"])           
+            cur.execute(insert_place_new_with_id, (place_id, place_name))
+            conn.commit()
+            places.append(new_id)
+        # insert new places into existing places_places
+        for i in range(len(places) - 1):
+            places_places.append((places[i], places[i + 1]))
+            a = i + 1
+        places_places.append((places[a], None))
+        for tup in places_places:
+            cur.execute(insert_nested_pair, tup)
+            conn.commit()
+        # insert new nested_places
+        k = 0
+        r = len(places)
+        for j in range(r):
+            nested_places.append(places[k:r])
+            k += 1
+            if k == r:
+                break
+        nested_place_tuples = []
+        for lst in nested_places:
+            qty = 9 - len(lst)
+            nulls = [None] * qty
+            tup = tuple(lst + nulls)
+            nested_place_tuples.append(tup) 
+        for tup in nested_place_tuples:
+            cur.execute(insert_nested_places, tup)
+            conn.commit()
+            
+        # update nested_place_id in right row of self.findings
+        # THIS IS NEXT....................................
+        
+
+        cur.close()
+        conn.close()
+
+    def update_known_places(self):
+        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+        # insert new places
+        # insert new places into existing places_places
+        # update existing places_places
+        # insert new nested_places
+        # update existing nested_places
+        # update nested_place_id in right row of self.findings
+
+    def update_mixed_places(self):
+        print("line", looky(seeline()).lineno, "If this never prints, it's not needed.")
+        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+        # insert new places
+        # insert new places into existing places_places
+        # update existing places_places
+        # insert new nested_places
+        # update existing nested_places
+        # update nested_place_id in right row of self.findings
 
     def collect_place_ids(self):
         print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
@@ -422,23 +513,52 @@ class ValidatePlace():
                     print("line", looky(seeline()).lineno, "something is wrong")
                     return
                 else:
-                    new_id = dkt["temp_id"]
+                    new_id = (dkt["temp_id"], "insert")
             elif len(dkt["id"]) > 1:
                 print("line", looky(seeline()).lineno, "there are still duplicates")
             elif len(dkt["id"]) == 1:
                 if dkt.get("temp_id") is None:
                     print("line", looky(seeline()).lineno, "place is already in database")
-                    new_id = dkt["id"][0]
+                    new_id = (dkt["id"][0], "update")
                 elif dkt.get("temp_id") is not None:
-                    new_id = self.new_place_dialog.radvars[r].get()
+                    new_id = (self.new_place_dialog.radvars[r].get(), "insert")
                 else:
                     print("line", looky(seeline()).lineno, "case not handled")
             else:
                 print("line", looky(seeline()).lineno, "case not handled")
             ids.append(new_id)
             print("line", looky(seeline()).lineno, "ids:", ids)
-            print("line", looky(seeline()).lineno, "self.new_place_dialog.radvars[r].get():", self.new_place_dialog.radvars[r].get())
+            dkt["input"]
             r += 1
+
+    # def collect_place_ids(self):
+        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
+        # ids = []
+        # r = 0
+        # for dkt in self.place_dicts:
+            # new_id = None
+            # if len(dkt["id"]) == 0:
+                # if dkt.get("temp_id") is None:
+                    # print("line", looky(seeline()).lineno, "something is wrong")
+                    # return
+                # else:
+                    # new_id = dkt["temp_id"]
+            # elif len(dkt["id"]) > 1:
+                # print("line", looky(seeline()).lineno, "there are still duplicates")
+            # elif len(dkt["id"]) == 1:
+                # if dkt.get("temp_id") is None:
+                    # print("line", looky(seeline()).lineno, "place is already in database")
+                    # new_id = dkt["id"][0]
+                # elif dkt.get("temp_id") is not None:
+                    # new_id = self.new_place_dialog.radvars[r].get()
+                # else:
+                    # print("line", looky(seeline()).lineno, "case not handled")
+            # else:
+                # print("line", looky(seeline()).lineno, "case not handled")
+            # ids.append(new_id)
+            # print("line", looky(seeline()).lineno, "ids:", ids)
+            # dkt["input"]
+            # r += 1
 
 class NewPlaceDialog():
     def __init__(
@@ -466,7 +586,6 @@ class NewPlaceDialog():
         self.edit_hint_id = 0
         self.hint_to_edit = None
         self.edit_rows = {}
-        # print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
         self.make_widgets()
 
     def make_widgets(self):
@@ -819,7 +938,7 @@ if __name__ == "__main__":
         final = widg.get()
         for child in frame.winfo_children():
             child.destroy()
-        final = ValidatePlace(view, treebard, final)
+        final = ValidatePlace(root, treebard, final)
         j = 0
         for dkt in final.place_dicts:
             lab = Label(
@@ -829,50 +948,33 @@ if __name__ == "__main__":
             lab.grid()
             j += 1
 
-    finding = 1
+            # self.final = ValidatePlace(
+                # self.root, 
+                # self.treebard,
+                # self.final,)
 
-    view = tk.Tk()
-    treebard = view # mockup; this isn't what really happens
+    root = tk.Tk()
+    treebard = root # mockup; this isn't what really happens
 
-    entry = EntryAutofill(view, width=50)
-    entry.config(textvariable=entry.var)
-    entry.values = place_strings
-    entry.autofill = True
+    entry = EntryAuto(root, width=50, autofill=True)
+    EntryAuto.create_lists(place_strings)
     entry.grid()
     entry.focus_set()
-    entry.bind("<FocusOut>", get_final)
+    entry.bind("<FocusOut>", get_final, add="+")
 
-    traverse = Entry(view)
+    traverse = Entry(root)
     traverse.grid()
-    frame = Frame(view)
+    frame = Frame(root)
     frame.grid()
     
-    view.mainloop()
+    root.mainloop()
 
 
 
 # DO LIST
 
 # input to db
-# add a search box for ids by name or name by ids
-# test all cases and make more cases to test
-    # concoct a case where there are 
-    #   2 contiguous insertions not at first or last 
-    #   2 contiguous insertions at first
-    #   2 contiguous insertions at last
-    #   2 non-contiguous insertions not at first or last 
-    #   2 non-contiguous insertions at first
-    #   2 non-contiguous insertions at last
-    #   1 new place and nothing else
-    #   2 new places and nothing else
-    #   3 new places and nothing else
-    #   1 new place and it's last
-    #   2 new places and they're both last
-    #   2 new places and they're not contiguous and one is last
-    #   inner duplicates as well as outer duplicates
-    #   inner duplicates as well as outer duplicates as well as orphans
-    #   inner duplicates as well as new places
-    #   etc.
+# check places_places and nested_places to make sure a bunch of junk hasn't been entered, esp. look for pairs in p_p where id2 is null.
 # in the real one, if CANCEL is pressed, the table cell that triggered this procedure should be cleared out so user can start fresh and not get the procedure auto-triggered again from the old data he input.
 
 

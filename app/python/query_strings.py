@@ -68,6 +68,7 @@ insert_nested_places = '''
         nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8) 
     VALUES ({})
 '''.format(','.join(['?'] * 9))
+# 'INSERT INTO nested_places (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8) VALUES (?,?,?,?,?,?,?,?,?)'
 
 insert_note = '''
     INSERT INTO note 
@@ -81,6 +82,11 @@ insert_person_null = '''
 insert_place_new = '''
     INSERT INTO place (place_id, places)
     VALUES (null, ?)
+'''
+
+insert_place_new_with_id = '''
+    INSERT INTO place (place_id, places)
+    VALUES (?, ?)
 '''
 
 insert_role_type = '''

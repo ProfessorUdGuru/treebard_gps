@@ -903,6 +903,36 @@ class EntryUnhilited(Entryx):
             font=formats['input_font'], 
             insertbackground=formats['fg'])
 
+
+class EntryHilited1(Entryx):
+    '''
+        Looks like a Label but different background color.
+    '''
+    def __init__(self, master, *args, **kwargs):
+        Entryx.__init__(self, master, *args, **kwargs)
+        
+        self.config(
+            bd=0,
+            bg=formats['highlight_bg'], 
+            fg=formats['fg'], 
+            font=formats['input_font'], 
+            insertbackground=formats['fg'])
+
+
+class EntryHilited2(Entryx):
+    '''
+        Looks like a Label but different background color.
+    '''
+    def __init__(self, master, *args, **kwargs):
+        Entryx.__init__(self, master, *args, **kwargs)
+        
+        self.config(
+            bd=0,
+            bg=formats['head_bg'], 
+            fg=formats['fg'], 
+            font=formats['output_font'], 
+            insertbackground=formats['fg'])
+
 class EntryAutofill(EntryUnhilited):
     ''' 
         Simple case-insensitive autofill entry with no dropdown 

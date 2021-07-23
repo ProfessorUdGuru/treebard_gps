@@ -98,11 +98,11 @@ bgStd_fgStd_fontIn = ('LabelButtonText',)
 
 bgLite_fgStd_fontIn_insFg = ('Entry', 'Text', 'EntryAutofillHilited')
 
-bgStd_fgStd_fontIn_insFg = ('EntryAutofill', 'EntryUnhilited')
+bgStd_fgStd_fontIn_insFg = ('EntryAuto', 'EntryAutofill', 'EntryUnhilited')
 
 bgLite_fgStd_fontOut = ()
 
-bgHead_fgStd_fontOut = ('LabelHilited2', )
+bgHead_fgStd_fontOut = ('LabelHilited2')
     
 bgStd_fgStd_fontOut_disAbl = ('LabelStylable', 'MessageCopiable')
 
@@ -374,6 +374,17 @@ def config_generic(parent):
         widg.config(state='readonly')
         widg.config(readonlybackground=widg.cget('background'))
 
+    def config_entryhilited2(widg):
+        widg.config(state='normal')
+        widg.config(
+            bg=formats['head_bg'], 
+            fg=formats['fg'],
+            insertbackground=formats['fg'],
+            font=formats['output_font'])
+        widg.config(state='readonly')
+        widg.config(readonlybackground=widg.cget('background'))
+        # widg.config(readonlyforeground=widg.cget('foreground'))
+
     def config_scale(widg):
         widg.config(
             bg=formats['bg'], 
@@ -469,14 +480,17 @@ def config_generic(parent):
             if widg.winfo_subclass() in bgLite_fgStd_fontIn_insFg:
                 config_bgLite_fgStd_fontIn_insFg(widg)
 
+            elif widg.winfo_subclass() in bgStd_fgStd_fontIn_insFg:
+                config_bgStd_fgStd_fontIn_insFg(widg)
+
             elif widg.winfo_subclass() == 'LabelCopiable':
                 config_labelcopiable(widg)
 
             # elif widg.winfo_subclass() in ('EntryUnhilited', 'EntryAutofill'):
                 # config_unhilited_entry(widg)
 
-            elif widg.winfo_subclass() in bgStd_fgStd_fontIn_insFg:
-                config_bgStd_fgStd_fontIn_insFg(widg)
+            elif widg.winfo_subclass() == 'EntryHilited2':
+                config_entryhilited2(widg)
 
         elif widg.winfo_class() == 'Text':
 

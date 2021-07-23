@@ -6,7 +6,9 @@ from files import current_file
 from window_border import Border 
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, 
-    KinTip, EntryAutofill, LabelH3, Button)
+    KinTip, LabelH3, Button, EntryHilited2) 
+    # KinTip, EntryAutofill, LabelH3, Button)
+from place_autofill import EntryAuto
 from toykinter_widgets import Separator
 from styles import make_formats_dict, config_generic
 from names import get_name_with_id
@@ -54,16 +56,6 @@ def get_current_person():
     cur.close()
     conn.close()
     return current_person
-
-def do_place_update(right_nest, finding):
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(
-        update_finding_nested_places, 
-        (right_nest, finding))
-    conn.commit()
-    cur.close()
-    conn.close()
 
 def get_findings():
 
@@ -284,10 +276,10 @@ def get_findings():
         source_count)
 
 class EventsTable(Frame):
-    def __init__(self, master, view, treebard, *args, **kwargs):
+    def __init__(self, master, root, treebard, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
-        self.view = view
+        self.root = root
         self.treebard = treebard
         self.headers = []
         self.widths = [[], [], [], [], []]
@@ -340,13 +332,9 @@ class EventsTable(Frame):
 
         def update_place():
             self.final = ValidatePlace(
-                self.view, 
-                self.treebard, 
-                self.finding, 
-                self.final,
-                self.findings,
-                widg)
-            self.final.sift_place_input()
+                self.root, 
+                self.treebard,
+                self.final)
 
         def update_particulars():
             cur.execute(update_finding_particulars, (self.final, self.finding))
@@ -376,7 +364,7 @@ class EventsTable(Frame):
 
     def make_table_cells(self, qty=1998):
         '''
-            EntryAutofill was used for all the text columns to keep the code 
+            EntryAuto was used for all the text columns to keep the code 
             symmetrical for all the text columns, with autofill set to False
             except for the places column.
         '''
@@ -386,12 +374,12 @@ class EventsTable(Frame):
             row = []
             for j in range(9):
                 if j < 5:
-                    cell = EntryAutofill(self)
+                    cell = EntryAuto(self, autofill=True)
                     cell.initial = ''
                     cell.final = ''
                     cell.finding = None
-                    cell.bind('<FocusIn>', self.get_initial)
-                    cell.bind('<FocusOut>', self.get_final)
+                    cell.bind('<FocusIn>', self.get_initial, add="+")
+                    cell.bind('<FocusOut>', self.get_final, add="+")
 
                     if j == 4:
                         cell.config(width=7)
@@ -451,11 +439,7 @@ class EventsTable(Frame):
                                 row_list.append(finding_id)
                                 self.findings.append(row_list)
 
-        for row in self.findings:
-            widg = row[2][0]
-            widg.autofill = True
-            widg.config(textvariable=widg.var)
-            widg.values = place_strings
+        EntryAuto.create_lists(place_strings)
 
         ma = None
         pa = None
@@ -638,7 +622,7 @@ class EventsTable(Frame):
         self.update_idletasks()
         for lst in self.cell_pool:
             for widg in lst[1]:
-                if widg.winfo_subclass() == 'EntryAutofill':
+                if widg.winfo_subclass() == 'EntryAuto':
                     widg.delete(0, 'end')
                 elif widg.winfo_subclass() == 'Frame':
                     self.destroy_kintip()
@@ -664,16 +648,16 @@ class EventsTable(Frame):
 
         y = 0
         for heading in FINDING_TABLE_HEADS:
-            head = EntryAutofill(self)
+            head = EntryHilited2(self)
             head.insert(0, heading)
-            head.config(width=len(head.get()), state='disabled')
-            head.grid(column=y, row=0, sticky='w')
+            head.config(width=len(head.get()), state='readonly', takefocus=0)
+            head.grid(column=y, row=0, sticky='ew')
             if y == 4:
                 head.config(width=7)
             if y in (6, 7, 8):
-                head.grid(column=y, row=0, sticky='w', padx=(2,0))
+                head.grid(column=y, row=0, sticky='ew')
             else:
-                head.grid(column=y, row=0, sticky='w')
+                head.grid(column=y, row=0, sticky='ew')
             if y < 5:
                 self.headers.append(head)
             y += 1
@@ -751,17 +735,13 @@ def highlight_current_title_bar(): # DON'T DELETE
 
 if __name__ == '__main__':
 
-    from widgets import EntryAutofill
-
     root = tk.Tk()
     root.geometry('+800+300')
 
-    auto = EntryAutofill(root, width=50)
-    auto.config(textvariable=auto.var)
+    auto = EntryAuto(root, width=50, autofill=True)
     strings = make_autofill_strings()
-    # auto.values = short_values
-    auto.values = strings
-    auto.autofill = True
+
+    EntryAuto.create_lists(strings)
     auto.focus_set()   
 
     move = tk.Entry(root)
@@ -774,9 +754,6 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# refactor kin column so that if there are two parents, instead of showing a mother button and a father button, show a single button with "parents" on it and on hover, show two tooltips, one for each parent
-
-# refactor duplicate place dialog to use sets, do it in a git branch
 
 # Have to make one permanent edit row and ungrid it on close, this is because I learned last time since there is only ever one of them it's better to grid_remove instead of destroy it.
 
