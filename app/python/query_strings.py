@@ -452,6 +452,12 @@ select_nested_places_same = '''
     WHERE nest0 = ?
 '''
 
+select_nesting_fk_finding = '''
+    SELECT nested_places_id 
+    FROM finding
+    WHERE finding_id = ?
+'''
+
 select_nestings_and_ids = '''
     SELECT nest0, nest1, nest2, nest3, nest4, nest5, nest6, 
         nest7, nest8, nested_places_id
@@ -544,11 +550,12 @@ select_place_hint = '''
     WHERE place_id = ?
 '''
 
-# select_place_place_id = '''
-    # SELECT places, place_id
-    # FROM place
-    # WHERE places = ?
-# '''
+select_places_places_id = '''
+    SELECT places_places_id
+    FROM places_places
+    WHERE place_id1 = ?
+        AND (place_id2 = ? OR place_id2 is null)
+'''
 
 select_private_note = '''
     SELECT private

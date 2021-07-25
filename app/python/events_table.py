@@ -28,7 +28,7 @@ from query_strings import (
     select_finding_ids_age_parents, select_person_id_birth,
     select_findings_details_offspring, select_all_findings_roles_ids, 
     select_finding_ids_offspring, select_all_findings_notes_ids,
-    select_count_finding_id_sources, 
+    select_count_finding_id_sources, select_nesting_fk_finding,
     update_finding_nested_places,
     select_nestings_and_ids, select_place, update_finding_particulars,
     update_finding_age, update_current_person,
@@ -39,6 +39,7 @@ from query_strings import (
     # select_nested_places_same, select_place_id1, select_place_id2,
 )
 import dev_tools as dt
+from dev_tools import looky, seeline
 
 
 
@@ -329,12 +330,20 @@ class EventsTable(Frame):
             self.update_db(widg, col_num)
 
     def update_db(self, widg, col_num):
-
         def update_place():
+            print("line", looky(seeline()).lineno, "self.finding:", self.finding)
+            cur.execute(select_nesting_fk_finding, (self.finding,))
+            nested_place = cur.fetchone()[0]
+
+
+
+
             self.final = ValidatePlace(
                 self.root, 
                 self.treebard,
-                self.final)
+                self.final,
+                self.finding,
+                nested_place)
 
         def update_particulars():
             cur.execute(update_finding_particulars, (self.final, self.finding))

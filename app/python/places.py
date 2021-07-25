@@ -11,7 +11,8 @@ from query_strings import (
     select_place_hint, select_all_places, select_all_places_places, 
     select_first_nested_place, update_place_hint, select_place_id2, 
     select_max_place_id, select_place_id1, update_finding_nested_places,
-    insert_place_new_with_id, insert_nested_pair, insert_nested_places)
+    insert_place_new_with_id, insert_nested_pair, insert_nested_places,
+    select_nested_places_id, select_places_places_id)
 from files import current_file
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
@@ -61,20 +62,13 @@ def get_all_places_places():
     conn.close()
     return places_places
 
-# def do_place_update(right_nest, finding):
-    # print("line", looky(seeline()).lineno, "right_nest, finding:", right_nest, finding)
-    # conn = sqlite3.connect(current_file)
-    # cur = conn.cursor()
-    # cur.execute(
-        # update_finding_nested_places, 
-        # (right_nest, finding))
-    # conn.commit()
-    # cur.close()
-    # conn.close()
+def make_global_place_lists():
+    place_strings = make_autofill_strings()
+    nested_place_ids = get_autofill_places()
+    places_places = get_all_places_places()
+    return place_strings, nested_place_ids, places_places
 
-place_strings = make_autofill_strings()
-nested_place_ids = get_autofill_places()
-places_places = get_all_places_places()
+place_strings, nested_place_ids, places_places = make_global_place_lists()
 
 conn = sqlite3.connect(current_file)
 cur = conn.cursor()
@@ -96,11 +90,14 @@ unique_place_names = set(all_place_names)
 class ValidatePlace():
 
     # def __init__(self, root, treebard, place_input, finding):
-    def __init__(self, root, treebard, place_input):
+    def __init__(self, root, treebard, place_input, finding, nested_place):
 
         self.root = root
         self.treebard = treebard
         self.place_input = place_input
+        self.finding = finding
+        self.nested_place = nested_place
+
         self.place_dicts = []
 
         self.new_places = False
@@ -434,6 +431,7 @@ class ValidatePlace():
             elif self.all_known is True:
                 self.update_known_places()
             else:
+                print("line", looky(seeline()).lineno, "normally should run from collect_place_ids(), not here?")
                 self.update_mixed_places()
 
     def update_new_places(self):
@@ -472,39 +470,131 @@ class ValidatePlace():
             nulls = [None] * qty
             tup = tuple(lst + nulls)
             nested_place_tuples.append(tup) 
+        t = 0
         for tup in nested_place_tuples:
             cur.execute(insert_nested_places, tup)
             conn.commit()
+            if t == 0:
+                cur.execute(
+                    "SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'nested_places'")
+                nested_places_id = cur.fetchone()[0]
+            t += 1
             
         # update nested_place_id in right row of self.findings
-        # THIS IS NEXT....................................
-        
+        cur.execute(update_finding_nested_places, (nested_places_id, self.finding))
+        conn.commit()
+
+        # update global place lists so they will be current immediately
+        EntryAuto.recent_items.insert(0, self.place_input)
+        self.update_global_place_lists()        
 
         cur.close()
         conn.close()
 
-    def update_known_places(self):
-        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
-        # insert new places
-        # insert new places into existing places_places
-        # update existing places_places
-        # insert new nested_places
-        # update existing nested_places
-        # update nested_place_id in right row of self.findings
+    def update_global_place_lists(self):
+        place_strings, nested_place_ids, places_places = make_global_place_lists()
+        EntryAuto.create_lists(place_strings) 
 
-    def update_mixed_places(self):
-        print("line", looky(seeline()).lineno, "If this never prints, it's not needed.")
-        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
-        # insert new places
-        # insert new places into existing places_places
-        # update existing places_places
-        # insert new nested_places
-        # update existing nested_places
+    def update_known_places(self):
         # update nested_place_id in right row of self.findings
+        input_ids = []
+        for dkt in self.place_dicts:
+            input_ids.append(dkt["id"][0])
+        qty = len(input_ids)
+        nulls = [None] * (9 - qty)
+        nesting = tuple(input_ids + nulls)
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_nested_places_id, nesting)
+        nested_places_id = cur.fetchone()[0]
+        cur.execute(update_finding_nested_places, (nested_places_id, self.finding))
+        conn.commit()
+        EntryAuto.recent_items.insert(0, self.place_input)
+        cur.close()
+        conn.close()
+
+    def update_mixed_places(self, ids=None):
+
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+        # make ordered list of knowns in input
+        print("line", looky(seeline()).lineno, "self.place_input:", self.place_input)
+        print("line", looky(seeline()).lineno, "ids:", ids)
+        # create a list of all relevant ordered pairs from knowns list
+        knowns = ids["known"]
+        knowns.append(None)
+        pairs = []
+        frog = len(knowns) - 1
+        f = frog
+        for i in range(frog):
+            a = knowns.pop(0)
+            for j in range(f):
+                pairs.append((a, knowns[j]))
+            f -= 1
+        print("line", looky(seeline()).lineno, "pairs:", pairs)
+
+        # find pairs in places_places that contain any of these pairs
+        related_pairs = []
+        for pair in pairs:
+            if pair in places_places:
+                related_pairs.append(pair)
+        print("line", looky(seeline()).lineno, "related_pairs:", related_pairs) 
+
+# line 516 self.place_dicts: [{'id': [833], 'input': 'Raton'}, {'id': [834], 'input': 'Colfax County'}, {'id': [835], 'input': 'New Mexico', 'temp_id': 845}, {'id': [8], 'input': 'USA'}]
+# line 518 self.place_input: Raton, Colfax County, New Mexico, USA
+# line 519 ids: {'all': [833, 834, 835, 8], 'known': [833, 834, 835, 8]}
+# line 531 pairs: [(833, 834), (833, 835), (833, 8), (833, None), (834, 835), (834, 8), (834, None), (835, 8), (835, None), (8, None)]
+# line 541 related_pairs: [(833, 834), (834, 835), (835, None), (8, None)]
+# line 552 pair: (833, 834)
+# line 552 pair: (834, 835)
+# line 552 pair: (835, None)
+# line 552 pair: (8, None)
+# line 556 correctable_pairs: [467, 468, 469, 8]
+
+# sqlite> select * from nested_places where nest0 in (833, 834, 835) or nest1 in (833, 834, 835) or nest2 in (833, 834, 835) or nest3 in (833, 834, 835) or nest5 in (833, 834, 835) or nest6 in (833, 834, 835);
+# nested_places_id|nest0|nest1|nest2|nest3|nest4|nest5|nest6|nest7|nest8
+# 578|833|834|835||||||
+# 579|834|835|||||||
+# 580|835||||||||
+
+        # detect affected pairs
+        correctable_pairs = []
+        for pair in related_pairs:
+            print("line", looky(seeline()).lineno, "pair:", pair)
+            cur.execute(select_places_places_id, pair)
+            fix = cur.fetchone()[0]
+            correctable_pairs.append(fix)
+        print("line", looky(seeline()).lineno, "correctable_pairs:", correctable_pairs)
+        # detect primary affected nesting
+        print("line", looky(seeline()).lineno, "self.nested_place:", self.nested_place)
+        # detect affected sub-nestings
+        # NESTED_PLACES HAS TO BE REFACTORED SO THAT ONLY THE PRIMARY NESTING
+        #   IS STORED IN THE DATABASE AND THE OTHERS ARE COMPUTED BY PYTHON AS NEEDED.
+        #   BETTER YET: STORE ONLY THE PAIRS AND ELIMINATE NESTED PLACES TABLE. SINCE
+        #   THE NESTINGS ARE COMPUTED FROM THE PAIRS, STORING THEM AT ALL IS WRONG 
+        #   BECAUSE THEY'RE ONLY NEEDED IN THE GUI AND NOT USED TO PERFORM ANY LOGIC,
+        #   SO THEY SHOULD BE COMPUTED ON THE FLY FOR THE AUTOFILLS TO USE.
+        # update pairs, create new as needed
+        # replace primary affected nesting with input
+        # replace sub-nestings with new ones
+        # change linked values eg fk in finding table
+        # update global place lists so they will be current immediately
+        self.update_global_place_lists()
+
+        cur.close()
+        conn.close()
+
+
+
+
+
+
+
 
     def collect_place_ids(self):
-        print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
-        ids = []
+        # ids = [[], []]
+        ids = {"all": [], "known": []}
         r = 0
         for dkt in self.place_dicts:
             new_id = None
@@ -513,52 +603,33 @@ class ValidatePlace():
                     print("line", looky(seeline()).lineno, "something is wrong")
                     return
                 else:
-                    new_id = (dkt["temp_id"], "insert")
+                    print("line", looky(seeline()).lineno, "its a new nest")
+                    new_id = dkt["temp_id"]
+                    ids["all"].append(new_id)
             elif len(dkt["id"]) > 1:
                 print("line", looky(seeline()).lineno, "there are still duplicates")
             elif len(dkt["id"]) == 1:
                 if dkt.get("temp_id") is None:
-                    print("line", looky(seeline()).lineno, "place is already in database")
-                    new_id = (dkt["id"][0], "update")
+                    print("line", looky(seeline()).lineno, "nest is already in database")
+                    new_id = dkt["id"][0]
+                    ids["all"].append(new_id)
+                    ids["known"].append(new_id)
                 elif dkt.get("temp_id") is not None:
-                    new_id = (self.new_place_dialog.radvars[r].get(), "insert")
+                    new_id = self.new_place_dialog.radvars[r].get()
+                    if new_id != dkt["temp_id"]:
+                        ids["all"].append(new_id)
+                        ids["known"].append(new_id)
+                    else:
+                        ids["all"].append(new_id)
+                        
+                    print("line", looky(seeline()).lineno, "theres both a known and a temp id for a nest")
                 else:
                     print("line", looky(seeline()).lineno, "case not handled")
             else:
                 print("line", looky(seeline()).lineno, "case not handled")
-            ids.append(new_id)
-            print("line", looky(seeline()).lineno, "ids:", ids)
-            dkt["input"]
-            r += 1
-
-    # def collect_place_ids(self):
-        # print("line", looky(seeline()).lineno, "self.place_dicts", self.place_dicts)
-        # ids = []
-        # r = 0
-        # for dkt in self.place_dicts:
-            # new_id = None
-            # if len(dkt["id"]) == 0:
-                # if dkt.get("temp_id") is None:
-                    # print("line", looky(seeline()).lineno, "something is wrong")
-                    # return
-                # else:
-                    # new_id = dkt["temp_id"]
-            # elif len(dkt["id"]) > 1:
-                # print("line", looky(seeline()).lineno, "there are still duplicates")
-            # elif len(dkt["id"]) == 1:
-                # if dkt.get("temp_id") is None:
-                    # print("line", looky(seeline()).lineno, "place is already in database")
-                    # new_id = dkt["id"][0]
-                # elif dkt.get("temp_id") is not None:
-                    # new_id = self.new_place_dialog.radvars[r].get()
-                # else:
-                    # print("line", looky(seeline()).lineno, "case not handled")
-            # else:
-                # print("line", looky(seeline()).lineno, "case not handled")
             # ids.append(new_id)
-            # print("line", looky(seeline()).lineno, "ids:", ids)
-            # dkt["input"]
-            # r += 1
+            r += 1
+        self.update_mixed_places(ids)
 
 class NewPlaceDialog():
     def __init__(
@@ -716,9 +787,12 @@ class NewPlaceDialog():
         cur = conn.cursor()
 
         self.radvars = []
+        i = 0
         for dd in self.place_dicts:
-            self.var = tk.IntVar(None, 0)
+            self.var = tk.IntVar()
+            # self.var = tk.IntVar(None, 0)
             self.radvars.append(self.var)
+            i += 1
 
         d = 0
         t = 0
@@ -790,10 +864,14 @@ class NewPlaceDialog():
                     last_idx = len(dkt["id"])
                     if h == last_idx:
                         current_id = new_id
+                        if h == 0:
+                            self.radvars[t].set(current_id)
                         rad_string = "{}: {} (new place and new place ID)".format(
                             current_id, dkt["input"])
                     else:
                         current_id = dkt["id"][h]
+                        if h == 0:
+                            self.radvars[t].set(current_id)
                         cur.execute(select_first_nested_place, (current_id,))
                         nesting = cur.fetchone()
                         nesting = [i for i in nesting if i]
@@ -802,10 +880,14 @@ class NewPlaceDialog():
                 elif dkt.get("temp_id") is not None and len(dkt["id"]) == 0:
                     # user will OK or CANCEL new ID
                     current_id = dkt["temp_id"]
+                    if h == 0:
+                        self.radvars[t].set(current_id)
                     rad_string = "{}: {} (new place and new place ID)".format(
                         current_id, dkt["input"])
                 else:
                     current_id = dkt["id"][h]
+                    if h == 0:
+                        self.radvars[t].set(current_id)
                     cur.execute(select_first_nested_place, (current_id,))
                     nesting = cur.fetchone()
                     nesting = [i for i in nesting if i]
@@ -814,9 +896,21 @@ class NewPlaceDialog():
                 rad = RadiobuttonBig(
                     self.hint_frm, 
                     variable=self.radvars[t],
-                    value=h,
+                    value=current_id,
                     text=rad_string, 
                     anchor="w")
+
+
+
+
+# line 825 t, h, current_id: 0 0 833
+# line 825 t, h, current_id: 1 0 834
+# line 807 t, h, current_id: 2 0 835
+# line 800 t, h, current_id: 2 1 845
+# line 825 t, h, current_id: 3 0 8
+
+
+
                 lab = Label(
                     self.hint_frm, 
                     text="hint: {}".format(hint),
@@ -918,6 +1012,9 @@ if __name__ == "__main__":
         'mmm' : "Calhoun County, Texas, USA",
     }
 
+    finding = 1
+    nested_place = 271
+
     def get_final(evt):
         widg = evt.widget
         # final = widg.get()
@@ -938,7 +1035,7 @@ if __name__ == "__main__":
         final = widg.get()
         for child in frame.winfo_children():
             child.destroy()
-        final = ValidatePlace(root, treebard, final)
+        final = ValidatePlace(root, treebard, final, finding, nested_place)
         j = 0
         for dkt in final.place_dicts:
             lab = Label(
@@ -1131,5 +1228,10 @@ The only way to leave out the largest place (e.g. "USA" if user doesn't want to 
 #   So we only test for "all new", "all known" and "some new, some known".
 #   Instead of setting the boolean default to False and checking for
 #   complicated conditions, we set it to True and check for simple stuff.
+
+
+
+
+#   
 
 
