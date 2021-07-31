@@ -191,6 +191,11 @@ select_all_places = '''
     FROM place
 '''
 
+select_all_place_ids = '''
+    SELECT place_id
+    FROM place
+'''
+
 select_all_places_places = '''
     SELECT place_id1, place_id2
     FROM places_places

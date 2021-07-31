@@ -1,11 +1,15 @@
-# treebard_root_021.py
+# treebard_root_022.py
 
-# _20 replaced root with icon which was used only for a taskbar icon, and view which became the new root but was really an ordinary toplevel. It worked but it was too much trouble for too little wonderfulness so I will roll this back to the normal root way of doing things. Also planning to move all the Toykinter widgets out of widgets.py into another module toykinter_widgets.py and manually compare and synchronize them with the toykinter modules which are now ahead of these, having been just now used together in a demo app so there have been lots of changes to make them work. Also planning to get rid of all ttk widgets now, having proved it can be done.         # NESTED_PLACES HAS TO BE REFACTORED SO THAT ONLY THE PRIMARY NESTING
-        #   IS STORED IN THE DATABASE AND THE OTHERS ARE COMPUTED BY PYTHON AS NEEDED.
-        #   BETTER YET: STORE ONLY THE PAIRS AND ELIMINATE NESTED PLACES TABLE. SINCE
-        #   THE NESTINGS ARE COMPUTED FROM THE PAIRS, STORING THEM AT ALL IS WRONG 
-        #   BECAUSE THEY'RE ONLY NEEDED IN THE GUI AND NOT USED TO PERFORM ANY LOGIC,
-        #   SO THEY SHOULD BE COMPUTED ON THE FLY FOR THE AUTOFILLS TO USE.
+# _22 Also planning to get rid of all ttk widgets now, having proved it can 
+#   be done. NESTED_PLACES HAS TO BE REFACTORED SO THAT ONLY THE PRIMARY NESTING
+#   IS STORED IN THE DATABASE AND THE OTHERS ARE COMPUTED BY PYTHON AS NEEDED.
+#   BETTER YET: STORE ONLY THE PAIRS AND ELIMINATE NESTED PLACES TABLE. SINCE
+#   THE NESTINGS ARE COMPUTED FROM THE PAIRS, STORING THEM AT ALL IS WRONG 
+#   BECAUSE THEY'RE ONLY NEEDED IN THE GUI AND NOT USED TO PERFORM ANY LOGIC,
+#   SO THEY SHOULD BE COMPUTED ON THE FLY FOR THE AUTOFILLS TO USE. However,
+#   there's an fk in finding table for the nested_places_id so if the table is
+#   dropped, that will have to be refactored also, so that an innermost nest
+#   is represented by a pair in places_places.
 
 import tkinter as tk
 from PIL import Image, ImageTk
