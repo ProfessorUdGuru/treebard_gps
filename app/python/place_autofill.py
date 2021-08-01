@@ -155,10 +155,11 @@ if __name__ == "__main__":
     autofill.grid()
     autofill.focus_set()
 
-    # this autofill is for comparison only, not to be used
+    # this old autofill is for comparison only, not to be used
+    #   actually it seems to be kinda broken
     traverse = EntryAutofill(root, bg="tan")
     traverse.grid()
-    traverse.autofill=True
+    traverse.autofill = True
     traverse.values = all_items
     traverse.config(textvariable=traverse.var)
 
