@@ -57,13 +57,13 @@ from dev_tools import looky, seeline
     in the same record. The FK would reference the primary key of a place in 
     the primary place column. But the nesting of a place is not that simple
     in the real world. For example, Dallas, Texas, has occupied the same basic 
-    spot on the map once during its life span, but it's had a number of 
+    spot on the map during its life span, but it's had a number of 
     different parents. Currently it occupies parts of four different counties.
     But when it first came into being, it wasn't even in the United States of
     America, but rather in a place called the Republic of Texas. The simple 
     self-referencing table doesn't represent how places really work.
 
-    One useful trick early in this lengthy groping-in-the-dark for usable code
+    One useful trick early in this lengthy process of planning this code
     was to multiply--by the length of the new results list--each branch in the 
     id_tree growing from the results of the previous query. This gives the 
     growing values list the right number of branches so that the new results 
@@ -115,15 +115,15 @@ class ManyManyRecursiveQuery():
 
         self.outwidg = outwidg
 
-        if len(inwidg.get().strip()) != 0:
+        if inwidg is not None and len(inwidg.get().strip()) != 0:
             self.initial_id = int(inwidg.get().strip())
         else:
             self.initial_id = initial_id
-        print("line", looky(seeline()).lineno, "self.initial_id:", self.initial_id)
         self.new_id_tree = []
         self.id_tree = [[self.initial_id]]
         self.final = []
         self.final_id_list = []
+        self.final_strings = []
         self.make_uppers_lists()
 
     def make_uppers_lists(self):
@@ -157,7 +157,8 @@ class ManyManyRecursiveQuery():
         cur.execute(select_place, (self.initial_id,))
         result = cur.fetchone()
         if result is None:
-            self.outwidg.config(values=[])
+            if self.outwidg:
+                self.outwidg.config(values=[])
             return
         run_query(self.initial_id)
         self.get_one_stage_of_values([self.initial_id])
@@ -247,16 +248,15 @@ class ManyManyRecursiveQuery():
 
         count = validate_input()
         if count == 0:
-            self.outwidg.config(values=[])
+            if self.outwidg:
+                self.outwidg.config(values=[])
             return
 
         final_values_lists = []
         final_strings = []
         for lst in self.final_id_list:
-            print("line", looky(seeline()).lineno, "lst:", lst)
             one_part = []
             for identity in lst:
-                print("line", looky(seeline()).lineno, "identity:", identity)
                 if identity is None:
                     break
                 string_part = get_string_with_id(identity)
@@ -267,20 +267,45 @@ class ManyManyRecursiveQuery():
             final_strings.append(stg)
             if final_strings == ['unknown']:
                 final_strings = []
-        self.outwidg.config(values=final_strings)
+        if self.outwidg:
+            self.outwidg.config(values=final_strings)
+        else:
+            self.final_strings = final_strings
         cur.close()
         conn.close()
+
+def make_all_nestings(query):
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    
+    cur.execute(query)
+    all_ids = [i[0] for i in cur.fetchall()]
+    print("line", looky(seeline()).lineno, "all_ids:", all_ids)
+    cur.close()
+    conn.close()
+    nest_lists = []
+    for item_id in all_ids:
+        mm = ManyManyRecursiveQuery(initial_id=item_id)
+        nest_lists.append(mm.final_strings)
+    all_nestings = []
+    for lst in nest_lists:
+        stg = ", ".join(lst)
+        all_nestings.append(stg)
+    return all_nestings
 
 if __name__ == '__main__':
 
     def get_current_place():
         mm = ManyManyRecursiveQuery(id_in, combo)
-        print("line", looky(seeline()).lineno, "mm.final_id_list:", mm.final_id_list)
 
     def clear_combo(evt):
         combo.delete(0, 'end')
 
-    all_items = ["hello", "help", "hellfire-and-brimstone", "health", "health & welfare"]
+    all_items = ["hello", "help", "hellfire-and-brimstone", 
+        "health", "health & welfare"]
+
+    all_items = make_all_nestings(select_all_place_ids)
+    print("line", looky(seeline()).lineno, "all_items:", all_items)
 
     root = tk.Tk()
 
@@ -313,5 +338,9 @@ if __name__ == '__main__':
 #   store each nesting in a Python list
 #   test with autofill
 #   when editing places do it over
-#   still don't know how to store a given nesting in finding table, maybe this: '20.18.7.8' denormalizing one field is better than denormalizing the whole database?
+# To store the nested place, what's needed & correct is this:
+#   finding table stores finding_places_id from a one-to-many table which has one finding-id FK and nine place_id FKs. The 9 are in order. The correct order could be found from the places_places table or from a global list created during load, using data from the places_places table. Unlike the nested_places table, this design
+#   1) does not have to use column order but should; why not? Technically it's the order of hierarchy from the places_places table that's dictating how this order will be stored; the storing is just being done when the ordering data is available; no reason to do it again.
+#   2) doesn't list all possible nestings like 22, 45, 16, 19, 12 then 45, 16, 19, 12 etc; it only lists the one used;
+#   3) might list the same set of values many times but with a different finding_id FK each time
 
