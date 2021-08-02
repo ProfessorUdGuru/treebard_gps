@@ -1,9 +1,9 @@
-# many_many_recursive_query
+# nested_place_strings.py
 
 ''' 
-    Based on many_many_recursive_query.py which converts a single input id into a collection of nested place strings which work in a combobox. In this version, all nestings will be created on load and thus available for use by an autofill entry. The procedure for creating the collection of all nestings can be re-run each time a change is made to the two place tables in the database.
-
-    There will no longer be a 3rd db table for nested place strings. They don't need to be stored, and trying to do it made a lot of extra work which was easy to do manually but when it came time to write the code to do that work every time a place was added, deleted, or edited, I wasn't willing to write the code.
+    Nestings are created on load, so are available for use by an autofill 
+    entry. The procedure for creating the collection of all nestings can 
+    be re-run each time a change is made to the place tables in the database.
 '''
 
 import tkinter as tk
@@ -280,7 +280,6 @@ def make_all_nestings(query):
     
     cur.execute(query)
     all_ids = [i[0] for i in cur.fetchall()]
-    print("line", looky(seeline()).lineno, "all_ids:", all_ids)
     cur.close()
     conn.close()
     nest_lists = []
@@ -332,15 +331,5 @@ if __name__ == '__main__':
     root.mainloop()
 
 
-# use above to generate nestings on load and store the nesting for use by autofills
-#   get all places from place table
-#   from each place generate its possible nestings
-#   store each nesting in a Python list
-#   test with autofill
-#   when editing places do it over
-# To store the nested place, what's needed & correct is this:
-#   finding table stores finding_places_id from a one-to-many table which has one finding-id FK and nine place_id FKs. The 9 are in order. The correct order could be found from the places_places table or from a global list created during load, using data from the places_places table. Unlike the nested_places table, this design
-#   1) does not have to use column order but should; why not? Technically it's the order of hierarchy from the places_places table that's dictating how this order will be stored; the storing is just being done when the ordering data is available; no reason to do it again.
-#   2) doesn't list all possible nestings like 22, 45, 16, 19, 12 then 45, 16, 19, 12 etc; it only lists the one used;
-#   3) might list the same set of values many times but with a different finding_id FK each time
+
 

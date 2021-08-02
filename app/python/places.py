@@ -6,13 +6,14 @@ from widgets import (
     Entry, ButtonQuiet)
 from place_autofill import EntryAuto
 from toykinter_widgets import Separator
+from nested_place_strings import make_all_nestings
 from query_strings import (
-    select_all_nested_places, select_place, select_place_id, 
+    select_place_id, 
     select_place_hint, select_all_places, select_all_places_places, 
-    select_first_nested_place, update_place_hint, select_place_id2, 
-    select_max_place_id, select_place_id1, update_finding_nested_places,
-    insert_place_new_with_id, insert_nested_pair, insert_nested_places,
-    select_nested_places_id, select_places_places_id)
+    select_finding_places_nesting, update_place_hint, select_place_id2, 
+    select_max_place_id, select_place_id1, update_finding_places_finding_id,
+    insert_place_new_with_id, insert_nested_pair, insert_finding_places,
+    select_finding_places_id, select_places_places_id, select_all_place_ids)
 from files import current_file
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
@@ -25,34 +26,6 @@ import sqlite3
 
 
 
-
-def get_autofill_places():
-
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(select_all_nested_places)
-    nested_place_ids = cur.fetchall()
-    cur.close()
-    conn.close()
-    nested_place_ids = [[i for i in lst if i] 
-        for lst in [list(j) for j in nested_place_ids]]
-    return nested_place_ids
-
-def make_autofill_strings():
-    nested_place_ids = get_autofill_places()
-    strings = [', '.join([get_string_with_id(num) 
-        for num in lsst]) for lsst in nested_place_ids]
-    return strings
-
-def get_string_with_id(num):
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(select_place, (num,))
-    stg = cur.fetchone()[0]  
-    cur.close()
-    conn.close()
-    return stg
-
 def get_all_places_places():
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
@@ -63,12 +36,11 @@ def get_all_places_places():
     return places_places
 
 def make_global_place_lists():
-    place_strings = make_autofill_strings()
-    nested_place_ids = get_autofill_places()
+    place_strings = make_all_nestings(select_all_place_ids)
     places_places = get_all_places_places()
-    return place_strings, nested_place_ids, places_places
+    return place_strings, places_places
 
-place_strings, nested_place_ids, places_places = make_global_place_lists()
+place_strings, places_places = make_global_place_lists()
 
 conn = sqlite3.connect(current_file)
 cur = conn.cursor()
@@ -423,9 +395,6 @@ class ValidatePlace():
                 self.treebard,
                 do_on_ok=self.collect_place_ids)
         else:
-            print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
-            print("line", looky(seeline()).lineno, "self.all_new:", self.all_new)
-            print("line", looky(seeline()).lineno, "self.all_known:", self.all_known)
             if self.all_new is True:
                 self.update_new_places()
             elif self.all_known is True:
@@ -456,32 +425,13 @@ class ValidatePlace():
         for tup in places_places:
             cur.execute(insert_nested_pair, tup)
             conn.commit()
-        # insert new nested_places
-        k = 0
-        r = len(places)
-        for j in range(r):
-            nested_places.append(places[k:r])
-            k += 1
-            if k == r:
-                break
-        nested_place_tuples = []
-        for lst in nested_places:
-            qty = 9 - len(lst)
-            nulls = [None] * qty
-            tup = tuple(lst + nulls)
-            nested_place_tuples.append(tup) 
-        t = 0
-        for tup in nested_place_tuples:
-            cur.execute(insert_nested_places, tup)
-            conn.commit()
-            if t == 0:
-                cur.execute(
-                    "SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'nested_places'")
-                nested_places_id = cur.fetchone()[0]
-            t += 1
-            
-        # update nested_place_id in right row of self.findings
-        cur.execute(update_finding_nested_places, (nested_places_id, self.finding))
+
+        qty = 9 - len(places)
+        nulls = [None] * qty
+        find = [self.finding]
+        tup = tuple(places + nulls + find)
+
+        cur.execute(update_finding_places_finding_id, tup)
         conn.commit()
 
         # update global place lists so they will be current immediately
@@ -492,22 +442,21 @@ class ValidatePlace():
         conn.close()
 
     def update_global_place_lists(self):
-        place_strings, nested_place_ids, places_places = make_global_place_lists()
+        place_strings, places_places = make_global_place_lists()
         EntryAuto.create_lists(place_strings) 
 
     def update_known_places(self):
-        # update nested_place_id in right row of self.findings
         input_ids = []
         for dkt in self.place_dicts:
             input_ids.append(dkt["id"][0])
         qty = len(input_ids)
         nulls = [None] * (9 - qty)
-        nesting = tuple(input_ids + nulls)
+        find = [self.finding]
+        tup = tuple(input_ids + nulls + find)
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        cur.execute(select_nested_places_id, nesting)
-        nested_places_id = cur.fetchone()[0]
-        cur.execute(update_finding_nested_places, (nested_places_id, self.finding))
+
+        cur.execute(update_finding_places_finding_id, tup)
         conn.commit()
         EntryAuto.recent_items.insert(0, self.place_input)
         cur.close()
@@ -532,31 +481,12 @@ class ValidatePlace():
             for j in range(f):
                 pairs.append((a, knowns[j]))
             f -= 1
-        print("line", looky(seeline()).lineno, "pairs:", pairs)
 
         # find pairs in places_places that contain any of these pairs
         related_pairs = []
         for pair in pairs:
             if pair in places_places:
-                related_pairs.append(pair)
-        print("line", looky(seeline()).lineno, "related_pairs:", related_pairs) 
-
-# line 516 self.place_dicts: [{'id': [833], 'input': 'Raton'}, {'id': [834], 'input': 'Colfax County'}, {'id': [835], 'input': 'New Mexico', 'temp_id': 845}, {'id': [8], 'input': 'USA'}]
-# line 518 self.place_input: Raton, Colfax County, New Mexico, USA
-# line 519 ids: {'all': [833, 834, 835, 8], 'known': [833, 834, 835, 8]}
-# line 531 pairs: [(833, 834), (833, 835), (833, 8), (833, None), (834, 835), (834, 8), (834, None), (835, 8), (835, None), (8, None)]
-# line 541 related_pairs: [(833, 834), (834, 835), (835, None), (8, None)]
-# line 552 pair: (833, 834)
-# line 552 pair: (834, 835)
-# line 552 pair: (835, None)
-# line 552 pair: (8, None)
-# line 556 correctable_pairs: [467, 468, 469, 8]
-
-# sqlite> select * from nested_places where nest0 in (833, 834, 835) or nest1 in (833, 834, 835) or nest2 in (833, 834, 835) or nest3 in (833, 834, 835) or nest5 in (833, 834, 835) or nest6 in (833, 834, 835);
-# nested_places_id|nest0|nest1|nest2|nest3|nest4|nest5|nest6|nest7|nest8
-# 578|833|834|835||||||
-# 579|834|835|||||||
-# 580|835||||||||
+                related_pairs.append(pair) 
 
         # detect affected pairs
         correctable_pairs = []
@@ -885,31 +815,26 @@ class NewPlaceDialog():
                     rad_string = "{}: {} (new place and new place ID)".format(
                         current_id, dkt["input"])
                 else:
+                    print("line", looky(seeline()).lineno, "dkt:", dkt)
+                    print("line", looky(seeline()).lineno, "dkt.get('temp_id'), len(dkt['id']):", dkt.get('temp_id'), len(dkt['id']))
+# line 818 dkt.get('temp_id'), len(dkt['id']): None 1
+                    print("line", looky(seeline()).lineno, "h, dkt:", h, dkt)
                     current_id = dkt["id"][h]
                     if h == 0:
                         self.radvars[t].set(current_id)
-                    cur.execute(select_first_nested_place, (current_id,))
+                    cur.execute(select_finding_places_nested_place, (current_id,))
+                    # cur.execute(select_first_nested_place, (current_id,))
                     nesting = cur.fetchone()
                     nesting = [i for i in nesting if i]
                     nesting = ", ".join(nesting)
                     rad_string = "{}: {}".format(current_id, nesting)
+
                 rad = RadiobuttonBig(
                     self.hint_frm, 
                     variable=self.radvars[t],
                     value=current_id,
                     text=rad_string, 
                     anchor="w")
-
-
-
-
-# line 825 t, h, current_id: 0 0 833
-# line 825 t, h, current_id: 1 0 834
-# line 807 t, h, current_id: 2 0 835
-# line 800 t, h, current_id: 2 1 845
-# line 825 t, h, current_id: 3 0 8
-
-
 
                 lab = Label(
                     self.hint_frm, 
