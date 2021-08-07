@@ -35,7 +35,6 @@ class EntryAuto(EntryUnhilited):
 
     def __init__(self, master, autofill=False, values=[], *args, **kwargs):
         EntryUnhilited.__init__(self, master, *args, **kwargs)
-
         self.master = master
         self.autofill = autofill
         
@@ -59,15 +58,26 @@ class EntryAuto(EntryUnhilited):
 
     def get_typed(self, evt):
         '''
-            runs on every key release; filters out non-alpha-numeric 
+            runs on every key release; filters out most non-alpha-numeric 
             keys; runs the functions not triggered by events.
         '''
+        def do_it():
+            hits = self.match_string()
+            self.show_hits(hits, self.pos)
+
         if self.autofill is False:
             return
         key = evt.keysym
+        # allow alphanumeric characters
         if len(key) == 1:
-            hits = self.match_string()
-            self.show_hits(hits, self.pos)
+            do_it()
+        # allow hyphens and apostrophes
+        elif key in ('minus', 'quoteright'):
+            do_it()
+        # look for other chars that should be allowed in nested names
+        else:
+            # print("line", looky(seeline()).lineno, "key:", key)
+            pass
 
     def match_string(self):
         hits = []
@@ -87,12 +97,10 @@ class EntryAuto(EntryUnhilited):
 
     def prepend_match(self, evt):
         content = self.get()
-        print("line", looky(seeline()).lineno, "content:", content)
         if content in EntryAuto.final_items:
             idx = EntryAuto.final_items.index(content)
             del EntryAuto.final_items[idx]
             EntryAuto.final_items.insert(0, content)
-        print("line", looky(seeline()).lineno, "EntryAuto.final_items[0]:", EntryAuto.final_items[0])
 
     def deselect(self, evt):
         '''

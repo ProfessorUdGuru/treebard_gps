@@ -460,21 +460,21 @@ select_name_with_id = '''
     WHERE name_type_id = 1
         AND name.person_id = ?
 '''
-select_nested_place_string = '''
-    SELECT a.places, b.places, c.places, d.places, 
-        e.places, f.places, g.places, h.places, i.places
-    FROM finding_places
-    LEFT JOIN place a ON a.place_id = finding_places.nest0
-    LEFT JOIN place b ON b.place_id = finding_places.nest1
-    LEFT JOIN place c ON c.place_id = finding_places.nest2
-    LEFT JOIN place d ON d.place_id = finding_places.nest3
-    LEFT JOIN place e ON e.place_id = finding_places.nest4
-    LEFT JOIN place f ON f.place_id = finding_places.nest5
-    LEFT JOIN place g ON g.place_id = finding_places.nest6
-    LEFT JOIN place h ON h.place_id = finding_places.nest7
-    LEFT JOIN place i ON i.place_id = finding_places.nest8             
-    WHERE finding_id = ? 
-'''
+# select_nested_place_string = '''
+    # SELECT a.places, b.places, c.places, d.places, 
+        # e.places, f.places, g.places, h.places, i.places
+    # FROM finding_places
+    # LEFT JOIN place a ON a.place_id = finding_places.nest0
+    # LEFT JOIN place b ON b.place_id = finding_places.nest1
+    # LEFT JOIN place c ON c.place_id = finding_places.nest2
+    # LEFT JOIN place d ON d.place_id = finding_places.nest3
+    # LEFT JOIN place e ON e.place_id = finding_places.nest4
+    # LEFT JOIN place f ON f.place_id = finding_places.nest5
+    # LEFT JOIN place g ON g.place_id = finding_places.nest6
+    # LEFT JOIN place h ON h.place_id = finding_places.nest7
+    # LEFT JOIN place i ON i.place_id = finding_places.nest8             
+    # WHERE finding_id = ? 
+# '''
 
 # select_nested_place_string = '''
     # SELECT a.places, b.places, c.places, d.places, 

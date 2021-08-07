@@ -304,7 +304,7 @@ if __name__ == '__main__':
         "health", "health & welfare"]
 
     all_items = make_all_nestings(select_all_place_ids)
-    print("line", looky(seeline()).lineno, "all_items:", all_items)
+    # print("line", looky(seeline()).lineno, "all_items:", all_items)
 
     root = tk.Tk()
 

@@ -20,7 +20,7 @@ from places import place_strings, ValidatePlace
 # from scrolling import (
     # Combobox, Scrollbar, resize_scrolled_content, MousewheelScrolling)
 from query_strings import (
-    select_nested_place_string, select_current_person_id, 
+    select_finding_places_nesting, select_current_person_id, 
     select_all_event_types_couple, select_all_kin_types_couple,
     select_all_findings_current_person, select_findings_details_generic,
     select_findings_details_couple_age, select_findings_details_couple_generic,
@@ -85,7 +85,8 @@ def get_findings():
 
         # place_to_show = generic_finding_details[3]
         # cur.execute(select_nested_place_string, (place_to_show,))
-        cur.execute(select_nested_place_string, (finding_id,))
+        # print("line", looky(seeline()).lineno, "finding_id:", finding_id)
+        cur.execute(select_finding_places_nesting, (finding_id,))
         place_string = cur.fetchone()
         place_string = [i for i in place_string if i]
         place_string = ', '.join(place_string)
@@ -136,7 +137,7 @@ def get_findings():
         # place_to_show = couple_generic_details[0][4]    
         # print("line", looky(seeline()).lineno, "place_to_show:", place_to_show)
         # cur.execute(select_nested_place_string, (place_to_show,))
-        cur.execute(select_nested_place_string, (finding_id,))
+        cur.execute(select_finding_places_nesting, (finding_id,))
         place_string = cur.fetchone()
         place_string = [i for i in place_string if i]
         place_string = ', '.join(place_string)
@@ -178,7 +179,7 @@ def get_findings():
         # place_to_show =  offspring_details[2]
         # cur.execute(select_nested_place_string, (place_to_show,))
 
-        cur.execute(select_nested_place_string, (finding_id,))
+        cur.execute(select_finding_places_nesting, (finding_id,))
         place_string = cur.fetchone()
         place_string = [i for i in place_string if i]
         place_string = ', '.join(place_string)
