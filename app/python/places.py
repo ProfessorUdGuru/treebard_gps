@@ -42,6 +42,8 @@ def make_global_place_lists():
 
 place_strings, places_places = make_global_place_lists()
 
+# print("line", looky(seeline()).lineno, "place_strings:", place_strings)
+
 conn = sqlite3.connect(current_file)
 cur = conn.cursor()
 cur.execute(select_all_places)
@@ -784,7 +786,9 @@ class NewPlaceDialog():
                         current_id = dkt["id"][h]
                         if h == 0:
                             self.radvars[t].set(current_id)
-                        cur.execute(select_first_nested_place, (current_id,))
+                        # cur.execute(select_first_nested_place, (current_id,))
+                        cur.execute(select_finding_places_nesting, (self.finding,))
+
                         nesting = cur.fetchone()
                         nesting = [i for i in nesting if i]
                         nesting = ", ".join(nesting)
@@ -802,7 +806,6 @@ class NewPlaceDialog():
                     if h == 0:
                         self.radvars[t].set(current_id)
                     nesting = ManyManyRecursiveQuery(initial_id=current_id).final_strings
-                    nesting = ", ".join(nesting)
                     rad_string = "{}: {}".format(current_id, nesting)
 
                 rad = RadiobuttonBig(

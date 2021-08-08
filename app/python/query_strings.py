@@ -420,13 +420,22 @@ select_findings_details_couple_generic = '''
 # '''
 
 select_findings_details_offspring = '''
-    SELECT date, date_sorter, finding.nested_places_id, particulars
+    SELECT date, date_sorter, finding_places_id, particulars
     FROM finding
-    JOIN nested_places
-        ON nested_places.nested_places_id = finding.nested_places_id
+    JOIN finding_places
+        ON finding_places.finding_id = finding.finding_id
     WHERE person_id = ?
         AND event_type_id = 1
 '''
+
+# select_findings_details_offspring = '''
+    # SELECT date, date_sorter, finding.nested_places_id, particulars
+    # FROM finding
+    # JOIN nested_places
+        # ON nested_places.nested_places_id = finding.nested_places_id
+    # WHERE person_id = ?
+        # AND event_type_id = 1
+# '''
 
 select_generic_event_roles = '''
     SELECT 

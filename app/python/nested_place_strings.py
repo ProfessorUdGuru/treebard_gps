@@ -109,8 +109,11 @@ from dev_tools import looky, seeline
 
 class ManyManyRecursiveQuery():
     '''
-        This class had widget references built into it.
+        This class has widget references built into it.
     '''
+
+    final_strings = []
+
     def __init__(self, inwidg=None, outwidg=None, initial_id=1):
 
         self.outwidg = outwidg
@@ -123,7 +126,7 @@ class ManyManyRecursiveQuery():
         self.id_tree = [[self.initial_id]]
         self.final = []
         self.final_id_list = []
-        self.final_strings = []
+        self.final_strings = [] # now used only to make radvars--change name?
         self.make_uppers_lists()
 
     def make_uppers_lists(self):
@@ -253,24 +256,28 @@ class ManyManyRecursiveQuery():
             return
 
         final_values_lists = []
-        final_strings = []
         for lst in self.final_id_list:
             one_part = []
+            k = 2
             for identity in lst:
                 if identity is None:
                     break
                 string_part = get_string_with_id(identity)
                 one_part.append(string_part)
-            final_values_lists.append(one_part) 
+                if k == len(lst):
+                    final_values_lists.append(one_part) 
+                k += 1
+
         for lst in final_values_lists:
             stg = ', '.join(lst)
-            final_strings.append(stg)
-            if final_strings == ['unknown']:
-                final_strings = []
-        if self.outwidg:
-            self.outwidg.config(values=final_strings)
-        else:
-            self.final_strings = final_strings
+            if stg == 'unknown':
+                stg = ''
+            ManyManyRecursiveQuery.final_strings.append(stg)
+
+        # single nesting for radiobutton label
+        if self.outwidg is None:
+            self.final_strings = stg
+
         cur.close()
         conn.close()
 
@@ -282,15 +289,9 @@ def make_all_nestings(query):
     all_ids = [i[0] for i in cur.fetchall()]
     cur.close()
     conn.close()
-    nest_lists = []
     for item_id in all_ids:
         mm = ManyManyRecursiveQuery(initial_id=item_id)
-        nest_lists.append(mm.final_strings)
-    all_nestings = []
-    for lst in nest_lists:
-        stg = ", ".join(lst)
-        all_nestings.append(stg)
-    return all_nestings
+    return ManyManyRecursiveQuery.final_strings
 
 if __name__ == '__main__':
 
@@ -304,7 +305,6 @@ if __name__ == '__main__':
         "health", "health & welfare"]
 
     all_items = make_all_nestings(select_all_place_ids)
-    # print("line", looky(seeline()).lineno, "all_items:", all_items)
 
     root = tk.Tk()
 
