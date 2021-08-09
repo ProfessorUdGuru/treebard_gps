@@ -466,7 +466,8 @@ class ValidatePlace():
         conn.close()
 
     def update_mixed_places(self, ids=None):
-
+        # print("line", looky(seeline()).lineno, "ids:", ids)
+# line 469 ids: {'all': [20, 19, 7, 8], 'known': [20, 19, 7, 8]}
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         # make ordered list of knowns in input
@@ -508,6 +509,22 @@ class ValidatePlace():
         conn.close()
 
     def collect_place_ids(self):
+
+        def list_new_or_known():
+            print("line", looky(seeline()).lineno, "dkt:", dkt)
+# line 535 there are still duplicates
+# line 536 self.new_place_dialog.radvars[r].get(): 862
+# line 514 dkt: {'id': [860, 861], 'input': 'Motel 6', 'inner_dupe': False, 'temp_id': 862}
+# line 520 ids: {'all': [None], 'known': [None]}
+
+            new_id = self.new_place_dialog.radvars[r].get()
+            if new_id != dkt["temp_id"]:
+                ids["all"].append(new_id)
+                ids["known"].append(new_id)
+            else:
+                ids["all"].append(new_id)  
+            print("line", looky(seeline()).lineno, "ids:", ids)
+
         ids = {"all": [], "known": []}
         r = 0
         for dkt in self.place_dicts:
@@ -522,6 +539,9 @@ class ValidatePlace():
                     ids["all"].append(new_id)
             elif len(dkt["id"]) > 1:
                 print("line", looky(seeline()).lineno, "there are still duplicates")
+                print("line", looky(seeline()).lineno, "self.new_place_dialog.radvars[r].get():", self.new_place_dialog.radvars[r].get())
+                list_new_or_known()
+                print("line", looky(seeline()).lineno, "new_id:", new_id)
             elif len(dkt["id"]) == 1:
                 if dkt.get("temp_id") is None:
                     print("line", looky(seeline()).lineno, "nest is already in database")
@@ -529,12 +549,13 @@ class ValidatePlace():
                     ids["all"].append(new_id)
                     ids["known"].append(new_id)
                 elif dkt.get("temp_id") is not None:
-                    new_id = self.new_place_dialog.radvars[r].get()
-                    if new_id != dkt["temp_id"]:
-                        ids["all"].append(new_id)
-                        ids["known"].append(new_id)
-                    else:
-                        ids["all"].append(new_id)                        
+                    list_new_or_known()
+                    # new_id = self.new_place_dialog.radvars[r].get()
+                    # if new_id != dkt["temp_id"]:
+                        # ids["all"].append(new_id)
+                        # ids["known"].append(new_id)
+                    # else:
+                        # ids["all"].append(new_id)                        
                     print("line", looky(seeline()).lineno, "there's both a known and a temp id for a nest")
                 else:
                     print("line", looky(seeline()).lineno, "case not handled")
@@ -661,8 +682,7 @@ class NewPlaceDialog():
         cur.execute(update_place_hint, ((new_hint, self.edit_hint_id)))
         conn.commit()
         cur.close()
-        conn.close()
-        
+        conn.close()        
         self.hint_to_edit.config(text="hint: {}".format(new_hint))
         edit_row.remove_edit_row()
 
@@ -704,7 +724,6 @@ class NewPlaceDialog():
         i = 0
         for dd in self.place_dicts:
             self.var = tk.IntVar()
-            # self.var = tk.IntVar(None, 0)
             self.radvars.append(self.var)
             i += 1
 
@@ -786,12 +805,7 @@ class NewPlaceDialog():
                         current_id = dkt["id"][h]
                         if h == 0:
                             self.radvars[t].set(current_id)
-                        # cur.execute(select_first_nested_place, (current_id,))
-                        cur.execute(select_finding_places_nesting, (self.finding,))
-
-                        nesting = cur.fetchone()
-                        nesting = [i for i in nesting if i]
-                        nesting = ", ".join(nesting)
+                        nesting = ManyManyRecursiveQuery(initial_id=current_id).final_strings
                         rad_string = "{}: {}".format(current_id, nesting)
                 elif dkt.get("temp_id") is not None and len(dkt["id"]) == 0:
                     # user will OK new place ID or CANCEL
