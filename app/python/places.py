@@ -1,4 +1,38 @@
-# sets_for_nested_places
+# places.py (starting over 20210809)
+
+
+''' It's possible that correcting-by-defect is the solution
+ but I doubt it. The system is too complex to be solved by a
+ complex algorithm. Any system that attempts to track the 
+ details of this problem will fail sooner or later, because
+ as more cases come up it will get harder and harder to improve,
+ maintain or even understand. What's needed is a revolution in
+ thought, which starts with a simple idea and stays with a simple
+ idea. That idea is a compromise and it will be put into play by
+ analyzing the input string as a string and dealing with it as
+ a string. It's obvious that keeping the dialog from opening in
+ some complex cases but not others is a hairsplitting waste of 
+ energy and will just complicate
+ the code more and more to no end. There should be very few
+ criteria as to whether a case is or is not too complex to 
+ accept input without a dialog. Fooling around with 'maybe this
+ but maybe that' is not worth the trouble because the result is
+ a house of cards built upon incomplete information. As more
+ cases come up, the whole thing needs to be redone or else 
+ fixing one thing will break another. So a decision needs to be
+ made when a string is input and no questions asked. The only 
+ way to solve this problem is to start over again on the duplicate
+ and new places dialog. I have no choice, because the result of 
+ each fix is a more and more patched-up non-algorithm of spaghetti.
+ At this point the code resembles that game 'pick-up-stix' where
+ you dump a bunch of lightweight sticks into a tangled pile and
+ each player has a color. He has to pick up all his sticks first
+ without moving any stick except the one he's currently picking
+ up. It's fun because it's nearly impossible. Coding should not 
+ be quite that impossible because I am now in the usual predicament
+ of trying to super-analyze code I never quite understood even when
+ I wrote it months ago. I'm starting over.'''
+                    
 
 import tkinter as tk
 from widgets import (
@@ -42,8 +76,6 @@ def make_global_place_lists():
 
 place_strings, places_places = make_global_place_lists()
 
-# print("line", looky(seeline()).lineno, "place_strings:", place_strings)
-
 conn = sqlite3.connect(current_file)
 cur = conn.cursor()
 cur.execute(select_all_places)
@@ -51,525 +83,13 @@ all_place_names = [i[0] for i in cur.fetchall()]
 cur.close()
 conn.close()
 
-unique_place_names = set(all_place_names)
-
-            # self.final = ValidatePlace(
-                # self.root, 
-                # self.treebard, 
-                # self.finding, 
-                # self.final,
-                # self.findings,
-                # widg)
-
-class ValidatePlace():
-
-    # def __init__(self, root, treebard, place_input, finding):
-    def __init__(self, root, treebard, place_input, finding, nested_place):
-
-        self.root = root
-        self.treebard = treebard
-        self.place_input = place_input
-        self.finding = finding
-        self.nested_place = nested_place
-
-        self.place_dicts = []
-
-        self.new_places = False
-        self.inner_duplicates = False
-        self.outer_duplicates = False
-        self.open_dialog = True
-        self.all_new = False
-        self.all_known = False
-
-        self.make_place_dicts()
-        self.id_orphans()
-        self.see_whats_needed()
-        self.open_new_places_dialog()
-
-    def make_place_dicts(self):
-        '''
-        User must separate nests with a comma and any number of spaces including 
-        no spaces. Nestings will be stored correctly with a comma and one space
-        separating nests, and autofill relies on places being typed this way,
-        but the validation process doesn't care about spaces, just the comma.
-
-        This method systematically stores the traits of each nest before anything 
-        else is done, instead of haphazardly swatting at a moving target with a bunch of
-        conditional tests. For example, it might seem lame to store the index when the
-        index could be detected at any time, but if it's stored up front then the
-        detection procedure won't interrupt the procedure for doing something
-        with the nestings based on the detected traits. This lets us change the
-        position of the nest within the nesting later (e.g. if a new nest is inserted),
-        without changing the list of dicts, by changing the value of dkt['index'].
-
-        The traits of a nesting are: 
-            "id" : list of place IDs whose nest string matches nest input,
-            "input" : nest string input,
-            "same_out" : how many nests are stored with the same spelling,
-            "same_in" : how many nests in this nesting are spelled the same as input 
-        '''
-
-        def get_matching_ids(nest):
-            cur.execute(select_place_id, (nest,))
-            ids = cur.fetchall()
-            ids = [i[0] for i in ids]
-            return ids
-    
-        def flag_inner_dupes():
-            n = 0
-            for dkt in self.place_dicts:
-                if len(dkt["id"]) > 1:
-                    name = dkt["input"]
-                    if self.place_list.count(name) > 1:
-                        dkt["inner_dupe"] = True
-                    else:
-                        dkt["inner_dupe"] = False
-                n += 1
-
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-
-        self.place_list = self.place_input.split(",")
-        self.place_list = [self.place_list[i].strip() for i in range(len(self.place_list))]
-        self.length = len(self.place_list)
-
-        self.place_dicts = [
-            (
-                { 
-                    "id" : get_matching_ids(x),
-                    "input" : x}) 
-            for x in self.place_list]
-        flag_inner_dupes()
-        cur.close()
-        conn.close()
-
-    def id_orphans(self):
-        '''
-            If a nest by an input spelling exists (single or duplicate), 
-            and is not the largest nest in the nesting, and the next nest in the nesting is not its parent, create a temp_id
-            for it in case the user intends to create a new place instead
-            of using an existing place by that name. For orphans there will
-            be both an id and a temp_id in the dict. All temp_ids have to be assigned at the same time so they are unique, therefore a temp_id of 0 is created here. Later on any temp_id of 0 will be given its real value.
-        '''
-        def seek_parent_ids(ids, parent_ids):
-            orphan = False
-            pairs_in_db = []
-            pairs_in_input = []
-            pairs = None
-            for num in ids:
-                cur.execute(select_place_id2, (num,))
-                parent_id_in_db = [i[0] for i in cur.fetchall()]
-                for iD in parent_id_in_db:
-                    pairs_in_db.append((num, iD))
-                for iD in parent_ids:
-                    pairs_in_input.append((num, iD))
-                pairs = tuple(pairs_in_db)
-            if pairs:
-                st = set(pairs).intersection(pairs_in_input)
-                if len(st) == 0:
-                    orphan = True
-            return orphan
-
-        orphans = []
-
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-
-        x = 0
-        for dkt in self.place_dicts[0:-1]:
-            ids = dkt["id"]
-            parent_ids = self.place_dicts[x + 1]["id"]
-            parent_len = len(parent_ids)
-            if parent_len == 0:
-                orphan = True
-            else:
-                orphan = seek_parent_ids(ids, parent_ids)            
-            orphans.append(orphan)
-            x += 1
-
-        cur.close()
-        conn.close()
-        
-        s = 0
-        for dkt in self.place_dicts[0:-1]:
-            if orphans[s] is True:
-                dkt["temp_id"] = 0
-            s += 1            
-
-    def see_whats_needed(self):
-        for dkt in self.place_dicts:
-            if len(dkt["id"]) == 0:
-                self.new_places = True
-            elif len(dkt["id"]) > 0:
-                if dkt.get("temp_id") is not None:
-                    self.new_places = True
-                elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is False:
-                    self.outer_duplicates = True
-                elif len(dkt["id"]) > 1 and dkt["inner_dupe"] is True:
-                    self.inner_duplicates = True
-                elif len(dkt["id"]) == 1:
-                    pass
-                else:
-                    print("line", looky(seeline()).lineno, "case not handled", dkt['id'])
-            else:
-                print("line", looky(seeline()).lineno, "case not handled")
-        if self.new_places is True:
-            self.make_new_places()
-        if self.inner_duplicates is True:
-            self.handle_inner_duplicates()
-        if self.outer_duplicates is True:
-            self.handle_outer_duplicates()
-
-    def make_new_places(self):
-        '''
-            The place IDs have to be assigned at the same time so that each
-            number is unique, then entry to the database has to be done all
-            at the same time while this information is still correct. After
-            the max ID is obtained from the database, no db tranactions can
-            occur which insert to any of the place tables till these temp IDs
-            are either used or discarded.
-        '''
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-        cur.execute(select_max_place_id)
-        temp_id = cur.fetchone()[0] + 1
-        for dkt in self.place_dicts:
-            if (
-                (dkt.get("id") is not None and dkt.get("temp_id") is not None) 
-                    or len(dkt["id"]) == 0):
-                dkt["temp_id"] = temp_id
-                temp_id += 1
-        cur.close()
-        conn.close()
-
-    def handle_inner_duplicates(self):
-        '''
-            This will handle one pair of inner duplicates. Otherwise, tell the
-            user to find unique historically correct names for some places.
-        '''
-
-        def handle_non_contiguous_dupes():
-            # apparently this won't be needed
-            pass
-
-        inner_dupes_idx = []
-        i = 0
-        for nest in self.place_list:
-            if self.place_list.count(nest) > 1:
-                same = nest
-                inner_dupes_idx.append(i)
-            i += 1
-        if len(inner_dupes_idx) == 0:
-            return
-        if abs(inner_dupes_idx[0] - inner_dupes_idx[1]) != 1:
-            handle_non_contiguous_dupes()
-
-        inner_dupes = []
-        for dkt in self.place_dicts:
-            if dkt["input"] == same:
-                inner_dupes.extend(dkt["id"])
-                break
-        pairs = [(i, j) for i in inner_dupes for j in inner_dupes if i != j]
-        right_pair = set(pairs).intersection(places_places)
-
-        for tup in right_pair: # there's only one
-            right_pair = tup
-        selected_ids = tuple(zip(inner_dupes_idx, right_pair))
-        b = 0
-        for dkt in self.place_dicts:
-            for tup in selected_ids:
-                if tup[0] == b:
-                    dkt["id"] = [tup[1]]
-            b += 1
-
-    def handle_outer_duplicates(self):
-
-        def pinpoint_child(parent, children):
-            conn = sqlite3.connect(current_file)
-            cur = conn.cursor()
-            cur.execute(select_place_id1, (parent,))
-            possible_children = [i[0] for i in cur.fetchall()]
-            
-            cur.close()
-            conn.close()
-
-            st = set(possible_children).intersection(children)
-            child = list(st)
-
-            return child
-
-        def seek_child():
-            u = 0
-            known = None
-            child = None
-            for dkt in self.place_dicts:
-                if len(dkt["id"]) == 1:
-                    known = dkt["id"][0]
-                else:
-                    u += 1
-                    continue
-                # u - 1 will refer to the last item if u == 0, don't allow that:
-                if u != 0:
-                    if known is not None and len(self.place_dicts[u - 1]["id"]) != 1:
-                        children = tuple(self.place_dicts[u - 1]["id"])
-                        child = pinpoint_child(known, children)
-                        self.place_dicts[u - 1]["id"] = child
-                        return
-                    else:
-                        u += 1
-                        continue
-        
-        for dkt in self.place_dicts:
-            seek_child()
-
-    def open_new_places_dialog(self):
-        '''
-            Open dialog by default. If one case is found which needs the dialog 
-            open, break the loop or return to stop looking through the cases. 
-        '''                   
-
-        def test_for_all_new():
-            z = 0
-            for dkt in self.place_dicts:
-                if dkt.get("temp_id") is not None and len(dkt["id"]) == 0:
-                    if z != len(self.place_dicts) - 1:
-                        z += 1
-                        continue
-                    else:
-                        self.open_dialog = False
-                        self.all_new = True
-                        return
-
-        def test_for_all_known():
-            known = 0
-            z = 0
-            for dkt in self.place_dicts:
-                if len(dkt["id"]) != 1 or dkt.get("temp_id") is not None:
-                    pass
-                elif len(dkt["id"]) == 1 and dkt.get("temp_id") is None:
-                    known += 1
-                z += 1
-            if z == known: 
-                self.open_dialog = False
-                self.all_known = True
-
-        def test_for_new_plus_known():
-            new = 0
-            known = 0
-            z = 0
-            for dkt in self.place_dicts:
-                if len(dkt["id"]) > 1:
-                    return
-                elif len(dkt["id"]) == 1 and dkt.get("temp_id") is None:
-                    known += 1
-                elif len(dkt["id"]) == 1 and dkt.get("temp_id") is not None:
-                    known += 1
-                    new += 1
-                elif len(dkt["id"]) == 0 and dkt.get("temp_id") is None:
-                    print("line", looky(seeline()).lineno, "case not handled")
-                elif len(dkt["id"]) == 0 and dkt.get("temp_id") is not None:
-                    new += 1
-                else:
-                    print("line", looky(seeline()).lineno, "case not handled")                    
-                z += 1
-            if new == 0 and known == 0:
-                self.open_dialog = False
-
-        test_for_all_new()
-        test_for_all_known()
-        test_for_new_plus_known()
- 
-        if self.open_dialog is True:
-            self.new_place_dialog = NewPlaceDialog(
-                self.root,
-                self.place_dicts,
-                self.finding,
-                "Clarify place selections where there is not exactly one ID "
-                "number.\n\nPress the EDIT button to add or edit hints for "
-                "duplicate place names (or any place name) so you won't have "
-                "to look up place IDs.\n\nIf you're entering a new place name "
-                "that has no duplicates, an ID number has been assigned which "
-                "you can just OK.\n\nIf, for even one of the levels in your "
-                "nested place, there is no correct option, press CANCEL and use "
-                "the Places Tab inputs to custom-create the desired nested "
-                "place before trying to use it.", 
-                "New and Duplicate Places Dialog",
-                ("OK", "CANCEL"),
-                self.treebard,
-                do_on_ok=self.collect_place_ids)
-        else:
-            if self.all_new is True:
-                self.update_new_places()
-            elif self.all_known is True:
-                self.update_known_places()
-            else:
-                # should run from collect_place_ids(), not here?
-                print("line", looky(seeline()).lineno, "running here anyway")
-                self.update_mixed_places()
-
-    def update_global_place_lists(self):
-        place_strings, places_places = make_global_place_lists()
-        EntryAuto.create_lists(place_strings)
-
-    def update_new_places(self):
-        conn = sqlite3.connect(current_file)
-        conn.execute("PRAGMA foreign_keys = 1")
-        cur = conn.cursor()
-        places = []
-        places_places = []
-        # insert new places
-        for dkt in self.place_dicts: 
-            new_id = dkt["temp_id"]
-            (place_id, place_name) = (new_id, dkt["input"])           
-            cur.execute(insert_place_new_with_id, (place_id, place_name))
-            conn.commit()
-            places.append(new_id)
-        # insert new places into existing places_places
-        for i in range(len(places) - 1):
-            places_places.append((places[i], places[i + 1]))
-            a = i + 1
-        places_places.append((places[a], None))
-        for tup in places_places:
-            cur.execute(insert_nested_pair, tup)
-            conn.commit()
-
-        qty = 9 - len(places)
-        nulls = [None] * qty
-        find = [self.finding]
-        tup = tuple(places + nulls + find)
-
-        cur.execute(update_finding_places_finding_id, tup)
-        conn.commit()
-
-        # update global place lists so they will be current immediately
-        EntryAuto.recent_items.insert(0, self.place_input)
-        self.update_global_place_lists()        
-
-        cur.close()
-        conn.close() 
-
-    def update_known_places(self):
-        input_ids = []
-        for dkt in self.place_dicts:
-            input_ids.append(dkt["id"][0])
-        qty = len(input_ids)
-        nulls = [None] * (9 - qty)
-        find = [self.finding]
-        tup = tuple(input_ids + nulls + find)
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-
-        cur.execute(update_finding_places_finding_id, tup)
-        conn.commit()
-        EntryAuto.recent_items.insert(0, self.place_input)
-        cur.close()
-        conn.close()
-
-    def update_mixed_places(self, ids=None):
-        # print("line", looky(seeline()).lineno, "ids:", ids)
-# line 469 ids: {'all': [20, 19, 7, 8], 'known': [20, 19, 7, 8]}
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-        # make ordered list of knowns in input
-        knowns = ids["known"]
-        all_ids = ids["all"]
-        all_ids.append(None)
-        # create new places
-        for nest in all_ids:
-            if nest not in knowns:
-                for dkt in self.place_dicts:
-                    if dkt.get("temp_id") is None:
-                        continue
-                    elif dkt["temp_id"] == nest:
-                        place_name = dkt["input"]
-                        cur.execute(insert_place_new_with_id, (nest, place_name))
-                        conn.commit()
-                        break 
-        # update pairs, create new pairs
-        new_pairs = []
-        u = 0
-        for nest in all_ids[0:len(all_ids) - 1]:
-            if nest not in knowns:
-                pair = [nest, all_ids[u + 1]]
-                new_pairs.append(pair)
-            u += 1
-        for pair in new_pairs:
-            cur.execute(insert_nested_pair, pair)
-            conn.commit()
-        # change fk in finding_places table
-        qty = len(all_ids)
-        nulls = [None] * (9 - qty)
-        find = [self.finding]
-        tup = tuple(all_ids + nulls + find)
-        cur.execute(update_finding_places_finding_id, tup)
-        conn.commit()
-        # update global place lists so they will be current immediately
-        self.update_global_place_lists()
-        cur.close()
-        conn.close()
-
-    def collect_place_ids(self):
-
-        def list_new_or_known():
-            print("line", looky(seeline()).lineno, "dkt:", dkt)
-# line 535 there are still duplicates
-# line 536 self.new_place_dialog.radvars[r].get(): 862
-# line 514 dkt: {'id': [860, 861], 'input': 'Motel 6', 'inner_dupe': False, 'temp_id': 862}
-# line 520 ids: {'all': [None], 'known': [None]}
-
-            new_id = self.new_place_dialog.radvars[r].get()
-            if new_id != dkt["temp_id"]:
-                ids["all"].append(new_id)
-                ids["known"].append(new_id)
-            else:
-                ids["all"].append(new_id)  
-            print("line", looky(seeline()).lineno, "ids:", ids)
-
-        ids = {"all": [], "known": []}
-        r = 0
-        for dkt in self.place_dicts:
-            new_id = None
-            if len(dkt["id"]) == 0:
-                if dkt.get("temp_id") is None:
-                    print("line", looky(seeline()).lineno, "something is wrong")
-                    return
-                else:
-                    print("line", looky(seeline()).lineno, "its a new nest")
-                    new_id = dkt["temp_id"]
-                    ids["all"].append(new_id)
-            elif len(dkt["id"]) > 1:
-                print("line", looky(seeline()).lineno, "there are still duplicates")
-                print("line", looky(seeline()).lineno, "self.new_place_dialog.radvars[r].get():", self.new_place_dialog.radvars[r].get())
-                list_new_or_known()
-                print("line", looky(seeline()).lineno, "new_id:", new_id)
-            elif len(dkt["id"]) == 1:
-                if dkt.get("temp_id") is None:
-                    print("line", looky(seeline()).lineno, "nest is already in database")
-                    new_id = dkt["id"][0]
-                    ids["all"].append(new_id)
-                    ids["known"].append(new_id)
-                elif dkt.get("temp_id") is not None:
-                    list_new_or_known()
-                    # new_id = self.new_place_dialog.radvars[r].get()
-                    # if new_id != dkt["temp_id"]:
-                        # ids["all"].append(new_id)
-                        # ids["known"].append(new_id)
-                    # else:
-                        # ids["all"].append(new_id)                        
-                    print("line", looky(seeline()).lineno, "there's both a known and a temp id for a nest")
-                else:
-                    print("line", looky(seeline()).lineno, "case not handled")
-            else:
-                print("line", looky(seeline()).lineno, "case not handled")
-            r += 1
-        self.update_mixed_places(ids)
+unique_place_names = set(all_place_names) 
 
 class NewPlaceDialog():
     def __init__(
             self,
             parent, 
             place_dicts,
-            finding, # get rid of this param if not used
             message, 
             title,
             button_labels,
@@ -580,7 +100,6 @@ class NewPlaceDialog():
 
         self.parent = parent
         self.place_dicts = place_dicts
-        self.finding = finding
         self.message = message
         self.title = title
         self.button_labels = button_labels
@@ -776,6 +295,7 @@ class NewPlaceDialog():
             else:
                 print("line", looky(seeline()).lineno, "case not handled")
             place_input = dkt["input"]
+            # place_string = '{}, place ID #{}'.format(place_input, place_id)
             place_string = '{}: {}, place ID #{}'.format(
                 bullet, place_input, place_id)
 
@@ -787,7 +307,7 @@ class NewPlaceDialog():
             self.hint_frm.columnconfigure(0, minsize=48)
 
             self.make_edit_row(self.hint_frm)
-
+            print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
             h = 0
             row = 0
             for hint in place_hints:
@@ -799,6 +319,8 @@ class NewPlaceDialog():
                         current_id = new_id
                         if h == 0:
                             self.radvars[t].set(current_id)
+                        # rad_string = "{} (new place and new place ID)".format(
+                            # dkt["input"])
                         rad_string = "{}: {} (new place and new place ID)".format(
                             current_id, dkt["input"])
                     else:
@@ -807,6 +329,7 @@ class NewPlaceDialog():
                             self.radvars[t].set(current_id)
                         nesting = ManyManyRecursiveQuery(initial_id=current_id).final_strings
                         rad_string = "{}: {}".format(current_id, nesting)
+                        # rad_string = "{}".format(nesting)
                 elif dkt.get("temp_id") is not None and len(dkt["id"]) == 0:
                     # user will OK new place ID or CANCEL
                     current_id = dkt["temp_id"]
@@ -814,12 +337,16 @@ class NewPlaceDialog():
                         self.radvars[t].set(current_id)
                     rad_string = "{}: {} (new place and new place ID)".format(
                         current_id, dkt["input"])
+                    # rad_string = "{} (new place and new place ID)".format(
+                        # dkt["input"])
                 else:
                     # user OKs or CANCELS some new and some existing IDs
+                    print("line", looky(seeline()).lineno, "dkt:", dkt)
                     current_id = dkt["id"][h]
                     if h == 0:
                         self.radvars[t].set(current_id)
                     nesting = ManyManyRecursiveQuery(initial_id=current_id).final_strings
+                    # rad_string = "{}".format(nesting)
                     rad_string = "{}: {}".format(current_id, nesting)
 
                 rad = RadiobuttonBig(
@@ -886,6 +413,94 @@ class EditRow(Frame):
     def remove_edit_row(self):
         self.grid_forget()
 
+class ValidatePlace():
+
+    def __init__(self, root, treebard, place_input, finding, nested_place):
+
+        self.root = root
+        self.treebard = treebard
+        self.place_input = place_input
+        self.finding = finding
+        self.nested_place = nested_place
+
+        self.place_list = []
+        self.place_dicts = []
+        self.new = False
+        self.dupes = False
+
+        self.see_whats_needed()
+
+    def see_whats_needed(self):
+
+        def get_matching_ids(nest):
+            cur.execute(select_place_id, (nest,))
+            ids = cur.fetchall()
+            ids = [i[0] for i in ids] 
+            if len(ids) == 0: self.new = True
+            elif len(ids) > 1: self.dupes = True
+            return ids
+
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+
+        self.place_list = self.place_input.split(",")
+        self.place_list = [self.place_list[i].strip() for i in range(len(self.place_list))]
+        self.length = len(self.place_list)
+
+        self.place_dicts = [
+            (
+                { 
+                    "id" : get_matching_ids(nest),
+                    "input" : nest}) 
+            for nest in self.place_list]
+        cur.close()
+        conn.close()
+
+        if self.new is True:
+            self.make_new_places()
+
+        if self.new is True or self.dupes is True:
+            dlg = NewPlaceDialog(
+                self.root,
+                self.place_dicts,
+                "Clarify place selections where there is not exactly one ID "
+                "number.\n\nPress the EDIT button to add or edit hints for "
+                "duplicate place names (or any place name) so you won't have "
+                "to look up place IDs.\n\nIf you're entering a new place name "
+                "that has no duplicates, an ID number has been assigned which "
+                "you can just OK.\n\nIf, for even one of the levels in your "
+                "nested place, there is no correct option, press CANCEL and use "
+                "the Places Tab inputs to custom-create the desired nested "
+                "place before trying to use it.", 
+                "New and Duplicate Places Dialog",
+                ("OK", "CANCEL"),
+                self.treebard,
+                do_on_ok=self.collect_place_ids)
+
+    def make_new_places(self):
+        '''
+            The place IDs have to be assigned at the same time so that each
+            number is unique, then entry to the database has to be done all
+            at the same time while this information is still correct. After
+            the max ID is obtained from the database, no db transactions can
+            occur which insert to any of the place tables till these temp IDs
+            are either used or discarded.
+        '''
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_max_place_id)
+        temp_id = cur.fetchone()[0] + 1
+        for dkt in self.place_dicts:
+            if len(dkt["id"]) == 0:
+                dkt["temp_id"] = temp_id
+                temp_id += 1
+        cur.close()
+        conn.close()
+
+
+    def collect_place_ids(self):
+        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)    
+
 if __name__ == "__main__":
 
     trials = {
@@ -935,18 +550,6 @@ if __name__ == "__main__":
 
     def get_final(evt):
         widg = evt.widget
-        # final = widg.get()
-        # if final != self.initial:
-            # self.final = final
-            # for row in self.findings:
-                # c = 0
-                # for col in row[0:-1]:
-                    # if col[0] == widg:
-                        # self.finding = row[9]
-                        # col_num = c
-                    # c += 1
-        
-            # self.update_db(widg, col_num)
         update_db(widg) # will need (widg, col_num) in real one
 
     def update_db(widg):
@@ -959,14 +562,9 @@ if __name__ == "__main__":
             lab = Label(
                 frame,
                 text='{} id#{}'.format(
-                    final.place_dicts[j]["input"], final.place_dicts[j]["id"]))
+                    final.place_list[j], final.place_list[j]))
             lab.grid()
             j += 1
-
-            # self.final = ValidatePlace(
-                # self.root, 
-                # self.treebard,
-                # self.final,)
 
     root = tk.Tk()
     treebard = root # mockup; this isn't what really happens
