@@ -112,6 +112,7 @@ class NewPlaceDialog():
         self.hint_to_edit = None
         self.edit_rows = {}
         self.make_widgets()
+        self.add_new_place_option = False
 
     def make_widgets(self):
 
@@ -133,7 +134,7 @@ class NewPlaceDialog():
         size = (
             self.parent.winfo_screenwidth(), self.parent.winfo_screenheight())
         self.new_places_dialog = Toplevel(self.parent)
-        self.new_places_dialog.geometry("+84+84")
+        self.new_places_dialog.geometry("+120+24")
         self.new_places_dialog.maxsize(
             width=int(size[0] * 0.85), height=int(size[1] * 0.95))
         self.new_places_dialog.columnconfigure(1, weight=1)
@@ -187,7 +188,7 @@ class NewPlaceDialog():
         self.frm.grid(column=1, row=2, sticky='news', pady=12)
 
         show_message()
-        self.show_choices()
+        self.lay_out_radios()
 
         resize_scrolled_content(self.new_places_dialog, canvas, window)
 
@@ -235,10 +236,11 @@ class NewPlaceDialog():
     def on_unhover(self, evt):
         evt.widget.config(text='')
 
-    def show_choices(self):
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-
+    def lay_out_radios(self):
+        '''
+            Make a new place dialog the same way for every place, then for
+            certain qualifying (unambiguous) cases, don't open the dialog.
+        '''
         self.radvars = []
         i = 0
         for dd in self.place_dicts:
@@ -246,147 +248,120 @@ class NewPlaceDialog():
             self.radvars.append(self.var)
             i += 1
 
-        d = 0
-        t = 0
-        bullet = len(self.place_dicts)
-        # configure place_id for query
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
         for dkt in self.place_dicts:
-            add_new_place_option = False
-            place_hints = []
-            if len(dkt["id"]) == 1:
-                if dkt.get("temp_id") is None:
-                    place_id = (dkt["id"][0],)
+            dkt["hint"] = ['']
+            for num in dkt["id"]:
+                cur.execute(select_place_hint, (num,))
+                place_hint = list(cur.fetchone())
+                if place_hint[0] is None:
+                    place_hint[0] = ''
                 else:
-                    place_id = (dkt["id"][0])
-                    add_new_place_option = True
-            elif len(dkt["id"]) > 1:
-                if dkt.get("temp_id") is not None:
-                    add_new_place_option = True
-                place_id = dkt["id"]
-            elif dkt.get("temp_id") is None:
-                place_id = ("none",)
-            elif dkt.get("temp_id"):
-                # place id will be int type which marks it as a new place
-                place_id = dkt["temp_id"]
-            else:
-                print("line", looky(seeline()).lineno, "case not handled")
-            if type(place_id) is int:
-                place_hints.append('')
-            else:
-                for num in place_id:
-                    if num == "none":
-                        place_hints.append('')
-                    else:
-                        cur.execute(select_place_hint, (num,))
-                        place_hint = cur.fetchone()
-                        if place_hint[0] is None:
-                            place_hint = ''
-                        else: 
-                            place_hint = place_hint[0]
-                        place_hints.append(place_hint)
-            # reconfigure place_id for display
-            if type(place_id) is int:
-                if dkt["temp_id"] is not None and len(dkt["id"]) > 0:
-                    place_hints.append('')
-            elif add_new_place_option is True:
-                place_hints.append('')
-            elif len(place_id) == 1:
-                place_id = place_id[0]
-            else:
-                print("line", looky(seeline()).lineno, "case not handled")
-            place_input = dkt["input"]
-            # place_string = '{}, place ID #{}'.format(place_input, place_id)
-            place_string = '{}: {}, place ID #{}'.format(
-                bullet, place_input, place_id)
-
-            lab = Label(self.frm, text=place_string)
-            lab.grid(column=0, row=d, sticky='w')
-
-            self.hint_frm = Frame(self.frm, name="nest{}".format(bullet-1))
-            self.hint_frm.grid(column=0, row=d+1, sticky='w', padx=(0,3), columnspan=2)
-            self.hint_frm.columnconfigure(0, minsize=48)
-
-            self.make_edit_row(self.hint_frm)
-            print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
-            h = 0
-            row = 0
-            for hint in place_hints:
-                if dkt.get("temp_id") is not None and len(dkt["id"]) > 0:
-                    # user will choose between a new ID or one of the existing IDs
-                    new_id = dkt["temp_id"]
-                    last_idx = len(dkt["id"])
-                    if h == last_idx:
-                        current_id = new_id
-                        if h == 0:
-                            self.radvars[t].set(current_id)
-                        # rad_string = "{} (new place and new place ID)".format(
-                            # dkt["input"])
-                        rad_string = "{}: {} (new place and new place ID)".format(
-                            current_id, dkt["input"])
-                    else:
-                        current_id = dkt["id"][h]
-                        if h == 0:
-                            self.radvars[t].set(current_id)
-                        nesting = ManyManyRecursiveQuery(initial_id=current_id).final_strings
-                        rad_string = "{}: {}".format(current_id, nesting)
-                        # rad_string = "{}".format(nesting)
-                elif dkt.get("temp_id") is not None and len(dkt["id"]) == 0:
-                    # user will OK new place ID or CANCEL
-                    current_id = dkt["temp_id"]
-                    if h == 0:
-                        self.radvars[t].set(current_id)
-                    rad_string = "{}: {} (new place and new place ID)".format(
-                        current_id, dkt["input"])
-                    # rad_string = "{} (new place and new place ID)".format(
-                        # dkt["input"])
-                else:
-                    # user OKs or CANCELS some new and some existing IDs
-                    print("line", looky(seeline()).lineno, "dkt:", dkt)
-                    current_id = dkt["id"][h]
-                    if h == 0:
-                        self.radvars[t].set(current_id)
-                    nesting = ManyManyRecursiveQuery(initial_id=current_id).final_strings
-                    # rad_string = "{}".format(nesting)
-                    rad_string = "{}: {}".format(current_id, nesting)
-
-                rad = RadiobuttonBig(
-                    self.hint_frm, 
-                    variable=self.radvars[t],
-                    value=current_id,
-                    text=rad_string, 
-                    anchor="w")
-
-                lab = Label(
-                    self.hint_frm, 
-                    text="hint: {}".format(hint),
-                    anchor='w', bg='red')
-                editx = ButtonQuiet(
-                    self.hint_frm, 
-                    width=2, 
-                    command=lambda hint=hint: self.grid_edit_row(hint))
-
-                self.hint_frm.columnconfigure(1, weight=1)
-                rad.grid(column=0, row=row, sticky='we', columnspan=2)
-                editx.grid(column=0, row=row+1, pady=(0,3), sticky='e')
-                lab.grid(column=1, row=row+1, sticky='w', padx=6)
-
-                editx.bind('<Enter>', self.on_hover)
-                editx.bind('<Leave>', self.on_unhover)
-                editx.bind('<Button-1>', self.get_clicked_row)
-                editx.bind('<space>', self.get_clicked_row)
-                editx.bind('<FocusIn>', self.on_hover)
-                editx.bind('<FocusOut>', self.on_unhover)
-                h += 1
-                row += 2
-
-            sep = Separator(self.frm, 3)
-            sep.grid(column=0, row=d+2, sticky='ew', columnspan=3, pady=(3,0))
-            d += 3
-            t += 1
-            bullet -= 1
-
+                    print("line", looky(seeline()).lineno, "case not handled")
+                # dkt["hint"].append(place_hint[0])
+                dkt["hint"].insert(0, place_hint[0])
+            
         cur.close()
         conn.close()
+
+        self.bullet = len(self.place_dicts) - 1
+        self.rowdx = 0
+        self.vardx = 0
+        for dkt in self.place_dicts:
+            self.make_radiobuttons(dkt)
+
+
+    def make_radiobuttons(self, dkt):
+        if len(dkt["id"]) > 0:
+            nest_ids =  dkt["id"]
+        else:
+            nest_ids = dkt["temp_id"]
+        place_string = '{}: {}, place ID #{}'.format(
+            self.bullet, dkt["input"], nest_ids)
+
+        lab = Label(self.frm, text=place_string)
+        lab.grid(column=0, row=self.rowdx, sticky='w')
+
+        self.hint_frm = Frame(self.frm, name="nest{}".format(self.bullet-1))
+        self.hint_frm.grid(column=0, row=self.rowdx+1, sticky='w', padx=(0,3), columnspan=2)
+        self.hint_frm.columnconfigure(0, minsize=48)
+
+        self.make_edit_row(self.hint_frm)
+        self.radx = 0
+        row = 0
+        for hint in dkt["hint"]:
+            if len(dkt["id"]) > 0:
+                new_id = dkt["temp_id"]
+                last_idx = len(dkt["id"])
+                if self.radx == last_idx:
+                    self.current_id = new_id
+                    self.select_first_radio()
+                    rad_string = "{}: {} (new place and new place ID)".format(
+                        self.current_id, dkt["input"])
+                else:
+                    self.current_id = dkt["id"][self.radx]
+                    self.select_first_radio()
+                    nesting = ManyManyRecursiveQuery(
+                        initial_id=self.current_id).final_strings
+                    rad_string = "{}: {}".format(self.current_id, nesting)
+            elif len(dkt["id"]) == 0:
+                self.current_id = dkt["temp_id"]
+                self.select_first_radio()
+                rad_string = "{}: {} (new place and new place ID)".format(
+                    self.current_id, dkt["input"])
+            else:
+                print("line", looky(seeline()).lineno, "what does this do?")
+                self.current_id = dkt["id"][self.radx]
+                self.select_first_radio()
+                nesting = ManyManyRecursiveQuery(
+                    initial_id=self.current_id).final_strings
+                rad_string = "{}: {}".format(self.current_id, nesting)
+
+            rad = RadiobuttonBig(
+                self.hint_frm, 
+                variable=self.radvars[self.vardx],
+                value=self.current_id,
+                text=rad_string, 
+                anchor="w")
+
+            lab = Label(
+                self.hint_frm, 
+                text="hint: {}".format(hint),
+                anchor='w', bg='red')
+            editx = ButtonQuiet(
+                self.hint_frm, 
+                width=2, 
+                command=lambda hint=hint: self.grid_edit_row(hint))
+
+            self.hint_frm.columnconfigure(1, weight=1)
+            rad.grid(column=0, row=row, sticky='we', columnspan=2)
+            lab.grid(column=1, row=row+1, sticky='w', padx=6)
+            editx.grid(column=0, row=row+1, pady=(0,3), sticky='e')
+
+            editx.bind('<Enter>', self.on_hover)
+            editx.bind('<Leave>', self.on_unhover)
+            editx.bind('<Button-1>', self.get_clicked_row)
+            editx.bind('<space>', self.get_clicked_row)
+            editx.bind('<FocusIn>', self.on_hover)
+            editx.bind('<FocusOut>', self.on_unhover)
+            self.radx += 1
+            row += 2
+
+        sep = Separator(self.frm, 3)
+        sep.grid(column=0, row=self.rowdx+2, sticky='ew', 
+            columnspan=3, pady=(3,0))
+        self.rowdx += 3
+        self.vardx += 1
+        self.bullet -= 1
+
+    def select_first_radio(self):
+        if self.radx == 0:
+            self.radvars[self.vardx].set(self.current_id)
+
+
+
+
 
 class EditRow(Frame):
     def __init__(self, master, command, *args, **kwargs):
@@ -456,22 +431,18 @@ class ValidatePlace():
         cur.close()
         conn.close()
 
-        if self.new is True:
-            self.make_new_places()
-
+        self.make_new_places()
+        print("line", looky(seeline()).lineno, "self.new, self.dupes:", self.new, self.dupes)
         if self.new is True or self.dupes is True:
-            dlg = NewPlaceDialog(
+            self.new_place_dialog = NewPlaceDialog(
                 self.root,
                 self.place_dicts,
                 "Clarify place selections where there is not exactly one ID "
                 "number.\n\nPress the EDIT button to add or edit hints for "
-                "duplicate place names (or any place name) so you won't have "
-                "to look up place IDs.\n\nIf you're entering a new place name "
-                "that has no duplicates, an ID number has been assigned which "
-                "you can just OK.\n\nIf, for even one of the levels in your "
-                "nested place, there is no correct option, press CANCEL and use "
-                "the Places Tab inputs to custom-create the desired nested "
-                "place before trying to use it.", 
+                "duplicate place names or any place name.\n\nWhen entering "
+                "new place names, ID numbers have been assigned which you can "
+                "just OK.\n\nIf the options are not exactly right, press CANCEL "
+                "and use the Places Tab to create or edit the place.", 
                 "New and Duplicate Places Dialog",
                 ("OK", "CANCEL"),
                 self.treebard,
@@ -479,7 +450,11 @@ class ValidatePlace():
 
     def make_new_places(self):
         '''
-            The place IDs have to be assigned at the same time so that each
+            A temp_id is assigned to each nest in case the user needs to make
+            a new place by the name input, even if some place(s) by that name
+            already exist in the database.
+
+            The temp_ids all have to be assigned at the same time so that each
             number is unique, then entry to the database has to be done all
             at the same time while this information is still correct. After
             the max ID is obtained from the database, no db transactions can
@@ -491,15 +466,52 @@ class ValidatePlace():
         cur.execute(select_max_place_id)
         temp_id = cur.fetchone()[0] + 1
         for dkt in self.place_dicts:
-            if len(dkt["id"]) == 0:
-                dkt["temp_id"] = temp_id
-                temp_id += 1
+            dkt["temp_id"] = temp_id
+            temp_id += 1
         cur.close()
         conn.close()
 
-
     def collect_place_ids(self):
-        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)    
+        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+        r = 0
+        for dkt in self.place_dicts:
+            dkt["id"] = self.new_place_dialog.radvars[r].get()
+            r += 1
+
+        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+
+# ALL KNOWN PLACES, NO DUPES: dialog doesn't open; dialog opens for all other cases:
+
+# ALL KNOWN, SOME OUTER DUPES
+# line 492 self.place_dicts: [{'id': [860, 861, 862, 864], 'input': 'Motel 6'}, {'id': [728, 792], 'input': 'Reno'}, {'id': [708], 'input': 'Nevada'}, {'id': [8], 'input': 'USA'}]
+# line 498 self.place_dicts: [{'id': 864, 'input': 'Motel 6'}, {'id': 728, 'input': 'Reno'}, {'id': 708, 'input': 'Nevada'}, {'id': 8, 'input': 'USA'}]
+
+# ALL KNOWN, SOME INNER DUPES
+# line 492 self.place_dicts: [{'id': [15, 679], 'input': 'Sassari'}, {'id': [15, 679], 'input': 'Sassari'}, {'id': [14], 'input': 'Sardegna'}, {'id': [12], 'input': 'Italy'}]
+# line 498 self.place_dicts: [{'id': 15, 'input': 'Sassari'}, {'id': 679, 'input': 'Sassari'}, {'id': 14, 'input': 'Sardegna'}, {'id': 12, 'input': 'Italy'}]
+
+# ALL KNOWN, SOME INNER & SOME OUTER DUPES
+
+
+# SOME NEW & SOME KNOWN, NO DUPES
+# line 492 self.place_dicts: [{'id': [], 'input': 'Abd', 'temp_id': 867}, {'id': [], 'input': 'Def', 'temp_id': 868}, {'id': [], 'input': 'Geh', 'temp_id': 869}, {'id': [116], 'input': 'Iowa'}, {'id': [8], 'input': 'USA'}]
+# line 498 self.place_dicts: [{'id': 867, 'input': 'Abd', 'temp_id': 867}, {'id': 868, 'input': 'Def', 'temp_id': 868}, {'id': 869, 'input': 'Geh', 'temp_id': 869}, {'id': 116, 'input': 'Iowa'}, {'id': 8, 'input': 'USA'}]
+
+# SOME NEW & SOME KNOWN, SOME OUTER DUPES = ok
+
+# SOME NEW & SOME KNOWN, SOME INNER DUPES = ok
+
+# SOME NEW & SOME KNOWN, SOME INNER & SOME OUTER DUPES = ok
+
+# ALL NEW, NO DUPES = ok
+
+# ALL NEW, SOME OUTER DUPES
+# NOT GOOD ENOUGH, NEEDED TO INPUT NEW BUT NO OPTION RAD
+
+# ALL NEW, SOME INNER DUPES
+
+# ALL NEW, SOME INNER & SOME OUTER DUPES
+
 
 if __name__ == "__main__":
 
