@@ -623,6 +623,12 @@ select_place_id = '''
     WHERE places = ?
 '''
 
+select_place_id_hint = '''
+    SELECT place_id, hint
+    FROM place
+    WHERE places = ?
+'''
+
 select_place_id1 = '''
     SELECT place_id1 
     FROM places_places 
