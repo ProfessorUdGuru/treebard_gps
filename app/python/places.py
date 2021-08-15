@@ -52,6 +52,7 @@ from query_strings import (
 from files import current_file
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
+from error_messages import open_error_message, places_err
 import dev_tools as dt
 from dev_tools import looky, seeline
 import sqlite3
@@ -114,6 +115,7 @@ class NewPlaceDialog():
         self.edit_rows = {}
         self.make_widgets()
         self.add_new_place_option = False
+        self.error = False
 
     def make_widgets(self):
 
@@ -128,7 +130,8 @@ class NewPlaceDialog():
         def ok():
             if self.do_on_ok:
                 self.do_on_ok()
-            cancel()
+            if self.error is False:
+                cancel()
 
         def cancel():
             self.new_places_dialog.destroy()
@@ -196,13 +199,10 @@ class NewPlaceDialog():
         self.new_places_dialog.focus_set()
 
     def ok_hint(self):
-        print("line", looky(seeline()).lineno, "self.got_row:", self.got_row)
-        print("line", looky(seeline()).lineno, "self.got_nest:", self.got_nest)
         edit_row = self.edit_rows[self.got_nest]
         new_hint = edit_row.ent.get()
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        print("line", looky(seeline()).lineno, "new_hint, self.edit_hint_id:", new_hint, self.edit_hint_id)
         cur.execute(update_place_hint, ((new_hint, self.edit_hint_id)))
         conn.commit()
         cur.close()
@@ -254,16 +254,6 @@ class NewPlaceDialog():
 
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        # for dkt in self.place_dicts:
-            # dkt["hint"] = ['']
-            # for num in dkt["id"]:
-                # cur.execute(select_place_hint, (num,))
-                # place_hint = list(cur.fetchone())
-                # if place_hint[0] is None:
-                    # place_hint[0] = ''
-                # else:
-                    # print("line", looky(seeline()).lineno, "case not handled")
-                # dkt["hint"].insert(0, place_hint[0])
             
         cur.close()
         conn.close()
@@ -273,7 +263,6 @@ class NewPlaceDialog():
         self.vardx = 0
         for dkt in self.place_dicts:
             self.make_radiobuttons(dkt)
-
 
     def make_radiobuttons(self, dkt):
         if len(dkt["id"]) > 0:
@@ -286,7 +275,6 @@ class NewPlaceDialog():
         lab = Label(self.frm, text=place_string)
         lab.grid(column=0, row=self.rowdx, sticky='w')
             
-        # self.nest_level = Frame(self.frm, name="nest{}".format(self.bullet - 1))
         self.nest_level = Frame(self.frm)
         self.nest_level.grid(column=0, row=self.rowdx+1, sticky='w', padx=(0,3), columnspan=2)
         self.nest_level.columnconfigure(0, minsize=48)
@@ -294,7 +282,6 @@ class NewPlaceDialog():
         self.make_edit_row(self.nest_level)
         self.radx = 0
         row = 0
-        print("line", looky(seeline()).lineno, "dkt['hint']:", dkt['hint'])
         for hint in dkt["hint"]:
             if len(dkt["id"]) > 0:
                 new_id = dkt["temp_id"]
@@ -365,10 +352,6 @@ class NewPlaceDialog():
         if self.radx == 0:
             self.radvars[self.vardx].set(self.current_id)
 
-
-
-
-
 class EditRow(Frame):
     def __init__(self, master, command, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
@@ -419,7 +402,6 @@ class ValidatePlace():
             if len(ids_hints) == 0: self.new = True
             elif len(ids_hints) > 1: self.dupes = True
             return ids_hints
-        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
 
@@ -430,17 +412,15 @@ class ValidatePlace():
         for nest in self.place_list:
             ids_hints = [list(i) for i in get_matching_ids_hints(nest)]
             ids = []
-            hints = [] # [""] [] fixes positioning of right hint w/ right radio but prevents temp_id extra radio from showing up
+            hints = []
             for tup in ids_hints:
                 ids.append(tup[0])
                 hints.append(tup[1])        
             hints.append("")
-            print("line", looky(seeline()).lineno, "ids, hints:", ids, hints)
             self.place_dicts.append({
                 "id" : ids,
                 "input" : nest,
                 "hint" : hints})
-
 
         cur.close()
         conn.close()
@@ -456,12 +436,17 @@ class ValidatePlace():
                 "number.\n\nPress the EDIT button to add or edit hints for "
                 "duplicate place names or any place name.\n\nWhen entering "
                 "new place names, ID numbers have been assigned which you can "
-                "just OK.\n\nIf the options are not exactly right, press CANCEL "
+                "just OK.\n\nIf the right options are not listed, press CANCEL "
                 "and use the Places Tab to create or edit the place.", 
                 "New and Duplicate Places Dialog",
                 ("OK", "CANCEL"),
                 self.treebard,
                 do_on_ok=self.collect_place_ids)
+        else:
+            for dkt in self.place_dicts:
+                dkt["id"] = dkt["id"][0]
+            print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+            self.input_to_db()
 
     def make_new_places(self):
         '''
@@ -487,13 +472,61 @@ class ValidatePlace():
         conn.close()
 
     def collect_place_ids(self):
-        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+
+        def reset_error(evt):
+            self.new_place_dialog.error = False
+
         r = 0
         for dkt in self.place_dicts:
             dkt["id"] = self.new_place_dialog.radvars[r].get()
             r += 1
 
+        seen = set()
+        for dkt in self.place_dicts:
+            val = dkt['id']
+            if val in seen:
+                msg = open_error_message(
+                    self.root, 
+                    places_err[0], 
+                    "Duplicate Place IDs", 
+                    "OK")
+                msg[1].config(aspect=400)
+                msg[0].bind("<Destroy>", reset_error)
+                self.new_place_dialog.error = True
+                return
+            seen.add(val)
+        self.input_to_db()
+
+    def input_to_db(self):
+
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+
         print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
+        ids = []
+        print("line", looky(seeline()).lineno, "self.finding:", self.finding)
+        
+        for dkt in self.place_dicts:
+            ids.append(dkt["id"])
+        print("line", looky(seeline()).lineno, "ids:", ids)
+        qty = len(self.place_dicts)
+        nulls = 9 - qty
+        ids = ids + [None] * nulls
+        ids.append(self.finding)
+        print("line", looky(seeline()).lineno, "ids:", ids)
+        
+
+        for dkt in self.place_dicts:
+            cur.execute(update_finding_places_finding_id, tuple(ids))
+            conn.commit()
+
+
+        
+        
+            
+        cur.close()
+        conn.close()
+
 
 # ALL KNOWN PLACES, NO DUPES: dialog doesn't open; dialog opens for all other cases:
 
@@ -613,8 +646,10 @@ if __name__ == "__main__":
 
 # DO LIST
 
+
+# New places not going into db yet
+# new places not yet made immediately available for autofill
 # input to db
-# check places_places and nested_places to make sure a bunch of junk hasn't been entered, esp. look for pairs in p_p where id2 is null.
 # in the real one, if CANCEL is pressed, the table cell that triggered this procedure should be cleared out so user can start fresh and not get the procedure auto-triggered again from the old data he input.
 
 

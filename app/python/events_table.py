@@ -344,7 +344,7 @@ class EventsTable(Frame):
             print("line", looky(seeline()).lineno, "self.finding:", self.finding)
             cur.execute(select_nesting_fk_finding, (self.finding,))
             nested_place = cur.fetchone()[0]
-
+            print("line", looky(seeline()).lineno, "nested_place:", nested_place)
 
 
 
