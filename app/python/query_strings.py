@@ -72,10 +72,6 @@ insert_name = '''
     VALUES (null, ?, ?, ?, ?, null)
 '''
 
-insert_nested_pair = '''
-    INSERT INTO places_places (place_id1, place_id2)
-    VALUES (?, ?)
-'''
 
 insert_note = '''
     INSERT INTO note 
@@ -88,11 +84,11 @@ insert_person_null = '''
 
 insert_place_new = '''
     INSERT INTO place (place_id, places)
-    VALUES (null, ?)
+    VALUES (?, ?)
 '''
 
-insert_place_new_with_id = '''
-    INSERT INTO place (place_id, places)
+insert_places_places_new = '''
+    INSERT INTO places_places (place_id1, place_id2)
     VALUES (?, ?)
 '''
 
@@ -182,6 +178,11 @@ select_all_person_images = '''
         AND name_type_id = 1
 '''
 
+select_all_place_ids = '''
+    SELECT place_id
+    FROM place
+'''
+
 select_all_place_images = '''
     SELECT places, images, caption, main_image
     FROM images_entities
@@ -195,11 +196,6 @@ select_all_place_images = '''
 
 select_all_places = '''
     SELECT places
-    FROM place
-'''
-
-select_all_place_ids = '''
-    SELECT place_id
     FROM place
 '''
 
@@ -724,12 +720,12 @@ update_finding_age = '''
     WHERE finding_id = ?
 '''
 
-update_finding_places_finding_id = '''
-    UPDATE finding_places
-    SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
-        = ({}) 
-    WHERE finding_id = ?
-'''.format(','.join(['?'] * 9))
+# update_finding_places_finding_id = '''
+    # UPDATE finding_places
+    # SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
+        # = ({}) 
+    # WHERE finding_id = ?
+# '''.format(','.join(['?'] * 9))
 
 # insert_finding_places = '''
     # INSERT INTO finding_places (
@@ -754,6 +750,20 @@ update_finding_particulars = '''
     UPDATE finding 
     SET particulars = ? 
     WHERE finding_id = ?
+'''
+
+update_finding_places = '''
+    UPDATE finding_places
+    SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
+        = ({}) 
+    WHERE finding_id = ?
+'''.format(','.join(['?'] * 9))
+
+update_finding_places_null = '''
+    UPDATE finding_places
+    SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
+        = (1, null, null, null, null, null, null, null, null)
+    WHERE finding_id = ?    
 '''
 
 update_findings_notes = '''

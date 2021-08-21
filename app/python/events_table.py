@@ -384,8 +384,8 @@ class EventsTable(Frame):
     def make_table_cells(self, qty=1998):
         '''
             EntryAuto was used for all the text columns to keep the code 
-            symmetrical for all the text columns, with autofill set to False
-            except for the places column.
+            symmetrical for all the text columns, with autofill defaulting to 
+            False except for the places column.
         '''
 
         self.table_cells = []

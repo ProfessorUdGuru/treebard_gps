@@ -126,7 +126,7 @@ class ManyManyRecursiveQuery():
         self.id_tree = [[self.initial_id]]
         self.final = []
         self.final_id_list = []
-        self.final_strings = [] # now used only to make radvars--change name?
+        self.radio_text = []
         self.make_uppers_lists()
 
     def make_uppers_lists(self):
@@ -254,7 +254,7 @@ class ManyManyRecursiveQuery():
             if self.outwidg:
                 self.outwidg.config(values=[])
             return
-
+        # ManyManyRecursiveQuery.final_strings = [] # *********************added
         final_values_lists = []
         for lst in self.final_id_list:
             one_part = []
@@ -276,7 +276,7 @@ class ManyManyRecursiveQuery():
 
         # single nesting for radiobutton label
         if self.outwidg is None:
-            self.final_strings = stg
+            self.radio_text = stg
 
         cur.close()
         conn.close()
@@ -287,10 +287,21 @@ def make_all_nestings(query):
     
     cur.execute(query)
     all_ids = [i[0] for i in cur.fetchall()]
+    print("line", looky(seeline()).lineno, "len(all_ids):", len(all_ids))
     cur.close()
     conn.close()
     for item_id in all_ids:
-        mm = ManyManyRecursiveQuery(initial_id=item_id)
+        ManyManyRecursiveQuery(initial_id=item_id)
+    print("line", looky(seeline()).lineno, "len(ManyManyRecursiveQuery.final_strings):", len(ManyManyRecursiveQuery.final_strings))
+    return ManyManyRecursiveQuery.final_strings
+
+def make_temp_nesting(query, idnum):
+    pass
+
+
+def make_new_nesting(query, idnum):
+    ManyManyRecursiveQuery(initial_id=idnum)
+    print("line", looky(seeline()).lineno, "len(ManyManyRecursiveQuery.final_strings):", len(ManyManyRecursiveQuery.final_strings))
     return ManyManyRecursiveQuery.final_strings
 
 if __name__ == '__main__':
