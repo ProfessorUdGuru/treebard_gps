@@ -2,8 +2,7 @@
 
 ''' 
     Nestings are created on load, so are available for use by an autofill 
-    entry. The procedure for creating the collection of all nestings can 
-    be re-run each time a change is made to the place tables in the database.
+    entry.
 '''
 
 import tkinter as tk
@@ -254,7 +253,6 @@ class ManyManyRecursiveQuery():
             if self.outwidg:
                 self.outwidg.config(values=[])
             return
-        # ManyManyRecursiveQuery.final_strings = [] # *********************added
         final_values_lists = []
         for lst in self.final_id_list:
             one_part = []
@@ -287,21 +285,14 @@ def make_all_nestings(query):
     
     cur.execute(query)
     all_ids = [i[0] for i in cur.fetchall()]
-    print("line", looky(seeline()).lineno, "len(all_ids):", len(all_ids))
     cur.close()
     conn.close()
     for item_id in all_ids:
         ManyManyRecursiveQuery(initial_id=item_id)
-    print("line", looky(seeline()).lineno, "len(ManyManyRecursiveQuery.final_strings):", len(ManyManyRecursiveQuery.final_strings))
     return ManyManyRecursiveQuery.final_strings
-
-def make_temp_nesting(query, idnum):
-    pass
-
 
 def make_new_nesting(query, idnum):
     ManyManyRecursiveQuery(initial_id=idnum)
-    print("line", looky(seeline()).lineno, "len(ManyManyRecursiveQuery.final_strings):", len(ManyManyRecursiveQuery.final_strings))
     return ManyManyRecursiveQuery.final_strings
 
 if __name__ == '__main__':

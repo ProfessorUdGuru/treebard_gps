@@ -1,16 +1,5 @@
 # treebard_root_022.py
 
-# _22 Also planning to get rid of all ttk widgets now, having proved it can 
-#   be done. NESTED_PLACES HAS TO BE REFACTORED SO THAT ONLY THE PRIMARY NESTING
-#   IS STORED IN THE DATABASE AND THE OTHERS ARE COMPUTED BY PYTHON AS NEEDED.
-#   BETTER YET: STORE ONLY THE PAIRS AND ELIMINATE NESTED PLACES TABLE. SINCE
-#   THE NESTINGS ARE COMPUTED FROM THE PAIRS, STORING THEM AT ALL IS WRONG 
-#   BECAUSE THEY'RE ONLY NEEDED IN THE GUI AND NOT USED TO PERFORM ANY LOGIC,
-#   SO THEY SHOULD BE COMPUTED ON THE FLY FOR THE AUTOFILLS TO USE. However,
-#   there's an fk in finding table for the nested_places_id so if the table is
-#   dropped, that will have to be refactored also, so that an innermost nest
-#   is represented by a pair in places_places.
-
 import tkinter as tk
 from PIL import Image, ImageTk
 import tkinter as tk

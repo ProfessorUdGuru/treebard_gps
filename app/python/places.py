@@ -595,9 +595,6 @@ if __name__ == "__main__":
 
 
 
-# DO LIST
-
-# in the real one, if CANCEL is pressed, the table cell that triggered this procedure should be cleared out so user can start fresh and not get the procedure auto-triggered again from the old data he input.
 
 
 

@@ -16,9 +16,6 @@ from names import get_name_with_id
 from roles import RolesDialog
 from notes import NotesDialog
 from places import place_strings, ValidatePlace
-    # place_strings, get_autofill_places, ValidatePlace, make_autofill_strings)
-# from scrolling import (
-    # Combobox, Scrollbar, resize_scrolled_content, MousewheelScrolling)
 from query_strings import (
     select_finding_places_nesting, select_current_person_id, 
     select_all_event_types_couple, select_all_kin_types_couple,
@@ -29,7 +26,6 @@ from query_strings import (
     select_findings_details_offspring, select_all_findings_roles_ids, 
     select_finding_ids_offspring, select_all_findings_notes_ids,
     select_count_finding_id_sources, select_nesting_fk_finding,
-    # update_finding_nested_places,
     select_nestings_and_ids, select_place, update_finding_particulars,
     update_finding_age, update_current_person, select_all_place_ids
 )
@@ -82,23 +78,16 @@ def get_findings():
         generic_finding_details = cur.fetchone()
         generic_finding_details = list(generic_finding_details) 
 
-
-        # place_to_show = generic_finding_details[3]
-        # cur.execute(select_nested_place_string, (place_to_show,))
-        # print("line", looky(seeline()).lineno, "finding_id:", finding_id)
         cur.execute(select_finding_places_nesting, (finding_id,))
         place_string = cur.fetchone()
         place_string = [i for i in place_string if i]
         place_string = ', '.join(place_string)
-        # generic_finding_details[3] = place_string
         generic_finding_details.insert(3, place_string)
         generic_finding_details[1] = generic_finding_details[1:3]
-
 
         del generic_finding_details[2]
         generic_finding_details.insert(0, finding_id)
         generic_findings.extend([generic_finding_details])
-
 
     for lst in generic_findings:
         if lst[3] == 'unknown':
@@ -134,9 +123,6 @@ def get_findings():
         couple_generic_details = [list(i) for i in couple_generic_details]
         couple_generic_details[0].insert(0, finding_id)
 
-        # place_to_show = couple_generic_details[0][4]    
-        # print("line", looky(seeline()).lineno, "place_to_show:", place_to_show)
-        # cur.execute(select_nested_place_string, (place_to_show,))
         cur.execute(select_finding_places_nesting, (finding_id,))
         place_string = cur.fetchone()
         place_string = [i for i in place_string if i]
@@ -175,9 +161,6 @@ def get_findings():
         
         cur.execute(select_findings_details_offspring, (child_id,))
         offspring_details = list(cur.fetchall()[0])
-
-        # place_to_show =  offspring_details[2]
-        # cur.execute(select_nested_place_string, (place_to_show,))
 
         cur.execute(select_finding_places_nesting, (finding_id,))
         place_string = cur.fetchone()
@@ -341,13 +324,8 @@ class EventsTable(Frame):
 
     def update_db(self, widg, col_num):
         def update_place():
-            print("line", looky(seeline()).lineno, "self.finding:", self.finding)
             cur.execute(select_nesting_fk_finding, (self.finding,))
             nested_place = cur.fetchone()[0]
-            print("line", looky(seeline()).lineno, "nested_place:", nested_place)
-
-
-
             self.final = ValidatePlace(
                 self.root, 
                 self.treebard,
@@ -555,7 +533,6 @@ class EventsTable(Frame):
                     text = col[1][0]
                 elif c in (0, 2, 3, 4):
                     text = col[1]
-                    # if c == 2: print("c, text is", c, text)
                 elif c == 5: # kin
                     # parents
                     if event_type == 'birth':
@@ -723,7 +700,6 @@ if __name__ == '__main__':
     root.geometry('+800+300')
 
     auto = EntryAuto(root, width=50, autofill=True)
-    # strings = make_autofill_strings()
     strings = make_all_nestings(select_all_place_ids)
 
     EntryAuto.create_lists(strings)
@@ -739,70 +715,19 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# Refactor new place dialog into a flat table or rows at least with each row showing a string of values for a whole nested place string. A radiobutton appears at the left of each row and instead of prefilling each element I will only have to prefill one radio button. Each value is shown as an ID/name pair, or new/name, no lookup of IDs is required. No typing into any but the bottom row labeled "other" and its radio preselects if you type into that row. Change nesting to 9 rows instead of 12. npd opens after ever single focus out of a place input unless the contents were not changed, so it's predictable. OK button is in focus when it opens so one click is all that's needed to accept prefilled choice. No input tricks, just type either the id or the place. No splitting, use separate inputs for every id and name. Put a tester autofill so user can be assured the place is available for autofill before he closes the dialog, and it can also be used as a search field unless an ID is needed in which case maybe a search field will also be necessary.
 
-# Open an R U SURE message when creating duplicate places by typing a place string that already exists: "A place by the name _____ already exists. Click OK to create a new place with with same name, or press Cancel. Hint: in use existing places, you can input place ID numbers in these fields. IDs can be searched from the search field in the new place dialog. To keep this dialog from opening, type "new place" in front of the place name." Make it work whether they type quotes around new place or not, single or double.
-# already tested changing number of nests in the new place dialog where there aren't enough, i.e. the USA had to be left off the end, and it didn't work right, it added a new place and did that right but it shouldn't have added a new place. The solution is to detect when that is being done and re-draw the new place dialog with an added combo prefilled with "USA" in red and then it will be input right. Also give the user an "Add another nest to this place" button so the user can anticipate and add the USA the first time.
-# If new place dialog is opened and the cancel button is pushed, should the autofill have re-inserted into it whatever was in it before the user typed anything?
-# do something with editing existing place strings that are changed, eg if a place is deleted then some strings have to be deleted from nested_strings and some nestings have to be deleted from places_places as well. Delete bad places and superfluous nest strings using the gui. Probably do this on the places tab and maybe have a message on the new place dialog like, "You can't edit existing places here (eg change a spelling) so do it in the places tab instead."
-# Make an R U Sure or something when creating a place by the same name. The need to merge places is to be avoided at all cost and this won't happen very often.
-# add aliases for places and main pic for current place
+# If new place dialog is opened and the cancel button is pushed, should the autofill have re-inserted into it whatever was in it before the user typed anything? (yes)
+# Place tab: add aliases for places and main pic for current place; edit/delete place button
 # find out why there's so much space between cols esp after place
-# add error dialogs
 # fix titles on root and new place dialog
-# REFACTOR place input to db from scratch. 
-#   0) everything is done in one place in new place input module. Not in events table. The code in events table for updating place in db shd be exactly the same as the code there for updating a plain string. All the work has to be done in one place and only the final results sent back to events table. Model that first, it is step 0. 
-#   1) make sure the combo display is PERFECT before proceeding. Forget about the "or" for places with more than one nesting string and get rid of any 2nd nesting strings anyway. Correct any ambiguity at this time. The user has to know what's going on.
-#   2) define all possible combinations of choices before writing any code. Do it in an orderly way with a fixed framework such as a dict which names each thing so indexes don't have to be fiddled with. The possible states of each comma-delimited element have to be defined by the same series of tests and set booleans or whatever so the right thing will be done with each element.
-#   3) put it in the db and immediately rerun the code that makes the place autofill values available so no reloading is needed to use the new place and/or new string.
-#   4) things to avoid: globality. pass all values as soon as they exist to the place where they will be needed.
-#   5) places where values have to be updated: 3 db tables, autofill values, entry display
-#   6) use existing queries but the python for sorting the input is really bad. 
-# findings_export has to be changed at the right time so the lst will be all new nestings immediately after nesting is made, see model . 
-# MODEL THIS: when changing old place in events table to different old place in evts table, everything works right.
-# If changing all of an existing place in the events table, everything works, but when changing part of an existing place to a new place, the new place dialog doesn't open and nothing goes into the db.
-# when changing an old place to a new place that doesn't all exist yet ?, the new place dialog opens but the new place doesn't become available for fill-in immed (?at all?) and it ?doesn't get stored in db for next time app loads either.
-# when making a totally new or partly new place in events table where there was a blank, the new place goes into the db but not into the finding table.
-# valid input to place field should go into finding table, test thoroughly
-# Change something (eg a place) in events table. Change current person by clicking kin button then changing back to original current person. Unedited values are shown in original current person events table. Don't know if they're messed up in db too but it rolls back the display somehow to previous values.
-
-# DO LIST after places is done
 # # NEW EVENT ROW: Have to make one permanent edit row and ungrid it on close, this is because I learned last time since there is only ever one of them it's better to grid_remove instead of destroy it.
 # # MAKE if __name__ == '__main__' DO SOMETHING bottom of window_border, check others
-# clicking any widget on a dialog shd change the title bar color of that dialog to main color and all other title bars incl. root to neutral color. Commented this, need to get back to it. It was in a different module and have to make it work in the right place. It used instance variable to colorize all the title bar widgets in the clicked dialog after decolorizing title bar widgets in all dialogs incl root.
 # add menubar, ribbon menu, footer
 # add picture and attrib table
-# IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys.
-# refactor dates validation to use regular expressions
+# IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?
 
-# DEV DOCS, new place dialog:
 
-# when inputting a place w/out all its ancestors eg "Dallas, Texas" w/out the "USA", it creates a separate autofill string and the result is that if the whole thing is also put in (with the USA), the autofill will not do anything till you type the U so is completely useless if you have strings with one or more final elements omitted. To solve this, 1) don't let the user make incomplete strings; detect when the last element of a string being input is missing something and add another combo for it and prefill it. 2) Don't allow blank combos. (I think that's already taken care of.) 3) create a feature where the user can designate top ancestors as not for display. I don't like this and maybe the user should just get used to using country names, that's why long ones have abbrevs like USA, US, UK, USSR etc. It's bad genealogy to leave off the country name so maybe for now at least it can be disallowed. But what if there's no country name? That's the problem withdisallowing things. If I write smart software that detects things and tells the user what to do, that's bad because I can't detect all possibilities. For example, before there was a Texas, USA, there was a Republic of Texas. So detecting that the user has not done something write and forcing some policy is bad news because it will keep people from doing what they want, for example if someone doesn't know "Republic of Texas" and tries to call it just Texas without the country name, because they do know it wasn't in the Union yet... bad. So maybe the best thing for now is to live with the fact that a few place names will have to be typed most of the way through and let the user make alternate strings as he sees fit. The feature mentioned doesn't even need to be built as long as the user knows he can leave off country names and that's how the autofill will work, it will only autofill what has previously been entered.
 
-#   Let's say a place autofill doesn't fill in because user has entered a previously unused string of nested places, e.g. "Paris, Lamar Co, TX". "Paris" and "Texas" are already in the db but the user wants to insert a county. Why not just accept the new place without an annoying dialog? Because there may be another place called Paris, and it's not our business to guess which Paris the user is talking about. We can guess which one he's probably talking about, and pre-select it in the combobox so that most of the time, the user can just accept pre-selected combobox values and click OK. This avoids annoying the user more than necessary with superfluous choices. There are at least two problems that the new place dialog forestalls. 1) mis-spelling an existing place will open the dialog. User can click Cancel and fix his spelling (or there should be a way of assigning spelling variants and aliases to a place if that's what the user intended); 2) in other genieware, it's a frequent problem with place autofill widgets that the wrong "Paris" would fill in the first time a new string containing "Paris" is typed, and the user would use the wrong nested place string dozens of times before finding out that his Texan ancestors came from France. Each of these mistakes would have to be hunted down and corrected. So Treebard has a policy of having the user confirm new nested place names, and Treebard doesn't autofill place strings that have never been used. It would be easy to do this by restarting the search for autofill matches every time the user typed a comma, but this is exactly when the wrong Paris gets plunked down in the middle of Texas. In Treebard, the user is given the opportunity to look at all the places in a new nested place string to make sure they are each the place he intended. The hard part for us is to make this as easy as possible by determining that there's already a place called "Paris" in a place called "Texas", so instead of making the user select "Texas" in the dialog, we pre-select it and it's probably right. But namings are not predictable by us and the needs of the user could be more complex than we might imagine, so the user has to be given the freedom to make place strings any way he wants, so that a few edge cases don't ruin his experience of using Treebard. The only thing Treebard won't do is to make two different places called "Paris, Texas". This sounds bad but it's not, because chances are, if there are two cities named "Paris" in Texas, they won't both be in Lamar County. But if there were, then chances are they'd be in different precincts or townships. So the worst case scenario is the extremely rare occasion wherein two cities a few inches apart from each other have the same name. But even in a case like this, research will show that the residents of these places have a way of distinguishing the two places. For example, "Glenwood" vs. "West Glenwood". The need to differentiate two similarly named places that happen to be close together doesn't originate with data entry. Research should always turn up a unique name or nickname for each place and if even that doesn't work, the extreme edge case will have the user creating a nickname himself. I doubt this will ever happen though. The other thing that Treebard places won't do for the user is to guess on capitalization. The user has to input new places as he wants them to appear. Treebard will never change the capitalization of a place name from the way the user first enters it unless the user changes the capitalization himself. However, when using the autofill for places that already exist, capitalization is not the user's problem.
-
-# CASES not handled:
-# Case: input Paris, Tennessee, USA. new place dialog opens but without "new place "Paris" prefilled in combo entry. This is OK. There are already three places named Paris. User can select one of them or just type Paris in the entry and that will tell Treebard to make a new place called Paris. Or he can type an ID and Treebard will use that place.
-
-# user docs, places autofill:
-# All places except for The Whole Universe are nested in a larger place, and someone has probably figured out a container for the whole universe but we'll skip right to the practical, everyday nitty gritty. A practical example of a nested place is Paris, Lamar County, Texas, USA. When you add this place to your database, Treebard will automatically make sure that the following autofill place strings are stored for you, so you never have to type them all the way out again:
-#    Paris, Lamar County, Texas, USA
-#    Lamar County, Texas, USA
-#    Texas, USA
-#    USA
-# But what if you want to use a place called "Lamar County, Texas" and not add the country? No problem, you just enter it that way and accept the string that way when Treebard shows you the new place dialog. In this way you can create autofill strings for places that already exist, and the new place dialog is easy to use so you won't accidentally create copies of places that already exist; just the autofill strings you need. Then if you never use the whole autofill string (with USA at the end), you'll never see it again because the values you're offered first are the ones you've used most recently. But if you did want to use the full string (the one with USA at the end), just start typing "u..." after the first part autofills, and the "USA" will fill in anyway. This is especially helpful if you intend to add "United States of America" after every USA place name, as suggested by some purists. Treebard has no opinion about that; it's up to you. We have two main options for improving the user options here: 1) add a "default place" option so you can tell Treebard never to display "United States of America" unless you actually type it in; or 2) give the user the option to give each place both a long name and short name. But then we'd have to ask you when you want to use the long and when to use the short... I can sense the code bloat... anyway, please register your vote. Which way would you like it best? The third option is to leave it the way it is, and you just enter what you want each time. Since it's autofill, it's already easy... why make it complicated?
-
-# ADDED NOTE: there are so many cities that are located in more than one county that Wikipedia has a list of them: https://en.wikipedia.org/wiki/List_of_U.S._municipalities_in_multiple_counties.
-
-# ADDED NOTE: not using jurisdiction categories allows a flexibility matching the reality of how we humans do things. So we don't have to stand on our heads to input places like this: Baltimore, Maryland is not in any county and the capital city of the United States is not in any of the 50 states. In Treebard there is nothing to do to accomodate these exceptions to the norm. Just enter them as "Baltimore, Maryland, USA" and "Washington, District of Columbis, USA". Treebard has no opinion about this.
-
-# ADDED NOTE: Treebard doesn't add or take away from what you enter as a place. Treebard doesn't add or remove jurisdictional titles such as "County". Just enter it the way you want it to be seen. This flexibility matches the facts of the situation. For example, in England, a county is called by its name only: just "Leicester". But not far from there in Ireland, the word "County" comes first, as in "County Down". In the US as far as I know, everyone says "County" after the county name, but since I said "everyone" there will be plenty of exceptions. For example, in Louisiana there are no counties at all, just parishes. Where I live now in the Philippines there are provinces instead of states, like in Canada. But there are no counties or parishes. There are baranggays, which are much smaller than American counties, and puroks, which are even smaller than that, each with its own governmental jurisdiction. The point is that it would be kinda silly for Treebard to build a jurisdictional naming structure into itself when literally every country would be an exception to anything we could possibly come up with. The same goes for people's names. Where I come from, there are first, middle and last names. But you don't have to be Chinese to feel that this convention is completely foreign. Iceland for example has a very different system. So building a system around American ways of doing things is something we try to avoid. Even if every single Treebard user forever and ever was an American (or a "United Statesian" as some feel we should be called), many of our very own ancestors never lived in America, never set foot on the place, or never even heard of it. The suffix "-centric" comes to mind. Here at Treebard University we want to be people-centric, instead of orbiting around any particular set of traditions including dead ones and ones that haven't been born yet. It's impossible to do anything perfectly but sometimes the best software is not trying so hard to be all things to all people. We like to let the user make the decisions, and one way to do that is to sometimes do less. In a less containerized structure, the user gets to design his own approach without feeling like he is cheating the program.
-
-# user docs:
-# can't use in place names: 
-#   '  #' (two spaces before a number sign aka hashtag character; one space is OK)
-#   the phrase "new place"
-#   double quotation mark ". Single quotation mark ' aka apostrophe is OK.
 
 
 
