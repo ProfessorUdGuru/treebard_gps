@@ -3,7 +3,7 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 import tkinter as tk
-from files import project_path
+from files import project_path, current_file
 from window_border import Border
 from scrolling import MousewheelScrolling
 from styles import config_generic, make_formats_dict
@@ -43,6 +43,8 @@ class Treebard():
             size=4, # use 3, 4, 7, or 11
             menubar=True, 
             ribbon_menu=True)
+        self.canvas.title_1.config(text="Treebard GPS")
+        self.canvas.title_2.config(text=current_file)
         self.main = Main(self.canvas, self.root, self)
         self.canvas.create_window(0, 0, anchor='nw', window=self.main)
 

@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from widgets import Frame, LabelH3, Label
-from window_border import Border
+# from window_border import Border
 from scrolling import Scrollbar    
 from events_table import EventsTable
 import dev_tools as dt
@@ -10,13 +10,12 @@ import dev_tools as dt
 
 
 class Main(Frame):
-    def __init__(self, master, view, treebard, *args, **kwargs):
+    def __init__(self, master, root, treebard, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master # the main canvas (instance of Border class)
-        self.view = view
+        self.root = root
         self.treebard = treebard
-        # print('19 self.view is', self.view)
         self.make_widgets()
 
     def make_menus(self):
@@ -30,12 +29,12 @@ class Main(Frame):
     def make_scrollbars(self):
 
         self.vsb = Scrollbar(
-            self.view, 
+            self.root, 
             hideable=True, 
             command=self.master.yview,
             width=20)
         self.hsb = Scrollbar(
-            self.view, 
+            self.root, 
             hideable=True, 
             width=20, 
             orient='horizontal',
@@ -67,7 +66,7 @@ class Main(Frame):
         right_panel = Frame(persons_tab)
         attributes_table = Label(right_panel, text='attributes table')
 
-        findings_table = EventsTable(persons_tab, self.view, self.treebard)
+        findings_table = EventsTable(persons_tab, self.root, self.treebard)
 
         # children of self
         scridth_n.grid(column=0, row=0, sticky='ew')

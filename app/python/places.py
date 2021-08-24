@@ -73,6 +73,9 @@ class NewPlaceDialog():
             message, 
             title,
             button_labels,
+            inwidg,
+            initial,
+            place_input,
             treebard,
             do_on_ok=None,
             selection=None
@@ -83,6 +86,9 @@ class NewPlaceDialog():
         self.message = message
         self.title = title
         self.button_labels = button_labels
+        self.inwidg = inwidg
+        self.initial = initial
+        self.place_input = place_input
         self.treebard = treebard
         self.do_on_ok = do_on_ok
 
@@ -113,6 +119,8 @@ class NewPlaceDialog():
 
         def cancel():
             self.new_places_dialog.destroy()
+            self.inwidg.delete(0, 'end')
+            self.inwidg.insert(0, self.initial)
         size = (
             self.parent.winfo_screenwidth(), self.parent.winfo_screenheight())
         self.new_places_dialog = Toplevel(self.parent)
@@ -123,7 +131,7 @@ class NewPlaceDialog():
         self.new_places_dialog.rowconfigure(4, weight=1)
         canvas = Border(self.new_places_dialog, size=3) # don't hard-code size            
         canvas.title_1.config(text=self.title)
-        canvas.title_2.config(text='')
+        canvas.title_2.config(text="input: {}".format(self.place_input))
 
         window = Frame(canvas)
         canvas.create_window(0, 0, anchor='nw', window=window)
@@ -179,6 +187,7 @@ class NewPlaceDialog():
         edit_row = self.edit_rows[self.got_nest]
         new_hint = edit_row.ent.get()
         conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         cur.execute(update_place_hint, ((new_hint, self.edit_hint_id)))
         conn.commit()
@@ -350,10 +359,14 @@ class EditRow(Frame):
 
 class ValidatePlace():
 
-    def __init__(self, root, treebard, place_input, finding, nested_place):
+    def __init__(
+            self, root, treebard, inwidg, initial, 
+            place_input, finding, nested_place):
 
         self.root = root
         self.treebard = treebard
+        self.inwidg = inwidg
+        self.initial = initial
         self.place_input = place_input
         self.finding = finding
         self.nested_place = nested_place
@@ -375,6 +388,7 @@ class ValidatePlace():
             return ids_hints
 
         conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
         if len(self.place_input) == 0:
@@ -415,6 +429,9 @@ class ValidatePlace():
                 "and use the Places Tab to create or edit the place.", 
                 "New and Duplicate Places Dialog",
                 ("OK", "CANCEL"),
+                self.inwidg,
+                self.initial,
+                self.place_input,
                 self.treebard,
                 do_on_ok=self.collect_place_ids)
         else:
@@ -436,6 +453,7 @@ class ValidatePlace():
             are either used or discarded.
         '''
         conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         cur.execute(select_max_place_id)
         temp_id = cur.fetchone()[0] + 1
@@ -474,6 +492,7 @@ class ValidatePlace():
     def input_to_db(self):
 
         conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
         ids = []
@@ -558,6 +577,7 @@ if __name__ == "__main__":
 
     finding = 1
     nested_place = 271
+    initial = ''
 
     def get_final(evt):
         widg = evt.widget
@@ -567,7 +587,7 @@ if __name__ == "__main__":
         final = widg.get()
         for child in frame.winfo_children():
             child.destroy()
-        final = ValidatePlace(root, treebard, final, finding, nested_place)
+        final = ValidatePlace(root, treebard, initial, final, finding, nested_place)
         j = 0
         for dkt in final.place_dicts:
             lab = Label(

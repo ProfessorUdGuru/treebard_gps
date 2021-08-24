@@ -6,8 +6,7 @@ from files import current_file
 from window_border import Border 
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, 
-    KinTip, LabelH3, Button, EntryHilited2) 
-    # KinTip, EntryAutofill, LabelH3, Button)
+    KinTip, LabelH3, Button) 
 from place_autofill import EntryAuto
 from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator
@@ -275,37 +274,61 @@ class EventsTable(Frame):
         self.master = master
         self.root = root
         self.treebard = treebard
+
+        self.inwidg = None
         self.headers = []
         self.widths = [[], [], [], [], []]
         self.nested_place_id = None
+        self.kintips = []
 
         self.screen_height = self.winfo_screenheight()
+        self.column_width_indecrement = -2
+        self.row_qty = 5
 
         self.make_header()
         self.make_table_cells()
+        self.make_new_event_row()
 
-    def size_column_to_header(self):
+    def size_columns_to_content(self):
         '''
-            Get length of each cell in the column and size the header to 
-            fit the longest content in the column. If the background is
-            the same as the general background, the entries will all fit
-            the column and sticky='ew' takes care of the rest. The +2 is
-            because the Age column header could be longer than its contents
-            and it acts like padx in the other columns. If edited content
-            is not all visible, a tooltip will show what the entry holds
-            till the table is redrawn.
+            Get length of each cell in the column and size the top row cells to 
+            fit the longest content in the column. The whole column will follow
+            this size. The method make_table_cells() has some influence in this
+            sizing process because column 0 (Event) sets itself to Tkinter's default
+            width=20 if you don't tell it not to and column 4 (Age) should be 
+            smaller than the others. Any of this could be improved, especially
+            if Tkinter would let us detect and set Labels and Entries to their
+            required width but they use different default characters so even
+            setting them to the same width doesn't work. One workaround might
+            be to have a button in the Preferences > Fonts tab or someplace which
+            increases or decreases the column width and redraws the table. Not
+            desirable, but I'm trying to avoid manually resizable columns since
+            I believe with religious fervor that they are inexcusable and I'm
+            waiting to be proven wrong. Thus for future reference: 
+            self.column_width_indecrement. If this works out, the button might
+            want to be on the Fonts tab since the setting would most often have to
+            be changed when redrawing the table in different fonts. Another thing to
+            consider is making the input and output fonts the same font family to
+            see if that helps.
         '''
 
         self.header_widths = []
         for lst in self.widths:
             self.header_widths.append(max(lst))
-        x = 0
-        for widg in self.headers:
-            widg.config(width=self.header_widths[x]+2)
-            x += 1
+        for row in self.cell_pool:
+            c = 0
+            for ent in row[1][0:5]:
+                if ent.winfo_class() == 'Entry':
+                    if ent.winfo_subclass() == 'EntryAuto':
+                        if len(ent.grid_info()) != 0:
+                            if ent.grid_info()['row'] == 2:
+                                ent.config(
+                                    width=self.header_widths[c] + self.column_width_indecrement)
+                                c += 1      
 
     def get_initial(self, evt):
         self.initial = evt.widget.get()
+        self.inwidg = evt.widget
 
     def get_final(self, evt):
         widg = evt.widget
@@ -329,6 +352,8 @@ class EventsTable(Frame):
             self.final = ValidatePlace(
                 self.root, 
                 self.treebard,
+                self.inwidg,
+                self.initial,
                 self.final,
                 self.finding,
                 nested_place)
@@ -367,19 +392,23 @@ class EventsTable(Frame):
         '''
 
         self.table_cells = []
-        for i in range(int(qty/9)):
+        for i in range(int(qty/9)): # 222
             row = []
             for j in range(9):
                 if j < 5:
-                    cell = EntryAuto(self, autofill=True)
+                    if j == 2:
+                        cell = EntryAuto(self, autofill=True)
+                    else:                        
+                        cell = EntryAuto(self)
                     cell.initial = ''
                     cell.final = ''
                     cell.finding = None
                     cell.bind('<FocusIn>', self.get_initial, add="+")
                     cell.bind('<FocusOut>', self.get_final, add="+")
-
-                    if j == 4:
-                        cell.config(width=7)
+                    if j == 0:
+                        cell.config(width=1)
+                    elif j == 4:
+                        cell.config(width=5)
                 elif j == 5:
                     cell = Frame(self, bd=0, highlightthickness=0)
                 elif j == 6:
@@ -410,12 +439,11 @@ class EventsTable(Frame):
         source_count = findings_data[7]
 
         self.cell_pool = []
-        self.table_size = len(finding_ids)
+
         i = 0
-        for row in self.table_cells[0:self.table_size]:
+        for row in self.table_cells[0:len(finding_ids)]:
             self.cell_pool.append([finding_ids[i], row])
             i += 1
-
         self.findings = []
         for finding_id in finding_ids:
             c = 0
@@ -510,18 +538,50 @@ class EventsTable(Frame):
 
         def open_kin_tip(evt, kin):
 
+            def make_kin_tip(lst):
+                self.instrux = KinTip(
+                    self.kin_tip, 
+                    text="{} (id #{})".format(lst[0], lst[1]))
+                self.instrux.grid(sticky="news")
+                self.instrux.instrux2.bind('<Button-1>', self.go_to)
+    
+            def highlight(event):
+                event.widget.config(bg=formats["head_bg"])
+
+            def unhighlight(event):
+                event.widget.config(bg=formats["bg"])
+
             if evt.widget.winfo_rooty() < 96:
                 y_offset = 32
             else:
                 y_offset = -84
+
             self.kin_tip = Toplevel(self)
             x, y, cx, cy = evt.widget.bbox("insert")
             x = x + evt.widget.winfo_rootx() + y_offset
             y = y + cy + evt.widget.winfo_rooty() + y_offset
             self.kin_tip.wm_geometry('+{}+{}'.format(x, y))
             self.kin_tip.wm_overrideredirect(1)
-            instrux = KinTip(self.kin_tip, text=kin[0])
-            instrux.grid()
+            self.kintips.append(self.kin_tip)
+
+            # spouse or child
+            if len(kin) == 3:
+                make_kin_tip(kin)
+            # parents
+            else:
+                for lst in kin:
+                    make_kin_tip(lst)
+
+            ex = LabelButtonText(
+                self.instrux, 
+                text="x", 
+                width=2,
+                font=("arial black", 3))
+            ex.place(rely=1.0, relx=1.0, x=0, y=0, anchor='se')
+            ex.bind('<Button-1>', self.destroy_kintip)
+            ex.bind('<Control-Button-1>', self.destroy_all_kintips)
+            ex.bind('<Enter>', highlight)
+            ex.bind('<Leave>', unhighlight)
 
         r = 2
         for row in self.findings:
@@ -534,46 +594,30 @@ class EventsTable(Frame):
                 elif c in (0, 2, 3, 4):
                     text = col[1]
                 elif c == 5: # kin
-                    # parents
+                    ma_pa = False
                     if event_type == 'birth':
-                        self.kin_buttons = []
-                        f = 0
-                        for kin in col[1]:
-                            kinlab = LabelButtonText(
-                                row[c][0],
-                                text=kin[2],
-                                anchor='w',
-                                font=formats['heading3'])
-                            kinlab.grid(column=f, row=0)
-                            kinlab.bind(
-                                '<Enter>', 
-                                lambda evt, kin=kin: open_kin_tip(evt, kin))
-                            kinlab.bind('<Leave>', self.destroy_kintip)
-                            kinlab.bind(
-                                '<Button-1>', 
-                                lambda evt, kin=kin: self.go_to(evt, kin))
-                            self.kin_buttons.append(kinlab)
-                            f += 1
-                    # spouse or child
+                        ma_pa = True
+                        self.kin_buttons = []                    
+                    if len(col[1]) == 0:
+                        text = ""
                     else:
-                        if len(col[1]) != 0:
-                            kin = col[1]
-                            if kin:
+                        kin = col[1]
+                        if kin:
+                            if ma_pa is False:
                                 text = kin[2]
-                            kinlab = LabelButtonText(
-                                row[c][0],
-                                text=text,
-                                anchor='w',
-                                font=formats['heading3'])
-                            kinlab.grid(column=0, row=0)
-                            kinlab.bind(
-                                '<Enter>', 
-                                lambda evt, kin=kin: open_kin_tip(evt, kin))
-                            kinlab.bind('<Leave>', self.destroy_kintip)
-                            kinlab.bind(
-                                '<Button-1>', 
-                                lambda evt, kin=kin: self.go_to(evt, kin))
-                            self.kin_buttons.append(kinlab)
+                            else:
+                                text = 'parents'
+                        kinlab = LabelButtonText(
+                            row[c][0],
+                            text=text,
+                            anchor='w',
+                            font=formats['heading3'])
+                        kinlab.grid(column=0, row=0)
+                        kinlab.bind(
+                            '<Button-1>', 
+                            lambda evt, kin=kin: open_kin_tip(evt, kin))
+                        self.kin_buttons.append(kinlab)
+
                 elif c == 6: # roles
                     widg.config(text=col[1])
                 elif c == 7: # notes
@@ -593,22 +637,38 @@ class EventsTable(Frame):
         self.fix_tab_traversal()
         for row_num in range(self.grid_size()[1]):
             self.grid_rowconfigure(row_num, weight=0)
+        self.row_qty = row_num
         
-        self.size_column_to_header()
+        self.size_columns_to_content()
 
-    def go_to(self, evt, parent):
-        new_current_person = parent[1]
+    def destroy_kintip(self, evt=None):
+        if evt:
+            tip = evt.widget.master.master
+            idx = self.kintips.index(tip)
+            del self.kintips[idx]
+            tip.destroy()
+        for widg in self.kintips:
+            widg.lift()
+
+    def destroy_all_kintips(self, evt=None):
+        for widg in self.kintips:
+            widg.destroy()
+        self.kintips = []
+
+    def go_to(self, evt):
+
+        text = evt.widget.cget("text")
+        person_id = text.split("#")[1]
+        self.instrux.person_id = int(person_id.rstrip(")"))
         conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        cur.execute(update_current_person, (new_current_person,))
+        cur.execute(update_current_person, (self.instrux.person_id,))
         conn.commit()
         cur.close()
         conn.close()
         self.forget_cells()
         self.set_cell_content()
-
-    def destroy_kintip(self, evt=None):
-        self.kin_tip.destroy()
 
     def forget_cells(self):
         self.update_idletasks()
@@ -617,7 +677,7 @@ class EventsTable(Frame):
                 if widg.winfo_subclass() == 'EntryAuto':
                     widg.delete(0, 'end')
                 elif widg.winfo_subclass() == 'Frame':
-                    self.destroy_kintip()
+                    self.destroy_all_kintips()
                     for button in self.kin_buttons:
                         button.destroy()
                 elif widg.winfo_subclass() == 'LabelButtonText':
@@ -625,27 +685,11 @@ class EventsTable(Frame):
                 widg.grid_forget()
 
     def make_header(self):
-        '''
-            To make columns line up with headers without excessive 
-            tweakings, use the same kind of widgets in the header 
-            as used in the table. Also use left-justified columns
-            instead of trying to center under the header. Get a solid
-            baseline of perfectly lined-up columns before adding any 
-            padding between columns. Anytime there is more than a few
-            pixels of padding needed, use a spacer column or row, not
-            padding, but before trying a spacer make sure sticky and
-            columnconfigure etc. are being used right. Add all padding
-            on one side and use the same side everywhere.
-        '''
-
+        
         y = 0
         for heading in FINDING_TABLE_HEADS:
-            head = EntryHilited2(self)
-            head.insert(0, heading)
-            head.config(width=len(head.get()), state='readonly', takefocus=0)
+            head = LabelH3(self, text=heading, anchor='w')
             head.grid(column=y, row=0, sticky='ew')
-            if y == 4:
-                head.config(width=7)
             if y in (6, 7, 8):
                 head.grid(column=y, row=0, sticky='ew')
             else:
@@ -653,8 +697,12 @@ class EventsTable(Frame):
             if y < 5:
                 self.headers.append(head)
             y += 1
+
         sep = Separator(self, height=3)
         sep.grid(column=0, row=1, columnspan=9, sticky='ew')
+
+    def make_new_event_row(self):
+        pass
 
     def fix_tab_traversal(self):
 
@@ -715,15 +763,23 @@ if __name__ == '__main__':
 
 # DO LIST
 
-
-# If new place dialog is opened and the cancel button is pushed, should the autofill have re-inserted into it whatever was in it before the user typed anything? (yes)
-# Place tab: add aliases for places and main pic for current place; edit/delete place button
-# find out why there's so much space between cols esp after place
-# fix titles on root and new place dialog
+# BRANCH: events_table
 # # NEW EVENT ROW: Have to make one permanent edit row and ungrid it on close, this is because I learned last time since there is only ever one of them it's better to grid_remove instead of destroy it.
-# # MAKE if __name__ == '__main__' DO SOMETHING bottom of window_border, check others
+
+# BRANCH: dates
+# finish refactoring dates validation
+
+# BRANCH: front_page
+# replace ttk.Notebooks
 # add menubar, ribbon menu, footer
 # add picture and attrib table
+# add buttons to place tab for alias and edit/delete place but don't make them do anything
+
+# BRANCH: fonts
+# make fonts tab on prefs tabbook
+# replace all comboboxes and all other ttk widgets
+
+# BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?
 
 
