@@ -38,6 +38,16 @@ insert_color_scheme = '''
     VALUES (null, ?, ?, ?, ?, 0, 0)
 '''
 
+insert_finding_new = '''
+    INSERT INTO finding (event_type_id, person_id)
+    VALUES (?, ?)
+'''
+
+insert_finding_new_couple = '''
+    INSERT INTO finding (event_type_id)
+    VALUES (?)
+'''
+
 insert_finding_places = '''
     INSERT INTO finding_places (
         nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8) 
@@ -48,6 +58,16 @@ insert_finding_places = '''
 insert_findings_notes = '''
     INSERT INTO findings_notes 
     VALUES (null, ?, ?, ?)
+'''
+
+insert_findings_persons_new_couple = '''
+    INSERT INTO findings_persons (finding_id, person_id, age, kin_type_id)
+    VALUES (?, ?, ?, ?)
+'''
+
+insert_findings_persons_new_couple_ids = '''
+    INSERT INTO findings_persons (finding_id, person_id, kin_type_id)
+    VALUES (?, ?, ?)
 '''
 
 insert_findings_roles = '''
@@ -99,6 +119,11 @@ select_all_color_schemes_plus = '''
     FROM color_scheme
 '''
 
+select_all_event_types = '''
+    SELECT event_types
+    FROM event_type
+'''
+
 select_all_event_types_couple = '''
     SELECT event_types
     FROM event_type
@@ -126,8 +151,15 @@ select_all_images = '''
     SELECT images FROM image
 '''
 
-select_all_kin_types_couple = '''
+select_all_kin_type_ids_couple = '''
     SELECT kin_type_id
+    FROM kin_type
+    WHERE kin_code = 'D'
+        AND hidden = 0
+'''
+
+select_all_kin_types_couple = '''
+    SELECT kin_type_id, kin_types
     FROM kin_type
     WHERE kin_code = 'D'
         AND hidden = 0
@@ -306,6 +338,12 @@ select_current_tree = '''
     SELECT current_tree 
     FROM closing_state 
     WHERE closing_state_id = 1
+'''
+
+select_event_type_id = '''
+    SELECT event_type_id, couple
+    FROM event_type
+    WHERE event_types = ?
 '''
 
 select_finding_id_birth = '''
@@ -587,12 +625,6 @@ select_role_type_id = '''
     WHERE role_types = ?
 '''
 
-select_all_permanent_dialogs = '''
-    SELECT toplevels
-    FROM closing_state
-    WHERE toplevels != 'tk'                
-'''
-
 update_color_scheme_null = '''
     UPDATE format 
     SET (bg, highlight_bg, head_bg, fg) = 
@@ -643,6 +675,12 @@ update_findings_notes = '''
     SET order_subtopic = ? 
     WHERE finding_id = ?
         AND note_id = ? 
+'''
+
+update_findings_persons_new_couple_age = '''
+    UPDATE findings_persons 
+    SET age = ?
+    WHERE findings_persons_id = ?
 '''
 
 update_findings_roles_person = '''

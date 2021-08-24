@@ -945,6 +945,7 @@ class EntryHilited2(Entryx):
 
 class EntryAutofill(EntryUnhilited):
     ''' 
+        SUPERCEDED BY EntryAutofill
         Simple case-insensitive autofill entry with no dropdown 
         list, lets you type as fast as you want. Values option 
         is not a real tkinter option, so you can't use

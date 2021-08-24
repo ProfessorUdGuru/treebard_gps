@@ -4,12 +4,15 @@
 
 import tkinter as tk
 from widgets import EntryUnhilited, EntryAutofill # EntryAutofill is for comparison, it's not to be used
+from styles import make_formats_dict
 import dev_tools as dt
 from dev_tools import looky, seeline
 
 
 
 
+
+formats = make_formats_dict()
 
 class EntryAuto(EntryUnhilited):
     '''
@@ -116,6 +119,12 @@ class EntryAuto(EntryUnhilited):
             is not often changed and should not be easy to change by mistake.
         '''
         self.select_clear()
+
+class EntryAutoHilited(EntryAuto):
+    def __init__(self, master, *args, **kwargs):
+        EntryAuto.__init__(self, master, *args, **kwargs)
+
+        self.config(bg=formats["highlight_bg"])
 
 if __name__ == "__main__":
 
