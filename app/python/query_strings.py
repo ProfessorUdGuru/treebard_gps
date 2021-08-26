@@ -55,6 +55,12 @@ insert_finding_places = '''
 '''.format(','.join(['?'] * 9))
 # which translates to:'INSERT INTO finding_places (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8) VALUES (?,?,?,?,?,?,?,?,?)'
 
+insert_finding_places_new = '''
+    INSERT INTO finding_places (
+        finding_id, nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
+    VALUES (?, 1, null, null, null, null, null, null, null, null)
+'''
+
 insert_findings_notes = '''
     INSERT INTO findings_notes 
     VALUES (null, ?, ?, ?)
@@ -65,10 +71,10 @@ insert_findings_persons_new_couple = '''
     VALUES (?, ?, ?, ?)
 '''
 
-insert_findings_persons_new_couple_ids = '''
-    INSERT INTO findings_persons (finding_id, person_id, kin_type_id)
-    VALUES (?, ?, ?)
-'''
+# insert_findings_persons_new_couple_ids = '''
+    # INSERT INTO findings_persons (finding_id, person_id, kin_type_id)
+    # VALUES (?, ?, ?)
+# '''
 
 insert_findings_roles = '''
     INSERT INTO findings_roles 
@@ -84,7 +90,6 @@ insert_name = '''
     INSERT INTO name 
     VALUES (null, ?, ?, ?, ?, null)
 '''
-
 
 insert_note = '''
     INSERT INTO note 

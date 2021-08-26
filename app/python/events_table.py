@@ -12,7 +12,7 @@ from place_autofill import EntryAuto, EntryAutoHilited
 from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator
 from styles import make_formats_dict, config_generic
-from names import get_name_with_id
+from names import get_name_with_id, make_values_list_for_person_select
 from roles import RolesDialog
 from notes import NotesDialog
 from places import place_strings, ValidatePlace
@@ -30,8 +30,7 @@ from query_strings import (
     update_finding_age, update_current_person, select_all_place_ids,
     select_all_event_types, select_event_type_id, insert_finding_new,
     insert_finding_new_couple, insert_findings_persons_new_couple,
-    select_all_kin_types_couple, select_all_names_ids, 
-    insert_findings_persons_new_couple_ids,
+    select_all_kin_types_couple, select_all_names_ids, insert_finding_places_new
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -110,8 +109,9 @@ def get_findings():
     cur.execute(sql, couple_kin_type_ids)
 
     finding_ids_kin_type_ids = cur.fetchall()
-
+    
     for event in finding_ids_kin_type_ids:
+        print("line", looky(seeline()).lineno, "event:", event)
         cur.execute(select_findings_details_couple_age, event)
         got = cur.fetchall()
         finding_id = event[0]
@@ -124,6 +124,8 @@ def get_findings():
         cur.execute(select_findings_details_couple_generic, (finding_id,))
         couple_generic_details = cur.fetchall()
         couple_generic_details = [list(i) for i in couple_generic_details]
+        print("line", looky(seeline()).lineno, "couple_generic_details:", couple_generic_details)
+# line 126 couple_generic_details: []
         couple_generic_details[0].insert(0, finding_id)
 
         cur.execute(select_finding_places_nesting, (finding_id,))
@@ -192,15 +194,19 @@ def get_findings():
     for lst in children:
         if lst[0] not in finding_ids:
             finding_ids.append(lst[0])
-
+    print("line", looky(seeline()).lineno, "couple_age_spouse:", couple_age_spouse)
     couple_findings = []
     for finding in generic_couple_findings:
+        print("line", looky(seeline()).lineno, "finding:", finding)
         for spouse_age in couple_age_spouse:
+            print("line", looky(seeline()).lineno, "spouse_age:", spouse_age)
             if finding[0] == spouse_age[0]:
                 for spouse in spouse_age[1:]:
+                    print("line", looky(seeline()).lineno, "spouse:", spouse)
                     if spouse[0] == current_person:
                         finding.append(spouse[1])
                 for spouse in spouse_age[1:]:
+                    print("line", looky(seeline()).lineno, "spouse:", spouse)
                     if spouse[0] != current_person:
                         spouse_id = spouse[0]
                         name = get_name_with_id(spouse_id)
@@ -710,31 +716,71 @@ class EventsTable(Frame):
 
         def add_event():
 
+            def couple_cancel():
+                new_couple_event.destroy()
+
             def couple_ok():
+                conn = sqlite3.connect(current_file)
+                conn.execute('PRAGMA foreign_keys = 1')
+                cur = conn.cursor()
+                kin_type_list = [kin_type_combo1.get(), kin_type_combo2.get()]
+                if len(kin_type_list[0]) == 0 or len(kin_type_list[1]) == 0:
+                    print("error--kintype is blank")
+                    return
+                else:
+                    v = 0
+                    for item in kin_type_list:
+                        if item in kintypes:
+                            k = 0
+                            for stg in kintypes:
+                                if stg == item:
+                                    idx = k
+                                    kin_type_list[v] = kintypes_and_ids[idx][0]
+                                k += 1
+                        else:
+                            print("line", looky(seeline()).lineno, "create new kin type")
+                        v += 1
+                # I think the dict is superfluous
                 age1 = age_input1.get()
                 age2 = age_input2.get()
+                other_person = other_person_combo.get()
+                other_person = other_person.split("#")[1]
+                print("line", looky(seeline()).lineno, "other_person:", other_person)
+                # self.couple_dict["current_person"]["kintype_id"] = kin_type_list[0]
+                # self.couple_dict["other_person"]["kintype_id"] = kin_type_list[1]
+                # self.couple_dict["current_person"]["age"] = age1
+                # self.couple_dict["other_person"]["age"] = age2
+                print("line", looky(seeline()).lineno, "kin_type_list:", kin_type_list)
+                cur.execute(
+                    insert_findings_persons_new_couple,
+                    (new_finding, self.current_person, age1, kin_type_list[0]))
+                conn.commit()
+                cur.execute(
+                    insert_findings_persons_new_couple, 
+                    (new_finding, other_person, age2, kin_type_list[1]))
+                conn.commit()
+                couple_cancel()
+                cur.close()
+                conn.close()
 
-                self.couple_dict["current_person"]["age"] = age1
-                self.couple_dict["other_person"]["age"] = age2
-
-
-            self.couple_dict = {
-                "current_person" : {
-                    "age" : '', 
-                    "finding_id" : 0, 
-                    "kintype_id" : 0, 
-                    "birth_name" : ''},
-                "other_person" : {
-                    "age" : '', 
-                    "finding_id" : 0, 
-                    "kintype_id" : 0, 
-                    "birth_name" : ''}
-            }
+            # self.couple_dict = {
+                # "current_person" : {
+                    # "age" : '', 
+                    # "finding_id" : 0, 
+                    # "kintype_id" : 0, 
+                    # "birth_name" : ''},
+                # "other_person" : {
+                    # "age" : '', 
+                    # "finding_id" : 0, 
+                    # "kintype_id" : 0, 
+                    # "birth_name" : ''}
+            # }
             print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
             conn = sqlite3.connect(current_file)
             conn.execute('PRAGMA foreign_keys = 1')
             cur = conn.cursor()
             new_event = combo.get()
+            print("line", looky(seeline()).lineno, "new_event:", new_event)
             if new_event == "new event": return
             if new_event not in event_types:
                 print("line", looky(seeline()).lineno, "new:")
@@ -752,18 +798,26 @@ class EventsTable(Frame):
                     # collect further data for 2nd insertion:
                     #   age goes into findings_persons
                     #   separate insertion to findings_persons for 2nd party in couple
-                    cur.execute(select_all_names_ids)
-                    persons = [i for i in cur.fetchall()]
-                    print("line", looky(seeline()).lineno, "persons:", persons)
+                    persons = make_values_list_for_person_select()
+                    # print("line", looky(seeline()).lineno, "persons:", persons)
                     cur.execute(insert_finding_new_couple, (event_type_id,))
                     conn.commit()
+
+                    cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'finding'")
+                    new_finding = cur.fetchone()[0]
+                    print("line", looky(seeline()).lineno, "new_finding:", new_finding)
+
+
                     cur.execute(select_all_kin_types_couple)
                     kintypes_and_ids = [i for i in cur.fetchall()]
                     kintypes = [i[1] for i in kintypes_and_ids]
+                    current_person_name = get_name_with_id(self.current_person)
                     new_couple_event = Toplevel(self.root)
                     new_couple_event.title("New Couple Event")
-                    kin_type_combo = Combobox(new_couple_event, self.root, values=kintypes)
-                    kin_type_combo.grid()
+                    current_name = Label(new_couple_event, text=current_person_name)
+                    current_name.grid()
+                    kin_type_combo1 = Combobox(new_couple_event, self.root, values=kintypes)
+                    kin_type_combo1.grid()
                     # replace this person combo w/ search dlg or add it besides the combo
                     other_person_combo = Combobox(new_couple_event, self.root, values=persons)
                     other_person_combo.grid()
@@ -771,35 +825,20 @@ class EventsTable(Frame):
                     age_label1.grid()
                     age_input1 = Entry(new_couple_event, width=6)
                     age_input1.grid()
+                    kin_type_combo2 = Combobox(new_couple_event, self.root, values=kintypes)
+                    kin_type_combo2.grid()
                     age_label2 = Label(new_couple_event, text="Age (other person)")
                     age_label2.grid()
                     age_input2 = Entry(new_couple_event, width=6)
                     age_input2.grid()
-                    ok_kintype = Button(new_couple_event, text="OK", command="couple_ok")
-                    ok_kintype.grid()
-                    cur.execute(
-                        insert_findings_persons_new_couple_ids, 
-                        (self.finding_id, self.current_person, kin_type_id))
+                    ok_couple = Button(new_couple_event, text="OK", command=couple_ok)
+                    ok_couple.grid() 
+                    print("line", looky(seeline()).lineno, "new_finding:", new_finding)
+                    # move this out of the if context once a new_finding is being made for generic events in the above if statement
+                    cur.execute(insert_finding_places_new, (new_finding,))
                     conn.commit()
-                    cur.execute(
-                        "SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'findings_persons'")
-                    new_id = cur.fetchone()[0]                    
-                # this info comes from dlg not here.....................
-                    cur.execute(
-                        insert_findings_persons_new_couple, 
-                        (new_finding, 
-                        other_person, 
-                        age2, 
-                        kin_type_id))
-                    conn.commit()
-                    cur.execute(
-                        update_findings_persons_new_couple_age, 
-                        (age1, new_id))
-                    conn.commit()
-                    
-                cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'finding'")
-                new_finding = cur.fetchone()[0]
-                print("line", looky(seeline()).lineno, "new_finding:", new_finding)
+            
+
             cur.close()
             conn.close()
 
@@ -912,8 +951,8 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
+# Spouse kin type works but husband/wife doesn't because they are supposed to be the same SEE `kin_type = spouse[2]` where there is no spouse[2] if we're searching for "wife" because there aren't two of them. The best way to fix this is to fix the algorithm so it searches for kin_code "D" as they are the same for both spouses and the wife/husband pair is only for the user to look at, it should not be used for logic because more problems will come up later due to gender delineations which not everybody will want to do the same or predictably.
 # # NEW EVENT ROW: Have to make one permanent edit row and ungrid it on close, this is because I learned last time since there is only ever one of them it's better to grid_remove instead of destroy it.
-# remove nested_places_id fk col from finding table
 
 # BRANCH: dates
 # finish refactoring dates validation
