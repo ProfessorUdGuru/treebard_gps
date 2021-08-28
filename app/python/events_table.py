@@ -30,7 +30,8 @@ from query_strings import (
     update_finding_age, update_current_person, select_all_place_ids,
     select_all_event_types, select_event_type_id, insert_finding_new,
     insert_finding_new_couple, insert_findings_persons_new_couple,
-    select_all_kin_types_couple, select_all_names_ids, insert_finding_places_new
+    select_all_kin_types_couple, select_all_names_ids, insert_finding_places_new,
+    select_max_persons_persons_id, insert_persons_persons_new
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -98,22 +99,33 @@ def get_findings():
     couple_age_spouse = []
     generic_couple_findings = []    
 
+    # sql =   '''
+                # SELECT finding_id, kin_type_id 
+                # FROM findings_persons 
+                # WHERE person_id = (SELECT person_id FROM current WHERE current_id = 1)
+                    # AND kin_type_id in ({}) 
+            # '''.format(
+                # ','.join('?' * len(couple_kin_type_ids)))
+    # cur.execute(sql, couple_kin_type_ids)
+
     sql =   '''
-                SELECT finding_id, kin_type_id 
+                SELECT finding_id, persons_persons_id 
                 FROM findings_persons 
                 WHERE person_id = (SELECT person_id FROM current WHERE current_id = 1)
                     AND kin_type_id in ({}) 
             '''.format(
                 ','.join('?' * len(couple_kin_type_ids)))
-
     cur.execute(sql, couple_kin_type_ids)
 
-    finding_ids_kin_type_ids = cur.fetchall()
+    # finding_ids_kin_type_ids = cur.fetchall()
+    finding_ids_persons_persons_ids = cur.fetchall()
     
-    for event in finding_ids_kin_type_ids:
+    # for event in finding_ids_kin_type_ids:    
+    for event in finding_ids_persons_persons_ids:
         print("line", looky(seeline()).lineno, "event:", event)
         cur.execute(select_findings_details_couple_age, event)
         got = cur.fetchall()
+        print("line", looky(seeline()).lineno, "len(got):", len(got))
         finding_id = event[0]
         for tup in got:
             if len(got) == 2:
@@ -135,6 +147,7 @@ def get_findings():
         couple_generic_details[0][4] = place_string
 
         generic_couple_findings.extend(couple_generic_details)
+
     for item in generic_couple_findings:
         if item[4] == 'unknown':
             item[4] = ''
@@ -195,6 +208,7 @@ def get_findings():
         if lst[0] not in finding_ids:
             finding_ids.append(lst[0])
     print("line", looky(seeline()).lineno, "couple_age_spouse:", couple_age_spouse)
+
     couple_findings = []
     for finding in generic_couple_findings:
         print("line", looky(seeline()).lineno, "finding:", finding)
@@ -210,14 +224,45 @@ def get_findings():
                     if spouse[0] != current_person:
                         spouse_id = spouse[0]
                         name = get_name_with_id(spouse_id)
-                        kin_type = spouse[2]
+                        kin_type = spouse[2] # doesn't work with pairs like wife/husband but does work for pairs like spouse/spouse
                         finding.append([name, spouse_id, kin_type])
         finding[2] = finding[2:4]
         del finding[3]
         couple_findings.append(finding)
 
-    couple_finding_ids = [i[0] for i in finding_ids_kin_type_ids]
+    couple_finding_ids = [i[0] for i in finding_ids_persons_persons_ids]
+    # couple_finding_ids = [i[0] for i in finding_ids_kin_type_ids]
     all_finding_ids = generic_finding_ids + couple_finding_ids
+
+
+
+
+
+
+
+    # couple_findings = []
+    # for finding in generic_couple_findings:
+        # print("line", looky(seeline()).lineno, "finding:", finding)
+        # for spouse_age in couple_age_spouse:
+            # print("line", looky(seeline()).lineno, "spouse_age:", spouse_age)
+            # if finding[0] == spouse_age[0]:
+                # for spouse in spouse_age[1:]:
+                    # print("line", looky(seeline()).lineno, "spouse:", spouse)
+                    # if spouse[0] == current_person:
+                        # finding.append(spouse[1])
+                # for spouse in spouse_age[1:]:
+                    # print("line", looky(seeline()).lineno, "spouse:", spouse)
+                    # if spouse[0] != current_person:
+                        # spouse_id = spouse[0]
+                        # name = get_name_with_id(spouse_id)
+                        # kin_type = spouse[2] # doesn't work with pairs like wife/husband but does work for pairs like spouse/spouse
+                        # finding.append([name, spouse_id, kin_type])
+        # finding[2] = finding[2:4]
+        # del finding[3]
+        # couple_findings.append(finding)
+
+    # couple_finding_ids = [i[0] for i in finding_ids_kin_type_ids]
+    # all_finding_ids = generic_finding_ids + couple_finding_ids
 
     cur.execute(select_all_findings_roles_ids)
 
@@ -751,13 +796,21 @@ class EventsTable(Frame):
                 # self.couple_dict["current_person"]["age"] = age1
                 # self.couple_dict["other_person"]["age"] = age2
                 print("line", looky(seeline()).lineno, "kin_type_list:", kin_type_list)
+                cur.execute(select_max_persons_persons_id)
+                persons_persons_id = cur.fetchone()[0] + 1
+                cur.execute(
+                    insert_persons_persons_new, 
+                    (persons_persons_id, self.current_person, other_person))
+                conn.commit()
                 cur.execute(
                     insert_findings_persons_new_couple,
-                    (new_finding, self.current_person, age1, kin_type_list[0]))
+                    (new_finding, self.current_person, age1, 
+                        kin_type_list[0], persons_persons_id))
                 conn.commit()
                 cur.execute(
                     insert_findings_persons_new_couple, 
-                    (new_finding, other_person, age2, kin_type_list[1]))
+                    (new_finding, other_person, age2, 
+                        kin_type_list[1], persons_persons_id))
                 conn.commit()
                 couple_cancel()
                 cur.close()
@@ -951,7 +1004,6 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# Spouse kin type works but husband/wife doesn't because they are supposed to be the same SEE `kin_type = spouse[2]` where there is no spouse[2] if we're searching for "wife" because there aren't two of them. The best way to fix this is to fix the algorithm so it searches for kin_code "D" as they are the same for both spouses and the wife/husband pair is only for the user to look at, it should not be used for logic because more problems will come up later due to gender delineations which not everybody will want to do the same or predictably.
 # # NEW EVENT ROW: Have to make one permanent edit row and ungrid it on close, this is because I learned last time since there is only ever one of them it's better to grid_remove instead of destroy it.
 
 # BRANCH: dates

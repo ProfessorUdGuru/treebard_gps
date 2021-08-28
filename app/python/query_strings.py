@@ -67,9 +67,14 @@ insert_findings_notes = '''
 '''
 
 insert_findings_persons_new_couple = '''
-    INSERT INTO findings_persons (finding_id, person_id, age, kin_type_id)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO findings_persons (finding_id, person_id, age, kin_type_id, persons_persons_id)
+    VALUES (?, ?, ?, ?, ?)
 '''
+
+# insert_findings_persons_new_couple = '''
+    # INSERT INTO findings_persons (finding_id, person_id, age, kin_type_id)
+    # VALUES (?, ?, ?, ?)
+# '''
 
 # insert_findings_persons_new_couple_ids = '''
     # INSERT INTO findings_persons (finding_id, person_id, kin_type_id)
@@ -98,6 +103,10 @@ insert_note = '''
 
 insert_person_null = '''
     INSERT INTO person VALUES (null, ?) 
+'''
+
+insert_persons_persons_new = '''
+    INSERT INTO persons_persons VALUES (?, ?, ?)
 '''
 
 insert_place_new = '''
@@ -398,13 +407,24 @@ select_findings_details_generic = '''
 '''
 
 select_findings_details_couple_age = '''
-    SELECT person_id, age, kin_types
+    SELECT person_id, age, kin_types, findings_persons.persons_persons_id
     FROM findings_persons
     JOIN kin_type
         ON kin_type.kin_type_id = findings_persons.kin_type_id
+    JOIN persons_persons
+        ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
     WHERE finding_id = ?
-        AND findings_persons.kin_type_id = ?
+        AND findings_persons.persons_persons_id = ?
 '''
+
+# select_findings_details_couple_age = '''
+    # SELECT person_id, age, kin_types
+    # FROM findings_persons
+    # JOIN kin_type
+        # ON kin_type.kin_type_id = findings_persons.kin_type_id
+    # WHERE finding_id = ?
+        # AND findings_persons.kin_type_id = ?
+# '''
 
 select_findings_details_couple_generic = '''
     SELECT event_types, date, date_sorter, finding_places_id, particulars 
@@ -456,6 +476,10 @@ select_name_with_id = '''
         ON name.person_id = person.person_id 
     WHERE name_type_id = 1
         AND name.person_id = ?
+'''
+
+select_max_persons_persons_id = ''' 
+    SELECT MAX(persons_persons_id) FROM persons_persons 
 '''
 
 select_max_place_id = ''' SELECT MAX(place_id) FROM place '''
