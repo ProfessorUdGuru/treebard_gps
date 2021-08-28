@@ -462,7 +462,12 @@ select_generic_event_roles = '''
 '''
 
 select_image_id = '''
-    SELECT image_id FROM image WHERE images = ?'''
+    SELECT image_id FROM image WHERE images = ?
+'''
+
+select_kin_type_string = '''
+    SELECT kin_types FROM kin_type WHERE kin_type_id = ?
+'''
 
 select_name_type_id = '''
     SELECT name_type_id 

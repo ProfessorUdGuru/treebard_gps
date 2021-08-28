@@ -31,7 +31,8 @@ from query_strings import (
     select_all_event_types, select_event_type_id, insert_finding_new,
     insert_finding_new_couple, insert_findings_persons_new_couple,
     select_all_kin_types_couple, select_all_names_ids, insert_finding_places_new,
-    select_max_persons_persons_id, insert_persons_persons_new
+    select_max_persons_persons_id, insert_persons_persons_new,
+    select_kin_type_string
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -773,6 +774,7 @@ class EventsTable(Frame):
                     print("error--kintype is blank")
                     return
                 else:
+                    print("line", looky(seeline()).lineno, "kintypes_and_ids:", kintypes_and_ids)
                     v = 0
                     for item in kin_type_list:
                         if item in kintypes:
@@ -782,6 +784,7 @@ class EventsTable(Frame):
                                     idx = k
                                     kin_type_list[v] = kintypes_and_ids[idx][0]
                                 k += 1
+                            print("line", looky(seeline()).lineno, "kin_type_list:", kin_type_list)
                         else:
                             print("line", looky(seeline()).lineno, "create new kin type")
                         v += 1
@@ -796,6 +799,7 @@ class EventsTable(Frame):
                 # self.couple_dict["current_person"]["age"] = age1
                 # self.couple_dict["other_person"]["age"] = age2
                 print("line", looky(seeline()).lineno, "kin_type_list:", kin_type_list)
+                new_row_values = [new_event, '', '', '', age1]
                 cur.execute(select_max_persons_persons_id)
                 persons_persons_id = cur.fetchone()[0] + 1
                 cur.execute(
@@ -813,26 +817,39 @@ class EventsTable(Frame):
                         kin_type_list[1], persons_persons_id))
                 conn.commit()
                 couple_cancel()
+
+                combo_frame.grid_remove()
+                new_event_combo.delete(0, 'end')
+
+                g = 0
+                for widg in new_event_row[0:5]:
+                    widg.insert(0, new_row_values[g])
+                    widg.grid()
+                    g += 1
+                        
+                widg = new_event_row[5]
+                cur.execute(select_kin_type_string, (kin_type_list[1],))
+                other_person_kin_type = cur.fetchone()[0]
+
+                kinlab = LabelButtonText(
+                    widg,
+                    text=other_person_kin_type,
+                    anchor='w',
+                    font=formats['heading3'])
+                kinlab.grid(column=0, row=0)
+                # kinlab.bind( # fix this see do list so it works don't delete
+                    # '<Button-1>', 
+                    # lambda evt, kin=kin: open_kin_tip(evt, kin))
+                self.kin_buttons.append(kinlab)
+                widg.grid()
+
                 cur.close()
                 conn.close()
 
-            # self.couple_dict = {
-                # "current_person" : {
-                    # "age" : '', 
-                    # "finding_id" : 0, 
-                    # "kintype_id" : 0, 
-                    # "birth_name" : ''},
-                # "other_person" : {
-                    # "age" : '', 
-                    # "finding_id" : 0, 
-                    # "kintype_id" : 0, 
-                    # "birth_name" : ''}
-            # }
-            print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
             conn = sqlite3.connect(current_file)
             conn.execute('PRAGMA foreign_keys = 1')
             cur = conn.cursor()
-            new_event = combo.get()
+            new_event = new_event_combo.get()
             print("line", looky(seeline()).lineno, "new_event:", new_event)
             if new_event == "new event": return
             if new_event not in event_types:
@@ -840,30 +857,21 @@ class EventsTable(Frame):
             else:
                 cur.execute(select_event_type_id, (new_event,))
                 event_type_id, couple_event = cur.fetchone()
-                # print("line", looky(seeline()).lineno, "event_type_id:", event_type_id)
-                # print("line", looky(seeline()).lineno, "couple_event:", couple_event)
                 if couple_event == 0:
                     cur.execute(insert_finding_new, (event_type_id, self.current_person))
                     conn.commit()
                 else:
-                    # insert some data to finding and some to findings_persons
-                    # get the new ids
-                    # collect further data for 2nd insertion:
-                    #   age goes into findings_persons
-                    #   separate insertion to findings_persons for 2nd party in couple
                     persons = make_values_list_for_person_select()
-                    # print("line", looky(seeline()).lineno, "persons:", persons)
                     cur.execute(insert_finding_new_couple, (event_type_id,))
                     conn.commit()
 
                     cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'finding'")
                     new_finding = cur.fetchone()[0]
-                    print("line", looky(seeline()).lineno, "new_finding:", new_finding)
-
 
                     cur.execute(select_all_kin_types_couple)
                     kintypes_and_ids = [i for i in cur.fetchall()]
                     kintypes = [i[1] for i in kintypes_and_ids]
+
                     current_person_name = get_name_with_id(self.current_person)
                     new_couple_event = Toplevel(self.root)
                     new_couple_event.title("New Couple Event")
@@ -871,7 +879,6 @@ class EventsTable(Frame):
                     current_name.grid()
                     kin_type_combo1 = Combobox(new_couple_event, self.root, values=kintypes)
                     kin_type_combo1.grid()
-                    # replace this person combo w/ search dlg or add it besides the combo
                     other_person_combo = Combobox(new_couple_event, self.root, values=persons)
                     other_person_combo.grid()
                     age_label1 = Label(new_couple_event, text="Age (current person)")
@@ -889,11 +896,12 @@ class EventsTable(Frame):
                     print("line", looky(seeline()).lineno, "new_finding:", new_finding)
                     # move this out of the if context once a new_finding is being made for generic events in the above if statement
                     cur.execute(insert_finding_places_new, (new_finding,))
-                    conn.commit()
-            
+                    conn.commit()            
 
             cur.close()
             conn.close()
+
+        new_event_row = []
 
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -934,11 +942,13 @@ class EventsTable(Frame):
                     text="0")
             cell.grid(column=j, row=new_row, sticky='we')
             cell.grid_remove()
+            new_event_row.append(cell)
+
         combo_frame = Frame(self)
         combo_frame.grid(column=0, row=new_row, columnspan=3, sticky="ew")
-        combo = Combobox(combo_frame, self.root, values=event_types)
-        combo.grid(column=0, row=0)
-        combo.entry.insert(0, "new event")
+        new_event_combo = Combobox(combo_frame, self.root, values=event_types)
+        new_event_combo.grid(column=0, row=0)
+        new_event_combo.entry.insert(0, "new event")
         combutt = Button(combo_frame, text="NEW EVENT", command=add_event)
         combutt.grid(column=1, row=0, padx=12, pady=3)
         cur.close()
@@ -1004,7 +1014,12 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# # NEW EVENT ROW: Have to make one permanent edit row and ungrid it on close, this is because I learned last time since there is only ever one of them it's better to grid_remove instead of destroy it.
+# `elif c == 5` line 666 and the 4 nested funx associated with it shd be moved out to a separate instance method with parameters so it can be run again for the new event row which currently ?makes a mock kin button which doesn't yet do anything
+# now do it for generic events
+# redraw table so new event is properly sorted by date
+# make sure ctrl+s works right to redraw table
+# make it possible to edit event_type
+# replace this person new_event_combo w/ search dlg or add it besides the new_event_combo or better yet, add it to main do list and don't do it yet
 
 # BRANCH: dates
 # finish refactoring dates validation
