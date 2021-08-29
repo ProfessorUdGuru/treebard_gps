@@ -6,7 +6,7 @@ from files import current_file
 from window_border import Border 
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, 
-    KinTip, LabelH3, Button, Entry)
+    KinTip, LabelH3, Button, Entry, MessageHilited)
 from custom_combobox_widget import Combobox 
 from place_autofill import EntryAuto, EntryAutoHilited
 from nested_place_strings import make_all_nestings
@@ -118,15 +118,11 @@ def get_findings():
                 ','.join('?' * len(couple_kin_type_ids)))
     cur.execute(sql, couple_kin_type_ids)
 
-    # finding_ids_kin_type_ids = cur.fetchall()
     finding_ids_persons_persons_ids = cur.fetchall()
-    
-    # for event in finding_ids_kin_type_ids:    
+   
     for event in finding_ids_persons_persons_ids:
-        print("line", looky(seeline()).lineno, "event:", event)
         cur.execute(select_findings_details_couple_age, event)
         got = cur.fetchall()
-        print("line", looky(seeline()).lineno, "len(got):", len(got))
         finding_id = event[0]
         for tup in got:
             if len(got) == 2:
@@ -137,8 +133,6 @@ def get_findings():
         cur.execute(select_findings_details_couple_generic, (finding_id,))
         couple_generic_details = cur.fetchall()
         couple_generic_details = [list(i) for i in couple_generic_details]
-        print("line", looky(seeline()).lineno, "couple_generic_details:", couple_generic_details)
-# line 126 couple_generic_details: []
         couple_generic_details[0].insert(0, finding_id)
 
         cur.execute(select_finding_places_nesting, (finding_id,))
@@ -208,62 +202,26 @@ def get_findings():
     for lst in children:
         if lst[0] not in finding_ids:
             finding_ids.append(lst[0])
-    print("line", looky(seeline()).lineno, "couple_age_spouse:", couple_age_spouse)
 
     couple_findings = []
     for finding in generic_couple_findings:
-        print("line", looky(seeline()).lineno, "finding:", finding)
         for spouse_age in couple_age_spouse:
-            print("line", looky(seeline()).lineno, "spouse_age:", spouse_age)
             if finding[0] == spouse_age[0]:
                 for spouse in spouse_age[1:]:
-                    print("line", looky(seeline()).lineno, "spouse:", spouse)
                     if spouse[0] == current_person:
                         finding.append(spouse[1])
                 for spouse in spouse_age[1:]:
-                    print("line", looky(seeline()).lineno, "spouse:", spouse)
                     if spouse[0] != current_person:
                         spouse_id = spouse[0]
                         name = get_name_with_id(spouse_id)
-                        kin_type = spouse[2] # doesn't work with pairs like wife/husband but does work for pairs like spouse/spouse
+                        kin_type = spouse[2]
                         finding.append([name, spouse_id, kin_type])
         finding[2] = finding[2:4]
         del finding[3]
         couple_findings.append(finding)
 
     couple_finding_ids = [i[0] for i in finding_ids_persons_persons_ids]
-    # couple_finding_ids = [i[0] for i in finding_ids_kin_type_ids]
     all_finding_ids = generic_finding_ids + couple_finding_ids
-
-
-
-
-
-
-
-    # couple_findings = []
-    # for finding in generic_couple_findings:
-        # print("line", looky(seeline()).lineno, "finding:", finding)
-        # for spouse_age in couple_age_spouse:
-            # print("line", looky(seeline()).lineno, "spouse_age:", spouse_age)
-            # if finding[0] == spouse_age[0]:
-                # for spouse in spouse_age[1:]:
-                    # print("line", looky(seeline()).lineno, "spouse:", spouse)
-                    # if spouse[0] == current_person:
-                        # finding.append(spouse[1])
-                # for spouse in spouse_age[1:]:
-                    # print("line", looky(seeline()).lineno, "spouse:", spouse)
-                    # if spouse[0] != current_person:
-                        # spouse_id = spouse[0]
-                        # name = get_name_with_id(spouse_id)
-                        # kin_type = spouse[2] # doesn't work with pairs like wife/husband but does work for pairs like spouse/spouse
-                        # finding.append([name, spouse_id, kin_type])
-        # finding[2] = finding[2:4]
-        # del finding[3]
-        # couple_findings.append(finding)
-
-    # couple_finding_ids = [i[0] for i in finding_ids_kin_type_ids]
-    # all_finding_ids = generic_finding_ids + couple_finding_ids
 
     cur.execute(select_all_findings_roles_ids)
 
@@ -337,6 +295,7 @@ class EventsTable(Frame):
         self.headers = []
         self.widths = [[], [], [], [], []]
         self.kintips = []
+        self.kin_buttons = []
 
         self.screen_height = self.winfo_screenheight()
         self.column_width_indecrement = 0
@@ -592,89 +551,20 @@ class EventsTable(Frame):
         self.show_table_cells()
 
     def show_table_cells(self):
-
-        def open_kin_tip(evt, kin):
-
-            def make_kin_tip(lst):
-                self.instrux = KinTip(
-                    self.kin_tip, 
-                    text="{} (id #{})".format(lst[0], lst[1]))
-                self.instrux.grid(sticky="news")
-                self.instrux.instrux2.bind('<Button-1>', self.go_to)
-    
-            def highlight(event):
-                event.widget.config(bg=formats["head_bg"])
-
-            def unhighlight(event):
-                event.widget.config(bg=formats["bg"])
-
-            if evt.widget.winfo_rooty() < 96:
-                y_offset = 32
-            else:
-                y_offset = -84
-
-            self.kin_tip = Toplevel(self)
-            x, y, cx, cy = evt.widget.bbox("insert")
-            x = x + evt.widget.winfo_rootx() + y_offset
-            y = y + cy + evt.widget.winfo_rooty() + y_offset
-            self.kin_tip.wm_geometry('+{}+{}'.format(x, y))
-            self.kin_tip.wm_overrideredirect(1)
-            self.kintips.append(self.kin_tip)
-
-            # spouse or child
-            if len(kin) == 3:
-                make_kin_tip(kin)
-            # parents
-            else:
-                for lst in kin:
-                    make_kin_tip(lst)
-
-            ex = LabelButtonText(
-                self.instrux, 
-                text="x", 
-                width=2,
-                font=("arial black", 3))
-            ex.place(rely=1.0, relx=1.0, x=0, y=0, anchor='se')
-            ex.bind('<Button-1>', self.destroy_kintip)
-            ex.bind('<Control-Button-1>', self.destroy_all_kintips)
-            ex.bind('<Enter>', highlight)
-            ex.bind('<Leave>', unhighlight)
-
         r = 2
         for row in self.findings:
             event_type = row[0][1]
             c = 0
             for col in row[0:9]:
+                cellval = col[1]
                 widg = col[0]
                 if c == 1:
-                    text = col[1][0]
+                    text = cellval[0]
                 elif c in (0, 2, 3, 4):
-                    text = col[1]
+                    text = cellval
                 elif c == 5: # kin
-                    ma_pa = False
-                    if event_type == 'birth':
-                        ma_pa = True
-                        self.kin_buttons = []                    
-                    if len(col[1]) == 0:
-                        text = ""
-                    else:
-                        kin = col[1]
-                        if kin:
-                            if ma_pa is False:
-                                text = kin[2]
-                            else:
-                                text = 'parents'
-                        kinlab = LabelButtonText(
-                            row[c][0],
-                            text=text,
-                            anchor='w',
-                            font=formats['heading3'])
-                        kinlab.grid(column=0, row=0)
-                        kinlab.bind(
-                            '<Button-1>', 
-                            lambda evt, kin=kin: open_kin_tip(evt, kin))
-                        self.kin_buttons.append(kinlab)
-
+                    kinframe = row[c][0]
+                    self.make_kin_button(event_type, cellval, kinframe)
                 elif c == 6: # roles
                     widg.config(text=col[1])
                 elif c == 7: # notes
@@ -697,6 +587,78 @@ class EventsTable(Frame):
         self.row_qty = row_num
         
         self.size_columns_to_content()
+
+    def make_kin_button(self, event_type, cellval, kinframe):
+        ma_pa = False
+        if event_type == 'birth':
+            ma_pa = True                    
+        if len(cellval) == 0:
+            text = ""
+        else:
+            kin = cellval
+            if kin:
+                if ma_pa is False:
+                    text = kin[2]
+                else:
+                    text = 'parents'
+            kinlab = LabelButtonText(
+                kinframe,
+                text=text,
+                anchor='w',
+                font=formats['heading3'])
+            kinlab.grid(column=0, row=0)
+            kinlab.bind(
+                '<Button-1>', 
+                lambda evt, kin=kin: self.open_kin_tip(evt, kin))
+            self.kin_buttons.append(kinlab)
+            kinframe.grid()
+
+    def open_kin_tip(self, evt, kin):
+
+        def make_kin_tip(lst):
+            self.instrux = KinTip(
+                self.kin_tip, 
+                text="{} (id #{})".format(lst[0], lst[1]))
+            self.instrux.grid(sticky="news")
+            self.instrux.instrux2.bind('<Button-1>', self.go_to)
+
+        def highlight(event):
+            event.widget.config(bg=formats["head_bg"])
+
+        def unhighlight(event):
+            event.widget.config(bg=formats["bg"])
+
+        if evt.widget.winfo_rooty() < 96:
+            y_offset = 32
+        else:
+            y_offset = -84
+
+        self.kin_tip = Toplevel(self)
+        x, y, cx, cy = evt.widget.bbox("insert")
+        x = x + evt.widget.winfo_rootx() + y_offset
+        y = y + cy + evt.widget.winfo_rooty() + y_offset
+        self.kin_tip.wm_geometry('+{}+{}'.format(x, y))
+        self.kin_tip.wm_overrideredirect(1)
+        self.kintips.append(self.kin_tip)
+
+        # spouse or child
+        if len(kin) == 3:
+            make_kin_tip(kin)
+        # parents
+        else:
+            for lst in kin:
+                make_kin_tip(lst)
+
+        ex = LabelButtonText(
+            self.instrux, 
+            text="x", 
+            width=2,
+            font=("arial black", 3))
+        ex.place(rely=1.0, relx=1.0, x=0, y=0, anchor='se')
+        ex.bind('<Button-1>', self.destroy_kintip)
+        ex.bind('<Control-Button-1>', self.destroy_all_kintips)
+        ex.bind('<Enter>', highlight)
+        ex.bind('<Leave>', unhighlight)
 
     def destroy_kintip(self, evt=None):
         if evt:
@@ -740,6 +702,17 @@ class EventsTable(Frame):
                 elif widg.winfo_subclass() == 'LabelButtonText':
                     widg.config(text='')
                 widg.grid_forget()
+        for widg in self.new_event_row[0:5]:
+            widg.delete(0, 'end')
+        for widg in self.new_event_row[6:]:
+            widg.config(text='')
+        for widg in self.new_event_row:
+            widg.grid_remove()
+            
+        self.combo_frame.grid(column= 0, row=self.new_row + 1)
+        if self.new_event_combo.get() != "new event":
+            self.new_event_combo.delete(0, 'end')
+            self.new_event_combo.insert(0, "new event")
 
     def make_header(self):
         
@@ -764,6 +737,7 @@ class EventsTable(Frame):
 
             def couple_cancel():
                 new_couple_event.destroy()
+                self.root.lift()
 
             def couple_ok():
                 conn = sqlite3.connect(current_file)
@@ -774,7 +748,6 @@ class EventsTable(Frame):
                     print("error--kintype is blank")
                     return
                 else:
-                    print("line", looky(seeline()).lineno, "kintypes_and_ids:", kintypes_and_ids)
                     v = 0
                     for item in kin_type_list:
                         if item in kintypes:
@@ -784,21 +757,14 @@ class EventsTable(Frame):
                                     idx = k
                                     kin_type_list[v] = kintypes_and_ids[idx][0]
                                 k += 1
-                            print("line", looky(seeline()).lineno, "kin_type_list:", kin_type_list)
                         else:
                             print("line", looky(seeline()).lineno, "create new kin type")
                         v += 1
-                # I think the dict is superfluous
                 age1 = age_input1.get()
                 age2 = age_input2.get()
                 other_person = other_person_combo.get()
-                other_person = other_person.split("#")[1]
-                print("line", looky(seeline()).lineno, "other_person:", other_person)
-                # self.couple_dict["current_person"]["kintype_id"] = kin_type_list[0]
-                # self.couple_dict["other_person"]["kintype_id"] = kin_type_list[1]
-                # self.couple_dict["current_person"]["age"] = age1
-                # self.couple_dict["other_person"]["age"] = age2
-                print("line", looky(seeline()).lineno, "kin_type_list:", kin_type_list)
+                other_person_all = other_person.split(" #")
+                other_person = other_person_all[1]
                 new_row_values = [new_event, '', '', '', age1]
                 cur.execute(select_max_persons_persons_id)
                 persons_persons_id = cur.fetchone()[0] + 1
@@ -818,39 +784,31 @@ class EventsTable(Frame):
                 conn.commit()
                 couple_cancel()
 
-                combo_frame.grid_remove()
-                new_event_combo.delete(0, 'end')
+                self.combo_frame.grid_remove()
+                self.new_event_combo.delete(0, 'end')
 
                 g = 0
-                for widg in new_event_row[0:5]:
+                for widg in self.new_event_row[0:5]:
                     widg.insert(0, new_row_values[g])
                     widg.grid()
                     g += 1
-                        
-                widg = new_event_row[5]
+
+                kinframe = self.new_event_row[5]
                 cur.execute(select_kin_type_string, (kin_type_list[1],))
                 other_person_kin_type = cur.fetchone()[0]
-
-                kinlab = LabelButtonText(
-                    widg,
-                    text=other_person_kin_type,
-                    anchor='w',
-                    font=formats['heading3'])
-                kinlab.grid(column=0, row=0)
-                # kinlab.bind( # fix this see do list so it works don't delete
-                    # '<Button-1>', 
-                    # lambda evt, kin=kin: open_kin_tip(evt, kin))
-                self.kin_buttons.append(kinlab)
-                widg.grid()
-
+                cellval = other_person_all
+                cellval.append(other_person_kin_type)
+                self.make_kin_button(new_event, cellval, kinframe)
+                for widg in self.new_event_row[6:]:
+                    widg.grid()
+                
                 cur.close()
                 conn.close()
 
             conn = sqlite3.connect(current_file)
             conn.execute('PRAGMA foreign_keys = 1')
             cur = conn.cursor()
-            new_event = new_event_combo.get()
-            print("line", looky(seeline()).lineno, "new_event:", new_event)
+            new_event = self.new_event_combo.get()
             if new_event == "new event": return
             if new_event not in event_types:
                 print("line", looky(seeline()).lineno, "new:")
@@ -872,43 +830,72 @@ class EventsTable(Frame):
                     kintypes_and_ids = [i for i in cur.fetchall()]
                     kintypes = [i[1] for i in kintypes_and_ids]
 
+                    
+                    message = "Information about the new event relating to the current person and the other person in the couple."    
                     current_person_name = get_name_with_id(self.current_person)
                     new_couple_event = Toplevel(self.root)
                     new_couple_event.title("New Couple Event")
-                    current_name = Label(new_couple_event, text=current_person_name)
-                    current_name.grid()
+
+                    new_couple_event.columnconfigure(0, weight=1)
+                    new_couple_event.rowconfigure(0, weight=1)
+                    lab = MessageHilited(
+                        new_couple_event, text=message, justify='left', aspect=500)
+
+                    current_name = LabelH3(
+                        new_couple_event, 
+                        text="Current person: {}".format(current_person_name))
+                    lab1 = Label(new_couple_event, text="Kin Type")
                     kin_type_combo1 = Combobox(new_couple_event, self.root, values=kintypes)
-                    kin_type_combo1.grid()
-                    other_person_combo = Combobox(new_couple_event, self.root, values=persons)
-                    other_person_combo.grid()
-                    age_label1 = Label(new_couple_event, text="Age (current person)")
-                    age_label1.grid()
+                    kin_type_combo1.focus_set()
+                    age_label1 = Label(new_couple_event, text="Age")
                     age_input1 = Entry(new_couple_event, width=6)
-                    age_input1.grid()
+                    sep = Separator(new_couple_event, width=3)
+                    lab2 = Label(new_couple_event, text="Other Person:")
+                    other_person_combo = Combobox(new_couple_event, self.root, values=persons)
+                    lab3 = Label(new_couple_event, text="Kin Type")
                     kin_type_combo2 = Combobox(new_couple_event, self.root, values=kintypes)
-                    kin_type_combo2.grid()
-                    age_label2 = Label(new_couple_event, text="Age (other person)")
-                    age_label2.grid()
+                    age_label2 = Label(new_couple_event, text="Age")
                     age_input2 = Entry(new_couple_event, width=6)
-                    age_input2.grid()
-                    ok_couple = Button(new_couple_event, text="OK", command=couple_ok)
-                    ok_couple.grid() 
+                    buttfrm = Frame(new_couple_event)
+                    ok_couple = Button(buttfrm, text="OK", command=couple_ok, width=6)
+                    cancel = Button(buttfrm, text="CANCEL", command=couple_cancel)
+
+                    lab.grid(
+                        column=0, row=0, sticky='news', ipady=18, 
+                        columnspan=2, padx=12, pady=12)
+                    current_name.grid(
+                        column=0, row=1, sticky='ew', columnspan=2, pady=(6,0))
+                    lab1.grid(column=0, row=2, sticky="e", pady=(6,0))
+                    kin_type_combo1.grid(column=1, row=2, sticky="w", pady=(6,0), padx=(0,12))
+                    age_label1.grid(column=0, row=3, sticky="e", pady=(6,0))
+                    age_input1.grid(column=1, row=3, sticky="w", pady=(6,0))
+                    sep.grid(column=0, row=4, columnspan=2, sticky="ew", padx=12, pady=(9,0))
+                    lab2.grid(column=0, row=5, sticky="e", pady=(6,0))
+                    other_person_combo.grid(column=1, row=5, sticky="w", pady=(6,0))
+                    lab3.grid(column=0, row=6, sticky="e", pady=(6,0))
+                    kin_type_combo2.grid(column=1, row=6, sticky="w", pady=(6,0))
+                    age_label2.grid(column=0, row=7, sticky="e", pady=(6,0))
+                    age_input2.grid(column=1, row=7, sticky="w", pady=(6,0))
+                    buttfrm.grid(column=1, row=8, sticky="e", pady=12)
+                    ok_couple.grid(column=0, row=0, padx=(0,12)) 
+                    cancel.grid(column=1, row=0, padx=(0,12))
+
                     print("line", looky(seeline()).lineno, "new_finding:", new_finding)
                     # move this out of the if context once a new_finding is being made for generic events in the above if statement
                     cur.execute(insert_finding_places_new, (new_finding,))
-                    conn.commit()            
+                    conn.commit()
 
             cur.close()
             conn.close()
 
-        new_event_row = []
+        self.new_event_row = []
 
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         cur.execute(select_all_event_types)
         event_types = [i[0] for i in cur.fetchall()]
-        new_row = self.row_qty + 1
+        self.new_row = self.row_qty + 1
         # this code block is almost identical to another, could be parameterized 
         for j in range(9):
             if j < 5:
@@ -929,6 +916,7 @@ class EventsTable(Frame):
                     cell.config(
                         width=self.header_widths[j] + self.column_width_indecrement)
             elif j == 5:
+                print("line", looky(seeline()).lineno, "j:", j)
                 cell = Frame(self, bd=0, highlightthickness=0)
             elif j == 6:
                 cell = LabelDots(self, current_file, RolesDialog, text='     ')
@@ -940,16 +928,16 @@ class EventsTable(Frame):
                     anchor='w',
                     font=formats['heading3'],
                     text="0")
-            cell.grid(column=j, row=new_row, sticky='we')
+            cell.grid(column=j, row=self.new_row, sticky='we')
             cell.grid_remove()
-            new_event_row.append(cell)
+            self.new_event_row.append(cell)
 
-        combo_frame = Frame(self)
-        combo_frame.grid(column=0, row=new_row, columnspan=3, sticky="ew")
-        new_event_combo = Combobox(combo_frame, self.root, values=event_types)
-        new_event_combo.grid(column=0, row=0)
-        new_event_combo.entry.insert(0, "new event")
-        combutt = Button(combo_frame, text="NEW EVENT", command=add_event)
+        self.combo_frame = Frame(self)
+        self.combo_frame.grid(column=0, row=self.new_row, columnspan=3, sticky="ew")
+        self.new_event_combo = Combobox(self.combo_frame, self.root, values=event_types)
+        self.new_event_combo.grid(column=0, row=0)
+        self.new_event_combo.entry.insert(0, "new event")
+        combutt = Button(self.combo_frame, text="NEW EVENT", command=add_event)
         combutt.grid(column=1, row=0, padx=12, pady=3)
         cur.close()
         conn.close()
@@ -1014,12 +1002,14 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# `elif c == 5` line 666 and the 4 nested funx associated with it shd be moved out to a separate instance method with parameters so it can be run again for the new event row which currently ?makes a mock kin button which doesn't yet do anything
+# after each evt added, redraw table so new event is properly sorted by date
+# add cancel buttons as needed, run the same code when clicking X on title bar
 # now do it for generic events
-# redraw table so new event is properly sorted by date
 # make sure ctrl+s works right to redraw table
-# make it possible to edit event_type
-# replace this person new_event_combo w/ search dlg or add it besides the new_event_combo or better yet, add it to main do list and don't do it yet
+# make it possible to edit event_type in a row or create a new event type by typing into combo
+# make it possible to create a new kin_type by typing it into the combo
+# replace this person self.new_event_combo w/ search dlg or add it besides the self.new_event_combo or better yet, add it to main do list and don't do it yet
+# replace windows title bar but no scrollbar, scridth, etc; maybe add scrollbar=False option to Border?
 
 # BRANCH: dates
 # finish refactoring dates validation
@@ -1036,6 +1026,8 @@ if __name__ == '__main__':
 
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?
+
+# add to do list for combobox: when scrolling if the mouse strays off the scrollbar the dropdown undrops, I've seen a way to fix that but what was it?
 
 
 
