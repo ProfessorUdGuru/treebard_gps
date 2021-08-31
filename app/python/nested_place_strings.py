@@ -10,7 +10,7 @@ from tkinter import ttk
 import sqlite3
 from files import current_file
 from widgets import Entry, Button
-from place_autofill import EntryAuto
+from autofill import EntryAuto
 from query_strings import (
    select_place_id2, select_count_place_id, select_place, select_all_place_ids)
 from styles import config_generic    

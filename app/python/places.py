@@ -22,7 +22,7 @@ import tkinter as tk
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, MessageHilited, 
     Entry, ButtonQuiet)
-from place_autofill import EntryAuto
+from autofill import EntryAuto
 from toykinter_widgets import Separator
 from nested_place_strings import (
     make_all_nestings, ManyManyRecursiveQuery)

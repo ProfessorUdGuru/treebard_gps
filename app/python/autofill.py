@@ -1,9 +1,11 @@
-# place_autofill.py
+# autofill.py
 
 # this is the new autofill as of 20210722 which I'm translating from JS to Python
+# EntryAutofill is shown for comparison, it's not to be used; 
+#   this module is about EntryAuto which is defined below
 
 import tkinter as tk
-from widgets import EntryUnhilited, EntryAutofill # EntryAutofill is for comparison, it's not to be used
+from widgets import EntryUnhilited, EntryAutofill
 from styles import make_formats_dict
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -18,28 +20,41 @@ class EntryAuto(EntryUnhilited):
     '''
         To use this class, after instantiating it, you have to call 
         EntryAuto.create_lists(all_items). Other than getting all_items
-        (e.g. from a database query), the class is self-contained. Every
-        instance of the widget in the same module will use the same autofill
-        values, so if that's a problem it will have to be redesigned to
-        add a column number parameter (or something) so it knows which list 
-        to use.
-        
+        (e.g. from a database query), the class is self-contained.        
     '''
+# Every instance of the widget in the same module will use the same autofill
+# values, so if that's a problem it will have to be redesigned to
+# add a parameter so it knows which list to use. But it can't be an instance var
+# or else every widget will keep and modify its own list. So it has to be a global
+# list here in autofill.py such as a dict of lists with the dict keys eg "all_places"
+# or "all_persons" being used as a parameter.
 
+    # recent_items = []
+    # all_items_unique = []
 
-    recent_items = []
-    all_items_unique = []
+    # def create_lists(all_items):
+
+        # for item in all_items:
+            # if item not in EntryAuto.recent_items:
+                # EntryAuto.all_items_unique.append(item)
+        # EntryAuto.final_items = EntryAuto.recent_items + EntryAuto.all_items_unique
+# USE values PARAM (which isn't currently being used) WITH SOMETHING THAT GETS DIFFERENT VALUES DEPENDING ON WHETHER IT'S A PLACE, A KIN-TYPE, A PERSON, ETC.
 
     def create_lists(all_items):
-        for item in all_items:
-            if item not in EntryAuto.recent_items:
-                EntryAuto.all_items_unique.append(item)
-        EntryAuto.final_items = EntryAuto.recent_items + EntryAuto.all_items_unique
+        recent_items = []
+        all_items_unique = []
 
-    def __init__(self, master, autofill=False, values=[], *args, **kwargs):
+        for item in all_items:
+            if item not in recent_items:
+                all_items_unique.append(item)
+        final_items = recent_items + all_items_unique
+        return final_items
+
+    def __init__(self, master, autofill=False, values=None, *args, **kwargs):
         EntryUnhilited.__init__(self, master, *args, **kwargs)
         self.master = master
         self.autofill = autofill
+        self.values = values
         
         self.bind("<KeyPress>", self.detect_pressed)
         self.bind("<KeyRelease>", self.get_typed)
@@ -85,7 +100,8 @@ class EntryAuto(EntryUnhilited):
     def match_string(self):
         hits = []
         got = self.get()
-        use_list = EntryAuto.final_items
+        # use_list = EntryAuto.final_items
+        use_list = self.values
         for item in use_list:
             if item.lower().startswith(got.lower()):
                 hits.append(item)
@@ -100,10 +116,14 @@ class EntryAuto(EntryUnhilited):
 
     def prepend_match(self, evt):
         content = self.get()
-        if content in EntryAuto.final_items:
-            idx = EntryAuto.final_items.index(content)
-            del EntryAuto.final_items[idx]
-            EntryAuto.final_items.insert(0, content)
+        if content in self.values:
+            idx = self.values.index(content)
+            del self.values[idx]
+            self.values.insert(0, content)
+        # if content in EntryAuto.final_items:
+            # idx = EntryAuto.final_items.index(content)
+            # del EntryAuto.final_items[idx]
+            # EntryAuto.final_items.insert(0, content)
 
     def deselect(self, evt):
         '''
