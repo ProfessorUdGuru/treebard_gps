@@ -115,7 +115,9 @@ class NewPlaceDialog():
             if self.do_on_ok:
                 self.do_on_ok()
             if self.error is False:
-                cancel()
+                self.new_places_dialog.destroy()
+                self.inwidg.delete(0, 'end')
+                self.inwidg.insert(0, self.place_input)
 
         def cancel():
             self.new_places_dialog.destroy()
@@ -360,8 +362,8 @@ class EditRow(Frame):
 class ValidatePlace():
 
     def __init__(
-            self, root, treebard, inwidg, initial, 
-            place_input, finding, nested_place):
+            self, root, treebard, inwidg, initial, place_input, finding):
+            # place_input, finding, nested_place):
 
         self.root = root
         self.treebard = treebard
@@ -369,7 +371,7 @@ class ValidatePlace():
         self.initial = initial
         self.place_input = place_input
         self.finding = finding
-        self.nested_place = nested_place
+        # self.nested_place = nested_place
 
         self.place_list = []
         self.place_dicts = []
@@ -525,8 +527,9 @@ class ValidatePlace():
         cur.execute(update_finding_places, tuple(ids))
         conn.commit()
         place_strings.insert(0, self.place_input)
-        EntryAuto.create_lists(place_strings)
-        EntryAuto.final_items.insert(0, self.place_input)        
+
+        place_autofill_values = EntryAuto.create_lists(place_strings)
+        place_autofill_values.insert(0, self.place_input)      
             
         cur.close()
         conn.close()
@@ -576,7 +579,7 @@ if __name__ == "__main__":
     }
 
     finding = 1
-    nested_place = 271
+    # nested_place = 271
     initial = ''
 
     def get_final(evt):
@@ -587,7 +590,8 @@ if __name__ == "__main__":
         final = widg.get()
         for child in frame.winfo_children():
             child.destroy()
-        final = ValidatePlace(root, treebard, initial, final, finding, nested_place)
+        final = ValidatePlace(root, treebard, initial, final, finding)
+        # final = ValidatePlace(root, treebard, initial, final, finding, nested_place)
         j = 0
         for dkt in final.place_dicts:
             lab = Label(
@@ -600,8 +604,9 @@ if __name__ == "__main__":
     root = tk.Tk()
     treebard = root # mockup; this isn't what really happens
 
-    entry = EntryAuto(root, width=50, autofill=True)
-    EntryAuto.create_lists(place_strings)
+    place_values = EntryAuto.create_lists(place_strings)
+
+    entry = EntryAuto(root, width=50, autofill=True, values=place_values)
     entry.grid()
     entry.focus_set()
     entry.bind("<FocusOut>", get_final, add="+")

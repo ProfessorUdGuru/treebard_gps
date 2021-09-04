@@ -172,6 +172,10 @@ select_all_kin_type_ids_couple = '''
         AND hidden = 0
 '''
 
+# select_all_kin_types = '''
+    # SELECT kin_types FROM kin_type
+# '''
+
 select_all_kin_types_couple = '''
     SELECT kin_type_id, kin_types
     FROM kin_type
@@ -360,6 +364,12 @@ select_event_type_id = '''
     WHERE event_types = ?
 '''
 
+select_event_type_couple = '''
+    SELECT couple
+    FROM event_type
+    WHERE event_types = ?
+'''
+
 select_finding_id_birth = '''
     SELECT finding_id 
     FROM finding
@@ -379,6 +389,20 @@ select_finding_ids_offspring = '''
     FROM findings_persons
     WHERE person_id = ?
         AND kin_type_id in (1, 2)
+'''
+
+select_finding_places_id = '''
+    SELECT finding_places_id
+    FROM finding_places
+    WHERE nest0 = ? 
+        AND (nest1 = ? OR nest1 is null) 
+        AND (nest2 = ? OR nest2 is null) 
+        AND (nest3 = ? OR nest3 is null) 
+        AND (nest4 = ? OR nest4 is null) 
+        AND (nest5 = ? OR nest5 is null) 
+        AND (nest6 = ? OR nest6 is null) 
+        AND (nest7 = ? OR nest7 is null) 
+        AND (nest8 = ? OR nest8 is null)
 '''
 
 select_finding_places_nesting = '''
@@ -416,15 +440,6 @@ select_findings_details_couple_age = '''
     WHERE finding_id = ?
         AND findings_persons.persons_persons_id = ?
 '''
-
-# select_findings_details_couple_age = '''
-    # SELECT person_id, age, kin_types
-    # FROM findings_persons
-    # JOIN kin_type
-        # ON kin_type.kin_type_id = findings_persons.kin_type_id
-    # WHERE finding_id = ?
-        # AND findings_persons.kin_type_id = ?
-# '''
 
 select_findings_details_couple_generic = '''
     SELECT event_types, date, date_sorter, finding_places_id, particulars 
@@ -483,25 +498,15 @@ select_name_with_id = '''
         AND name.person_id = ?
 '''
 
+select_max_finding_places_id = '''
+    SELECT MAX(finding_places_id) FROM finding_places
+'''
+
 select_max_persons_persons_id = ''' 
     SELECT MAX(persons_persons_id) FROM persons_persons 
 '''
 
 select_max_place_id = ''' SELECT MAX(place_id) FROM place '''
-
-select_finding_places_id = '''
-    SELECT finding_places_id
-    FROM finding_places
-    WHERE nest0 = ? 
-        AND (nest1 = ? OR nest1 is null) 
-        AND (nest2 = ? OR nest2 is null) 
-        AND (nest3 = ? OR nest3 is null) 
-        AND (nest4 = ? OR nest4 is null) 
-        AND (nest5 = ? OR nest5 is null) 
-        AND (nest6 = ? OR nest6 is null) 
-        AND (nest7 = ? OR nest7 is null) 
-        AND (nest8 = ? OR nest8 is null)
-'''
 
 select_nested_places_same = '''
     SELECT nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8
@@ -709,6 +714,13 @@ update_findings_notes = '''
     SET order_subtopic = ? 
     WHERE finding_id = ?
         AND note_id = ? 
+'''
+
+update_findings_persons_couple_age = '''
+    UPDATE findings_persons
+    SET age = ?
+    WHERE finding_id = ?
+        AND  person_id = ?
 '''
 
 update_findings_persons_new_couple_age = '''

@@ -11,7 +11,7 @@ import dev_tools as dt
 from dev_tools import looky, seeline
 
 
-
+dt.make_rollback_copy()
 
 
 formats = make_formats_dict()
@@ -22,23 +22,6 @@ class EntryAuto(EntryUnhilited):
         EntryAuto.create_lists(all_items). Other than getting all_items
         (e.g. from a database query), the class is self-contained.        
     '''
-# Every instance of the widget in the same module will use the same autofill
-# values, so if that's a problem it will have to be redesigned to
-# add a parameter so it knows which list to use. But it can't be an instance var
-# or else every widget will keep and modify its own list. So it has to be a global
-# list here in autofill.py such as a dict of lists with the dict keys eg "all_places"
-# or "all_persons" being used as a parameter.
-
-    # recent_items = []
-    # all_items_unique = []
-
-    # def create_lists(all_items):
-
-        # for item in all_items:
-            # if item not in EntryAuto.recent_items:
-                # EntryAuto.all_items_unique.append(item)
-        # EntryAuto.final_items = EntryAuto.recent_items + EntryAuto.all_items_unique
-# USE values PARAM (which isn't currently being used) WITH SOMETHING THAT GETS DIFFERENT VALUES DEPENDING ON WHETHER IT'S A PLACE, A KIN-TYPE, A PERSON, ETC.
 
     def create_lists(all_items):
         recent_items = []
@@ -55,11 +38,11 @@ class EntryAuto(EntryUnhilited):
         self.master = master
         self.autofill = autofill
         self.values = values
-        
-        self.bind("<KeyPress>", self.detect_pressed)
-        self.bind("<KeyRelease>", self.get_typed)
-        self.bind("<FocusOut>", self.prepend_match, add="+")
-        self.bind("<FocusIn>", self.deselect, add="+")
+        if autofill is True:
+            self.bind("<KeyPress>", self.detect_pressed)
+            self.bind("<KeyRelease>", self.get_typed)
+            self.bind("<FocusOut>", self.prepend_match, add="+")
+            self.bind("<FocusIn>", self.deselect, add="+")
 
     def detect_pressed(self, evt):
         '''
@@ -100,7 +83,6 @@ class EntryAuto(EntryUnhilited):
     def match_string(self):
         hits = []
         got = self.get()
-        # use_list = EntryAuto.final_items
         use_list = self.values
         for item in use_list:
             if item.lower().startswith(got.lower()):
@@ -120,10 +102,6 @@ class EntryAuto(EntryUnhilited):
             idx = self.values.index(content)
             del self.values[idx]
             self.values.insert(0, content)
-        # if content in EntryAuto.final_items:
-            # idx = EntryAuto.final_items.index(content)
-            # del EntryAuto.final_items[idx]
-            # EntryAuto.final_items.insert(0, content)
 
     def deselect(self, evt):
         '''
@@ -200,9 +178,10 @@ if __name__ == "__main__":
     traverse.values = all_items
     traverse.config(textvariable=traverse.var)
 
-    autofill2 = EntryAuto(root, autofill=True, width=40, bg="steelblue")
+    place_values = EntryAuto.create_lists(all_items)
+
+    autofill2 = EntryAuto(root, autofill=True, width=40, bg="steelblue", values=place_values)
     autofill2.grid()
-    EntryAuto.create_lists(all_items)
     root.mainloop()
 
 
