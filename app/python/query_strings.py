@@ -80,8 +80,8 @@ insert_images_entities = '''
 '''
 
 insert_kin_type_new = '''
-    INSERT INTO kin_type (kin_type_id, kin_types, kin_code)
-    VALUES (?, ?, 'X')
+    INSERT INTO kin_type (kin_types, kin_code)
+    VALUES (?, ?)
 '''
 
 insert_name = '''

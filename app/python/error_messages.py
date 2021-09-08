@@ -30,7 +30,6 @@ def open_error_message(parent, message, title, buttlab):
     button = Button(msg, text=buttlab, command=close)
     button.grid(padx=6, pady=(0,12))
     button.focus_set()
-    # return msg, lab
     return msg, lab, button
 
 places_err = (
@@ -42,5 +41,6 @@ places_err = (
 event_table_err = (
     "The same person was used twice.",
     "Please enter a kin type for each person.",
+    "A second person must be entered for a couple event.",
 
 )
