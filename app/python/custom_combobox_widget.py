@@ -519,7 +519,8 @@ class Combobox(FrameHilited3):
         '''
             A function specified on instantiation.
         '''
-        print('this will not print if overridden (callback)')
+        # print('this will not print if overridden (callback)')
+        pass
 
     def combobox_selected(self):
         '''
@@ -527,7 +528,8 @@ class Combobox(FrameHilited3):
             the selection is made. Similar to ttk's <<ComboboxSelected>>
             but instead of binding to a virtual event.
         '''
-        print('this will not print if overridden (combobox_selected)')
+        # print('this will not print if overridden (combobox_selected)')
+        pass
 
 if __name__ == '__main__':
 

@@ -44,22 +44,20 @@ insert_finding_new = '''
 '''
 
 insert_finding_new_couple = '''
-    INSERT INTO finding (event_type_id)
-    VALUES (?)
+    INSERT INTO finding (finding_id, event_type_id)
+    VALUES (?, ?)
 '''
-
-insert_finding_places = '''
-    INSERT INTO finding_places (
-        nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8) 
-    VALUES ({})
-'''.format(','.join(['?'] * 9))
-# which translates to:'INSERT INTO finding_places (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8) VALUES (?,?,?,?,?,?,?,?,?)'
-
 insert_finding_places_new = '''
     INSERT INTO finding_places (
         finding_id, nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
     VALUES (?, 1, null, null, null, null, null, null, null, null)
 '''
+
+insert_finding_places_new_event = '''
+    INSERT INTO finding_places
+       (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8, finding_id)
+    VALUES ({})
+'''.format(','.join(['?'] * 10))
 
 insert_findings_notes = '''
     INSERT INTO findings_notes 
@@ -71,16 +69,6 @@ insert_findings_persons_new_couple = '''
     VALUES (?, ?, ?, ?, ?)
 '''
 
-# insert_findings_persons_new_couple = '''
-    # INSERT INTO findings_persons (finding_id, person_id, age, kin_type_id)
-    # VALUES (?, ?, ?, ?)
-# '''
-
-# insert_findings_persons_new_couple_ids = '''
-    # INSERT INTO findings_persons (finding_id, person_id, kin_type_id)
-    # VALUES (?, ?, ?)
-# '''
-
 insert_findings_roles = '''
     INSERT INTO findings_roles 
     VALUES (null, ?, ?, ?)
@@ -89,6 +77,11 @@ insert_findings_roles = '''
 insert_images_entities = '''
     INSERT INTO images_entities (image_id, main_image, person_id) 
     VALUES (?, 1, ?) 
+'''
+
+insert_kin_type_new = '''
+    INSERT INTO kin_type (kin_type_id, kin_types, kin_code)
+    VALUES (?, ?, 'X')
 '''
 
 insert_name = '''
@@ -145,6 +138,10 @@ select_all_event_types_couple = '''
         AND couple == 1
 '''
 
+select_all_finding_places_findings = '''
+    SELECT finding_id FROM finding_places
+'''
+
 select_all_findings_current_person = '''
     SELECT finding_id
     FROM finding
@@ -171,10 +168,6 @@ select_all_kin_type_ids_couple = '''
     WHERE kin_code = 'D'
         AND hidden = 0
 '''
-
-# select_all_kin_types = '''
-    # SELECT kin_types FROM kin_type
-# '''
 
 select_all_kin_types_couple = '''
     SELECT kin_type_id, kin_types
@@ -484,6 +477,24 @@ select_kin_type_string = '''
     SELECT kin_types FROM kin_type WHERE kin_type_id = ?
 '''
 
+select_max_finding_id = '''
+    SELECT MAX(finding_id) FROM finding
+'''
+
+select_max_finding_places_id = '''
+    SELECT MAX(finding_places_id) FROM finding_places
+'''
+
+select_max_kin_type_id = '''
+    SELECT MAX(kin_type_id) FROM kin_type
+'''
+
+select_max_persons_persons_id = ''' 
+    SELECT MAX(persons_persons_id) FROM persons_persons 
+'''
+
+select_max_place_id = ''' SELECT MAX(place_id) FROM place '''
+
 select_name_type_id = '''
     SELECT name_type_id 
     FROM name_type
@@ -497,16 +508,6 @@ select_name_with_id = '''
     WHERE name_type_id = 1
         AND name.person_id = ?
 '''
-
-select_max_finding_places_id = '''
-    SELECT MAX(finding_places_id) FROM finding_places
-'''
-
-select_max_persons_persons_id = ''' 
-    SELECT MAX(persons_persons_id) FROM persons_persons 
-'''
-
-select_max_place_id = ''' SELECT MAX(place_id) FROM place '''
 
 select_nested_places_same = '''
     SELECT nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8
@@ -769,6 +770,12 @@ update_images_entities_one = '''
     AND person_id = 
         (SELECT current.person_id 
         FROM current WHERE current_id = 1)
+'''
+
+update_kin_type_kin_code = '''
+    UPDATE kin_type 
+    SET kin_code = ? 
+    WHERE kin_type_id = ?
 '''
 
 update_note = '''

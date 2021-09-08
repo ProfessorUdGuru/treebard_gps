@@ -31,8 +31,9 @@ from query_strings import (
     select_place_hint, select_all_places, select_all_places_places, 
     select_finding_places_nesting, update_place_hint, select_place_id2, 
     select_max_place_id, select_place_id1, update_finding_places,
-    insert_places_places_new, insert_finding_places, select_all_place_ids, 
-    select_finding_places_id, select_places_places_id)
+    insert_places_places_new, select_all_place_ids, select_finding_places_id,
+    insert_finding_places_new_event, select_places_places_id, 
+    select_all_finding_places_findings)
 from files import current_file
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
@@ -363,7 +364,6 @@ class ValidatePlace():
 
     def __init__(
             self, root, treebard, inwidg, initial, place_input, finding):
-            # place_input, finding, nested_place):
 
         self.root = root
         self.treebard = treebard
@@ -371,7 +371,6 @@ class ValidatePlace():
         self.initial = initial
         self.place_input = place_input
         self.finding = finding
-        # self.nested_place = nested_place
 
         self.place_list = []
         self.place_dicts = []
@@ -491,11 +490,22 @@ class ValidatePlace():
             seen.add(val)
         self.input_to_db()
 
-    def input_to_db(self):
+    def input_new_event(self):
+        return self.place_dicts
 
+    def input_to_db(self):
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
+
+        cur.execute(select_all_finding_places_findings)
+        all_finding_ids = [i[0] for i in cur.fetchall()]
+
+        if self.finding not in all_finding_ids:
+            # If it's a new event, there's no finding_id yet, all the
+            #   database input is handled in the new events procedure.
+            self.input_new_event()
+            return
 
         ids = []
         for dkt in self.place_dicts:            
@@ -504,7 +514,6 @@ class ValidatePlace():
         nulls = 9 - qty
         ids = ids + [None] * nulls
         ids.append(self.finding)
-        
         last = len(self.place_dicts) - 1
         q = 0
         for dkt in self.place_dicts:
@@ -524,12 +533,24 @@ class ValidatePlace():
                     cur.execute(insert_places_places_new, (child, parent))
                     conn.commit()
             q += 1
+
+        # cur.execute(select_all_finding_places_findings)
+        # all_finding_ids = [i[0] for i in cur.fetchall()]
+
+        # if self.finding in all_finding_ids:
+            # cur.execute(update_finding_places, tuple(ids))
+            # conn.commit()
+        # else:
+            # can't do this here, the new event doesn't exist yet, have to do all new event stuff in the new event procedure so the process isn't scattered among various modules
+            # cur.execute(insert_finding_places_new_event, tuple(ids))
+            # conn.commit() 
+
         cur.execute(update_finding_places, tuple(ids))
-        conn.commit()
+        conn.commit()       
+        print("line", looky(seeline()).lineno, "self.place_input:", self.place_input)
         place_strings.insert(0, self.place_input)
 
         place_autofill_values = EntryAuto.create_lists(place_strings)
-        place_autofill_values.insert(0, self.place_input)      
             
         cur.close()
         conn.close()
@@ -579,7 +600,6 @@ if __name__ == "__main__":
     }
 
     finding = 1
-    # nested_place = 271
     initial = ''
 
     def get_final(evt):
@@ -591,7 +611,6 @@ if __name__ == "__main__":
         for child in frame.winfo_children():
             child.destroy()
         final = ValidatePlace(root, treebard, initial, final, finding)
-        # final = ValidatePlace(root, treebard, initial, final, finding, nested_place)
         j = 0
         for dkt in final.place_dicts:
             lab = Label(

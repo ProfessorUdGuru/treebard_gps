@@ -41,5 +41,6 @@ places_err = (
 
 event_table_err = (
     "The same person was used twice.",
+    "Please enter a kin type for each person.",
 
 )
