@@ -1046,7 +1046,7 @@ class NewEventDialog(Toplevel):
                     insert_persons_persons_new, 
                     (persons_persons_id, self.current_person, other_person_id))
                 conn.commit()
-
+                print("line", looky(seeline()).lineno, "self.new_kin_type_codes:", self.new_kin_type_codes)
                 self.kin_type_list = list(
                     zip(self.kin_type_list, self.new_kin_type_codes))
                 self.kin_type_list = [list(i) for i in self.kin_type_list]
@@ -1211,6 +1211,7 @@ class NewEventDialog(Toplevel):
                         idx = k
                         self.kin_type_list[v] = self.kintypes_and_ids[idx][0]
                     k += 1
+                new_kin_types.append(None)
             else:
                 if type(item) is not int and len(item) != 0:
                     new_kin_types.append(item)
@@ -1224,6 +1225,7 @@ class NewEventDialog(Toplevel):
                         # item, 
                         # new_kin_type_id, 
                         # self)
+            
             v += 1
             # f += 1
 
@@ -1240,7 +1242,7 @@ class NewEventDialog(Toplevel):
             new_kin_types,
             self).show()
 
-        # print("line", looky(seeline()).lineno, "self.new_kin_type_codes:", self.new_kin_type_codes)
+        print("line", looky(seeline()).lineno, "self.new_kin_type_codes:", self.new_kin_type_codes)
         # for code in self.new_kin_type_codes:
             # print("line", looky(seeline()).lineno, "code.get():", code.get())
 
@@ -1313,9 +1315,16 @@ class NewKinTypeDialog(Toplevel):
         self.columnconfigure('all', weight=1)
         self.make_widgets()
 # the problem is that this is looping over one thing when there are two.
+        print("line", looky(seeline()).lineno, "new_kin_types:", new_kin_types)
         column = 0
         for item in new_kin_types:
-            self.make_widgets_for_one(item, column) 
+            self.make_widgets_for_one(item, column)
+            
+        # for item in new_kin_types:
+            # if item is None:
+                # continue
+            # else:
+                # self.make_widgets_for_one(item, column) 
             column += 1
 
         self.grab_set()
@@ -1328,12 +1337,16 @@ class NewKinTypeDialog(Toplevel):
         cancel_rads = Button(buttons, text="CANCEL", command=self.cancel_new_kin_type)
         cancel_rads.grid(column=1, row=0, padx=12, pady=12)
 
-    def make_widgets_for_one(self, item, column):        
+    def make_widgets_for_one(self, item, column): 
+        print("line", looky(seeline()).lineno, "item, column:", item, column)
+        if item is None:
+            return
         radframe = Frame(self)
         radframe.grid(column=column, row=0, sticky="news", padx=12, pady=(6,0))
         radios = []
         radvar = tk.StringVar(None, "B")
         # self.kinradvars.append(radvar)
+        print("line", looky(seeline()).lineno, "item, column:", item, column)
         self.kinradvars[column] = radvar
         head = LabelH3(radframe, text="Create new kin type: {}".format(item))
         head.grid(column=0, row=0, padx=12, pady=(6,0))
@@ -1418,7 +1431,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# see output below. Maybe the problem is that the code (radvar) is being appended to the first list instead of to the right list.
+# see output below. Maybe the problem is that `code` (radvar) is being appended to the first list instead of to the right list.
  
 # works right if 1st kintype is new and 2nd is old.
 # line 1044 self.kin_type_list: ['old lady', 9]
