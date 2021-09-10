@@ -534,20 +534,8 @@ class ValidatePlace():
                     conn.commit()
             q += 1
 
-        # cur.execute(select_all_finding_places_findings)
-        # all_finding_ids = [i[0] for i in cur.fetchall()]
-
-        # if self.finding in all_finding_ids:
-            # cur.execute(update_finding_places, tuple(ids))
-            # conn.commit()
-        # else:
-            # can't do this here, the new event doesn't exist yet, have to do all new event stuff in the new event procedure so the process isn't scattered among various modules
-            # cur.execute(insert_finding_places_new_event, tuple(ids))
-            # conn.commit() 
-
         cur.execute(update_finding_places, tuple(ids))
-        conn.commit()       
-        print("line", looky(seeline()).lineno, "self.place_input:", self.place_input)
+        conn.commit()   
         place_strings.insert(0, self.place_input)
 
         place_autofill_values = EntryAuto.create_lists(place_strings)
