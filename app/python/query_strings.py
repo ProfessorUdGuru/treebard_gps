@@ -39,8 +39,8 @@ insert_color_scheme = '''
 '''
 
 insert_finding_new = '''
-    INSERT INTO finding (event_type_id, person_id)
-    VALUES (?, ?)
+    INSERT INTO finding (finding_id, age, event_type_id, person_id)
+    VALUES (?, ?, ?, ?)
 '''
 
 insert_finding_new_couple = '''

@@ -1076,8 +1076,9 @@ class NewEventDialog(Toplevel):
         cur = conn.cursor()
 
         age_1 = self.age1_input.get()
-        age_2 = self.age2_input.get()
-        other_person = self.other_person_input.get()
+        if self.couple_event == 1:
+            age_2 = self.age2_input.get()
+            other_person = self.other_person_input.get()
 
         if self.new_event not in self.event_types:
             print("line", looky(seeline()).lineno, "new:")
@@ -1085,7 +1086,7 @@ class NewEventDialog(Toplevel):
             if self.couple_event == 0:
                 cur.execute(
                     insert_finding_new, 
-                    (self.event_type_id, self.current_person))
+                    (self.new_finding, age_1, self.event_type_id, self.current_person))
                 conn.commit()            
             else:
                 cur.execute(
@@ -1130,6 +1131,7 @@ class NewEventDialog(Toplevel):
             if child == dkt["temp_id"]:
                 cur.execute(insert_place_new, (child, dkt["input"]))
                 conn.commit()
+                print("line", looky(seeline()).lineno, "child, parent:", child, parent)
                 cur.execute(insert_places_places_new, (child, parent))
                 conn.commit()
             else:
@@ -1138,6 +1140,7 @@ class NewEventDialog(Toplevel):
                     cur.execute(insert_places_places_new, (child, parent))
                     conn.commit()
             q += 1
+        print("line", looky(seeline()).lineno, "ids:", ids)
         cur.execute(insert_finding_places_new_event, tuple(ids))
         conn.commit() 
         place_strings.insert(0, self.place_string)
@@ -1192,21 +1195,12 @@ class NewEventDialog(Toplevel):
                 if type(item) is not int and len(item) != 0:
                     new_kin_types.append(item)            
             v += 1
-        # THIS SHD ONLY RUN IF IT NEEDS TO it interferes with proceeding when no new kin type is input 
-        print("line", looky(seeline()).lineno, "new_kin_types:", new_kin_types)
+
         if new_kin_types != [None, None]:
-            print("line", looky(seeline()).lineno, "running:")
             self.new_kin_type_codes = NewKinTypeDialog(
                 self.root,
                 new_kin_types,
                 self).show()
-        elif new_kin_types == [None, None]:
-            print("line", looky(seeline()).lineno, "running:") # ****************
-        elif new_kin_types[0] is None and new_kin_types[1] is None:
-            print("line", looky(seeline()).lineno, "running:")
-        else:
-            print("line", looky(seeline()).lineno, "new_kin_types:", new_kin_types)
-
 
         cur.close()
         conn.close()
@@ -1373,10 +1367,10 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# now do it for generic events
-# what if user inputs a new event TYPE?
-# what if user inputs a new name? 
-# make it possible to edit event_type in an existing row including making new event type see also `if self.new_event not in self.event_types:`
+# fix new places for couple and generic events
+# what if user inputs a new event TYPE? (couple & generic events)
+# what if user inputs a new name?  (couple & generic events)
+# make it possible to edit event_type in an existing row including making new event type see also `if self.new_event not in self.event_types:` (couple & generic events)
 # make it impossible to create more than one birth or death event
 # add tooltips/status bar messages
 # open kintips with spacebar when kin button is in focus, not just mouse click
