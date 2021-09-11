@@ -38,6 +38,11 @@ insert_color_scheme = '''
     VALUES (null, ?, ?, ?, ?, 0, 0)
 '''
 
+insert_event_type_new = '''
+    INSERT INTO event_type (event_type_id, event_types, couple)
+    VALUES (?, ?, ?)
+'''
+
 insert_finding_new = '''
     INSERT INTO finding (finding_id, age, event_type_id, person_id)
     VALUES (?, ?, ?, ?)
@@ -475,6 +480,10 @@ select_image_id = '''
 
 select_kin_type_string = '''
     SELECT kin_types FROM kin_type WHERE kin_type_id = ?
+'''
+
+select_max_event_type_id = '''
+    SELECT MAX(event_type_id) FROM event_type
 '''
 
 select_max_finding_id = '''
