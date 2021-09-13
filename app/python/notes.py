@@ -7,7 +7,7 @@ from widgets import (
     Radiobutton, Entry, Label, LabelMovable)
 from toykinter_widgets import  StatusbarTooltips, run_statusbar_tooltips
 from scrolling import ScrolledText
-from messages import ErrorMessage
+from messagesx import ErrorMessage
 from styles import make_formats_dict, config_generic
 from names import get_name_with_id
 from right_click_menu import make_rc_menus, RightClickMenu

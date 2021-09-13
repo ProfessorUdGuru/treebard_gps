@@ -6,20 +6,22 @@ from files import get_current_file, current_file
 from widgets import (
     Frame, Label, ClearableReadonlyCombobox, ClickAnywhereCombo, Button, 
     LabelMovable, LabelH3, Entry)
+from autofill import EntryAuto
 from toykinter_widgets import StatusbarTooltips, run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from message_strings import person_add_msg
+from messages import open_yes_no_message, names_msg
 from query_strings import (
     select_current_person, select_name_with_id, select_all_names_ids,
     select_all_person_ids, insert_person_null, select_image_id, 
     insert_images_entities, select_name_type_id, insert_name, 
-    select_all_images)
+    select_all_images, select_all_name_types)
 import dev_tools as dt
+from dev_tools import looky, seeline
 
 
 
 
-# current_file = get_current_file()[0]
 
 GENDER_TYPES = ('unknown (default if left blank)', 'female', 'male', 'other')
 
@@ -96,12 +98,16 @@ def get_all_persons():
     return persons
 
 class PersonAdd(Frame):
-    def __init__(self, parent, autofill, root, *args, **kwargs):
+    '''
+        The parameter `name_entry` used to be `autofill` so watch out for this
+        till the refactoring is complete.
+    '''
+    def __init__(self, parent, name_entry, root, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
 
         self.parent = parent
+        self.name_entry = name_entry
         self.root = root
-        self.autofill = autofill
 
         self.config(padx=24, pady=24)
 
@@ -111,11 +117,21 @@ class PersonAdd(Frame):
 
         self.role_person_edited = False
         self.findings_roles_id = None
+        self.make_dupe = False
 
         self.rc_menu = RightClickMenu(self.root)
         self.make_widgets()
+        # self.show_sort_order()
+        print("line", looky(seeline()).lineno, "self.master:", self.master)
+        print("line", looky(seeline()).lineno, "self:", self)
+        if self.master.winfo_class() == "Toplevel": # ADDED 20210913 save comment
+            self.master.withdraw()
 
     def make_widgets(self):
+
+        def go_beyond(evt):
+            for child in self.order_frm.winfo_children():
+                child.config(takefocus=0)
 
         all_pics = self.get_all_pics()
 
@@ -128,8 +144,9 @@ class PersonAdd(Frame):
         lab3 = Label(self, text='Name Type:')
         self.name_type_input = ClearableReadonlyCombobox(self, values=self.get_name_types())
 
-        lab4 = Label(self, text='Full Name')
+        lab4 = Label(self, text='Full Name:')
         self.name_input = Entry(self, width=65)
+        self.name_input.bind("<FocusOut>", self.show_sort_order)
 
         self.how = LabelH3(
             self, 
@@ -138,7 +155,9 @@ class PersonAdd(Frame):
                   'arrow keys or if sort order is correct, just click ADD.')
 
         autosort = Button(
-            self, text='AUTOSORT', command=self.show_sort_order)
+            self, text='AUTOSORT')
+            # self, text='AUTOSORT', command=self.show_sort_order)
+        autosort.bind("<Control-Tab>", go_beyond)#, add="+"
 
         self.order_frm = Frame(self)
 
@@ -219,7 +238,7 @@ class PersonAdd(Frame):
         self.name_input.delete(0, 'end')
         for child in self.order_frm.winfo_children():
             child['text'] = ''
-        self.dupe_check = True  
+        self.make_dupe = True  
 
     def add_person(self, findings_roles_id=None):
         self.get_entered_values()
@@ -227,11 +246,10 @@ class PersonAdd(Frame):
         self.check_for_dupes()
 
     def get_entered_values(self):
-        ''' 
-        '''
         if len(self.gender_input.get()) != 0:
             self.gender = self.gender_input.get()
         self.full_name = self.name_input.get()
+        print("line", looky(seeline()).lineno, "self.full_name:", self.full_name)
         self.selected_image = self.image_input.get()
         self.name_type = self.name_type_input.get()
 
@@ -239,6 +257,25 @@ class PersonAdd(Frame):
         ''' 
             If birth name already exists in database, open dialog. 
         '''
+
+        def ok_new_name():
+            self.make_dupe = True
+            msg[0].destroy()
+            self.master.deiconify()
+            self.master.grab_set() 
+            # if self.make_dupe is True:  
+            # self.make_new_person() 
+            # self.make_sort_order()
+            # self.save_new_name(self.new_person_id)  
+            # self.reset()
+            # else:
+                # self.reset()
+
+        def cancel_new_name():
+            msg[0].destroy()
+            self.master.destroy()
+            self.master.master.grab_set()
+            self.reset()
  
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -263,19 +300,23 @@ class PersonAdd(Frame):
             people_vals.append(' #'.join([lst[0], str(lst[1])]))
 
         if self.full_name not in names_only:
+            print("line", looky(seeline()).lineno, "running:")
             self.make_new_person()
             self.make_sort_order()
             self.save_new_name(self.new_person_id)  
             self.reset()
         else:
-            self.dupe_check = msg.YesNoMessage(
-                self,
-                title='Duplicate Check',
-                message="This birth name already exists. To create a "
-                    "new person by the same name, click SUBMIT. The "
-                    "two persons can be merged later if desired.",
-                show_input=self.full_name).show()                
-            if self.dupe_check is True:  
+            msg = open_yes_no_message(
+                self, 
+                names_msg[0], 
+                "Duplicate Name in Tree", 
+                "OK", "CANCEL")
+            msg[0].grab_set()
+            msg[1].config(aspect=400)
+            msg[2].config(command=ok_new_name)
+            msg[3].config(command=cancel_new_name) 
+            print("line", looky(seeline()).lineno, "self.make_dupe:", self.make_dupe)
+            if self.make_dupe is True:  
                 self.make_new_person() 
                 self.make_sort_order()
                 self.save_new_name(self.new_person_id)  
@@ -327,14 +368,18 @@ class PersonAdd(Frame):
         cur.execute(select_name_type_id, (self.name_type,))
         name_type_id = cur.fetchone()
         name_type_id = name_type_id[0]
+
+        print("line", looky(seeline()).lineno, "self.full_name:", self.full_name)
         cur.execute(
             insert_name, 
             (subject_id, self.full_name, name_type_id, self.order))
         conn.commit()
 
-        new_list = make_values_list_for_person_select()
-
-        self.autofill.values = new_list
+        # # new_list = make_values_list_for_person_select()
+        # # self.name_entry.values = new_list
+        people = make_values_list_for_person_select()        
+        all_birth_names = EntryAuto.create_lists(people)
+        self.name_entry.values = all_birth_names
         
         cur.close()
         conn.close()
@@ -354,7 +399,19 @@ class PersonAdd(Frame):
         self.gender_input.config(state='readonly')
         self.gender_input.focus_set()
 
-    def show_sort_order(self):
+    def show_sort_order(self, evt=None):
+        '''
+            This has to be run in the instance as soon as the name input has a 
+            name inserted into it by the program so that normally the user can 
+            bypass manual sorting by pressing Ctrl+Tab when the AUTOFOCUS 
+            button is in focus.
+            But if the user changes what Treebard inserts to the name entry,
+            then on focus out this function runs again.
+        '''
+
+        if evt is not None and evt.type == "10":
+            for child in self.order_frm.winfo_children():
+                child.config(text='')
 
         self.got = self.name_input.get()
         self.new_name = self.got
@@ -397,6 +454,7 @@ class PersonAdd(Frame):
 
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
+        cur.execute(select_all_images)
         picvals = cur.fetchall()
         cur.close()
         conn.close()

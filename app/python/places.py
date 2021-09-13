@@ -37,7 +37,7 @@ from query_strings import (
 from files import current_file
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
-from error_messages import open_error_message, places_err
+from messages import open_error_message, places_err
 import dev_tools as dt
 from dev_tools import looky, seeline
 import sqlite3

@@ -12,12 +12,13 @@ from autofill import EntryAuto, EntryAutoHilited
 from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator
 from styles import make_formats_dict, config_generic
-from names import get_name_with_id, make_values_list_for_person_select
+from names import (
+    get_name_with_id, make_values_list_for_person_select, PersonAdd)
 from roles import RolesDialog
 from notes import NotesDialog
 from places import place_strings, ValidatePlace, places_places
 from scrolling import Scrollbar, resize_scrolled_content
-from error_messages import open_error_message, event_table_err
+from messages import open_error_message, event_table_err
 from query_strings import (
     select_finding_places_nesting, select_current_person_id, 
     select_all_event_types_couple, select_all_kin_type_ids_couple,
@@ -1081,7 +1082,7 @@ class NewEventDialog(Toplevel):
         name2 = Label(self.couple_data_inputs, text="Partner")
         self.other_person_input = EntryAutoHilited(
             self.couple_data_inputs, width=32, autofill=True, values=self.all_birth_names)
-        self.other_person_input.bind("<FocusOut>", self.catch_dupe_partner)
+        self.other_person_input.bind("<FocusOut>", self.catch_dupe_or_new_partner)
         age2 = Label(self.couple_data_inputs, text="Age")
         self.age2_input = EntryHilited1(self.couple_data_inputs, width=6)
         kintype2 = Label(self.couple_data_inputs, text="Kin Type")
@@ -1298,9 +1299,9 @@ class NewEventDialog(Toplevel):
         msg[1].config(aspect=400)
         msg[2].config(command=err_done3)
 
-    def catch_dupe_partner(self, evt):
+    def catch_dupe_or_new_partner(self, evt):
 
-        def err_done (): 
+        def err_done(): 
             self.other_person_input.focus_set()
             self.other_person_input.delete(0, 'end')
             self.grab_set()
@@ -1308,8 +1309,10 @@ class NewEventDialog(Toplevel):
 
         if self.couple_event == 0: return
         person_and_id = self.other_person_input.get().split("#")
-        print("line", looky(seeline()).lineno, "person_and_id:", person_and_id)
         if len(person_and_id[0]) == 0: return
+        if len(person_and_id) == 1:
+            self.open_new_person_dialog(person_and_id)
+            return
         if self.current_person == int(person_and_id[1]):
             msg = open_error_message(
                 self, 
@@ -1319,6 +1322,19 @@ class NewEventDialog(Toplevel):
             msg[0].grab_set()
             msg[1].config(aspect=400)
             msg[2].config(command=err_done)
+
+    def open_new_person_dialog(self, new_name):
+        print("line", looky(seeline()).lineno, "new_name:", new_name)
+        new_partner_dialog = Toplevel(self)
+        new_partner_dialog.title("Add New Person")
+        person_add = PersonAdd(new_partner_dialog, self.other_person_input, self.root)
+        print("line", looky(seeline()).lineno, "new_partner_dialog:", new_partner_dialog)
+        print("line", looky(seeline()).lineno, "self:", self)
+        person_add.grid()
+        person_add.add_person()
+        person_add.name_input.delete(0, 'end')
+        person_add.name_input.insert(0, new_name[0])
+        person_add.show_sort_order()
 
     def validate_place(self, evt):
         inwidg = evt.widget
@@ -1454,7 +1470,10 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# what if user inputs a new name?  (couple & generic events)
+# nothing happens on ADD name dlg. remember to differentiate whether testing new name or dupe. Seems the name Antonio Metoyer went in but the name didn't, just everything else. See the db record.
+# get rid of ttk combox
+# change how autofill values are gotten in names.py
+# what if user inputs a new name? What if it's a duplicate?  (couple & generic events)
 # make it possible to edit event_type in an existing row including making new event type see also `if self.new_event not in self.event_types:` (couple & generic events)
 # make it impossible to create more than one birth or death event
 # add tooltips/status bar messages
