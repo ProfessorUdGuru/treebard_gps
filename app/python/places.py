@@ -377,6 +377,8 @@ class ValidatePlace():
         self.new = False
         self.dupes = False
 
+        self.new_place_dialog = None # added 20210913
+
         self.see_whats_needed()
 
     def see_whats_needed(self):

@@ -422,7 +422,6 @@ select_finding_places_nesting = '''
 select_findings_details_generic = '''
     SELECT event_types, date, date_sorter, particulars, age
     FROM finding
-
     JOIN event_type
         ON finding.event_type_id = event_type.event_type_id
     WHERE  finding_id = ?
