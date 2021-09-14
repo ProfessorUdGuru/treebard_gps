@@ -700,6 +700,12 @@ update_current_tree = '''
     WHERE closing_state_id = 1
 '''
 
+update_event_types = '''
+    UPDATE finding
+    SET event_type_id = ?
+    WHERE finding_id = ?
+'''
+
 update_finding_age = '''
     UPDATE finding 
     SET age = ? 

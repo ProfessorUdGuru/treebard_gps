@@ -36,10 +36,12 @@ from query_strings import (
     select_all_kin_types_couple, select_all_names_ids, insert_finding_places_new,
     select_max_persons_persons_id, insert_persons_persons_new,
     select_kin_type_string, update_findings_persons_couple_age,
-    select_event_type_couple, insert_kin_type_new,
+    select_event_type_couple, insert_kin_type_new, update_event_types,
     update_kin_type_kin_code, select_max_finding_id, insert_place_new,
     insert_places_places_new, insert_finding_places_new_event,
-    insert_event_type_new, select_max_event_type_id)
+    insert_event_type_new, select_max_event_type_id,
+
+)
 
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -389,6 +391,49 @@ class EventsTable(Frame):
 
     def update_db(self, widg, col_num):
 
+        def update_event_type():
+
+            def err_done4():
+                msg[0].destroy()
+                self.focus_set()
+                widg.delete(0, 'end')
+                widg.insert(0, 'offspring')
+
+            def make_new_event_type():
+                print("line", looky(seeline()).lineno, "self.final:", self.final)
+
+            def update_to_existing_type():
+                event_type_id = None
+                couple = None
+                cur.execute(select_event_type_id, (self.final,))
+                result = cur.fetchone()
+                if result:
+                    event_type_id, couple = result 
+                if couple in (0, 1):
+                    cur.execute(update_event_types, (event_type_id, self.finding))
+                    conn.commit()
+                else:
+                    print("line", looky(seeline()).lineno, "case not handled:")
+                print("line", looky(seeline()).lineno, "event_type_id, couple:", event_type_id, couple)
+
+
+            event_types = get_all_event_types()
+            self.final = self.final.strip().lower()
+            if self.final in event_types:
+                update_to_existing_type()
+            elif self.initial == 'offspring' or self.final == 'offspring':
+                msg = open_error_message(
+                    self, 
+                    event_table_err[3], 
+                    "Offspring Event Edit Error", 
+                    "OK")
+                msg[0].grab_set()
+                msg[1].config(aspect=400)
+                msg[2].config(command=err_done4)
+            else:
+                make_new_event_type()
+                update_to_existing_type()
+
         def update_place():
             cur.execute(select_nesting_fk_finding, (self.finding,))
             nested_place = cur.fetchone()[0]
@@ -410,12 +455,14 @@ class EventsTable(Frame):
                 (self.final, self.finding, self.current_person))
                 conn.commit()
 
+        print("line", looky(seeline()).lineno, "widg, col_num:", widg, col_num)
+
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
         if col_num == 0:
-            pass
+            update_event_type()
         elif col_num == 1:
             pass
         elif col_num == 2:
