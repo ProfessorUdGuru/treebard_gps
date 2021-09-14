@@ -1312,8 +1312,7 @@ class NewEventDialog(Toplevel):
         if len(person_and_id[0]) == 0: return
         if len(person_and_id) == 1:
             self.open_new_person_dialog(person_and_id)
-            return
-        if self.current_person == int(person_and_id[1]):
+        elif self.current_person == int(person_and_id[1]):
             msg = open_error_message(
                 self, 
                 event_table_err[0], 
@@ -1324,17 +1323,18 @@ class NewEventDialog(Toplevel):
             msg[2].config(command=err_done)
 
     def open_new_person_dialog(self, new_name):
-        print("line", looky(seeline()).lineno, "new_name:", new_name)
+        print("line", looky(seeline()).lineno, "running:")
         new_partner_dialog = Toplevel(self)
         new_partner_dialog.title("Add New Person")
-        person_add = PersonAdd(new_partner_dialog, self.other_person_input, self.root)
-        print("line", looky(seeline()).lineno, "new_partner_dialog:", new_partner_dialog)
-        print("line", looky(seeline()).lineno, "self:", self)
+        person_add = PersonAdd(
+            new_partner_dialog, self.other_person_input, self.root)
         person_add.grid()
-        person_add.add_person()
         person_add.name_input.delete(0, 'end')
+        print("line", looky(seeline()).lineno, "new_name:", new_name)
         person_add.name_input.insert(0, new_name[0])
+        person_add.add_person()
         person_add.show_sort_order()
+        person_add.gender_input.focus_set()
 
     def validate_place(self, evt):
         inwidg = evt.widget
@@ -1470,18 +1470,16 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# nothing happens on ADD name dlg. remember to differentiate whether testing new name or dupe. Seems the name Antonio Metoyer went in but the name didn't, just everything else. See the db record.
-# get rid of ttk combox
-# change how autofill values are gotten in names.py
-# what if user inputs a new name? What if it's a duplicate?  (couple & generic events)
 # make it possible to edit event_type in an existing row including making new event type see also `if self.new_event not in self.event_types:` (couple & generic events)
 # make it impossible to create more than one birth or death event
 # add tooltips/status bar messages
 # open kintips with spacebar when kin button is in focus, not just mouse click
 # bind all ok buttons to Return and cancel buttons to Escape
-# on small dlgs which don't use the Treebard border, make all the border X buttons use the existing cancel() method whatever it is for that dlg
+# on small dlgs which don't use the Treebard border, make all the border X buttons use the existing cancel() method whatever it is for that dlg BETTER YET finish the Border code so it only makes scridth & scrollbar if make_scrollbar is True but make it False by default
 # detect if kintips text is too long and if so change font-size to boilerplate
-# add probate and ? to list of autosorted events ie: Birth, other, Death, Burial, there has to be an exception for probate bec it takes place anytime after death, maybe even before burial, esp if someone's grave is moved, then generally the 2nd burial will take place after probate. THE SOLUTION IS to have a separately sorted-by-date list of things that can take place after death such as probate, burial, reburial and sort these things according to a definite order first, resort acc to date, then append to main event date which is sorted by date except for birth and death which are always first and last. Will also need another question on the new event type dlg as to whether or not this event type can take place after death optionally or always, in which case an after-death event dialog will have to open up so the user can insert after death event type into the existing order of after death events. Note on the dlg that to trump the defined order of after-death dates, insert a date (even if abt or est) to put the event where it belongs in an individuals history. NOTE the burial event which till now has been last on the events table will be replaced by the whole sublist of after-death events. 
+# add probate and ? to list of autosorted events ie: Birth, other, Death, Burial, there has to be an exception for probate bec it takes place anytime after death, maybe even before burial, esp if someone's grave is moved, then generally the 2nd burial will take place after probate. THE SOLUTION IS to have a separately sorted-by-date list of things that can take place after death such as probate, burial, reburial and sort these things according to a definite order first, resort acc to date, then append to main event date which is sorted by date except for birth and death which are always first and last. Will also need another question on the new event type dlg as to whether or not this event type can take place after death optionally or always, in which case an after-death event dialog will have to open up so the user can insert after death event type into the existing order of after death events. Note on the dlg that to trump the defined order of after-death dates, insert a date (even if abt or est) to put the event where it belongs in an individuals history. NOTE the burial event which till now has been last on the events table will be replaced by the whole sublist of after-death events.
+# get rid of ttk combobox in new person dialog 
+# test notes & roles all features; esp. test roles re: `if self.role_person_edited is True:` since new_person_id is no longer real but temp at this point in names.py and get rid of ttk.Combobox
 
 # BRANCH: dates
 # finish refactoring dates validation

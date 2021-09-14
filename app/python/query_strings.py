@@ -99,9 +99,13 @@ insert_note = '''
     VALUES (null, ?, 0, ?)
 '''
 
-insert_person_null = '''
-    INSERT INTO person VALUES (null, ?) 
+insert_person_new = '''
+    INSERT INTO person VALUES (?, ?)
 '''
+
+# insert_person_null = '''
+    # INSERT INTO person VALUES (null, ?) 
+# '''
 
 insert_persons_persons_new = '''
     INSERT INTO persons_persons VALUES (?, ?, ?)
@@ -495,6 +499,10 @@ select_max_finding_places_id = '''
 
 select_max_kin_type_id = '''
     SELECT MAX(kin_type_id) FROM kin_type
+'''
+
+select_max_person_id = '''
+    SELECT MAX(person_id) FROM person
 '''
 
 select_max_persons_persons_id = ''' 
