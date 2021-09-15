@@ -61,13 +61,30 @@ places_err = (
 
 )
 
-event_table_err = (
+events_msg = (
     "The same person was used twice.",
     "Please enter a kin type for each person.",
     "A second person must be entered for a couple event.",
     "Offspring events are not edited directly in the Events "
         "Table. They can be edited directly in the Immediate "
         "Family pane above the Events Table.",
+    "A couple event can't be changed to a non-couple event, or "
+        "vice-versa. For example, a marriage can be changed to "
+        "a wedding but a death can't be changed to a divorce. "
+        "Delete unwanted events and create new ones to "
+        "replace them if they're incompatible in this way. To "
+        "delete an event, delete the event type in the first column.",
+    "An event is about to be deleted. This can't be undone. For "
+        "couple events, the event will be deleted for both "
+        "partners.",
+    "Each person has one birth and one death event. To add more "
+        "hypothetical birth or death events, add them as assertions "
+        "instead of conclusions. The events table is for conclusions, "
+        "but assertions can be added freely by clicking the SOURCES "
+        "button at the end of the birth or death event row or by "
+        "going directly to the assertions tab if you prefer to make "
+        "no conclusions at this time.",
+
 
 )
 

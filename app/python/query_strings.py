@@ -12,10 +12,50 @@ import dev_tools as dt
 	where they are used.
 '''
 
+delete_claims_findings = '''
+    DELETE FROM claims_findings
+    WHERE finding_id = ?
+'''
+
 delete_color_scheme = '''
     DELETE FROM color_scheme 
     WHERE color_scheme_id = ?
 '''
+   
+delete_finding = '''
+    DELETE FROM finding
+    WHERE finding_id = ?    
+'''
+
+# delete_finding_generic = '''
+    # DELETE FROM finding
+    # WHERE finding_id = ?
+# '''
+
+delete_finding_places = '''
+    DELETE FROM finding_places
+    WHERE finding_id = ?
+'''
+
+delete_findings_notes_finding = '''
+    DELETE FROM findings_notes
+    WHERE finding_id = ?
+'''
+
+delete_findings_persons = '''
+    DELETE FROM findings_persons
+    WHERE finding_id = ?
+'''
+
+delete_persons_persons = '''
+    DELETE FROM persons_persons
+    WHERE persons_persons_id = ?
+'''
+
+delete_findings_roles_finding = '''
+    DELETE FROM findings_roles
+    WHERE finding_id = ?
+''' 
 
 delete_findings_notes = '''
     DELETE FROM findings_notes
@@ -461,6 +501,14 @@ select_findings_details_offspring = '''
         AND event_type_id = 1
 '''
 
+select_findings_for_person = '''
+    SELECT event_types
+    FROM finding
+    JOIN event_type
+        ON finding.event_type_id = event_type.event_type_id
+    WHERE person_id = ?
+'''
+
 select_generic_event_roles = '''
     SELECT 
         finding.finding_id,
@@ -597,6 +645,16 @@ select_person_id_kin_types_birth = '''
     JOIN kin_type
         ON kin_type.kin_type_id = findings_persons.kin_type_id
     WHERE finding_id = ?
+'''
+
+select_persons_persons = '''
+    SELECT findings_persons.persons_persons_id
+    FROM findings_persons
+    JOIN persons_persons
+        ON findings_persons.persons_persons_id =
+            persons_persons.persons_persons_id
+    WHERE finding_id = ?
+        AND person_id = ?
 '''
 
 select_place = '''

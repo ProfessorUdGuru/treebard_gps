@@ -18,7 +18,7 @@ from roles import RolesDialog
 from notes import NotesDialog
 from places import place_strings, ValidatePlace, places_places
 from scrolling import Scrollbar, resize_scrolled_content
-from messages import open_error_message, event_table_err
+from messages import open_error_message, events_msg, open_yes_no_message
 from query_strings import (
     select_finding_places_nesting, select_current_person_id, 
     select_all_event_types_couple, select_all_kin_type_ids_couple,
@@ -39,9 +39,10 @@ from query_strings import (
     select_event_type_couple, insert_kin_type_new, update_event_types,
     update_kin_type_kin_code, select_max_finding_id, insert_place_new,
     insert_places_places_new, insert_finding_places_new_event,
-    insert_event_type_new, select_max_event_type_id,
-
-)
+    insert_event_type_new, select_max_event_type_id, delete_finding,delete_claims_findings, delete_finding_places,
+    delete_findings_roles_finding, delete_findings_notes_finding, 
+    delete_claims_findings, delete_persons_persons, delete_findings_persons,
+    select_persons_persons, select_findings_for_person)
 
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -319,7 +320,7 @@ class EventsTable(Frame):
         self.new_row = 0
 
         event_types = get_all_event_types()
-        self.event_types = EntryAuto.create_lists(event_types)
+        self.event_autofill_values = EntryAuto.create_lists(event_types)
 
         self.root.bind(
             "<Control-S>", 
@@ -358,7 +359,10 @@ class EventsTable(Frame):
 
         self.header_widths = []
         for lst in self.widths:
-            self.header_widths.append(max(lst))
+            # the condition lets us open an empty table 
+            #   if the current person is null
+            if len(lst) > 0:
+                self.header_widths.append(max(lst))
         for row in self.cell_pool:
             c = 0
             for ent in row[1][0:5]:
@@ -389,6 +393,76 @@ class EventsTable(Frame):
         
             self.update_db(widg, col_num)
 
+    def delete_event(self, finding_id, widg, initial):
+
+        def ok_delete_event():
+            msg[0].destroy()
+            self.focus_set()
+            proceed(initial_value)
+
+
+        def cancel_delete_event():
+            msg[0].destroy()
+            widg.insert(0, initial)
+            widg.focus_set()
+
+        def proceed(initial_value):
+
+            def delete_generic_finding():
+                cur.execute(delete_finding_places, (finding_id,))
+                conn.commit()
+                cur.execute(delete_findings_roles_finding, (finding_id,))
+                conn.commit()
+                cur.execute(delete_findings_notes_finding, (finding_id,))
+                conn.commit()
+                cur.execute(delete_claims_findings, (finding_id,))
+                conn.commit()
+                cur.execute(delete_finding, (finding_id,))
+                conn.commit()
+
+            def delete_couple_finding():
+                cur.execute(select_persons_persons, (finding_id, current_person))
+                persons_persons_id = cur.fetchone()[0]
+                cur.execute(delete_findings_persons, (finding_id,))
+                conn.commit()
+                cur.execute(delete_persons_persons, (persons_persons_id,))
+                conn.commit()
+                delete_generic_finding()
+
+            current_person = self.current_person
+            conn = sqlite3.connect(current_file)
+            conn.execute('PRAGMA foreign_keys = 1')
+            cur = conn.cursor()
+            cur.execute(select_event_type_id, (initial_value,))
+            result = cur.fetchone()
+            if result:
+                old_event_type_id, couple_event_old = result 
+            if couple_event_old == 0:
+                delete_generic_finding()
+            elif couple_event_old == 1:
+                delete_couple_finding()
+            self.go_to(current_person=current_person)
+            cur.close()
+            conn.close()
+
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+
+        msg = open_yes_no_message(
+            self, 
+            events_msg[5], 
+            "Delete Event Message", 
+            "OK", "CANCEL")
+        msg[0].grab_set()
+        msg[1].config(aspect=400)
+        msg[2].config(command=ok_delete_event)
+        msg[3].config(command=cancel_delete_event)
+
+        initial_value = self.initial
+        cur.close()
+        conn.close()
+
     def update_db(self, widg, col_num):
 
         def update_event_type():
@@ -400,22 +474,51 @@ class EventsTable(Frame):
                 widg.insert(0, 'offspring')
 
             def make_new_event_type():
-                print("line", looky(seeline()).lineno, "self.final:", self.final)
+                cur.execute(select_event_type_couple, (self.initial,))
+                couple = cur.fetchone()[0]
+
+                cur.execute(insert_event_type_new, (None, self.final, couple))
+                conn.commit() 
+
+                event_types = get_all_event_types()
+                self.event_autofill_values = EntryAuto.create_lists(event_types)
+                self.event_input.values = self.event_autofill_values
 
             def update_to_existing_type():
+
+                def err_done5():
+                    msg4[0].destroy()
+                    self.focus_set()
+                    widg.delete(0, 'end')
+                    widg.insert(0, initial_value)
+
+                initial_value = self.initial
+                cur.execute(select_event_type_id, (initial_value,))
+                result = cur.fetchone()
+                if result:
+                    old_event_type_id, couple_event_old = result 
                 event_type_id = None
-                couple = None
+                couple_event_new = None
                 cur.execute(select_event_type_id, (self.final,))
                 result = cur.fetchone()
                 if result:
-                    event_type_id, couple = result 
-                if couple in (0, 1):
+                    event_type_id, couple_event_new = result 
+                if couple_event_old != couple_event_new:
+                    msg4 = open_error_message(
+                        self, 
+                        events_msg[4], 
+                        "Incompatible Event Type Error", 
+                        "OK")
+                    msg4[0].grab_set()
+                    msg4[1].config(aspect=400)
+                    msg4[2].config(command=err_done5)
+                    return
+
+                if couple_event_new in (0, 1):
                     cur.execute(update_event_types, (event_type_id, self.finding))
-                    conn.commit()
+                    conn.commit() 
                 else:
                     print("line", looky(seeline()).lineno, "case not handled:")
-                print("line", looky(seeline()).lineno, "event_type_id, couple:", event_type_id, couple)
-
 
             event_types = get_all_event_types()
             self.final = self.final.strip().lower()
@@ -424,12 +527,15 @@ class EventsTable(Frame):
             elif self.initial == 'offspring' or self.final == 'offspring':
                 msg = open_error_message(
                     self, 
-                    event_table_err[3], 
+                    events_msg[3], 
                     "Offspring Event Edit Error", 
                     "OK")
                 msg[0].grab_set()
                 msg[1].config(aspect=400)
                 msg[2].config(command=err_done4)
+            elif len(self.final) == 0:
+                initial = self.initial
+                self.delete_event(self.finding, widg, initial)
             else:
                 make_new_event_type()
                 update_to_existing_type()
@@ -497,7 +603,12 @@ class EventsTable(Frame):
             row = []
             for j in range(9):
                 if j < 5:
-                    if j == 2:
+                    if j == 0:
+                        cell = EntryAuto(
+                            self, 
+                            autofill=True, 
+                            values=self.event_autofill_values)
+                    elif j == 2:
                         cell = EntryAuto(
                             self, 
                             autofill=True, 
@@ -529,7 +640,7 @@ class EventsTable(Frame):
             self.table_cells.append(row)
         
         self.event_input = EntryAutoHilited(
-            self, autofill=True, values=self.event_types)
+            self, autofill=True, values=self.event_autofill_values)
         self.add_event_button = Button(
             self, text="NEW EVENT", command=self.make_new_event)
         self.set_cell_content()
@@ -774,9 +885,10 @@ class EventsTable(Frame):
             person_id = text.split("#")[1]
             self.instrux.person_id = int(person_id.rstrip(")"))
             self.current_person = self.instrux.person_id
+            print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         else:
             self.current_person = current_person
-
+        print("line", looky(seeline()).lineno, "current_person:", current_person)
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -842,8 +954,43 @@ class EventsTable(Frame):
         for widg in widgets:
             widg.lift() 
 
+    def count_birth_death_events(self, new_event, too_many=False):
+        
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_findings_for_person, (self.current_person,))
+        all_events = [i[0] for i in cur.fetchall()]
+        if new_event in all_events:
+            too_many = True
+        print("line", looky(seeline()).lineno, "too_many:", too_many)
+        cur.close()
+        conn.close()
+        return too_many
+
     def make_new_event(self):
-        new_event = self.event_input.get().strip()
+        '''
+            Disallow creation of second birth or death event, and
+            otherwise proceed.
+        '''
+
+        def err_done6():
+            self.event_input.delete(0, 'end')
+            msg[0].destroy()
+            self.focus_set()
+
+        new_event = self.event_input.get().strip().lower()
+        if new_event in ("birth", "death"):
+            too_many = self.count_birth_death_events(new_event)
+        if too_many is True: 
+            msg = open_error_message(
+                self, 
+                events_msg[6], 
+                "Multiple Birth or Death Events", 
+                "OK")
+            msg[0].grab_set()
+            msg[1].config(aspect=400)
+            msg[2].config(command=err_done6)
+            return
         self.new_event_dialog = NewEventDialog(
             self.root, 
             self.treebard,
@@ -1264,7 +1411,6 @@ class NewEventDialog(Toplevel):
                     cur.execute(insert_places_places_new, (child, parent))
                     conn.commit()
             q += 1
-        print("line", looky(seeline()).lineno, "ids:", ids)
         cur.execute(insert_finding_places_new_event, tuple(ids))
         conn.commit() 
         place_strings.insert(0, self.place_string)
@@ -1297,7 +1443,7 @@ class NewEventDialog(Toplevel):
             if len(kin_type_input.get()) == 0:
                 msg = open_error_message(
                     self, 
-                    event_table_err[1], 
+                    events_msg[1], 
                     "No Kin Type Selected", 
                     "OK")
                 msg[0].grab_set()
@@ -1339,7 +1485,7 @@ class NewEventDialog(Toplevel):
 
         msg = open_error_message(
             self, 
-            event_table_err[2], 
+            events_msg[2], 
             "Missing Person in Couple", 
             "OK")
         msg[0].grab_set()
@@ -1362,7 +1508,7 @@ class NewEventDialog(Toplevel):
         elif self.current_person == int(person_and_id[1]):
             msg = open_error_message(
                 self, 
-                event_table_err[0], 
+                events_msg[0], 
                 "Duplicate Persons in Couple", 
                 "OK")
             msg[0].grab_set()
@@ -1517,14 +1663,12 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# make it possible to edit event_type in an existing row including making new event type see also `if self.new_event not in self.event_types:` (couple & generic events)
-# make it impossible to create more than one birth or death event
+# add probate and ? to list of autosorted events ie: Birth, other, Death, Burial, there has to be an exception for probate bec it takes place anytime after death, maybe even before burial, esp if someone's grave is moved, then generally the 2nd burial will take place after probate. THE SOLUTION IS to have a separately sorted-by-date list of things that can take place after death such as probate, burial, reburial and sort these things according to a definite order first, resort acc to date, then append to main event date which is sorted by date except for birth and death which are always first and last. Will also need another question on the new event type dlg as to whether or not this event type can take place after death optionally or always, in which case an after-death event dialog will have to open up so the user can insert after death event type into the existing order of after death events. Note on the dlg that to trump the defined order of after-death dates, insert a date (even if abt or est) to put the event where it belongs in an individuals history. NOTE the burial event which till now has been last on the events table will be replaced by the whole sublist of after-death events.
 # add tooltips/status bar messages
 # open kintips with spacebar when kin button is in focus, not just mouse click
 # bind all ok buttons to Return and cancel buttons to Escape
-# on small dlgs which don't use the Treebard border, make all the border X buttons use the existing cancel() method whatever it is for that dlg BETTER YET finish the Border code so it only makes scridth & scrollbar if make_scrollbar is True but make it False by default
+# finish the Border code so it only makes scridth & scrollbar if make_scrollbar is True but make it False by default, show NO  Windows title bars on ANY dialog
 # detect if kintips text is too long and if so change font-size to boilerplate
-# add probate and ? to list of autosorted events ie: Birth, other, Death, Burial, there has to be an exception for probate bec it takes place anytime after death, maybe even before burial, esp if someone's grave is moved, then generally the 2nd burial will take place after probate. THE SOLUTION IS to have a separately sorted-by-date list of things that can take place after death such as probate, burial, reburial and sort these things according to a definite order first, resort acc to date, then append to main event date which is sorted by date except for birth and death which are always first and last. Will also need another question on the new event type dlg as to whether or not this event type can take place after death optionally or always, in which case an after-death event dialog will have to open up so the user can insert after death event type into the existing order of after death events. Note on the dlg that to trump the defined order of after-death dates, insert a date (even if abt or est) to put the event where it belongs in an individuals history. NOTE the burial event which till now has been last on the events table will be replaced by the whole sublist of after-death events.
 # get rid of ttk combobox in new person dialog 
 # test notes & roles all features; esp. test roles re: `if self.role_person_edited is True:` since new_person_id is no longer real but temp at this point in names.py and get rid of ttk.Combobox
 
