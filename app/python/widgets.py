@@ -610,18 +610,28 @@ class KinTip(FrameHilited5):
         Display kin name when user points to a kin_type button in kin column
         on events table.
     '''
-    def __init__(self, master, text='', *args, **kwargs):
+    def __init__(
+            self, master, text='', empty=False, finding=None, *args, **kwargs):
         FrameHilited5.__init__(self, master, *args, **kwargs)
+
+        self.text = text
+        self.finding = finding
 
         self.columnconfigure(1, weight=1)
 
         self.person_id = 0
 
+        if empty is False:
+            self.make_widgets()
+        else:
+            self.add_kin()
+
+    def make_widgets(self):
         instrux1 = LabelTip(
             self, text='Make', bd=0)
         self.instrux2 = LabelTipBold(
             self, 
-            text=text,
+            text=self.text,
             cursor="hand2")
         instrux3 = LabelTip(
             self, text='the current person', bd=0)
@@ -635,6 +645,15 @@ class KinTip(FrameHilited5):
         instrux3.grid(
             column=0, row=1, padx=3, pady=1, 
             ipadx=3, ipady=3, sticky='ew', columnspan=3)
+
+    def add_kin(self):
+        self.instrux2 = LabelTipBold(
+            self, 
+            text=self.text,
+            cursor="hand2")
+        self.instrux2.grid(
+            column=0, row=0, 
+            ipadx=24, ipady=36, sticky='news')
 
 class LabelMovable(LabelHilited):
     ''' 

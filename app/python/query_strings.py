@@ -79,8 +79,8 @@ insert_color_scheme = '''
 '''
 
 insert_event_type_new = '''
-    INSERT INTO event_type (event_type_id, event_types, couple)
-    VALUES (?, ?, ?)
+    INSERT INTO event_type (event_type_id, event_types, couple, after_death)
+    VALUES (?, ?, ?, ?)
 '''
 
 insert_finding_new = '''
@@ -92,6 +92,7 @@ insert_finding_new_couple = '''
     INSERT INTO finding (finding_id, event_type_id)
     VALUES (?, ?)
 '''
+
 insert_finding_places_new = '''
     INSERT INTO finding_places (
         finding_id, nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
@@ -110,7 +111,8 @@ insert_findings_notes = '''
 '''
 
 insert_findings_persons_new_couple = '''
-    INSERT INTO findings_persons (finding_id, person_id, age, kin_type_id, persons_persons_id)
+    INSERT INTO findings_persons (
+        finding_id, person_id, age, kin_type_id, persons_persons_id)
     VALUES (?, ?, ?, ?, ?)
 '''
 
@@ -406,7 +408,19 @@ select_event_type_id = '''
     WHERE event_types = ?
 '''
 
-select_event_type_couple = '''
+select_event_type_after_death = '''
+    SELECT event_types
+    FROM event_type
+    WHERE after_death = 1
+'''
+
+select_event_type_after_death_bool = '''
+    SELECT after_death
+    FROM event_type
+    WHERE event_types = ?
+'''
+
+select_event_type_couple_bool = '''
     SELECT couple
     FROM event_type
     WHERE event_types = ?
@@ -533,6 +547,14 @@ select_kin_type_string = '''
     SELECT kin_types FROM kin_type WHERE kin_type_id = ?
 '''
 
+select_kin_types_finding = '''
+    SELECT kin_types
+    FROM kin_type
+    JOIN findings_persons
+        ON kin_type.kin_type_id = findings_persons.kin_type_id
+    WHERE finding_id = ?
+'''
+
 select_max_event_type_id = '''
     SELECT MAX(event_type_id) FROM event_type
 '''
@@ -655,6 +677,21 @@ select_persons_persons = '''
             persons_persons.persons_persons_id
     WHERE finding_id = ?
         AND person_id = ?
+'''
+
+select_persons_persons_both = '''
+    SELECT person_id1, person_id2
+    FROM persons_persons
+    WHERE persons_persons_id = ?
+'''
+
+select_persons_persons_id = '''
+    SELECT findings_persons.persons_persons_id
+    FROM findings_persons
+    JOIN persons_persons
+        ON findings_persons.persons_persons_id =
+            persons_persons.persons_persons_id
+    WHERE finding_id = ?
 '''
 
 select_place = '''
@@ -804,6 +841,20 @@ update_findings_persons_couple_age = '''
         AND  person_id = ?
 '''
 
+update_findings_persons_couple_old = '''
+    UPDATE findings_persons
+    SET (age, kin_type_id) = (?, ?)
+    WHERE finding_id = ?  
+        AND person_id = ?
+'''
+
+update_findings_persons_couple_new = '''
+    UPDATE findings_persons
+    SET (age, kin_type_id, person_id) = (?, ?, ?)
+    WHERE finding_id = ? 
+        AND (person_id != ? OR person_id is null)
+'''
+                    
 update_findings_persons_new_couple_age = '''
     UPDATE findings_persons 
     SET age = ?
@@ -874,6 +925,18 @@ update_note_subtopic = '''
     UPDATE note 
     SET subtopic = ? 
     WHERE note_id = ? 
+'''
+
+update_persons_persons_1 = '''
+    UPDATE persons_persons
+    SET person_id1 = ?
+    WHERE persons_persons_id = ?
+'''
+
+update_persons_persons_2 = '''
+    UPDATE persons_persons
+    SET person_id2 = ?
+    WHERE persons_persons_id = ?
 '''
 
 update_place_hint = '''

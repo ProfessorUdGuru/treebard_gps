@@ -36,13 +36,20 @@ from query_strings import (
     select_all_kin_types_couple, select_all_names_ids, insert_finding_places_new,
     select_max_persons_persons_id, insert_persons_persons_new,
     select_kin_type_string, update_findings_persons_couple_age,
-    select_event_type_couple, insert_kin_type_new, update_event_types,
+    select_event_type_couple_bool, insert_kin_type_new, update_event_types,
     update_kin_type_kin_code, select_max_finding_id, insert_place_new,
     insert_places_places_new, insert_finding_places_new_event,
     insert_event_type_new, select_max_event_type_id, delete_finding,delete_claims_findings, delete_finding_places,
     delete_findings_roles_finding, delete_findings_notes_finding, 
     delete_claims_findings, delete_persons_persons, delete_findings_persons,
-    select_persons_persons, select_findings_for_person)
+    select_persons_persons, select_findings_for_person,
+    select_event_type_after_death, select_event_type_after_death_bool,
+    select_kin_types_finding, select_persons_persons_id, 
+    select_persons_persons_both, update_persons_persons_1,
+    update_persons_persons_2, update_findings_persons_couple_old,
+    update_findings_persons_couple_new, update_finding_places_null,
+    update_finding_places,
+)
 
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -86,6 +93,15 @@ def get_all_event_types():
     conn.close()
     return event_types
 
+def get_after_death_event_types():
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    cur.execute(select_event_type_after_death)
+    after_death_event_types = [i[0] for i in cur.fetchall()]
+    cur.close()
+    conn.close()
+    return after_death_event_types    
+
 def get_findings():
     current_person = get_current_person()
     conn = sqlite3.connect(current_file)
@@ -106,6 +122,7 @@ def get_findings():
     generic_finding_ids = [i[0] for i in generic_finding_ids]
 
     for finding_id in generic_finding_ids: 
+        finding_id
         cur.execute(select_findings_details_generic, (finding_id,))
 
         generic_finding_details = cur.fetchone()
@@ -314,6 +331,7 @@ class EventsTable(Frame):
         self.widths = [[], [], [], [], []]
         self.kintips = []
         self.kin_buttons = []
+        self.unknown_kin = None
 
         self.screen_height = self.winfo_screenheight()
         self.column_width_indecrement = 0
@@ -474,10 +492,18 @@ class EventsTable(Frame):
                 widg.insert(0, 'offspring')
 
             def make_new_event_type():
-                cur.execute(select_event_type_couple, (self.initial,))
+                cur.execute(select_event_type_couple_bool, (self.initial,))
                 couple = cur.fetchone()[0]
 
-                cur.execute(insert_event_type_new, (None, self.final, couple))
+                cur.execute(select_event_type_after_death_bool, (self.initial,))
+                after_death = cur.fetchone()[0]
+
+                
+
+                cur.execute(
+                    insert_event_type_new, (
+                        None, 
+                        self.final, couple, after_death))
                 conn.commit() 
 
                 event_types = get_all_event_types()
@@ -561,8 +587,6 @@ class EventsTable(Frame):
                 (self.final, self.finding, self.current_person))
                 conn.commit()
 
-        print("line", looky(seeline()).lineno, "widg, col_num:", widg, col_num)
-
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -580,7 +604,7 @@ class EventsTable(Frame):
             for row in self.findings:
                 if row[9] == self.finding: 
                     event_string = row[0][1]
-                    cur.execute(select_event_type_couple, (event_string,))
+                    cur.execute(select_event_type_couple_bool, (event_string,))
                     couple_or_not = cur.fetchone()[0]
                     if couple_or_not == 1:
                         couple = True
@@ -733,14 +757,50 @@ class EventsTable(Frame):
                     row[8][1] = src
 
         # sort by date
+        after_death_events = get_after_death_event_types()
+        after_death = []
+        a_d = 0
         for row in self.findings:
             event_type = row[0][1]
             if event_type == 'birth':
                 row[1][1][1] = '-10000,0,0'
             elif event_type == 'death':
                 row[1][1][1] = '10000,0,0'
-            elif event_type == 'burial':
-                row[1][1][1] = '10001,0,0'
+            elif event_type in after_death_events:
+                after_death.append([row[9], row[1][1][1]])
+
+        t = 0
+        for event in after_death:
+            sorter = event[1].split(',')
+            sorter = [int(i) for i in sorter]
+            event = sorter
+            after_death[t][1] = event
+            t += 1   
+
+        after_death = sorted(after_death, key=lambda i: i[1])
+        d = 0
+        for event in after_death:
+            for row in self.findings:
+                if event[0] == row[9]:
+                    after_death[d][1] = [20000 + d, 0, 0]
+                    break
+            d += 1
+
+        for event in after_death:
+            n = 0
+            for num in event[1]:
+                num = str(num)
+                event[1][n] = num
+                n += 1
+        
+        for event in after_death:
+            event[1] = ",".join(event[1])
+
+        for event in after_death:
+            for row in self.findings:
+                if event[0] == row[9]:
+                    row[1][1][1] = event[1]
+                    break
 
         for row in self.findings:
             sorter = row[1][1][1]
@@ -766,7 +826,9 @@ class EventsTable(Frame):
                     text = cellval
                 elif c == 5: # kin
                     kinframe = row[c][0]
-                    self.make_kin_button(event_type, cellval, kinframe)
+                    finding = row[9]
+                    self.make_kin_button(
+                        event_type, cellval, kinframe, row)
                 elif c == 6: # roles
                     widg.config(text=col[1])
                 elif c == 7: # notes
@@ -774,7 +836,8 @@ class EventsTable(Frame):
                 elif c == 8: # sources
                     widg.config(text=row[8][1][1], width=8)
                 if c in (6, 7, 8):
-                    widg.grid(column=c, row=r, sticky='w', pady=(3,0), padx=(2,0))
+                    widg.grid(
+                        column=c, row=r, sticky='w', pady=(3,0), padx=(2,0))
                 else:
                     widg.grid(column=c, row=r, sticky='ew', pady=(3,0))
                 if c < 5:
@@ -793,7 +856,7 @@ class EventsTable(Frame):
         self.event_input.grid(column=0, row=self.new_row, pady=6)
         self.add_event_button.grid(column=1, row=self.new_row, pady=6)
 
-    def make_kin_button(self, event_type, cellval, kinframe):
+    def make_kin_button(self, event_type, cellval, kinframe, finding):
         ma_pa = False
         if event_type == 'birth':
             ma_pa = True                    
@@ -801,11 +864,15 @@ class EventsTable(Frame):
             text = ""
         else:
             kin = cellval
+            kin.append(finding)
+            self.kinless = "Click to Add Kin"
             if kin:
                 if ma_pa is False:
                     text = kin[2]
                 else:
                     text = 'parents'
+            if kin[1] is None:
+                kin[1] = self.kinless
             kinlab = LabelButtonText(
                 kinframe,
                 text=text,
@@ -821,11 +888,21 @@ class EventsTable(Frame):
     def open_kin_tip(self, evt, kin):
 
         def make_kin_tip(lst):
-            self.instrux = KinTip(
-                self.kin_tip, 
-                text="{} (id #{})".format(lst[0], lst[1]))
-            self.instrux.grid(sticky="news")
-            self.instrux.instrux2.bind('<Button-1>', self.go_to)
+            if lst[1] == self.kinless:
+                self.instrux = KinTip(
+                    self.kin_tip, 
+                    text=lst[1],
+                    empty=True)
+                self.instrux.grid(sticky="news")
+                self.instrux.instrux2.bind('<Button-1>', self.go_to)
+                self.instrux.finding = kin[3]
+                self.unknown_kin = lst[2]
+            else:
+                self.instrux = KinTip(
+                    self.kin_tip, 
+                    text="{} (id #{})".format(lst[0], lst[1]))
+                self.instrux.grid(sticky="news")
+                self.instrux.instrux2.bind('<Button-1>', self.go_to)
 
         def highlight(event):
             event.widget.config(bg=formats["head_bg"])
@@ -845,13 +922,13 @@ class EventsTable(Frame):
         self.kin_tip.wm_geometry('+{}+{}'.format(x, y))
         self.kin_tip.wm_overrideredirect(1)
         self.kintips.append(self.kin_tip)
-
         # spouse or child
-        if len(kin) == 3:
+        if len(kin) == 4:
             make_kin_tip(kin)
         # parents
         else:
-            for lst in kin:
+            for lst in kin[0:2]:
+            # for lst in kin:
                 make_kin_tip(lst)
 
         ex = LabelButtonText(
@@ -879,16 +956,37 @@ class EventsTable(Frame):
             widg.destroy()
         self.kintips = []
 
+    def add_kin(self):
+        print("line", looky(seeline()).lineno, "self.unknown_kin:", self.unknown_kin)
+        event_type = self.instrux.finding[0][1]
+        # open dlg to select person_id
+        self.edit_event_dialog = NewEventDialog(
+            self.root, 
+            self.treebard,
+            self,
+            event_type,
+            self.current_person,
+            self.place_autofill_values,   
+            self.go_to,
+            finding=self.instrux.finding)#need finding also, not just id but whole row
+        # fill_in what's already known eg current person, place, age, kin_types
+        # add person_id to persons_persons
+        # add p_p_fk to findings_persons
+         
+
     def go_to(self, evt=None, current_person=None):
-        if evt and evt.type == "4":
+        if evt and evt.type == "4":            
             text = evt.widget.cget("text")
-            person_id = text.split("#")[1]
-            self.instrux.person_id = int(person_id.rstrip(")"))
-            self.current_person = self.instrux.person_id
-            print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
+            if text == self.kinless:
+                self.add_kin()
+                return
+            else:
+                person_id = text.split("#")[1]
+                id_string = person_id.rstrip(")")
+                self.instrux.person_id = int(id_string)
+                self.current_person = self.instrux.person_id
         else:
             self.current_person = current_person
-        print("line", looky(seeline()).lineno, "current_person:", current_person)
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -954,15 +1052,14 @@ class EventsTable(Frame):
         for widg in widgets:
             widg.lift() 
 
-    def count_birth_death_events(self, new_event, too_many=False):
-        
+    def count_birth_death_events(self, new_event):
+        too_many = False
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_findings_for_person, (self.current_person,))
         all_events = [i[0] for i in cur.fetchall()]
         if new_event in all_events:
             too_many = True
-        print("line", looky(seeline()).lineno, "too_many:", too_many)
         cur.close()
         conn.close()
         return too_many
@@ -978,6 +1075,7 @@ class EventsTable(Frame):
             msg[0].destroy()
             self.focus_set()
 
+        too_many = False
         new_event = self.event_input.get().strip().lower()
         if new_event in ("birth", "death"):
             too_many = self.count_birth_death_events(new_event)
@@ -1006,7 +1104,7 @@ class NewEventDialog(Toplevel):
             self, master, treebard, events_table,
             new_event, 
             current_person, place_autofill_values, 
-            go_to, *args, **kwargs):
+            go_to, finding=None, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.root = master
@@ -1016,8 +1114,16 @@ class NewEventDialog(Toplevel):
         self.current_person = current_person
         self.place_autofill_values = place_autofill_values
         self.go_to = go_to
+        self.finding = finding
+        print("line", looky(seeline()).lineno, "self.finding:", self.finding)
+        if self.finding:
+            self.edit_event = True
+        else:
+            self.edit_event = False
+        print("line", looky(seeline()).lineno, "self.edit_event:", self.edit_event)
 
         self.new_event_type = False
+        self.never_mind = False
 
         self.new_kin_type_codes = [None, None]
 
@@ -1060,39 +1166,128 @@ class NewEventDialog(Toplevel):
         cur.close()
         conn.close()
 
-    def input_new_event_type(self):
+    def ask_if_after_death(self):
 
         def ok_new_evt_type():
             conn = sqlite3.connect(current_file)
             conn.execute('PRAGMA foreign_keys = 1')
             cur = conn.cursor()
-            couple_event = couplevar.get()
+            evt_is_after_death = posthumousvar.get()
             cur.execute(insert_event_type_new, (
-                self.event_type_id, self.new_event, couple_event))
+                self.event_type_id, 
+                self.new_event, 
+                self.couple_event, 
+                evt_is_after_death))
             conn.commit()
 
             event_types = get_all_event_types()
             more_event_types = EntryAuto.create_lists(event_types)
             self.events_table.event_input.values = more_event_types
 
-            self.couple_event = couple_event
-            cancel_new_evt_type()
+            self.asker.grab_release()
+            self.asker.destroy()
+            self.deiconify()
+            self.focus_set() 
+            self.lift()
+            self.grab_set()
             cur.close()
             conn.close()
 
         def cancel_new_evt_type():
+            nonlocal never_mind
+            self.asker.grab_release()
+            self.asker.destroy()
+            never_mind = True
+
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+
+        never_mind = False
+
+        text = ( 
+            "Before-death event type: e.g. 'promotion', "
+            "'business venture', 'graduation'.",
+            "After-death event type: e.g. 'funeral', 'probate', "
+            "'reading of the will', 'posthumous ______'.")
+        posthumousvar = tk.IntVar(None, 0)
+        self.asker = Toplevel(self)
+        self.asker.title("Select Before- or After-Death Event Type")
+        lab = LabelH3(
+            self.asker, 
+            text="Does the new event type occur after death?")
+        
+        for i in range(2):
+            rad = Radiobutton(
+                self.asker,  
+                text=text[i],
+                value=i,
+                variable=posthumousvar,
+                anchor='w')
+            rad.grid(column=0, row=i+1)
+
+        buttonframe = Frame(self.asker)
+        butt1 = Button(
+            buttonframe, text="OK", width=6, 
+            command=ok_new_evt_type)
+        butt2 = Button(
+            buttonframe, text="CANCEL", width=6, 
+            command=cancel_new_evt_type)
+
+        lab.grid(column=0, row=0, pady=12)
+        buttonframe.grid(column=0, row=3, sticky='e', pady=(0,12))
+        butt1.grid(column=0, row=0, sticky='e', padx=12, pady=6)
+        butt2.grid(column=1, row=0, sticky='e', padx=12, pady=6)
+        self.asker.grab_set()
+        butt1.focus_set()
+        
+        self.wait_window(self.asker)
+        if never_mind is False:
+            self.make_widgets()
+        else:
+            self.destroy()
+        cur.close()
+        conn.close()        
+
+    def input_new_event_type(self):  
+
+        def ask_next_question():
+            self.couple_event = couplevar.get()
             id_couple_event.grab_release()
             id_couple_event.destroy()
+
+        def input_evt_type_now():
+            conn = sqlite3.connect(current_file)
+            conn.execute('PRAGMA foreign_keys = 1')
+            cur = conn.cursor()
+            self.couple_event = couplevar.get()
+            cur.execute(insert_event_type_new, (
+                self.event_type_id, self.new_event, self.couple_event, 0))
+            conn.commit()
+
+            event_types = get_all_event_types()
+            more_event_types = EntryAuto.create_lists(event_types)
+            self.events_table.event_input.values = more_event_types
+
+            cur.close()
+            conn.close()
+
+            self.make_widgets()
             self.deiconify()
-            self.focus_set()    
-            self.lift()
-            self.grab_set()
+
+        def cancel_new_evt_type():
+            nonlocal never_mind
+            id_couple_event.grab_release()
+            id_couple_event.destroy()
+            never_mind = True
+
+        never_mind = False
 
         text = ( 
             "Generic event type: one primary participant or a parent, e.g. "
-                "'Birth', 'Career', 'Adopted a child'.",
-            "Couple event type: two equal participants, e.g. 'Husband', "
-                "'Wife', 'Spouse'.")
+                "'birth', 'career', 'adopted a child'.",
+            "Couple event type: two equal participants, e.g. 'marriage', "
+                "'wedding', 'engagement'.")
         couplevar = tk.IntVar(None, 0)
         id_couple_event = Toplevel(self.root)
         id_couple_event.title("Select Couple or Generic Event Type")
@@ -1115,7 +1310,7 @@ class NewEventDialog(Toplevel):
         buttonframe = Frame(id_couple_event)
         butt1 = Button(
             buttonframe, text="OK", width=6, 
-            command=ok_new_evt_type)
+            command=ask_next_question)
         butt2 = Button(
             buttonframe, text="CANCEL", width=6, 
             command=cancel_new_evt_type)
@@ -1127,7 +1322,14 @@ class NewEventDialog(Toplevel):
         butt1.focus_set()
         
         self.wait_window(id_couple_event)
-        self.make_widgets()
+        if never_mind is False:
+            if self.couple_event == 0:
+                self.ask_if_after_death()
+            else:
+                input_evt_type_now()
+        else:
+            self.destroy()
+            
 
     def make_widgets(self):
 
@@ -1142,8 +1344,11 @@ class NewEventDialog(Toplevel):
 
         self.columnconfigure(1, weight=1)
         self.rowconfigure(4, weight=1)
-        canvas = Border(self, size=3) # don't hard-code size            
-        canvas.title_1.config(text="New Event Dialog")
+        canvas = Border(self, size=3) # don't hard-code size   
+        if self.edit_event is True:
+            canvas.title_1.config(text="Edit Event Dialog")
+        else:
+            canvas.title_1.config(text="New Event Dialog")
         canvas.title_2.config(text="Current Person: {}, id #{}".format(
             self.current_name, self.current_person))
 
@@ -1213,7 +1418,7 @@ class NewEventDialog(Toplevel):
             self.generic_data_inputs, text="Event Type: {}".format(
                 self.new_event))
         lab1 = Label(self.generic_data_inputs, text="Date")
-        date_input = EntryHilited1(self.generic_data_inputs)
+        self.date_input = EntryHilited1(self.generic_data_inputs)
         lab2 = Label(self.generic_data_inputs, text="Place")
         self.place_input = EntryAutoHilited(
             self.generic_data_inputs, 
@@ -1225,7 +1430,7 @@ class NewEventDialog(Toplevel):
 
         self.lab0.grid(column=0, row=0, sticky="w", pady=6)
         lab1.grid(column=0, row=1, sticky="e", pady=(0,1))
-        date_input.grid(column=1, row=1, sticky="w", padx=(3,0), pady=(0,1))
+        self.date_input.grid(column=1, row=1, sticky="w", padx=(3,0), pady=(0,1))
         lab2.grid(column=0, row=2, sticky="e", pady=(0,1))
         self.place_input.grid(
             column=1, row=2, sticky="w", padx=(3,0), pady=(0,1))
@@ -1234,11 +1439,39 @@ class NewEventDialog(Toplevel):
         if self.couple_event == 0:
             self.b1.config(command=self.add_event)
             self.show_one_person()
+            if self.edit_event is True:
+                self.fill_in_for_editing()
         elif self.couple_event == 1:
-            self.b1.config(command=self.validate_kin_types)
+            # self.b1.config(command=self.validate_kin_types)
             self.show_other_person()
+            if self.edit_event is True:
+                self.fill_in_for_editing(people=2)
+                self.b1.config(command=self.validate_kin_types)
+            else:
+                self.b1.config(command=self.validate_kin_types)
 
-        date_input.focus_set()
+        self.date_input.focus_set()
+
+    def fill_in_for_editing(self, people=1):
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+
+        self.finding_id = self.finding[9]
+        self.date_input.insert(0, self.finding[1][1][0])
+        self.place_input.insert(0, self.finding[2][1])
+        self.particulars_input.insert(0, self.finding[3][1])
+        self.age1_input.insert(0, self.finding[4][1])
+        if people == 1:
+            cur.close() 
+            conn.close()
+            return
+        cur.execute(select_kin_types_finding, (self.finding_id,))
+        kin_types = [i[0] for i in cur.fetchall()]
+        self.kin_type_input1.insert(0, kin_types[0])
+        self.kin_type_input2.insert(0, kin_types[1])
+        self.other_person_input.focus_set()
+        cur.close() 
+        conn.close()        
 
     def show_one_person(self):
         self.new_evt_msg.config(text="Information about the new event "
@@ -1304,76 +1537,147 @@ class NewEventDialog(Toplevel):
         self.root.lift()
         self.destroy()
 
-    def add_event(self):          
+    def add_event(self):  
+
+        def talk_to_db(other_person_id):
+            cur.execute(select_max_persons_persons_id)
+            persons_persons_id = cur.fetchone()[0] + 1
+            cur.execute(
+                insert_persons_persons_new, 
+                (persons_persons_id, self.current_person, other_person_id))
+            conn.commit()
+
+            self.kin_type_list = list(
+                zip(self.kin_type_list, self.new_kin_type_codes))
+            self.kin_type_list = [list(i) for i in self.kin_type_list]
+
+            for item in self.kin_type_list:
+                if item[1] is None:
+                    continue
+                else:
+                    cur.execute(
+                        insert_kin_type_new, 
+                        (item[0], item[1].get()))
+                    conn.commit()
+                    cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'kin_type'")
+                    new_id = cur.fetchone()[0]
+                    item[0] = new_id
+
+            cur.execute(
+                insert_findings_persons_new_couple,
+                (self.new_finding, self.current_person, age_1, 
+                    self.kin_type_list[0][0], persons_persons_id))
+            conn.commit()
+            cur.execute(
+                insert_findings_persons_new_couple, 
+                (self.new_finding, other_person_id, age_2, 
+                    self.kin_type_list[1][0], persons_persons_id))
+            conn.commit()
+
+        def edit_existing_event(other_person_id):
+            cur.execute(
+                select_persons_persons_id, 
+                (self.finding_id,))
+            persons_persons_id = cur.fetchone()[0]
+            cur.execute(
+                select_persons_persons_both, 
+                (persons_persons_id,))
+            right_pair = cur.fetchone()
+            idx = right_pair.index(self.current_person)
+            if idx == 0:
+                sql = update_persons_persons_2
+            elif idx == 1:
+                sql = update_persons_persons_1
+            cur.execute(
+                sql, (other_person_id, persons_persons_id))
+            conn.commit()
+
+            # parameterize this repeated block of code
+            self.kin_type_list = list(
+                zip(self.kin_type_list, self.new_kin_type_codes))
+            self.kin_type_list = [list(i) for i in self.kin_type_list]
+            for item in self.kin_type_list:
+                if item[1] is None:
+                    continue
+                else:
+                    cur.execute(
+                        insert_kin_type_new, 
+                        (item[0], item[1].get()))
+                    conn.commit()
+                    cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'kin_type'")
+                    new_id = cur.fetchone()[0]
+                    item[0] = new_id
+            # *******************************
+
+            cur.execute(
+                update_findings_persons_couple_old, (
+                    age_1, self.kin_type_list[0][0], 
+                    self.finding_id, self.current_person))
+            conn.commit()
+            cur.execute(
+                update_findings_persons_couple_new, (
+                    age_2, self.kin_type_list[1][0], 
+                    other_person_id, self.finding_id, self.current_person))
+            conn.commit()
 
         def couple_ok():                
             if len(other_person) != 0:
                 other_person_all = other_person.split(" #")
                 other_person_id = other_person_all[1]
-                cur.execute(select_max_persons_persons_id)
-                persons_persons_id = cur.fetchone()[0] + 1
-                cur.execute(
-                    insert_persons_persons_new, 
-                    (persons_persons_id, self.current_person, other_person_id))
-                conn.commit()
-                self.kin_type_list = list(
-                    zip(self.kin_type_list, self.new_kin_type_codes))
-                self.kin_type_list = [list(i) for i in self.kin_type_list]
-
-                g = 0
-                for item in self.kin_type_list:
-                    if item[1] is None:
-                        continue
-                    else:
-                        cur.execute(
-                            insert_kin_type_new, 
-                            (item[0], item[1].get()))
-                        conn.commit()
-                        cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'kin_type'")
-                        new_id = cur.fetchone()[0]
-                        item[0] = new_id
-                    g += 1
-
-                cur.execute(
-                    insert_findings_persons_new_couple,
-                    (self.new_finding, self.current_person, age_1, 
-                        self.kin_type_list[0][0], persons_persons_id))
-                conn.commit()
-                cur.execute(
-                    insert_findings_persons_new_couple, 
-                    (self.new_finding, other_person_id, age_2, 
-                        self.kin_type_list[1][0], persons_persons_id))
-                conn.commit()
+            else:
+                other_person_id = None
+            if self.edit_event is True:
+                edit_existing_event(other_person_id)
+            else:
+                talk_to_db(other_person_id)
 
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
+
 
         age_1 = self.age1_input.get()
         if self.couple_event == 1:
             age_2 = self.age2_input.get()
             other_person = self.other_person_input.get()
 
-        if self.couple_event == 0:
-            cur.execute(
-                insert_finding_new, 
-                (self.new_finding, age_1, self.event_type_id, self.current_person))
-            conn.commit()            
-        else:
-            cur.execute(
-                insert_finding_new_couple, 
-                (self.new_finding, self.event_type_id,))
-            conn.commit()
+        if self.edit_event is False:
+            if self.couple_event == 0:
+                cur.execute(
+                    insert_finding_new, 
+                    (self.new_finding, age_1, self.event_type_id, self.current_person))
+                conn.commit()            
+            else:
+                cur.execute(
+                    insert_finding_new_couple, 
+                    (self.new_finding, self.event_type_id,))
+                conn.commit()
 
-            couple_ok()  
-        
-        if len(self.place_string) == 0:
-            cur.execute(insert_finding_places_new, (self.new_finding,))
-            conn.commit()
-        else:
-            self.update_db_place()
+                couple_ok()  
+            
+            if len(self.place_string) == 0:
+                cur.execute(insert_finding_places_new, (self.new_finding,))
+                conn.commit()
+            else:
+                self.update_db_place()
 
-        update_particulars(self.particulars_input.get().strip(), self.new_finding)
+            update_particulars(
+                self.particulars_input.get().strip(), self.new_finding)
+
+        else:
+            if self.couple_event == 0:
+                pass # for now
+            elif self.couple_event == 1:
+                couple_ok()
+            place_string = self.place_input.get()
+            if len(place_string) == 0:
+                cur.execute(update_finding_places_null, (self.finding_id,))
+                conn.commit()
+            else:
+                self.update_db_place()
+
+            update_particulars(
+                self.particulars_input.get().strip(), self.finding_id)
 
         cur.close()
         conn.close()
@@ -1381,6 +1685,7 @@ class NewEventDialog(Toplevel):
         self.go_to(current_person=self.current_person)
 
     def update_db_place(self):
+        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -1390,7 +1695,7 @@ class NewEventDialog(Toplevel):
         qty = len(self.place_dicts)
         nulls = 9 - qty
         ids = ids + [None] * nulls
-        ids.append(self.new_finding)
+        # ids.append(self.new_finding)
         last = len(self.place_dicts) - 1
         q = 0
         for dkt in self.place_dicts:
@@ -1402,7 +1707,6 @@ class NewEventDialog(Toplevel):
             if child == dkt["temp_id"]:
                 cur.execute(insert_place_new, (child, dkt["input"]))
                 conn.commit()
-                print("line", looky(seeline()).lineno, "child, parent:", child, parent)
                 cur.execute(insert_places_places_new, (child, parent))
                 conn.commit()
             else:
@@ -1411,8 +1715,17 @@ class NewEventDialog(Toplevel):
                     cur.execute(insert_places_places_new, (child, parent))
                     conn.commit()
             q += 1
-        cur.execute(insert_finding_places_new_event, tuple(ids))
-        conn.commit() 
+        print("line", looky(seeline()).lineno, "self.edit_event:", self.edit_event)
+        if self.edit_event is False:
+            ids.append(self.new_finding)
+            cur.execute(insert_finding_places_new_event, tuple(ids))
+            conn.commit() 
+        else:
+            ids.append(self.finding_id)
+            print("line", looky(seeline()).lineno, "ids:", ids)
+            cur.execute(update_finding_places, tuple(ids))
+            conn.commit() 
+
         place_strings.insert(0, self.place_string)
 
         self.place_autofill_values = EntryAuto.create_lists(place_strings)
@@ -1426,10 +1739,6 @@ class NewEventDialog(Toplevel):
             msg[0].destroy() 
             self.grab_set()
             widg.focus_set()
-
-        if len(self.other_person_input.get()) == 0:
-            self.catch_empty_partner()
-            return
 
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -1465,7 +1774,6 @@ class NewEventDialog(Toplevel):
                 if type(item) is not int and len(item) != 0:
                     new_kin_types.append(item)            
             v += 1
-
         if new_kin_types != [None, None]:
             self.new_kin_type_codes = NewKinTypeDialog(
                 self.root,
@@ -1475,22 +1783,6 @@ class NewEventDialog(Toplevel):
         cur.close()
         conn.close()
         self.add_event()
-
-    def catch_empty_partner(self):
-
-        def err_done3():
-            msg[0].destroy()
-            self.grab_set()
-            self.other_person_input.focus_set()            
-
-        msg = open_error_message(
-            self, 
-            events_msg[2], 
-            "Missing Person in Couple", 
-            "OK")
-        msg[0].grab_set()
-        msg[1].config(aspect=400)
-        msg[2].config(command=err_done3)
 
     def catch_dupe_or_new_partner(self, evt):
 
@@ -1516,20 +1808,19 @@ class NewEventDialog(Toplevel):
             msg[2].config(command=err_done)
 
     def open_new_person_dialog(self, new_name):
-        print("line", looky(seeline()).lineno, "running:")
         new_partner_dialog = Toplevel(self)
         new_partner_dialog.title("Add New Person")
         person_add = PersonAdd(
             new_partner_dialog, self.other_person_input, self.root)
         person_add.grid()
         person_add.name_input.delete(0, 'end')
-        print("line", looky(seeline()).lineno, "new_name:", new_name)
         person_add.name_input.insert(0, new_name[0])
         person_add.add_person()
         person_add.show_sort_order()
         person_add.gender_input.focus_set()
 
     def validate_place(self, evt):
+        print("line", looky(seeline()).lineno, "running:")
         inwidg = evt.widget
         self.place_string = inwidg.get().strip()
         if len(self.place_string) == 0:
@@ -1663,14 +1954,19 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# add probate and ? to list of autosorted events ie: Birth, other, Death, Burial, there has to be an exception for probate bec it takes place anytime after death, maybe even before burial, esp if someone's grave is moved, then generally the 2nd burial will take place after probate. THE SOLUTION IS to have a separately sorted-by-date list of things that can take place after death such as probate, burial, reburial and sort these things according to a definite order first, resort acc to date, then append to main event date which is sorted by date except for birth and death which are always first and last. Will also need another question on the new event type dlg as to whether or not this event type can take place after death optionally or always, in which case an after-death event dialog will have to open up so the user can insert after death event type into the existing order of after death events. Note on the dlg that to trump the defined order of after-death dates, insert a date (even if abt or est) to put the event where it belongs in an individuals history. NOTE the burial event which till now has been last on the events table will be replaced by the whole sublist of after-death events.
+# add 'unknown' to kin_types in case someone doesn't want to display e.g. 'husband' for an unknown person, might need unknown for generic kin and unknown2 for couple events
+# GET nested funx out of add_event(), make them inst. attribs
+# SEE # parameterize this repeated block of code
+# when able to add kin for couples, extend so kin can be added/edited for spouses and children if possible (ie if a null or empty spouse or child can be stored in db) but definitely for parents
+# when couple asker closes, the afterdeath asker works and has grabset and the OK button has focus, but the titlebar doesn't change color.
 # add tooltips/status bar messages
 # open kintips with spacebar when kin button is in focus, not just mouse click
 # bind all ok buttons to Return and cancel buttons to Escape
-# finish the Border code so it only makes scridth & scrollbar if make_scrollbar is True but make it False by default, show NO  Windows title bars on ANY dialog
+# finish the Border code so it only makes scridth & scrollbar if make_scrollbar is True but make it False by default, show NO Windows title bars on ANY dialog
 # detect if kintips text is too long and if so change font-size to boilerplate
 # get rid of ttk combobox in new person dialog 
 # test notes & roles all features; esp. test roles re: `if self.role_person_edited is True:` since new_person_id is no longer real but temp at this point in names.py and get rid of ttk.Combobox
+# Q: Is it possible to eliminate the immediate family area (pedigree area) above the table because of the kin column and its clickable functionalities? IE could a parent or child be added this way?
 
 # BRANCH: dates
 # finish refactoring dates validation
