@@ -191,7 +191,8 @@ def get_findings():
         cur.execute(select_person_id_kin_types_birth, (birth_id,))
         parents = cur.fetchall()
         parents.insert(0, birth_id)
-
+        # print("line", looky(seeline()).lineno, "parents:", parents)
+# line 194 parents: [28, (4, 'mother'), (5, 'father')]
     cur.execute(select_finding_ids_age_parents, (current_person,))
     children = cur.fetchall()
     children = [list(i) for i in children]
@@ -202,7 +203,8 @@ def get_findings():
         offspring = cur.fetchone()
         if offspring:
             lst.insert(2, offspring[0])
-
+    # print("line", looky(seeline()).lineno, "children:", children)
+# line 206 children: [[7, '28', 77], [8, '28', 88]]
     kids = []
     for lst in children:
         child_id = lst[2]
@@ -306,7 +308,8 @@ def get_findings():
 
     cur.close()
     conn.close()    
-
+    print("line", looky(seeline()).lineno, "parents:", parents)
+# line 311 parents: [28, (4, 'mother'), (5, 'father')]
     return (
         generic_findings,
         couple_findings, 
@@ -495,11 +498,9 @@ class EventsTable(Frame):
                 cur.execute(select_event_type_couple_bool, (self.initial,))
                 couple = cur.fetchone()[0]
 
-                cur.execute(select_event_type_after_death_bool, (self.initial,))
-                after_death = cur.fetchone()[0]
-
-                
-
+                cur.execute(
+                    select_event_type_after_death_bool, (self.initial,))
+                after_death = cur.fetchone()[0] 
                 cur.execute(
                     insert_event_type_new, (
                         None, 
@@ -664,7 +665,10 @@ class EventsTable(Frame):
             self.table_cells.append(row)
         
         self.event_input = EntryAutoHilited(
-            self, autofill=True, values=self.event_autofill_values)
+            self, 
+            width=32, 
+            autofill=True, 
+            values=self.event_autofill_values)
         self.add_event_button = Button(
             self, text="NEW EVENT", command=self.make_new_event)
         self.set_cell_content()
@@ -672,7 +676,6 @@ class EventsTable(Frame):
     def set_cell_content(self):
 
         findings_data = get_findings()
-
         generic_findings = findings_data[0]
         couple_findings = findings_data[1]
         parents = findings_data[2]
@@ -715,7 +718,7 @@ class EventsTable(Frame):
                 finding_id = row[9]
                 break
         for row in self.findings:
-            if row[9] == finding_id:            
+            if row[9] == finding_id: 
                 for item in parents:
                     if item == finding_id:
                         for parent in parents[1:]:
@@ -726,9 +729,11 @@ class EventsTable(Frame):
                     continue
                 if ma:
                     ma = [get_name_with_id(ma[0]), ma[0], ma[1]]
+                    print("line", looky(seeline()).lineno, "ma:", ma)
                     row[5][1].append(ma)
                 if pa:
                     pa = [get_name_with_id(pa[0]), pa[0], pa[1]]
+                    print("line", looky(seeline()).lineno, "pa:", pa)
                     row[5][1].append(pa)
 
         for row in self.findings:
@@ -853,13 +858,24 @@ class EventsTable(Frame):
         
         self.size_columns_to_content()
 
-        self.event_input.grid(column=0, row=self.new_row, pady=6)
-        self.add_event_button.grid(column=1, row=self.new_row, pady=6)
+        self.event_input.grid(
+            column=0, 
+            row=self.new_row,
+            pady=6, columnspan=2, 
+            sticky='w')
+        self.add_event_button.grid(
+            column=2, 
+            row=self.new_row, 
+            pady=6, sticky='w')
 
     def make_kin_button(self, event_type, cellval, kinframe, finding):
         ma_pa = False
         if event_type == 'birth':
-            ma_pa = True                    
+            ma_pa = True
+            print("line", looky(seeline()).lineno, "cellval:", cellval)
+# line 733 ma: ['Maria Tabitha Mullinax', 4, 'mother']
+# line 737 pa: ['Donald Wiley Webb', 5, 'father']
+# line 876 cellval: [['Maria Tabitha Mullinax', 4, 'mother'], ['Donald Wiley Webb', 5, 'father']]
         if len(cellval) == 0:
             text = ""
         else:
@@ -884,7 +900,8 @@ class EventsTable(Frame):
                 lambda evt, kin=kin: self.open_kin_tip(evt, kin))
             self.kin_buttons.append(kinlab)
             kinframe.grid()
-
+# MAKE BUTTON FOR BIRTH EVENT EVEN IF NO PARENTS KNOWN
+# MAKE KINTIPS FOR FATHER & MOTHER EVEN IF ONE OR NO PARENTS KNOWN
     def open_kin_tip(self, evt, kin):
 
         def make_kin_tip(lst):
@@ -1539,113 +1556,113 @@ class NewEventDialog(Toplevel):
 
     def add_event(self):  
 
-        def talk_to_db(other_person_id):
-            cur.execute(select_max_persons_persons_id)
-            persons_persons_id = cur.fetchone()[0] + 1
-            cur.execute(
-                insert_persons_persons_new, 
-                (persons_persons_id, self.current_person, other_person_id))
-            conn.commit()
+        # def talk_to_db(other_person_id):
+            # cur.execute(select_max_persons_persons_id)
+            # persons_persons_id = cur.fetchone()[0] + 1
+            # cur.execute(
+                # insert_persons_persons_new, 
+                # (persons_persons_id, self.current_person, other_person_id))
+            # conn.commit()
 
-            self.kin_type_list = list(
-                zip(self.kin_type_list, self.new_kin_type_codes))
-            self.kin_type_list = [list(i) for i in self.kin_type_list]
+            # self.kin_type_list = list(
+                # zip(self.kin_type_list, self.new_kin_type_codes))
+            # self.kin_type_list = [list(i) for i in self.kin_type_list]
 
-            for item in self.kin_type_list:
-                if item[1] is None:
-                    continue
-                else:
-                    cur.execute(
-                        insert_kin_type_new, 
-                        (item[0], item[1].get()))
-                    conn.commit()
-                    cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'kin_type'")
-                    new_id = cur.fetchone()[0]
-                    item[0] = new_id
+            # for item in self.kin_type_list:
+                # if item[1] is None:
+                    # continue
+                # else:
+                    # cur.execute(
+                        # insert_kin_type_new, 
+                        # (item[0], item[1].get()))
+                    # conn.commit()
+                    # cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'kin_type'")
+                    # new_id = cur.fetchone()[0]
+                    # item[0] = new_id
 
-            cur.execute(
-                insert_findings_persons_new_couple,
-                (self.new_finding, self.current_person, age_1, 
-                    self.kin_type_list[0][0], persons_persons_id))
-            conn.commit()
-            cur.execute(
-                insert_findings_persons_new_couple, 
-                (self.new_finding, other_person_id, age_2, 
-                    self.kin_type_list[1][0], persons_persons_id))
-            conn.commit()
+            # cur.execute(
+                # insert_findings_persons_new_couple,
+                # (self.new_finding, self.current_person, age_1, 
+                    # self.kin_type_list[0][0], persons_persons_id))
+            # conn.commit()
+            # cur.execute(
+                # insert_findings_persons_new_couple, 
+                # (self.new_finding, other_person_id, age_2, 
+                    # self.kin_type_list[1][0], persons_persons_id))
+            # conn.commit()
 
-        def edit_existing_event(other_person_id):
-            cur.execute(
-                select_persons_persons_id, 
-                (self.finding_id,))
-            persons_persons_id = cur.fetchone()[0]
-            cur.execute(
-                select_persons_persons_both, 
-                (persons_persons_id,))
-            right_pair = cur.fetchone()
-            idx = right_pair.index(self.current_person)
-            if idx == 0:
-                sql = update_persons_persons_2
-            elif idx == 1:
-                sql = update_persons_persons_1
-            cur.execute(
-                sql, (other_person_id, persons_persons_id))
-            conn.commit()
+        # def edit_existing_event(other_person_id):
+            # cur.execute(
+                # select_persons_persons_id, 
+                # (self.finding_id,))
+            # persons_persons_id = cur.fetchone()[0]
+            # cur.execute(
+                # select_persons_persons_both, 
+                # (persons_persons_id,))
+            # right_pair = cur.fetchone()
+            # idx = right_pair.index(self.current_person)
+            # if idx == 0:
+                # sql = update_persons_persons_2
+            # elif idx == 1:
+                # sql = update_persons_persons_1
+            # cur.execute(
+                # sql, (other_person_id, persons_persons_id))
+            # conn.commit()
 
-            # parameterize this repeated block of code
-            self.kin_type_list = list(
-                zip(self.kin_type_list, self.new_kin_type_codes))
-            self.kin_type_list = [list(i) for i in self.kin_type_list]
-            for item in self.kin_type_list:
-                if item[1] is None:
-                    continue
-                else:
-                    cur.execute(
-                        insert_kin_type_new, 
-                        (item[0], item[1].get()))
-                    conn.commit()
-                    cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'kin_type'")
-                    new_id = cur.fetchone()[0]
-                    item[0] = new_id
-            # *******************************
+            # # parameterize this repeated block of code
+            # self.kin_type_list = list(
+                # zip(self.kin_type_list, self.new_kin_type_codes))
+            # self.kin_type_list = [list(i) for i in self.kin_type_list]
+            # for item in self.kin_type_list:
+                # if item[1] is None:
+                    # continue
+                # else:
+                    # cur.execute(
+                        # insert_kin_type_new, 
+                        # (item[0], item[1].get()))
+                    # conn.commit()
+                    # cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'kin_type'")
+                    # new_id = cur.fetchone()[0]
+                    # item[0] = new_id
+            # # *******************************
 
-            cur.execute(
-                update_findings_persons_couple_old, (
-                    age_1, self.kin_type_list[0][0], 
-                    self.finding_id, self.current_person))
-            conn.commit()
-            cur.execute(
-                update_findings_persons_couple_new, (
-                    age_2, self.kin_type_list[1][0], 
-                    other_person_id, self.finding_id, self.current_person))
-            conn.commit()
+            # cur.execute(
+                # update_findings_persons_couple_old, (
+                    # age_1, self.kin_type_list[0][0], 
+                    # self.finding_id, self.current_person))
+            # conn.commit()
+            # cur.execute(
+                # update_findings_persons_couple_new, (
+                    # age_2, self.kin_type_list[1][0], 
+                    # other_person_id, self.finding_id, self.current_person))
+            # conn.commit()
 
-        def couple_ok():                
-            if len(other_person) != 0:
-                other_person_all = other_person.split(" #")
-                other_person_id = other_person_all[1]
-            else:
-                other_person_id = None
-            if self.edit_event is True:
-                edit_existing_event(other_person_id)
-            else:
-                talk_to_db(other_person_id)
+        # def couple_ok():                
+            # if len(other_person) != 0:
+                # other_person_all = other_person.split(" #")
+                # other_person_id = other_person_all[1]
+            # else:
+                # other_person_id = None
+            # if self.edit_event is True:
+                # self.edit_existing_event(other_person_id)
+            # else:
+                # self.talk_to_db(other_person_id)
 
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
-
-        age_1 = self.age1_input.get()
+# other_person, age_1, age_2 CHANGE TO inst. vars
+        self.age_1 = self.age1_input.get()
         if self.couple_event == 1:
-            age_2 = self.age2_input.get()
-            other_person = self.other_person_input.get()
+            self.age_2 = self.age2_input.get()
+            self.other_person = self.other_person_input.get()
 
         if self.edit_event is False:
             if self.couple_event == 0:
                 cur.execute(
                     insert_finding_new, 
-                    (self.new_finding, age_1, self.event_type_id, self.current_person))
+                    (self.new_finding, self.age_1, self.event_type_id, self.current_person))
                 conn.commit()            
             else:
                 cur.execute(
@@ -1653,7 +1670,7 @@ class NewEventDialog(Toplevel):
                     (self.new_finding, self.event_type_id,))
                 conn.commit()
 
-                couple_ok()  
+                self.couple_ok()  
             
             if len(self.place_string) == 0:
                 cur.execute(insert_finding_places_new, (self.new_finding,))
@@ -1668,7 +1685,7 @@ class NewEventDialog(Toplevel):
             if self.couple_event == 0:
                 pass # for now
             elif self.couple_event == 1:
-                couple_ok()
+                self.couple_ok()
             place_string = self.place_input.get()
             if len(place_string) == 0:
                 cur.execute(update_finding_places_null, (self.finding_id,))
@@ -1683,6 +1700,108 @@ class NewEventDialog(Toplevel):
         conn.close()
         self.cancel()
         self.go_to(current_person=self.current_person)
+
+    def couple_ok(self):                
+        if len(self.other_person) != 0:
+            other_person_all = self.other_person.split(" #")
+            other_person_id = other_person_all[1]
+        else:
+            other_person_id = None
+        if self.edit_event is True:
+            self.edit_existing_event()
+        else:
+            self.talk_to_db()
+
+    def talk_to_db(self):
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(select_max_persons_persons_id)
+        persons_persons_id = cur.fetchone()[0] + 1
+        cur.execute(
+            insert_persons_persons_new, 
+            (persons_persons_id, self.current_person, other_person_id))
+        conn.commit()
+
+        self.kin_type_list = list(
+            zip(self.kin_type_list, self.new_kin_type_codes))
+        self.kin_type_list = [list(i) for i in self.kin_type_list]
+
+        for item in self.kin_type_list:
+            if item[1] is None:
+                continue
+            else:
+                cur.execute(
+                    insert_kin_type_new, 
+                    (item[0], item[1].get()))
+                conn.commit()
+                cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'kin_type'")
+                new_id = cur.fetchone()[0]
+                item[0] = new_id
+
+        cur.execute(
+            insert_findings_persons_new_couple,
+            (self.new_finding, self.current_person, self.age_1, 
+                self.kin_type_list[0][0], persons_persons_id))
+        conn.commit()
+        cur.execute(
+            insert_findings_persons_new_couple, 
+            (self.new_finding, other_person_id, self.age_2, 
+                self.kin_type_list[1][0], persons_persons_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+    def edit_existing_event(self):
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(
+            select_persons_persons_id, 
+            (self.finding_id,))
+        persons_persons_id = cur.fetchone()[0]
+        cur.execute(
+            select_persons_persons_both, 
+            (persons_persons_id,))
+        right_pair = cur.fetchone()
+        idx = right_pair.index(self.current_person)
+        if idx == 0:
+            sql = update_persons_persons_2
+        elif idx == 1:
+            sql = update_persons_persons_1
+        cur.execute(
+            sql, (other_person_id, persons_persons_id))
+        conn.commit()
+
+        # parameterize this repeated block of code
+        self.kin_type_list = list(
+            zip(self.kin_type_list, self.new_kin_type_codes))
+        self.kin_type_list = [list(i) for i in self.kin_type_list]
+        for item in self.kin_type_list:
+            if item[1] is None:
+                continue
+            else:
+                cur.execute(
+                    insert_kin_type_new, 
+                    (item[0], item[1].get()))
+                conn.commit()
+                cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'kin_type'")
+                new_id = cur.fetchone()[0]
+                item[0] = new_id
+        # *******************************
+
+        cur.execute(
+            update_findings_persons_couple_old, (
+                self.age_1, self.kin_type_list[0][0], 
+                self.finding_id, self.current_person))
+        conn.commit()
+        cur.execute(
+            update_findings_persons_couple_new, (
+                self.age_2, self.kin_type_list[1][0], 
+                other_person_id, self.finding_id, self.current_person))
+        conn.commit()
+        cur.close()
+        conn.close()
 
     def update_db_place(self):
         print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
@@ -1954,10 +2073,11 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
+# use James Woodland who has a mother but no father to do with kintips what was done with missing spouses so kintips can be used to add a missing parent.
 # add 'unknown' to kin_types in case someone doesn't want to display e.g. 'husband' for an unknown person, might need unknown for generic kin and unknown2 for couple events
-# GET nested funx out of add_event(), make them inst. attribs
 # SEE # parameterize this repeated block of code
-# when able to add kin for couples, extend so kin can be added/edited for spouses and children if possible (ie if a null or empty spouse or child can be stored in db) but definitely for parents
+# when able to add kin for couples, extend so kin can be added/edited for spouses and children if possible (ie if a null or empty spouse or child can be stored in db) but definitely for parents; ADD the ability to create an offspring event, just create the birth event instead and use that to create an offspring event in the usual way.
+# on right-clicking a kintip, a dlg opens to change kin_type
 # when couple asker closes, the afterdeath asker works and has grabset and the OK button has focus, but the titlebar doesn't change color.
 # add tooltips/status bar messages
 # open kintips with spacebar when kin button is in focus, not just mouse click
@@ -1987,6 +2107,11 @@ if __name__ == '__main__':
 # add to do list for combobox: when scrolling if the mouse strays off the scrollbar the dropdown undrops, I've seen a way to fix that but what was it?
 # add to main do list re: all dialogs: run the same code when clicking X on title bar
 # add to do list for new_event dialog: add person search button 
+
+
+
+
+# ADD TO DEV DOCS FOR EVENTS TABLE.PY: is it possible to get rid of persons_persons table? There seems to be a one-to-one relationship between the finding_id in a couple event and the persons_persons_id in that event. So look at what persons_persons is being used for. Can the finding_id be used instead? Seems like they aren't exactly the same thing because finding_id has 2 records in findings_persons for each event where the two people are related, but 1 record in persons_persons. Try to remember why I created this table to begin with. Something to do with ??? I have no idea but it's very recent so shd have left a trail of blather in some rollback with the rationale behind this annoying data item. Look at August rollbacks for a hint. For ex on aug 28 I wrote "But let's say you want to search how many 2 people are linked to each other. This would be a very simple search if each event in which the 2 are coupled is a separate persons_persons_id.) Another question: have I put the fk in the wrong table? Now I'm putting persons_persons_id in findings_persons table. Should I instead be putting finding_id in persons_persons table? Then there's a directly discernible reason for each row in the p_P table to exist instead of just these 2 mysterious columns. But it would be a drastic redesign to move finding_id to persons_persons out of findings_persons where it is now and it seems like I'm very close to making the code work, since it already works for same-name couple (spouse/spouse), all I need is to make the code work for diff-name couples (wife/husband) and since it's already close, I shd resist the temptation to rip the building down to the foundations, change the foundations, and start over completely because that's what I'd have to do, I'd have to refactor the events_table code again and I kinda refuse." But what was the original reason to make the table? Here it is, same day: "select_findings_details_couple_age is inadequate since it looks for pairs of matched kin_type_id but wife & husband have different ids whereas spouse & spouse have the same. Need a better way to select partnerships eg maybe a new table called couples so that each coupling will have a separate couple_id (persons_persons_id). It should be a table called persons_persons because it is many to many, each person can have any number of links to each other person including more than one link to the same person in case the same couple gets married twice etc. Then put fk persons_persons_id in findings_persons. The persons_persons table might be useful for other relationship problems later on such as people with real parents, foster parents, and adoptive parents for example." So in short, the problem I was having was that I was doing something by searching for matching kin type to find spouses, but this didn't work eg with "wife" and "husband" because the kin types didn't match. So I had to register the relationship as a single record in a table to easily detect the relationship.
 
 
 
