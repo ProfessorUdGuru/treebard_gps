@@ -221,6 +221,13 @@ select_all_kin_type_ids_couple = '''
 '''
 
 select_all_kin_types_couple = '''
+    SELECT kin_types
+    FROM kin_type
+    WHERE kin_code = 'D'
+        AND hidden = 0
+'''
+
+select_all_kin_ids_types_couple = '''
     SELECT kin_type_id, kin_types
     FROM kin_type
     WHERE kin_code = 'D'
@@ -521,6 +528,13 @@ select_findings_for_person = '''
     JOIN event_type
         ON finding.event_type_id = event_type.event_type_id
     WHERE person_id = ?
+'''
+
+select_findings_persons_age = '''
+    SELECT age
+    FROM findings_persons
+    WHERE person_id = ?
+        AND finding_id = ?
 '''
 
 select_generic_event_roles = '''
@@ -861,6 +875,20 @@ update_findings_persons_new_couple_age = '''
     WHERE findings_persons_id = ?
 '''
 
+update_findings_persons_father = '''
+    UPDATE findings_persons
+    SET (age, person_id) = (?, ?)
+    WHERE finding_id = ?
+        AND kin_type_id = 2
+'''
+
+update_findings_persons_mother = '''
+    UPDATE findings_persons
+    SET (age, person_id) = (?, ?)
+    WHERE finding_id = ?
+        AND kin_type_id = 1
+'''
+
 update_findings_roles_person = '''
     UPDATE findings_roles 
     SET person_id = ? 
@@ -936,6 +964,12 @@ update_persons_persons_1 = '''
 update_persons_persons_2 = '''
     UPDATE persons_persons
     SET person_id2 = ?
+    WHERE persons_persons_id = ?
+'''
+
+update_persons_persons_both = '''
+    UPDATE persons_persons
+    SET (person_id1, person_id2) = (?, ?)
     WHERE persons_persons_id = ?
 '''
 
