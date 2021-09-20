@@ -83,6 +83,11 @@ insert_event_type_new = '''
     VALUES (?, ?, ?, ?)
 '''
 
+insert_finding_birth = '''
+    INSERT INTO finding (finding_id, age, event_type_id, person_id)
+    VALUES (?, 0, 1, ?)
+'''
+
 insert_finding_new = '''
     INSERT INTO finding (finding_id, age, event_type_id, person_id)
     VALUES (?, ?, ?, ?)
@@ -144,10 +149,6 @@ insert_note = '''
 insert_person_new = '''
     INSERT INTO person VALUES (?, ?)
 '''
-
-# insert_person_null = '''
-    # INSERT INTO person VALUES (null, ?) 
-# '''
 
 insert_persons_persons_new = '''
     INSERT INTO persons_persons VALUES (?, ?, ?)

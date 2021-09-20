@@ -65,9 +65,8 @@ events_msg = (
     "The same person was used twice.",
     "Please enter a kin type for each person.",
     "A second person must be entered for a couple event.",
-    "Offspring events are not edited directly in the Events "
-        "Table. They can be edited directly in the Immediate "
-        "Family pane above the Events Table.",
+    "Offspring events can't be changed to other event types in the "
+        "Events Table. Try doing this in the Types Tab.",
     "A couple event can't be changed to a non-couple event, or "
         "vice-versa. For example, a marriage can be changed to "
         "a wedding but a death can't be changed to a divorce. "

@@ -8,7 +8,7 @@ import dev_tools as dt
     The purpose of this tool is not for doing genealogy but for creating
     sample people and dates for the sample database so that real people
     are not used and so that I don't have to think up names and dates.
-    The death age is calculated very crudely but it's a good tool for doing
+    The death age is calculated crudely but this is a good tool for doing
     what it's intended to do. The values generated can be added 
     manually through the GUI inputs or by typing sql commands in the console.
     Just input a year of birth, the names and dates are made automatically. 
