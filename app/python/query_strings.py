@@ -27,11 +27,6 @@ delete_finding = '''
     WHERE finding_id = ?    
 '''
 
-# delete_finding_generic = '''
-    # DELETE FROM finding
-    # WHERE finding_id = ?
-# '''
-
 delete_finding_places = '''
     DELETE FROM finding_places
     WHERE finding_id = ?
@@ -49,7 +44,14 @@ delete_findings_persons = '''
 
 delete_persons_persons = '''
     DELETE FROM persons_persons
-    WHERE persons_persons_id = ?
+    WHERE finding_id = ?
+'''
+# won't this delete all their offspring?
+delete_findings_persons_offspring = '''
+    DELETE FROM findings_persons
+    WHERE finding_id = ?
+        AND person_id = ?
+        AND kin_type_id in (1, 2)
 '''
 
 delete_findings_roles_finding = '''
@@ -117,8 +119,8 @@ insert_findings_notes = '''
 
 insert_findings_persons_new_couple = '''
     INSERT INTO findings_persons (
-        finding_id, person_id, age, kin_type_id, persons_persons_id)
-    VALUES (?, ?, ?, ?, ?)
+        finding_id, person_id, age, kin_type_id)
+    VALUES (?, ?, ?, ?)
 '''
 
 insert_findings_roles = '''
@@ -151,7 +153,12 @@ insert_person_new = '''
 '''
 
 insert_persons_persons_new = '''
-    INSERT INTO persons_persons VALUES (?, ?, ?)
+    INSERT INTO persons_persons VALUES (?, ?, ?, ?)
+'''
+
+insert_persons_persons_finding = '''
+    INSERT INTO persons_persons
+    VALUES (null, ?, ?, ?)
 '''
 
 insert_place_new = '''
@@ -434,6 +441,12 @@ select_event_type_couple_bool = '''
     WHERE event_types = ?
 '''
 
+select_finding_event_type = '''
+    SELECT event_type_id
+    FROM finding
+    WHERE finding_id = ?
+'''
+
 select_finding_id_birth = '''
     SELECT finding_id 
     FROM finding
@@ -494,14 +507,15 @@ select_findings_details_generic = '''
 '''
 
 select_findings_details_couple_age = '''
-    SELECT person_id, age, kin_types, findings_persons.persons_persons_id
+    SELECT findings_persons.person_id, findings_persons.age, kin_types
     FROM findings_persons
+    JOIN finding
+        ON finding.finding_id = findings_persons.finding_id
     JOIN kin_type
         ON kin_type.kin_type_id = findings_persons.kin_type_id
     JOIN persons_persons
-        ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-    WHERE finding_id = ?
-        AND findings_persons.persons_persons_id = ?
+        ON persons_persons.finding_id = finding.finding_id
+    WHERE findings_persons.finding_id = ?
 '''
 
 select_findings_details_couple_generic = '''
@@ -684,28 +698,9 @@ select_person_id_kin_types_birth = '''
     WHERE finding_id = ?
 '''
 
-select_persons_persons = '''
-    SELECT findings_persons.persons_persons_id
-    FROM findings_persons
-    JOIN persons_persons
-        ON findings_persons.persons_persons_id =
-            persons_persons.persons_persons_id
-    WHERE finding_id = ?
-        AND person_id = ?
-'''
-
 select_persons_persons_both = '''
     SELECT person_id1, person_id2
     FROM persons_persons
-    WHERE persons_persons_id = ?
-'''
-
-select_persons_persons_id = '''
-    SELECT findings_persons.persons_persons_id
-    FROM findings_persons
-    JOIN persons_persons
-        ON findings_persons.persons_persons_id =
-            persons_persons.persons_persons_id
     WHERE finding_id = ?
 '''
 
@@ -890,6 +885,14 @@ update_findings_persons_mother = '''
         AND kin_type_id = 1
 '''
 
+update_findings_persons_parent_age = '''
+    UPDATE findings_persons
+    SET age = ?
+    WHERE finding_id = ?
+        AND kin_type_id in (1, 2)
+        AND person_id = ?
+'''
+
 update_findings_roles_person = '''
     UPDATE findings_roles 
     SET person_id = ? 
@@ -956,22 +959,23 @@ update_note_subtopic = '''
     WHERE note_id = ? 
 '''
 
+
 update_persons_persons_1 = '''
     UPDATE persons_persons
     SET person_id1 = ?
-    WHERE persons_persons_id = ?
+    WHERE finding_id = ?
 '''
 
 update_persons_persons_2 = '''
     UPDATE persons_persons
     SET person_id2 = ?
-    WHERE persons_persons_id = ?
+    WHERE finding_id = ?
 '''
 
 update_persons_persons_both = '''
     UPDATE persons_persons
     SET (person_id1, person_id2) = (?, ?)
-    WHERE persons_persons_id = ?
+    WHERE finding_id = ?
 '''
 
 update_place_hint = '''

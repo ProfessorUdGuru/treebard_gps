@@ -65,8 +65,8 @@ events_msg = (
     "The same person was used twice.",
     "Please enter a kin type for each person.",
     "A second person must be entered for a couple event.",
-    "Offspring events can't be changed to other event types in the "
-        "Events Table. Try doing this in the Types Tab.",
+    "Offspring events can't be changed to other event types. You "
+    "can delete the event and make a new event.",
     "A couple event can't be changed to a non-couple event, or "
         "vice-versa. For example, a marriage can be changed to "
         "a wedding but a death can't be changed to a divorce. "
@@ -75,7 +75,8 @@ events_msg = (
         "delete an event, delete the event type in the first column.",
     "An event is about to be deleted. This can't be undone. For "
         "couple events, the event will be deleted for both "
-        "partners.",
+        "partners. For offspring events, the child's birth event "
+        "will be deleted, but not the child.",
     "Each person has one birth and one death event. To add more "
         "hypothetical birth or death events, add them as assertions "
         "instead of conclusions. The events table is for conclusions, "
