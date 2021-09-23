@@ -134,7 +134,6 @@ def get_findings():
     generic_finding_ids = [i[0] for i in generic_finding_ids]
 
     for finding_id in generic_finding_ids:
-        print("line", looky(seeline()).lineno, "finding_id:", finding_id)
         cur.execute(select_findings_details_generic, (finding_id,))
         generic_finding_details = cur.fetchone()
         generic_finding_details = list(generic_finding_details)
@@ -155,13 +154,6 @@ def get_findings():
 
     couple_age_spouse = []
     generic_couple_findings = []
-
-    # sql =   '''
-                # SELECT finding_id, persons_persons_id 
-                # FROM findings_persons 
-                # WHERE person_id = (SELECT person_id FROM current WHERE current_id = 1)
-                    # AND kin_type_id in ({}) 
-            # '''.format(
     sql =   '''
                 SELECT finding_id 
                 FROM findings_persons 
@@ -210,25 +202,18 @@ def get_findings():
     cur.execute(select_finding_ids_age_parents, (current_person,))
     children = cur.fetchall()
     children = [list(i) for i in children]
-    print("line", looky(seeline()).lineno, "children:", children)
-    # is finding_id being re-used or what? could it be a different var name?
     for lst in children:
-        print("line", looky(seeline()).lineno, "lst:", lst)
         finding_id = lst[0]
-
         cur.execute(select_person_id_birth, (finding_id,))
         offspring = cur.fetchone()
         if offspring:
             lst.insert(2, offspring[0])
     kids = []
     for lst in children:
-        print("line", looky(seeline()).lineno, "lst:", lst)
-        child_id = lst[2]
-        
+        child_id = lst[2]        
         cur.execute(select_findings_details_offspring, (child_id,))
         offspring_details = list(cur.fetchall()[0])
-        print("line", looky(seeline()).lineno, "offspring_details:", offspring_details)
-        cur.execute(select_finding_places_nesting, (finding_id,))
+        cur.execute(select_finding_places_nesting, (lst[0],))
         place_string = cur.fetchone()
         place_string = [i for i in place_string if i]
         place_string = ', '.join(place_string)
@@ -242,7 +227,7 @@ def get_findings():
         new_list.insert(2, [offspring_details[0], offspring_details[1]])
         new_list.insert(3, offspring_details[2])
         new_list.insert(4, offspring_details[3])
-        kids.append(new_list) 
+        kids.append(new_list)
 
     finding_ids = []
     for lst in generic_findings:
@@ -467,22 +452,19 @@ class EventsTable(Frame):
                     cur.execute(delete_findings_persons_offspring, 
                         (finding_id, person))
                 conn.commit()
-# # won't this delete all their offspring? LOOK AT THE QUERY
-
                 cur.execute(delete_persons_persons, (finding_id,))
                 conn.commit()       
-                # delete_generic_finding() # UNCOMMENT THIS & DELETE BELOW IF POSSBL
-                cur.execute(delete_finding_places, (finding_id,))
-                conn.commit()
-                cur.execute(delete_findings_roles_finding, (finding_id,))
-                conn.commit()
-                cur.execute(delete_findings_notes_finding, (finding_id,))
-                conn.commit()
-                cur.execute(delete_claims_findings, (finding_id,))
-                conn.commit()
-                print("line", looky(seeline()).lineno, "finding_id:", finding_id)
-                cur.execute(delete_finding, (finding_id,))
-                conn.commit()
+                delete_generic_finding() # UNCOMMENT THIS & DELETE BELOW IF POSSBL
+                # cur.execute(delete_finding_places, (finding_id,))
+                # conn.commit()
+                # cur.execute(delete_findings_roles_finding, (finding_id,))
+                # conn.commit()
+                # cur.execute(delete_findings_notes_finding, (finding_id,))
+                # conn.commit()
+                # cur.execute(delete_claims_findings, (finding_id,))
+                # conn.commit()
+                # cur.execute(delete_finding, (finding_id,))
+                # conn.commit()
 
             current_person = self.current_person
             conn = sqlite3.connect(current_file)
@@ -620,6 +602,8 @@ class EventsTable(Frame):
                 self.finding)
 
         def update_age(offspring_event, row):
+            if row[0][1] == "birth" and self.final not in (0, "0", "0d 0m 0y"):
+                return
             if couple is False and offspring_event is False:
                 cur.execute(update_finding_age, (self.final, self.finding))
                 conn.commit() 
@@ -1188,8 +1172,6 @@ class NewEventDialog(Toplevel):
             self.edit_event = True
         else:
             self.edit_event = False
-        print("line", looky(seeline()).lineno, "self.edit_event:", self.edit_event)
-
 
         self.place_dicts = None
         self.new_event_type = False
@@ -1507,7 +1489,6 @@ class NewEventDialog(Toplevel):
         self.particulars_input.grid(column=1, row=3, sticky="w", padx=(3,0))
         if self.couple_event == 0:
             self.b1.config(command=self.add_event)
-            print("line", looky(seeline()).lineno, "self.new_event:", self.new_event)
             if self.ma_pa is True:
                 self.show_other_person()
             elif self.new_event == "offspring":
@@ -1604,7 +1585,6 @@ class NewEventDialog(Toplevel):
 
         def radio_reflex():
             parent_type = self.offspringvar.get()
-            print("line", looky(seeline()).lineno, "parent_type:", parent_type)
             if parent_type == 1:
                 self.mother_or_father.config(text="father")
             elif parent_type == 2:
@@ -1657,7 +1637,6 @@ class NewEventDialog(Toplevel):
             self.lab0.config(
                 text="offspring (child of {})".format(self.current_name))
             age1.config(text="Current Person Age")
-            # kin_type1.config(text="Child Kin Type")
             offspring.grid(column=0, row=0, sticky='e', pady=(9,1))
             self.offspring_input.grid(
                 column=1, row=0, sticky='w', padx=(3,0), pady=(9,1))
@@ -1676,8 +1655,6 @@ class NewEventDialog(Toplevel):
                 rad.grid(column=i, row=0)
         elif self.ma_pa is False:
             name1.grid(column=0, row=0, sticky="w", columnspan=2, pady=(9,1))
-            # self.age1_input.grid(
-                # column=1, row=1, sticky="w", padx=(3,0), pady=(0,1))
             self.kin_type_input1.grid(column=1, row=2, sticky="w", padx=(2,0))
             self.kin_type_input2.grid(column=4, row=2, sticky="w", padx=(2,0))
         else:
@@ -1686,8 +1663,6 @@ class NewEventDialog(Toplevel):
                 column=1, row=0, sticky='w', padx=(3,0), pady=(9,1))
             name1.config(text="mother")
             name2.config(text="father")
-            # self.age1_input.grid(
-                # column=1, row=1, sticky="w", padx=(3,0), pady=(0,1))
             mother_is_it.grid(column=1, row=2, sticky="w", padx=(2,0), ipadx=1)
             father_is_it.grid(column=4, row=2, sticky="w", padx=(2,0), ipadx=1)
         age1.grid(column=0, row=1, sticky="e", pady=(0,1))
@@ -1747,7 +1722,6 @@ class NewEventDialog(Toplevel):
                 self.particulars_input.get().strip(), self.new_finding)
         else:
             if self.couple_event == 0:
-                print("line", looky(seeline()).lineno, "running:")
                 if self.ma_pa is True:
                     ma_input = self.parent1_input.get()
                     ma_age = self.age1_input.get()
@@ -2002,8 +1976,9 @@ class NewEventDialog(Toplevel):
             ids.append(self.new_finding)
             cur.execute(insert_finding_places_new_event, tuple(ids))
             conn.commit() 
-        else:
+        else:            
             ids.append(self.finding_id)
+            print("line", looky(seeline()).lineno, "ids:", ids)
             cur.execute(update_finding_places, tuple(ids))
             conn.commit() 
 
@@ -2234,14 +2209,9 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# WHEN recreating an offspring that was just deleted, the persons_persons_id 33 is added back in along with the right one which is max_id + 1
-# the row is not being deleted from persons_persons_id when the offspring evt is deleted.
-# won't this delete all these parents' offspring? LOOK AT THE QUERY
-# persons_persons_id 14 the finding_id is 0, fix that
-# unable to delete offspring event, can't delete both finding and persons_persons row, not sure why but in case it's because the fk for ppid that's in findings_persons twice shd prob be replaced by one finding_id fk in pp, I'm going to restructure finding table and pp table and when the queries are adjusted and everything works, hopefully the problem will no longer exist re deleting an offspring evt, I say the fk is backwards bec pp is a details table not a type table so its pk shd not be used anywhere, the fks belong in details table. A type table has original data that originates in that table and it has few or no fks in it. The original reason for creating persons_persons table was that I'd been using the "husband/wife" dichotomy to do some logic that became impossible to do if the user chose to label the couple "spouse/spouse" instead. The table solved that problem but I think I put the fk in the wrong table and that created other problems or maybe a circular reference or something.
-# when trying to delete an offspring event by deleting the event on table, only the record in finding_places is deleted which breaks the table for next procedure.
 # test the kintips systems thoroughly by using it to create people from scratch. Anything that can't be done, make it possible. The goal is to totally replace the way that genbox makes parents and children so the whole immediate family area becomes unnecessary, could be replaced by a non-active display like a pannable pedigree for example. Then maybe make the pannable pedigree active anyway.
 # make sure it can still be done if only one parent is known, and you have to be able to add the unknown parent(s) also.
+# make sure you can't add an offspring by a certain person_id if the parents already have that person as an offspring. Think of other physically impossible things that have to be disallowed.
 # make sure it works if the child's and/or partner's name is a new person
 # add 'unknown' to kin_types in case someone doesn't want to display e.g. 'husband' for an unknown person, might need unknown for generic kin and unknown2 for couple events but if possible make unknown a special case which can be used anywhere
 # SEE # parameterize

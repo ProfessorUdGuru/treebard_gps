@@ -515,6 +515,7 @@ class ValidatePlace():
         qty = len(self.place_dicts)
         nulls = 9 - qty
         ids = ids + [None] * nulls
+        print("line", looky(seeline()).lineno, "self.finding:", self.finding)
         ids.append(self.finding)
         last = len(self.place_dicts) - 1
         q = 0
@@ -535,7 +536,7 @@ class ValidatePlace():
                     cur.execute(insert_places_places_new, (child, parent))
                     conn.commit()
             q += 1
-
+        print("line", looky(seeline()).lineno, "ids:", ids)
         cur.execute(update_finding_places, tuple(ids))
         conn.commit()   
         place_strings.insert(0, self.place_input)
