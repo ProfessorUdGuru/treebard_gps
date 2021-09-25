@@ -42,11 +42,11 @@ delete_findings_persons = '''
     WHERE finding_id = ?
 '''
 
-delete_persons_persons = '''
-    DELETE FROM persons_persons
-    WHERE finding_id = ?
-'''
-# won't this delete all their offspring?
+# delete_persons_persons = '''
+    # DELETE FROM persons_persons
+    # WHERE finding_id = ?
+# '''
+
 delete_findings_persons_offspring = '''
     DELETE FROM findings_persons
     WHERE finding_id = ?
@@ -119,8 +119,9 @@ insert_findings_notes = '''
 
 insert_findings_persons_new_couple = '''
     INSERT INTO findings_persons (
-        finding_id, person_id, age, kin_type_id)
-    VALUES (?, ?, ?, ?)
+        finding_id, person_id1, age1, kin_type_id1, 
+        person_id2, age2, kin_type_id2)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
 '''
 
 insert_findings_roles = '''
@@ -152,14 +153,14 @@ insert_person_new = '''
     INSERT INTO person VALUES (?, ?)
 '''
 
-insert_persons_persons_new = '''
-    INSERT INTO persons_persons VALUES (?, ?, ?, ?)
-'''
+# insert_persons_persons_new = '''
+    # INSERT INTO persons_persons VALUES (?, ?, ?, ?)
+# '''
 
-insert_persons_persons_finding = '''
-    INSERT INTO persons_persons
-    VALUES (null, ?, ?, ?)
-'''
+# insert_persons_persons_finding = '''
+    # INSERT INTO persons_persons
+    # VALUES (null, ?, ?, ?)
+# '''
 
 insert_place_new = '''
     INSERT INTO place (place_id, places)
@@ -228,12 +229,12 @@ select_all_kin_type_ids_couple = '''
         AND hidden = 0
 '''
 
-select_all_kin_types_couple = '''
-    SELECT kin_types
-    FROM kin_type
-    WHERE kin_code = 'D'
-        AND hidden = 0
-'''
+# select_all_kin_types_couple = '''
+    # SELECT kin_types
+    # FROM kin_type
+    # WHERE kin_code = 'D'
+        # AND hidden = 0
+# '''
 
 select_all_kin_ids_types_couple = '''
     SELECT kin_type_id, kin_types
@@ -455,17 +456,17 @@ select_finding_id_birth = '''
 '''
 
 select_finding_ids_age_parents = '''
-    SELECT finding_id, age
+    SELECT finding_id, age1
     FROM findings_persons
-    WHERE person_id = ?
-        AND kin_type_id in (1, 2)
+    WHERE person_id1 = ?
+        AND kin_type_id1 in (1, 2)
 '''
 
 select_finding_ids_offspring = '''
     SELECT finding_id
     FROM findings_persons
-    WHERE person_id = ?
-        AND kin_type_id in (1, 2)
+    WHERE person_id1 = ?
+        AND kin_type_id1 in (1, 2)
 '''
 
 select_finding_places_id = '''
@@ -499,7 +500,7 @@ select_finding_places_nesting = '''
 '''
 
 select_findings_details_generic = '''
-    SELECT event_types, date, date_sorter, particulars, age
+    SELECT event_types, particulars, age, date, date_sorter
     FROM finding
     JOIN event_type
         ON finding.event_type_id = event_type.event_type_id
@@ -507,19 +508,20 @@ select_findings_details_generic = '''
 '''
 
 select_findings_details_couple_age = '''
-    SELECT findings_persons.person_id, findings_persons.age, kin_types
+    SELECT findings_persons.person_id1, findings_persons.age1, a.kin_types,
+        findings_persons.person_id2, findings_persons.age2, b.kin_types
     FROM findings_persons
     JOIN finding
         ON finding.finding_id = findings_persons.finding_id
-    JOIN kin_type
-        ON kin_type.kin_type_id = findings_persons.kin_type_id
-    JOIN persons_persons
-        ON persons_persons.finding_id = finding.finding_id
+    JOIN kin_type as a
+        ON a.kin_type_id = findings_persons.kin_type_id1
+    JOIN kin_type as b
+        ON b.kin_type_id = findings_persons.kin_type_id2
     WHERE findings_persons.finding_id = ?
 '''
 
 select_findings_details_couple_generic = '''
-    SELECT event_types, date, date_sorter, finding_places_id, particulars 
+    SELECT event_types, date, date_sorter, particulars, finding_places_id 
     FROM finding 
         JOIN finding_places 
             ON finding_places.finding_id = finding.finding_id 
@@ -529,7 +531,7 @@ select_findings_details_couple_generic = '''
 '''
 
 select_findings_details_offspring = '''
-    SELECT date, date_sorter, finding_places_id, particulars
+    SELECT date, date_sorter, particulars, finding_places_id
     FROM finding
     JOIN finding_places
         ON finding_places.finding_id = finding.finding_id
@@ -550,6 +552,12 @@ select_findings_persons_age = '''
     FROM findings_persons
     WHERE person_id = ?
         AND finding_id = ?
+'''
+
+select_findings_persons_parents = '''
+    SELECT person_id1, person_id2
+    FROM findings_persons
+    WHERE finding_id = ?
 '''
 
 select_generic_event_roles = '''
@@ -604,9 +612,9 @@ select_max_person_id = '''
     SELECT MAX(person_id) FROM person
 '''
 
-select_max_persons_persons_id = ''' 
-    SELECT MAX(persons_persons_id) FROM persons_persons 
-'''
+# select_max_persons_persons_id = ''' 
+    # SELECT MAX(persons_persons_id) FROM persons_persons 
+# '''
 
 select_max_place_id = ''' SELECT MAX(place_id) FROM place '''
 
@@ -691,16 +699,12 @@ select_person_id_birth = '''
 '''
 
 select_person_id_kin_types_birth = '''
-    SELECT person_id, kin_types
+    SELECT person_id1, a.kin_types, person_id2, b.kin_types
     FROM findings_persons
-    JOIN kin_type
-        ON kin_type.kin_type_id = findings_persons.kin_type_id
-    WHERE finding_id = ?
-'''
-
-select_persons_persons_both = '''
-    SELECT person_id1, person_id2
-    FROM persons_persons
+    JOIN kin_type as a
+        ON a.kin_type_id = findings_persons.kin_type_id1
+    JOIN kin_type as b
+        ON b.kin_type_id = findings_persons.kin_type_id2
     WHERE finding_id = ?
 '''
 
@@ -844,6 +848,24 @@ update_findings_notes = '''
         AND note_id = ? 
 '''
 
+update_findings_persons_1 = '''
+    UPDATE findings_persons
+    SET person_id1 = ?
+    WHERE finding_id = ?
+'''
+
+update_findings_persons_2 = '''
+    UPDATE findings_persons
+    SET person_id2 = ?
+    WHERE finding_id = ?
+'''
+
+update_findings_persons_1_2 = '''
+    UPDATE findings_persons
+    SET (person_id1, person_id2) = (?, ?)
+    WHERE finding_id = ?
+'''
+
 update_findings_persons_couple_age = '''
     UPDATE findings_persons
     SET age = ?
@@ -959,24 +981,23 @@ update_note_subtopic = '''
     WHERE note_id = ? 
 '''
 
+# update_persons_persons_1 = '''
+    # UPDATE persons_persons
+    # SET person_id1 = ?
+    # WHERE finding_id = ?
+# '''
 
-update_persons_persons_1 = '''
-    UPDATE persons_persons
-    SET person_id1 = ?
-    WHERE finding_id = ?
-'''
+# update_persons_persons_2 = '''
+    # UPDATE persons_persons
+    # SET person_id2 = ?
+    # WHERE finding_id = ?
+# '''
 
-update_persons_persons_2 = '''
-    UPDATE persons_persons
-    SET person_id2 = ?
-    WHERE finding_id = ?
-'''
-
-update_persons_persons_both = '''
-    UPDATE persons_persons
-    SET (person_id1, person_id2) = (?, ?)
-    WHERE finding_id = ?
-'''
+# update_persons_persons_both = '''
+    # UPDATE persons_persons
+    # SET (person_id1, person_id2) = (?, ?)
+    # WHERE finding_id = ?
+# '''
 
 update_place_hint = '''
     UPDATE place 
