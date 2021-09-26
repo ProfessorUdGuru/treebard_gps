@@ -28,7 +28,7 @@ char_dict = {
 vowels = ('a', 'e', 'i', 'o', 'u')
 consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z')
 
-name = "William Claude Dukenfield"
+name = "Robert Anthony De Niro Junior"
 name = name.split()
 lowered = []
 for nick in name:
@@ -112,6 +112,7 @@ ent11.insert(0, ent1.get())
 
 
 
+
 root.mainloop()
 
 
@@ -138,6 +139,9 @@ root.mainloop()
 
 # 483
 # Alison Maria Krauss Born: 23 July 1971 Decatur, Illinois
+
+# 134
+# Robert Anthony De Niro Junior born August 17, 1943 New York City, U.S
 
 # 685
 # william henry gates the third    born october 28 1955 - scorpio

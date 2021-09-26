@@ -17,7 +17,7 @@ from query_strings import (
     update_findings_roles_person, insert_role_type, 
     update_findings_roles_role_type, update_findings_roles_null_person,
     delete_findings_role, select_count_findings_roles, select_role_types,
-    select_generic_event_roles, select_couple_event_ids, 
+    select_findings_roles_generic, select_couple_event_ids, 
     select_couple_event_roles)
 import dev_tools as dt
 
@@ -708,7 +708,7 @@ class RolesDialog(Toplevel):
                 Flower girl in a Wedding event is couple-event role because
                 it will be linked to both spouses.
             '''
-            cur.execute(select_generic_event_roles, (self.current_person,))
+            cur.execute(select_findings_roles_generic, (self.current_person,))
             generic_event_roles = cur.fetchall()
             generic_event_roles = [list(i) for i in generic_event_roles]
 

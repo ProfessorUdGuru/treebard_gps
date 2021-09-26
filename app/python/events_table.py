@@ -28,10 +28,10 @@ from query_strings import (
     select_finding_places_nesting, select_current_person_id, 
     select_all_event_types_couple, select_all_kin_type_ids_couple,
     select_all_findings_current_person, select_findings_details_generic,
-    select_findings_details_couple_age, select_findings_details_couple_generic,
+    select_findings_details_couple, select_findings_details_couple_generic,
     select_finding_id_birth, select_person_id_kin_types_birth,
     select_finding_ids_age_parents, select_person_id_birth,
-    select_findings_details_offspring, select_all_findings_roles_ids, 
+    select_findings_details_offspring, select_all_findings_roles_ids_distinct, 
     select_finding_ids_offspring, select_all_findings_notes_ids,
     select_count_finding_id_sources, select_nesting_fk_finding,
     select_nestings_and_ids, select_place, update_finding_particulars,
@@ -45,23 +45,18 @@ from query_strings import (
     insert_places_places_new, insert_finding_places_new_event,
     insert_event_type_new, select_max_event_type_id, delete_finding,delete_claims_findings, delete_finding_places,
     delete_findings_roles_finding, delete_findings_notes_finding, 
-    delete_claims_findings, 
-    delete_findings_persons,
+    delete_claims_findings, delete_findings_persons,    
     select_findings_for_person, insert_finding_places_new,
     select_event_type_after_death, select_event_type_after_death_bool,
-    select_kin_types_finding,  
-    select_findings_persons_parents,
-    update_findings_persons_2, update_findings_persons_1,
-    update_findings_persons_couple_old,
+    select_kin_types_finding, update_findings_persons_1_2,  
+    select_findings_persons_parents, update_findings_persons_couple_old,
+    update_findings_persons_2, update_findings_persons_1,   
     update_findings_persons_couple_new, update_finding_places_null,
-    update_finding_places, 
-    select_findings_persons_age,
-    update_findings_persons_1_2,
+    update_finding_places, select_findings_persons_age,
     update_findings_persons_mother, update_findings_persons_father,
     insert_finding_birth, update_findings_persons_parent_age,
     select_finding_event_type, delete_findings_persons_offspring,
-    
-
+    select_findings_roles_generic_finding, 
 
 )
 
@@ -136,18 +131,21 @@ def make_sorter(date):
     date = [int(i) for i in sorter]
     return date
 
-def get_generic_findings(dkt, conn, cur, finding_id, findings_data):
+def get_generic_findings(
+        dkt, cur, finding_id, findings_data, current_person, non_empty_roles):
     cur.execute(select_findings_details_generic, finding_id)
     generic_details = [i for i in cur.fetchone()] 
     sorter = make_sorter(generic_details[4])
-    # sorter = generic_details[4].split(",")
-    # generic_details[4] = [int(i) for i in sorter]
     dkt["event"], dkt["particulars"], dkt["age"] = generic_details[0:3]
     dkt["date"] = [generic_details[3], sorter]
     get_place_string(finding_id, dkt, cur)
+
+    if finding_id[0] in non_empty_roles:
+        get_role_findings(dkt, finding_id, cur, current_person)
+
     findings_data[finding_id[0]] = dkt
 
-def get_couple_findings(conn, cur, current_person, rowtotype, findings_data):
+def get_couple_findings(cur, current_person, rowtotype, findings_data):
     couple_kin_type_ids = get_couple_kin_types()
     curr_per_kin_types = tuple([current_person] + couple_kin_type_ids)
     sql =   '''
@@ -172,31 +170,37 @@ def get_couple_findings(conn, cur, current_person, rowtotype, findings_data):
     for finding_id in couple_findings:
         finding_id = (finding_id,)
         dkt = dict(rowtotype)
-        cur.execute(select_findings_details_couple_age, finding_id)
+        cur.execute(select_findings_details_couple, finding_id)
         gotgot = cur.fetchone()
         if gotgot:
             if gotgot[0] == current_person:
                 dkt["age"] = gotgot[1]
                 dkt["kin_type"] = gotgot[2]
+                dkt["partner_id"] = gotgot[3]
+                dkt["partner_kin_type"] = gotgot[5]
+                dkt["partner_name"] = get_name_with_id(gotgot[3])
             elif gotgot[3] == current_person:
                 dkt["age"] = gotgot[4]
                 dkt["kin_type"] = gotgot[5]
+                dkt["partner_id"] = gotgot[0]
+                dkt["partner_kin_type"] = gotgot[2]
+                dkt["partner_name"] = get_name_with_id(gotgot[0])
       
         cur.execute(select_findings_details_couple_generic, finding_id)
         couple_generics = list(cur.fetchone())
         get_place_string(finding_id, dkt, cur)
         sorter = make_sorter(couple_generics[2])
-        # sorter = couple_generics[2].split(",")
-        # couple_generics[2] = [int(i) for i in sorter]
         couple_generic_details = [
             couple_generics[0], 
-            [couple_generics[1], sorter],
-            # [couple_generics[1], couple_generics[2]], 
+            [couple_generics[1], sorter], 
             couple_generics[3]]
         dkt["event"], dkt["date"], dkt["particulars"] = couple_generic_details
         findings_data[finding_id[0]] = dkt
 
-def get_birth_findings(dkt, conn, cur, current_person):
+    return couple_findings
+
+def get_birth_findings(dkt, cur, current_person, non_empty_roles):
+    dkt["offspring"] = []
     cur.execute(select_finding_id_birth, (current_person,))
     birth_id = cur.fetchone()
     parents = (None, None)
@@ -206,11 +210,15 @@ def get_birth_findings(dkt, conn, cur, current_person):
     if not parents:
         pass
     elif parents[1] == "mother":
-        dkt["mother"] = parents[0]
-        dkt["father"] = parents[2]
+        dkt["mother_id"] = parents[0]
+        dkt["mother_name"] = get_name_with_id(parents[0])
+        dkt["father_id"] = parents[2]
+        dkt["father_name"] = get_name_with_id(parents[2])
     elif parents[3] == "mother":
-        dkt["father"] = parents[0]
-        dkt["mother"] = parents[2]
+        dkt["father_id"] = parents[0]
+        dkt["father_name"] = get_name_with_id(parents[0])
+        dkt["mother_id"] = parents[2]
+        dkt["mother_name"] = get_name_with_id(parents[2])
 
     cur.execute(select_finding_ids_age_parents, (current_person,))
     children = [list(i) for i in cur.fetchall()]
@@ -226,21 +234,84 @@ def get_birth_findings(dkt, conn, cur, current_person):
         cur.execute(select_findings_details_offspring, (child_id,))       
         offspring_details = cur.fetchone()
 
+        child_name = get_name_with_id(child_id)
+
         sorter = make_sorter(offspring_details[1])
-        date = [offspring_details[1], sorter]
-        # date = (offspring_details[0:2])
+        date = [offspring_details[0], sorter]
         particulars = offspring_details[2]
-        cur.execute(select_finding_places_nesting, birth_id)
+        # make get_place_string() more general so it can be used here too
+        cur.execute(select_finding_places_nesting, (offspring_event_id,))
         place = ", ".join([i for i in cur.fetchone() if i])
         if place == "unknown":
             place = ""
-        dkt["offspring"] = {}
-        dkt["offspring"][offspring_event_id] = {
+
+
+        dkt["offspring"].append({offspring_event_id: {
             "child_id": child_id,
+            "child_name": child_name,
             "date": date,
             "place": place,
             "particulars": particulars,
-            "parent_age": parent_age, }
+            "parent_age": parent_age }})
+
+        if offspring_event_id in non_empty_roles:
+            get_role_findings(
+                dkt, (offspring_event_id,), cur, current_person, offspring=True)
+
+def get_role_findings(dkt, finding_id, cur, current_person, offspring=False):
+
+    cur.execute(select_findings_roles_generic_finding, finding_id)
+    current_roles = cur.fetchall()
+    if offspring is False:
+        dkt["roles"] = current_roles
+    else:
+        for dikt in dkt["offspring"]:
+            if list(dikt.keys())[0] == finding_id[0]:
+                dikt[finding_id[0]]["roles"] = current_roles
+ 
+
+        
+
+
+
+
+
+
+
+
+
+
+    # if finding_id in current_roles:
+        # cur.execute(select_roles, (finding_id,))
+        # got_roles = [i[0] for i in cur.fetchall()]
+        # print("line", looky(seeline()).lineno, "got_roles:", got_roles)
+        # # findings_roles_id, 
+        # # role_types, 
+        # # person_id, 
+        # # findings_roles.role_type_id 
+        # roles.extend(got_roles) 
+    # print("line", looky(seeline()).lineno, "roles:", roles)
+
+    
+
+    # current_roles = []
+    # for role_id in all_finding_ids:
+        # if role_id in non_empty_roles:
+            # current_roles.append(role_id)
+    # cur.execute(select_finding_ids_offspring, (current_person,))
+    # offspring_events = cur.fetchall()
+
+    # if len(offspring_events) != 0:
+        # offspring_roles = []
+        # for finding_id in offspring_events:
+            # if finding_id[0] in non_empty_roles:
+                # offspring_roles.append(finding_id[0])
+        # current_roles.extend(offspring_roles)
+    # print("line", looky(seeline()).lineno, "current_roles:", current_roles)
+
+
+def get_note_findings(all_finding_ids, cur, current_person):
+    pass
 
 def get_findings():
     
@@ -249,94 +320,36 @@ def get_findings():
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
 
-    generic_findings = []
     rowtotype = {
         "event": "", "date": "", "place": "", "particulars": "", "age": ""}
 
     cur.execute(select_all_findings_current_person, (current_person,))
     generic_finding_ids = cur.fetchall()
 
+    cur.execute(select_all_findings_roles_ids_distinct)
+    non_empty_roles = [i[0] for i in cur.fetchall()]
+    print("line", looky(seeline()).lineno, "non_empty_roles:", non_empty_roles)
+
     for finding_id in generic_finding_ids:
         dkt = dict(rowtotype)
-        get_generic_findings(dkt, conn, cur, finding_id, findings_data)
+        get_generic_findings(
+            dkt, cur, finding_id, findings_data, current_person, non_empty_roles)
         if dkt["event"] == "birth":
-            get_birth_findings(dkt, conn, cur, current_person)
+            get_birth_findings(dkt, cur, current_person, non_empty_roles)
 
-    get_couple_findings(conn, cur, current_person, rowtotype, findings_data)
-                    
-    findings_data[finding_id[0]] = dkt
-    # print("line", looky(seeline()).lineno, "findings_data:", findings_data)
-        
-        # cur.execute(select_finding_places_nesting, (lst[0],))
-        # place_string = cur.fetchone()
-        # place_string = [i for i in place_string if i]
-        # place_string = ', '.join(place_string)
-        # offspring_details[2] = place_string
-        # if offspring_details[2] == 'unknown':
-            # offspring_details[2] = ''
+    # generic_finding_ids = [i[0] for i in generic_finding_ids]
 
-        # name = get_name_with_id(child_id)
-        # new_list = [lst[0], lst[1], [name, child_id, 'child']] 
-        # new_list.insert(1, 'offspring')
-        # new_list.insert(2, [offspring_details[0], offspring_details[1]])
-        # new_list.insert(3, offspring_details[2])
-        # new_list.insert(4, offspring_details[3])
-        # kids.append(new_list)
+    couple_finding_ids = get_couple_findings(
+        cur, current_person, rowtotype, findings_data)
 
-    # finding_ids = []
-    # for lst in generic_findings:
-        # if lst[0] not in finding_ids:
-            # finding_ids.append(lst[0])
-    # for lst in generic_couple_findings:
-        # if lst[0] not in finding_ids:
-            # finding_ids.append(lst[0])
-    # for lst in children:
-        # if lst[0] not in finding_ids:
-            # finding_ids.append(lst[0])
-    # couple_findings = []
-    # for finding in generic_couple_findings:
-        # for spouse_age in couple_age_spouse:
-            # print("line", looky(seeline()).lineno, "spouse_age:", spouse_age)
-# # line 259 spouse_age: [5, (1, '25', 'spouse'), (6, '24', 'spouse')]
-            # if finding[0] == spouse_age[0]:
-                # for spouse in spouse_age[1:]:
-                    # if spouse[0] == current_person:
-                        # finding.append(spouse[1])
-                # for spouse in spouse_age[1:]:
-                    # if spouse[0] != current_person:
-                        # spouse_id = spouse[0]
-                        # name = get_name_with_id(spouse_id)
-                        # kin_type = spouse[2]
-                        # finding.append([name, spouse_id, kin_type])
-        # finding[2] = finding[2:4]
-        # del finding[3]
-        # print("line", looky(seeline()).lineno, "couple_findings:", couple_findings)
-        # couple_findings.append(finding)
-
-    # print("line", looky(seeline()).lineno, "couple_findings:", couple_findings)
-# # line 273 couple_findings: []
-# # line 276 couple_findings: [[5, 'marriage', ['Mar 12, 1909', '1909,3,12'], 'Aspen, Pitkin County, Colorado, USA', 'musically inclined, childhood sweethearts', ['Jeremiah Laurence Grimaldo', 1, 'spouse'], ['Ronnie Webb', 6, 'spouse']]]
-    # couple_finding_ids = [i[0] for i in couple_findings]
-    # all_finding_ids = generic_finding_ids + couple_finding_ids
+    # all_finding_ids = couple_finding_ids + [i[0] for i in generic_finding_ids]
     # print("line", looky(seeline()).lineno, "all_finding_ids:", all_finding_ids)
-    # cur.execute(select_all_findings_roles_ids)
-    # non_empty_roles = cur.fetchall()
-    # non_empty_roles = [i[0] for i in non_empty_roles]
 
-    # current_roles = []
-    # for role_id in all_finding_ids:
-        # if role_id in non_empty_roles:
-            # current_roles.append(role_id)
-    # cur.execute(select_finding_ids_offspring, (current_person,))
-    # offspring_events = cur.fetchone()
+        
+    # get_role_findings(all_finding_ids, cur, current_person)
 
-    # if offspring_events:
-        # offspring_roles = []
-        # for finding_id in offspring_events:
-            # if finding_id in non_empty_roles:
-                # offspring_roles.append(finding_id)
-        # current_roles.extend(offspring_roles)
-    # non_empty_roles = current_roles
+
+
 
     # cur.execute(select_all_findings_notes_ids)
 
@@ -364,17 +377,9 @@ def get_findings():
         # src_count = cur.fetchone()
         # source_count.append((finding_id, src_count[0]))
 
-    # cur.close()
-    # conn.close()  
-    # return (
-        # generic_findings,
-        # couple_findings, 
-        # parents, 
-        # kids,
-        # finding_ids,
-        # non_empty_roles,
-        # non_empty_notes,
-        # source_count)
+    cur.close()
+    conn.close()  
+
     return findings_data
 
 class EventsTable(Frame):
@@ -761,7 +766,7 @@ class EventsTable(Frame):
         parents = findings_data[2]
         children = findings_data[3]
         finding_ids = findings_data[4]
-        non_empty_roles = findings_data[5]
+        current_roles = findings_data[5]
         non_empty_notes = findings_data[6]
         source_count = findings_data[7]
 
@@ -770,7 +775,7 @@ class EventsTable(Frame):
         print("line", looky(seeline()).lineno, "parents:", parents)
         print("line", looky(seeline()).lineno, "children:", children)
         print("line", looky(seeline()).lineno, "finding_ids:", finding_ids)
-        print("line", looky(seeline()).lineno, "non_empty_roles:", non_empty_roles)
+        print("line", looky(seeline()).lineno, "current_roles:", current_roles)
         print("line", looky(seeline()).lineno, "non_empty_notes:", non_empty_notes)
         print("line", looky(seeline()).lineno, "source_count:", source_count)
 
@@ -827,7 +832,7 @@ class EventsTable(Frame):
             widg = row[6][0]
             finding_id = row[9]
             widg.finding_id = finding_id
-            if row[9] in non_empty_roles:
+            if row[9] in current_roles:
                 widg.header = [row[0][1], row[1][1][0], row[2][1], row[3][1]]
                 row[6][1] = ' ... '
             else:
@@ -2275,7 +2280,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# LEFT OFF with make_sorter(). Check to see that all offspring events are being made and all offspring event dates are correctly formatted.
+# LEFT OFF at line 289 key, d trying to match them up so I can put offspring roles in the correct dict
 # test the kintips systems thoroughly by using it to create people from scratch. Anything that can't be done, make it possible. The goal is to totally replace the way that genbox makes parents and children so the whole immediate family area becomes unnecessary, could be replaced by a non-active display like a pannable pedigree for example. Then maybe make the pannable pedigree active anyway.
 # make sure it can still be done if only one parent is known, and you have to be able to add the unknown parent(s) also.
 # make sure you can't add an offspring by a certain person_id if the parents already have that person as an offspring. Think of other physically impossible things that have to be disallowed.
@@ -2317,7 +2322,7 @@ if __name__ == '__main__':
 
 
 
-# ADD TO DEV DOCS FOR EVENTS TABLE.PY: is it possible to get rid of persons_persons table? There seems to be a one-to-one relationship between the finding_id in a couple event and the persons_persons_id in that event. So look at what persons_persons is being used for. Can the finding_id be used instead? Seems like they aren't exactly the same thing because finding_id has 2 records in findings_persons for each event where the two people are related, but 1 record in persons_persons. Try to remember why I created this table to begin with. Something to do with ??? I have no idea but it's very recent so shd have left a trail of blather in some rollback with the rationale behind this annoying data item. Look at August rollbacks for a hint. For ex on aug 28 I wrote "But let's say you want to search how many 2 people are linked to each other. This would be a very simple search if each event in which the 2 are coupled is a separate persons_persons_id.) Another question: have I put the fk in the wrong table? Now I'm putting persons_persons_id in findings_persons table. Should I instead be putting finding_id in persons_persons table? Then there's a directly discernible reason for each row in the p_P table to exist instead of just these 2 mysterious columns. But it would be a drastic redesign to move finding_id to persons_persons out of findings_persons where it is now and it seems like I'm very close to making the code work, since it already works for same-name couple (spouse/spouse), all I need is to make the code work for diff-name couples (wife/husband) and since it's already close, I shd resist the temptation to rip the building down to the foundations, change the foundations, and start over completely because that's what I'd have to do, I'd have to refactor the events_table code again and I kinda refuse." But what was the original reason to make the table? Here it is, same day: "select_findings_details_couple_age is inadequate since it looks for pairs of matched kin_type_id but wife & husband have different ids whereas spouse & spouse have the same. Need a better way to select partnerships eg maybe a new table called couples so that each coupling will have a separate couple_id (persons_persons_id). It should be a table called persons_persons because it is many to many, each person can have any number of links to each other person including more than one link to the same person in case the same couple gets married twice etc. Then put fk persons_persons_id in findings_persons. The persons_persons table might be useful for other relationship problems later on such as people with real parents, foster parents, and adoptive parents for example." So in short, the problem I was having was that I was doing something by searching for matching kin type to find spouses, but this didn't work eg with "wife" and "husband" because the kin types didn't match. So I had to register the relationship as a single record in a table to easily detect the relationship.
+# ADD TO DEV DOCS FOR EVENTS TABLE.PY: is it possible to get rid of persons_persons table? There seems to be a one-to-one relationship between the finding_id in a couple event and the persons_persons_id in that event. So look at what persons_persons is being used for. Can the finding_id be used instead? Seems like they aren't exactly the same thing because finding_id has 2 records in findings_persons for each event where the two people are related, but 1 record in persons_persons. Try to remember why I created this table to begin with. Something to do with ??? I have no idea but it's very recent so shd have left a trail of blather in some rollback with the rationale behind this annoying data item. Look at August rollbacks for a hint. For ex on aug 28 I wrote "But let's say you want to search how many 2 people are linked to each other. This would be a very simple search if each event in which the 2 are coupled is a separate persons_persons_id.) Another question: have I put the fk in the wrong table? Now I'm putting persons_persons_id in findings_persons table. Should I instead be putting finding_id in persons_persons table? Then there's a directly discernible reason for each row in the p_P table to exist instead of just these 2 mysterious columns. But it would be a drastic redesign to move finding_id to persons_persons out of findings_persons where it is now and it seems like I'm very close to making the code work, since it already works for same-name couple (spouse/spouse), all I need is to make the code work for diff-name couples (wife/husband) and since it's already close, I shd resist the temptation to rip the building down to the foundations, change the foundations, and start over completely because that's what I'd have to do, I'd have to refactor the events_table code again and I kinda refuse." But what was the original reason to make the table? Here it is, same day: "select_findings_details_couple is inadequate since it looks for pairs of matched kin_type_id but wife & husband have different ids whereas spouse & spouse have the same. Need a better way to select partnerships eg maybe a new table called couples so that each coupling will have a separate couple_id (persons_persons_id). It should be a table called persons_persons because it is many to many, each person can have any number of links to each other person including more than one link to the same person in case the same couple gets married twice etc. Then put fk persons_persons_id in findings_persons. The persons_persons table might be useful for other relationship problems later on such as people with real parents, foster parents, and adoptive parents for example." So in short, the problem I was having was that I was doing something by searching for matching kin type to find spouses, but this didn't work eg with "wife" and "husband" because the kin types didn't match. So I had to register the relationship as a single record in a table to easily detect the relationship.
 
 
 

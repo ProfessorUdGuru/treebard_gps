@@ -213,6 +213,11 @@ select_all_findings_roles_ids = '''
     FROM findings_roles
 '''
 
+select_all_findings_roles_ids_distinct = '''
+    SELECT DISTINCT finding_id
+    FROM findings_roles
+'''
+
 select_all_findings_notes_ids = '''
     SELECT finding_id
     FROM findings_notes
@@ -499,15 +504,7 @@ select_finding_places_nesting = '''
     WHERE finding_id = ? 
 '''
 
-select_findings_details_generic = '''
-    SELECT event_types, particulars, age, date, date_sorter
-    FROM finding
-    JOIN event_type
-        ON finding.event_type_id = event_type.event_type_id
-    WHERE  finding_id = ?
-'''
-
-select_findings_details_couple_age = '''
+select_findings_details_couple = '''
     SELECT findings_persons.person_id1, findings_persons.age1, a.kin_types,
         findings_persons.person_id2, findings_persons.age2, b.kin_types
     FROM findings_persons
@@ -528,6 +525,14 @@ select_findings_details_couple_generic = '''
         JOIN event_type 
             ON finding.event_type_id = event_type.event_type_id 
     WHERE finding_places.finding_id = ?
+'''
+
+select_findings_details_generic = '''
+    SELECT event_types, particulars, age, date, date_sorter
+    FROM finding
+    JOIN event_type
+        ON finding.event_type_id = event_type.event_type_id
+    WHERE  finding_id = ?
 '''
 
 select_findings_details_offspring = '''
@@ -560,7 +565,7 @@ select_findings_persons_parents = '''
     WHERE finding_id = ?
 '''
 
-select_generic_event_roles = '''
+select_findings_roles_generic = '''
     SELECT 
         finding.finding_id,
         findings_roles.role_type_id,
@@ -574,6 +579,21 @@ select_generic_event_roles = '''
         JOIN role_type
             ON role_type.role_type_id = findings_roles.role_type_id 
     WHERE finding.person_id = ?
+'''
+
+select_findings_roles_generic_finding = '''
+    SELECT 
+        findings_roles.role_type_id,
+        findings_roles.person_id        
+    FROM
+        finding
+        JOIN findings_roles
+            ON findings_roles.finding_id = finding.finding_id 
+        JOIN person
+            ON person.person_id = findings_roles.person_id
+        JOIN role_type
+            ON role_type.role_type_id = findings_roles.role_type_id 
+    WHERE findings_roles.finding_id = ?
 '''
 
 select_image_id = '''
