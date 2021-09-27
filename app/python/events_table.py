@@ -120,11 +120,12 @@ def get_couple_kin_types():
     conn.close()
     return couple_kin_type_ids
 
-def get_place_string(finding_id, dkt, cur):
+def get_place_string(finding_id, cur):
     cur.execute(select_finding_places_nesting, finding_id)
-    dkt["place"] = ", ".join([i for i in cur.fetchone() if i])
-    if dkt["place"] == "unknown":
-        dkt["place"] = ""
+    place = cur.fetchone()
+    place_string = ", ".join([i for i in place if i])
+    if place_string == "unknown": place_string = ""
+    return place_string
 
 def make_sorter(date):
     sorter = date.split(",")
@@ -132,20 +133,32 @@ def make_sorter(date):
     return date
 
 def get_generic_findings(
-        dkt, cur, finding_id, findings_data, current_person, non_empty_roles):
+        dkt, cur, finding_id, findings_data, 
+        current_person, non_empty_roles, non_empty_notes):
     cur.execute(select_findings_details_generic, finding_id)
     generic_details = [i for i in cur.fetchone()] 
     sorter = make_sorter(generic_details[4])
     dkt["event"], dkt["particulars"], dkt["age"] = generic_details[0:3]
     dkt["date"] = [generic_details[3], sorter]
-    get_place_string(finding_id, dkt, cur)
+    place = get_place_string(finding_id, cur)
+    dkt["place"] = place
 
     if finding_id[0] in non_empty_roles:
-        get_role_findings(dkt, finding_id, cur, current_person)
+        get_role_findings(dkt, finding_id[0], cur, current_person)
+
+    if finding_id[0] in non_empty_notes:
+        get_note_findings(dkt, finding_id[0], cur, current_person)
+
+    cur.execute(select_count_finding_id_sources, finding_id)
+    source_count = cur.fetchone()[0]
+    dkt["source_count"] = source_count
 
     findings_data[finding_id[0]] = dkt
 
-def get_couple_findings(cur, current_person, rowtotype, findings_data):
+def get_couple_findings(
+        cur, current_person, rowtotype, findings_data, 
+        non_empty_roles, non_empty_notes):
+
     couple_kin_type_ids = get_couple_kin_types()
     curr_per_kin_types = tuple([current_person] + couple_kin_type_ids)
     sql =   '''
@@ -188,18 +201,30 @@ def get_couple_findings(cur, current_person, rowtotype, findings_data):
       
         cur.execute(select_findings_details_couple_generic, finding_id)
         couple_generics = list(cur.fetchone())
-        get_place_string(finding_id, dkt, cur)
+        place = get_place_string(finding_id, cur)
+        dkt["place"] = place
         sorter = make_sorter(couple_generics[2])
         couple_generic_details = [
             couple_generics[0], 
             [couple_generics[1], sorter], 
             couple_generics[3]]
+
+        if finding_id[0] in non_empty_roles:
+            get_role_findings(dkt, finding_id[0], cur, current_person)
+
+        if finding_id[0] in non_empty_notes:
+            get_note_findings(dkt, finding_id[0], cur, current_person)
+
+        cur.execute(select_count_finding_id_sources, finding_id)
+        source_count = cur.fetchone()[0]
+        dkt["source_count"] = source_count
+
         dkt["event"], dkt["date"], dkt["particulars"] = couple_generic_details
         findings_data[finding_id[0]] = dkt
 
     return couple_findings
 
-def get_birth_findings(dkt, cur, current_person, non_empty_roles):
+def get_birth_findings(dkt, cur, current_person, non_empty_roles, non_empty_notes):
     dkt["offspring"] = []
     cur.execute(select_finding_id_birth, (current_person,))
     birth_id = cur.fetchone()
@@ -239,12 +264,10 @@ def get_birth_findings(dkt, cur, current_person, non_empty_roles):
         sorter = make_sorter(offspring_details[1])
         date = [offspring_details[0], sorter]
         particulars = offspring_details[2]
-        # make get_place_string() more general so it can be used here too
-        cur.execute(select_finding_places_nesting, (offspring_event_id,))
-        place = ", ".join([i for i in cur.fetchone() if i])
-        if place == "unknown":
-            place = ""
+        place = get_place_string((offspring_event_id,), cur)
 
+        cur.execute(select_count_finding_id_sources, (offspring_event_id,))
+        source_count = cur.fetchone()[0]
 
         dkt["offspring"].append({offspring_event_id: {
             "child_id": child_id,
@@ -252,66 +275,38 @@ def get_birth_findings(dkt, cur, current_person, non_empty_roles):
             "date": date,
             "place": place,
             "particulars": particulars,
-            "parent_age": parent_age }})
+            "parent_age": parent_age,
+            "source_count": source_count}})
 
         if offspring_event_id in non_empty_roles:
             get_role_findings(
-                dkt, (offspring_event_id,), cur, current_person, offspring=True)
+                dkt, offspring_event_id, cur, current_person, offspring=True)
 
-def get_role_findings(dkt, finding_id, cur, current_person, offspring=False):
+        if offspring_event_id in non_empty_notes:
+            get_note_findings(
+                dkt, offspring_event_id, cur, current_person, offspring=True)
 
-    cur.execute(select_findings_roles_generic_finding, finding_id)
-    current_roles = cur.fetchall()
+def get_role_findings(
+    dkt, finding_id, cur, current_person, offspring=False):
+    current_roles = []
+    current_roles.append(finding_id)
     if offspring is False:
         dkt["roles"] = current_roles
     else:
         for dikt in dkt["offspring"]:
-            if list(dikt.keys())[0] == finding_id[0]:
-                dikt[finding_id[0]]["roles"] = current_roles
- 
+            if list(dikt.keys())[0] == finding_id:
+                dikt[finding_id]["roles"] = current_roles
 
-        
-
-
-
-
-
-
-
-
-
-
-    # if finding_id in current_roles:
-        # cur.execute(select_roles, (finding_id,))
-        # got_roles = [i[0] for i in cur.fetchall()]
-        # print("line", looky(seeline()).lineno, "got_roles:", got_roles)
-        # # findings_roles_id, 
-        # # role_types, 
-        # # person_id, 
-        # # findings_roles.role_type_id 
-        # roles.extend(got_roles) 
-    # print("line", looky(seeline()).lineno, "roles:", roles)
-
-    
-
-    # current_roles = []
-    # for role_id in all_finding_ids:
-        # if role_id in non_empty_roles:
-            # current_roles.append(role_id)
-    # cur.execute(select_finding_ids_offspring, (current_person,))
-    # offspring_events = cur.fetchall()
-
-    # if len(offspring_events) != 0:
-        # offspring_roles = []
-        # for finding_id in offspring_events:
-            # if finding_id[0] in non_empty_roles:
-                # offspring_roles.append(finding_id[0])
-        # current_roles.extend(offspring_roles)
-    # print("line", looky(seeline()).lineno, "current_roles:", current_roles)
-
-
-def get_note_findings(all_finding_ids, cur, current_person):
-    pass
+def get_note_findings(
+    dkt, finding_id, cur, current_person, offspring=False):
+    current_notes = []
+    current_notes.append(finding_id)
+    if offspring is False:
+        dkt["notes"] = current_notes
+    else:
+        for dikt in dkt["offspring"]:
+            if list(dikt.keys())[0] == finding_id:
+                dikt[finding_id]["notes"] = current_notes
 
 def get_findings():
     
@@ -328,54 +323,22 @@ def get_findings():
 
     cur.execute(select_all_findings_roles_ids_distinct)
     non_empty_roles = [i[0] for i in cur.fetchall()]
-    print("line", looky(seeline()).lineno, "non_empty_roles:", non_empty_roles)
+
+    cur.execute(select_all_findings_notes_ids)
+    non_empty_notes = [i[0] for i in cur.fetchall()]
 
     for finding_id in generic_finding_ids:
         dkt = dict(rowtotype)
         get_generic_findings(
-            dkt, cur, finding_id, findings_data, current_person, non_empty_roles)
+            dkt, cur, finding_id, findings_data, 
+            current_person, non_empty_roles, non_empty_notes)
         if dkt["event"] == "birth":
-            get_birth_findings(dkt, cur, current_person, non_empty_roles)
-
-    # generic_finding_ids = [i[0] for i in generic_finding_ids]
+            get_birth_findings(
+                dkt, cur, current_person, non_empty_roles, non_empty_notes)
 
     couple_finding_ids = get_couple_findings(
-        cur, current_person, rowtotype, findings_data)
-
-    # all_finding_ids = couple_finding_ids + [i[0] for i in generic_finding_ids]
-    # print("line", looky(seeline()).lineno, "all_finding_ids:", all_finding_ids)
-
-        
-    # get_role_findings(all_finding_ids, cur, current_person)
-
-
-
-
-    # cur.execute(select_all_findings_notes_ids)
-
-    # non_empty_notes = cur.fetchall()
-    # non_empty_notes = [i[0] for i in non_empty_notes]
-
-    # current_notes = []
-    # for note_id in all_finding_ids:
-        # if note_id in non_empty_notes:
-            # current_notes.append(note_id)
-    # cur.execute(select_finding_ids_offspring, (current_person,))
-    # offspring_events = cur.fetchone()
-
-    # if offspring_events:
-        # offspring_notes = []
-        # for finding_id in offspring_events:
-            # if finding_id in non_empty_notes:
-                # offspring_notes.append(finding_id)
-        # current_notes.extend(offspring_notes)
-    # non_empty_notes = current_notes
-
-    # source_count = []
-    # for finding_id in finding_ids:
-        # cur.execute(select_count_finding_id_sources, (finding_id,))
-        # src_count = cur.fetchone()
-        # source_count.append((finding_id, src_count[0]))
+        cur, current_person, rowtotype, findings_data, 
+        non_empty_roles, non_empty_notes)
 
     cur.close()
     conn.close()  
@@ -441,8 +404,7 @@ class EventsTable(Frame):
 
         self.header_widths = []
         for lst in self.widths:
-            # the condition lets us open an empty table 
-            #   if the current person is null
+            # so an empty table can open if the current person is null
             if len(lst) > 0:
                 self.header_widths.append(max(lst))
         for row in self.cell_pool:
@@ -759,7 +721,7 @@ class EventsTable(Frame):
 
         findings_data = get_findings()
         print("line", looky(seeline()).lineno, "findings_data:", findings_data)
-        return # GET RID OF THIS LINE
+        return # GET RID OF THIS LINE************************************************
 
         generic_findings = findings_data[0]
         couple_findings = findings_data[1]
@@ -1812,10 +1774,6 @@ class NewEventDialog(Toplevel):
         def make_new_person(new_name=None):
             if new_name is None:
                 return
-                
-            
-            
-
         other_person_id = None
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -1848,20 +1806,9 @@ class NewEventDialog(Toplevel):
 
         cur.execute(insert_finding_birth, (new_finding, child_id))
         conn.commit()
-        # cur.execute(select_max_persons_persons_id)
-        # persons_persons_id = cur.fetchone()[0] + 1
-        # cur.execute(
-            # insert_persons_persons_new, 
-            # (persons_persons_id, self.current_person, other_person_id, new_finding))
-        # conn.commit()
         cur.execute(insert_findings_persons_new_couple, 
             (new_finding, self.current_person, age1, kin_type1, 
                 other_person_id, age2, partner_kin_type)) 
-
-        # cur.execute(insert_findings_persons_new_couple, 
-            # (new_finding, other_person_id, age2, partner_kin_type)) 
-        # conn.commit()
-
         cur.close()
         conn.close()
 
@@ -1883,7 +1830,6 @@ class NewEventDialog(Toplevel):
             pa_id = pa_input[1]
 
         cur.execute(update_findings_persons_1_2, (ma_id, pa_id, self.finding_id))
-        # cur.execute(update_persons_persons_both, (ma_id, pa_id, self.finding_id))
         conn.commit()
 
         cur.execute(update_findings_persons_mother, 
@@ -1912,14 +1858,6 @@ class NewEventDialog(Toplevel):
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        # cur.execute(select_max_persons_persons_id)
-        # persons_persons_id = cur.fetchone()[0] + 1
-        # cur.execute(
-            # insert_persons_persons_new, (
-                # persons_persons_id, self.current_person, 
-                # other_person_id, self.new_finding)) 
-            # (persons_persons_id, self.current_person, other_person_id))
-        # conn.commit()
 
         self.kin_type_list = list(
             zip(self.kin_type_list, self.new_kin_type_codes))
@@ -1943,14 +1881,6 @@ class NewEventDialog(Toplevel):
                 self.kin_type_list[0][0], other_person_id, self.age_2, 
                 self.kin_type_list[1][0]))
         conn.commit()
-        # cur.execute(
-            # insert_findings_persons_new_couple, 
-            # (self.new_finding, other_person_id, self.age_2, 
-                # self.kin_type_list[1][0]))
-        # conn.commit()
-        # cur.execute(insert_persons_persons_finding, 
-            # (self.current_person, other_person_id, self.new_finding))
-        # conn.commit()
         cur.close()
         conn.close()
 
@@ -1958,28 +1888,17 @@ class NewEventDialog(Toplevel):
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        # cur.execute(
-            # select_persons_persons_id, 
-            # (self.finding_id,))
-        # persons_persons_id = cur.fetchone()[0]
         cur.execute(
             select_findings_persons_parents,
             (self.finding_id,))
-            # select_persons_persons_both, 
-            # (persons_persons_id,))
         right_pair = cur.fetchone()
         idx = right_pair.index(self.current_person)
         if idx == 0:
             sql = update_findings_persons_2
         elif idx == 1:
             sql = update_findings_persons_1
-        # if idx == 0:
-            # sql = update_persons_persons_2
-        # elif idx == 1:
-            # sql = update_persons_persons_1
         cur.execute(
             sql, (other_person_id, self.finding_id))
-            # sql, (other_person_id, persons_persons_id))
         conn.commit()
 
         # parameterize this repeated block of code
@@ -1998,7 +1917,6 @@ class NewEventDialog(Toplevel):
                 new_id = cur.fetchone()[0]
                 item[0] = new_id
         # *******************************
-
         cur.execute(
             update_findings_persons_couple_old, (
                 self.age_1, self.kin_type_list[0][0], 
@@ -2280,7 +2198,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# LEFT OFF at line 289 key, d trying to match them up so I can put offspring roles in the correct dict
+# roles stored in dict for generic & offspring evts, still to do couple roles
 # test the kintips systems thoroughly by using it to create people from scratch. Anything that can't be done, make it possible. The goal is to totally replace the way that genbox makes parents and children so the whole immediate family area becomes unnecessary, could be replaced by a non-active display like a pannable pedigree for example. Then maybe make the pannable pedigree active anyway.
 # make sure it can still be done if only one parent is known, and you have to be able to add the unknown parent(s) also.
 # make sure you can't add an offspring by a certain person_id if the parents already have that person as an offspring. Think of other physically impossible things that have to be disallowed.

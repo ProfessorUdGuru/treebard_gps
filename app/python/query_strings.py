@@ -1001,24 +1001,6 @@ update_note_subtopic = '''
     WHERE note_id = ? 
 '''
 
-# update_persons_persons_1 = '''
-    # UPDATE persons_persons
-    # SET person_id1 = ?
-    # WHERE finding_id = ?
-# '''
-
-# update_persons_persons_2 = '''
-    # UPDATE persons_persons
-    # SET person_id2 = ?
-    # WHERE finding_id = ?
-# '''
-
-# update_persons_persons_both = '''
-    # UPDATE persons_persons
-    # SET (person_id1, person_id2) = (?, ?)
-    # WHERE finding_id = ?
-# '''
-
 update_place_hint = '''
     UPDATE place 
     SET hint = ?
