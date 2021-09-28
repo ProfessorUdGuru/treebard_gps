@@ -224,8 +224,9 @@ def get_couple_findings(
 
     return couple_findings
 
-def get_birth_findings(dkt, cur, current_person, non_empty_roles, non_empty_notes):
-    dkt["offspring"] = []
+def get_birth_findings(
+        dkt, cur, current_person, findings_data, non_empty_roles, non_empty_notes):
+    # dkt["offspring"] = []
     cur.execute(select_finding_id_birth, (current_person,))
     birth_id = cur.fetchone()
     parents = (None, None)
@@ -268,45 +269,48 @@ def get_birth_findings(dkt, cur, current_person, non_empty_roles, non_empty_note
 
         cur.execute(select_count_finding_id_sources, (offspring_event_id,))
         source_count = cur.fetchone()[0]
-
-        dkt["offspring"].append({offspring_event_id: {
-            "child_id": child_id,
-            "child_name": child_name,
-            "date": date,
-            "place": place,
-            "particulars": particulars,
-            "parent_age": parent_age,
-            "source_count": source_count}})
+        
+        findings_data[offspring_event_id] = {}
+        findings_data[offspring_event_id]["event"] = "offspring"
+        findings_data[offspring_event_id]["date"] = date
+        findings_data[offspring_event_id]["place"] = place
+        findings_data[offspring_event_id]["particulars"] = particulars
+        findings_data[offspring_event_id]["age"] = parent_age
+        findings_data[offspring_event_id]["source_count"] = source_count
+        findings_data[offspring_event_id]["child_id"] = child_id
+        findings_data[offspring_event_id]["child_name"] = child_name
 
         if offspring_event_id in non_empty_roles:
             get_role_findings(
-                dkt, offspring_event_id, cur, current_person, offspring=True)
+                dkt, offspring_event_id, cur, current_person, 
+                findings_data=findings_data)
 
         if offspring_event_id in non_empty_notes:
             get_note_findings(
-                dkt, offspring_event_id, cur, current_person, offspring=True)
+                dkt, offspring_event_id, cur, current_person, 
+                findings_data=findings_data)
 
 def get_role_findings(
-    dkt, finding_id, cur, current_person, offspring=False):
+    dkt, finding_id, cur, current_person, findings_data=None):
+    # dkt, finding_id, cur, current_person, offspring=False, findings_data=None):
     current_roles = []
     current_roles.append(finding_id)
-    if offspring is False:
+    # if offspring is False:
+    if findings_data is None:
         dkt["roles"] = current_roles
-    else:
-        for dikt in dkt["offspring"]:
-            if list(dikt.keys())[0] == finding_id:
-                dikt[finding_id]["roles"] = current_roles
+    else: 
+        findings_data[finding_id]["roles"] = current_roles
 
 def get_note_findings(
-    dkt, finding_id, cur, current_person, offspring=False):
+    dkt, finding_id, cur, current_person, findings_data=None):
+    # dkt, finding_id, cur, current_person, offspring=False, findings_data=None):
     current_notes = []
     current_notes.append(finding_id)
-    if offspring is False:
+    # if offspring is False:
+    if findings_data is None:
         dkt["notes"] = current_notes
     else:
-        for dikt in dkt["offspring"]:
-            if list(dikt.keys())[0] == finding_id:
-                dikt[finding_id]["notes"] = current_notes
+        findings_data[finding_id]["notes"] = current_notes
 
 def get_findings():
     
@@ -334,7 +338,8 @@ def get_findings():
             current_person, non_empty_roles, non_empty_notes)
         if dkt["event"] == "birth":
             get_birth_findings(
-                dkt, cur, current_person, non_empty_roles, non_empty_notes)
+                dkt, cur, current_person, findings_data,
+                non_empty_roles, non_empty_notes)
 
     couple_finding_ids = get_couple_findings(
         cur, current_person, rowtotype, findings_data, 
@@ -719,8 +724,28 @@ class EventsTable(Frame):
 
     def set_cell_content(self):
 
-        findings_data = get_findings()
-        print("line", looky(seeline()).lineno, "findings_data:", findings_data)
+        self.findings_data = get_findings()
+        print("line", looky(seeline()).lineno, "self.findings_data:", self.findings_data)
+        finding_ids = list(self.findings_data.keys())
+        # print("line", looky(seeline()).lineno, "finding_ids:", finding_ids)
+        table_size = len(self.findings_data)
+        # for k,v in self.findings_data.items():
+            # if v["event"] == "birth" and v["offspring"]:
+                # for dickt in v["offspring"]:
+                    # finding_ids.append(list(dickt.keys())[0])
+                # table_size += len(v['offspring'])
+                # break
+        print("line", looky(seeline()).lineno, "finding_ids:", finding_ids)
+
+        self.cell_pool = []
+
+        i = 0
+        for row in self.table_cells[0:table_size]:
+            self.cell_pool.append([finding_ids[i], row])
+            i += 1
+            
+        self.show_table_cells()
+
         return # GET RID OF THIS LINE************************************************
 
         generic_findings = findings_data[0]
@@ -732,21 +757,14 @@ class EventsTable(Frame):
         non_empty_notes = findings_data[6]
         source_count = findings_data[7]
 
-        print("line", looky(seeline()).lineno, "generic_findings:", generic_findings)
-        print("line", looky(seeline()).lineno, "couple_findings:", couple_findings)
-        print("line", looky(seeline()).lineno, "parents:", parents)
-        print("line", looky(seeline()).lineno, "children:", children)
-        print("line", looky(seeline()).lineno, "finding_ids:", finding_ids)
-        print("line", looky(seeline()).lineno, "current_roles:", current_roles)
-        print("line", looky(seeline()).lineno, "non_empty_notes:", non_empty_notes)
-        print("line", looky(seeline()).lineno, "source_count:", source_count)
-
         self.cell_pool = []
 
         i = 0
         for row in self.table_cells[0:len(finding_ids)]:
             self.cell_pool.append([finding_ids[i], row])
             i += 1
+
+# **********************************************************************************
         self.findings = []
         for finding_id in finding_ids:
             c = 0
@@ -766,6 +784,8 @@ class EventsTable(Frame):
                                 row_list = [list(i) for i in zip(right_cells, right_row)]
                                 row_list.append(finding_id)
                                 self.findings.append(row_list)
+
+
         print("line", looky(seeline()).lineno, "self.findings:", self.findings)
         ma = None
         pa = None
@@ -872,6 +892,17 @@ class EventsTable(Frame):
         self.show_table_cells()
 
     def show_table_cells(self):
+        r = 2
+        for row in self.cell_pool:
+            finding_id = row[0]
+            print("line", looky(seeline()).lineno, "row:", row)
+            c = 0
+            for col in row[1][0:9]:
+                if c == 0:
+                    text = self.findings_data[finding_id]["event"]
+                    print("line", looky(seeline()).lineno, "text:", text)
+
+    def show_table_cellsx(self):
         r = 2
         for row in self.findings:
             event_type = row[0][1]
@@ -2198,7 +2229,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# roles stored in dict for generic & offspring evts, still to do couple roles
+# The offspring event is a continuous thorn in my side. At least put it in the dict same as any other event, bec it's a row in the table same as any event, so stop nesting it inside the birth event dict, this will greatly simplify the code.
 # test the kintips systems thoroughly by using it to create people from scratch. Anything that can't be done, make it possible. The goal is to totally replace the way that genbox makes parents and children so the whole immediate family area becomes unnecessary, could be replaced by a non-active display like a pannable pedigree for example. Then maybe make the pannable pedigree active anyway.
 # make sure it can still be done if only one parent is known, and you have to be able to add the unknown parent(s) also.
 # make sure you can't add an offspring by a certain person_id if the parents already have that person as an offspring. Think of other physically impossible things that have to be disallowed.
