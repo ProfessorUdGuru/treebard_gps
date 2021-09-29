@@ -4,6 +4,7 @@ import tkinter as tk
 from styles import make_formats_dict
 from widgets import FrameHilited4, CanvasHilited, FrameHilited3, LabelHilited
 from scrolling import Scrollbar
+from utes import create_tooltip
 
 
 
