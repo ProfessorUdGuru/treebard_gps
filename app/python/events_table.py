@@ -149,10 +149,7 @@ def get_generic_findings(
 
     dkt["event"], dkt["particulars"], dkt["age"], dkt["date"] = generic_details[0:4]
     dkt["sorter"] = make_sorter(generic_details[4])
-    
 
-    # dkt["event"], dkt["particulars"], dkt["age"] = generic_details[0:3]
-    # dkt["date"] = [generic_details[3], sorter]
     place = get_place_string(finding_id, cur)
     dkt["place"] = place
 
@@ -220,8 +217,7 @@ def get_couple_findings(
         couple_generic_details = [
             couple_generics[0], 
             couple_generics[1], 
-            sorter, 
-            # [couple_generics[1], sorter], 
+            sorter,  
             couple_generics[3]]
 
         if finding_id[0] in non_empty_roles:
@@ -241,7 +237,6 @@ def get_couple_findings(
 
 def get_birth_findings(
         dkt, cur, current_person, findings_data, non_empty_roles, non_empty_notes):
-    # dkt["offspring"] = []
     cur.execute(select_finding_id_birth, (current_person,))
     birth_id = cur.fetchone()
     parents = (None, None)
@@ -280,8 +275,6 @@ def get_birth_findings(
         sorter = make_sorter(offspring_details[1])
         date = offspring_details[0]
 
-        # sorter = make_sorter(offspring_details[1])
-        # date = [offspring_details[0], sorter]
         particulars = offspring_details[2]
         place = get_place_string((offspring_event_id,), cur)
 
@@ -311,10 +304,8 @@ def get_birth_findings(
 
 def get_role_findings(
     dkt, finding_id, cur, current_person, findings_data=None):
-    # dkt, finding_id, cur, current_person, offspring=False, findings_data=None):
     current_roles = []
     current_roles.append(finding_id)
-    # if offspring is False:
     if findings_data is None:
         dkt["roles"] = current_roles
     else: 
@@ -322,10 +313,8 @@ def get_role_findings(
 
 def get_note_findings(
     dkt, finding_id, cur, current_person, findings_data=None):
-    # dkt, finding_id, cur, current_person, offspring=False, findings_data=None):
     current_notes = []
     current_notes.append(finding_id)
-    # if offspring is False:
     if findings_data is None:
         dkt["notes"] = current_notes
     else:
@@ -746,8 +735,6 @@ class EventsTable(Frame):
         self.findings_data, current_roles, current_notes = get_findings()
         finding_ids = list(self.findings_data.keys())
         table_size = len(self.findings_data)
-        print("line", looky(seeline()).lineno, "finding_ids:", finding_ids)
-        # print("line", looky(seeline()).lineno, "self.findings_data:", self.findings_data)
         self.cell_pool = []
 
         i = 0
@@ -755,71 +742,6 @@ class EventsTable(Frame):
             self.cell_pool.append([finding_ids[i], row])
             i += 1
             
-        # self.show_table_cells()
-
- 
-
-        # generic_findings = findings_data[0]
-        # couple_findings = findings_data[1]
-        # parents = findings_data[2]
-        # children = findings_data[3]
-        # finding_ids = findings_data[4]
-        # current_roles = findings_data[5]
-        # non_empty_notes = findings_data[6]
-        # source_count = findings_data[7]
-
-        # self.cell_pool = []
-
-        # i = 0
-        # for row in self.table_cells[0:len(finding_ids)]:
-            # self.cell_pool.append([finding_ids[i], row])
-            # i += 1
-
-        # self.findings = []
-        # for finding_id in finding_ids:
-            # c = 0
-            # for row in self.cell_pool:
-                # if row[0] == finding_id:
-                    # right_cells = row[1]
-                    # c += 1
-                    # for final_list in (couple_findings, generic_findings, children):
-                        # for lst in final_list:
-                            # if finding_id == lst[0]:
-                                # right_row = lst[1:]
-                                # couple_or_no = len(right_row)
-                                # if couple_or_no == 5:
-                                    # right_row.extend([[], '     ', '     ', []])
-                                # elif couple_or_no == 6:
-                                    # right_row.extend(['     ', '     ', []])
-                                # row_list = [list(i) for i in zip(right_cells, right_row)]
-                                # row_list.append(finding_id)
-                                # self.findings.append(row_list)
-
-
-        # print("line", looky(seeline()).lineno, "self.findings:", self.findings)
-        # ma = None
-        # pa = None
-        # for row in self.findings:
-            # if row[0][1] == 'birth':
-                # finding_id = row[9]
-                # break
-        # for row in self.findings:
-            # if row[9] == finding_id: 
-                # for item in parents:
-                    # if item == finding_id:
-                        # for parent in parents[1:]:
-                            # if parent[1] == 'mother':
-                                # ma = parent
-                            # elif parent[1] == 'father':
-                                # pa = parent
-                    # continue
-                # if ma:
-                    # ma = [get_name_with_id(ma[0]), ma[0], ma[1]]
-                    # row[5][1].append(ma)
-                # if pa:
-                    # pa = [get_name_with_id(pa[0]), pa[0], pa[1]]
-                    # row[5][1].append(pa)
-
         for row in self.cell_pool:
             widg = row[1][6]
             finding_id = row[0]
@@ -842,67 +764,60 @@ class EventsTable(Frame):
                     self.findings_data[finding_id]["place"], 
                     self.findings_data[finding_id]["particulars"]]
 
-
-
-        # # sort by date THIS SHD BE A SEPARATE METHOD
-        # after_death_events = get_after_death_event_types()
-        # after_death = []
-        # a_d = 0
-        # for row in self.findings:
-            # event_type = row[0][1]
-            # if event_type == 'birth':
-                # row[1][1][1] = '-10000,0,0'
-            # elif event_type == 'death':
-                # row[1][1][1] = '10000,0,0'
-            # elif event_type in after_death_events:
-                # after_death.append([row[9], row[1][1][1]])
-
-        # t = 0
-        # for event in after_death:
-            # sorter = event[1].split(',')
-            # sorter = [int(i) for i in sorter]
-            # event = sorter
-            # after_death[t][1] = event
-            # t += 1   
-
-        # after_death = sorted(after_death, key=lambda i: i[1])
-        # d = 0
-        # for event in after_death:
-            # for row in self.findings:
-                # if event[0] == row[9]:
-                    # after_death[d][1] = [20000 + d, 0, 0]
-                    # break
-            # d += 1
-
-        # for event in after_death:
-            # n = 0
-            # for num in event[1]:
-                # num = str(num)
-                # event[1][n] = num
-                # n += 1
-        
-        # for event in after_death:
-            # event[1] = ",".join(event[1])
-
-        # for event in after_death:
-            # for row in self.findings:
-                # if event[0] == row[9]:
-                    # row[1][1][1] = event[1]
-                    # break
-
-        # for row in self.findings:
-            # sorter = row[1][1][1]
-            # sorter = sorter.split(',')
-            # sorter = [int(i) for i in sorter]
-            # row[1][1][1] = sorter
-           
-        # self.findings = sorted(self.findings, key=lambda i: i[1][1][1])
-
         self.show_table_cells()
+
+    def sort_by_date(self):
+        after_death_events = get_after_death_event_types()
+
+        after_death = []
+        for finding_id in self.findings_data:
+            event_type = self.findings_data[finding_id]['event']
+            sorter = self.findings_data[finding_id]['sorter']
+            if event_type in after_death_events:
+                after_death.append([finding_id, event_type, sorter])
+
+        after_death = sorted(after_death, key=lambda i: i[2])
+        m = 0
+        for lst in after_death:
+            lst[2] = [20000 + m, 0, 0]
+            m += 1
+
+        row_order = []
+        for finding_id in self.findings_data:
+            event_type = self.findings_data[finding_id]['event']
+            if event_type == "birth":
+                sorter = [-10000, 0, 0]
+                row_order.append([finding_id, event_type, sorter])
+            elif event_type == "death":
+                sorter = [10000, 0, 0]
+                row_order.append([finding_id, event_type, sorter])
+            elif event_type in (after_death_events):
+                pass
+            else:
+                sorter = self.findings_data[finding_id]['sorter']
+                row_order.append([finding_id, event_type, sorter])
+
+        row_order = sorted(row_order, key = lambda i: i[2])
+        all_sorted = row_order + after_death
+ 
+        new_order = []
+        for lst in all_sorted:
+            new_order.append(lst[0])
+        return new_order
 
     def show_table_cells(self):
 
         couple_event_types = get_couple_event_types()
+
+        row_order = self.sort_by_date()
+       
+        copy = []
+        for finding_id in row_order:
+            for row in self.cell_pool:
+                if row[0] == finding_id:
+                    copy.append(row)
+
+        self.cell_pool = copy
 
         r = 2
         for row in self.cell_pool:
@@ -914,6 +829,7 @@ class EventsTable(Frame):
                 if c < 5:
                     text = self.findings_data[finding_id][HEADS[c]]
                 elif c == 5: # kin
+                    finding = [finding_id, self.findings_data[finding_id]]
                     event_type = self.findings_data[finding_id]["event"]
                     if event_type == "birth":
                         if self.findings_data[finding_id].get("mother_id"):
@@ -937,13 +853,14 @@ class EventsTable(Frame):
                             self.findings_data[finding_id]["child_id"],
                             "child"]
                     elif event_type in couple_event_types:
-                        cellval = [
+                        cellval = [                            
                             self.findings_data[finding_id]["partner_name"], 
                             self.findings_data[finding_id]["partner_id"],
-                            self.findings_data[finding_id]["kin_type"]]
+                            self.findings_data[finding_id]["partner_kin_type"]]
                     else:
                         pass
-                    self.make_kin_button(event_type, cellval, widg, row)
+                    self.make_kin_button(event_type, cellval, widg, finding)
+                    # self.make_kin_button(event_type, cellval, widg, row)
                 elif c == 8:
                     text = self.findings_data[finding_id]["source_count"]
                 else:
@@ -1091,8 +1008,7 @@ class EventsTable(Frame):
             widg.destroy()
         self.kintips = []
 
-    def add_kin(self, ma_pa):
-        event_type = self.instrux.finding[0][1]
+    def add_kin(self, ma_pa, event_type):
         self.edit_event_dialog = NewEventDialog(
             self.root, 
             self.treebard,
@@ -1108,9 +1024,11 @@ class EventsTable(Frame):
         if evt and evt.type == "4": 
             text = evt.widget.cget("text")
             if text == self.kinless:
-                if self.instrux.finding[0][1] == "birth":
+                finding_id = self.instrux.finding[0]
+                event_type = self.findings_data[finding_id]["event"]
+                if event_type == "birth":
                     ma_pa = True
-                self.add_kin(ma_pa)
+                self.add_kin(ma_pa, event_type)
                 return
             else:
                 person_id = text.split("#")[1]
@@ -1585,17 +1503,19 @@ class NewEventDialog(Toplevel):
             else:
                 self.b1.config(command=self.validate_kin_types)        
 
-        self.date_input.focus_set()
+        # self.date_input.focus_set()
 
     def fill_in_for_editing(self, people=1):
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        self.finding_id = self.finding[9]
-        self.date_input.insert(0, self.finding[1][1][0])
-        self.place_input.insert(0, self.finding[2][1])
-        self.particulars_input.insert(0, self.finding[3][1])
+        
+        self.finding_id = self.finding[0]
+        finding_data = self.finding[1]
+        self.date_input.insert(0, finding_data["date"])
+        self.place_input.insert(0, finding_data["place"])
+        self.particulars_input.insert(0, finding_data["particulars"])
         if self.ma_pa is False:
-            self.age1_input.insert(0, self.finding[4][1])
+            self.age1_input.insert(0, finding_data["age"])
             if people == 1:
                 cur.close() 
                 conn.close()
@@ -1605,25 +1525,36 @@ class NewEventDialog(Toplevel):
             self.kin_type_input1.insert(0, kin_types[0])
             self.kin_type_input2.insert(0, kin_types[1])
         else:
-            ma_id = self.finding[5][1][0][1]
-            ma_name = self.finding[5][1][0][0]
-            cur.execute(
-                select_findings_persons_age, 
-                (ma_id, self.finding_id))
-            result = cur.fetchone()
+            result = None
+            ma_id = finding_data.get("mother_id")
+            ma_name = finding_data.get("mother_name")
+            if ma_id:
+                cur.execute(
+                    select_findings_persons_age, 
+                    (ma_id, self.finding_id))
+                result = cur.fetchone()
+                self.parent1_input.insert(0, '{}  #{}'.format(ma_name, ma_id))
+            else:
+                ma_id = ""
+                ma_name = ""
             if result:
                 age_ma = result[0]
             else:
                 age_ma = ''
-            self.parent1_input.insert(0, '{}  #{}'.format(ma_name, ma_id))
+            
             self.age1_input.insert(0, age_ma)
 
-            pa_id = self.finding[5][1][1][1]
-            pa_name = self.finding[5][1][1][0]
-            cur.execute(
-                select_findings_persons_age, 
-                (pa_id, self.finding_id))
-            result = cur.fetchone()
+            result = None
+            pa_id = finding_data.get("father_id")
+            pa_name = finding_data.get("father_name")
+            if pa_id:
+                cur.execute(
+                    select_findings_persons_age, 
+                    (pa_id, self.finding_id))
+                result = cur.fetchone()
+            else:
+                pa_id = ""
+                pa_name = ""
             if result:
                 age_pa = result[0]
             else:
@@ -1634,16 +1565,36 @@ class NewEventDialog(Toplevel):
             if people == 1:
                 cur.close() 
                 conn.close()
-                self.other_person_input.focus_set()
+                # self.other_person_input.focus_set()
+                self.focus_first_empty()
                 return
             cur.execute(select_kin_types_finding, (self.finding_id,))
             kin_types = [i[0] for i in cur.fetchall()]
             self.kin_type_input1.insert(0, kin_types[0])
             self.kin_type_input2.insert(0, kin_types[1])
 
-        self.other_person_input.focus_set()
+        # self.other_person_input.focus_set()
+        self.focus_first_empty()
+        # for widg in (self.date_input, self.place_input, self.particulars_input, self.offspring_input, self.parent1_input, self.age1_input, self.kin_type_input1, self.other_person_input, self.age2_input, self.kin_type_input2):
+            # filled_in = widg.get()
+            # if len(filled_in) == 0:
+                # print("line", looky(seeline()).lineno, "widg:", widg)
+                # widg.focus_set()
+                # break
         cur.close() 
-        conn.close()        
+        conn.close()   
+
+    def focus_first_empty(self):
+        for widg in (
+                self.date_input, self.place_input, self.particulars_input, 
+                self.offspring_input, self.parent1_input, self.age1_input, 
+                self.kin_type_input1, self.other_person_input, self.age2_input, 
+                self.kin_type_input2):
+            filled_in = widg.get()
+            if len(filled_in) == 0:
+                print("line", looky(seeline()).lineno, "widg:", widg)
+                widg.focus_set()
+                break
 
     def show_one_person(self):
         self.new_evt_msg.config(text="Information about the new event "
