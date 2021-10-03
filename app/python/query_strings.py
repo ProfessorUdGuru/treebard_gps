@@ -42,16 +42,9 @@ delete_findings_persons = '''
     WHERE finding_id = ?
 '''
 
-# delete_persons_persons = '''
-    # DELETE FROM persons_persons
-    # WHERE finding_id = ?
-# '''
-
 delete_findings_persons_offspring = '''
     DELETE FROM findings_persons
     WHERE finding_id = ?
-        AND person_id = ?
-        AND kin_type_id in (1, 2)
 '''
 
 delete_findings_roles_finding = '''
@@ -460,18 +453,38 @@ select_finding_id_birth = '''
         AND person_id = ?
 '''
 
-select_finding_ids_age_parents = '''
+select_finding_ids_age1_parents = '''
     SELECT finding_id, age1
     FROM findings_persons
     WHERE person_id1 = ?
         AND kin_type_id1 in (1, 2)
 '''
 
+select_finding_ids_age2_parents = '''
+    SELECT finding_id, age2
+    FROM findings_persons
+    WHERE person_id2 = ?
+        AND kin_type_id2 in (1, 2)
+'''
+
+# select_finding_ids_age_parents = '''
+    # SELECT finding_id, age1
+    # FROM findings_persons
+    # WHERE person_id1 = ?
+        # AND kin_type_id1 in (1, 2)
+# '''
+
 select_finding_ids_offspring = '''
     SELECT finding_id
     FROM findings_persons
     WHERE person_id1 = ?
         AND kin_type_id1 in (1, 2)
+'''
+
+select_finding_places = '''
+    SELECT finding_places_id
+    FROM finding_places
+    WHERE finding_id = ?
 '''
 
 select_finding_places_id = '''
@@ -631,10 +644,6 @@ select_max_kin_type_id = '''
 select_max_person_id = '''
     SELECT MAX(person_id) FROM person
 '''
-
-# select_max_persons_persons_id = ''' 
-    # SELECT MAX(persons_persons_id) FROM persons_persons 
-# '''
 
 select_max_place_id = ''' SELECT MAX(place_id) FROM place '''
 
@@ -934,6 +943,19 @@ update_findings_persons_parent_age = '''
         AND kin_type_id in (1, 2)
         AND person_id = ?
 '''
+
+# insert_finding_places_new_event = '''
+    # INSERT INTO finding_places
+       # (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8, finding_id)
+    # VALUES ({})
+# '''.format(','.join(['?'] * 10))
+#below query is based on above, it's not tested
+update_finding_places_new_event = '''
+    UPDATE finding_places
+    SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8) =
+        ({})
+    WHERE finding_id = ?
+'''.format(','.join(['?'] * 9))
 
 update_findings_roles_person = '''
     UPDATE findings_roles 

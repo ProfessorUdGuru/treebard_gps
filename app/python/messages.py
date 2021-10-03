@@ -84,6 +84,8 @@ events_msg = (
         "button at the end of the birth or death event row or by "
         "going directly to the assertions tab if you prefer to make "
         "no conclusions at this time.",
+    "A non-offspring event can't be changed to an offspring event. "
+        "You can delete the event and make a new event.",
 
 
 )

@@ -30,7 +30,8 @@ from query_strings import (
     select_all_findings_current_person, select_findings_details_generic,
     select_findings_details_couple, select_findings_details_couple_generic,
     select_finding_id_birth, select_person_id_kin_types_birth,
-    select_finding_ids_age_parents, select_person_id_birth,
+    select_person_id_birth, select_finding_ids_age1_parents,
+    select_finding_ids_age2_parents,
     select_findings_details_offspring, select_all_findings_roles_ids_distinct, 
     select_finding_ids_offspring, select_all_findings_notes_ids,
     select_count_finding_id_sources, select_nesting_fk_finding,
@@ -56,7 +57,8 @@ from query_strings import (
     update_findings_persons_mother, update_findings_persons_father,
     insert_finding_birth, update_findings_persons_parent_age,
     select_finding_event_type, delete_findings_persons_offspring,
-    select_findings_roles_generic_finding, 
+    select_findings_roles_generic_finding, select_finding_places,
+    update_finding_places_new_event,
 
 )
 
@@ -256,8 +258,13 @@ def get_birth_findings(
         dkt["mother_id"] = parents[2]
         dkt["mother_name"] = get_name_with_id(parents[2])
 
-    cur.execute(select_finding_ids_age_parents, (current_person,))
-    children = [list(i) for i in cur.fetchall()]
+    cur.execute(select_finding_ids_age1_parents, (current_person,))
+    children1 = [list(i) for i in cur.fetchall()]
+
+    cur.execute(select_finding_ids_age2_parents, (current_person,))
+    children2 = [list(i) for i in cur.fetchall()]
+
+    children = children1 + children2
     for lst in children:
         offspring_event_id = lst[0]
         cur.execute(select_person_id_birth, (offspring_event_id,))
@@ -440,11 +447,11 @@ class EventsTable(Frame):
         final = widg.get()
         if final != self.initial:
             self.final = final
-            for row in self.findings:
+            for row in self.cell_pool:
                 c = 0
-                for col in row[0:-1]:
-                    if col[0] == widg:
-                        self.finding = row[9]
+                for col in row[1]:
+                    if col == widg:
+                        self.finding = row[0]
                         col_num = c
                     c += 1
         
@@ -485,8 +492,7 @@ class EventsTable(Frame):
                 cur.execute(select_findings_persons_parents, (finding_id,))
                 parents = cur.fetchone()
                 for person in parents:
-                    cur.execute(delete_findings_persons_offspring, 
-                        (finding_id, person))
+                    cur.execute(delete_findings_persons_offspring, (finding_id,))
                 conn.commit()       
                 delete_generic_finding()
 
@@ -538,6 +544,12 @@ class EventsTable(Frame):
                 self.focus_set()
                 widg.delete(0, 'end')
                 widg.insert(0, 'offspring')
+
+            def err_done7():
+                msg[0].destroy()
+                self.focus_set()
+                widg.delete(0, 'end')
+                widg.insert(0, initval)
 
             def make_new_event_type():
                 cur.execute(select_event_type_couple_bool, (self.initial,))
@@ -592,10 +604,10 @@ class EventsTable(Frame):
                 else:
                     print("line", looky(seeline()).lineno, "case not handled:")
 
+            initval = self.initial
             event_types = get_all_event_types()
             self.final = self.final.strip().lower()
-            if ((self.initial == 'offspring' or self.final == 'offspring') and
-                    len(self.final) != 0):
+            if (self.initial == 'offspring' and len(self.final) != 0):
                 msg = open_error_message(
                     self, 
                     events_msg[3], 
@@ -604,6 +616,18 @@ class EventsTable(Frame):
                 msg[0].grab_set()
                 msg[1].config(aspect=400)
                 msg[2].config(command=err_done4)
+                return
+
+            if self.final == 'offspring':
+                msg = open_error_message(
+                    self, 
+                    events_msg[7], 
+                    "Change to Offspring Event Error", 
+                    "OK")
+                msg[0].grab_set()
+                msg[1].config(aspect=400)
+                msg[2].config(command=err_done7)
+                return
                 
             if self.final in event_types:
                 update_to_existing_type()
@@ -828,39 +852,38 @@ class EventsTable(Frame):
                 widg = row[1][c]
                 if c < 5:
                     text = self.findings_data[finding_id][HEADS[c]]
-                elif c == 5: # kin
-                    finding = [finding_id, self.findings_data[finding_id]]
-                    event_type = self.findings_data[finding_id]["event"]
-                    if event_type == "birth":
-                        if self.findings_data[finding_id].get("mother_id"):
-                            ma_id = self.findings_data[finding_id]["mother_id"]
-                            ma_name = self.findings_data[finding_id]["mother_name"]
-                        else:
-                            ma_id = None
-                            ma_name = ""
-                        if self.findings_data[finding_id].get("father_id"):
-                            pa_id = self.findings_data[finding_id]["father_id"]
-                            pa_name = self.findings_data[finding_id]["father_name"]
-                        else:
-                            pa_id = None
-                            pa_name = ""                                
-                        cellval = [
-                            [ma_name, ma_id], 
-                            [pa_name, pa_id]]
-                    elif event_type == "offspring":
-                        cellval = [
-                            self.findings_data[finding_id]["child_name"], 
-                            self.findings_data[finding_id]["child_id"],
-                            "child"]
-                    elif event_type in couple_event_types:
-                        cellval = [                            
-                            self.findings_data[finding_id]["partner_name"], 
-                            self.findings_data[finding_id]["partner_id"],
-                            self.findings_data[finding_id]["partner_kin_type"]]
-                    else:
-                        pass
-                    self.make_kin_button(event_type, cellval, widg, finding)
-                    # self.make_kin_button(event_type, cellval, widg, row)
+                # elif c == 5: # kin
+                    # finding = [finding_id, self.findings_data[finding_id]]
+                    # event_type = self.findings_data[finding_id]["event"]
+                    # if event_type == "birth":
+                        # if self.findings_data[finding_id].get("mother_id"):
+                            # ma_id = self.findings_data[finding_id]["mother_id"]
+                            # ma_name = self.findings_data[finding_id]["mother_name"]
+                        # else:
+                            # ma_id = None
+                            # ma_name = ""
+                        # if self.findings_data[finding_id].get("father_id"):
+                            # pa_id = self.findings_data[finding_id]["father_id"]
+                            # pa_name = self.findings_data[finding_id]["father_name"]
+                        # else:
+                            # pa_id = None
+                            # pa_name = ""                                
+                        # cellval = [
+                            # [ma_name, ma_id], 
+                            # [pa_name, pa_id]]
+                    # elif event_type == "offspring":
+                        # cellval = [
+                            # self.findings_data[finding_id]["child_name"], 
+                            # self.findings_data[finding_id]["child_id"],
+                            # "child"]
+                    # elif event_type in couple_event_types:
+                        # cellval = [                            
+                            # self.findings_data[finding_id]["partner_name"], 
+                            # self.findings_data[finding_id]["partner_id"],
+                            # self.findings_data[finding_id]["partner_kin_type"]]
+                    # else:
+                        # pass
+                    # self.make_kin_button(event_type, cellval, widg, finding)
                 elif c == 8:
                     text = self.findings_data[finding_id]["source_count"]
                 else:
@@ -1452,6 +1475,15 @@ class NewEventDialog(Toplevel):
 
     def make_inputs(self):
 
+
+        self.offspring_input = None
+        self.parent1_input = None
+        self.kin_type_input1 = None
+        self.other_person_input = None
+        self.age2_input = None
+        self.kin_type_input2 = None
+
+
         self.generic_data_inputs = Frame(self.frm)
         self.couple_data_inputs = Frame(self.frm)
         more = Label(
@@ -1501,9 +1533,9 @@ class NewEventDialog(Toplevel):
                 self.fill_in_for_editing(people=2)
                 self.b1.config(command=self.validate_kin_types)
             else:
-                self.b1.config(command=self.validate_kin_types)        
+                self.b1.config(command=self.validate_kin_types)       
 
-        # self.date_input.focus_set()
+        self.focus_first_empty()
 
     def fill_in_for_editing(self, people=1):
         conn = sqlite3.connect(current_file)
@@ -1565,7 +1597,6 @@ class NewEventDialog(Toplevel):
             if people == 1:
                 cur.close() 
                 conn.close()
-                # self.other_person_input.focus_set()
                 self.focus_first_empty()
                 return
             cur.execute(select_kin_types_finding, (self.finding_id,))
@@ -1573,14 +1604,7 @@ class NewEventDialog(Toplevel):
             self.kin_type_input1.insert(0, kin_types[0])
             self.kin_type_input2.insert(0, kin_types[1])
 
-        # self.other_person_input.focus_set()
         self.focus_first_empty()
-        # for widg in (self.date_input, self.place_input, self.particulars_input, self.offspring_input, self.parent1_input, self.age1_input, self.kin_type_input1, self.other_person_input, self.age2_input, self.kin_type_input2):
-            # filled_in = widg.get()
-            # if len(filled_in) == 0:
-                # print("line", looky(seeline()).lineno, "widg:", widg)
-                # widg.focus_set()
-                # break
         cur.close() 
         conn.close()   
 
@@ -1590,11 +1614,13 @@ class NewEventDialog(Toplevel):
                 self.offspring_input, self.parent1_input, self.age1_input, 
                 self.kin_type_input1, self.other_person_input, self.age2_input, 
                 self.kin_type_input2):
-            filled_in = widg.get()
-            if len(filled_in) == 0:
-                print("line", looky(seeline()).lineno, "widg:", widg)
-                widg.focus_set()
-                break
+            if widg:
+                filled_in = widg.get()
+                if len(filled_in) == 0:
+                    widg.focus_set()
+                    break
+
+
 
     def show_one_person(self):
         self.new_evt_msg.config(text="Information about the new event "
@@ -1638,6 +1664,10 @@ class NewEventDialog(Toplevel):
         self.offspring_input = EntryAutoHilited(
             self.couple_data_inputs, width=32, 
             autofill=True, values=self.all_birth_names)
+        self.offspring_input.bind(
+            "<FocusOut>", 
+            lambda evt, widg=self.offspring_input: self.catch_dupe_or_new_person(
+                evt, widg))
         age1 = Label(self.couple_data_inputs, text="Age")
         self.age1_input = EntryHilited1(self.couple_data_inputs, width=6)
         kin_type1 = Label(self.couple_data_inputs, text="Kin Type")
@@ -1654,7 +1684,9 @@ class NewEventDialog(Toplevel):
             self.couple_data_inputs, width=32, autofill=True, 
             values=self.all_birth_names)
         self.other_person_input.bind(
-            "<FocusOut>", self.catch_dupe_or_new_partner)
+            "<FocusOut>", 
+            lambda evt, widg=self.other_person_input: self.catch_dupe_or_new_person(
+                evt, widg))
 
         age2 = Label(self.couple_data_inputs, text="Age")
         self.age2_input = EntryHilited1(self.couple_data_inputs, width=6)
@@ -1780,28 +1812,18 @@ class NewEventDialog(Toplevel):
         self.go_to(current_person=self.current_person)
 
     def offspring_ok(self):
-
-        def make_new_person(new_name=None):
-            if new_name is None:
-                return
         other_person_id = None
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
         other_person = self.other_person_input.get().split("  #")
         if len(other_person) == 0:
             pass
         elif len(other_person) == 1:
-            # make_new_person()
             pass
         else:
             other_person_id = other_person[1]
-        child_id = self.offspring_input.get().split("  #")
-        if len(child_id) < 2:
-            # make_new_person()
-            pass
+        child_string = self.offspring_input.get().split("  #")
+        if len(child_string) < 2:
         else:
-            child_id = child_id[1]
+            child_id = child_string[1]
         age1 = self.age1_input.get()
         age2 = self.age2_input.get()
         partner_kin_type = self.offspringvar.get()
@@ -1811,14 +1833,16 @@ class NewEventDialog(Toplevel):
             kin_type1 = 1
         child_kin_type = 6
 
-        cur.execute(select_max_finding_id)
-        new_finding = cur.fetchone()[0] + 1
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
 
-        cur.execute(insert_finding_birth, (new_finding, child_id))
-        conn.commit()
+        new_finding = self.create_birth_event(child_id, cur, conn)
+
         cur.execute(insert_findings_persons_new_couple, 
             (new_finding, self.current_person, age1, kin_type1, 
                 other_person_id, age2, partner_kin_type)) 
+        conn.commit()
         cur.close()
         conn.close()
 
@@ -1863,6 +1887,22 @@ class NewEventDialog(Toplevel):
             self.edit_existing_event()
         else:
             self.talk_to_db(other_person_id)
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        self.create_birth_event(other_person_id, cur, conn)
+        cur.close()
+        conn.close()
+
+    def create_birth_event(self, child_id, cur, conn):
+
+        cur.execute(select_max_finding_id)
+        new_finding = cur.fetchone()[0] + 1
+        cur.execute(insert_finding_birth, (new_finding, child_id))
+        conn.commit()
+        cur.execute(insert_finding_places_new, (new_finding,))
+        conn.commit()
+        return new_finding
 
     def talk_to_db(self, other_person_id):
         conn = sqlite3.connect(current_file)
@@ -1973,11 +2013,17 @@ class NewEventDialog(Toplevel):
 
         if self.edit_event is False:
             ids.append(self.new_finding)
-            cur.execute(insert_finding_places_new_event, tuple(ids))
-            conn.commit() 
+            cur.execute(select_finding_places, (self.new_finding,))
+            fpid = cur.fetchone()
+            if fpid is not None and ids[0] != 1:
+                cur.execute(update_finding_places_new_event, tuple(ids))
+                conn.commit()
+            else:
+                cur.execute(insert_finding_places_new_event, tuple(ids))
+                conn.commit() 
+            pass
         else:            
             ids.append(self.finding_id)
-            print("line", looky(seeline()).lineno, "ids:", ids)
             cur.execute(update_finding_places, tuple(ids))
             conn.commit() 
 
@@ -2039,19 +2085,17 @@ class NewEventDialog(Toplevel):
         conn.close()
         self.add_event()
 
-    def catch_dupe_or_new_partner(self, evt):
+    def catch_dupe_or_new_person(self, evt, input_widget):
 
         def err_done(): 
-            self.other_person_input.focus_set()
-            self.other_person_input.delete(0, 'end')
+            input_widget.focus_set()
+            input_widget.delete(0, 'end')
             self.grab_set()
             msg[0].destroy()
-
-        if self.couple_event == 0: return
-        person_and_id = self.other_person_input.get().split("#")
+        person_and_id = input_widget.get().split("#")
         if len(person_and_id[0]) == 0: return
         if len(person_and_id) == 1:
-            self.open_new_person_dialog(person_and_id)
+            self.open_new_person_dialog(person_and_id, input_widget)
         elif self.current_person == int(person_and_id[1]):
             msg = open_error_message(
                 self, 
@@ -2060,19 +2104,20 @@ class NewEventDialog(Toplevel):
                 "OK")
             msg[0].grab_set()
             msg[1].config(aspect=400)
-            msg[2].config(command=err_done)
+            msg[2].config(command=err_done)  
 
-    def open_new_person_dialog(self, new_name):
+    def open_new_person_dialog(self, new_name, input_widget):
         new_partner_dialog = Toplevel(self)
         new_partner_dialog.title("Add New Person")
         person_add = PersonAdd(
-            new_partner_dialog, self.other_person_input, self.root)
+            new_partner_dialog, input_widget, self.root)
         person_add.grid()
         person_add.name_input.delete(0, 'end')
         person_add.name_input.insert(0, new_name[0])
         person_add.add_person()
         person_add.show_sort_order()
         person_add.gender_input.focus_set()
+
 
     def validate_place(self, evt):
         inwidg = evt.widget
@@ -2208,14 +2253,11 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# test the kintips systems thoroughly by using it to create people from scratch. Anything that can't be done, make it possible. The goal is to totally replace the way that genbox makes parents and children so the whole immediate family area becomes unnecessary, could be replaced by a non-active display like a pannable pedigree for example. Then maybe make the pannable pedigree active anyway.
-# make sure it can still be done if only one parent is known, and you have to be able to add the unknown parent(s) also.
 # make sure you can't add an offspring by a certain person_id if the parents already have that person as an offspring. Think of other physically impossible things that have to be disallowed.
 # make sure it works if the child's and/or partner's name is a new person
 # add 'unknown' to kin_types in case someone doesn't want to display e.g. 'husband' for an unknown person, might need unknown for generic kin and unknown2 for couple events but if possible make unknown a special case which can be used anywhere
+# get rid of the kintips systems and the whole column but first recreate the Change Current Person system from before along with the person search dialog
 # SEE # parameterize
-# on right-clicking a kintip, a dlg opens to edit non-missing persons e.g.add/edit a child/name on offspring
-# when couple asker closes, the afterdeath asker works and has grabset and the OK button has focus, but the titlebar doesn't change color.
 # add tooltips/status bar messages
 # open kintips with spacebar when kin button is in focus, not just mouse click
 # bind all ok buttons to Return and cancel buttons to Escape
