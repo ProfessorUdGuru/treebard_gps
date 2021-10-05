@@ -467,13 +467,6 @@ select_finding_ids_age2_parents = '''
         AND kin_type_id2 in (1, 2)
 '''
 
-# select_finding_ids_age_parents = '''
-    # SELECT finding_id, age1
-    # FROM findings_persons
-    # WHERE person_id1 = ?
-        # AND kin_type_id1 in (1, 2)
-# '''
-
 select_finding_ids_offspring = '''
     SELECT finding_id
     FROM findings_persons
@@ -570,6 +563,12 @@ select_findings_persons_age = '''
     FROM findings_persons
     WHERE person_id = ?
         AND finding_id = ?
+'''
+
+select_findings_persons_person_id = '''
+    SELECT person_id1, person_id2
+    FROM findings_persons
+    WHERE finding_id = ?
 '''
 
 select_findings_persons_parents = '''
@@ -895,61 +894,54 @@ update_findings_persons_1_2 = '''
     WHERE finding_id = ?
 '''
 
-update_findings_persons_couple_age = '''
+update_findings_persons_age1 = '''
     UPDATE findings_persons
-    SET age = ?
+    SET age1 = ?
     WHERE finding_id = ?
-        AND  person_id = ?
+        AND person_id1 = ?
 '''
 
-update_findings_persons_couple_old = '''
+update_findings_persons_age2 = '''
     UPDATE findings_persons
-    SET (age, kin_type_id) = (?, ?)
-    WHERE finding_id = ?  
-        AND person_id = ?
+    SET age2 = ?
+    WHERE finding_id = ?
+        AND person_id2 = ?
 '''
 
-update_findings_persons_couple_new = '''
-    UPDATE findings_persons
-    SET (age, kin_type_id, person_id) = (?, ?, ?)
-    WHERE finding_id = ? 
-        AND (person_id != ? OR person_id is null)
-'''
+# update_findings_persons_couple_old = '''
+    # UPDATE findings_persons
+    # SET (age, kin_type_id) = (?, ?)
+    # WHERE finding_id = ?  
+        # AND person_id = ?
+# '''
+
+# update_findings_persons_couple_new = '''
+    # UPDATE findings_persons
+    # SET (age, kin_type_id, person_id) = (?, ?, ?)
+    # WHERE finding_id = ? 
+        # AND (person_id != ? OR person_id is null)
+# '''
                     
-update_findings_persons_new_couple_age = '''
-    UPDATE findings_persons 
-    SET age = ?
-    WHERE findings_persons_id = ?
-'''
+# update_findings_persons_new_couple_age = '''
+    # UPDATE findings_persons 
+    # SET age = ?
+    # WHERE findings_persons_id = ?
+# '''
 
-update_findings_persons_father = '''
-    UPDATE findings_persons
-    SET (age, person_id) = (?, ?)
-    WHERE finding_id = ?
-        AND kin_type_id = 2
-'''
+# update_findings_persons_father = '''
+    # UPDATE findings_persons
+    # SET (age, person_id) = (?, ?)
+    # WHERE finding_id = ?
+        # AND kin_type_id = 2
+# '''
 
-update_findings_persons_mother = '''
-    UPDATE findings_persons
-    SET (age, person_id) = (?, ?)
-    WHERE finding_id = ?
-        AND kin_type_id = 1
-'''
+# update_findings_persons_mother = '''
+    # UPDATE findings_persons
+    # SET (age, person_id) = (?, ?)
+    # WHERE finding_id = ?
+        # AND kin_type_id = 1
+# '''
 
-update_findings_persons_parent_age = '''
-    UPDATE findings_persons
-    SET age = ?
-    WHERE finding_id = ?
-        AND kin_type_id in (1, 2)
-        AND person_id = ?
-'''
-
-# insert_finding_places_new_event = '''
-    # INSERT INTO finding_places
-       # (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8, finding_id)
-    # VALUES ({})
-# '''.format(','.join(['?'] * 10))
-#below query is based on above, it's not tested
 update_finding_places_new_event = '''
     UPDATE finding_places
     SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8) =

@@ -86,6 +86,9 @@ events_msg = (
         "no conclusions at this time.",
     "A non-offspring event can't be changed to an offspring event. "
         "You can delete the event and make a new event.",
+    "Offspring events can't be created directly. Create a new person "
+        "and give them parents, and the parents' offspring events "
+        "will be created automatically.",
 
 
 )

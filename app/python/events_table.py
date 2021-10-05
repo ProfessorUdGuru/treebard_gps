@@ -2,8 +2,6 @@
 
 # previous version x7 canned because modifying the code is too hard due to the use of lists throughout the process of building a table from queried data results. I had once done this with dicts but changed to lists since the table columns are in a fixed order and the list can be in the same order, so making the table is faster from a list. But it's more important to make the code accessible so I'm going back to dictionaries which will make the code easier to read and understand. 
 
-# During the process of building a table, the data has to be manipulated and trying to keep everything in the right order throughout this process is hard, especially when coming back to change something down the road since the index gives no clue as to what data can be found where until the list if finished and ready to be used to display a table. Instead the table will be made from a list of dicts which can be sorted as a list while the values of the table cells can be stored in a dict for each table row. If it helps, the final list of dicts can be converted to a list of lists but only if it makes the table display faster.
-
 import tkinter as tk
 import sqlite3
 from files import current_file
@@ -31,35 +29,25 @@ from query_strings import (
     select_findings_details_couple, select_findings_details_couple_generic,
     select_finding_id_birth, select_person_id_kin_types_birth,
     select_person_id_birth, select_finding_ids_age1_parents,
-    select_finding_ids_age2_parents,
-    select_findings_details_offspring, select_all_findings_roles_ids_distinct, 
-    select_finding_ids_offspring, select_all_findings_notes_ids,
+    select_finding_ids_age2_parents, select_all_findings_notes_ids,
+    select_findings_details_offspring, select_all_findings_roles_ids_distinct,     
     select_count_finding_id_sources, select_nesting_fk_finding,
-    select_nestings_and_ids, select_place, update_finding_particulars,
+    update_finding_particulars, select_all_kin_ids_types_couple,
     update_finding_age, update_current_person, select_all_place_ids,
     select_all_event_types, select_event_type_id, insert_finding_new,
-    insert_finding_new_couple, insert_findings_persons_new_couple,
-    select_all_kin_ids_types_couple, select_all_names_ids,
-    select_kin_type_string, update_findings_persons_couple_age,
-    select_event_type_couple_bool, insert_kin_type_new, update_event_types,
-    update_kin_type_kin_code, select_max_finding_id, insert_place_new,
+    insert_finding_new_couple, insert_findings_persons_new_couple,    
+    update_findings_persons_age1, select_max_finding_id, insert_place_new,
+    select_event_type_couple_bool, insert_kin_type_new, update_event_types,    
     insert_places_places_new, insert_finding_places_new_event,
-    insert_event_type_new, select_max_event_type_id, delete_finding,delete_claims_findings, delete_finding_places,
-    delete_findings_roles_finding, delete_findings_notes_finding, 
-    delete_claims_findings, delete_findings_persons,    
+    insert_event_type_new, select_max_event_type_id, delete_finding,delete_claims_findings, delete_finding_places, delete_findings_persons,
+    delete_findings_roles_finding, delete_findings_notes_finding,         
     select_findings_for_person, insert_finding_places_new,
     select_event_type_after_death, select_event_type_after_death_bool,
-    select_kin_types_finding, update_findings_persons_1_2,  
-    select_findings_persons_parents, update_findings_persons_couple_old,
-    update_findings_persons_2, update_findings_persons_1,   
-    update_findings_persons_couple_new, update_finding_places_null,
-    update_finding_places, select_findings_persons_age,
-    update_findings_persons_mother, update_findings_persons_father,
-    insert_finding_birth, update_findings_persons_parent_age,
+    select_findings_persons_parents, select_findings_persons_age,    
+    insert_finding_birth, update_findings_persons_age2,
     select_finding_event_type, delete_findings_persons_offspring,
-    select_findings_roles_generic_finding, select_finding_places,
-    update_finding_places_new_event,
-
+    select_findings_persons_person_id,
+    
 )
 
 import dev_tools as dt
@@ -377,8 +365,6 @@ class EventsTable(Frame):
         self.inwidg = None
         self.headers = []
         self.widths = [[], [], [], [], []]
-        self.kintips = []
-        self.kin_buttons = []
 
         self.screen_height = self.winfo_screenheight()
         self.column_width_indecrement = 0
@@ -491,6 +477,8 @@ class EventsTable(Frame):
             def delete_offspring_finding():
                 cur.execute(select_findings_persons_parents, (finding_id,))
                 parents = cur.fetchone()
+                print("line", looky(seeline()).lineno, "finding_id:", finding_id)
+                print("line", looky(seeline()).lineno, "parents:", parents)
                 for person in parents:
                     cur.execute(delete_findings_persons_offspring, (finding_id,))
                 conn.commit()       
@@ -603,7 +591,7 @@ class EventsTable(Frame):
                     conn.commit() 
                 else:
                     print("line", looky(seeline()).lineno, "case not handled:")
-
+            print("line", looky(seeline()).lineno, "running:")
             initval = self.initial
             event_types = get_all_event_types()
             self.final = self.final.strip().lower()
@@ -650,20 +638,22 @@ class EventsTable(Frame):
                 self.finding)
 
         def update_age(offspring_event, row):
-            if row[0][1] == "birth" and self.final not in (0, "0", "0d 0m 0y"):
+            if event_string == "birth" and self.final not in (0, "0", "0d 0m 0y"):
                 return
             if couple is False and offspring_event is False:
                 cur.execute(update_finding_age, (self.final, self.finding))
                 conn.commit() 
-            elif offspring_event is True:
-                cur.execute(
-                    update_findings_persons_parent_age, 
-                    (self.final, self.finding, self.current_person))
-                conn.commit()
             else:
-                cur.execute(
-                update_findings_persons_couple_age, 
-                (self.final, self.finding, self.current_person))
+                cur.execute(select_findings_persons_person_id, (self.finding,))
+                right_person = cur.fetchone()
+                if right_person[0] == self.current_person:
+                    cur.execute(
+                        update_findings_persons_age1, 
+                        (self.final, self.finding, self.current_person))
+                elif right_person[1] == self.current_person:
+                    cur.execute(
+                        update_findings_persons_age2, 
+                        (self.final, self.finding, self.current_person))
                 conn.commit()
 
         conn = sqlite3.connect(current_file)
@@ -681,9 +671,9 @@ class EventsTable(Frame):
         elif col_num == 4:
             couple = False
             offspring_event = False
-            for row in self.findings:
-                if row[9] == self.finding: 
-                    event_string = row[0][1]
+            for row in self.cell_pool:
+                if row[0] == self.finding:
+                    event_string = self.findings_data[self.finding]["event"]
                     cur.execute(select_event_type_couple_bool, (event_string,))
                     couple_or_not = cur.fetchone()[0]
                     if couple_or_not == 1:
@@ -852,38 +842,6 @@ class EventsTable(Frame):
                 widg = row[1][c]
                 if c < 5:
                     text = self.findings_data[finding_id][HEADS[c]]
-                # elif c == 5: # kin
-                    # finding = [finding_id, self.findings_data[finding_id]]
-                    # event_type = self.findings_data[finding_id]["event"]
-                    # if event_type == "birth":
-                        # if self.findings_data[finding_id].get("mother_id"):
-                            # ma_id = self.findings_data[finding_id]["mother_id"]
-                            # ma_name = self.findings_data[finding_id]["mother_name"]
-                        # else:
-                            # ma_id = None
-                            # ma_name = ""
-                        # if self.findings_data[finding_id].get("father_id"):
-                            # pa_id = self.findings_data[finding_id]["father_id"]
-                            # pa_name = self.findings_data[finding_id]["father_name"]
-                        # else:
-                            # pa_id = None
-                            # pa_name = ""                                
-                        # cellval = [
-                            # [ma_name, ma_id], 
-                            # [pa_name, pa_id]]
-                    # elif event_type == "offspring":
-                        # cellval = [
-                            # self.findings_data[finding_id]["child_name"], 
-                            # self.findings_data[finding_id]["child_id"],
-                            # "child"]
-                    # elif event_type in couple_event_types:
-                        # cellval = [                            
-                            # self.findings_data[finding_id]["partner_name"], 
-                            # self.findings_data[finding_id]["partner_id"],
-                            # self.findings_data[finding_id]["partner_kin_type"]]
-                    # else:
-                        # pass
-                    # self.make_kin_button(event_type, cellval, widg, finding)
                 elif c == 8:
                     text = self.findings_data[finding_id]["source_count"]
                 else:
@@ -922,142 +880,13 @@ class EventsTable(Frame):
             row=self.new_row, 
             pady=6, sticky='w')
 
-    def make_kin_button(self, event_type, cellval, kinframe, finding):
-        ma_pa = False
-        if event_type == 'birth':
-            ma_pa = True
-        if len(cellval) == 0:
-            text = ""
-        else:
-            kin = cellval
-            kin.append(finding)
-            self.kinless = "Click to edit event details. Right-click to edit kin type."
-            if kin:
-                if ma_pa is False:
-                    text = kin[2]
-                else:
-                    text = 'parents'
-            if kin[1] is None:             
-                kin[1] = self.kinless
-            if ma_pa is True:
-                parentlist = list(kin[0:2])                
-                
-                for lst in parentlist:
-                    if lst[1] is None:
-                        lst[1] = self.kinless
-                kin[0:2] = parentlist
-            
-            kinlab = LabelButtonText(
-                kinframe,
-                text=text,
-                anchor='w',
-                font=formats['heading3'])
-            kinlab.grid(column=0, row=0)
-            kinlab.bind(
-                '<Button-1>', 
-                lambda evt, kin=kin, ma_pa=ma_pa: self.open_kin_tip(
-                    evt, kin, ma_pa))
-            self.kin_buttons.append(kinlab)
-            kinframe.grid()
-
-    def open_kin_tip(self, evt, kin, ma_pa):
-
-        def make_kin_tip(lst):
-            if lst[1] == self.kinless:
-                self.instrux = KinTip(
-                    self.kin_tip, 
-                    text=lst[1],
-                    empty=True)
-                self.instrux.grid(sticky="news")
-                self.instrux.instrux2.bind('<Button-1>', self.go_to)
-                if ma_pa is False:
-                    self.instrux.finding = kin[3]
-                else:
-                    self.instrux.finding = kin[2]
-            else:
-                self.instrux = KinTip(
-                    self.kin_tip, 
-                    text="{} (id #{})".format(lst[0], lst[1]))
-                self.instrux.grid(sticky="news")
-                self.instrux.instrux2.bind('<Button-1>', self.go_to)
-
-        def highlight(event):
-            event.widget.config(bg=formats["head_bg"])
-
-        def unhighlight(event):
-            event.widget.config(bg=formats["bg"])
-
-        if evt.widget.winfo_rooty() < 96:
-            y_offset = 32
-        else:
-            y_offset = -84
-
-        self.kin_tip = Toplevel(self)
-        x, y, cx, cy = evt.widget.bbox("insert")
-        x = x + evt.widget.winfo_rootx() + y_offset
-        y = y + cy + evt.widget.winfo_rooty() + y_offset
-        self.kin_tip.wm_geometry('+{}+{}'.format(x, y))
-        self.kin_tip.wm_overrideredirect(1)
-        self.kintips.append(self.kin_tip)
-        # spouse or child
-        if len(kin) == 4:
-            make_kin_tip(kin)
-        # parents
-        else:
-            for lst in kin[0:2]:
-                make_kin_tip(lst)
-        ex = LabelButtonText(
-            self.instrux, 
-            text="x", 
-            width=2,
-            font=("arial black", 3))
-        ex.place(rely=1.0, relx=1.0, x=0, y=0, anchor='se')
-        ex.bind('<Button-1>', self.destroy_kintip)
-        ex.bind('<Control-Button-1>', self.destroy_all_kintips)
-        ex.bind('<Enter>', highlight)
-        ex.bind('<Leave>', unhighlight)
-
-    def destroy_kintip(self, evt=None):
-        if evt:
-            tip = evt.widget.master.master
-            idx = self.kintips.index(tip)
-            del self.kintips[idx]
-            tip.destroy()
-        for widg in self.kintips:
-            widg.lift()
-
-    def destroy_all_kintips(self, evt=None):
-        for widg in self.kintips:
-            widg.destroy()
-        self.kintips = []
-
-    def add_kin(self, ma_pa, event_type):
-        self.edit_event_dialog = NewEventDialog(
-            self.root, 
-            self.treebard,
-            self,
-            event_type,
-            self.current_person,
-            self.place_autofill_values,   
-            self.go_to,
-            finding=self.instrux.finding,
-            ma_pa=ma_pa)         
-
     def go_to(self, evt=None, current_person=None):
         if evt and evt.type == "4": 
             text = evt.widget.cget("text")
-            if text == self.kinless:
-                finding_id = self.instrux.finding[0]
-                event_type = self.findings_data[finding_id]["event"]
-                if event_type == "birth":
-                    ma_pa = True
-                self.add_kin(ma_pa, event_type)
-                return
-            else:
-                person_id = text.split("#")[1]
-                id_string = person_id.rstrip(")")
-                self.instrux.person_id = int(id_string)
-                self.current_person = self.instrux.person_id
+            person_id = text.split("#")[1]
+            id_string = person_id.rstrip(")")
+            self.instrux.person_id = int(id_string)
+            self.current_person = self.instrux.person_id
         else:
             self.current_person = current_person
         conn = sqlite3.connect(current_file)
@@ -1077,10 +906,6 @@ class EventsTable(Frame):
             for widg in lst[1]:
                 if widg.winfo_subclass() == 'EntryAuto':
                     widg.delete(0, 'end')
-                elif widg.winfo_subclass() == 'Frame':
-                    self.destroy_all_kintips()
-                    for button in self.kin_buttons:
-                        button.destroy()
                 elif widg.winfo_subclass() == 'LabelButtonText':
                     widg.config(text='')
                 widg.grid_forget()
@@ -1189,10 +1014,6 @@ class NewEventDialog(Toplevel):
         self.go_to = go_to
         self.finding = finding
         self.ma_pa = ma_pa
-        if self.finding:
-            self.edit_event = True
-        else:
-            self.edit_event = False
 
         self.place_dicts = None
         self.new_event_type = False
@@ -1417,10 +1238,8 @@ class NewEventDialog(Toplevel):
         self.columnconfigure(1, weight=1)
         self.rowconfigure(4, weight=1)
         canvas = Border(self, size=3) # don't hard-code size   
-        if self.edit_event is True:
-            canvas.title_1.config(text="Edit Event Dialog")
-        else:
-            canvas.title_1.config(text="New Event Dialog")
+
+        canvas.title_1.config(text="New Event Dialog")
         canvas.title_2.config(text="Current Person: {}, id #{}".format(
             self.current_name, self.current_person))
 
@@ -1475,6 +1294,10 @@ class NewEventDialog(Toplevel):
 
     def make_inputs(self):
 
+        def err_done8():
+            msg[0].destroy() 
+            self.destroy()
+            
 
         self.offspring_input = None
         self.parent1_input = None
@@ -1522,105 +1345,22 @@ class NewEventDialog(Toplevel):
             if self.ma_pa is True:
                 self.show_other_person()
             elif self.new_event == "offspring":
-                self.show_other_person()            
+                msg = open_error_message(
+                    self, 
+                    events_msg[8], 
+                    "Offspring Event Creation Error", 
+                    "OK") 
+                msg[0].grab_set()
+                msg[1].config(aspect=400)
+                msg[2].config(command=err_done8)
+                return           
             else:
                 self.show_one_person()
-            if self.edit_event is True:
-                self.fill_in_for_editing()
         elif self.couple_event == 1:
             self.show_other_person()
-            if self.edit_event is True:
-                self.fill_in_for_editing(people=2)
-                self.b1.config(command=self.validate_kin_types)
-            else:
-                self.b1.config(command=self.validate_kin_types)       
+            self.b1.config(command=self.validate_kin_types)       
 
         self.focus_first_empty()
-
-    def fill_in_for_editing(self, people=1):
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-        
-        self.finding_id = self.finding[0]
-        finding_data = self.finding[1]
-        self.date_input.insert(0, finding_data["date"])
-        self.place_input.insert(0, finding_data["place"])
-        self.particulars_input.insert(0, finding_data["particulars"])
-        if self.ma_pa is False:
-            self.age1_input.insert(0, finding_data["age"])
-            if people == 1:
-                cur.close() 
-                conn.close()
-                return
-            cur.execute(select_kin_types_finding, (self.finding_id,))
-            kin_types = [i[0] for i in cur.fetchall()]
-            self.kin_type_input1.insert(0, kin_types[0])
-            self.kin_type_input2.insert(0, kin_types[1])
-        else:
-            result = None
-            ma_id = finding_data.get("mother_id")
-            ma_name = finding_data.get("mother_name")
-            if ma_id:
-                cur.execute(
-                    select_findings_persons_age, 
-                    (ma_id, self.finding_id))
-                result = cur.fetchone()
-                self.parent1_input.insert(0, '{}  #{}'.format(ma_name, ma_id))
-            else:
-                ma_id = ""
-                ma_name = ""
-            if result:
-                age_ma = result[0]
-            else:
-                age_ma = ''
-            
-            self.age1_input.insert(0, age_ma)
-
-            result = None
-            pa_id = finding_data.get("father_id")
-            pa_name = finding_data.get("father_name")
-            if pa_id:
-                cur.execute(
-                    select_findings_persons_age, 
-                    (pa_id, self.finding_id))
-                result = cur.fetchone()
-            else:
-                pa_id = ""
-                pa_name = ""
-            if result:
-                age_pa = result[0]
-            else:
-                age_pa = ''
-            self.other_person_input.insert(0, pa_name)
-            self.age2_input.insert(0, age_pa)
-            # Also used if ma_pa is True since kin_type is fixed.
-            if people == 1:
-                cur.close() 
-                conn.close()
-                self.focus_first_empty()
-                return
-            cur.execute(select_kin_types_finding, (self.finding_id,))
-            kin_types = [i[0] for i in cur.fetchall()]
-            self.kin_type_input1.insert(0, kin_types[0])
-            self.kin_type_input2.insert(0, kin_types[1])
-
-        self.focus_first_empty()
-        cur.close() 
-        conn.close()   
-
-    def focus_first_empty(self):
-        for widg in (
-                self.date_input, self.place_input, self.particulars_input, 
-                self.offspring_input, self.parent1_input, self.age1_input, 
-                self.kin_type_input1, self.other_person_input, self.age2_input, 
-                self.kin_type_input2):
-            if widg:
-                filled_in = widg.get()
-                if len(filled_in) == 0:
-                    widg.focus_set()
-                    break
-
-
 
     def show_one_person(self):
         self.new_evt_msg.config(text="Information about the new event "
@@ -1697,13 +1437,15 @@ class NewEventDialog(Toplevel):
         father_is_it = LabelHilited(self.couple_data_inputs, text="father")
 
         if self.new_event == "offspring":
+            self.ma_pa = True
             self.lab0.config(
                 text="offspring (child of {})".format(self.current_name))
             age1.config(text="Current Person Age")
             offspring.grid(column=0, row=0, sticky='e', pady=(9,1))
             self.offspring_input.grid(
                 column=1, row=0, sticky='w', padx=(3,0), pady=(9,1))
-            self.mother_or_father.grid(column=1, row=2, sticky="w", padx=(2,0), ipadx=1)
+            self.mother_or_father.grid(
+                column=1, row=2, sticky="w", padx=(2,0), ipadx=1)
             radframe.grid(column=4, row=2, sticky="w", padx=(2,0))
             self.offspringvar = tk.IntVar(None, 0)
             pardlabs = ("mother", "father")
@@ -1758,124 +1500,35 @@ class NewEventDialog(Toplevel):
             self.age_2 = self.age2_input.get()
             self.other_person = self.other_person_input.get()
 
-        if self.edit_event is False:
-            if self.new_event == "offspring":
-                self.offspring_ok()
-            elif self.couple_event == 0:
-                cur.execute(
-                    insert_finding_new, (
-                        self.new_finding, self.age_1, 
-                        self.event_type_id, self.current_person))
-                conn.commit()            
-            else:
-                cur.execute(
-                    insert_finding_new_couple, 
-                    (self.new_finding, self.event_type_id,))
-                conn.commit()
 
-                self.couple_ok()  
-            
-            if len(self.place_string) == 0:
-                cur.execute(insert_finding_places_new, (self.new_finding,))
-                conn.commit()
-            else:
-                self.update_db_place()
 
-            update_particulars(
-                self.particulars_input.get().strip(), self.new_finding)
+
+        if self.couple_event == 0:
+            cur.execute(
+                insert_finding_new, (
+                    self.new_finding, self.age_1, 
+                    self.event_type_id, self.current_person))
+            conn.commit()            
         else:
-            if self.couple_event == 0:
-                if self.ma_pa is True:
-                    ma_input = self.parent1_input.get()
-                    ma_age = self.age1_input.get()
-                    pa_input = self.other_person_input.get()
-                    pa_age = self.age2_input.get()
-                    self.ma_pa_ok(ma_input, pa_input, ma_age, pa_age)           
+            cur.execute(
+                insert_finding_new_couple, 
+                (self.new_finding, self.event_type_id,))
+            conn.commit()
 
-            elif self.couple_event == 1:
-                self.couple_ok()
-            else:
-                print("line", looky(seeline()).lineno, "case not handled:")
-            place_string = self.place_input.get()
-            if len(place_string) == 0:
-                cur.execute(update_finding_places_null, (self.finding_id,))
-                conn.commit()
-            else:
-                self.update_db_place()
+            self.couple_ok() 
+        if len(self.place_string) == 0:
+            cur.execute(insert_finding_places_new, (self.new_finding,))
+            conn.commit()
+        else:
+            self.update_db_place()
 
-            update_particulars(
-                self.particulars_input.get().strip(), self.finding_id)
+        update_particulars(
+            self.particulars_input.get().strip(), self.new_finding)        
 
         cur.close()
         conn.close()
         self.cancel()
         self.go_to(current_person=self.current_person)
-
-    def offspring_ok(self):
-        other_person_id = None
-        other_person = self.other_person_input.get().split("  #")
-        if len(other_person) == 0:
-            pass
-        elif len(other_person) == 1:
-            pass
-        else:
-            other_person_id = other_person[1]
-        child_string = self.offspring_input.get().split("  #")
-        if len(child_string) < 2:
-        else:
-            child_id = child_string[1]
-        age1 = self.age1_input.get()
-        age2 = self.age2_input.get()
-        partner_kin_type = self.offspringvar.get()
-        if partner_kin_type == 1:
-            kin_type1 = 2
-        else:
-            kin_type1 = 1
-        child_kin_type = 6
-
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
-
-        new_finding = self.create_birth_event(child_id, cur, conn)
-
-        cur.execute(insert_findings_persons_new_couple, 
-            (new_finding, self.current_person, age1, kin_type1, 
-                other_person_id, age2, partner_kin_type)) 
-        conn.commit()
-        cur.close()
-        conn.close()
-
-    def ma_pa_ok(self, ma_input, pa_input, ma_age, pa_age):
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
-        ma_id = None
-        pa_id = None
-        ma_name = ""
-        pa_name = ""
-        if len(ma_input) != 0:
-            ma_input = ma_input.split("  #")
-            ma_name = ma_input[0]
-            ma_id = ma_input[1]
-        if len(pa_input) != 0:
-            pa_input = pa_input.split("  #")
-            pa_name = pa_input[0]
-            pa_id = pa_input[1]
-
-        cur.execute(update_findings_persons_1_2, (ma_id, pa_id, self.finding_id))
-        conn.commit()
-
-        cur.execute(update_findings_persons_mother, 
-            (ma_age, ma_id, self.finding_id))
-        conn.commit()
-
-        cur.execute(update_findings_persons_father, 
-            (pa_age, pa_id, self.finding_id))
-        conn.commit()
-
-        cur.close()
-        conn.close()
 
     def couple_ok(self):                
         if len(self.other_person) != 0:
@@ -1883,10 +1536,8 @@ class NewEventDialog(Toplevel):
             other_person_id = other_person_all[1]
         else:
             other_person_id = None
-        if self.edit_event is True:
-            self.edit_existing_event()
-        else:
-            self.talk_to_db(other_person_id)
+
+        self.talk_to_db(other_person_id)
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -1904,26 +1555,24 @@ class NewEventDialog(Toplevel):
         conn.commit()
         return new_finding
 
+    def focus_first_empty(self):
+        for widg in (
+                self.date_input, self.place_input, self.particulars_input, 
+                self.offspring_input, self.parent1_input, self.age1_input, 
+                self.kin_type_input1, self.other_person_input, self.age2_input, 
+                self.kin_type_input2):
+            if widg:
+                filled_in = widg.get()
+                if len(filled_in) == 0:
+                    widg.focus_set()
+                    break
+
     def talk_to_db(self, other_person_id):
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
-        self.kin_type_list = list(
-            zip(self.kin_type_list, self.new_kin_type_codes))
-        self.kin_type_list = [list(i) for i in self.kin_type_list]
-
-        for item in self.kin_type_list:
-            if item[1] is None:
-                continue
-            else:
-                cur.execute(
-                    insert_kin_type_new, 
-                    (item[0], item[1].get()))
-                conn.commit()
-                cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'kin_type'")
-                new_id = cur.fetchone()[0]
-                item[0] = new_id
+        self.make_new_kin_type(cur, conn)
 
         cur.execute(
             insert_findings_persons_new_couple,
@@ -1934,24 +1583,7 @@ class NewEventDialog(Toplevel):
         cur.close()
         conn.close()
 
-    def edit_existing_event(self):
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
-        cur.execute(
-            select_findings_persons_parents,
-            (self.finding_id,))
-        right_pair = cur.fetchone()
-        idx = right_pair.index(self.current_person)
-        if idx == 0:
-            sql = update_findings_persons_2
-        elif idx == 1:
-            sql = update_findings_persons_1
-        cur.execute(
-            sql, (other_person_id, self.finding_id))
-        conn.commit()
-
-        # parameterize this repeated block of code
+    def make_new_kin_type(self, cur, conn):
         self.kin_type_list = list(
             zip(self.kin_type_list, self.new_kin_type_codes))
         self.kin_type_list = [list(i) for i in self.kin_type_list]
@@ -1965,20 +1597,7 @@ class NewEventDialog(Toplevel):
                 conn.commit()
                 cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'kin_type'")
                 new_id = cur.fetchone()[0]
-                item[0] = new_id
-        # *******************************
-        cur.execute(
-            update_findings_persons_couple_old, (
-                self.age_1, self.kin_type_list[0][0], 
-                self.finding_id, self.current_person))
-        conn.commit()
-        cur.execute(
-            update_findings_persons_couple_new, (
-                self.age_2, self.kin_type_list[1][0], 
-                other_person_id, self.finding_id, self.current_person))
-        conn.commit()
-        cur.close()
-        conn.close()
+                item[0] = new_id 
 
     def update_db_place(self):
         if self.place_dicts is None: return
@@ -2011,21 +1630,10 @@ class NewEventDialog(Toplevel):
                     conn.commit()
             q += 1
 
-        if self.edit_event is False:
-            ids.append(self.new_finding)
-            cur.execute(select_finding_places, (self.new_finding,))
-            fpid = cur.fetchone()
-            if fpid is not None and ids[0] != 1:
-                cur.execute(update_finding_places_new_event, tuple(ids))
-                conn.commit()
-            else:
-                cur.execute(insert_finding_places_new_event, tuple(ids))
-                conn.commit() 
-            pass
-        else:            
-            ids.append(self.finding_id)
-            cur.execute(update_finding_places, tuple(ids))
-            conn.commit() 
+        ids.append(self.new_finding)
+
+        cur.execute(insert_finding_places_new_event, tuple(ids))
+        conn.commit()
 
         place_strings.insert(0, self.place_string)
 
@@ -2117,7 +1725,6 @@ class NewEventDialog(Toplevel):
         person_add.add_person()
         person_add.show_sort_order()
         person_add.gender_input.focus_set()
-
 
     def validate_place(self, evt):
         inwidg = evt.widget
@@ -2253,24 +1860,21 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# make sure you can't add an offspring by a certain person_id if the parents already have that person as an offspring. Think of other physically impossible things that have to be disallowed.
-# make sure it works if the child's and/or partner's name is a new person
-# add 'unknown' to kin_types in case someone doesn't want to display e.g. 'husband' for an unknown person, might need unknown for generic kin and unknown2 for couple events but if possible make unknown a special case which can be used anywhere
-# get rid of the kintips systems and the whole column but first recreate the Change Current Person system from before along with the person search dialog
-# SEE # parameterize
-# add tooltips/status bar messages
-# open kintips with spacebar when kin button is in focus, not just mouse click
+# get rid of the kintips systems and the whole column
 # bind all ok buttons to Return and cancel buttons to Escape
+# add tooltips/status bar messages
 # finish the Border code so it only makes scridth & scrollbar if make_scrollbar is True but make it False by default, show NO Windows title bars on ANY dialog
-# detect if kintips text is too long and if so change font-size to boilerplate
 # get rid of ttk combobox in new person dialog 
 # test notes & roles all features; esp. test roles re: `if self.role_person_edited is True:` since new_person_id is no longer real but temp at this point in names.py and get rid of ttk.Combobox
-# Q: Is it possible to eliminate the immediate family area (pedigree area) above the table because of the kin column and its clickable functionalities? IE could a parent or child be added this way?
+
 
 # BRANCH: dates
 # finish refactoring dates validation
+# get rid of ttk combobox in dates settings tab
 
 # BRANCH: front_page
+# change current person
+# person search dialog
 # replace ttk.Notebooks
 # add menubar, ribbon menu, footer
 # add picture and attrib table
