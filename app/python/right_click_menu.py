@@ -34,7 +34,7 @@ def make_rc_menus(
 
         self.rc_menu = rcm.RightClickMenu(self.root)
 
-        The 3 default values can be ignored except where data is being passed
+        The 3 default parameters are ignored except where data is being passed
         that will be used to make headers in dialogs and the header items will
         have right-click context help functionality.
     '''

@@ -1,7 +1,6 @@
 # window_border.py
 
 import tkinter as tk
-from scrolling import Scrollbar
 from files import current_file, project_path
 from widgets import (
     LabelButtonImage, Frame, FrameTitleBar, LabelTitleBar, Toplevel, Canvas) 

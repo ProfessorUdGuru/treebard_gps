@@ -8,7 +8,7 @@ from files import current_file
 from window_border import Border 
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
-    KinTip, LabelH3, Button, Entry, MessageHilited, EntryHilited1,
+    LabelH3, Button, Entry, MessageHilited, EntryHilited1,
     LabelHilited)
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
@@ -62,7 +62,6 @@ formats = make_formats_dict()
 HEADS = (
     'event', 'date', 'place', 'particulars', 'age', 
     'roles', 'notes', 'sources')
-    # 'kin', 'roles', 'notes', 'sources')
 
 def get_current_person():
     conn = sqlite3.connect(current_file)
@@ -590,7 +589,6 @@ class EventsTable(Frame):
                     conn.commit() 
                 else:
                     print("line", looky(seeline()).lineno, "case not handled:")
-            print("line", looky(seeline()).lineno, "running:")
             initval = self.initial
             event_types = get_all_event_types()
             self.final = self.final.strip().lower()
@@ -688,7 +686,6 @@ class EventsTable(Frame):
         conn.close()
 
     def make_table_cells(self, qty=2000):
-    # def make_table_cells(self, qty=1998):
         '''
             EntryAuto was used for all the text columns to keep the code 
             symmetrical for all the text columns, with autofill defaulting to 
@@ -697,10 +694,8 @@ class EventsTable(Frame):
         self.place_autofill_values = EntryAuto.create_lists(place_strings)
         self.table_cells = []
         for i in range(int(qty/8)): # 250
-        # for i in range(int(qty/9)): # 222
             row = []
             for j in range(8):
-            # for j in range(9):
                 if j < 5:
                     if j == 0:
                         cell = EntryAuto(
@@ -723,16 +718,11 @@ class EventsTable(Frame):
                         cell.config(width=1)
                     elif j == 4:
                         cell.config(width=5)
-                # elif j == 5:
-                    # cell = Frame(self, bd=0, highlightthickness=0)
                 elif j == 5:
-                # elif j == 6:
                     cell = LabelDots(self, current_file, RolesDialog)
                 elif j == 6:
-                # elif j == 7:
                     cell = LabelDots(self, current_file, NotesDialog)
                 elif j == 7:
-                # elif j == 8:
                     cell = LabelButtonText(
                         self,
                         width=8,
@@ -843,24 +833,19 @@ class EventsTable(Frame):
             finding_id = row[0]
             c = 0
             for cell in row[1]:
-                # cellval = []
                 widg = row[1][c]
                 if c < 5:
                     text = self.findings_data[finding_id][HEADS[c]]
                 elif c == 7:
-                # elif c == 8:
                     text = self.findings_data[finding_id]["source_count"]
                 else:
                     text = "     "
                     if c == 5 and self.findings_data[finding_id].get("roles"):
-                    # if c == 6 and self.findings_data[finding_id].get("roles"):
                         text = " ... "
                     elif c == 6 and self.findings_data[finding_id].get("notes"):
-                    # elif c == 7 and self.findings_data[finding_id].get("notes"):
                         text = " ... "
                     
                 if c in (5, 6, 7):
-                # if c in (6, 7, 8):
                     widg.config(text=text)
                     widg.grid(
                         column=c, row=r, sticky='w', pady=(3,0), padx=(2,0))
@@ -890,16 +875,6 @@ class EventsTable(Frame):
             pady=6, sticky='w')
 
     def redraw(self, evt=None, current_person=None):
-        # if evt and evt.type == "4": 
-            # print("line", looky(seeline()).lineno, "running:")
-            # text = evt.widget.cget("text")
-            # person_id = text.split("#")[1]
-            # id_string = person_id.rstrip(")")
-            # self.instrux.person_id = int(id_string)
-            # self.current_person = self.instrux.person_id
-        # else:
-            # print("line", looky(seeline()).lineno, "running:")
-            # self.current_person = current_person
         if evt:
             self.current_person = current_person
         conn = sqlite3.connect(current_file)
@@ -932,7 +907,6 @@ class EventsTable(Frame):
             head = LabelH3(self, text=heading.upper(), anchor='w')
             head.grid(column=y, row=0, sticky='ew')
             if y in (5, 6, 7):
-            # if y in (6, 7, 8):
                 head.grid(column=y, row=0, sticky='ew')
             else:
                 head.grid(column=y, row=0, sticky='ew')
@@ -1310,8 +1284,7 @@ class NewEventDialog(Toplevel):
 
         def err_done8():
             msg[0].destroy() 
-            self.destroy()
-            
+            self.destroy()            
 
         self.offspring_input = None
         self.parent1_input = None
@@ -1319,7 +1292,6 @@ class NewEventDialog(Toplevel):
         self.other_person_input = None
         self.age2_input = None
         self.kin_type_input2 = None
-
 
         self.generic_data_inputs = Frame(self.frm)
         self.couple_data_inputs = Frame(self.frm)
@@ -1513,9 +1485,6 @@ class NewEventDialog(Toplevel):
         if self.couple_event == 1:
             self.age_2 = self.age2_input.get()
             self.other_person = self.other_person_input.get()
-
-
-
 
         if self.couple_event == 0:
             cur.execute(
@@ -1835,21 +1804,6 @@ class NewKinTypeDialog(Toplevel):
  
 short_values = ['red', 'white', 'blue', 'black', 'rust', 'pink', 'steelblue']
 
-def highlight_current_title_bar(): # DON'T DELETE
-    # MOVED HERE FROM window_border.py... I think currently the title bars
-    #    are the right color except for the root when another dialog is in focus,
-    #    anyway check it and make it right
-    # for k,v in perm_dialogs.items():
-        # border = v['canvas']
-        # for widg in (
-                # border.title_bar, border.title_frame, border.logo, 
-                # border.title_1, border.title_1b, border.title_2, 
-                # border.txt_frm, border.buttonbox, border.border_top, 
-                # border.border_left, border.border_right, 
-                # border.border_bottom):
-            # widg.config(bg=NEUTRAL_COLOR)
-    pass
-
 if __name__ == '__main__':
 
     root = tk.Tk()
@@ -1874,13 +1828,14 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: events_table
-# get rid of the kintips systems and the whole column
-# bind all ok buttons to Return and cancel buttons to Escape
 # add tooltips/status bar messages
-# finish the Border code so it only makes scridth & scrollbar if make_scrollbar is True but make it False by default, show NO Windows title bars on ANY dialog
 # get rid of ttk combobox in new person dialog 
-# test notes & roles all features; esp. test roles re: `if self.role_person_edited is True:` since new_person_id is no longer real but temp at this point in names.py and get rid of ttk.Combobox
+# incorporate config_generic all dialogs
+# replace windows border on all dialogs see new event dialog for example
 
+# BRANCH roles_notes
+# Refactor roles.py completely from scratch, it is very broken and the way I did it was convoluted not worth fixing. Decouple it from notes.py which works but labeldots needs to work for both and if it doesn't then make a special labeldots for roles. Header doesn't work for either since parameters have been taken thru a secret path of modules that I don't want to try and track down. Pass finding_id etc (all header data) directly to LabelDots using the new dictionary.
+# test notes & roles all features; esp. test roles re: `if self.role_person_edited is True:` since new_person_id is no longer real but temp at this point in names.py and get rid of ttk.Combobox
 
 # BRANCH: dates
 # finish refactoring dates validation

@@ -5,11 +5,14 @@ import sqlite3
 from files import current_file
 from widgets import(
     Toplevel, Canvas, Frame, LabelH3, ClickAnywhereCombo, 
-    EntryAutofillHilited, Button, Label, ButtonQuiet)
+    Button, Label, ButtonQuiet)
+from autofill import EntryAutoHilited
 from toykinter_widgets import StatusbarTooltips, run_statusbar_tooltips
 from scrolling import Scrollbar
 from styles import make_formats_dict, config_generic
-from names import get_all_persons, get_name_with_id, PersonAdd
+from names import (
+    get_all_persons, get_name_with_id, PersonAdd, 
+    make_values_list_for_person_select)
 from right_click_menu import RightClickMenu, make_rc_menus
 from message_strings import role_dlg_msg, gen_edit_role_rows
 from query_strings import (
@@ -20,6 +23,7 @@ from query_strings import (
     select_findings_roles_generic, select_couple_event_ids, 
     select_couple_event_roles)
 import dev_tools as dt
+from dev_tools import looky, seeline
 
 
 
@@ -71,6 +75,7 @@ class RolesDialog(Toplevel):
         '''
             The attribute self.header passes values used in a convoluted
             process kept in message_strings.py and right_click_menu.py.
+            GET RID OF THIS AND PASS THE NEEDED INFO DIRECTLY,
         '''
 
         # auto-scrollbar
@@ -121,12 +126,13 @@ class RolesDialog(Toplevel):
         self.role_type_input = ClickAnywhereCombo(
             new_roles_area, values=self.role_types)
 
-        self.person_input = EntryAutofillHilited(new_roles_area)
-        self.person_input.values = self.persons
-        self.person_input.autofill = True
-        self.person_input.config(textvariable=self.person_input.var)
-        # self.person_input.fix_max_width()
+        people = make_values_list_for_person_select()        
+        self.all_birth_names = EntryAutoHilited.create_lists(people)
 
+        self.person_input = EntryAutoHilited(
+            new_roles_area, width=32, 
+            autofill=True, values=self.all_birth_names)
+        
         self.add_butt = Button(
             new_roles_area, 
             text='Add',
@@ -316,10 +322,15 @@ class RolesDialog(Toplevel):
         self.edit_role_type = ClickAnywhereCombo(
             self.edit_row, values=self.role_types)
 
-        self.edit_role_person = EntryAutofillHilited(self.edit_row)
-        self.edit_role_person.values = self.persons
-        self.edit_role_person.autofill = True
-        self.edit_role_person.config(textvariable=self.edit_role_person.var)
+        # people = make_values_list_for_person_select()        
+        # self.all_birth_names = EntryAutoHilited.create_lists(people)
+
+        self.edit_role_person = EntryAutoHilited(self.edit_row, width=32, 
+            autofill=True, values=self.all_birth_names)
+        # self.edit_role_person = EntryAutofillHilited(self.edit_row)
+        # self.edit_role_person.values = self.persons
+        # self.edit_role_person.autofill = True
+        # self.edit_role_person.config(textvariable=self.edit_role_person.var)
 
         self.ok_butt = Button( 
             self.edit_row, 
@@ -393,6 +404,7 @@ class RolesDialog(Toplevel):
         cur = conn.cursor()
         cur.execute(select_role_type_id, (role_type,))
         role_type_id = cur.fetchone()[0]
+        print("line", looky(seeline()).lineno, "self.finding_id:", self.finding_id)
         cur.execute(
             insert_findings_roles, 
             (self.finding_id, role_type_id, role_person_id))
