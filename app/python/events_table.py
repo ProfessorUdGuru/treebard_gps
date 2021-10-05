@@ -61,7 +61,8 @@ formats = make_formats_dict()
 
 HEADS = (
     'event', 'date', 'place', 'particulars', 'age', 
-    'kin', 'roles', 'notes', 'sources')
+    'roles', 'notes', 'sources')
+    # 'kin', 'roles', 'notes', 'sources')
 
 def get_current_person():
     conn = sqlite3.connect(current_file)
@@ -375,11 +376,11 @@ class EventsTable(Frame):
 
         self.root.bind(
             "<Control-S>", 
-            lambda evt, curr_per=self.current_person: self.go_to(
+            lambda evt, curr_per=self.current_person: self.redraw(
                 evt, current_person=curr_per))
         self.root.bind(
             "<Control-s>", 
-            lambda evt, curr_per=self.current_person: self.go_to(
+            lambda evt, curr_per=self.current_person: self.redraw(
                 evt, current_person=curr_per))
 
         self.make_header()
@@ -477,8 +478,6 @@ class EventsTable(Frame):
             def delete_offspring_finding():
                 cur.execute(select_findings_persons_parents, (finding_id,))
                 parents = cur.fetchone()
-                print("line", looky(seeline()).lineno, "finding_id:", finding_id)
-                print("line", looky(seeline()).lineno, "parents:", parents)
                 for person in parents:
                     cur.execute(delete_findings_persons_offspring, (finding_id,))
                 conn.commit()       
@@ -501,7 +500,7 @@ class EventsTable(Frame):
                     delete_generic_finding()
             elif couple_event_old == 1:
                 delete_couple_finding()
-            self.go_to(current_person=current_person)
+            self.redraw(current_person=current_person)
             cur.close()
             conn.close()
 
@@ -688,7 +687,8 @@ class EventsTable(Frame):
         cur.close()
         conn.close()
 
-    def make_table_cells(self, qty=1998):
+    def make_table_cells(self, qty=2000):
+    # def make_table_cells(self, qty=1998):
         '''
             EntryAuto was used for all the text columns to keep the code 
             symmetrical for all the text columns, with autofill defaulting to 
@@ -696,9 +696,11 @@ class EventsTable(Frame):
         '''
         self.place_autofill_values = EntryAuto.create_lists(place_strings)
         self.table_cells = []
-        for i in range(int(qty/9)): # 222
+        for i in range(int(qty/8)): # 250
+        # for i in range(int(qty/9)): # 222
             row = []
-            for j in range(9):
+            for j in range(8):
+            # for j in range(9):
                 if j < 5:
                     if j == 0:
                         cell = EntryAuto(
@@ -721,16 +723,19 @@ class EventsTable(Frame):
                         cell.config(width=1)
                     elif j == 4:
                         cell.config(width=5)
+                # elif j == 5:
+                    # cell = Frame(self, bd=0, highlightthickness=0)
                 elif j == 5:
-                    cell = Frame(self, bd=0, highlightthickness=0)
-                elif j == 6:
+                # elif j == 6:
                     cell = LabelDots(self, current_file, RolesDialog)
-                elif j == 7:
+                elif j == 6:
+                # elif j == 7:
                     cell = LabelDots(self, current_file, NotesDialog)
-                elif j == 8:
+                elif j == 7:
+                # elif j == 8:
                     cell = LabelButtonText(
                         self,
-                        width=6,
+                        width=8,
                         anchor='w',
                         font=formats['heading3'])
                 row.append(cell)
@@ -838,20 +843,24 @@ class EventsTable(Frame):
             finding_id = row[0]
             c = 0
             for cell in row[1]:
-                cellval = []
+                # cellval = []
                 widg = row[1][c]
                 if c < 5:
                     text = self.findings_data[finding_id][HEADS[c]]
-                elif c == 8:
+                elif c == 7:
+                # elif c == 8:
                     text = self.findings_data[finding_id]["source_count"]
                 else:
                     text = "     "
-                    if c == 6 and self.findings_data[finding_id].get("roles"):
+                    if c == 5 and self.findings_data[finding_id].get("roles"):
+                    # if c == 6 and self.findings_data[finding_id].get("roles"):
                         text = " ... "
-                    elif c == 7 and self.findings_data[finding_id].get("notes"):
+                    elif c == 6 and self.findings_data[finding_id].get("notes"):
+                    # elif c == 7 and self.findings_data[finding_id].get("notes"):
                         text = " ... "
                     
-                if c in (6, 7, 8):
+                if c in (5, 6, 7):
+                # if c in (6, 7, 8):
                     widg.config(text=text)
                     widg.grid(
                         column=c, row=r, sticky='w', pady=(3,0), padx=(2,0))
@@ -880,14 +889,18 @@ class EventsTable(Frame):
             row=self.new_row, 
             pady=6, sticky='w')
 
-    def go_to(self, evt=None, current_person=None):
-        if evt and evt.type == "4": 
-            text = evt.widget.cget("text")
-            person_id = text.split("#")[1]
-            id_string = person_id.rstrip(")")
-            self.instrux.person_id = int(id_string)
-            self.current_person = self.instrux.person_id
-        else:
+    def redraw(self, evt=None, current_person=None):
+        # if evt and evt.type == "4": 
+            # print("line", looky(seeline()).lineno, "running:")
+            # text = evt.widget.cget("text")
+            # person_id = text.split("#")[1]
+            # id_string = person_id.rstrip(")")
+            # self.instrux.person_id = int(id_string)
+            # self.current_person = self.instrux.person_id
+        # else:
+            # print("line", looky(seeline()).lineno, "running:")
+            # self.current_person = current_person
+        if evt:
             self.current_person = current_person
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -918,7 +931,8 @@ class EventsTable(Frame):
         for heading in HEADS:
             head = LabelH3(self, text=heading.upper(), anchor='w')
             head.grid(column=y, row=0, sticky='ew')
-            if y in (6, 7, 8):
+            if y in (5, 6, 7):
+            # if y in (6, 7, 8):
                 head.grid(column=y, row=0, sticky='ew')
             else:
                 head.grid(column=y, row=0, sticky='ew')
@@ -994,7 +1008,7 @@ class EventsTable(Frame):
             new_event,
             self.current_person,
             self.place_autofill_values,   
-            self.go_to)
+            self.redraw)
         self.event_input.delete(0, 'end')
 
 class NewEventDialog(Toplevel):
@@ -1002,7 +1016,7 @@ class NewEventDialog(Toplevel):
             self, master, treebard, events_table,
             new_event, 
             current_person, place_autofill_values, 
-            go_to, finding=None, ma_pa=False, *args, **kwargs):
+            redraw, finding=None, ma_pa=False, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.root = master
@@ -1011,7 +1025,7 @@ class NewEventDialog(Toplevel):
         self.new_event = new_event
         self.current_person = current_person
         self.place_autofill_values = place_autofill_values
-        self.go_to = go_to
+        self.redraw = redraw
         self.finding = finding
         self.ma_pa = ma_pa
 
@@ -1528,7 +1542,7 @@ class NewEventDialog(Toplevel):
         cur.close()
         conn.close()
         self.cancel()
-        self.go_to(current_person=self.current_person)
+        self.redraw(current_person=self.current_person)
 
     def couple_ok(self):                
         if len(self.other_person) != 0:
