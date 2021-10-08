@@ -45,7 +45,7 @@ def open_yes_no_message(parent, message, title, ok_lab, cancel_lab):
     msg.columnconfigure(0, weight=1)
     msg.rowconfigure(0, weight=1)
     lab = MessageHilited(msg, text=message, justify='left')
-    lab.grid(column=0, row=0, sticky='news', padx=12, pady=12)
+    lab.grid(column=0, row=0, sticky='news', padx=12, pady=12, columnspan=2)
     buttonbox = Frame(msg)
     buttonbox.grid(column=0, row=1, sticky='e', padx=(0,12), pady=12)
     ok_butt = Button(buttonbox, text=ok_lab, command=cancel, width=6)
@@ -53,7 +53,7 @@ def open_yes_no_message(parent, message, title, ok_lab, cancel_lab):
     cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
     cancel_butt.grid(column=1, row=0, padx=6)
     ok_butt.focus_set()
-    return msg, lab, ok_butt, cancel_butt
+    return msg, lab, ok_butt, cancel_butt, buttonbox
 
 places_err = (
     "A place cannot contain itself.\n\nSelect a "
@@ -97,5 +97,10 @@ names_msg = (
     "This birth name already exists. To create a "
     "new person by the same name, click OK. The "
     "two persons can be merged later if desired.",
+
+)
+
+notes_msg = (
+    "Any note can be linked to any number of entities.",
 
 )

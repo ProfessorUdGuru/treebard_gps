@@ -17,7 +17,7 @@ from toykinter_widgets import Separator
 from styles import make_formats_dict, config_generic
 from names import (
     get_name_with_id, make_values_list_for_person_select, PersonAdd)
-from roles import RolesDialog, LabelDotsRoles
+from roles import RolesDialog
 from notes import NotesDialog
 from places import place_strings, ValidatePlace, places_places
 from scrolling import Scrollbar, resize_scrolled_content
@@ -719,10 +719,11 @@ class EventsTable(Frame):
                     elif j == 4:
                         cell.config(width=5)
                 elif j == 5:
-                    cell = LabelDotsRoles(self, finding_row=None)
+                    cell = LabelDots(self, RolesDialog, finding_row=None)
                     # cell = LabelDotsRoles(self, current_file)
                 elif j == 6:
-                    cell = LabelDots(self, current_file, NotesDialog)
+                    cell = LabelDots(self, NotesDialog, finding_row=None)
+                    # cell = LabelDots(self, current_file, NotesDialog)
                 elif j == 7:
                     cell = LabelButtonText(
                         self,
@@ -754,13 +755,9 @@ class EventsTable(Frame):
             
         for row in self.cell_pool:
             widg = row[1][5]
-            # widg = row[1][6]
-            print("line", looky(seeline()).lineno, "widg:", widg)
             finding_id = row[0]
             widg.finding_id = finding_id
             widg.current_person = self.current_person
-
-            # if finding_id in current_roles:
             widg.header = [
                 self.findings_data[finding_id]["event"], 
                 self.findings_data[finding_id]["date"], 
@@ -769,10 +766,9 @@ class EventsTable(Frame):
 
         for row in self.cell_pool:
             widg = row[1][6]
-            # widg = row[1][7]
             finding_id = row[0]
             widg.finding_id = finding_id
-            # if finding_id in current_notes:
+            widg.current_person = self.current_person
             widg.header = [
                 self.findings_data[finding_id]["event"], 
                 self.findings_data[finding_id]["date"], 
@@ -1834,8 +1830,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH roles_notes
-# Refactor roles.py completely from scratch, it is very broken and the way I did it was convoluted not worth fixing. Decouple it from notes.py which works but labeldots needs to work for both and if it doesn't then make a special labeldots for roles. Header doesn't work for either since parameters have been taken thru a secret path of modules that I don't want to try and track down. Pass finding_id etc (all header data) directly to LabelDots? or why be clever, just pass it to the dialog directly, using the new dictionary.
-# test notes & roles all features; esp. test roles re: `if self.role_person_edited is True:` since new_person_id is no longer real but temp at this point in names.py and get rid of ttk.Combobox
+# Copy the new labeldots to notes and try not to change it; if possible it can be just plain generic labeldots class move to widgets.py. Make notes work, test all.
 
 # BRANCH: dates
 # finish refactoring dates validation

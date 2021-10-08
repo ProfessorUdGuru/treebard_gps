@@ -1,20 +1,22 @@
-# notes.py (import as notes)
+# notes.py
 
 import tkinter as tk
 import sqlite3
+from window_border import Border 
 from widgets import (
-    LabelButtonText, Toplevel, LabelH3, Button, Frame, LabelFrame, 
-    Radiobutton, Entry, Label, LabelMovable)
+    Toplevel, LabelH3, Button, Frame, LabelFrame, 
+    Radiobutton, Entry, Label, LabelMovable, LabelDots, LabelHeader)
 from toykinter_widgets import  StatusbarTooltips, run_statusbar_tooltips
-from scrolling import ScrolledText
+from scrolling import ScrolledText, Scrollbar, resize_scrolled_content
 from messagesx import ErrorMessage
+from messages import open_yes_no_message, notes_msg
 from styles import make_formats_dict, config_generic
 from names import get_name_with_id
 from right_click_menu import make_rc_menus, RightClickMenu
 from message_strings import note_dlg_msg
 from utes import center_window, create_tooltip
 from custom_listbox_widget import Listbox
-from files import get_current_file, current_file
+from files import current_file
 from query_strings import (
     update_note, select_count_subtopic, insert_note, insert_findings_notes,
     select_notes_refresh, update_note_private, update_note_subtopic,
@@ -24,6 +26,9 @@ from query_strings import (
     
 )
 import dev_tools as dt
+from dev_tools import looky, seeline
+
+
 
 
 
@@ -31,18 +36,9 @@ formats = make_formats_dict()
 
 class NotesDialog(Toplevel):
     def __init__(
-            self,
-            master,
-            current_person,
-            finding_id=None,
-            header=None,
-            pressed=None,
-            *args,
-            **kwargs):
+            self, master, finding_id, header, current_person, 
+            pressed=None, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
-
-        self.birth_name = get_name_with_id(current_person)
-        self.title('{} ({})'.format('Notes for an Event', self.birth_name))
 
         self.current_person = current_person
         self.root = master
@@ -50,7 +46,6 @@ class NotesDialog(Toplevel):
         self.header = header
         self.pressed = pressed
 
-        # self.self.new_index = None
         self.current_note_text = ''
         self.current_subtopic = ''
         self.current_note_id = None
@@ -58,9 +53,9 @@ class NotesDialog(Toplevel):
         self.current_subtopic_index = None
         self.new_subtopic_name = ''
 
-        self.current_file = get_current_file()[0]
+        self.current_name = get_name_with_id(self.current_person)
 
-        self.bind('<Escape>', self.close_roles_dialog)
+        self.bind('<Escape>', self.close_notes_dialog)
         self.subtopics = []
 
         self.privacy = tk.IntVar()
@@ -68,26 +63,66 @@ class NotesDialog(Toplevel):
         self.refresh_notes_per_finding()
         self.rc_menu = RightClickMenu(self.root)
         self.make_widgets()
-        self.protocol('WM_DELETE_WINDOW', self.close_roles_dialog)
+        self.geometry("+100+20")
 
     def make_widgets(self):
 
-        self.title('{}{} ({})'.format(
-            'Notes for Conclusion #', 
-            self.finding_id,
-            self.birth_name))
+        def show_message():
+            self.header = "\n".join(self.header)
+            header_text = "Notes for Conclusion #{}: {}".format(
+                self.finding_id, self.header)
+            self.header_msg = LabelHeader(
+                self.window,
+                text=header_text)
+            self.header_msg.grid(
+                column=0, row=0, sticky='news', columnspan=4, 
+                ipadx=12, ipady=12, padx=(24,0), pady=18)
 
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=1)
-        header = Frame(self)
-        header.grid_columnconfigure(1, weight=1)
-        header.grid_rowconfigure(0, weight=1)
+        self.canvas = Border(self, size=3) # don't hard-code size   
 
-        self.notes_dialog_header = Frame(header)
+        self.canvas.title_1.config(text="Notes Dialog")
+        self.canvas.title_2.config(text="Current Person: {}, id #{}".format(
+            self.current_name, self.current_person))
 
-        content = Frame(self)
+        self.window = Frame(self.canvas)
+        self.canvas.create_window(0, 0, anchor='nw', window=self.window)
+        scridth = 16
+        scridth_n = Frame(self.window, height=scridth)
+        scridth_w = Frame(self.window, width=scridth)
+        # DO NOT DELETE THESE LINES, UNCOMMENT IN REAL APP
+        # self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
+        # self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
-        left_panel = Frame(content)
+        self.window.vsb = Scrollbar(
+            self, 
+            hideable=True, 
+            command=self.canvas.yview,
+            width=scridth)
+        self.window.hsb = Scrollbar(
+            self, 
+            hideable=True, 
+            width=scridth, 
+            orient='horizontal',
+            command=self.canvas.xview)
+        self.canvas.config(
+            xscrollcommand=self.window.hsb.set, 
+            yscrollcommand=self.window.vsb.set)
+        self.window.vsb.grid(column=2, row=4, sticky='ns')
+        self.window.hsb.grid(column=1, row=5, sticky='ew')
+
+        scridth_n.grid(column=0, row=0, sticky='ew')
+        scridth_w.grid(column=0, row=1, sticky='ns')
+        show_message()
+
+        self.make_inputs()
+
+        config_generic(self) 
+
+        resize_scrolled_content(self, self.canvas, self.window)
+
+    def make_inputs(self):
+
+        left_panel = Frame(self.window)
 
         topiclab = Label(left_panel, text='Note Subtopics')
 
@@ -107,21 +142,21 @@ class NotesDialog(Toplevel):
         self.toc.pass_ctrl_click = self.open_links_dialog
         self.toc.pass_delete_key = self.delete_note
 
-        self.selected_subtopic = Label(content, text='New Note')        
+        self.selected_subtopic = Label(self.window, text='New Note')        
 
-        self.note_input = ScrolledText(content)
+        self.note_input = ScrolledText(self.window)
 
         note_submit = Button(
-            content, 
-            text='Submit Changes',
+            self.window, 
+            text='SUBMIT CHANGES',
             command=self.save_changes)
 
         order = Button(
-            content, 
-            text='Change Order of Subtopics', 
+            self.window, 
+            text='CHANGE ORDER OF SUBTOPICS', 
             command=self.reorder_notes)
 
-        radframe = LabelFrame(content, text='Make selected note...')
+        radframe = LabelFrame(self.window, text='Make selected note...')
 
         self.public = Radiobutton(
             radframe, 
@@ -139,46 +174,38 @@ class NotesDialog(Toplevel):
             value=1,
             command=self.save_privacy_setting)
 
-        close = Button(content, text='DONE', command=self.close_roles_dialog)
+        close = Button(self.window, text='DONE', command=self.close_notes_dialog)
 
-        # notes_statusbar = StatusbarTooltips(self)
+        visited = (
+            (self.toc, 
+                'this is a notes_statusbar message', 
+                'this is a tooltip'), 
+            (note_submit, 
+                'this is also a notes_statusbar message', 
+                'this is another tooltip'))
 
-        # visited = (
-            # (above, 
-                # 'this is a notes_statusbar message', 
-                # 'this is a tooltip'), 
-            # (below, 
-                # 'this is also a notes_statusbar message', 
-                # 'this is another tooltip'))
+        run_statusbar_tooltips(
+            visited, 
+            self.canvas.statusbar.status_label, 
+            self.canvas.statusbar.tooltip_label)
 
-        # run_statusbar_tooltips(
-            # visited, 
-            # notes_statusbar.status_label, 
-            # notes_statusbar.tooltip_label)
+        # rcm_widgets = (self.subtopic_input, self.note_input.text)
+        # make_rc_menus(
+            # rcm_widgets, 
+            # self.rc_menu, 
+            # note_dlg_msg)
 
-        # grid in self
-        header.grid(column=0, row=0, columnspan=2, pady=12, sticky='we')
-        content.grid(column=0, row=1, sticky='news', padx=(0,6))
-        # notes_statusbar.grid(column=0, row=2, sticky='ew')
-
-        # grid in header
-        self.notes_dialog_header.grid(column=1, row=0, sticky='ew')
-        self.notes_dialog_header.grid_columnconfigure(0, weight=1)
-
-        # grid in content
+        # grid in self.window
         left_panel.grid(
-            column=0, row=1, sticky='news', 
-            rowspan=2, pady=24)
-        self.selected_subtopic.grid(column=1, row=1, sticky='w')
+            column=0, row=1, sticky='s', 
+            rowspan=2, padx=(24,6))
+        self.selected_subtopic.grid(column=1, row=1, sticky='w', columnspan=3)
         self.note_input.grid(
-            column=1, row=2, columnspan=3, sticky='nsew', padx=(0,24), pady=12)
-        note_submit.grid(column=3, row=3, sticky='se')
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        content.grid_rowconfigure(1, weight=1)
-        order.grid(column=1, row=4)
-        radframe.grid(column=2, row=5, sticky='n', pady=24)
-        close.grid(column=3, row=6, sticky='se', padx=24, pady=(0,24))
+            column=1, row=2, columnspan=3, sticky='nsew', padx=(0,24))
+        note_submit.grid(column=3, row=4, sticky='e', padx=(0,24))
+        order.grid(column=0, row=4, columnspan=2, sticky='w', padx=(24,0))
+        radframe.grid(column=2, row=4, pady=(24,0))
+        close.grid(column=3, row=5, sticky='e', padx=24)
 
         # grid in left_panel
         topiclab.grid(column=0, row=0)
@@ -191,15 +218,6 @@ class NotesDialog(Toplevel):
         # grid in radframe
         self.public.grid(column=0, row=0, sticky='news', padx=24)
         self.private.grid(column=0, row=1, sticky='news', padx=24)
-
-        # rcm_widgets = (self.subtopic_input, self.note_input.text)
-        # make_rc_menus(
-            # rcm_widgets, 
-            # self.rc_menu, 
-            # note_dlg_msg,
-            # header_parent=self.notes_dialog_header, 
-            # header=self.header, 
-            # which_dlg='notes')
 
         config_generic(self) 
         center_window(self)
@@ -217,7 +235,7 @@ class NotesDialog(Toplevel):
 
         self.save_new_subtopic()
 
-        conn = sqlite3.connect(self.current_file)
+        conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
@@ -236,7 +254,8 @@ class NotesDialog(Toplevel):
             return
         self.subtopic_dialog = Toplevel(self.root)
         self.subtopic_dialog.title('New Note: Subtopic Input Dialog')
-        headlab = LabelH3(self.subtopic_dialog, text='Unique subtopic name for new note:')
+        headlab = LabelH3(
+            self.subtopic_dialog, text='Unique subtopic name for new note:')
         self.subtopic_input = Entry(self.subtopic_dialog, width=64)
         self.subtopic_input.focus_set()
         buttonbox = Frame(self.subtopic_dialog)
@@ -255,10 +274,11 @@ class NotesDialog(Toplevel):
         new_note_cancel.grid(column=1, row=0, sticky='e', padx=12)
 
         self.subtopic_dialog.bind('<Escape>', self.close_subtopic_dialog)
-        self.subtopic_dialog.protocol('WM_DELETE_WINDOW', self.close_subtopic_dialog)
+        self.subtopic_dialog.protocol(
+            'WM_DELETE_WINDOW', self.close_subtopic_dialog)
 
     def submit_new_note(self):
-        conn = sqlite3.connect(self.current_file)
+        conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
@@ -309,7 +329,7 @@ class NotesDialog(Toplevel):
         self.refresh()
 
     def refresh_notes_per_finding(self):
-        conn = sqlite3.connect(self.current_file)
+        conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_notes_refresh, (self.finding_id,))
         notes = cur.fetchall()
@@ -329,7 +349,7 @@ class NotesDialog(Toplevel):
         cur.close()
         conn.close()
 
-    def close_roles_dialog(self, evt=None):
+    def close_notes_dialog(self, evt=None):
         self.destroy()
         self.master.focus_set()
 
@@ -338,7 +358,7 @@ class NotesDialog(Toplevel):
 
     def save_privacy_setting(self):
         privacy_setting = self.privacy.get()
-        conn = sqlite3.connect(self.current_file)
+        conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         cur.execute(update_note_private, (privacy_setting, self.current_note_id))
@@ -347,7 +367,6 @@ class NotesDialog(Toplevel):
         conn.close()
 
     def get_selected_subtopic(self):
-        # "is not None" has to be explicit here
         if self.toc.curselection() is not None:
             self.current_subtopic_index = self.toc.curselection()            
         else:
@@ -361,7 +380,7 @@ class NotesDialog(Toplevel):
             self.current_note_text = v[1]
 
     def store_new_subtopic_name(self):
-        conn = sqlite3.connect(self.current_file)
+        conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         cur.execute(
@@ -389,7 +408,7 @@ class NotesDialog(Toplevel):
         self.note_input.text.delete(1.0, 'end')
         self.note_input.text.insert(1.0, self.current_note_text) 
 
-        conn = sqlite3.connect(self.current_file)
+        conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(
             select_private_note, 
@@ -423,7 +442,7 @@ class NotesDialog(Toplevel):
 
         def cancel_delete():
             self.focus_set()
-            deleter.destroy()
+            msg[0].destroy()
 
         def run_delete():
 
@@ -442,16 +461,15 @@ class NotesDialog(Toplevel):
                 if linked_notes == 0:
                     cur.execute(delete_note, (deletable,))
                     conn.commit()
-                cur.execute(
-                    select_count_findings_notes_finding_id, 
-                    (self.finding_id,))
-                note_count_per_finding = cur.fetchone()[0]
+            cur.execute(
+                select_count_findings_notes_finding_id, 
+                (self.finding_id,))
+            note_count_per_finding = cur.fetchone()[0]
 
             cur.close()
             conn.close()
 
             self.toc.selection_clear()
-
             if note_count_per_finding == 0:
                 self.pressed.config(text='     ')        
 
@@ -462,7 +480,7 @@ class NotesDialog(Toplevel):
         if subtopic is None:
             return
 
-        conn = sqlite3.connect(self.current_file)
+        conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         cur.execute(select_note_id, (subtopic,))
@@ -474,35 +492,32 @@ class NotesDialog(Toplevel):
 
         delete_var = tk.IntVar()
 
-        deleter = Toplevel(self)
-        deleter.title('Delete Note Dialog')
-        
-        instrux = LabelH3(
-            deleter, 
-            text='Any note can be linked to any number of entities.')
+        msg = open_yes_no_message(
+            self, 
+            notes_msg[0], 
+            "Delete Note Dialog", 
+            "OK", "CANCEL")
+        msg[0].grab_set()
+        msg[1].config(aspect=400)
+        msg[2].config(command=ok_delete)
+        msg[3].config(command=cancel_delete)
 
         radio1 = Radiobutton(
-            deleter,
+            msg[0],
             text='Delete this instance of this note.',
             value=0,
             variable=delete_var)
 
         radio2 = Radiobutton(
-            deleter,
+            msg[0],
             text='Delete all instances of this note.',
             value=1,
             variable=delete_var)
 
-        instrux.grid(column=0, row=0, columnspan=2, padx=24, pady=24)
         radio1.grid(column=0, row=1)
         radio2.grid(column=1, row=1)
 
-        buttonbox = Frame(deleter)
-        buttonbox.grid(column=1, row=2, sticky='e')
-        b1 = Button(buttonbox, text='OK', command=ok_delete)
-        b2 = Button(buttonbox, text='Cancel', command=cancel_delete)
-        b1.grid(column=0, row=0)
-        b2.grid(column=1, row=0)
+        msg[4].grid(column=1, row=2, sticky='e', padx=(0,12), pady=12)
 
     def refresh(self):
 
@@ -513,9 +528,8 @@ class NotesDialog(Toplevel):
             child.bind('<<ListboxSelected>>', self.switch_note)
 
     def reorder_notes(self):
-        '''
-        '''
-        if self.toc.size() < 2:
+
+        if self.toc.size() <= 2:
             return
 
         self.order_dlg = Toplevel(self)
@@ -527,7 +541,7 @@ class NotesDialog(Toplevel):
         self.order_dlg.title('Reorder Subtopics')
 
         instrux = (
-            'Tab or Ctrl+Tab selects movable subtopic.\n'
+            'Tab or Shift + Tab selects movable subtopic.\n'
             'Arrow keys change subtopic order up or down.')
          
         top = LabelH3(self.order_dlg, text=instrux, anchor='center')
@@ -574,7 +588,7 @@ class NotesDialog(Toplevel):
             save_order.append([text, q])
             q += 1
 
-        conn = sqlite3.connect(self.current_file)
+        conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
@@ -593,7 +607,8 @@ class NotesDialog(Toplevel):
         self.order_dlg.destroy()
         self.focus_set()
 
-
-
-
-
+# DO LIST
+# get all error messages from messages.py
+# ESCAPE key doesn't close roles ?or notes dialogs
+# rc_menu--need access to the referenced widgets but they're made inside of functions.
+# add statusbar messages

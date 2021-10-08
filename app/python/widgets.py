@@ -415,33 +415,64 @@ class LabelDots(LabelButtonText):
     def __init__(
             self, 
             master,
-            current_file,
             dialog_class,
             *args, **kwargs):
         LabelButtonText.__init__(self, master, *args, **kwargs)
 
         self.master = master
-        self.root = master.master
         self.dialog_class = dialog_class
+        self.current_person = None
+        
+        self.root = master.master
 
         self.finding_id = None
-        self.header = None
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-        cur.execute(select_current_person_id)
-        self.current_person = cur.fetchone()[0]
+        self.header = []
         self.config(width=5, font=formats['heading3'])
         self.bind('<Button-1>', self.open_dialog)
-        cur.close()
-        conn.close()
 
     def open_dialog(self, evt):
-        dialog = self.dialog_class(
-            self.root,
+        dlg = self.dialog_class(
+            self.master, 
+            self.finding_id, 
+            self.header, 
             self.current_person,
-            finding_id=self.finding_id,
-            header=self.header,
             pressed=evt.widget)
+
+# class LabelDots(LabelButtonText):
+    # ''' 
+        # Display clickable dots if more info, no dots 
+        # if no more info. 
+    # '''
+    # def __init__(
+            # self, 
+            # master,
+            # current_file,
+            # dialog_class,
+            # *args, **kwargs):
+        # LabelButtonText.__init__(self, master, *args, **kwargs)
+
+        # self.master = master
+        # self.root = master.master
+        # self.dialog_class = dialog_class
+
+        # self.finding_id = None
+        # self.header = None
+        # conn = sqlite3.connect(current_file)
+        # cur = conn.cursor()
+        # cur.execute(select_current_person_id)
+        # self.current_person = cur.fetchone()[0]
+        # self.config(width=5, font=formats['heading3'])
+        # self.bind('<Button-1>', self.open_dialog)
+        # cur.close()
+        # conn.close()
+
+    # def open_dialog(self, evt):
+        # dialog = self.dialog_class(
+            # self.root,
+            # self.current_person,
+            # finding_id=self.finding_id,
+            # header=self.header,
+            # pressed=evt.widget)
 
 class LabelBoilerplate(Labelx):
     ''' 

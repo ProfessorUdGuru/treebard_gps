@@ -34,34 +34,34 @@ from dev_tools import looky, seeline
 
 formats = make_formats_dict()
 
-class LabelDotsRoles(LabelButtonText):
-    ''' 
-        Display clickable dots if more info, no dots 
-        if no more info. 
-    '''
-    def __init__(
-            self, 
-            master,
-            *args, **kwargs):
-        LabelButtonText.__init__(self, master, *args, **kwargs)
+# class LabelDots(LabelButtonText):
+    # ''' 
+        # Display clickable dots if more info, no dots 
+        # if no more info. 
+    # '''
+    # def __init__(
+            # self, 
+            # master,
+            # *args, **kwargs):
+        # LabelButtonText.__init__(self, master, *args, **kwargs)
 
-        self.master = master
-        self.current_person = None
+        # self.master = master
+        # self.current_person = None
         
-        self.root = master.master
+        # self.root = master.master
 
-        self.finding_id = None
-        self.header = []
-        self.config(width=5, font=formats['heading3'])
-        self.bind('<Button-1>', self.open_dialog)
+        # self.finding_id = None
+        # self.header = []
+        # self.config(width=5, font=formats['heading3'])
+        # self.bind('<Button-1>', self.open_dialog)
 
-    def open_dialog(self, evt):
-        dlg = RolesDialog(
-            self.master, 
-            self.finding_id, 
-            self.header, 
-            self.current_person,
-            pressed=evt.widget)
+    # def open_dialog(self, evt):
+        # dlg = RolesDialog(
+            # self.master, 
+            # self.finding_id, 
+            # self.header, 
+            # self.current_person,
+            # pressed=evt.widget)
 
 class RolesDialog(Toplevel):
     def __init__(
@@ -114,8 +114,6 @@ class RolesDialog(Toplevel):
         scridth = 16
         scridth_n = Frame(self.window, height=scridth)
         scridth_w = Frame(self.window, width=scridth)
-        scridth_n.grid(column=0, row=0, sticky='ew')
-        scridth_w.grid(column=0, row=1, sticky='ns')
         # DO NOT DELETE THESE LINES, UNCOMMENT IN REAL APP
         # self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
         # self.treebard.scroll_mouse.configure_mousewheel_scrolling()
@@ -141,9 +139,6 @@ class RolesDialog(Toplevel):
         scridth_w.grid(column=0, row=1, sticky='ns')
         self.window.columnconfigure(2, weight=1)
         self.window.rowconfigure(1, minsize=60)
-        self.frm = Frame(self.window)
-        self.frm.grid(column=1, row=2, sticky='news', pady=12)
-        self.frm.columnconfigure(0, weight=1)
         show_message()
         self.make_inputs()
 
@@ -604,15 +599,7 @@ class RolesDialog(Toplevel):
             elif child.grid_info()['row'] == self.got_row:
                 if child.grid_info()['column'] == 2:
                     child.config(text=new_person_name)
-        # self.resize_scrollbar()
-        # self.resize_window()
         resize_scrolled_content(self, self.canvas, self.window)
         self.make_roles_list()
 
-# DO LIST
-# TEST:
-# make new role
-# edit existing role person and/or role type
-# make new role type
-# make new role person
-# delete a role
+
