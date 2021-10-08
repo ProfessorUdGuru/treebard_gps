@@ -455,41 +455,6 @@ gen_edit_role_rows = (
         'being used in the tree.', 
         'Edit Existing Role Button')
 
-# Messages used by specific widgets made in a loop:
-
-# roles dialog in root module and notes dialog in notes.py
-def make_header_roles_notes(header_parent, dlg_header, which_dlg, rc_menu):
-    '''
-        Used for roles and notes dialogs linked to a specific event.
-        Called inside of rcm.make_rc_menus().
-    '''
-
-    if not dlg_header: 
-        return
-
-    header_form = (
-        ('This is the type of event that the {} dialog refers to.'.format(
-                which_dlg), 
-            'Event Type Header'),
-        ('This is the date of the event that the {} dialog refers to.'.format(
-                which_dlg), 
-            'Event Date Header'), 
-        ('This is the place of the event that the {} dialog refers to.'.format(
-                which_dlg), 
-            'Event Place Header'),
-        ('This is the particulars of the event that the {} dialog refers to.'.format(
-                which_dlg),
-            'Event Particulars Header'))
-
-    s = 0
-    print('485 dlg_header is', dlg_header)
-# 485 dlg_header is Enter new role for event.
-    for stg in dlg_header:              
-        lab = LabelH3(header_parent, text=stg)
-        if len(stg) != 0:
-            lab.grid()
-        rc_menu.loop_made[lab] = (header_form)[s]
-        s += 1
 
 
 

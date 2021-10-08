@@ -9,12 +9,21 @@ from widgets import (
     LabelH3, Button, EntryHilited1, LabelHeader)
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
+from right_click_menu import RightClickMenu, make_rc_menus
+from message_strings import role_dlg_msg, gen_edit_role_rows
 from styles import make_formats_dict, config_generic
 from names import (
-    get_name_with_id, make_values_list_for_person_select, PersonAdd)
+    get_name_with_id, make_values_list_for_person_select, PersonAdd,
+    get_all_persons)
 from scrolling import Scrollbar, resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
-from query_strings import select_roles, select_role_types
+from query_strings import (
+    select_roles, select_role_types, select_role_type_id,
+    update_findings_roles_role_type, update_findings_roles_person,
+    insert_findings_roles, delete_findings_role,
+    select_count_findings_roles,
+
+)
 
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -47,23 +56,34 @@ class LabelDotsRoles(LabelButtonText):
         self.bind('<Button-1>', self.open_dialog)
 
     def open_dialog(self, evt):
-        dlg = RolesDialog(self.master, self.finding_id, self.header, self.current_person)
+        dlg = RolesDialog(
+            self.master, 
+            self.finding_id, 
+            self.header, 
+            self.current_person,
+            pressed=evt.widget)
 
 class RolesDialog(Toplevel):
-    def __init__(self, master, finding_id, header, current_person, *args, **kwargs):
+    def __init__(
+            self, master, finding_id, header, current_person, 
+            pressed=None, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.root = master
         self.finding_id = finding_id
         self.header = header
         self.current_person = current_person
+        self.pressed = pressed
 
         self.role_types = []
+        self.persons = get_all_persons()
+        self.roles_per_finding = []
 
         self.current_name = get_name_with_id(self.current_person)
         people = make_values_list_for_person_select()        
         self.all_birth_names = EntryAuto.create_lists(people)
 
+        self.rc_menu = RightClickMenu(self.root)
         self.make_widgets()
 
     def make_widgets(self):
@@ -167,6 +187,16 @@ class RolesDialog(Toplevel):
             self.canvas.statusbar.status_label, 
             self.canvas.statusbar.tooltip_label)
 
+        rcm_widgets = (
+            self.role_type_input, self.person_input, self.add_butt, 
+            self.done_butt, self.close_butt)
+        make_rc_menus(
+            rcm_widgets, 
+            self.rc_menu,
+            role_dlg_msg)
+
+        config_generic(self) 
+
         resize_scrolled_content(self, self.canvas, self.window)
 
     def make_inputs(self):
@@ -246,7 +276,7 @@ class RolesDialog(Toplevel):
             editx.bind('<Leave>', on_unhover)
             editx.bind('<Button-1>', get_clicked_row)
             editx.bind('<space>', get_clicked_row)
-            # self.rc_menu.loop_made[editx] = gen_edit_role_rows
+            self.rc_menu.loop_made[editx] = gen_edit_role_rows
             n += 1
         if first_butt:
             first_butt.focus_set()
@@ -429,7 +459,160 @@ class RolesDialog(Toplevel):
                 child.grid(row=row-1)
         resize_scrolled_content(self, self.canvas, self.window)
 
-# DO LIST
+    def update_role_type(self, edited_role_type):
 
-# rc_menu
-# statusbar tooltips
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(select_role_type_id, (edited_role_type,))
+        chosen_role_type_id = cur.fetchone()
+        if chosen_role_type_id:
+            chosen_role_type_id = chosen_role_type_id[0]
+
+        cur.execute(
+            update_findings_roles_role_type, 
+            (chosen_role_type_id, self.edited_role_id))
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        for child in self.rolfrm.winfo_children():
+            if child.winfo_class() == 'Frame':
+                pass
+            elif child.grid_info()['row'] == self.got_row:
+                if child.grid_info()['column'] == 0:
+                    child.config(text=edited_role_type)
+
+        resize_scrolled_content(self, self.canvas, self.window)
+        # self.resize_scrollbar()
+        # self.resize_window()
+
+        self.get_role_types()
+        self.make_roles_list()
+
+    def make_new_person(self, from_edit=False, edited_role_person=None):
+        '''
+            Do not make the person-add dialog modal, because it prevents
+            the right-click menu from working right. This means the user
+            can go back and forth from roles dialog to person-add dialog
+            and make manual changes. It works fine. The only problem is if
+            ADD is clicked twice, there will be two person-add dialogs and
+            the first one can't be closed without reloading the app. So
+            instead of making the person-add dialog modal, the buttons
+            on the roles dialog are disabled while the person-add dialog is open.
+        '''
+
+        def close_dialog():
+            self.add_butt.config(state='normal')
+            self.done_butt.config(state='normal')
+            self.close_butt.config(state='normal')
+            self.new_role_person_dialog.destroy() 
+
+        self.new_role_person_dialog = Toplevel(self)
+        self.new_role_person_dialog.resizable(False, False)
+        self.add_butt.config(state='disabled')
+        self.done_butt.config(state='disabled')
+        self.close_butt.config(state='disabled')
+        self.person_add = PersonAdd(
+            self.new_role_person_dialog, 
+            self.person_input, 
+            self.root)   
+        self.person_add.grid(column=0, row=0)
+        self.person_add.name_input.delete(0, 'end')
+        if from_edit is False:
+            self.person_add.name_input.insert(0, self.user_input_person)
+        else:
+            self.person_add.name_input.insert(0, edited_role_person)
+        self.person_add.add_butt.config(command=self.person_add.add_person)
+
+        closer = Button(
+            self.person_add.buttonbox, 
+            text='Close',
+            width=8,
+            command=close_dialog)
+        closer.grid(column=1, row=0, padx=6, pady=6)
+
+        self.person_add.new_person_statusbar.grid(column=0, row=2, sticky='ew')
+
+        self.new_role_person_dialog.protocol("WM_DELETE_WINDOW", close_dialog)
+        self.person_add.gender_input.focus_set()
+        config_generic(self.new_role_person_dialog)
+        self.new_role_person_dialog.wait_window()
+        self.persons = get_all_persons() 
+
+    def make_new_role(self, role_type):
+        if len(self.user_input_person) == 0:            
+            role_person_id = None
+        elif self.user_input_person not in self.persons:
+            self.make_new_person()
+            role_person_id = self.person_add.new_person_id
+        else:
+            role_person_id = self.person_input.get().split('  #')[1]
+
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(select_role_type_id, (role_type,))
+        role_type_id = cur.fetchone()[0]
+        cur.execute(
+            insert_findings_roles, 
+            (self.finding_id, role_type_id, role_person_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        dont_destroy = []
+        for child in self.rolfrm.winfo_children():
+            if child.winfo_class() == 'Frame':
+                edit_row_frame = child
+                dont_destroy.append(edit_row_frame)
+                break
+        for child in self.rolfrm.winfo_children():
+            if child.master == edit_row_frame:
+                dont_destroy.append(child)
+        for child in self.rolfrm.winfo_children():
+            if child not in dont_destroy:
+                child.destroy()
+        self.make_roles_table()
+        
+        self.pressed.config(text=' ... ')
+        self.role_type_input.delete(0, 'end')
+        self.person_input.delete(0, 'end')
+        resize_scrolled_content(self, self.canvas, self.window)
+        self.make_roles_list()
+
+    def change_role_person(self, edited_role_person):
+        '''
+            Change role person to a person that already exists.
+        '''
+
+        new_person_data = edited_role_person.split('  #')
+        new_person_id = new_person_data[1]
+        new_person_name = new_person_data[0]
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(
+            update_findings_roles_person, (new_person_id, self.edited_role_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        for child in self.rolfrm.winfo_children():
+            if child.winfo_class() == 'Frame':
+                pass
+            elif child.grid_info()['row'] == self.got_row:
+                if child.grid_info()['column'] == 2:
+                    child.config(text=new_person_name)
+        # self.resize_scrollbar()
+        # self.resize_window()
+        resize_scrolled_content(self, self.canvas, self.window)
+        self.make_roles_list()
+
+# DO LIST
+# TEST:
+# make new role
+# edit existing role person and/or role type
+# make new role type
+# make new role person
+# delete a role

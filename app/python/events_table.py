@@ -760,24 +760,24 @@ class EventsTable(Frame):
             widg.finding_id = finding_id
             widg.current_person = self.current_person
 
-            if finding_id in current_roles:
-                widg.header = [
-                    self.findings_data[finding_id]["event"], 
-                    self.findings_data[finding_id]["date"], 
-                    self.findings_data[finding_id]["place"], 
-                    self.findings_data[finding_id]["particulars"]]
+            # if finding_id in current_roles:
+            widg.header = [
+                self.findings_data[finding_id]["event"], 
+                self.findings_data[finding_id]["date"], 
+                self.findings_data[finding_id]["place"], 
+                self.findings_data[finding_id]["particulars"]]
 
         for row in self.cell_pool:
             widg = row[1][6]
             # widg = row[1][7]
             finding_id = row[0]
             widg.finding_id = finding_id
-            if finding_id in current_notes:
-                widg.header = [
-                    self.findings_data[finding_id]["event"], 
-                    self.findings_data[finding_id]["date"], 
-                    self.findings_data[finding_id]["place"], 
-                    self.findings_data[finding_id]["particulars"]]
+            # if finding_id in current_notes:
+            widg.header = [
+                self.findings_data[finding_id]["event"], 
+                self.findings_data[finding_id]["date"], 
+                self.findings_data[finding_id]["place"], 
+                self.findings_data[finding_id]["particulars"]]
 
         self.show_table_cells()
 

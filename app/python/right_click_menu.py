@@ -1,9 +1,8 @@
-# right_click_menu (import as rcm)
+# right_click_menu
 
 import tkinter as tk
 from styles import config_generic
 from widgets import Toplevel, LabelStylable, Button
-from message_strings import make_header_roles_notes
 import dev_tools as dt
 
 
@@ -11,10 +10,7 @@ import dev_tools as dt
 def make_rc_menus(
         rcm_widgets, 
         rc_menu,
-        rcm_msg, 
-        header_parent=None, 
-        header=None, 
-        which_dlg=None):
+        rcm_msg):
     '''
         To include a widget in the right-click context help, list the widget
         in rcm_widgets in the instance and store each widget's message 
@@ -25,21 +21,12 @@ def make_rc_menus(
             rcm.make_rc_menus(
                 rcm_widgets, 
                 self.rc_menu, 
-                ms.note_dlg_msg,
-                header_parent=self.notes_dialog_header, 
-                header=self.header, 
-                which_dlg='notes')
+                ms.note_dlg_msg)
 
         ...and in __init__ right before calling make_widgets() do this...
 
         self.rc_menu = rcm.RightClickMenu(self.root)
-
-        The 3 default parameters are ignored except where data is being passed
-        that will be used to make headers in dialogs and the header items will
-        have right-click context help functionality.
     '''
-
-    make_header_roles_notes(header_parent, header, which_dlg, rc_menu)
 
     rc_menu.help_per_context = dict(zip(rcm_widgets, rcm_msg))
     
@@ -79,7 +66,7 @@ class RightClickMenu(tk.Menu):
         print('Pasted')
 
     def context_help(self):
-        help = Toplevel()
+        help = Toplevel(self.master)
         help.title(self.help_title)
         text = LabelStylable(
             help,

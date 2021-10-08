@@ -338,7 +338,14 @@ def config_generic(parent):
             bg=formats['bg'],
             fg=formats['fg'], 
             activebackground=formats['highlight_bg'],
-            selectcolor=formats['highlight_bg']) 
+            selectcolor=formats['highlight_bg'])
+
+    def config_buttons_quiet(button):
+        button.config(
+            bg=formats['bg'],  
+            fg=formats['fg'],
+            font=(formats['boilerplate']),
+            activebackground=formats['head_bg']) 
 
     def config_radiobuttonhilited(radio):
         radio.config(
@@ -499,8 +506,11 @@ def config_generic(parent):
 
         elif widg.winfo_class() == 'Button':
 
-            if widg.winfo_subclass() in ('Button', 'ButtonQuiet'):
+            if widg.winfo_subclass() == 'Button':
                 config_buttons(widg)
+
+            elif widg.winfo_subclass() == 'ButtonQuiet':
+                config_buttons_quiet(widg)
 
             elif widg.winfo_subclass() == 'ButtonPlain':
                 config_buttons_plain(widg)

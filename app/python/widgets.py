@@ -843,7 +843,8 @@ class ButtonQuiet(Buttonx):
             overrelief=tk.GROOVE, 
             activebackground=formats['head_bg'],
             bg=formats['bg'],  
-            fg=formats['fg'])
+            fg=formats['fg'],
+            font=formats['boilerplate'])
 
 class ButtonPlain(Buttonx):
     ''' Sans serif font. '''
