@@ -17,7 +17,7 @@ from toykinter_widgets import Separator
 from styles import make_formats_dict, config_generic
 from names import (
     get_name_with_id, make_values_list_for_person_select, PersonAdd)
-from roles import RolesDialog
+from roles import RolesDialog, LabelDotsRoles
 from notes import NotesDialog
 from places import place_strings, ValidatePlace, places_places
 from scrolling import Scrollbar, resize_scrolled_content
@@ -719,7 +719,8 @@ class EventsTable(Frame):
                     elif j == 4:
                         cell.config(width=5)
                 elif j == 5:
-                    cell = LabelDots(self, current_file, RolesDialog)
+                    cell = LabelDotsRoles(self, finding_row=None)
+                    # cell = LabelDotsRoles(self, current_file)
                 elif j == 6:
                     cell = LabelDots(self, current_file, NotesDialog)
                 elif j == 7:
@@ -752,9 +753,13 @@ class EventsTable(Frame):
             i += 1
             
         for row in self.cell_pool:
-            widg = row[1][6]
+            widg = row[1][5]
+            # widg = row[1][6]
+            print("line", looky(seeline()).lineno, "widg:", widg)
             finding_id = row[0]
             widg.finding_id = finding_id
+            widg.current_person = self.current_person
+
             if finding_id in current_roles:
                 widg.header = [
                     self.findings_data[finding_id]["event"], 
@@ -763,7 +768,8 @@ class EventsTable(Frame):
                     self.findings_data[finding_id]["particulars"]]
 
         for row in self.cell_pool:
-            widg = row[1][7]
+            widg = row[1][6]
+            # widg = row[1][7]
             finding_id = row[0]
             widg.finding_id = finding_id
             if finding_id in current_notes:
@@ -1827,14 +1833,8 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: events_table
-# add tooltips/status bar messages
-# get rid of ttk combobox in new person dialog 
-# incorporate config_generic all dialogs
-# replace windows border on all dialogs see new event dialog for example
-
 # BRANCH roles_notes
-# Refactor roles.py completely from scratch, it is very broken and the way I did it was convoluted not worth fixing. Decouple it from notes.py which works but labeldots needs to work for both and if it doesn't then make a special labeldots for roles. Header doesn't work for either since parameters have been taken thru a secret path of modules that I don't want to try and track down. Pass finding_id etc (all header data) directly to LabelDots using the new dictionary.
+# Refactor roles.py completely from scratch, it is very broken and the way I did it was convoluted not worth fixing. Decouple it from notes.py which works but labeldots needs to work for both and if it doesn't then make a special labeldots for roles. Header doesn't work for either since parameters have been taken thru a secret path of modules that I don't want to try and track down. Pass finding_id etc (all header data) directly to LabelDots? or why be clever, just pass it to the dialog directly, using the new dictionary.
 # test notes & roles all features; esp. test roles re: `if self.role_person_edited is True:` since new_person_id is no longer real but temp at this point in names.py and get rid of ttk.Combobox
 
 # BRANCH: dates
@@ -1857,9 +1857,15 @@ if __name__ == '__main__':
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?
 
-# add to do list for combobox: when scrolling if the mouse strays off the scrollbar the dropdown undrops, I've seen a way to fix that but what was it?
+# add to main do list 
+# combobox: when scrolling if the mouse strays off the scrollbar the dropdown undrops, I've seen a way to fix that but what was it?
 # add to main do list re: all dialogs: run the same code when clicking X on title bar
 # add to do list for new_event dialog: add person search button 
+# events_table:
+# add tooltips/status bar messages
+# get rid of ttk combobox in new person dialog 
+# incorporate config_generic all dialogs
+# replace windows border on all dialogs see new event dialog for example
 
 
 

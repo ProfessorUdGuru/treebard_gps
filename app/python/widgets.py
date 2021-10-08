@@ -233,6 +233,20 @@ class LabelItalic(Labelx):
             fg=formats['fg'],
             font=formats['show_font'])
 
+class LabelHeader(Labelx):
+    ''' 
+        Like MessageHilited with line breaks.  
+    '''
+    def __init__(self, master, *args, **kwargs):
+        Labelx.__init__(self, master, *args, **kwargs)
+
+        self.config(
+            bg=formats['highlight_bg'], 
+            fg=formats['fg'],
+            font=formats['heading3'],
+            bd=3,
+            relief='raised')
+
 class LabelHilited(Labelx):
     ''' 
         Like Label with a different background.  
@@ -604,56 +618,6 @@ class LabelButtonText(LabelButtonImage):
             relief='raised', 
             takefocus=1,
             width=width)
-
-# class KinTip(FrameHilited5):
-    # '''
-        # Display kin name when user points to a kin_type button in kin column
-        # on events table.
-    # '''
-    # def __init__(
-            # self, master, text='', empty=False, finding=None, *args, **kwargs):
-        # FrameHilited5.__init__(self, master, *args, **kwargs)
-
-        # self.text = text
-        # self.finding = finding
-
-        # self.columnconfigure(1, weight=1)
-
-        # self.person_id = 0
-
-        # if empty is False:
-            # self.make_widgets()
-        # else:
-            # self.add_kin()
-
-    # def make_widgets(self):
-        # instrux1 = LabelTip(
-            # self, text='Make', bd=0)
-        # self.instrux2 = LabelTipBold(
-            # self, 
-            # text=self.text,
-            # cursor="hand2")
-        # instrux3 = LabelTip(
-            # self, text='the current person', bd=0)
-
-        # instrux1.grid(
-            # column=0, row=0, padx=(3, 0), pady=1, 
-            # ipadx=3, ipady=3, sticky='w')
-        # self.instrux2.grid(
-            # column=1, row=0, padx=(0, 3), pady=1, 
-            # ipadx=3, ipady=3, sticky='w', columnspan=2)
-        # instrux3.grid(
-            # column=0, row=1, padx=3, pady=1, 
-            # ipadx=3, ipady=3, sticky='ew', columnspan=3)
-
-    # def add_kin(self):
-        # self.instrux2 = LabelTipBold(
-            # self, 
-            # text=self.text,
-            # cursor="hand2")
-        # self.instrux2.grid(
-            # column=0, row=0, 
-            # ipadx=24, ipady=36, sticky='news')
 
 class LabelMovable(LabelHilited):
     ''' 

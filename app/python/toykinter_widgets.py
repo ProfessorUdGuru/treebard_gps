@@ -82,8 +82,8 @@ class StatusbarTooltips(Frame):
                     'tooltip message on mouse hover.'))        
             run_statusbar_tooltips(
                 visited, 
-                roles_statusbar.status_label, 
-                roles_statusbar.tooltip_label)
+                some_statusbar.status_label, 
+                some_statusbar.tooltip_label)
         If parent is a Toplevel and you don't want the Toplevel to be resizable,
         use resizer=False when instantiating the Statusbar and add this:
             dialog.resizable(False, False) --that's width and height in that order.
