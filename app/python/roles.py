@@ -34,35 +34,6 @@ from dev_tools import looky, seeline
 
 formats = make_formats_dict()
 
-# class LabelDots(LabelButtonText):
-    # ''' 
-        # Display clickable dots if more info, no dots 
-        # if no more info. 
-    # '''
-    # def __init__(
-            # self, 
-            # master,
-            # *args, **kwargs):
-        # LabelButtonText.__init__(self, master, *args, **kwargs)
-
-        # self.master = master
-        # self.current_person = None
-        
-        # self.root = master.master
-
-        # self.finding_id = None
-        # self.header = []
-        # self.config(width=5, font=formats['heading3'])
-        # self.bind('<Button-1>', self.open_dialog)
-
-    # def open_dialog(self, evt):
-        # dlg = RolesDialog(
-            # self.master, 
-            # self.finding_id, 
-            # self.header, 
-            # self.current_person,
-            # pressed=evt.widget)
-
 class RolesDialog(Toplevel):
     def __init__(
             self, master, finding_id, header, current_person, 
@@ -222,6 +193,7 @@ class RolesDialog(Toplevel):
             new_roles_area,
             text='Close',
             command=self.close_roles_dialog)
+        self.bind('<Escape>', self.close_roles_dialog)
 
         self.rolfrm.grid(column=0, row=1, columnspan=2)       
         self.rolfrm.columnconfigure(4, weight=1)

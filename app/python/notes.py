@@ -10,9 +10,9 @@ from toykinter_widgets import  StatusbarTooltips, run_statusbar_tooltips
 from scrolling import ScrolledText, Scrollbar, resize_scrolled_content
 from messagesx import ErrorMessage
 from messages import open_yes_no_message, notes_msg
+from right_click_menu import RightClickMenu, make_rc_menus
 from styles import make_formats_dict, config_generic
 from names import get_name_with_id
-from right_click_menu import make_rc_menus, RightClickMenu
 from message_strings import note_dlg_msg
 from utes import center_window, create_tooltip
 from custom_listbox_widget import Listbox
@@ -609,6 +609,5 @@ class NotesDialog(Toplevel):
 
 # DO LIST
 # get all error messages from messages.py
-# ESCAPE key doesn't close roles ?or notes dialogs
 # rc_menu--need access to the referenced widgets but they're made inside of functions.
 # add statusbar messages

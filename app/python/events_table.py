@@ -1829,9 +1829,6 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH roles_notes
-# Copy the new labeldots to notes and try not to change it; if possible it can be just plain generic labeldots class move to widgets.py. Make notes work, test all.
-
 # BRANCH: dates
 # finish refactoring dates validation
 # get rid of ttk combobox in dates settings tab
