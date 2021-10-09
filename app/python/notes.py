@@ -606,8 +606,3 @@ class NotesDialog(Toplevel):
         self.order_dlg.grab_release()
         self.order_dlg.destroy()
         self.focus_set()
-
-# DO LIST
-# get all error messages from messages.py
-# rc_menu--need access to the referenced widgets but they're made inside of functions.
-# add statusbar messages

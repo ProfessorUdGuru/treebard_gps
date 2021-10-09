@@ -12,6 +12,7 @@ from widgets import (
     LabelHilited)
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
+from dates import validate_date
 from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator
 from styles import make_formats_dict, config_generic
@@ -623,6 +624,16 @@ class EventsTable(Frame):
                 make_new_event_type()
                 update_to_existing_type()
 
+        def update_date():
+            self.final = validate_date(
+                # self.root, 
+                # self.treebard,
+                self.inwidg,
+                self.initial,
+                self.final,
+                self.finding)
+            print("line", looky(seeline()).lineno, "self.final:", self.final)
+
         def update_place():
             cur.execute(select_nesting_fk_finding, (self.finding,))
             nested_place = cur.fetchone()[0]
@@ -660,7 +671,7 @@ class EventsTable(Frame):
         if col_num == 0:
             update_event_type()
         elif col_num == 1:
-            pass
+            update_date()
         elif col_num == 2:
             update_place()
         elif col_num == 3:
@@ -1858,6 +1869,10 @@ if __name__ == '__main__':
 # get rid of ttk combobox in new person dialog 
 # incorporate config_generic all dialogs
 # replace windows border on all dialogs see new event dialog for example
+# notes dialog:
+# get all error messages from messages.py
+# rc_menu--need access to the referenced widgets but they're made inside of functions.
+# add statusbar messages
 
 
 

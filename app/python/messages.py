@@ -104,3 +104,7 @@ notes_msg = (
     "Any note can be linked to any number of entities.",
 
 )
+
+dates_msg = (
+    "",
+)
