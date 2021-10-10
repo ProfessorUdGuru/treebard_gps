@@ -22,7 +22,9 @@ from dev_tools import looky, seeline
 
 formats = make_formats_dict()
 
-SEPTORS = (" ", "/", ".", "-", "*", "_")
+# "." can't be used as a separator or it would prevent the user
+#   from using a dot to denote an abbreviation e.g. "A.D."
+SEPTORS = (" ", "/", "-", "*", "_")
 
 OK_MONTHS = (
     'ja', 'f', 'mar', 'ap', 'may', 'jun', 
@@ -33,7 +35,7 @@ MONTH_ABBS = (
     'jun.', 'jul.', 'au.', 'aug.', 's.', 'se.', 'sep.', 'sept.', 
     'oc.', 'oct.', 'no.', 'nov.', 'd.', 'de.', 'dec.',
     'jan', 'feb', 'mar', 'apr', 'jun', 'jul', 'aug', 'sep', 'sept', 
-    'oct', 'nov', 'dec')
+    'oct', 'nov', 'dec', 'fe', 'se', 'de')
 
 FULL_MONTHS = (
     "january", "february", "march", "april", "may", "june", 
@@ -130,7 +132,13 @@ def validate_date(
     final = find_bad_dates(final)
     if not final: return
 
-    final = find_date_parts(final)
+    final = make_date_dict(list(final))
+    if not final: return
+
+    final = order_compound_dates(final)
+    if not final: return
+
+
     
 
 
@@ -163,7 +171,7 @@ def find_bad_dates(final):
         print("too many months error")
 
     for word in words:
-        if words.count(word) > 1:
+        if word in ("and", "to") and words.count(word) > 1:
             print("repeated word error")
             return
 
@@ -171,25 +179,45 @@ def find_bad_dates(final):
     comp2 = []
     compsep = None
     for term in terms:
+        print("line", looky(seeline()).lineno, "term:", term)
         if term in ("and", "to"):
+            if compsep is not None:
+                print("repeated word 'and' or 'to' error")
+                return               
             compsep = term
         elif compsep is None:
             comp1.append(term)
         elif compsep is not None:
             comp2.append(term)
+        else:
+            print("line", looky(seeline()).lineno, "case not handled:")
+
+    if len(month_words) > 1 and compsep is None:
+        print("two dates no connector error")
+        return
 
     for lst in (comp1, comp2):
+        print("line", looky(seeline()).lineno, "lst:", lst)
         nums = 0
+        over_two_digits = 0
         lenlist = len(lst)
         for item in lst:
             if item.isdigit() is True:
+                if len(item) > 2: 
+                    if over_two_digits > 0:
+                        print("too many years input error")
+                        return
+                    else:
+                        over_two_digits += 1
                 nums += 1
+
         if nums >= 3:
             print("too many numerical terms error")
             return
         elif lenlist > 5:
             print("too many terms error")
             return
+
         prefixes = 0
         suffixes = 0
         for elem in lst:
@@ -201,10 +229,18 @@ def find_bad_dates(final):
             print("too many prefixes or suffixes error")
             return
 
-        if len(lst) == 1 and lst[0].isalpha() is True:
+        if lenlist == 1 and lst[0].isalpha() is True:
             print("lack of numerical items")
             return
-        elif len(lst) > 1:
+        elif lenlist > 1:
+            numbers = []
+            for elem in lst:
+                if elem.isdigit() is True:
+                    numbers.append(int(elem))
+            lennums = len(numbers)
+            if lenlist == lennums:
+                print("no month error")
+                return
             abc = 0
             for i in lst:
                 if i.lower() in ALL_MONTHS:
@@ -212,15 +248,115 @@ def find_bad_dates(final):
             if abc == 0:
                 print("no month error")
                 return
+            if lennums == 2:
+                over_31 = 0
+                for number in numbers:
+                    if number > 31:
+                        if over_31 > 0:
+                            print("too many years error")
+                            return
+                        over_31 += 1
 
-    if len(month_words) > 1 and compsep is None:
-        print("two dates no connector error")
-        return
+
 
     return (comp1, compsep, comp2)
 
-def find_date_parts(final):
+def make_date_dict(final):
+
+    def find_month(lst, b):
+        g = 0
+        for item in lst:
+            if item.isalpha():
+                if item.lower().startswith(OK_MONTHS):
+                    for mo in OK_MONTHS:
+                        if item.lower().startswith(mo):
+                            month_key = mo
+                            break
+                    date_dict[b]["month"] = month_key
+                    break
+            g += 1
+        return lst
+
+    def find_year(lst, b):
+        h = 0
+        under_two = 0
+        for item in lst:
+            if item.isdigit():
+                if len(item) < 3:
+                    if under_two > 0:
+                        lst = clarify_year(lst)
+                    else:
+                        under_two += 1
+                elif len(item) > 2:                       
+                    date_dict[b]["year"] = item
+                    break
+            h += 1    
+        return lst
+
+    def find_day(lst, b):
+        i = 0
+        for item in lst:
+            if type(item) is not dict:
+                if item.isdigit():  
+                    date_dict[b]["day"] = item
+                    break
+            i += 1
+
+        return lst
+
+    def clarify_year(lst):
+        print("line", looky(seeline()).lineno, "lst:", lst)
+        return lst
+
+    date_dict = [{}, {}]
+                    
+    if len(final) == 1:
+        pass
+    elif len(final) > 1:
+        comps = [final[0], final[2]]
+        b = 0
+        for lst in comps:
+            lst = find_month(lst, b)
+            lst = find_year(lst, b)
+            lst = find_day(lst, b)
+            comps[b] = lst
+            b += 1
+        date_dict.insert(1, final[1])
+    print("line", looky(seeline()).lineno, "date_dict:", date_dict)
     print("line", looky(seeline()).lineno, "final:", final)
+
+                        
+
+
+
+
+def order_compound_dates(final):
+    print("line", looky(seeline()).lineno, "final:", final)
+# line 259 final: (['10', 'June', '1884'], 'to', ['14', 'f', '1888'])
+
+
+    order = ["ad", "ad"]        
+    e = 0
+    for lst in (final[0], final[2]):
+        for item in lst:
+            if item.upper() in BC:
+                order[e] = "bc"
+                continue
+            elif item.upper() in AD:
+                order[e] = "ad"
+                continue
+        e += 1
+    print("line", looky(seeline()).lineno, "order:", order)
+    if order == ("ad", "ad"):
+        pass
+    elif order == ("bc", "bc"):
+        pass
+    elif order == ("ad", "bc"):
+        pass
+    elif order == ("bc", "ad"):
+        pass
+
+
 
 
 
@@ -241,3 +377,7 @@ if __name__ == "__main__":
 
     root.mainloop()
     
+# DO LIST
+# clarify_year() eg 12 10 feb
+# match allowable num of days in mo to month see over_31
+# add prefixes & suffixes to date_dict
