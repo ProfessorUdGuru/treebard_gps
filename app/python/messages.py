@@ -1,12 +1,14 @@
 # error_messages.py
 
+from tkinter import StringVar
 import sqlite3
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
-from widgets import (Toplevel, Label, Button, Frame, MessageHilited)
+from widgets import (Toplevel, Label, Button, Frame, MessageHilited, Entry)
 from styles import config_generic
 from files import current_file
 import dev_tools as dt
+from dev_tools import looky, seeline
 
 
 
@@ -54,6 +56,42 @@ def open_yes_no_message(parent, message, title, ok_lab, cancel_lab):
     cancel_butt.grid(column=1, row=0, padx=6)
     ok_butt.focus_set()
     return msg, lab, ok_butt, cancel_butt, buttonbox
+
+def open_input_message(parent, message, title, ok_lab, cancel_lab, user_input):
+    def ok():
+        cancel()
+
+    def cancel():
+        msg.destroy()
+
+    def show():
+        gotten = got.get()
+        return gotten
+
+    got = StringVar()
+
+    msg = Toplevel(parent)
+    msg.title(title)
+    msg.columnconfigure(0, weight=1)
+    msg.rowconfigure(0, weight=1)
+    lab = MessageHilited(msg, text=message, justify='left')
+    lab.grid(column=0, row=0, sticky='news', padx=12, pady=12, columnspan=2)
+    lab2 = Label(msg, text="{} or {}?".format(user_input[0], user_input[1]))
+    lab2.grid(column=0, row=1)
+    inPut = Entry(msg, textvariable=got)
+    inPut.grid(column=1, row=1)
+    buttonbox = Frame(msg)
+    buttonbox.grid(column=0, row=2, sticky='e', padx=(0,12), pady=12)
+    ok_butt = Button(buttonbox, text=ok_lab, command=cancel, width=6)
+    ok_butt.grid(column=0, row=0, padx=6)
+    cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
+    cancel_butt.grid(column=1, row=0, padx=6)
+    inPut.focus_set()
+    parent.wait_window(msg)
+    got = show()
+    print("line", looky(seeline()).lineno, "got:", got)
+    return user_input, got
+    # return msg, lab, ok_butt, cancel_butt, buttonbox, got
 
 places_err = (
     "A place cannot contain itself.\n\nSelect a "

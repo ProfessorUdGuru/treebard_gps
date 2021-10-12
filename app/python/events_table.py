@@ -626,7 +626,7 @@ class EventsTable(Frame):
 
         def update_date():
             self.final = validate_date(
-                # self.root, 
+                self.root, 
                 # self.treebard,
                 self.inwidg,
                 self.initial,
