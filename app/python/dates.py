@@ -17,21 +17,63 @@ from dev_tools import looky, seeline
 
 
 
+
+
 '''
+    Treebard's policy is to let the user input dates with extreme freedom while
+    displaying dates without regard for how the date was input, but rather
+    in reference to stored user preferences. So this module is kinda complex
+    but since it's written strictly in accordance with the needs of Treebard,
+    there's nothing here that doesn't need to be here.
+
+    Another policy is to have no pop-up calendars and the like when the user
+    tries to input a date. These encumbrances only slow down input which is more easily typed, and while coders might like them because they're cute or 
+    convenient, users find them annoying if trying to do any significant amount 
+    of data input. In Treebard, a date is input as a typed string, with several
+    choices of delimiter between date elements, and with the elements typed in 
+    almost any order. 
+
+    The policy of not allowing numerical month input makes it easy for Treebard
+    to tell which number is the year and which number is the day, except for years
+    less than 100. In this case a simple dialog coaches the user to input short
+    years with leading zeroes. So the only time a user has to worry about inputting
+    date elements in a fixed order is when typing "and" or "to" between two
+    compound dates. For example, the user can type "1852 ja 3 est and bc 14 f 1901 
+    abt" and Treebard will know that this means "between about 14 Feb 1901 BC 
+    and estimated 3 Jan 1852 AD". This allows the user to just start typing, 
+    and as long as the "and" or "to" is in the right place, the input will be 
+    correctly interpreted.
+
+    Another policy is to allow no bad date input and no ambiguous date input. 
+    Treebard is meant to be easily sharable. Allowing numerical month input 
+    would be good for some parts of our program by increasing flexibility of input
+    to infinity and beyond, but would bloat the code and open up the possibility 
+    of easily misinterpreted dates when trees are shared from one country to 
+    another.
+
+    Another policy is to ignore that period of time when the Gregorian Calendar was 
+    being adopted in lieu of the ancient Julian Calendar. Some genieware uglifies 
+    these dates according to when western cultures were supposedly making this 
+    transition. Treebard uglifies no date. The transition took place at different 
+    times in different countries, in fact it has only recently taken place in some 
+    countries. The user can mark his dates "old style" or "new style" in whatever 
+    formatting he prefers, but dates like "14 Oct 1752/1753" cannot exist in 
+    Treebard.
+
     There are places where this code appears redundant, for example while 
     initially weeding out bad user input, some facts have to be found (e.g. 
     which number represents the year); facts which will 
     be needed later. Instead of passing these findings along, sometimes they're 
     rediscovered later when they're needed, in order to 
     keep the various procedures better separated 
-    from each other. If we were dealing with big data here, this would be 
-    inefficient, but in this case, where all this code exists for the purpose of
+    from each other. If we were dealing with big data here, this might be 
+    inexcusable, but in this case, where all this code exists for the purpose of
     validating one single string, I think it's better to keep the code easy to 
     read than to try and kill two birds with one stone and end up with complex,
     confusing procedures that are not strictly separated from each other. I'd rather do something easy twice than confuse two processes out of
     sheer neatnickism and end up with tangled procedures.
 
-    However there is not total separation of concerns because for example,
+    But there can't be total separation of concerns because for example,
     you gotta know what the year is or what the month is when you gotta know, 
     so finding bad dates relies on finding out some other things too.
 
@@ -47,6 +89,25 @@ from dev_tools import looky, seeline
     class, which can have the same confusing effect as global variables, all to validate one single string. I like
     classes but in this case, working the code out procedurally seemed like a
     better approach, after trying it both ways.
+
+    Also I've simplified the code somewhat by using two globals in this module.
+    As far as I know the wrong place to ever use globals is when the variable
+    is being modified from a variety of places in the code. In the case of these
+    two globals, each is assigned a value once and it never changes. Remember, 
+    this whole module has only one simple task: to validate one single string.
+
+    As for the history of this module's development, big trouble was had at first
+    due to trying to have the code care whether the date input was supposed to 
+    be a compound date or not (like "from 1845 to 1872"). Finally it was revealed
+    to me that all date inputs should be treated as compound, and if the second
+    term in the list was empty, then it could just be ignored. Another early 
+    problem was caused by letting the user input months as numbers. Disallowing
+    this simplified the programmer's task big time. Treebard policy is to
+    disallow numerical month DISPLAY because of cultural differences in the 
+    ordering of numerical date values which would make for ambiguity from one 
+    country to another. This would make sharing trees a big hassle in some cases.
+    Extending this policy to date INPUT seemed only logical when considering how 
+    much less code bloat would exist if it were done.
 
     Treebard GPS has to remain accessible to neophyte coders such as genealogists
     who want to customize their own applications.
@@ -77,11 +138,11 @@ ALL_MONTHS = [i for i in OK_MONTHS] + [i for i in MONTH_ABBS] + [i for i in FULL
 
 DAYS_30 = ('ap', 'jun', 's', 'no')
 
-INPUT_PFX = ['est', 'cal', 'abt', 'bef', 'aft']
+STORE_PFX = ['est', 'cal', 'abt', 'bef', 'aft']
 
-INPUT_SFX = ['ad', 'bc', 'os', 'ns', 'ce', 'bce']
+STORE_SFX = ['ad', 'bc', 'os', 'ns', 'ce', 'bce']
 
-OK_ABBS = INPUT_PFX + INPUT_SFX
+OK_ABBS = STORE_PFX + STORE_SFX
 
 MONTH_CONVERSIONS = {
     '01': ['01', 'Jan',  'Jan.', 'January'],
@@ -97,16 +158,16 @@ MONTH_CONVERSIONS = {
     '11': ['11', 'Nov',  'Nov.', 'November'],
     '12': ['12', 'Dec',  'Dec.', 'December']}
 
-# date output options
-EST = ("est", "est.", "estimated", "est'd")
-ABT = ("abt", "about", "circa", "ca", "ca.", "approximately", "approx.")
-CAL = ("cal", "calc", "calc.", "cal.", "calculated", "calc'd")
-BEF = ("bef", "bef.", "prior to", "before")
-AFT = ("aft", "aft.", "later than", "after")
-BC = ("BCE", "BC", "B.C.E.", "B.C.")
-AD = ("CE", "AD", "C.E.", "A.D.")
-JULIAN = ("OS", "O.S.", "old style", "Old Style")
-GREGORIAN = ("NS", "N.S.", "new style", "New Style")
+# date input/output options
+EST = ["est", "est.", "estimated", "est'd"]
+ABT = ["abt", "about", "circa", "ca", "ca.", "approximately", "approx."]
+CAL = ["cal", "calc", "calc.", "cal.", "calculated", "calc'd"]
+BEF = ["bef", "bef.", "prior to", "before"]
+AFT = ["aft", "aft.", "later than", "after"]
+BC = ["BCE", "BC", "B.C.E.", "B.C."]
+AD = ["CE", "AD", "C.E.", "A.D."]
+JULIAN = ["OS", "O.S.", "old style", "Old Style"]
+GREGORIAN = ["NS", "N.S.", "new style", "New Style"]
 
 PAIRS = ((BEF, AFT), (BC, AD), (JULIAN, GREGORIAN))
 ABB_PAIRS = []
@@ -146,7 +207,7 @@ RANGE_FORMATS = (
         "bet._and", "between_&", "between_and")
 
 DATE_FORMAT_LOOKUP = dict(zip(DATE_PREF_COMBOS[0], DATE_FORMATS))
-
+# print("line", looky(seeline()).lineno, "DATE_FORMAT_LOOKUP:", DATE_FORMAT_LOOKUP)
 SPAN_FORMAT_LOOKUP = dict(zip(DATE_PREF_COMBOS[7], SPAN_FORMATS))
 
 RANGE_FORMAT_LOOKUP = dict(zip(DATE_PREF_COMBOS[8], RANGE_FORMATS))
@@ -155,6 +216,7 @@ OK_PREFIXES = ABT+EST+CAL+BEF+AFT
 OK_SUFFIXES = BC+AD+JULIAN+GREGORIAN
 
 root = None
+compound_date_link = None
 
 def validate_date(
     parent,
@@ -202,7 +264,7 @@ def find_bad_dates(final):
     return final
 
 def find_word_errors(terms):
-
+    global compound_date_link
     words = []
     month_words = []
     for term in terms:
@@ -225,7 +287,7 @@ def find_word_errors(terms):
 
     comp1 = []
     comp2 = []
-    compound_date_link = None
+    # compound_date_link = None
     for term in terms:
         if term.lower() in ("and", "to"):
             if compound_date_link is not None:
@@ -242,11 +304,13 @@ def find_word_errors(terms):
     if len(month_words) > 1 and compound_date_link is None:
         print("two dates no connector error")
         return
-
-    return comp1, comp2, compound_date_link
+    print("line", looky(seeline()).lineno, "compound_date_link:", compound_date_link)
+    compound_date_link = compound_date_link
+    return comp1, comp2
+    # return comp1, comp2, compound_date_link
 
 def find_number_errors(compounds):
-
+    print("line", looky(seeline()).lineno, "compound_date_link:", compound_date_link)
     def standardize_month(term):
         if term.startswith(OK_MONTHS):
             for mo in OK_MONTHS:
@@ -255,7 +319,8 @@ def find_number_errors(compounds):
                     break
         return term
 
-    for lst in (compounds[0:2]):
+    for lst in compounds:
+    # for lst in final[0:2]:
         nums = 0
         over_two_digits = 0
         lenlist = len(lst)
@@ -398,15 +463,11 @@ def make_date_dict(final):
             comps[b] = lst
             b += 1
 
-        # date_dict.insert(1, final[1])
-    # print("line", looky(seeline()).lineno, "date_dict:", date_dict)
-    # print("line", looky(seeline()).lineno, "final:", final)
-
     check_days_in_months(date_dict)
-
     order = ["ad", "ad"]        
     e = 0
-    for lst in final[0:2]:
+    for lst in final:
+    # for lst in final[0:2]:
         for item in lst:
             if item.upper() in BC:
                 order[e] = "bc"
@@ -415,23 +476,53 @@ def make_date_dict(final):
         e += 1  
 
     f = 0
-    for lst in final[0:2]:
+    for lst in final:
+    # for lst in final[0:2]:
         for item in lst:
             if not item.isdigit() and not item.lower().startswith(OK_MONTHS):
-                term = assign_prefixes_suffixes(date_dict, lst, item)
-                print("line", looky(seeline()).lineno, "term:", term)
+                if item.lower() in OK_PREFIXES:
+                    date_dict = assign_prefixes(date_dict, item, f)
+                elif (item in OK_SUFFIXES or 
+                        item.upper() in OK_SUFFIXES or item.title() in OK_SUFFIXES):
+                    date_dict = assign_suffixes(date_dict, item, f)
+                else:
+                    print("line", looky(seeline()).lineno, "case not handled for item", item)
         f += 1
 
     return date_dict, order
 
-# line 173 final: (['10', 'June', '1884', 'bc', 'est'], ['1', 'oc', 'abt', 'ad', '18'], 'to')
-# line 177 final: [{'month': 'jun', 'year': '1884', 'day': '10'}, {'month': 'oc', 'year': '0018', 'day': '1'}]
+def assign_prefixes(date_dict, item, f):
+    if item in ABT:
+        term = "abt"
+    elif item in EST:
+        term = "est"
+    elif item in CAL:
+        term = "cal"
+    elif item in BEF:
+        term = "bef"
+    elif item in AFT:
+        term = "aft"
+    date_dict[f]["prefix"] = term
 
-def assign_prefixes_suffixes(date_dict, lst, item):
-    print("line", looky(seeline()).lineno, "date_dict, lst, item:", date_dict, lst, item)
-# line 431 date_dict, lst, item: [{'month': 'jun', 'year': '1884', 'day': '10'}, {'month': 'ap', 'year': '1492', 'day': '1'}] ['10', 'June', '1884', 'est', 'bc'] June
-    term = item # delete this
-    return term
+    return date_dict
+
+def assign_suffixes(date_dict, item, f):
+    for i in (item, item.upper(), item.title()):
+        if i in BC:
+            term = "bc"
+            break
+        elif i in AD:
+            term = "ad"
+            break
+        elif i in JULIAN:
+            term = "os"
+            break
+        elif i in GREGORIAN:
+            term = "ns"
+            break
+    date_dict[f]["suffix"] = term
+
+    return date_dict
 
 def check_days_in_months(date_dict):
     for dkt in date_dict:
@@ -451,6 +542,7 @@ def check_days_in_months(date_dict):
 def order_compound_dates(final, order):
     if len(final) < 2:
         return final
+    print("line", looky(seeline()).lineno, "final:", final)
     sort1 = []
     sort2 = [[], []]    
     u = 0
@@ -472,17 +564,21 @@ def order_compound_dates(final, order):
         sort_again = fwd
         if sort1[0] == sort1[1]:
             sort_again = sorted(fwd, key=lambda i: i["sort2"])
+            sort_again.insert(1, compound_date_link)
         return sort_again
     elif order == ["bc", "bc"]:
         rev = sorted(final, key=lambda i: i["sort1"], reverse=True) 
         sort_again = rev
         if sort1[0] == sort1[1]:
             sort_again = sorted(rev, key=lambda i: i["sort2"])
+        sort_again.insert(1, compound_date_link)
         return sort_again
     elif order == ["ad", "bc"]:
         right = [final[1], final[0]]
+        right.insert(1, compound_date_link)
         return right
     elif order == ["bc", "ad"]:
+        final.insert(1, compound_date_link)
         return final
 
 if __name__ == "__main__":
@@ -503,7 +599,7 @@ if __name__ == "__main__":
     root.mainloop()
     
 # DO LIST
-# add link, prefixes & suffixes to date_dict
 # fix `if len(final) == 1:` line 391
+# test dates with no day and/or month
 # update db
 # get formatting & display right 1) when editing in table & 2) on load
