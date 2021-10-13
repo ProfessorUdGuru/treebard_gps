@@ -18,7 +18,7 @@ def open_error_message(parent, message, title, buttlab):
 
     def close():
         '''
-            See events_table `err_done` for an example of how to override
+            See events_table `err_done` for examples of how to override
             this if more needs to be done on closing the error message.
         '''
         msg.destroy()
@@ -144,5 +144,31 @@ notes_msg = (
 )
 
 dates_msg = (
-    "",
+    "One of the words 'and' or 'to' can be used once in a compound date. "
+    "Input should be like 'feb 27 1885 to 1886' for 'from 27 Feb 1885 to 1886' "
+    "or '1884 and mar 1885' for 'between 1884 and March 1885'.",
+    "Treebard thinks you've typed parts of two dates but not joined them with "
+    "'and' or 'to'.",
+    "For compound dates connected by 'and' or 'to', two months are possible. For "
+    "single dates there can only be one month.",
+    "If no month is input, no day can be input",
+    "Each part of a compound date can have one prefix and one suffix. Each single "
+    "date can have one prefix and one suffix. Prefixes include est, abt, bef, aft, "
+    "and cal. Suffixes include AD, BC, CE, BCE, NS and OS.",
+    "One date includes only one year.",
+    "Date input included too many numerical terms. Input months as text, for "
+    "example: feb for February, jul for July, may for May, etc.",
+    "Each single date can include a maximum of five terms. Each compound date can "
+    "include five terms in each part plus a link ('and' or 'to) between the two "
+    "parts. The parts within a date can be in any order, for example 'nov 1885 14 "
+    "est bc' for 'estimated 14 Nov 1885 BC'.",
+    "Day and year are input as numbers. Months are input as abbreviated text "
+    "such as mar, sep, dec. The date input seems to be lacking numerical input.",
+    "A compound date should include two distinct and complete single dates "
+    "separated by 'and' or 'to'. Treebard translates input separated by 'and' into "
+    "a range such as 'between 1885 and 1886'. Compound dates separated by 'to' are "
+    "translated into a span such as 'from 1912 to Feb 1915'. The input was for two "
+    "identical dates. ",
+    "That month doesn't have that many days. In leap years, February has 29 days. "
+    "Leap years are evenly divisible by 4.",
 )

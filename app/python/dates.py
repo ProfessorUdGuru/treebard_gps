@@ -60,6 +60,11 @@ from dev_tools import looky, seeline
     formatting he prefers, but dates like "14 Oct 1752/1753" cannot exist in 
     Treebard.
 
+    Globals are used for `root` and `widg` because we are validating a single
+    string found in a single Entry in a single app and none of that will ever
+    change. These values are set once per use and don't change during the 
+    procedure.
+
     There are places where this code appears redundant, for example while 
     initially weeding out bad user input, some facts have to be found (e.g. 
     which number represents the year); facts which will 
@@ -210,6 +215,7 @@ OK_PREFIXES = ABT+EST+CAL+BEF+AFT
 OK_SUFFIXES = BC+AD+JULIAN+GREGORIAN
 
 root = None
+widg = None
 
 def validate_date(
     parent,
@@ -218,11 +224,12 @@ def validate_date(
     final,
     finding):
 
-    global root
+    global root, widg
 
     print("line", looky(seeline()).lineno, "inwidg, initial, final, finding:", inwidg, initial, final, finding)
 
     root = parent
+    widg = inwidg
 
     final = find_bad_dates(final)
     print("line", looky(seeline()).lineno, "final:", final)
@@ -231,7 +238,6 @@ def validate_date(
     results = make_date_dict(list(final))
     if results:        
         final, order, compound_date_link = results
-    # final, order, compound_date_link = make_date_dict(list(final))
         print("line", looky(seeline()).lineno, "final:", final)
     else:
         return
@@ -254,7 +260,6 @@ def find_bad_dates(final):
         term = term.strip()
 
     compounds = find_word_errors(terms)
-    print("line", looky(seeline()).lineno, "compounds:", compounds)
     if not compounds:
         return
     
@@ -262,32 +267,41 @@ def find_bad_dates(final):
 
     return final
 
-def find_word_errors(terms):
-
-    print("line", looky(seeline()).lineno, "terms:", terms)
-    words = []
+def count_month_words(info):
+    compound = False
     month_words = []
-    for term in terms:
+    for term in info:
         if term.lower() in ALL_MONTHS:
             month_words.append(term)
         elif term.lower() in ("to", "and"):
-            pass
-        elif term.isalpha() is True:
-            words.append(term)
+            compound = True
         else:
             "case not handled"
+    return month_words, compound
 
-    for word in words:
-        if word in ("and", "to") and words.count(word) > 1:
-            print("repeated word error")
-            return
+def err_done0(widg, dlg):
+    widg.delete(0, 'end')
+    dlg.destroy()
+    widg.focus_set()
+
+def find_word_errors(terms):
+
+    month_words, compound = count_month_words(terms)
     compound_date_link = None
     comp1 = []
     comp2 = []
     for term in terms:
         if term.lower() in ("and", "to"):
             if compound_date_link is not None:
-                print("repeated word 'and' or 'to' error")
+                msg = open_error_message(
+                    root, 
+                    dates_msg[0], 
+                    "Repeated Compound Date Link", 
+                    "OK")
+                msg[0].grab_set()
+                msg[1].config(aspect=400)
+                msg[2].config(
+                    command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
                 return               
             compound_date_link = term
         elif compound_date_link is None:
@@ -300,28 +314,62 @@ def find_word_errors(terms):
     months = len(month_words)
 
     if months > 1 and compound_date_link is None:
-        print("two dates no connector error")
+        msg = open_error_message(
+            root, 
+            dates_msg[1], 
+            "Compound Dates Unlinked", 
+            "OK")
+        msg[0].grab_set()
+        msg[1].config(aspect=400)
+        msg[2].config(
+            command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
         return
-
     if months > 2:
-        print("too many months error")
+        msg = open_error_message(
+            root, 
+            dates_msg[2], 
+            "Too Many Months Input", 
+            "OK")
+        msg[0].grab_set()
+        msg[1].config(aspect=400)
+        msg[2].config(
+            command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
+        return
     elif months == 2:
         pass
     elif months <= 1:
-        print("line", looky(seeline()).lineno, "months:", months)
         for lst in (comp1, comp2):
-            print("line", looky(seeline()).lineno, "lst:", lst)
             n = 0
             for item in lst:
                 if item.isdigit():
                     n += 1
             if months == 1 and n > 1:
-                print("missing month when there is a day error")
-                return
+                month_words2 = count_month_words(lst)[0]
+                if len(month_words2) == months:
+                    pass
+                else: 
+                    msg = open_error_message(
+                        root, 
+                        dates_msg[3], 
+                        "Day Input Without Month", 
+                        "OK")
+                    msg[0].grab_set()
+                    msg[1].config(aspect=400)
+                    msg[2].config(
+                        command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
+                    return
             elif months == 0 and n == 1:
                 pass
             elif months == 0 and n > 1:
-                print("there is a day when no month error")
+                msg = open_error_message(
+                    root, 
+                    dates_msg[3], 
+                    "Day Input Without Month", 
+                    "OK")
+                msg[0].grab_set()
+                msg[1].config(aspect=400)
+                msg[2].config(
+                    command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
                 return
 
     for lst in (comp1, comp2):
@@ -333,20 +381,28 @@ def find_word_errors(terms):
             elif elem.upper() in OK_SUFFIXES:
                 suffixes += 1
         if prefixes > 1 or suffixes > 1:
-            print("too many prefixes or suffixes error")
+            msg = open_error_message(
+                root, 
+                dates_msg[4], 
+                "Too Many Prefixes or Suffixes", 
+                "OK")
+            msg[0].grab_set()
+            msg[1].config(aspect=400)
+            msg[2].config(
+                command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
 
-    return comp1, comp2, compound_date_link
+    return comp1, comp2, compound_date_link, compound
+
+def standardize_month(term):
+    if term.startswith(OK_MONTHS):
+        for mo in OK_MONTHS:
+            if term.startswith(mo):
+                term = mo
+                break
+    return term
 
 def find_number_errors(compounds):
-
-    def standardize_month(term):
-        if term.startswith(OK_MONTHS):
-            for mo in OK_MONTHS:
-                if term.startswith(mo):
-                    term = mo
-                    break
-        return term
 
     for lst in compounds[0:2]:
         nums = 0
@@ -356,52 +412,56 @@ def find_number_errors(compounds):
             if item.isdigit() is True:
                 if len(item) > 2: 
                     if over_two_digits > 0:
-                        print("too many years input error")
+                        msg = open_error_message(
+                            root, 
+                            dates_msg[5], 
+                            "Too Many Years Input", 
+                            "OK")
+                        msg[0].grab_set()
+                        msg[1].config(aspect=400)
+                        msg[2].config(
+                            command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
                         return
                     else:
                         over_two_digits += 1
                 nums += 1
 
         if nums >= 3:
-            print("too many numerical terms error")
+            msg = open_error_message(
+                root, 
+                dates_msg[6], 
+                "Too Many Numerical Terms Input", 
+                "OK")
+            msg[0].grab_set()
+            msg[1].config(aspect=400)
+            msg[2].config(
+                command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
         elif lenlist > 5:
-            print("too many terms error")
+            msg = open_error_message(
+                root, 
+                dates_msg[7], 
+                "Too Many Terms Input", 
+                "OK")
+            msg[0].grab_set()
+            msg[1].config(aspect=400)
+            msg[2].config(
+                command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
 
         if lenlist == 1 and lst[0].isalpha() is True:
-            print("lack of numerical items")
+            msg = open_error_message(
+                root, 
+                dates_msg[8], 
+                "Numerical Terms Input Lacking", 
+                "OK")
+            msg[0].grab_set()
+            msg[1].config(aspect=400)
+            msg[2].config(
+                command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
-        # elif lenlist > 1:
-            # numbers = []
-            # for elem in lst:
-                # if elem.isdigit() is True:
-                    # numbers.append(int(elem))
-            # lennums = len(numbers)
-            # if lenlist == lennums:
-                # print("no month error 365")
-# # this works right for 10 1884 to 14 jun 1888 but in case of 10 jun 1884 to 14 1888 neither this one nor the next one works below so the solution is to make one foolproof test for a missing month that works in every case
-                # return
-            # print("line", looky(seeline()).lineno, "lst:", lst)
-            # months = 0
-            # j = 0
-            # for term in lst:
-                # if term.lower() in ALL_MONTHS:
-                    # if months > 1:
-                        # print("too many months input error")
-                        # return
-                    # else:
-                        # lst[j] = standardize_month(term)                        
-                    # months += 1
-                # j += 1 
-            # # this works right in case there's a day but not a month; but raises error
-            # #   wrongly in case of input like `1885 ad to 1899 bc`
-            # if months == 0:
-                # print("no month error 379")
-                # return
-    return compounds
 
-# for each compound date, test once if there is a missing month or not and if there's a missing date from either comp then return, otherwise standardize months
+    return compounds
 
 def clarify_year(numbers, lst):
     copy = lst
@@ -442,7 +502,26 @@ def make_date_dict(final):
         return lst
 
     def find_year(lst, b):
+
+        def add_zeros(lst, the_one):
+            length = len(the_one[0])
+            idx = the_one[1]
+            if length == 2:
+                fixed = "00" + the_one[0]
+            elif length == 3:
+                fixed = "0" + the_one[0]
+            lst[idx] = fixed
+            return lst 
         
+        num_count = []
+        u = 0
+        for item in lst:
+            if item.isdigit():
+                num_count.append((item, u))
+            u += 1
+        if len(num_count) == 1:
+            the_one = num_count[0]
+            lst = add_zeros(lst, the_one)
         under_two = 0
         nums = []
         for item in lst:
@@ -473,23 +552,23 @@ def make_date_dict(final):
 
         return lst
 
-    compound_date_link = final[2]
+    compound_date_link, compound = final[2:]
     date_dict = [{}, {}]
     if len(final) == 1:
-        print("line", looky(seeline()).lineno, "final:", final)
+        comps = [final[0]]
     elif len(final) > 1:
         comps = [final[0], final[1]]
         b = 0
-        for lst in comps:
-            lst = find_month(lst, b)
-            lst = find_year(lst, b)
-            lst = find_day(lst, b)
-            comps[b] = lst
-            b += 1
+    for lst in comps:
+        lst = find_month(lst, b)
+        lst = find_year(lst, b)
+        lst = find_day(lst, b)
+        comps[b] = lst
+        b += 1
     check_days_in_months(date_dict)
     order = ["ad", "ad"]        
     e = 0
-    for lst in final[0:2]:
+    for lst in comps:
         for item in lst:
             if item.upper() in BC:
                 order[e] = "bc"
@@ -498,7 +577,7 @@ def make_date_dict(final):
         e += 1  
 
     f = 0
-    for lst in final[0:2]:
+    for lst in comps:
         for item in lst:
             if not item.isdigit() and not item.lower().startswith(OK_MONTHS):
                 if item.lower() in OK_PREFIXES:
@@ -506,13 +585,20 @@ def make_date_dict(final):
                 elif (item in OK_SUFFIXES or 
                         item.upper() in OK_SUFFIXES or item.title() in OK_SUFFIXES):
                     date_dict = assign_suffixes(date_dict, item, f)
-                else:
-                    print("line", looky(seeline()).lineno, "case not handled for item", item)
         f += 1
 
-    if date_dict[0] == date_dict[1]:
-        print("compound dates not different error")
-        return
+    if compound is True:
+        if date_dict[0] == date_dict[1]:
+            msg = open_error_message(
+                root, 
+                dates_msg[9], 
+                "Indistinct Compound Date", 
+                "OK")
+            msg[0].grab_set()
+            msg[1].config(aspect=400)
+            msg[2].config(
+                command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
+            return
 
     return date_dict, order, compound_date_link
 
@@ -564,11 +650,19 @@ def check_days_in_months(date_dict):
             elif dkt["month"] in DAYS_30:
                 maxdays = 30 
             if dkt.get("day") and int(dkt["day"]) > maxdays:
-                print("too many days for that month error")
+                msg = open_error_message(
+                    root, 
+                    dates_msg[10], 
+                    "Too Many Days for the Month", 
+                    "OK")
+                msg[0].grab_set()
+                msg[1].config(aspect=400)
+                msg[2].config(
+                    command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
                 return
 
 def order_compound_dates(final, order, compound_date_link):
-    if len(final) < 2:
+    if len(final[1]) == 0:
         return final
     sort1 = []
     sort2 = [[], []]    
@@ -626,7 +720,5 @@ if __name__ == "__main__":
     root.mainloop()
     
 # DO LIST
-# fix `if len(final) == 1:` line 391
-# make error popups
 # update db
 # get formatting & display right 1) when editing in table & 2) on load
