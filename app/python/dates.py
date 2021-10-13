@@ -114,7 +114,7 @@ from dev_tools import looky, seeline
 
 formats = make_formats_dict()
 
-# "." can't be used as a separator or it would prevent the user
+# "." can't be used as a separator as it would prevent the user
 #   from using a dot to denote an abbreviation e.g. "A.D."
 SEPTORS = (" ", "/", "-", "*", "_")
 
@@ -143,19 +143,19 @@ STORE_SFX = ['ad', 'bc', 'os', 'ns', 'ce', 'bce']
 
 OK_ABBS = STORE_PFX + STORE_SFX
 
-MONTH_CONVERSIONS = {
-    '01': ['01', 'Jan',  'Jan.', 'January'],
-    '02': ['02', 'Feb',  'Feb.', 'February'],
-    '03': ['03', 'Mar',  'Mar.', 'March'],
-    '04': ['04', 'Apr',  'Apr.', 'April'],
-    '05': ['05', 'May',  'May',  'May'],
-    '06': ['06', 'June', 'June', 'June'],
-    '07': ['07', 'July', 'July', 'July'],
-    '08': ['08', 'Aug',  'Aug.', 'August'],
-    '09': ['09', 'Sep',  'Sep.', 'September'],
-    '10': ['10', 'Oct',  'Oct.', 'October'],
-    '11': ['11', 'Nov',  'Nov.', 'November'],
-    '12': ['12', 'Dec',  'Dec.', 'December']}
+# MONTH_CONVERSIONS = {
+    # '01': ['01', 'Jan',  'Jan.', 'January'],
+    # '02': ['02', 'Feb',  'Feb.', 'February'],
+    # '03': ['03', 'Mar',  'Mar.', 'March'],
+    # '04': ['04', 'Apr',  'Apr.', 'April'],
+    # '05': ['05', 'May',  'May',  'May'],
+    # '06': ['06', 'June', 'June', 'June'],
+    # '07': ['07', 'July', 'July', 'July'],
+    # '08': ['08', 'Aug',  'Aug.', 'August'],
+    # '09': ['09', 'Sep',  'Sep.', 'September'],
+    # '10': ['10', 'Oct',  'Oct.', 'October'],
+    # '11': ['11', 'Nov',  'Nov.', 'November'],
+    # '12': ['12', 'Dec',  'Dec.', 'December']}
 
 # date input/output options
 EST = ["est", "est.", "estimated", "est'd"]
@@ -247,7 +247,9 @@ def validate_date(
     print("line", looky(seeline()).lineno, "final:", final)
     if final is None: return
 
-    print("line", looky(seeline()).lineno, "final:", final)    
+    final = make_date_string(final)
+    print("line", looky(seeline()).lineno, "final:", final)
+
     return final
 
 def find_bad_dates(final):
@@ -553,6 +555,7 @@ def make_date_dict(final):
         return lst
 
     compound_date_link, compound = final[2:]
+    print("line", looky(seeline()).lineno, "compound_date_link:", compound_date_link)
     date_dict = [{}, {}]
     if len(final) == 1:
         comps = [final[0]]
@@ -574,8 +577,7 @@ def make_date_dict(final):
                 order[e] = "bc"
             elif item.upper() in AD:
                 order[e] = "ad"
-        e += 1  
-
+        e += 1 
     f = 0
     for lst in comps:
         for item in lst:
@@ -586,7 +588,6 @@ def make_date_dict(final):
                         item.upper() in OK_SUFFIXES or item.title() in OK_SUFFIXES):
                     date_dict = assign_suffixes(date_dict, item, f)
         f += 1
-
     if compound is True:
         if date_dict[0] == date_dict[1]:
             msg = open_error_message(
@@ -663,6 +664,8 @@ def check_days_in_months(date_dict):
 
 def order_compound_dates(final, order, compound_date_link):
     if len(final[1]) == 0:
+        print("line", looky(seeline()).lineno, "final[1]:", final[1])
+        final.insert(1, "")
         return final
     sort1 = []
     sort2 = [[], []]    
@@ -701,6 +704,37 @@ def order_compound_dates(final, order, compound_date_link):
     elif order == ["bc", "ad"]:
         final.insert(1, compound_date_link)
         return final
+
+def make_date_string(final):
+
+    def concat_parts(
+            prefix1="", year1="0000", month1="00", day1="00", suffix1="",
+            link="", prefix2="", year2="0000", month2="00", day2="00", suffix2=""):
+        date_string = "{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}".format(
+            prefix1, year1, month1, day1, suffix1, 
+            link, prefix2, year2, month2, day2, suffix2)
+        return date_string
+
+    comp1 = final[0]
+    link = final[1]
+    comp2 = final[2]
+
+    prefix1 = comp1.get("prefix", "")
+    year1 = comp1.get("year", "")
+    month1 = comp1.get("month", "")
+    day1 = comp1.get("day", "")
+    suffix1 = comp1.get("suffix", "")
+    if len(link) == 0:
+        return concat_parts(prefix1, year1, month1, day1, suffix1)
+    link = link
+    prefix2 = comp2.get("prefix", "")
+    year2 = comp2.get("year", "")
+    month2 = comp2.get("month", "")
+    day2 = comp2.get("day", "")
+    suffix2 = comp2.get("suffix", "")
+    return concat_parts(
+        prefix1, year1, month1, day1, suffix1,
+        link, prefix2, year2, month2, day2, suffix2)
 
 if __name__ == "__main__":
 
