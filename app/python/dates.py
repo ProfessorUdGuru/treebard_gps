@@ -7,9 +7,7 @@ from custom_combobox_widget import Combobox
 from autofill import EntryAuto, EntryAutoHilited
 from styles import make_formats_dict
 from messages import open_error_message, dates_msg, open_input_message
-# from query_strings import (
-    
-# )
+from query_strings import select_date_format
 
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -114,6 +112,17 @@ from dev_tools import looky, seeline
 
 formats = make_formats_dict()
 
+def get_date_formats():
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    cur.execute(select_date_format)
+    date_prefs = cur.fetchone()
+    cur.close()
+    conn.close()
+    return date_prefs
+
+date_prefs = get_date_formats()
+
 # "." can't be used as a separator as it would prevent the user
 #   from using a dot to denote an abbreviation e.g. "A.D."
 SEPTORS = (" ", "/", "-", "*", "_")
@@ -143,26 +152,25 @@ STORE_SFX = ['ad', 'bc', 'os', 'ns', 'ce', 'bce']
 
 OK_ABBS = STORE_PFX + STORE_SFX
 
-# MONTH_CONVERSIONS = {
-    # '01': ['01', 'Jan',  'Jan.', 'January'],
-    # '02': ['02', 'Feb',  'Feb.', 'February'],
-    # '03': ['03', 'Mar',  'Mar.', 'March'],
-    # '04': ['04', 'Apr',  'Apr.', 'April'],
-    # '05': ['05', 'May',  'May',  'May'],
-    # '06': ['06', 'June', 'June', 'June'],
-    # '07': ['07', 'July', 'July', 'July'],
-    # '08': ['08', 'Aug',  'Aug.', 'August'],
-    # '09': ['09', 'Sep',  'Sep.', 'September'],
-    # '10': ['10', 'Oct',  'Oct.', 'October'],
-    # '11': ['11', 'Nov',  'Nov.', 'November'],
-    # '12': ['12', 'Dec',  'Dec.', 'December']}
+MONTH_CONVERSIONS = {
+    'ja': ['January', 'Jan', 'Jan.'],
+    'f': ['February', 'Feb', 'Feb.'],
+    'mar': ['March', 'Mar', 'Mar.'],
+    'ap': ['April', 'Apr', 'Apr.'],
+    'may': ['May',  'May', 'May'],
+    'jun': ['June', 'June', 'June'],
+    'jul': ['July', 'July', 'July'],
+    'au': ['August', 'Aug', 'Aug.'],
+    's': ['September', 'Sep', 'Sep.'],
+    'oc': ['October', 'Oct', 'Oct.'],
+    'no': ['November', 'Nov', 'Nov.'],
+    'd': ['December', 'Dec', 'Dec.']}
 
-# date input/output options
-EST = ["est", "est.", "estimated", "est'd"]
-ABT = ["abt", "about", "circa", "ca", "ca.", "approximately", "approx."]
-CAL = ["cal", "calc", "calc.", "cal.", "calculated", "calc'd"]
-BEF = ["bef", "bef.", "prior to", "before"]
-AFT = ["aft", "aft.", "later than", "after"]
+EST = ["est", "est.", "est'd"]
+ABT = ["abt", "about", "circa", "ca", "ca.", "approx."]
+CAL = ["cal", "calc", "calc.", "cal.", "calc'd"]
+BEF = ["bef", "bef.", "before"]
+AFT = ["aft", "aft.", "after"]
 BC = ["BCE", "BC", "B.C.E.", "B.C."]
 AD = ["CE", "AD", "C.E.", "A.D."]
 JULIAN = ["OS", "O.S.", "old style", "Old Style"]
@@ -180,8 +188,6 @@ for pair in PAIRS:
     ABB_PAIRS.append(paired) 
     q += 1
 
-# ABB_PAIRS: [['bef/aft', 'bef./aft.', 'prior to/later than', 'before/after'], ['BCE/CE', 'BC/AD', 'B.C.E./C.E.', 'B.C./A.D.'], ['OS/NS', 'O.S./N.S.', 'old style/new style', 'Old Style/New Style']]
-
 DATE_PREF_COMBOS = (
     ("18 April 1906", "18 Apr 1906", "18 Apr. 1906", "April 18, 1906", 
         "Apr 18, 1906", "Apr. 18, 1906", "1906-04-18", "1906/04/18", 
@@ -192,24 +198,29 @@ DATE_PREF_COMBOS = (
         "frm [date 1] to [date 2]", "fr [date 1] to [date 2]"),
     ("btwn [date 1] & [date 2]", "btwn [date 1] and [date 2]",  
         "bet [date 1] & [date 2]", "bet [date 1] and [date 2]", 
-        "bet. [date 1] & [date 2]" , "bet. [date 1] and [date 2]",
-        "between [date 1] & [date 2]", "between [date 1] and [date 2]"))
+        "bet. [date 1] & [date 2]" , "bet. [date 1] and [date 2]"))
 
 DATE_FORMATS = (
-    'alpha_dmy', 'alpha_dmy_abb', 'alpha_dmy_dot', 'alpha_mdy', 
-    'alpha_mdy_abb', 'alpha_mdy_dot', 'iso_dash', 'iso_slash', 'iso_dot')
+    'dmy', 'dmy_abb', 'dmy_dot', 'mdy', 'mdy_abb', 'mdy_dot')
 
 SPAN_FORMATS = ("from_to", "fr._to", "frm_to", "fr_to")
 
 RANGE_FORMATS = (
-    "btwn_&", "btwn_and", "bet_&", "bet_and", "bet._&", 
-        "bet._and", "between_&", "between_and")
+    "btwn_&", "btwn_and", "bet_&", "bet_and", "bet._&", "bet._and")
+
+FORMAT_TO_STRIP = ("from", "fr.", "frm", "fr", "btwn", "bet", "bet.", ",", "between")
 
 DATE_FORMAT_LOOKUP = dict(zip(DATE_PREF_COMBOS[0], DATE_FORMATS))
 # print("line", looky(seeline()).lineno, "DATE_FORMAT_LOOKUP:", DATE_FORMAT_LOOKUP)
+# line 215 DATE_FORMAT_LOOKUP: {'18 April 1906': 'dmy', '18 Apr 1906': 'dmy_abb', '18 Apr. 1906': 'dmy_dot', 'April 18, 1906': 'mdy', 'Apr 18, 1906': 'mdy_abb', 'Apr. 18, 1906': 'mdy_dot'}
+
 SPAN_FORMAT_LOOKUP = dict(zip(DATE_PREF_COMBOS[7], SPAN_FORMATS))
+# print("line", looky(seeline()).lineno, "SPAN_FORMAT_LOOKUP:", SPAN_FORMAT_LOOKUP)
+# line 212 SPAN_FORMAT_LOOKUP: {'from [date 1] to [date 2]': 'from_to', 'fr. [date 1] to [date 2]': 'fr._to', 'frm [date 1] to [date 2]': 'frm_to', 'fr [date 1] to [date 2]': 'fr_to'}
 
 RANGE_FORMAT_LOOKUP = dict(zip(DATE_PREF_COMBOS[8], RANGE_FORMATS))
+# print("line", looky(seeline()).lineno, "RANGE_FORMAT_LOOKUP:", RANGE_FORMAT_LOOKUP)
+# line 221 RANGE_FORMAT_LOOKUP: {'btwn [date 1] & [date 2]': 'btwn_&', 'btwn [date 1] and [date 2]': 'btwn_and', 'bet [date 1] & [date 2]': 'bet_&', 'bet [date 1] and [date 2]': 'bet_and', 'bet. [date 1] & [date 2]': 'bet._&', 'bet. [date 1] and [date 2]': 'bet._and'}
 
 OK_PREFIXES = ABT+EST+CAL+BEF+AFT
 OK_SUFFIXES = BC+AD+JULIAN+GREGORIAN
@@ -226,33 +237,31 @@ def validate_date(
 
     global root, widg
 
-    print("line", looky(seeline()).lineno, "inwidg, initial, final, finding:", inwidg, initial, final, finding)
-
     root = parent
     widg = inwidg
 
     final = find_bad_dates(final)
-    print("line", looky(seeline()).lineno, "final:", final)
     if final is None: return
 
     results = make_date_dict(list(final))
     if results:        
         final, order, compound_date_link = results
-        print("line", looky(seeline()).lineno, "final:", final)
     else:
         return
     if final is None: return
 
     final = order_compound_dates(final, order, compound_date_link)
-    print("line", looky(seeline()).lineno, "final:", final)
     if final is None: return
 
     final = make_date_string(final)
-    print("line", looky(seeline()).lineno, "final:", final)
 
     return final
 
 def find_bad_dates(final):
+
+    final = final.replace("&", "and")
+    for mark in FORMAT_TO_STRIP:
+        final = final.replace(mark, "")
 
     for sep in SEPTORS:
         final = final.replace(sep, " ")
@@ -319,7 +328,7 @@ def find_word_errors(terms):
         msg = open_error_message(
             root, 
             dates_msg[1], 
-            "Compound Dates Unlinked", 
+            "Too Many Months Input", 
             "OK")
         msg[0].grab_set()
         msg[1].config(aspect=400)
@@ -506,6 +515,7 @@ def make_date_dict(final):
     def find_year(lst, b):
 
         def add_zeros(lst, the_one):
+            fixed = the_one[0]
             length = len(the_one[0])
             idx = the_one[1]
             if length == 2:
@@ -551,11 +561,9 @@ def make_date_dict(final):
                     date_dict[b]["day"] = item
                     break
             i += 1
-
         return lst
 
     compound_date_link, compound = final[2:]
-    print("line", looky(seeline()).lineno, "compound_date_link:", compound_date_link)
     date_dict = [{}, {}]
     if len(final) == 1:
         comps = [final[0]]
@@ -664,7 +672,6 @@ def check_days_in_months(date_dict):
 
 def order_compound_dates(final, order, compound_date_link):
     if len(final[1]) == 0:
-        print("line", looky(seeline()).lineno, "final[1]:", final[1])
         final.insert(1, "")
         return final
     sort1 = []
@@ -709,7 +716,7 @@ def make_date_string(final):
 
     def concat_parts(
             prefix1="", year1="0000", month1="00", day1="00", suffix1="",
-            link="", prefix2="", year2="0000", month2="00", day2="00", suffix2=""):
+            link="", prefix2="", year2="", month2="", day2="", suffix2=""):
         date_string = "{}-{}-{}-{}-{}-{}-{}-{}-{}-{}-{}".format(
             prefix1, year1, month1, day1, suffix1, 
             link, prefix2, year2, month2, day2, suffix2)
@@ -736,7 +743,192 @@ def make_date_string(final):
         prefix1, year1, month1, day1, suffix1,
         link, prefix2, year2, month2, day2, suffix2)
 
+def format_stored_date(stored_date):
+
+    if stored_date == "-0000-00-00----0000-00-00-":
+        return ""
+    dateform = date_prefs[0]
+    formatted_date = ""
+    preprefix = ""
+    prefix1 = ""
+    year1 = ""
+    month1 = ""
+    day1 = ""
+    suffix1 = ""
+    link = ""
+    prefix2 = ""
+    year2 = ""
+    month2 = ""
+    day2 = ""
+    suffix2 = ""
+    span = False
+    ranje = False
+    compound = False
+    parts = stored_date.split("-")
+
+    if 'to' in parts:
+        span = True
+        compound = True
+    elif 'and' in parts:
+        ranje = True
+        compound = True
+
+    y = 0
+    for part in parts:
+        if len(part) == 0:
+            pass
+        elif y in (0, 6):
+            part = find_prefix(part)
+            if y == 0:
+                prefix1 = part                
+            elif y == 6:
+                prefix2 = part
+        elif y in (1, 7):
+            part = part.lstrip("0")
+            if y == 1:
+                year1 = part
+            elif y == 7:
+                year2 = part
+        elif y in (2, 8):
+            part = convert_month(part, dateform)
+            if y == 2:
+                month1 = part
+            elif y == 8:
+                month2 = part
+        elif y in (3, 9):
+            part = part.lstrip("0")
+            if y == 3:
+                day1 = part
+            elif y == 9:
+                day2 = part
+        elif y in (4, 10):
+            part = find_suffix(part)
+            if y == 4:
+                suffix1 = part
+            elif y == 10:
+                suffix2 = part
+        elif y == 5:
+            if compound is False:
+                break
+            if span is True:
+                part = date_prefs[7].split("_")
+                preprefix = part[0]
+                link = part[1]
+            elif ranje is True:
+                part = date_prefs[8].split("_")
+                preprefix = part[0]
+                link = part[1]
+        y += 1
+
+    t = 0
+    for tup in ((suffix1, year1), (suffix2, year2)):        
+        suffix = tup[0]
+        year = tup[1]
+        if suffix in AD:
+            if int(year) > 99:
+                suffix = ""
+        if t == 0:
+            suffix1 = suffix
+        elif t == 1:
+            suffix2 = suffix
+        t += 1
+
+    month_first_commas2 = (
+        preprefix, prefix1, month1, day1 + ",", year1, suffix1, 
+        link, prefix2, month2, day2 + ",", year2, suffix2)
+
+    month_first_comma_a = (
+        preprefix, prefix1, month1, day1 + ",", year1, suffix1, 
+        link, prefix2, month2, day2, year2, suffix2)
+
+    month_first_comma_b = (
+        preprefix, prefix1, month1, day1, year1, suffix1, 
+        link, prefix2, month2, day2 + ",", year2, suffix2)
+
+    month_first_no_comma = (
+        preprefix, prefix1, month1, day1, year1, suffix1, 
+        link, prefix2, month2, day2, year2, suffix2)
+
+    day_first = (
+        preprefix, prefix1, day1, month1, year1, suffix1, 
+        link, prefix2, day2, month2, year2, suffix2)
+
+    len1 = len(day1)
+    len2 = len(day2)
+
+    if "dm" in dateform:
+        order = day_first
+    elif "md" in dateform:
+        if compound is True:
+            if len1 > 0 and len2 > 0:
+                order = month_first_commas2
+            elif len1 > 0 and len2 == 0:
+                order = month_first_comma_a
+            elif len1 == 0 and len2 > 0:
+                order = month_first_comma_b
+            else:
+                order = month_first_no_comma
+        else:
+            if len1 > 0:
+                order = month_first_comma_a
+            else:
+                order = month_first_no_comma
+
+    formatted_date = "{} {} {} {} {} {} {} {} {} {} {} {}".format(*order)
+
+    formatted_date = " ".join(formatted_date.split())
+
+    return formatted_date
+
+def find_prefix(part):
+    if part == 'abt':
+        prefix = date_prefs[1]
+    elif part == 'est':
+        prefix = date_prefs[2]
+    elif part == 'cal':
+        prefix = date_prefs[3]
+    elif part in ('bef', 'aft'):
+        bef_aft = date_prefs[4].split("/")
+        if part == 'bef':
+            prefix = bef_aft[0]
+        elif part == 'aft':
+            prefix = bef_aft[1]
+    return prefix
+
+def convert_month(part, dateform):
+    print("line", looky(seeline()).lineno, "part, dateform:", part, dateform)
+    month = ""
+    idx = 0
+    if 'abb' in dateform:
+        idx = 1
+    elif 'dot' in dateform:
+        idx = 2
+    for k,v in MONTH_CONVERSIONS.items():
+        if k == part:
+            month = v[idx] 
+            break
+    return month
+
+def find_suffix(part):
+    if part in ("bc, ad"):
+        bc_ad = date_prefs[5].split("/")
+        if part == "bc":
+            suffix = bc_ad[0]
+        elif part == "ad":
+            suffix = bc_ad[1]
+    elif part in ("os, ns"):
+        os_ns = date_prefs[6].split("/")
+        if part == "os":
+            suffix = bc_ad[0]
+        elif part == "ns":
+            suffix = bc_ad[1]
+    return suffix
+        
+
+
 if __name__ == "__main__":
+
+    # this doesn't do anything yet
 
     from autofill import EntryAuto
     from widgets import Entry
@@ -750,9 +942,8 @@ if __name__ == "__main__":
     traverse = Entry(root)
     traverse.grid()
 
-
     root.mainloop()
+
+
     
-# DO LIST
-# update db
-# get formatting & display right 1) when editing in table & 2) on load
+

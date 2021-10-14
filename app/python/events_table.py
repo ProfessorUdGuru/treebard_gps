@@ -12,7 +12,7 @@ from widgets import (
     LabelHilited)
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
-from dates import validate_date
+from dates import validate_date, format_stored_date
 from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator
 from styles import make_formats_dict, config_generic
@@ -47,7 +47,7 @@ from query_strings import (
     select_findings_persons_parents, select_findings_persons_age,    
     insert_finding_birth, update_findings_persons_age2,
     select_finding_event_type, delete_findings_persons_offspring,
-    select_findings_persons_person_id,
+    select_findings_persons_person_id, update_finding_date,
     
 )
 
@@ -136,9 +136,10 @@ def get_generic_findings(
         dkt, cur, finding_id, findings_data, 
         current_person, non_empty_roles, non_empty_notes):
     cur.execute(select_findings_details_generic, finding_id)
-    generic_details = [i for i in cur.fetchone()] 
+    generic_details = [i for i in cur.fetchone()]
+    dkt["date"] = format_stored_date(generic_details[3])
 
-    dkt["event"], dkt["particulars"], dkt["age"], dkt["date"] = generic_details[0:4]
+    dkt["event"], dkt["particulars"], dkt["age"] = generic_details[0:3]
     dkt["sorter"] = make_sorter(generic_details[4])
 
     place = get_place_string(finding_id, cur)
@@ -199,9 +200,10 @@ def get_couple_findings(
                 dkt["partner_id"] = gotgot[0]
                 dkt["partner_kin_type"] = gotgot[2]
                 dkt["partner_name"] = get_name_with_id(gotgot[0])
-      
+
         cur.execute(select_findings_details_couple_generic, finding_id)
         couple_generics = list(cur.fetchone())
+        couple_generics[1] = format_stored_date(couple_generics[1])
         place = get_place_string(finding_id, cur)
         dkt["place"] = place
         sorter = make_sorter(couple_generics[2])
@@ -269,14 +271,13 @@ def get_birth_findings(
         child_name = get_name_with_id(child_id)
 
         sorter = make_sorter(offspring_details[1])
-        date = offspring_details[0]
+        date = format_stored_date(offspring_details[0])
 
         particulars = offspring_details[2]
         place = get_place_string((offspring_event_id,), cur)
 
         cur.execute(select_count_finding_id_sources, (offspring_event_id,))
-        source_count = cur.fetchone()[0]
-        
+        source_count = cur.fetchone()[0]      
         findings_data[offspring_event_id] = {}
         findings_data[offspring_event_id]["event"] = "offspring"
         findings_data[offspring_event_id]["date"] = date
@@ -633,6 +634,17 @@ class EventsTable(Frame):
                 self.final,
                 self.finding)
             print("line", looky(seeline()).lineno, "self.final:", self.final)
+# line 266 final: 21 d 1884
+# line 259 final: -1884-d-21-------
+# line 636 self.final: -1884-d-21-------
+            if not self.final:
+                self.final = "-0000-00-00-------"
+            cur.execute(update_finding_date, (self.final, self.finding))
+            conn.commit()
+            formatted_date = format_stored_date(self.final)
+            widg.delete(0, 'end')
+            widg.insert(0, formatted_date)
+            # widg.insert(0, self.final)
 
         def update_place():
             cur.execute(select_nesting_fk_finding, (self.finding,))
@@ -1840,10 +1852,6 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: dates
-# finish refactoring dates validation
-# get rid of ttk combobox in dates settings tab
-
 # BRANCH: front_page
 # change current person
 # person search dialog
@@ -1851,11 +1859,13 @@ if __name__ == '__main__':
 # add menubar, ribbon menu, footer
 # add picture and attrib table
 # add buttons to place tab for alias and edit/delete place but don't make them do anything
+# get rid of ttk combobox in dates settings tab
 
 # BRANCH: fonts
 # make fonts tab on prefs tabbook
 # replace all comboboxes and all other ttk widgets
 # get rid of nesting in styles.py by passing conn, cur
+# unhardcode the border size settings everywhere by hooking them to a control in the fonts tab
 
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?

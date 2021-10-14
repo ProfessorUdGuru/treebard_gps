@@ -416,6 +416,12 @@ select_current_tree = '''
     WHERE closing_state_id = 1
 '''
 
+select_date_format = '''
+    SELECT date_formats, abt, est, cal, bef_aft, bc_ad, os_ns, span, range
+    FROM date_format
+    WHERE date_format_id = 1
+'''
+
 select_event_type_id = '''
     SELECT event_type_id, couple
     FROM event_type
@@ -846,6 +852,12 @@ update_event_types = '''
 update_finding_age = '''
     UPDATE finding 
     SET age = ? 
+    WHERE finding_id = ?
+'''
+
+update_finding_date = '''
+    UPDATE finding
+    SET date = ?
     WHERE finding_id = ?
 '''
 
