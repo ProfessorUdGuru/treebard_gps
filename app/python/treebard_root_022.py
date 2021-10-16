@@ -2,7 +2,6 @@
 
 import tkinter as tk
 from PIL import Image, ImageTk
-import tkinter as tk
 from files import project_path, current_file
 from window_border import Border
 from scrolling import MousewheelScrolling
@@ -26,7 +25,7 @@ IMPORTS STRUCTURE:
                |  main   |                                  
                |         |                           
                treebard_root_020                                            
-                                                       
+                                                        
                     
 '''         
 

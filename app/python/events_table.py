@@ -633,10 +633,7 @@ class EventsTable(Frame):
                 self.initial,
                 self.final,
                 self.finding)
-            print("line", looky(seeline()).lineno, "self.final:", self.final)
-# line 266 final: 21 d 1884
-# line 259 final: -1884-d-21-------
-# line 636 self.final: -1884-d-21-------
+
             if not self.final:
                 self.final = "-0000-00-00-------"
             cur.execute(update_finding_date, (self.final, self.finding))
@@ -644,7 +641,6 @@ class EventsTable(Frame):
             formatted_date = format_stored_date(self.final)
             widg.delete(0, 'end')
             widg.insert(0, formatted_date)
-            # widg.insert(0, self.final)
 
         def update_place():
             cur.execute(select_nesting_fk_finding, (self.finding,))
@@ -900,11 +896,13 @@ class EventsTable(Frame):
             pady=6, sticky='w')
 
     def redraw(self, evt=None, current_person=None):
+        print("line", looky(seeline()).lineno, "running:")
         if evt:
             self.current_person = current_person
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
+        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         cur.execute(update_current_person, (self.current_person,))
         conn.commit()
         cur.close()
@@ -1869,6 +1867,8 @@ if __name__ == '__main__':
 
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?
+# edit ReadMe
+# write blog post "refactor finished"
 
 # add to main do list 
 # combobox: when scrolling if the mouse strays off the scrollbar the dropdown undrops, I've seen a way to fix that but what was it?

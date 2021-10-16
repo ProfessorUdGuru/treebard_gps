@@ -744,7 +744,7 @@ def make_date_string(final):
         link, prefix2, year2, month2, day2, suffix2)
 
 def format_stored_date(stored_date):
-
+    # print("line", looky(seeline()).lineno, "stored_date:", stored_date)
     if stored_date == "-0000-00-00----0000-00-00-":
         return ""
     dateform = date_prefs[0]
@@ -778,6 +778,7 @@ def format_stored_date(stored_date):
         if len(part) == 0:
             pass
         elif y in (0, 6):
+            print("line", looky(seeline()).lineno, "part:", part)
             part = find_prefix(part)
             if y == 0:
                 prefix1 = part                
@@ -881,6 +882,7 @@ def format_stored_date(stored_date):
     return formatted_date
 
 def find_prefix(part):
+    print("line", looky(seeline()).lineno, "part:", part)
     if part == 'abt':
         prefix = date_prefs[1]
     elif part == 'est':
@@ -893,10 +895,10 @@ def find_prefix(part):
             prefix = bef_aft[0]
         elif part == 'aft':
             prefix = bef_aft[1]
+    print("line", looky(seeline()).lineno, "prefix:", prefix)
     return prefix
 
 def convert_month(part, dateform):
-    print("line", looky(seeline()).lineno, "part, dateform:", part, dateform)
     month = ""
     idx = 0
     if 'abb' in dateform:
