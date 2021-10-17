@@ -896,13 +896,11 @@ class EventsTable(Frame):
             pady=6, sticky='w')
 
     def redraw(self, evt=None, current_person=None):
-        print("line", looky(seeline()).lineno, "running:")
         if evt:
             self.current_person = current_person
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         cur.execute(update_current_person, (self.current_person,))
         conn.commit()
         cur.close()

@@ -778,7 +778,6 @@ def format_stored_date(stored_date):
         if len(part) == 0:
             pass
         elif y in (0, 6):
-            print("line", looky(seeline()).lineno, "part:", part)
             part = find_prefix(part)
             if y == 0:
                 prefix1 = part                
@@ -882,7 +881,6 @@ def format_stored_date(stored_date):
     return formatted_date
 
 def find_prefix(part):
-    print("line", looky(seeline()).lineno, "part:", part)
     if part == 'abt':
         prefix = date_prefs[1]
     elif part == 'est':
@@ -895,21 +893,9 @@ def find_prefix(part):
             prefix = bef_aft[0]
         elif part == 'aft':
             prefix = bef_aft[1]
-    print("line", looky(seeline()).lineno, "prefix:", prefix)
+    else:
+        prefix = ""
     return prefix
-
-def convert_month(part, dateform):
-    month = ""
-    idx = 0
-    if 'abb' in dateform:
-        idx = 1
-    elif 'dot' in dateform:
-        idx = 2
-    for k,v in MONTH_CONVERSIONS.items():
-        if k == part:
-            month = v[idx] 
-            break
-    return month
 
 def find_suffix(part):
     if part in ("bc, ad"):
@@ -924,7 +910,23 @@ def find_suffix(part):
             suffix = bc_ad[0]
         elif part == "ns":
             suffix = bc_ad[1]
+    else:
+        suffix = ""
     return suffix
+
+def convert_month(part, dateform):
+    month = ""
+    idx = 0
+    if 'abb' in dateform:
+        idx = 1
+    elif 'dot' in dateform:
+        idx = 2
+    for k,v in MONTH_CONVERSIONS.items():
+        if k == part:
+            month = v[idx] 
+            break
+    return month
+
         
 
 

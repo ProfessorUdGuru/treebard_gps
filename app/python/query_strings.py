@@ -516,6 +516,12 @@ select_finding_places_nesting = '''
     WHERE finding_id = ? 
 '''
 
+select_finding_sorter = '''
+    SELECT date_sorter
+    FROM finding
+    WHERE finding_id = ?
+'''
+
 select_findings_details_couple = '''
     SELECT findings_persons.person_id1, findings_persons.age1, a.kin_types,
         findings_persons.person_id2, findings_persons.age2, b.kin_types
@@ -568,6 +574,34 @@ select_findings_persons_age = '''
     SELECT age
     FROM findings_persons
     WHERE person_id = ?
+        AND finding_id = ?
+'''
+
+select_findings_persons_ma_id1 = '''
+    SELECT person_id1
+    FROM findings_persons
+    WHERE kin_type_id1 = 1
+        AND finding_id = ?
+'''
+
+select_findings_persons_ma_id2 = '''
+    SELECT person_id2
+    FROM findings_persons
+    WHERE kin_type_id2 = 1
+        AND finding_id = ?
+'''
+
+select_findings_persons_pa_id1 = '''
+    SELECT person_id1
+    FROM findings_persons
+    WHERE kin_type_id1 = 2
+        AND finding_id = ?
+'''
+
+select_findings_persons_pa_id2 = '''
+    SELECT person_id2
+    FROM findings_persons
+    WHERE kin_type_id2 = 2
         AND finding_id = ?
 '''
 
@@ -652,6 +686,24 @@ select_max_person_id = '''
 
 select_max_place_id = ''' SELECT MAX(place_id) FROM place '''
 
+select_name_details = '''
+    SELECT names, name_types, used_by
+    FROM name
+    LEFT JOIN name_type
+        ON name.name_type_id = name_type.name_type_id
+    WHERE person_id = ?
+'''
+
+select_name_sort_order = '''
+    SELECT
+        sort_order
+    FROM name
+    JOIN person
+        ON person.person_id = name.person_id
+    WHERE name.person_id = ?
+        AND name_type_id = 1 
+'''
+
 select_name_type_id = '''
     SELECT name_type_id 
     FROM name_type
@@ -723,6 +775,48 @@ select_opening_settings = '''
         default_font_size            
     FROM format
     WHERE format_id = 1
+'''
+
+select_person_birth_date = '''
+    SELECT 
+        finding_id,
+        date
+    FROM person
+    JOIN finding
+        ON finding.person_id = person.person_id
+    JOIN event_type
+        ON finding.event_type_id = event_type.event_type_id 
+    WHERE finding.person_id = ?
+    AND finding.event_type_id == 1 
+'''
+
+select_person_death_date = '''
+    SELECT date
+    FROM person
+    JOIN finding
+        ON finding.person_id = person.person_id
+    JOIN event_type
+        ON finding.event_type_id = event_type.event_type_id 
+    WHERE finding.person_id = ?
+    AND finding.event_type_id == 4 
+'''
+
+select_person_distinct_like = '''
+    SELECT DISTINCT 
+        person.person_id
+    FROM person
+    JOIN name
+        ON person.person_id = name.person_id
+    WHERE names LIKE ? 
+        OR person.person_id LIKE ?
+'''
+
+select_person_gender = '''
+    SELECT gender 
+    FROM person 
+    JOIN name
+        ON person.person_id = name.person_id
+    WHERE names = ? AND name_type_id = 1
 '''
 
 select_person_id_birth = '''
