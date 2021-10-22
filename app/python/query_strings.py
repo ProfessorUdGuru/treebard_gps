@@ -122,6 +122,11 @@ insert_findings_roles = '''
     VALUES (null, ?, ?, ?)
 '''
 
+insert_image_new = '''
+    INSERT INTO image
+    VALUES (null, ?, '')
+'''
+
 insert_images_entities = '''
     INSERT INTO images_entities (image_id, main_image, person_id) 
     VALUES (?, 1, ?) 
@@ -137,6 +142,11 @@ insert_name = '''
     VALUES (null, ?, ?, ?, ?, null)
 '''
 
+insert_name_type_new = '''
+    INSERT INTO name_type
+    VALUES (?, ?)
+'''
+
 insert_note = '''
     INSERT INTO note 
     VALUES (null, ?, 0, ?)
@@ -145,15 +155,6 @@ insert_note = '''
 insert_person_new = '''
     INSERT INTO person VALUES (?, ?)
 '''
-
-# insert_persons_persons_new = '''
-    # INSERT INTO persons_persons VALUES (?, ?, ?, ?)
-# '''
-
-# insert_persons_persons_finding = '''
-    # INSERT INTO persons_persons
-    # VALUES (null, ?, ?, ?)
-# '''
 
 insert_place_new = '''
     INSERT INTO place (place_id, places)
@@ -226,13 +227,6 @@ select_all_kin_type_ids_couple = '''
     WHERE kin_code = 'D'
         AND hidden = 0
 '''
-
-# select_all_kin_types_couple = '''
-    # SELECT kin_types
-    # FROM kin_type
-    # WHERE kin_code = 'D'
-        # AND hidden = 0
-# '''
 
 select_all_kin_ids_types_couple = '''
     SELECT kin_type_id, kin_types
@@ -676,6 +670,10 @@ select_max_finding_places_id = '''
     SELECT MAX(finding_places_id) FROM finding_places
 '''
 
+select_max_name_type_id = '''
+    SELECT MAX(name_type_id) FROM name_type
+'''
+
 select_max_kin_type_id = '''
     SELECT MAX(kin_type_id) FROM kin_type
 '''
@@ -716,6 +714,13 @@ select_name_with_id = '''
         ON name.person_id = person.person_id 
     WHERE name_type_id = 1
         AND name.person_id = ?
+'''
+
+select_name_with_id_any = '''
+    SELECT names, name_type_id 
+    FROM name JOIN person 
+        ON name.person_id = person.person_id 
+    WHERE name.person_id = ?
 '''
 
 select_nested_places_same = '''

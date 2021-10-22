@@ -1,9 +1,17 @@
 # custom_tabbed_widget
 
+from widgets import Labelx, Framex, Frame, FrameHilited2
+from styles import make_formats_dict, config_generic
+from utes import create_tooltip
+import dev_tools as dt
+from dev_tools import looky, seeline
 
 
 
 '''
+    Replaces ttk.Notebook. Tabs can be displayed on the bottom of the main
+    frame, instead of the top. 
+
     This is a Frame that can be gridded anywhere. No scrollbar needed, because
     tabbed widgets are meant to retain a fixed size and the space they are in
     has a scrollbar of its own. The space they are in should not resize, so set
@@ -218,11 +226,10 @@ class TabBook(Framex):
                 bg=self.formats['highlight_bg'],
                 font=self.formats['tab_font'])
 
-
         # detect which tab is active and set its tab.chosen attribute to True
         #   so config_generic will give it the right background color when
         #   color_scheme is changed
-        for tab in self.tabdict.values():
+        for tab in self.tabdict.values():    
             if tab[1] == self.active:
                 tab[1].chosen = True
             else:
@@ -233,6 +240,12 @@ class TabBook(Framex):
         self.active.config(
             bg=self.formats['bg'],
             font=self.formats['tab_font'])
+        # remove all pages and regrid the right one
+        for v in self.tabdict.values():
+            if self.active == v[1]:
+                for widg in self.tabdict.values():
+                    widg[2].grid_remove()
+                v[2].grid()
 
     def open_tab_alt(self, root_window):
         ''' Bindings for notebook tab accelerators. '''

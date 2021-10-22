@@ -129,8 +129,9 @@ events_msg = (
 
 names_msg = (
     "This birth name already exists. To create a "
-    "new person by the same name, click OK. The "
-    "two persons can be merged later if desired.",
+        "new person by the same name, click OK. The "
+        "two persons can be merged later if desired.",
+    "That name type doesn't exist yet. Create it?",
 )
 
 notes_msg = (

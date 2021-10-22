@@ -264,6 +264,7 @@ def get_birth_findings(
             lst.append(offspring[0])
 
     for lst in children:
+        print("line", looky(seeline()).lineno, "lst:", lst)
         offspring_event_id, parent_age, child_id = lst
         cur.execute(select_findings_details_offspring, (child_id,))       
         offspring_details = cur.fetchone()
@@ -630,9 +631,10 @@ class EventsTable(Frame):
                 self.root, 
                 # self.treebard,
                 self.inwidg,
-                self.initial,
+                # self.initial,
                 self.final,
-                self.finding)
+                # self.finding
+)
 
             if not self.final:
                 self.final = "-0000-00-00-------"
@@ -896,6 +898,7 @@ class EventsTable(Frame):
             pady=6, sticky='w')
 
     def redraw(self, evt=None, current_person=None):
+        print("line", looky(seeline()).lineno, "running:")
         if evt:
             self.current_person = current_person
         conn = sqlite3.connect(current_file)
@@ -1008,8 +1011,7 @@ class EventsTable(Frame):
 
 class NewEventDialog(Toplevel):
     def __init__(
-            self, master, treebard, events_table,
-            new_event, 
+            self, master, treebard, events_table, new_event, 
             current_person, place_autofill_values, 
             redraw, finding=None, ma_pa=False, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
@@ -1526,6 +1528,15 @@ class NewEventDialog(Toplevel):
         else:
             self.update_db_place()
 
+        new_event_date = validate_date(
+            self.root,
+            self.date_input,
+            self.date_input.get())
+        if not new_event_date:
+            new_event_date = "-0000-00-00-------"
+        cur.execute(update_finding_date, (new_event_date, self.new_finding))
+        conn.commit()
+
         update_particulars(
             self.particulars_input.get().strip(), self.new_finding)        
 
@@ -1721,8 +1732,7 @@ class NewEventDialog(Toplevel):
     def open_new_person_dialog(self, new_name, input_widget):
         new_partner_dialog = Toplevel(self)
         new_partner_dialog.title("Add New Person")
-        person_add = PersonAdd(
-            new_partner_dialog, input_widget, self.root)
+        person_add = PersonAdd(new_partner_dialog, input_widget, self.root)
         person_add.grid()
         person_add.name_input.delete(0, 'end')
         person_add.name_input.insert(0, new_name[0])
@@ -1849,13 +1859,20 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# change current person
-# person search dialog
-# replace ttk.Notebooks
-# add menubar, ribbon menu, footer
+# SEE `get_any_name_with_id` IN main.py............ Keep going, it should work...when the new current person has no birth name, current person area shd display any name the person does have, or else it shd display a string eg "name unknown"
+# when making a new person, current person on person page display in current person area disappears and it says none; currently it fills in the newly made person into entry 1 but what if the user didn't mean to change current person but just make a new person? If new person procedure is cancelled, I think it leaves None as the current person.
+# refactor PersonAdd class and then finish Search class again.
+# make sure PersonAdd still works in Role dialog and new event couple event type, current person area, search class
+# fix, standardize, or get rid of open_new_person_dialog() in events_table.py CHANGE THE NAME OF THIS FUNX, it is self.open_new_person_dialog but it causes confusion since there's now another funx by the same name imported from names.py to main.py
+# statustips and rcm in search dialog and new person dialog
 # add picture and attrib table
+# add menubar, ribbon menu, footer
+# add functionality to obvious menu choices incl. add new person, add/edit name, and others
 # add buttons to place tab for alias and edit/delete place but don't make them do anything
+# add colorizer, dates prefs, & fonts tabs
 # get rid of ttk combobox in dates settings tab
+# resize correctly when changing persons so cols not too wide
+# get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
 
 # BRANCH: fonts
 # make fonts tab on prefs tabbook
@@ -1866,6 +1883,7 @@ if __name__ == '__main__':
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?
 # edit ReadMe
+# figure out how to dump db as a text file so it can be pushed to github
 # write blog post "refactor finished"
 
 # add to main do list 

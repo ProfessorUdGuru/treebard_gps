@@ -2,11 +2,15 @@
 
 import tkinter as tk
 from widgets import Frame, LabelH2, LabelH3, Label, Button
+from custom_tabbed_widget import TabBook
 from autofill import EntryAutoHilited    
 from scrolling import Scrollbar    
 from events_table import EventsTable
-from names import get_name_with_id, make_values_list_for_person_select   
+from names import (
+    get_name_with_id, make_values_list_for_person_select,
+    open_new_person_dialog, get_any_name_with_id)
 from search import PersonSearch
+# from search import PersonSearch, open_names_tab
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -14,7 +18,16 @@ from dev_tools import looky, seeline
 
 
 
-    
+
+
+MAIN_TABS = [
+    ("person", "P"), ("places", "L"), ("sources", "S"), ("names", "N"), 
+    ("reports", "R"), ("charts", "A"), ("projects", "J"), ("graphics", "G"), 
+    ("types", "T"), ("preferences", "E")]
+
+RIGHT_PANEL_TABS = [("attributes", "B"), ("gallery", "Y")]   
+
+PREFS_TABS = [("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D")]
 
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
@@ -65,8 +78,12 @@ class Main(Frame):
         scridth_n = Frame(self, height=scridth)
         scridth_w = Frame(self, width=scridth)
         current_person_area = Frame(self)
-        self.main_tabs = Frame(self)
-        persons_tab = Frame(self.main_tabs)
+        self.main_tabs = TabBook(
+            self, root=self.root, tabs=MAIN_TABS, 
+            selected='person', case='upper', miny=0.66)
+        persons_tab = Frame(self.main_tabs.store["person"])
+        self.names_tab = Frame(self.main_tabs.store["names"])
+        prefs_tab = Frame(self.main_tabs.store["preferences"])
         footer = Frame(self)
         boilerplate = Label(footer, text='footer')
 
@@ -80,12 +97,23 @@ class Main(Frame):
             current_person_area, text="OK", command=self.change_person)
         person_search = Button(
             current_person_area, 
-            text="Find/Create a Person/Name", 
+            text="Find or Create a Person", 
             command=self.open_person_search)
-        right_panel = Frame(persons_tab)
-        attributes_table = Label(right_panel, text='attributes table')
+        right_panel = TabBook(
+            persons_tab, root=self.root, tabs=RIGHT_PANEL_TABS, side="se", 
+            selected='gallery', case='upper', miny=0.25, minx=0.20)
+
+        attributes_table = Label(
+            right_panel.store["attributes"], text='attributes table')
 
         self.findings_table = EventsTable(persons_tab, self.root, self.treebard)
+
+        # self.person_add = PersonAdd(
+            # self.names_tab, self.person_entry, self.root, self.treebard)
+
+        options_tabs = TabBook(
+            prefs_tab, root=self.root, tabs=PREFS_TABS, side="se", 
+            selected='general', case='upper', miny=0.5, minx=0.66)
 
         # children of self
         scridth_n.grid(column=0, row=0, sticky='ew')
@@ -93,17 +121,25 @@ class Main(Frame):
         self.columnconfigure(1, weight=1)
         self.columnconfigure(2, weight=1)
         self.rowconfigure(2, weight=1)
-        current_person_area.grid(column=1, row=1, sticky='ew')
+        current_person_area.grid(column=1, row=1, sticky='ew', pady=18)
         self.main_tabs.grid(column=1, row=2, sticky='ew')
         footer.grid(column=1, row=3, sticky='ew')
 
-        # children of self.main_tabs
+        # children of main tabs
         persons_tab.grid(column=0, row=0, sticky='news')
+        self.names_tab.grid(column=0, row=0, sticky='news')
+        prefs_tab.grid(column=0, row=0, sticky='news')
 
         # children of persons_tab
-        right_panel.grid(column=1, row=0, sticky='e')
-        self.findings_table.grid(column=0, row=1, columnspan=2, sticky='news')
+        right_panel.grid(column=1, row=0, sticky='e', padx=12, pady=12)
+        self.findings_table.grid(
+            column=0, row=1, columnspan=2, sticky='news', padx=12, pady=12)
 
+        # children of self.names_tab
+        # self.person_add.grid(column=0, row=0, sticky="news", padx=12, pady=12)
+
+        # children of preferences tab
+        options_tabs.grid(column=0, row=0, sticky="news", padx=12, pady=12)
         # children of current_person_area
         self.current_person_label.pack(side="top", pady=24)
         instrux.pack(side="left")
@@ -112,7 +148,7 @@ class Main(Frame):
         person_search.pack(side="right")
 
         # children of right_panel
-        attributes_table.grid(column=0, row=0, sticky='news')
+        attributes_table.grid(column=0, row=0, sticky='e')
 
         # children of footer
         boilerplate.grid()
@@ -130,31 +166,38 @@ class Main(Frame):
         self.person_entry.values = self.person_autofill_values
 
     def open_person_search(self):
-        print("line", looky(seeline()).lineno, "self.current_person_name:", self.current_person_name)
         person_search_dialog = PersonSearch(
             self, 
-            self.root, 
+            self.root,
+            self.treebard,
             self.person_entry, 
             self.findings_table,
-            names_tab=None, 
+            names_tab=self.main_tabs.store["names"],
             pic=None)
 
+    
+
     def change_person(self):
-        print("line", looky(seeline()).lineno, "self.person_entry.get():", self.person_entry.get())
-        new_person = self.person_entry.get().split("#")
-        self.current_person = int(new_person[1])
-        self.current_person_name = get_name_with_id(self.current_person)
+        if "#" not in self.person_entry.get():
+            self.current_person = open_new_person_dialog(
+                self, self.person_entry, self.root)
+        else:
+            new_person = self.person_entry.get().split("#")
+            self.current_person = int(new_person[1]) 
+        self.current_person_name = get_any_name_with_id(self.current_person) 
+        # self.current_person_name = get_name_with_id(self.current_person)
+        print("line", looky(seeline()).lineno, "len(self.current_person_name):", len(self.current_person_name))
         self.findings_table.current_person = self.current_person
-        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
-        self.findings_table.redraw()
+        self.findings_table.redraw(current_person=self.current_person)
         self.person_entry.delete(0, 'end')
         self.current_person_label.config(
             text="Current Person (ID): {} ({})".format(
                 self.current_person_name, self.current_person))
 
-# DO LIST
-# make date entry on new event dialog work right w/ the date validation code
-# last: make table resize right on redraw
+
+        
+
+
         
 
 

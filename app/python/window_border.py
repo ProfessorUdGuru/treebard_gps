@@ -201,7 +201,6 @@ class Border(Canvas):
     def move_window(self, evt):
         ''' Drag the window by the title frame
         '''
-
         self.master.update_idletasks()
         x_mouse_move_screen = evt.x_root
         y_mouse_move_screen = evt.y_root
@@ -212,10 +211,9 @@ class Border(Canvas):
 
     def get_pos(self, evt):
         ''' Prepare to drag the window by the title frame. '''
-
         evt.widget.winfo_toplevel().lift()
         self.colorize_border()
-
+        
         left_edge = self.master.winfo_rootx()
         top_edge = self.master.winfo_rooty()
         x_click_screen = evt.x_root

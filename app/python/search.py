@@ -9,10 +9,10 @@ from styles import config_generic, make_formats_dict
 from widgets import (
     Toplevel, Frame, Button, MessageHilited, Entry, LabelH2, Label, LabelH3,
     LabelNegative)
-from names import get_name_with_id
+from names import get_name_with_id, open_new_person_dialog
 from dates import OK_PREFIXES, format_stored_date
 from query_strings import (
-    select_person_distinct_like, select_name_details, select_person_gender,
+    select_person_distinct_like, select_name_details,
     select_finding_sorter, select_name_sort_order, select_person_death_date,
     select_person_birth_date, select_findings_persons_ma_id1, 
     select_findings_persons_ma_id2, select_findings_persons_pa_id1,
@@ -26,7 +26,7 @@ from dev_tools import looky, seeline
 
 
 formats = make_formats_dict()
-COL_HEADS = ('ID', 'Name', 'Birth', 'Death', 'Mother', 'Father')
+COL_HEADS = ('ID', 'Birth Name', 'Birth', 'Death', 'Mother', 'Father')
 
 NONPRINT_KEYS = (
     'Return', 'Tab', 'Shift_L', 'Shift_R', 'Escape', 
@@ -65,12 +65,13 @@ def get_matches(search_input):
 
 class PersonSearch(Toplevel):
     def __init__(
-            self, master, root, entry, findings_table, names_tab, pic, 
-            *args, **kwargs):
+            self, master, root, treebard, entry, findings_table, 
+            names_tab, pic, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
-        self.master = master
+        self.master = master # this is an instance of Main (a Frame)
         self.root = root
+        self.treebard = treebard
         self.entry = entry
         self.findings_table = findings_table
         self.names_tab = names_tab
@@ -109,7 +110,7 @@ class PersonSearch(Toplevel):
 
         self.title('Person Search')
         self.geometry('+100+20')
-        self.grab_set()
+        # self.grab_set()
 
         self.columnconfigure(1, weight=1)
         self.canvas = Border(self, size=3) # don't hard-code size
@@ -189,7 +190,21 @@ class PersonSearch(Toplevel):
         self.person_adder = Button(
             header, 
             text='Add New Person',
-            command=self.open_names_tab)
+            command=lambda master=self,
+                inwidg=self.entry,
+                root=self.root,
+                inwidg2=self.search_input: open_new_person_dialog(
+                    master, inwidg, root, inwidg2))
+            # command=lambda inwidg=self.search_input, 
+                # treebard=self.treebard, 
+                # host_dlg=self,
+                # inwidg2=self.search_input: open_new_person_dialog(
+                    # host_dlg, inwidg, self.root))
+
+# people = make_values_list_for_person_select()        
+# all_birth_names = EntryAuto.create_lists(people)
+# self.person_entry.values = all_birth_names
+
 
         self.person_adder.grid(column=2, row=1, padx=12, pady=12)
 
@@ -303,39 +318,7 @@ class PersonSearch(Toplevel):
                 cursor='hand2',
                 anchor='w')
             lab.grid(column=col, row=0, sticky='ew', ipadx=12)
-            lab.bind('<Button-1>', self.track_column_state)  
-
-    def open_names_tab(self):
-
-        xfr = self.search_input.get()
-        self.destroy() 
-        # SAVE FOR LATER
-        # self.master.tabs.select(self.names_tab)
-        # self.master.names.name_input.delete(0, 'end')
-        # self.master.names.name_input.insert(0, xfr)
-        # self.master.names.name_input.config(
-            # font=formats['input_font'],
-            # foreground='black')
-        # self.master.names.new_or_current.set('new')
-        # self.master.names.toggle_name_var()
-
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-        cur.execute(select_person_gender, (xfr,))
-        first_match = cur.fetchone()
-        cur.close()
-        conn.close()
-
-        if first_match:
-            first_match = first_match[0]
-            # SAVE FOR LATER
-            # self.master.names.gender_input.config(state='normal')
-            # self.master.names.gender_input.delete(0, 'end')
-            # self.master.names.gender_input.insert(0, first_match)
-            # self.master.names.gender_input.config(state='readonly')
-            # self.master.names.gender = first_match
-        # LATER
-        # self.master.canvas.yview_moveto(0.0)
+            lab.bind('<Button-1>', self.track_column_state) 
 
     def make_search_dialog_cells(self):
         self.result_rows = []
@@ -385,7 +368,8 @@ class PersonSearch(Toplevel):
 
         for child in self.search_table.winfo_children():
             if child.grid_info()['row'] not in (0, 1):
-                child.bind('<Double-Button-1>', self.select)
+                child.bind('<Button-1>', self.select)
+                # child.bind('<Double-Button-1>', self.select)
                 child.bind('<Return>', self.select)
                 child.bind('<Key-space>', self.select)
                 child.bind('<FocusIn>', self.highlight_on_focus)                
@@ -545,7 +529,6 @@ class PersonSearch(Toplevel):
 
         self.row_list.append(self.display_name)
         ext = [[], [], '', '', '', '', '', [], [], []]
-        # ext = [[], [], '', '', '', '', '', []]
         self.row_list.extend(ext[0:])
 
         # this has to run last
@@ -815,9 +798,7 @@ class LabelSearch(Label):
         self.formats = make_formats_dict()
         self.config(anchor='w')
 
-# DO LIST
-# make tabs
-# uncomment SAVE FOR LATER to test new name procedure
+
 
 
 

@@ -231,9 +231,10 @@ widg = None
 def validate_date(
     parent,
     inwidg,
-    initial,
+    # initial,
     final,
-    finding):
+    # finding
+):
 
     global root, widg
 
