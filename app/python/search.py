@@ -9,7 +9,7 @@ from styles import config_generic, make_formats_dict
 from widgets import (
     Toplevel, Frame, Button, MessageHilited, Entry, LabelH2, Label, LabelH3,
     LabelNegative)
-from names import get_name_with_id, open_new_person_dialog
+from names import get_name_with_id, open_new_person_dialog, get_any_name_with_id
 from dates import OK_PREFIXES, format_stored_date
 from query_strings import (
     select_person_distinct_like, select_name_details,
@@ -398,7 +398,7 @@ class PersonSearch(Toplevel):
             elif (child.grid_info()['row'] == self.hilit_row and 
                     child.grid_info()['column'] == 1):
                 self.new_current_person = child['text']
-        # handle the double-click event
+        # click name or id in table to change current person
         if evt.type == '4':
             if (evt.widget.grid_info()['column'] == 0 and 
                     evt.widget.grid_info()['row'] == self.hilit_row):
@@ -413,9 +413,13 @@ class PersonSearch(Toplevel):
         if evt.type != '4':
             self.new_current_id = evt.widget['text']
 
-        self.new_current_person = get_name_with_id(self.new_current_id)
+        # self.new_current_person = get_name_with_id(self.new_current_id)
+        self.new_current_person = get_any_name_with_id(self.new_current_id)
+        print("line", looky(seeline()).lineno, "self.new_current_person:", self.new_current_person)
         self.close_search_dialog()
-
+        if type(self.new_current_person) is list:
+            name_stuff = list(self.new_current_person)
+            self.new_current_person = "({}) {}".format(name_stuff[0][1], name_stuff[0][0])
         self.findings_table.redraw(evt, current_person=self.new_current_id)
 
         self.master.current_person_label.config(

@@ -1859,7 +1859,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# SEE `get_any_name_with_id` IN main.py............ Keep going, it should work...when the new current person has no birth name, current person area shd display any name the person does have, or else it shd display a string eg "name unknown"
+# SEE `get_any_name_with_id` IN main.py...when the new current person has no birth name, current person area shd display any name the person does have. Shd also display this way on load. Already works when changed from search dlg but there's no way to change current person from entry 1 if the person has no birth name, which is OK. FIRST MAKE an algorithm to decide which name a person shd use if no birth name is available. If there's only one name (but no birth name), just use the one there is. If there are two or more, then prioritize the existing names according to a hard-coded list in Treebard so that the first hit on the list is the one used. Also add a convenience name type (but figure out a better name for the type) and if none of the person's names are on the accepted list, prompt the user to add a convenience name till the real name is found, and that one will be used. (So make it top on the prioritized list.)
 # when making a new person, current person on person page display in current person area disappears and it says none; currently it fills in the newly made person into entry 1 but what if the user didn't mean to change current person but just make a new person? If new person procedure is cancelled, I think it leaves None as the current person.
 # refactor PersonAdd class and then finish Search class again.
 # make sure PersonAdd still works in Role dialog and new event couple event type, current person area, search class

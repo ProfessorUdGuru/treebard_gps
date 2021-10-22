@@ -21,7 +21,7 @@ from query_strings import (
     insert_images_entities, select_name_type_id, insert_name, 
     select_all_images, select_all_name_types, insert_person_new,
     select_person_gender, select_max_name_type_id, insert_name_type_new,
-    insert_image_new)
+    insert_image_new, select_name_with_id_any)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -82,6 +82,9 @@ def get_any_name_with_id(iD):
 
         cur.close()
         conn.close()
+        return all_names_types
+    else:
+        return name
         
 
     

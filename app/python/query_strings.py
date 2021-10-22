@@ -717,11 +717,21 @@ select_name_with_id = '''
 '''
 
 select_name_with_id_any = '''
-    SELECT names, name_type_id 
-    FROM name JOIN person 
-        ON name.person_id = person.person_id 
+    SELECT names, name_types 
+    FROM name 
+        JOIN person 
+            ON name.person_id = person.person_id
+        JOIN name_type 
+            ON name_type.name_type_id = name.name_type_id
     WHERE name.person_id = ?
 '''
+
+# select_name_with_id_any = '''
+    # SELECT names, name_type_id 
+    # FROM name JOIN person 
+        # ON name.person_id = person.person_id 
+    # WHERE name.person_id = ?
+# '''
 
 select_nested_places_same = '''
     SELECT nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8
