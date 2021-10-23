@@ -10,7 +10,6 @@ from names import (
     get_name_with_id, make_values_list_for_person_select,
     open_new_person_dialog, get_any_name_with_id)
 from search import PersonSearch
-# from search import PersonSearch, open_names_tab
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -80,7 +79,7 @@ class Main(Frame):
         current_person_area = Frame(self)
         self.main_tabs = TabBook(
             self, root=self.root, tabs=MAIN_TABS, 
-            selected='person', case='upper', miny=0.66)
+            selected='person', case='upper', miny=0.66, takefocus=0)
         persons_tab = Frame(self.main_tabs.store["person"])
         self.names_tab = Frame(self.main_tabs.store["names"])
         prefs_tab = Frame(self.main_tabs.store["preferences"])
@@ -101,15 +100,12 @@ class Main(Frame):
             command=self.open_person_search)
         right_panel = TabBook(
             persons_tab, root=self.root, tabs=RIGHT_PANEL_TABS, side="se", 
-            selected='gallery', case='upper', miny=0.25, minx=0.20)
+            selected='gallery', case='upper', miny=0.25, minx=0.20, takefocus=0)
 
         attributes_table = Label(
             right_panel.store["attributes"], text='attributes table')
 
         self.findings_table = EventsTable(persons_tab, self.root, self.treebard)
-
-        # self.person_add = PersonAdd(
-            # self.names_tab, self.person_entry, self.root, self.treebard)
 
         options_tabs = TabBook(
             prefs_tab, root=self.root, tabs=PREFS_TABS, side="se", 
@@ -136,7 +132,6 @@ class Main(Frame):
             column=0, row=1, columnspan=2, sticky='news', padx=12, pady=12)
 
         # children of self.names_tab
-        # self.person_add.grid(column=0, row=0, sticky="news", padx=12, pady=12)
 
         # children of preferences tab
         options_tabs.grid(column=0, row=0, sticky="news", padx=12, pady=12)
@@ -154,10 +149,12 @@ class Main(Frame):
         boilerplate.grid()
 
     def get_current_values(self):
-
         all_birth_names = make_values_list_for_person_select()
         self.current_person = self.findings_table.current_person
-        self.current_person_name = get_name_with_id(self.current_person)
+        self.current_person_name = get_any_name_with_id(self.current_person)
+        if type(self.current_person_name) is tuple:
+            use_name = list(self.current_person_name)
+            self.current_person_name = "({}) {}".format(use_name[1], use_name[0])
         self.current_person_label.config(
             text="Current Person (ID): {} ({})".format(
                 self.current_person_name, self.current_person))
@@ -173,20 +170,19 @@ class Main(Frame):
             self.person_entry, 
             self.findings_table,
             names_tab=self.main_tabs.store["names"],
-            pic=None)
-
-    
+            pic=None)    
 
     def change_person(self):
         if "#" not in self.person_entry.get():
+            old_current_person = self.current_person
             self.current_person = open_new_person_dialog(
                 self, self.person_entry, self.root)
+            if self.current_person is None:
+                self.current_person = old_current_person
         else:
             new_person = self.person_entry.get().split("#")
-            self.current_person = int(new_person[1]) 
-        self.current_person_name = get_any_name_with_id(self.current_person) 
-        # self.current_person_name = get_name_with_id(self.current_person)
-        print("line", looky(seeline()).lineno, "len(self.current_person_name):", len(self.current_person_name))
+            self.current_person = int(new_person[1])
+        self.current_person_name = get_name_with_id(self.current_person)
         self.findings_table.current_person = self.current_person
         self.findings_table.redraw(current_person=self.current_person)
         self.person_entry.delete(0, 'end')

@@ -36,6 +36,12 @@ NAME_SUFFIXES = (
     'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 
     'ix', 'x', 'xi', 'xii', 'xiii', 'xiv', 'xv')
 
+NAME_TYPES_HIERARCHY = (
+    'reference name', 'adoptive name', 'also known as', 'married name', 
+    'legally changed name', 'pseudonym', 'pen name', 'stage name', 'nickname', 
+    'call name', 'official name', 'anglicized name', 'religious order name', 
+    'other name type')
+
 def get_current_person():
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
@@ -71,23 +77,23 @@ def get_name_with_id(iD):
         return ''
 
 def get_any_name_with_id(iD):
-    name = get_name_with_id(iD)
-    if len(name) == 0:
+    birth_name = get_name_with_id(iD)
+    if len(birth_name) == 0:
+        use_name = 'name unknown'
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_name_with_id_any, (iD,))
         all_names_types = cur.fetchall()
-        print("line", looky(seeline()).lineno, "all_names_types:", all_names_types)
-
-
+        for tup in all_names_types:
+            for name in NAME_TYPES_HIERARCHY:
+                if tup[1] == name:
+                    use_name = tup
+                    break
         cur.close()
         conn.close()
-        return all_names_types
+        return use_name
     else:
-        return name
-        
-
-    
+        return birth_name    
 
 def make_values_list_for_person_select():
     conn = sqlite3.connect(current_file)
@@ -123,372 +129,6 @@ def get_all_persons():
             persons.append(name)
     return persons
 
-# class PersonAdd(Frame):
-    # '''
-        # The parameter `name_entry` used to be `autofill` so watch out for this
-        # till the refactoring is complete.
-    # '''
-    # def __init__(self, master, name_entry, root, treebard, *args, **kwargs):
-        # Frame.__init__(self, master, *args, **kwargs)
-
-        # self.master = master
-        # self.name_entry = name_entry
-        # self.root = root
-        # self.treebard = treebard
-
-        # self.config(padx=24, pady=24)
-
-        # self.gender = 'unknown'
-
-        # self.new_person_id = None
-
-        # self.role_person_edited = False
-        # self.findings_roles_id = None
-        # self.make_dupe = False
-
-        # self.rc_menu = RightClickMenu(self.root)
-        # self.make_widgets()
-        # if self.master.winfo_class() == "Toplevel":
-            # self.master.withdraw()
-
-    # def make_widgets(self):
-
-        # def go_beyond(evt):
-            # for child in self.order_frm.winfo_children():
-                # child.config(takefocus=0)
-
-        # all_pics = self.get_all_pics()
-
-        # lab1 = Label(self, text='Gender:')
-        # self.gender_input = ClearableReadonlyCombobox(self, values=GENDER_TYPES)
-
-        # lab2 = Label(self, text='Main Image:')
-        # self.image_input = ClickAnywhereCombo(self, values=all_pics)
-
-        # lab3 = Label(self, text='Name Type:')
-        # self.name_type_input = ClearableReadonlyCombobox(self, values=self.get_name_types())
-
-        # lab4 = Label(self, text='Full Name:')
-        # self.name_input = Entry(self, width=65)
-        # self.name_input.bind("<FocusOut>", self.show_sort_order)
-
-        # self.how = LabelH3(
-            # self, 
-            # text='Alphabetize name: after clicking auto-sort, tab into '
-                  # 'auto-filled name fields to modify\nsort order with '
-                  # 'arrow keys or if sort order is correct, just click ADD.')
-
-        # autosort = Button(self, text='AUTOSORT')
-        # autosort.bind("<Control-Tab>", go_beyond)
-
-        # self.order_frm = Frame(self)
-
-        # s = 0
-        # for stg in range(20):
-            # mov = LabelMovable(self.order_frm)
-            # mov.grid(column=s, row=0, padx=3)
-            # s += 1 
-
-        # self.buttonbox = Frame(self)
-        # self.add_butt = Button(
-            # self.buttonbox, 
-            # text='ADD', 
-            # width=6, 
-            # command=self.ok_new_person)
-        # self.cancel_butt = Button(
-            # self.buttonbox, 
-            # text='CANCEL', 
-            # width=6, 
-            # command=self.cancel_new_person)
-
-        # lab1.grid(column=0, row=3)
-        # self.gender_input.grid(
-            # column=1, row=3, padx=12, pady=12, sticky='e')
-        # lab2.grid(column=2, row=3)
-        # self.image_input.grid(column=3, row=3, padx=12, pady=12)
-        # lab3.grid(column=0, row=4)
-        # self.name_type_input.grid(
-            # column=1, row=4,  padx=12, pady=12, sticky='e')
-        # lab4.grid(column=2, row=4)
-        # self.name_input.grid(column=3, row=4, padx=12, pady=12)
-
-        # self.how.grid(column=0, row=5, padx=6, pady=6, columnspan=4)
-        # autosort.grid(column=0, row=6, padx=6, pady=6)
-        # self.order_frm.grid(column=1, row=6, columnspan=4, pady=24)
-        # self.buttonbox.grid(column=3, row=7, sticky='e', pady=(12,0))
-        # self.add_butt.grid(column=0, row=0, padx=(0,12))
-        # self.cancel_butt.grid(column=1, row=0)
-
-        # self.new_person_statusbar = StatusbarTooltips(
-            # self.master, resizer=False)
-        # visited = (
-            # (self.gender_input, 
-                # "Gender Input", 
-                # "'Unknown' used if left blank."),
-            # (self.image_input, 
-                # "Image Input", 
-                # "Use an old photo of person's home town if no photo available."),
-            # (self.name_type_input, 
-                # "Name Type Input", 
-                # "Choose the name type."),
-            # (self.name_input, 
-                # "Name Input", 
-                # "Autofills but you can change it."),
-            # (autosort, 
-                # "Autosort Button", 
-                # "Click to auto-create a sortable name."),
-            # (self.order_frm, 
-                # "", 
-                # "Tab to focus name element. Arrow to change order.")
-# )        
-        # run_statusbar_tooltips(
-            # visited, 
-            # self.new_person_statusbar.status_label, 
-            # self.new_person_statusbar.tooltip_label)
-
-        # self.preset()
-
-        # rcm_widgets = (self.name_input, self.name_type_input)
-        # make_rc_menus(
-            # rcm_widgets, 
-            # self.rc_menu, 
-            # person_add_msg)
-
-    # def ok_new_person(self):
-        # self.save_new_name()
-        # self.cancel_new_person()
-
-    # def cancel_new_person(self):
-        # if self.master.winfo_class() == "Toplevel":
-            # self.master.destroy()
-
-    # def preset(self):
-
-        # self.gender_input.config(state='normal')
-        # self.gender_input.delete(0, 'end')
-        # self.gender_input.config(state='readonly')
-        # self.image_input.delete(0, 'end')
-        # self.image_input.insert(0, 'no_photo_001.gif')
-        # self.name_type_input.config(state='normal')
-        # self.name_type_input.delete(0, 'end')
-        # self.name_type_input.insert(0, 'birth name')
-        # self.name_type_input.config(state='readonly')
-
-    # def reset(self):
-        # self.preset()
-        # self.name_input.delete(0, 'end')
-        # for child in self.order_frm.winfo_children():
-            # child['text'] = ''
-        # self.make_dupe = True  
-
-    # def prepare_to_add_person(self, findings_roles_id=None):
-        # self.get_entered_values()
-        # self.findings_roles_id = findings_roles_id
-        # self.check_for_dupes()
-
-    # def get_entered_values(self):
-        # if len(self.gender_input.get()) != 0:
-            # self.gender = self.gender_input.get()
-        # self.full_name = self.name_input.get()
-        # self.selected_image = self.image_input.get()
-        # self.name_type = self.name_type_input.get()
-
-    # def check_for_dupes(self):
-        # ''' 
-            # If birth name already exists in database, open dialog. 
-        # '''
-
-        # def ok_new_name():
-            # self.make_dupe = True
-            # msg[0].destroy()
-            # self.master.grab_set()
-            # self.name_input.insert(0, self.full_name)
-            # self.make_temp_person_id()
-            # self.make_sort_order_to_store()
-            # self.show_sort_order()
-
-        # def cancel_new_name():
-            # msg[0].destroy()
-            # if self.master.winfo_class() == "Toplevel":
-                # self.master.destroy()
-                # self.master.master.grab_set()
-            # self.reset()
- 
-        # conn = sqlite3.connect(current_file)
-        # cur = conn.cursor()
-        # cur.execute(select_all_person_ids)
-        # all_people = cur.fetchall()
-        # cur.close()
-        # conn.close()
-        
-        # all_people = [[i[0]] for i in all_people]
-
-        # names_only = []
-
-        # for id in all_people:
-            # display_name = get_name_with_id(id[0]) 
-            # names_only.append(display_name)
-            # id.insert(0, display_name)
-
-        # people_vals = []
-        # for lst in all_people:
-            # if not lst[0]:
-                # lst[0] = ''
-            # people_vals.append(' #'.join([lst[0], str(lst[1])]))
-        # if self.full_name not in names_only:
-            # self.make_temp_person_id()
-            # self.make_sort_order_to_store()
-            # self.master.grab_set()
-        # else:
-            # msg = open_yes_no_message(
-                # self, 
-                # names_msg[0], 
-                # "Duplicate Name in Tree", 
-                # "OK", "CANCEL")
-            # msg[0].grab_set()
-            # msg[1].config(aspect=400)
-            # msg[2].config(command=ok_new_name)
-            # msg[3].config(command=cancel_new_name)
-            # if self.make_dupe is True:  
-                # self.make_temp_person_id() 
-                # self.make_sort_order_to_store()
-                # self.reset()
-            # else:
-                # self.reset() 
-
-    # def make_temp_person_id(self): 
-        # conn = sqlite3.connect(current_file)
-        # cur = conn.cursor()
-        # cur.execute(select_max_person_id)
-        # self.new_person_id = cur.fetchone()[0] + 1
-
-        # if self.role_person_edited is True:
-            # cur.execute(
-                # update_findings_roles_person, 
-                # (self.new_person_id, self.findings_roles_id))
-            # conn.commit()
-            # self.role_person_edited = False 
-        
-        # cur.close()
-        # conn.close()
-
-    # def make_sort_order_to_store(self): 
-
-        # self.order = []
-
-        # for child in self.order_frm.winfo_children():
-            # text = child['text']
-            # self.order.append(text)
-
-        # self.order = ' '.join(self.order)
-        # self.order = self.order.replace(' , ', ', ')
-        # self.order = self.order.strip(', ') 
-
-    # def save_new_name(self):
-        # conn = sqlite3.connect(current_file)
-        # cur = conn.cursor()
-        # conn.execute('PRAGMA foreign_keys = 1')
-        # cur.execute(select_image_id, (self.selected_image,))
-        # img_id = cur.fetchone()[0]
-        # cur.execute(select_name_type_id, (self.name_type,))
-        # name_type_id = cur.fetchone()
-        # name_type_id = name_type_id[0]
-
-        # cur.execute(insert_person_new, (self.new_person_id, self.gender))
-        # conn.commit()
-        # cur.execute(
-            # insert_name, 
-            # (self.new_person_id, self.full_name, name_type_id, self.order))
-        # conn.commit()
-
-        # cur.execute(insert_images_entities, (img_id, self.new_person_id))
-        # conn.commit()
-
-        # new_name_string = "{}  #{}".format(self.full_name, self.new_person_id)
-        # self.name_entry.delete(0, 'end')
-        # self.name_entry.insert(0, new_name_string)
-        # people = make_values_list_for_person_select()        
-        # all_birth_names = EntryAuto.create_lists(people)
-        # self.name_entry.values = all_birth_names
-        
-        # cur.close()
-        # conn.close()
-
-        # self.image_input.delete(0, 'end')
-        # self.image_input.insert(0, 'no_photo_001.gif')
-
-        # for widg in (self.name_type_input, self.name_input):
-            # widg.config(state='normal')
-            # widg.delete(0, 'end')
-        # self.name_type_input.config(state='readonly')
-
-        # for child in self.order_frm.winfo_children():
-            # child.config(text='')
-        # self.gender_input.config(state='normal')
-        # self.gender_input.delete(0, 'end')
-        # self.gender_input.config(state='readonly')
-        # self.gender_input.focus_set()
-
-    # def show_sort_order(self, evt=None):
-        # '''
-            # This has to be run in the instance as soon as the name input has a 
-            # name inserted into it by the program so that normally the user can 
-            # bypass manual sorting by pressing Ctrl+Tab when the AUTOFOCUS 
-            # button is in focus. But if the user changes what Treebard inserts 
-            # to the name entry, then on focus out this function runs again.
-        # '''
-
-        # if evt is not None and evt.type == "10":
-            # for child in self.order_frm.winfo_children():
-                # child.config(text='')
-
-        # self.got = self.name_input.get()
-        # self.new_name = self.got
-        # self.got = self.got.split()
-        # if len(self.got) == 0:
-            # return
-        # else:
-            # length = len(self.got)-1
-        # word = self.got[length].lower()
-        
-        # self.got.insert(0, ',')
-        # length += 1
-        # if word not in NAME_SUFFIXES:
-            # self.got.insert(0, self.got.pop())
-        # elif word in NAME_SUFFIXES and self.got[length].lower() == word:
-            # self.got.insert(0, self.got.pop())
-            # self.got.insert(0, self.got.pop())
-
-        # for child in self.order_frm.winfo_children():
-            # child.config(text='')
-
-        # v = 0
-        # for name in self.got:
-            # self.order_frm.winfo_children()[v].config(text=name)
-            # v += 1
-
-    # def get_name_types(self):
-
-        # conn = sqlite3.connect(current_file)
-        # cur = conn.cursor()
-        # cur.execute(select_all_name_types)
-        # name_types = cur.fetchall()
-        # cur.close()
-        # conn.close()
-        # name_types = [i[0] for i in name_types]
-
-        # return name_types
-
-    # def get_all_pics(self):
-
-        # conn = sqlite3.connect(current_file)
-        # cur = conn.cursor()
-        # cur.execute(select_all_images)
-        # picvals = cur.fetchall()
-        # cur.close()
-        # conn.close()
-        # return picvals
-
 def open_new_person_dialog(master, inwidg, root, inwidg2=None):
     person_add = PersonAdd(master, inwidg, root, inwidg2)
     root.wait_window(person_add)
@@ -506,6 +146,7 @@ class PersonAdd(Toplevel):
        
 
         self.xfr = self.inwidg.get()
+        print("line", looky(seeline()).lineno, "self.xfr, self.inwidg:", self.xfr, self.inwidg)
         self.role_person_edited = False
         self.rc_menu = RightClickMenu(self.root)
 
@@ -719,10 +360,13 @@ class PersonAdd(Toplevel):
         self.name_input.delete(0, 'end')
         get2 = self.inwidg2
         if get2 and len(get2.get()) != 0:
+            print("line", looky(seeline()).lineno, "running:")
             self.name_input.insert(0, get2.get())
         elif get2 and len(get2.get()) == 0:
+            print("line", looky(seeline()).lineno, "running:")
             self.name_input.insert(0, self.xfr)
         elif get2 is None:
+            print("line", looky(seeline()).lineno, "running:")
             self.name_input.insert(0, self.xfr)
 
     def make_sort_order_to_store(self): 
@@ -742,6 +386,7 @@ class PersonAdd(Toplevel):
             self.order = " ".join(order)
 
     def prepare_to_add_person(self, findings_roles_id=None):
+        print("line", looky(seeline()).lineno, "running:")
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -763,7 +408,7 @@ class PersonAdd(Toplevel):
 
     def ok_new_person(self):
         self.save_new_name()
-        self.cancel_new_person()
+        self.cancel_new_person() 
 
     def cancel_new_person(self):
         self.grab_release()
@@ -785,11 +430,9 @@ class PersonAdd(Toplevel):
         if selected_image in all_images:
             self.selected_image = selected_image
         else:
-            print("line", looky(seeline()).lineno, "selected_image:", selected_image)
             cur.execute(insert_image_new, (selected_image,))
             conn.commit()
-            self.selected_image = selected_image
-    
+            self.selected_image = selected_image    
 
     def create_new_name_type(self, new_name_type, cur, conn):
         def ok_new_name_type():
@@ -813,7 +456,8 @@ class PersonAdd(Toplevel):
                 go = False
             show(go)
 
-        def show():            
+        def show():  
+            print("line", looky(seeline()).lineno, "running:")          
             self.wait_window(msg[0])
             if go is True:
                 self.check_for_dupes()

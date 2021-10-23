@@ -21,9 +21,7 @@ from query_strings import (
     select_roles, select_role_types, select_role_type_id,
     update_findings_roles_role_type, update_findings_roles_person,
     insert_findings_roles, delete_findings_role,
-    select_count_findings_roles,
-
-)
+    select_count_findings_roles, insert_role_type)
 
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -315,15 +313,26 @@ class RolesDialog(Toplevel):
             widg.config_values(self.role_types)
 
     def get_add_state(self):
-
-        if len(self.role_type_input.get()) == 0:
-            self.role_type_input.focus_set()
-            return
+        for widg in (self.role_type_input.entry, self.person_input):
+            if len(widg.get()) == 0:
+                widg.focus_set()
+                return
         chosen_role_type = self.role_type_input.get()
         self.user_input_person = self.person_input.get()            
         if chosen_role_type not in self.role_types:
-            self.make_new_role_type(chosen_role_type)
+            chosen_role_type = self.make_new_role_type(chosen_role_type)
         self.make_new_role(chosen_role_type)
+
+    def make_new_role_type(self, new_role_type):   
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(insert_role_type, (new_role_type,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return new_role_type
+
 
     def add_and_close(self):
         self.get_add_state()
@@ -388,7 +397,11 @@ class RolesDialog(Toplevel):
         else:
             self.make_new_person(from_edit=True, edited_role_person=edited_role_person)
             edited_person_id = self.person_add.new_person_id
-            self.update_role_person(edited_person_id)
+            print("line", looky(seeline()).lineno, "edited_person_id:", edited_person_id)
+            print("line", looky(seeline()).lineno, "edited_role_person:", edited_role_person)
+            edited_role_person = (edited_role_person, edited_person_id)
+            self.change_role_person(edited_role_person)
+            # self.change_role_person(edited_person_id)
         self.original_role_type = edited_role_type
         self.original_role_person = self.edit_role_person.get()
         self.edit_row.grid_remove()
@@ -459,53 +472,54 @@ class RolesDialog(Toplevel):
         self.make_roles_list()
 
     def make_new_person(self, from_edit=False, edited_role_person=None):
-        '''
-            Do not make the person-add dialog modal, because it prevents
-            the right-click menu from working right. This means the user
-            can go back and forth from roles dialog to person-add dialog
-            and make manual changes. It works fine. The only problem is if
-            ADD is clicked twice, there will be two person-add dialogs and
-            the first one can't be closed without reloading the app. So
-            instead of making the person-add dialog modal, the buttons
-            on the roles dialog are disabled while the person-add dialog is open.
-        '''
 
-        def close_dialog():
-            self.add_butt.config(state='normal')
-            self.done_butt.config(state='normal')
-            self.close_butt.config(state='normal')
-            self.new_role_person_dialog.destroy() 
+        # def close_dialog():
+            # self.add_butt.config(state='normal')
+            # self.done_butt.config(state='normal')
+            # self.close_butt.config(state='normal')
+            # self.new_role_person_dialog.destroy() 
 
-        self.new_role_person_dialog = Toplevel(self)
-        self.new_role_person_dialog.resizable(False, False)
-        self.add_butt.config(state='disabled')
-        self.done_butt.config(state='disabled')
-        self.close_butt.config(state='disabled')
-        self.person_add = PersonAdd(
-            self.new_role_person_dialog, 
-            self.person_input, 
-            self.root)   
-        self.person_add.grid(column=0, row=0)
-        self.person_add.name_input.delete(0, 'end')
+        # self.new_role_person_dialog = Toplevel(self)
+        # self.new_role_person_dialog.resizable(False, False)
+        # self.add_butt.config(state='disabled')
+        # self.done_butt.config(state='disabled')
+        # self.close_butt.config(state='disabled')
+        # self.person_add = PersonAdd(
+            # self.new_role_person_dialog, 
+            # self.person_input, 
+            # self.root) 
+
+        # open_new_person_dialog(
+        print("line", looky(seeline()).lineno, "self.edit_role_person.get():", self.edit_role_person.get())
         if from_edit is False:
-            self.person_add.name_input.insert(0, self.user_input_person)
+            self.person_add = PersonAdd(
+                self.root, self.person_input, self.root, None) 
         else:
-            self.person_add.name_input.insert(0, edited_role_person)
-        self.person_add.add_butt.config(command=self.person_add.add_person)
+            self.person_add = PersonAdd(
+                self.root, self.edit_role_person, self.root, None)
 
-        closer = Button(
-            self.person_add.buttonbox, 
-            text='Close',
-            width=8,
-            command=close_dialog)
-        closer.grid(column=1, row=0, padx=6, pady=6)
+        # self.person_add.grid(column=0, row=0)
+        # self.person_add.name_input.delete(0, 'end')
+        # if from_edit is False:
+            # self.person_add.name_input.insert(0, self.user_input_person)
+        # else:
+            # self.person_add.name_input.insert(0, edited_role_person)
+        # self.person_add.b1.config(command=self.person_add.add_person)
+        # self.person_add.add_butt.config(command=self.person_add.add_person)
 
-        self.person_add.new_person_statusbar.grid(column=0, row=2, sticky='ew')
+        # closer = Button(
+            # self.person_add.buttonbox, 
+            # text='Close',
+            # width=8,
+            # command=close_dialog)
+        # closer.grid(column=1, row=0, padx=6, pady=6)
 
-        self.new_role_person_dialog.protocol("WM_DELETE_WINDOW", close_dialog)
-        self.person_add.gender_input.focus_set()
-        config_generic(self.new_role_person_dialog)
-        self.new_role_person_dialog.wait_window()
+        # self.person_add.new_person_statusbar.grid(column=0, row=2, sticky='ew')
+
+        # self.new_role_person_dialog.protocol("WM_DELETE_WINDOW", close_dialog)
+        self.person_add.gender_input.entry.focus_set()
+        # config_generic(self.new_role_person_dialog)
+        self.wait_window(self.person_add) # NOT DOING ANYTHING???????????
         self.persons = get_all_persons() 
 
     def make_new_role(self, role_type):
@@ -549,11 +563,10 @@ class RolesDialog(Toplevel):
         self.make_roles_list()
 
     def change_role_person(self, edited_role_person):
-        '''
-            Change role person to a person that already exists.
-        '''
-
-        new_person_data = edited_role_person.split('  #')
+        if "#" in edited_role_person:
+            new_person_data = edited_role_person.split('  #')
+        else:
+            new_person_data = edited_role_person
         new_person_id = new_person_data[1]
         new_person_name = new_person_data[0]
         conn = sqlite3.connect(current_file)

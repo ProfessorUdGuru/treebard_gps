@@ -17,7 +17,8 @@ from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator
 from styles import make_formats_dict, config_generic
 from names import (
-    get_name_with_id, make_values_list_for_person_select, PersonAdd)
+    get_name_with_id, make_values_list_for_person_select,
+    open_new_person_dialog)
 from roles import RolesDialog
 from notes import NotesDialog
 from places import place_strings, ValidatePlace, places_places
@@ -264,7 +265,6 @@ def get_birth_findings(
             lst.append(offspring[0])
 
     for lst in children:
-        print("line", looky(seeline()).lineno, "lst:", lst)
         offspring_event_id, parent_age, child_id = lst
         cur.execute(select_findings_details_offspring, (child_id,))       
         offspring_details = cur.fetchone()
@@ -629,12 +629,8 @@ class EventsTable(Frame):
         def update_date():
             self.final = validate_date(
                 self.root, 
-                # self.treebard,
                 self.inwidg,
-                # self.initial,
-                self.final,
-                # self.finding
-)
+                self.final)
 
             if not self.final:
                 self.final = "-0000-00-00-------"
@@ -741,10 +737,8 @@ class EventsTable(Frame):
                         cell.config(width=5)
                 elif j == 5:
                     cell = LabelDots(self, RolesDialog, finding_row=None)
-                    # cell = LabelDotsRoles(self, current_file)
                 elif j == 6:
                     cell = LabelDots(self, NotesDialog, finding_row=None)
-                    # cell = LabelDots(self, current_file, NotesDialog)
                 elif j == 7:
                     cell = LabelButtonText(
                         self,
@@ -753,13 +747,21 @@ class EventsTable(Frame):
                         font=formats['heading3'])
                 row.append(cell)
             self.table_cells.append(row)
+        self.new_event_frame = Frame(self)
         self.event_input = EntryAutoHilited(
-            self, 
+            self.new_event_frame, 
             width=32, 
             autofill=True, 
             values=self.event_autofill_values)
         self.add_event_button = Button(
-            self, text="NEW EVENT", command=self.make_new_event)
+            self.new_event_frame, text="NEW EVENT", command=self.make_new_event)
+        # self.event_input = EntryAutoHilited(
+            # self, 
+            # width=32, 
+            # autofill=True, 
+            # values=self.event_autofill_values)
+        # self.add_event_button = Button(
+            # self, text="NEW EVENT", command=self.make_new_event)
         self.set_cell_content()
 
     def set_cell_content(self):
@@ -887,18 +889,33 @@ class EventsTable(Frame):
         
         self.size_columns_to_content()
 
-        self.event_input.grid(
+        self.new_event_frame.grid(
             column=0, 
             row=self.new_row,
-            pady=6, columnspan=2, 
+            pady=6, columnspan=3, 
+            sticky='ew')
+        self.event_input.grid(
+            column=0, 
+            row=0,
+            # pady=6, columnspan=2,
+            padx=(0,12), 
             sticky='w')
         self.add_event_button.grid(
-            column=2, 
-            row=self.new_row, 
-            pady=6, sticky='w')
+            column=1, 
+            row=0, 
+            # pady=6, 
+            sticky='w')
+        # self.event_input.grid(
+            # column=0, 
+            # row=self.new_row,
+            # pady=6, columnspan=2, 
+            # sticky='w')
+        # self.add_event_button.grid(
+            # column=2, 
+            # row=self.new_row, 
+            # pady=6, sticky='w')
 
     def redraw(self, evt=None, current_person=None):
-        print("line", looky(seeline()).lineno, "running:")
         if evt:
             self.current_person = current_person
         conn = sqlite3.connect(current_file)
@@ -1716,9 +1733,13 @@ class NewEventDialog(Toplevel):
             self.grab_set()
             msg[0].destroy()
         person_and_id = input_widget.get().split("#")
-        if len(person_and_id[0]) == 0: return
-        if len(person_and_id) == 1:
-            self.open_new_person_dialog(person_and_id, input_widget)
+        if len(person_and_id[0]) == 0: 
+            return
+        elif len(person_and_id) == 1:
+            new_partner = open_new_person_dialog(self, input_widget, self.root)
+            print("line", looky(seeline()).lineno, "new_partner:", new_partner)
+            # person_add = PersonAdd(self, input_widget, self.root, None)
+            self.validate_kin_types()
         elif self.current_person == int(person_and_id[1]):
             msg = open_error_message(
                 self, 
@@ -1729,16 +1750,16 @@ class NewEventDialog(Toplevel):
             msg[1].config(aspect=400)
             msg[2].config(command=err_done)  
 
-    def open_new_person_dialog(self, new_name, input_widget):
-        new_partner_dialog = Toplevel(self)
-        new_partner_dialog.title("Add New Person")
-        person_add = PersonAdd(new_partner_dialog, input_widget, self.root)
-        person_add.grid()
-        person_add.name_input.delete(0, 'end')
-        person_add.name_input.insert(0, new_name[0])
-        person_add.add_person()
-        person_add.show_sort_order()
-        person_add.gender_input.focus_set()
+    # def open_new_person_dialog(self, new_name, input_widget):
+        # new_partner_dialog = Toplevel(self)
+        # new_partner_dialog.title("Add New Person")
+        # person_add = PersonAdd(new_partner_dialog, input_widget, self.root)
+        # person_add.grid()
+        # person_add.name_input.delete(0, 'end')
+        # person_add.name_input.insert(0, new_name[0])
+        # person_add.add_person()
+        # person_add.show_sort_order()
+        # person_add.gender_input.focus_set()
 
     def validate_place(self, evt):
         inwidg = evt.widget
@@ -1859,11 +1880,8 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# SEE `get_any_name_with_id` IN main.py...when the new current person has no birth name, current person area shd display any name the person does have. Shd also display this way on load. Already works when changed from search dlg but there's no way to change current person from entry 1 if the person has no birth name, which is OK. FIRST MAKE an algorithm to decide which name a person shd use if no birth name is available. If there's only one name (but no birth name), just use the one there is. If there are two or more, then prioritize the existing names according to a hard-coded list in Treebard so that the first hit on the list is the one used. Also add a convenience name type (but figure out a better name for the type) and if none of the person's names are on the accepted list, prompt the user to add a convenience name till the real name is found, and that one will be used. (So make it top on the prioritized list.)
-# when making a new person, current person on person page display in current person area disappears and it says none; currently it fills in the newly made person into entry 1 but what if the user didn't mean to change current person but just make a new person? If new person procedure is cancelled, I think it leaves None as the current person.
-# refactor PersonAdd class and then finish Search class again.
-# make sure PersonAdd still works in Role dialog and new event couple event type, current person area, search class
-# fix, standardize, or get rid of open_new_person_dialog() in events_table.py CHANGE THE NAME OF THIS FUNX, it is self.open_new_person_dialog but it causes confusion since there's now another funx by the same name imported from names.py to main.py
+# person entry autofills HAVE TO fill with ANY name type, eg in the partner input new person input on the new event couple event type, there's no other way except to know and type the whole thing, id and all. Also as it stands you can't autofill entry # 1 in change current person procedure if there's no birth name. Also you have blank name fields in the search dlg table which is weird.
+# make kintips for event column only to say child, spouse name not parents bec we have only 2 parents and it's redundant info (on the same page) but since there can be more than one spouse or child, it is important to make kintips for event rows re: child or spouse only
 # statustips and rcm in search dialog and new person dialog
 # add picture and attrib table
 # add menubar, ribbon menu, footer
@@ -1871,8 +1889,10 @@ if __name__ == '__main__':
 # add buttons to place tab for alias and edit/delete place but don't make them do anything
 # add colorizer, dates prefs, & fonts tabs
 # get rid of ttk combobox in dates settings tab
-# resize correctly when changing persons so cols not too wide
+# resize correctly when changing persons so cols not too wide (? isn't it stretching to fill the available space? Didn't I tell it to do that?
 # get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
+# activate mousewheel scrolling
+# Make scrollbar and/or window resize right when changing current persons. Since putting new event entry and button in a frame, this has gotten worse, sometimes when manually resizing, the window won't show the new event section at all or cuts off part of it.
 
 # BRANCH: fonts
 # make fonts tab on prefs tabbook

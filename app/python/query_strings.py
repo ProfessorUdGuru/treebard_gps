@@ -726,13 +726,6 @@ select_name_with_id_any = '''
     WHERE name.person_id = ?
 '''
 
-# select_name_with_id_any = '''
-    # SELECT names, name_type_id 
-    # FROM name JOIN person 
-        # ON name.person_id = person.person_id 
-    # WHERE name.person_id = ?
-# '''
-
 select_nested_places_same = '''
     SELECT nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8
     FROM nested_places

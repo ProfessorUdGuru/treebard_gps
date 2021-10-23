@@ -110,7 +110,6 @@ class PersonSearch(Toplevel):
 
         self.title('Person Search')
         self.geometry('+100+20')
-        # self.grab_set()
 
         self.columnconfigure(1, weight=1)
         self.canvas = Border(self, size=3) # don't hard-code size
@@ -195,16 +194,6 @@ class PersonSearch(Toplevel):
                 root=self.root,
                 inwidg2=self.search_input: open_new_person_dialog(
                     master, inwidg, root, inwidg2))
-            # command=lambda inwidg=self.search_input, 
-                # treebard=self.treebard, 
-                # host_dlg=self,
-                # inwidg2=self.search_input: open_new_person_dialog(
-                    # host_dlg, inwidg, self.root))
-
-# people = make_values_list_for_person_select()        
-# all_birth_names = EntryAuto.create_lists(people)
-# self.person_entry.values = all_birth_names
-
 
         self.person_adder.grid(column=2, row=1, padx=12, pady=12)
 
@@ -369,7 +358,6 @@ class PersonSearch(Toplevel):
         for child in self.search_table.winfo_children():
             if child.grid_info()['row'] not in (0, 1):
                 child.bind('<Button-1>', self.select)
-                # child.bind('<Double-Button-1>', self.select)
                 child.bind('<Return>', self.select)
                 child.bind('<Key-space>', self.select)
                 child.bind('<FocusIn>', self.highlight_on_focus)                
@@ -413,13 +401,11 @@ class PersonSearch(Toplevel):
         if evt.type != '4':
             self.new_current_id = evt.widget['text']
 
-        # self.new_current_person = get_name_with_id(self.new_current_id)
         self.new_current_person = get_any_name_with_id(self.new_current_id)
-        print("line", looky(seeline()).lineno, "self.new_current_person:", self.new_current_person)
         self.close_search_dialog()
-        if type(self.new_current_person) is list:
-            name_stuff = list(self.new_current_person)
-            self.new_current_person = "({}) {}".format(name_stuff[0][1], name_stuff[0][0])
+        if type(self.new_current_person) is tuple:
+            use_name = list(self.new_current_person)
+            self.new_current_person = "({}) {}".format(use_name[1], use_name[0])
         self.findings_table.redraw(evt, current_person=self.new_current_id)
 
         self.master.current_person_label.config(
