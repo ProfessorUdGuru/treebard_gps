@@ -17,7 +17,7 @@ from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator
 from styles import make_formats_dict, config_generic
 from names import (
-    get_name_with_id, make_values_list_for_person_select,
+    get_name_with_id, make_all_names_list_for_person_select,
     open_new_person_dialog)
 from roles import RolesDialog
 from notes import NotesDialog
@@ -755,13 +755,6 @@ class EventsTable(Frame):
             values=self.event_autofill_values)
         self.add_event_button = Button(
             self.new_event_frame, text="NEW EVENT", command=self.make_new_event)
-        # self.event_input = EntryAutoHilited(
-            # self, 
-            # width=32, 
-            # autofill=True, 
-            # values=self.event_autofill_values)
-        # self.add_event_button = Button(
-            # self, text="NEW EVENT", command=self.make_new_event)
         self.set_cell_content()
 
     def set_cell_content(self):
@@ -890,30 +883,10 @@ class EventsTable(Frame):
         self.size_columns_to_content()
 
         self.new_event_frame.grid(
-            column=0, 
-            row=self.new_row,
-            pady=6, columnspan=3, 
-            sticky='ew')
-        self.event_input.grid(
-            column=0, 
-            row=0,
-            # pady=6, columnspan=2,
-            padx=(0,12), 
-            sticky='w')
+            column=0, row=self.new_row, pady=6, columnspan=3, sticky='ew')
+        self.event_input.grid(column=0, row=0, padx=(0,12), sticky='w')
         self.add_event_button.grid(
-            column=1, 
-            row=0, 
-            # pady=6, 
-            sticky='w')
-        # self.event_input.grid(
-            # column=0, 
-            # row=self.new_row,
-            # pady=6, columnspan=2, 
-            # sticky='w')
-        # self.add_event_button.grid(
-            # column=2, 
-            # row=self.new_row, 
-            # pady=6, sticky='w')
+            column=1, row=0, sticky='w')
 
     def redraw(self, evt=None, current_person=None):
         if evt:
@@ -1054,8 +1027,8 @@ class NewEventDialog(Toplevel):
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
-        people = make_values_list_for_person_select()        
-        self.all_birth_names = EntryAuto.create_lists(people)
+        people = make_all_names_list_for_person_select()        
+        self.all_names = EntryAuto.create_lists(people)
 
         cur.execute(select_all_kin_ids_types_couple)
         self.kintypes_and_ids = [i for i in cur.fetchall()]
@@ -1426,10 +1399,10 @@ class NewEventDialog(Toplevel):
         offspring = Label(self.couple_data_inputs, text="Name of Child")
         self.parent1_input = EntryAutoHilited(
             self.couple_data_inputs, width=32, 
-            autofill=True, values=self.all_birth_names)
+            autofill=True, values=self.all_names)
         self.offspring_input = EntryAutoHilited(
             self.couple_data_inputs, width=32, 
-            autofill=True, values=self.all_birth_names)
+            autofill=True, values=self.all_names)
         self.offspring_input.bind(
             "<FocusOut>", 
             lambda evt, widg=self.offspring_input: self.catch_dupe_or_new_person(
@@ -1448,7 +1421,7 @@ class NewEventDialog(Toplevel):
         name2 = Label(self.couple_data_inputs, text="Partner")
         self.other_person_input = EntryAutoHilited(
             self.couple_data_inputs, width=32, autofill=True, 
-            values=self.all_birth_names)
+            values=self.all_names)
         self.other_person_input.bind(
             "<FocusOut>", 
             lambda evt, widg=self.other_person_input: self.catch_dupe_or_new_person(
@@ -1737,8 +1710,6 @@ class NewEventDialog(Toplevel):
             return
         elif len(person_and_id) == 1:
             new_partner = open_new_person_dialog(self, input_widget, self.root)
-            print("line", looky(seeline()).lineno, "new_partner:", new_partner)
-            # person_add = PersonAdd(self, input_widget, self.root, None)
             self.validate_kin_types()
         elif self.current_person == int(person_and_id[1]):
             msg = open_error_message(
@@ -1749,17 +1720,6 @@ class NewEventDialog(Toplevel):
             msg[0].grab_set()
             msg[1].config(aspect=400)
             msg[2].config(command=err_done)  
-
-    # def open_new_person_dialog(self, new_name, input_widget):
-        # new_partner_dialog = Toplevel(self)
-        # new_partner_dialog.title("Add New Person")
-        # person_add = PersonAdd(new_partner_dialog, input_widget, self.root)
-        # person_add.grid()
-        # person_add.name_input.delete(0, 'end')
-        # person_add.name_input.insert(0, new_name[0])
-        # person_add.add_person()
-        # person_add.show_sort_order()
-        # person_add.gender_input.focus_set()
 
     def validate_place(self, evt):
         inwidg = evt.widget
@@ -1880,9 +1840,6 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# person entry autofills HAVE TO fill with ANY name type, eg in the partner input new person input on the new event couple event type, there's no other way except to know and type the whole thing, id and all. Also as it stands you can't autofill entry # 1 in change current person procedure if there's no birth name. Also you have blank name fields in the search dlg table which is weird.
-# make kintips for event column only to say child, spouse name not parents bec we have only 2 parents and it's redundant info (on the same page) but since there can be more than one spouse or child, it is important to make kintips for event rows re: child or spouse only
-# statustips and rcm in search dialog and new person dialog
 # add picture and attrib table
 # add menubar, ribbon menu, footer
 # add functionality to obvious menu choices incl. add new person, add/edit name, and others
@@ -1892,7 +1849,11 @@ if __name__ == '__main__':
 # resize correctly when changing persons so cols not too wide (? isn't it stretching to fill the available space? Didn't I tell it to do that?
 # get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
 # activate mousewheel scrolling
+# statustips and rcm in search dialog and new person dialog and other recent dialogs
 # Make scrollbar and/or window resize right when changing current persons. Since putting new event entry and button in a frame, this has gotten worse, sometimes when manually resizing, the window won't show the new event section at all or cuts off part of it.
+
+# BRANCH: pedigree
+# INSTEAD OF MAKING kintips for event column only to say child, spouse name not parents bec we have only 2 parents and it's redundant info (on the same page) but since there can be more than one spouse or child, it is important to make kintips for event rows re: child or spouse only DO THIS INSTEAD: since it's still redundant info, with the same info in a table up top (not even started), just highlight the spouse or child in the top table as the mouse hovers over them. Don't make it like gbx. The spouse should be WITH the relevant children and both families in the case of 2 spouses shd be visible at the same time with the 2 spouses also visible at the same time. ALSO if the highlighted row is not visible on the screen, it appears as a tooltip instead so user can always see it.
 
 # BRANCH: fonts
 # make fonts tab on prefs tabbook

@@ -243,6 +243,12 @@ select_all_names_ids = '''
     SELECT names, name.person_id, sort_order 
     FROM name JOIN person 
         ON person.person_id = name.person_id 
+'''
+
+select_birth_names_ids = '''
+    SELECT names, name.person_id, sort_order 
+    FROM name JOIN person 
+        ON person.person_id = name.person_id 
     WHERE name_type_id = 1 
 '''
 
@@ -910,9 +916,9 @@ select_roles = '''
         person_id, 
         findings_roles.role_type_id 
     FROM role_type 
-    JOIN findings_roles 
-        ON role_type.role_type_id = findings_roles.role_type_id 
-        WHERE finding_id = ?
+        JOIN findings_roles 
+            ON role_type.role_type_id = findings_roles.role_type_id 
+    WHERE finding_id = ?
 ''' 
 
 select_role_types = '''

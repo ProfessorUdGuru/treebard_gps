@@ -21,7 +21,7 @@ from query_strings import (
     insert_images_entities, select_name_type_id, insert_name, 
     select_all_images, select_all_name_types, insert_person_new,
     select_person_gender, select_max_name_type_id, insert_name_type_new,
-    insert_image_new, select_name_with_id_any)
+    insert_image_new, select_name_with_id_any, select_birth_names_ids)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -40,7 +40,7 @@ NAME_TYPES_HIERARCHY = (
     'reference name', 'adoptive name', 'also known as', 'married name', 
     'legally changed name', 'pseudonym', 'pen name', 'stage name', 'nickname', 
     'call name', 'official name', 'anglicized name', 'religious order name', 
-    'other name type')
+    'other name type', 'given name')
 
 def get_current_person():
     conn = sqlite3.connect(current_file)
@@ -96,6 +96,30 @@ def get_any_name_with_id(iD):
         return birth_name    
 
 def make_values_list_for_person_select():
+    ''' 
+        birth names only, probably not useful for autofills 
+    '''
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    cur.execute(select_birth_names_ids)
+
+    peeps = cur.fetchall()
+    peeps = [list(i) for i in peeps]
+
+    cur.close()
+    conn.close()
+
+    combo_peeps = sorted(peeps, key=lambda i: i[2])
+    people = []
+    for tup in combo_peeps:
+        line = '{}  #{}'.format(tup[0], tup[1])
+        people.append(line)
+    return people
+
+def make_all_names_list_for_person_select():
+    ''' 
+        all name types, best for autofill values 
+    '''
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_all_names_ids)
@@ -113,6 +137,23 @@ def make_values_list_for_person_select():
         people.append(line)
     return people
 
+# CONFIRM BEFORE DELETING that this is not used anywhere
+# def get_all_persons():
+    # conn = sqlite3.connect(current_file)
+    # cur = conn.cursor()
+    # cur.execute(select_all_person_ids)
+    # person_ids = cur.fetchall()
+    # person_ids = [i[0] for i in person_ids]
+    # cur.close()
+    # conn.close()
+    # persons = []
+    # for id in person_ids:
+        # name = get_name_with_id(id)
+        # if len(name) != 0:
+            # name = '{}  #{}'.format(name, id)
+            # persons.append(name)
+    # return persons
+
 def get_all_persons():
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
@@ -122,11 +163,13 @@ def get_all_persons():
     cur.close()
     conn.close()
     persons = []
-    for id in person_ids:
-        name = get_name_with_id(id)
-        if len(name) != 0:
-            name = '{}  #{}'.format(name, id)
-            persons.append(name)
+    for iD in person_ids:
+        name = get_any_name_with_id(iD)
+        if type(name) is tuple:
+            name = "{}  #{}".format(name[0], iD)
+        elif len(name) != 0:
+            name = '{}  #{}'.format(name, iD)
+        persons.append(name)
     return persons
 
 def open_new_person_dialog(master, inwidg, root, inwidg2=None):
@@ -142,11 +185,9 @@ class PersonAdd(Toplevel):
         self.master = master
         self.inwidg = inwidg
         self.root = root
-        self.inwidg2 = inwidg2
-       
+        self.inwidg2 = inwidg2       
 
         self.xfr = self.inwidg.get()
-        print("line", looky(seeline()).lineno, "self.xfr, self.inwidg:", self.xfr, self.inwidg)
         self.role_person_edited = False
         self.rc_menu = RightClickMenu(self.root)
 
@@ -317,7 +358,6 @@ class PersonAdd(Toplevel):
 
         self.got = self.name_input.get().split()
         if len(self.got) == 0:
-            print("line", looky(seeline()).lineno, "self.got:", self.got)
             return
         else:
             length = len(self.got)-1
@@ -386,7 +426,6 @@ class PersonAdd(Toplevel):
             self.order = " ".join(order)
 
     def prepare_to_add_person(self, findings_roles_id=None):
-        print("line", looky(seeline()).lineno, "running:")
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -456,8 +495,7 @@ class PersonAdd(Toplevel):
                 go = False
             show(go)
 
-        def show():  
-            print("line", looky(seeline()).lineno, "running:")          
+        def show():          
             self.wait_window(msg[0])
             if go is True:
                 self.check_for_dupes()

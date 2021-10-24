@@ -21,6 +21,10 @@
         ...a dropdown item with text longer than the window displays a tooltip 
             that shows the whole text
         ...the arrow button changes color when the Entry is in focus.
+
+    This combobox bogs down if there is a very large values list, but when there's
+    a very large values list, why not use EntryAuto instead? That way only the 
+    value you're looking for is displayed.
 '''
 
 import tkinter as tk
@@ -101,7 +105,6 @@ class Combobox(FrameHilited3):
     def make_widgets(self):
         self.entry = Entry(self, textvariable=self.var)
         self.arrow = LabelHilited(self, text='\u25BC', width=2)
-        # self.arrow = ComboboxArrow(self, text='\u25BC', width=2)
 
         self.entry.grid(column=0, row=0)
         self.arrow.grid(column=1, row=0)

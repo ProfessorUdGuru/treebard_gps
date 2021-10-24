@@ -9,7 +9,7 @@ from styles import config_generic, make_formats_dict
 from widgets import (
     Toplevel, Frame, Button, MessageHilited, Entry, LabelH2, Label, LabelH3,
     LabelNegative)
-from names import get_name_with_id, open_new_person_dialog, get_any_name_with_id
+from names import open_new_person_dialog, get_any_name_with_id
 from dates import OK_PREFIXES, format_stored_date
 from query_strings import (
     select_person_distinct_like, select_name_details,
@@ -25,8 +25,9 @@ from dev_tools import looky, seeline
 
 
 
+
 formats = make_formats_dict()
-COL_HEADS = ('ID', 'Birth Name', 'Birth', 'Death', 'Mother', 'Father')
+COL_HEADS = ('ID', 'Name', 'Birth', 'Death', 'Mother', 'Father')
 
 NONPRINT_KEYS = (
     'Return', 'Tab', 'Shift_L', 'Shift_R', 'Escape', 
@@ -267,9 +268,7 @@ class PersonSearch(Toplevel):
                 # self.master.master.rc_menu.attach_rt_clk_menu)
 
         self.make_header_row()
-
         config_generic(self)
-
         resize_scrolled_content(self, self.canvas, self.window)
 
     def cancel(self):
@@ -506,8 +505,8 @@ class PersonSearch(Toplevel):
             from the Search class which has collected matches from a search  
             input. The unique person data is used to create a row list which 
             will be used to create a sortable search results table with one
-            person per row. The other_names value is a list of names by results
-            table row which will be displayed in a nametip.  
+            person per row. The other_names value is a list of names by 
+            results-table row which will be displayed in a nametip.  
         '''
 
         self.row_list = []
@@ -515,7 +514,10 @@ class PersonSearch(Toplevel):
         self.row_list.append(self.found_person)
         self.other_names = unique_match[1]
 
-        self.display_name = get_name_with_id(self.found_person)
+        self.display_name = get_any_name_with_id(self.found_person)
+        if type(self.display_name) is tuple:
+            self.display_name = "({}) {}".format(
+                self.display_name[1], self.display_name[0])
 
         self.row_list.append(self.display_name)
         ext = [[], [], '', '', '', '', '', [], [], []]
@@ -641,7 +643,11 @@ class PersonSearch(Toplevel):
             else:
                 self.ma_id = None
 
-        self.row_list[4] = get_name_with_id(self.ma_id)
+
+        self.row_list[4] = get_any_name_with_id(self.ma_id)
+        if type(self.row_list[4]) is tuple:
+            self.row_list[4] = "({}) {}".format(
+                self.row_list[4][1], self.row_list[4][0])
 
         cur.close()
         conn.close()
@@ -663,7 +669,11 @@ class PersonSearch(Toplevel):
             else:
                 self.pa_id = None
 
-        self.row_list[5] = get_name_with_id(self.pa_id)
+        self.row_list[5] = get_any_name_with_id(self.pa_id)
+        if type(self.row_list[5]) is tuple:
+            self.row_list[5] = "({}) {}".format(
+                self.row_list[5][1], self.row_list[5][0])
+
         cur.close()
         conn.close()
 

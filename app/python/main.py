@@ -7,7 +7,7 @@ from autofill import EntryAutoHilited
 from scrolling import Scrollbar    
 from events_table import EventsTable
 from names import (
-    get_name_with_id, make_values_list_for_person_select,
+    get_name_with_id, make_all_names_list_for_person_select,
     open_new_person_dialog, get_any_name_with_id)
 from search import PersonSearch
 import dev_tools as dt
@@ -149,7 +149,7 @@ class Main(Frame):
         boilerplate.grid()
 
     def get_current_values(self):
-        all_birth_names = make_values_list_for_person_select()
+        all_names = make_all_names_list_for_person_select()
         self.current_person = self.findings_table.current_person
         self.current_person_name = get_any_name_with_id(self.current_person)
         if type(self.current_person_name) is tuple:
@@ -159,7 +159,7 @@ class Main(Frame):
             text="Current Person (ID): {} ({})".format(
                 self.current_person_name, self.current_person))
         self.person_autofill_values = EntryAutoHilited.create_lists(
-            all_birth_names)
+            all_names)
         self.person_entry.values = self.person_autofill_values
 
     def open_person_search(self):
@@ -182,13 +182,21 @@ class Main(Frame):
         else:
             new_person = self.person_entry.get().split("#")
             self.current_person = int(new_person[1])
-        self.current_person_name = get_name_with_id(self.current_person)
+        self.current_person_name = get_any_name_with_id(self.current_person)
+        if type(self.current_person_name) is tuple:
+            currents = list(self.current_person_name)
+            self.current_person_name = currents[0]
+            name_type = currents[1]
+            self.current_person_label.config(
+                text="Current Person (ID): ({}) {} ({})".format(
+                    name_type, self.current_person_name, self.current_person))
+        else:
+            self.current_person_label.config(
+                text="Current Person (ID): {} ({})".format(
+                    self.current_person_name, self.current_person))
         self.findings_table.current_person = self.current_person
         self.findings_table.redraw(current_person=self.current_person)
         self.person_entry.delete(0, 'end')
-        self.current_person_label.config(
-            text="Current Person (ID): {} ({})".format(
-                self.current_person_name, self.current_person))
 
 
         
