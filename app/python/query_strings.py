@@ -652,6 +652,18 @@ select_image_id = '''
     SELECT image_id FROM image WHERE images = ?
 '''
 
+select_images_entities_main_image = '''
+    SELECT images
+    FROM images_entities
+        JOIN person
+            ON images_entities.person_id = person.person_id 
+        JOIN current
+            ON current.person_id = person.person_id
+        JOIN image
+            ON image.image_id = images_entities.image_id 
+    WHERE images_entities.main_image = 1
+'''
+
 select_kin_type_string = '''
     SELECT kin_types FROM kin_type WHERE kin_type_id = ?
 '''
@@ -965,7 +977,7 @@ update_finding_age = '''
 
 update_finding_date = '''
     UPDATE finding
-    SET date = ?
+    SET (date, date_sorter) = (?, ?)
     WHERE finding_id = ?
 '''
 

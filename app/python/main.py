@@ -1,7 +1,12 @@
 # main.py
 
 import tkinter as tk
-from widgets import Frame, LabelH2, LabelH3, Label, Button
+import sqlite3
+from PIL import Image, ImageTk
+from files import get_current_file, current_drive
+from widgets import (
+    Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonPlain, FrameHilited1,
+    CanvasHilited, FrameHilited3, Toplevel)
 from custom_tabbed_widget import TabBook
 from autofill import EntryAutoHilited    
 from scrolling import Scrollbar    
@@ -10,6 +15,7 @@ from names import (
     get_name_with_id, make_all_names_list_for_person_select,
     open_new_person_dialog, get_any_name_with_id)
 from search import PersonSearch
+from query_strings import select_images_entities_main_image
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -19,14 +25,14 @@ from dev_tools import looky, seeline
 
 
 
-MAIN_TABS = [
-    ("person", "P"), ("places", "L"), ("sources", "S"), ("names", "N"), 
-    ("reports", "R"), ("charts", "A"), ("projects", "J"), ("graphics", "G"), 
-    ("types", "T"), ("preferences", "E")]
+MAIN_TABS = (
+    ("person", "P"), ("attributes", "B"), ("places", "L"), ("sources", "S"), 
+    ("names", "N"), ("reports", "R"), ("charts", "A"), ("projects", "J"), 
+    ("graphics", "G"), ("types", "T"), ("preferences", "E"))
 
-RIGHT_PANEL_TABS = [("attributes", "B"), ("gallery", "Y")]   
+RIGHT_PANEL_TABS = (("images", "I"), ("do list", "O"))
 
-PREFS_TABS = [("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D")]
+PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"))
 
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
@@ -37,6 +43,12 @@ class Main(Frame):
 
         self.current_person = None
         self.current_person_name = ""
+        self.tabbook_x = 300
+        self.tabbook_y = 300
+        self.screen_width = self.winfo_screenwidth()
+        self.screen_height = self.winfo_screenheight()
+
+
         self.make_widgets()
         self.get_current_values()
 
@@ -81,6 +93,7 @@ class Main(Frame):
             self, root=self.root, tabs=MAIN_TABS, 
             selected='person', case='upper', miny=0.66, takefocus=0)
         persons_tab = Frame(self.main_tabs.store["person"])
+        attributes_tab = Frame(self.main_tabs.store["attributes"])
         self.names_tab = Frame(self.main_tabs.store["names"])
         prefs_tab = Frame(self.main_tabs.store["preferences"])
         footer = Frame(self)
@@ -98,14 +111,44 @@ class Main(Frame):
             current_person_area, 
             text="Find or Create a Person", 
             command=self.open_person_search)
-        right_panel = TabBook(
-            persons_tab, root=self.root, tabs=RIGHT_PANEL_TABS, side="se", 
-            selected='gallery', case='upper', miny=0.25, minx=0.20, takefocus=0)
 
-        attributes_table = Label(
-            right_panel.store["attributes"], text='attributes table')
+        family_table = Frame(persons_tab)
+        family_table.columnconfigure(0, weight=1)
+        family_table.rowconfigure(0, weight=1)
+        family_canvas = Canvas(family_table, width=800, height=400)
+        family_window = Frame(family_canvas)
+        family_canvas.create_window(0, 0, anchor="nw", window=family_window)
+        family_canvas.config(scrollregion=(0, 0, 1000, 700))
+        family_sbv = Scrollbar(
+            family_table, 
+            command=family_canvas.yview)
+        family_canvas.config(yscrollcommand=family_sbv.set)
+
+        family_sbh = Scrollbar(
+            family_table, 
+            orient='horizontal', 
+            command=family_canvas.xview)
+        family_canvas.config(xscrollcommand=family_sbh.set)
+
+        minx = self.tabbook_x/self.screen_width
+        miny = self.tabbook_y/self.screen_height
+
+        self.right_panel = TabBook(
+            persons_tab, root=self.root, tabs=RIGHT_PANEL_TABS, side="se", 
+            selected='images', case='upper', miny=0.25, minx=0.20, takefocus=0)
+
+        self.top_pic_button = ButtonPlain(
+            self.right_panel.store['images'],
+            command=self.open_person_gallery)
+
+        self.show_top_pic(self.top_pic_button)
+
+        self.att = EventsTable(attributes_tab, self.root, self.treebard, attrib=True)
+        EventsTable.instances.append(self.att)
 
         self.findings_table = EventsTable(persons_tab, self.root, self.treebard)
+        EventsTable.instances.append(self.findings_table)
+        print("line", looky(seeline()).lineno, "EventsTable.instances:", EventsTable.instances)
 
         options_tabs = TabBook(
             prefs_tab, root=self.root, tabs=PREFS_TABS, side="se", 
@@ -123,18 +166,29 @@ class Main(Frame):
 
         # children of main tabs
         persons_tab.grid(column=0, row=0, sticky='news')
+        attributes_tab.grid(column=0, row=0, sticky='news')
         self.names_tab.grid(column=0, row=0, sticky='news')
         prefs_tab.grid(column=0, row=0, sticky='news')
 
         # children of persons_tab
-        right_panel.grid(column=1, row=0, sticky='e', padx=12, pady=12)
+        family_table.grid(column=0, row=0, sticky="news", padx=12, pady=12)
+        self.right_panel.grid(column=1, row=0, sticky='e', padx=12, pady=12)
         self.findings_table.grid(
             column=0, row=1, columnspan=2, sticky='news', padx=12, pady=12)
+
+        # children of family_table
+        family_canvas.grid(column=0, row=0, sticky="news")
+        family_sbv.grid(column=1, row=0, sticky="ns")
+        family_sbh.grid(column=0, row=1, sticky="ew")
+
+        # children of attributes tab
+        self.att.grid(column=0, row=0, sticky='e')
 
         # children of self.names_tab
 
         # children of preferences tab
         options_tabs.grid(column=0, row=0, sticky="news", padx=12, pady=12)
+
         # children of current_person_area
         self.current_person_label.pack(side="top", pady=24)
         instrux.pack(side="left")
@@ -142,8 +196,10 @@ class Main(Frame):
         person_change.pack(side="left", padx=6)
         person_search.pack(side="right")
 
-        # children of right_panel
-        attributes_table.grid(column=0, row=0, sticky='e')
+        # children of images tab
+        self.right_panel.store['images'].columnconfigure(0, weight=1)
+        self.right_panel.store['images'].rowconfigure(0, weight=1)
+        self.top_pic_button.grid(column=0, row=0, sticky='news', padx=3, pady=3)
 
         # children of footer
         boilerplate.grid()
@@ -197,9 +253,38 @@ class Main(Frame):
         self.findings_table.current_person = self.current_person
         self.findings_table.redraw(current_person=self.current_person)
         self.person_entry.delete(0, 'end')
-
-
         
+        self.show_top_pic(self.top_pic_button)
+
+    def open_person_gallery(self):
+        pass
+
+    def show_top_pic(self, top_pic_button):
+        current_file_tup = get_current_file()
+        current_file = current_file_tup[0]
+        image_dir = current_file_tup[1]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_images_entities_main_image)
+
+        top_pic = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if top_pic:
+            img_stg = ''.join(top_pic)
+            new_stg = '{}treebard_gps/data/{}/images/{}'.format(
+                current_drive, image_dir, img_stg)
+
+            top = Image.open(new_stg)
+            img1 = ImageTk.PhotoImage(top)
+
+            top_pic_button.config(image=img1)
+            top_pic_button.image = img1
+
+            self.tabbook_x = top.width
+            self.tabbook_y = top.height
+
 
 
         

@@ -45,7 +45,7 @@ class Border(Canvas):
             whole app and is only instantiated once, so this class has to use 
             its host toplevel as parent. Setting font size should change the size of 
             fonts, title bar, and max/min/quit buttons. The settings are 3, 4, 7, 
-            for 11 pixels. Currently the title bar size is hard-coded upon
+            or 11 pixels. Currently the title bar size is hard-coded upon
             instantiation, but should be linked to changes in font size.
         '''
 

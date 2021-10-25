@@ -33,7 +33,8 @@ from dev_tools import looky, seeline
 current_path = argv[0]
 split_path = path.splitdrive(current_path)
 current_drive = '{}\\'.format(split_path[0])
-current_database = '{}treebard_gps/data/sample_tree/sample_tree.tbd'.format(current_drive)
+current_database = '{}treebard_gps/data/sample_tree/sample_tree.tbd'.format(
+    current_drive)
 project_path = '{}treebard_gps/app/python/'.format(current_drive)
 print("split_path[0]", split_path[0])
 print("argv", argv)
@@ -50,10 +51,6 @@ print("project_path", project_path)
 # argv[0] D:\treebard_gps\app\python\treebard_root_020.py
 # current_drive D:\
 # current_database D:\treebard_gps/data/sample_tree/sample_tree.tbd
-
-# ****************************************************************
-# i THINK THAT ALL INSTANCES OF current_drive IN THIS FILE NEED TO BE
-#   REPLACED WITH current_drive?????????????????????????????????
 
 def get_current_file():
     conn = sqlite3.connect(current_database)
@@ -132,25 +129,7 @@ def open_tree(root, dialog=None):
         set_current_file(current_file)
         change_tree_title(root)
     else:
-        pass                                                                        
-    # self.parent.main.canvas.grid() # DO NOT DELETE
-
-    # # ************* DO NOT DELETE yet
-    # # This block of code has to be repeated in each method 
-    # #    that opens a tree so try to make a resuable method 
-    # #    instead of repeating.
-    # events = self.parent.main.persons.findings_table
-    # attributes = self.parent.main.persons.attributes_table
-    # # Runs once to get a master list of findings that includes
-    # #   both events and attributes.
-    # events.distinguish_evt_att()
-    # # Save the second value so it will still exist when 
-    # #   FindingsTable class is instantiated as attributes table.         
-    # attributes.current_person_attributes = events.current_person_attributes
-    # # runs once for each FindingsTable instance
-    # events.make_findings_table(events.current_person_events)
-    # attributes.make_findings_table(attributes.current_person_attributes)
-    # # *************
+        pass  
 
     if dialog:
         dialog.destroy() 
@@ -203,25 +182,6 @@ def make_tree(parent, dialog=None):
         change_tree_title(root)
     else: 
         pass
-
-    # # self.parent.main.canvas.grid()# see lines 81 & 217 root_017 MIGHT NEED TO DO THIS
-
-    # # *************
-    # # This block of code has to be repeated in each method 
-    # #    that opens a tree so try to make a resuable method 
-    # #    instead of repeating. It's only been tested in open_tree().
-    # events = self.parent.main.persons.findings_table
-    # attributes = self.parent.main.persons.attributes_table
-    # # Runs once to get a master list of findings that includes
-    # #   both events and attributes.
-    # events.distinguish_evt_att()
-    # # Save the second value so it will still exist when 
-    # #   FindingsTable class is instantiated as attributes table.         
-    # attributes.current_person_attributes = events.current_person_attributes
-    # # runs once for each FindingsTable instance
-    # events.make_findings_table(events.current_person_events)
-    # attributes.make_findings_table(attributes.current_person_attributes)
-    # # *************
 
     if dialog:
         dialog.destroy()

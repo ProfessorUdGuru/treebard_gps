@@ -13,6 +13,7 @@ import dev_tools as dt
 	One purpose of this module is to tell right here how to make a canvas and 
     scrollbar do different things under a variety of circumstances. Please
     contact me if there are any mistakes in this Tkinter scrollbar tutorial.
+    I wrote this because I needed a cheat sheet, not because I'm an expert.
 
     I. MAKE SCROLLBARS:
 
@@ -28,6 +29,9 @@ import dev_tools as dt
             command=canvas.xview, 
             hideable=True)
         canvas.config(xscrollcommand=sbh.set)
+
+    A scrollbar and its canvas are always siblings, e.g. in the above example, 
+    the parent of the canvas would also be `toplevel`.
 
     The class is a custom "Toykinter" widget based on the Tkinter API so using 
     it is almost identical to using the Tkinter scrollbar except that it can be 
@@ -53,7 +57,8 @@ import dev_tools as dt
 
     The canvas is a widget, gridded, packed or placed like any other widget.
 
-    What I'm calling a "content frame" is a single frame covering the whole canvas, so that
+    What I'm calling a "content frame" is a single frame covering the whole 
+    canvas, so that
     when the canvas is scrolled, the effect is that the content and all its 
     widgets are being scrolled. Since this frame is not gridded but created 
     by canvas.create_window(), in my code where it says 'window' this should be
@@ -102,9 +107,9 @@ import dev_tools as dt
     B. NESTED CANVAS WITH A FIXED SIZE
 
     Within a toplevel whether it's got its own full-size scrolled area or not, 
-    it could contain a smaller scrolled area of a fixed size. In this case, the 
-    scrollregion doesn't get set to bbox('all') but to a fized size at least 
-    the size of the canvas. The resizing methods are not needed here.
+    a smaller scrolled area of a fixed size could be contained. In this case, 
+    the scrollregion doesn't get set to bbox('all') but to a fized size at 
+    least the size of the canvas. The resizing methods are not needed here.
 
         canvas = Canvas(root, width=500, height=750)
         content = Frame(canvas) # don't grid

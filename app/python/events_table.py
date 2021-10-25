@@ -12,7 +12,7 @@ from widgets import (
     LabelHilited)
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
-from dates import validate_date, format_stored_date
+from dates import validate_date, format_stored_date, OK_MONTHS
 from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator
 from styles import make_formats_dict, config_generic
@@ -54,7 +54,6 @@ from query_strings import (
 
 import dev_tools as dt
 from dev_tools import looky, seeline
-
 
 
 
@@ -128,9 +127,11 @@ def get_place_string(finding_id, cur):
     if place_string == "unknown": place_string = ""
     return place_string
 
-def make_sorter(date):
+def split_sorter(date):
+    # print("line", looky(seeline()).lineno, "date:", date)
     sorter = date.split(",")
     date = [int(i) for i in sorter]
+    # print("line", looky(seeline()).lineno, "date:", date)
     return date
 
 def get_generic_findings(
@@ -141,7 +142,7 @@ def get_generic_findings(
     dkt["date"] = format_stored_date(generic_details[3])
 
     dkt["event"], dkt["particulars"], dkt["age"] = generic_details[0:3]
-    dkt["sorter"] = make_sorter(generic_details[4])
+    dkt["sorter"] = split_sorter(generic_details[4])
 
     place = get_place_string(finding_id, cur)
     dkt["place"] = place
@@ -207,7 +208,7 @@ def get_couple_findings(
         couple_generics[1] = format_stored_date(couple_generics[1])
         place = get_place_string(finding_id, cur)
         dkt["place"] = place
-        sorter = make_sorter(couple_generics[2])
+        sorter = split_sorter(couple_generics[2])
         couple_generic_details = [
             couple_generics[0], 
             couple_generics[1], 
@@ -271,7 +272,7 @@ def get_birth_findings(
 
         child_name = get_name_with_id(child_id)
 
-        sorter = make_sorter(offspring_details[1])
+        sorter = split_sorter(offspring_details[1])
         date = format_stored_date(offspring_details[0])
 
         particulars = offspring_details[2]
@@ -357,11 +358,15 @@ def get_findings():
     return findings_data, non_empty_roles, non_empty_notes
 
 class EventsTable(Frame):
-    def __init__(self, master, root, treebard, *args, **kwargs):
+
+    instances = []
+
+    def __init__(self, master, root, treebard, attrib=False, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
         self.root = root
         self.treebard = treebard
+        self.attrib = attrib
 
         self.current_person = get_current_person()
 
@@ -375,6 +380,8 @@ class EventsTable(Frame):
 
         event_types = get_all_event_types()
         self.event_autofill_values = EntryAuto.create_lists(event_types)
+        self.after_death_events = get_after_death_event_types()
+        self.events_only_even_without_dates = ["birth", "death"] + self.after_death_events
 
         self.root.bind(
             "<Control-S>", 
@@ -410,12 +417,13 @@ class EventsTable(Frame):
             consider is making the input and output fonts the same font family to
             see if that helps.
         '''
-
         self.header_widths = []
         for lst in self.widths:
             # so an empty table can open if the current person is null
-            if len(lst) > 0:
+            if len(lst) > 0 :
                 self.header_widths.append(max(lst))
+            else:
+                self.header_widths.append(0)
         for row in self.cell_pool:
             c = 0
             for ent in row[1][0:5]:
@@ -425,7 +433,7 @@ class EventsTable(Frame):
                             if ent.grid_info()['row'] == 2:
                                 ent.config(
                                     width=self.header_widths[c] + self.column_width_indecrement)
-                                c += 1      
+                                c += 1  
 
     def get_initial(self, evt):
         self.initial = evt.widget.get()
@@ -634,11 +642,20 @@ class EventsTable(Frame):
 
             if not self.final:
                 self.final = "-0000-00-00-------"
-            cur.execute(update_finding_date, (self.final, self.finding))
+            sorter = self.make_date_sorter(self.final)
+
+            if self.final == "----------":
+                self.final = "-0000-00-00-------"
+
+            cur.execute(update_finding_date, (self.final, sorter, self.finding))
             conn.commit()
             formatted_date = format_stored_date(self.final)
             widg.delete(0, 'end')
             widg.insert(0, formatted_date)
+            print("line", looky(seeline()).lineno, "EventsTable.instances:", EventsTable.instances)
+            for instance in EventsTable.instances:
+                instance.redraw()
+            # self.redraw()
 
         def update_place():
             cur.execute(select_nesting_fk_finding, (self.finding,))
@@ -754,12 +771,30 @@ class EventsTable(Frame):
             autofill=True, 
             values=self.event_autofill_values)
         self.add_event_button = Button(
-            self.new_event_frame, text="NEW EVENT", command=self.make_new_event)
+            self.new_event_frame, 
+            text="NEW EVENT OR ATTRIBUTE", 
+            command=self.make_new_event)
         self.set_cell_content()
 
     def set_cell_content(self):
 
         self.findings_data, current_roles, current_notes = get_findings()
+
+        copy = dict(self.findings_data)
+        self.attributes = {}
+        print("line", looky(seeline()).lineno, "self.events_only_even_without_dates:", self.events_only_even_without_dates)
+        for k,v in copy.items():
+            print("line", looky(seeline()).lineno, "v:", v)
+        
+            if v["event"] in self.events_only_even_without_dates:
+                pass
+            elif len(v["date"]) == 0:
+                self.attributes[k] = v
+                del self.findings_data[k]
+
+        if self.attrib is True:
+            self.findings_data = self.attributes
+
         finding_ids = list(self.findings_data.keys())
         table_size = len(self.findings_data)
         self.cell_pool = []
@@ -794,13 +829,14 @@ class EventsTable(Frame):
         self.show_table_cells()
 
     def sort_by_date(self):
-        after_death_events = get_after_death_event_types()
-
+        # after_death_events = get_after_death_event_types()
+        # self.events_only_even_without_dates = ["birth", "death"] + after_death_events
+        print("line", looky(seeline()).lineno, "self.events_only_even_without_dates:", self.events_only_even_without_dates)
         after_death = []
         for finding_id in self.findings_data:
             event_type = self.findings_data[finding_id]['event']
             sorter = self.findings_data[finding_id]['sorter']
-            if event_type in after_death_events:
+            if event_type in self.after_death_events:
                 after_death.append([finding_id, event_type, sorter])
 
         after_death = sorted(after_death, key=lambda i: i[2])
@@ -818,7 +854,7 @@ class EventsTable(Frame):
             elif event_type == "death":
                 sorter = [10000, 0, 0]
                 row_order.append([finding_id, event_type, sorter])
-            elif event_type in (after_death_events):
+            elif event_type in (self.after_death_events):
                 pass
             else:
                 sorter = self.findings_data[finding_id]['sorter']
@@ -832,7 +868,7 @@ class EventsTable(Frame):
             new_order.append(lst[0])
         return new_order
 
-    def show_table_cells(self):
+    def show_table_cells(self): 
 
         couple_event_types = get_couple_event_types()
 
@@ -901,6 +937,7 @@ class EventsTable(Frame):
         self.forget_cells()
         self.new_row = 0 
         self.set_cell_content()
+        self.size_columns_to_content()
 
     def forget_cells(self):
         self.update_idletasks()
@@ -951,6 +988,34 @@ class EventsTable(Frame):
 
         for widg in widgets:
             widg.lift() 
+
+    def make_date_sorter(self, storable_date):
+        sorter = storable_date.split("-")
+        sorter = sorter[1:4]
+        i = 0
+        for item in sorter:
+            if i == 0:
+                if len(item) == 0:
+                    sorter[0] = "0"
+            elif i == 1:
+                if len(item) != 0:
+                    a = 1
+                    for abb in OK_MONTHS:
+                        if abb == sorter[1]:
+                            sorter[1] = str(a)
+                            break
+                        a += 1
+                else:
+                    sorter[1] = "0"
+            elif i == 2:
+                if len(item) == 0:
+                    sorter[2] = "0"
+
+            i += 1
+        # if self.final == "----------":
+            # self.final = "-0000-00-00-------"
+        sorter = ",".join(sorter)
+        return sorter
 
     def count_birth_death_events(self, new_event):
         too_many = False
@@ -1524,7 +1589,13 @@ class NewEventDialog(Toplevel):
             self.date_input.get())
         if not new_event_date:
             new_event_date = "-0000-00-00-------"
-        cur.execute(update_finding_date, (new_event_date, self.new_finding))
+
+        sorter = self.events_table.make_date_sorter(new_event_date)
+
+        if new_event_date == "----------":
+            new_event_date = "-0000-00-00-------"
+
+        cur.execute(update_finding_date, (new_event_date, sorter, self.new_finding))
         conn.commit()
 
         update_particulars(
@@ -1533,7 +1604,9 @@ class NewEventDialog(Toplevel):
         cur.close()
         conn.close()
         self.cancel()
-        self.redraw(current_person=self.current_person)
+        for instance in EventsTable.instances:
+            instance.redraw(current_person=self.current_person)
+        # self.redraw(current_person=self.current_person)
 
     def couple_ok(self):                
         if len(self.other_person) != 0:
@@ -1840,8 +1913,9 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# add picture and attrib table
+# make it impossible to move birth, death, burial or after death events to the attributes table even if date is removed
 # add menubar, ribbon menu, footer
+# in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
 # add functionality to obvious menu choices incl. add new person, add/edit name, and others
 # add buttons to place tab for alias and edit/delete place but don't make them do anything
 # add colorizer, dates prefs, & fonts tabs
@@ -1850,7 +1924,10 @@ if __name__ == '__main__':
 # get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
 # activate mousewheel scrolling
 # statustips and rcm in search dialog and new person dialog and other recent dialogs
+# tooltip in attributes table says that adding a date will move the attrib to evts table
 # Make scrollbar and/or window resize right when changing current persons. Since putting new event entry and button in a frame, this has gotten worse, sometimes when manually resizing, the window won't show the new event section at all or cuts off part of it.
+# add splash screen and open screen
+# add more camera graphics to images, change size and color to same color as first one, make one with no person the default
 
 # BRANCH: pedigree
 # INSTEAD OF MAKING kintips for event column only to say child, spouse name not parents bec we have only 2 parents and it's redundant info (on the same page) but since there can be more than one spouse or child, it is important to make kintips for event rows re: child or spouse only DO THIS INSTEAD: since it's still redundant info, with the same info in a table up top (not even started), just highlight the spouse or child in the top table as the mouse hovers over them. Don't make it like gbx. The spouse should be WITH the relevant children and both families in the case of 2 spouses shd be visible at the same time with the 2 spouses also visible at the same time. ALSO if the highlighted row is not visible on the screen, it appears as a tooltip instead so user can always see it.
