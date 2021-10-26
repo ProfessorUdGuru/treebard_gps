@@ -851,7 +851,8 @@ class ButtonPlain(Buttonx):
             bd=0, 
             activebackground=formats['head_bg'],
             bg=formats['bg'],  
-            fg=formats['fg'])
+            fg=formats['fg'],
+            cursor='hand2')
         self.bind('<Enter>', self.highlight)
 
     def highlight(self, evt):

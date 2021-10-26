@@ -128,10 +128,8 @@ def get_place_string(finding_id, cur):
     return place_string
 
 def split_sorter(date):
-    # print("line", looky(seeline()).lineno, "date:", date)
     sorter = date.split(",")
     date = [int(i) for i in sorter]
-    # print("line", looky(seeline()).lineno, "date:", date)
     return date
 
 def get_generic_findings(
@@ -652,10 +650,8 @@ class EventsTable(Frame):
             formatted_date = format_stored_date(self.final)
             widg.delete(0, 'end')
             widg.insert(0, formatted_date)
-            print("line", looky(seeline()).lineno, "EventsTable.instances:", EventsTable.instances)
             for instance in EventsTable.instances:
                 instance.redraw()
-            # self.redraw()
 
         def update_place():
             cur.execute(select_nesting_fk_finding, (self.finding,))
@@ -782,10 +778,7 @@ class EventsTable(Frame):
 
         copy = dict(self.findings_data)
         self.attributes = {}
-        print("line", looky(seeline()).lineno, "self.events_only_even_without_dates:", self.events_only_even_without_dates)
-        for k,v in copy.items():
-            print("line", looky(seeline()).lineno, "v:", v)
-        
+        for k,v in copy.items():        
             if v["event"] in self.events_only_even_without_dates:
                 pass
             elif len(v["date"]) == 0:
@@ -829,9 +822,6 @@ class EventsTable(Frame):
         self.show_table_cells()
 
     def sort_by_date(self):
-        # after_death_events = get_after_death_event_types()
-        # self.events_only_even_without_dates = ["birth", "death"] + after_death_events
-        print("line", looky(seeline()).lineno, "self.events_only_even_without_dates:", self.events_only_even_without_dates)
         after_death = []
         for finding_id in self.findings_data:
             event_type = self.findings_data[finding_id]['event']
@@ -1913,19 +1903,18 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# make it impossible to move birth, death, burial or after death events to the attributes table even if date is removed
-# add menubar, ribbon menu, footer
+# add menubar
+# get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
 # in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
 # add functionality to obvious menu choices incl. add new person, add/edit name, and others
 # add buttons to place tab for alias and edit/delete place but don't make them do anything
 # add colorizer, dates prefs, & fonts tabs
 # get rid of ttk combobox in dates settings tab
 # resize correctly when changing persons so cols not too wide (? isn't it stretching to fill the available space? Didn't I tell it to do that?
-# get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
 # activate mousewheel scrolling
 # statustips and rcm in search dialog and new person dialog and other recent dialogs
 # tooltip in attributes table says that adding a date will move the attrib to evts table
-# Make scrollbar and/or window resize right when changing current persons. Since putting new event entry and button in a frame, this has gotten worse, sometimes when manually resizing, the window won't show the new event section at all or cuts off part of it.
+# Make scrollbar and/or window resize right when changing current persons. Since putting new event entry and button in a frame, this has gotten worse, sometimes when manually resizing, the window won't show the new event section at all or cuts off part of it. Make max y smaller vs screensize
 # add splash screen and open screen
 # add more camera graphics to images, change size and color to same color as first one, make one with no person the default
 
