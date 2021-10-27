@@ -267,7 +267,6 @@ class LabelHilited(Labelx):
     def unhighlight(self, evt):
         self.config(bg=self.formats['highlight_bg'])
 
-
 class LabelHilited2(Labelx):
     ''' 
         Like Label with a different background. 
@@ -279,6 +278,18 @@ class LabelHilited2(Labelx):
             bg=formats['head_bg'], 
             fg=formats['fg'],
             font=formats['output_font'])
+
+class LabelHilited3(Labelx):
+    ''' 
+        Like Label with a different background and input font. 
+    '''
+    def __init__(self, master, *args, **kwargs):
+        Labelx.__init__(self, master, *args, **kwargs)
+
+        self.config(
+            bg=formats['highlight_bg'], 
+            fg=formats['fg'],
+            font=formats['input_font'])
 
 class LabelTip(LabelHilited):
     ''' 

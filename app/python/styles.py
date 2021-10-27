@@ -102,6 +102,8 @@ bgStd_fgStd_fontIn_insFg = ('EntryAuto', 'EntryAutofill', 'EntryUnhilited')
 
 bgLite_fgStd_fontOut = ()
 
+bgLite_fgStd_fontIn = ('LabelHilited3',)
+
 bgHead_fgStd_fontOut = ('LabelHilited2',)
     
 bgStd_fgStd_fontOut_disAbl = ('LabelStylable', 'MessageCopiable')
@@ -164,6 +166,12 @@ def config_generic(parent):
             bg=formats['head_bg'], 
             fg=formats['fg'],
             font=formats['output_font'])  
+
+    def config_bgLite_fgStd_fontIn(widg):
+        widg.config(
+            bg=formats['highlight_bg'], 
+            fg=formats['fg'],
+            font=formats['input_font'])  
 
     def config_bgStd_fgStd_fontIn(widg):
         widg.config(
@@ -449,6 +457,9 @@ def config_generic(parent):
 
             elif widg.winfo_subclass() in bgHead_fgStd_fontOut:
                 config_bgHead_fgStd_fontOut(widg)
+
+            elif widg.winfo_subclass() in bgLite_fgStd_fontIn:
+                config_bgLite_fgStd_fontIn(widg)
 
             elif widg.winfo_subclass() == 'LabelStatusbar':
                 config_labelstatusbar(widg)
