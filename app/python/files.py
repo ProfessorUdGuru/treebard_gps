@@ -3,7 +3,6 @@
 from sys import argv
 from os import path, rename
 from shutil import copy2
-import tkinter as tk
 from tkinter import messagebox
 from tkinter import filedialog
 from PIL import Image, ImageTk
@@ -14,20 +13,20 @@ from dev_tools import looky, seeline
 
 # *********************************************************
 # KEEP THIS SECTION INCLUDING COMMENTED FOR FUTURE REFERENCE
-# BEFORE THE current_drive WAS BEING USED IN LIEU OF BOTHERING TO FIGURE OUT
+# BEFORE THE root_drive WAS BEING USED IN LIEU OF BOTHERING TO FIGURE OUT
 # HOW TO FIND THE ACTUAL DRIVE BEING USED. conn_fig HAS BEEN CHANGED
 # TO current_database 
 # WHEN ALL HAS BEEN TESTED (SINCE I MOVED ALL FILES TO D: DRIVE), THEN
 # IT'S OK TO DELETE THE COMMENTED LINES BELOW
-# POSSIBLE current_drive OR conn_fig HAS BEEN REFERENCED SOMEWHERE SO THEY'D
-# HAVE TO BE CHANGED TO current_drive AND current_database
-# for some reason the relative paths used throughout the app no lonter work
+# POSSIBLE root_drive OR conn_fig HAS BEEN REFERENCED SOMEWHERE SO THEY'D
+# HAVE TO BE CHANGED TO root_drive AND current_database
+# for some reason the relative paths used throughout the app no longer work
 # since these changes but all I've had to do to fix it is to import project_path
 # from files and add it to the relative paths with another {} in the format string
 
-# current_drive = '{}{}'.format(path.abspath('.').split(path.sep)[0], path.sep)
-# conn_fig = '{}treebard_gps/data/sample_tree/sample_tree.tbd'.format(current_drive)
-# print("current_drive", current_drive)
+# root_drive = '{}{}'.format(path.abspath('.').split(path.sep)[0], path.sep)
+# conn_fig = '{}treebard_gps/data/sample_tree/sample_tree.tbd'.format(root_drive)
+# print("root_drive", root_drive)
 # print("conn_fig", conn_fig)
 
 current_path = argv[0]

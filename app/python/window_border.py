@@ -49,7 +49,7 @@ class Border(Canvas):
             instantiation, but should be linked to changes in font size.
         '''
 
-        self.master = master
+        self.master = master # root
         self.size = size
         self.menubar = menubar
         self.ribbon_menu = ribbon_menu
@@ -76,14 +76,12 @@ class Border(Canvas):
 
     def make_widgets(self):
 
-        self.grid(column=0, row=1, sticky='news')
-
         self.border_top = FrameTitleBar(
             self.master, height=3, name='top')
         self.title_bar = FrameTitleBar(self.master)
 
-        self.menu = Frame(self.master)
-        self.ribbon = Frame(self.master)
+        self.menu_frame = Frame(self.master)
+        self.ribbon_frame = Frame(self.master)
 
         self.border_left = FrameTitleBar(self.master, width=3, name='left')
         self.border_right = FrameTitleBar(self.master, width=3, name='right')
@@ -99,13 +97,13 @@ class Border(Canvas):
         self.border_right.config(cursor='sb_h_double_arrow')
         self.border_bottom.config(cursor='sb_v_double_arrow')
 
+        # children of root
         self.border_top.grid(column=0, row=0, columnspan=4, sticky='ew')
         self.title_bar.grid(column=1, row=1, columnspan=2, sticky='ew')
         if self.menubar is True:
-            self.menu.grid(column=1, row=2, columnspan=2, sticky='ew')
+            self.menu_frame.grid(column=1, row=2, columnspan=2, sticky='ew')
         if self.ribbon_menu is True:
-            self.ribbon.grid(
-                column=1, row=3, columnspan=2, sticky='ew', padx=(18,0))
+            self.ribbon_frame.grid(column=1, row=3, columnspan=2, sticky='ew')
         self.grid(column=1, row=4, sticky='news')
         self.border_left.grid(column=0, row=1, rowspan=6, sticky='ns')
         self.border_right.grid(column=3, row=1, rowspan=6, sticky='ns')
@@ -379,7 +377,8 @@ class TitleBarButton(LabelButtonImage):
                 icon_size = v[0]
                 file = v[1]
         img = Image.open(file)
-        self.tk_img = ImageTk.PhotoImage(img)
+        self.tk_img = ImageTk.PhotoImage(img, master=master)
+        # self.tk_img = ImageTk.PhotoImage(img)
 
         self.config(
             font=('arial', icon_size, 'bold'), 

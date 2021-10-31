@@ -1,8 +1,6 @@
 from os import path
-import tkinter as tk
-from tkinter import ttk
+from tkinter import Tk, Label
 import sqlite3
-from tkinter import font
 from files import current_file
 from query_strings import(
     select_opening_settings, select_all_color_schemes,
@@ -10,6 +8,9 @@ from query_strings import(
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
+
+
+
 
 
 
@@ -26,6 +27,13 @@ from dev_tools import looky, seeline
 MAX_WINDOW_HEIGHT = 0.95
 MAX_WINDOW_WIDTH = 0.995
 NEUTRAL_COLOR = '#878787'
+
+# add a monospaced sans-serif font for cases like dropdown menus with text at both
+#   flush left and flush right of the same label
+MONOSPACED_SANS = (
+    "cascadia code", "consolas", "dejavu sans mono", "liberation mono", 
+    "lucida console", "noto mono", "source code pro")
+# mono_sans = MONOSPACED_SANS[0]
 
 '''
     widget.winfo_class() is a built-in Tkinter method that refers to 
@@ -488,8 +496,6 @@ def config_generic(parent):
                 config_labeltipbold(widg)
             elif widg.winfo_subclass() == 'LabelNegative':
                 config_labelnegative(widg)
-            # elif widg.winfo_subclass() == ('TitleBarButtonSolidBG'):
-                # config_bgLite(widg)
             elif widg.winfo_subclass() == 'LabelMovable':
                 config_labelmovable(widg)
 
@@ -582,6 +588,9 @@ def get_formats():
         user-preference, use the default.
     '''
     all_prefs = get_opening_settings()
+# line 585 all_prefs: (
+    # '#232931', '#393e46', '#2e5447', '#eeeeee', 'courier', 'ms sans serif', 12, 
+    # '#232931', '#393e46', '#2e5447', '#eeeeee', 'Courier', 'tahoma', 12)
     prefs_to_use = []
     x = 0
     for setting in all_prefs[0:7]:
@@ -592,15 +601,55 @@ def get_formats():
         x += 1
     return prefs_to_use
 
+def get_mono_sans_font_thats_on_users_computer():
+    mono_sans = (MONOSPACED_SANS[0], 12)
+    default_font = "TkDefaultFont"
+    # print("line", looky(seeline()).lineno, "default_font:", default_font)
+    f = 0
+    for i in MONOSPACED_SANS:
+        # ***** THIS BLOCK OF CODE creates an unwanted instance of Tk() since no 
+        #   instance of Tk() exists in this module, and the right instance can't be 
+        #   imported here. Because of this code, all instances of ImageTk.PhotoImage
+        #   need their master explicitly named in order to avoid  
+        #   `_tkinter.TclError: image "pyimage2" doesn't exist`.
+        #   Would be nice to solve this some other way but don't know how. So do this:
+        #   `x = ImageTk.PhotoImage(img, master=self.master)`.
+# POSSIBLE SOLUTION: MOVE THIS WHOLE MODULE TO A MODULE WHERE A REFERENCE TO root ALREADY EXISTS
+# OTHERWISE ALL masters have to be marked in ImageTk... but what's wrong with that??? In Tkinter all masters have to be named anyway
+        temp = Tk()
+        temp.withdraw()
+        test2 = Label(temp, text="test", font=mono_sans)
+        font_used = test2.config()['font'][3]
+        # Keep these 3 lines as explanation.
+        font_requested = test2.config()['font'][4]
+        # print("line", looky(seeline()).lineno, "font_used:", font_used)
+        # print("line", looky(seeline()).lineno, "font_requested:", font_requested)
+        temp.quit()
+        # ************************************
+        if str(font_used) == default_font:
+            mono_sans = (MONOSPACED_SANS[f], 12)
+            break
+        else:
+            break
+        f += 1
+    # print("line", looky(seeline()).lineno, "mono_sans:", mono_sans)
+    return mono_sans
+
 def make_formats_dict():
     ''' 
         To add a style, add a string to the end of keys list
         and a line below values.append...
     '''
-
     prefs_to_use = get_formats()
-
-# prefs_to_use e.g.: ['#232931', '#393e46', '#2E5447', '#eeeeee', 'courier', 'tahoma', 14]
+    # print("line", looky(seeline()).lineno, "prefs_to_use:", prefs_to_use)
+# line 611 prefs_to_use: ['#232931', '#393e46', '#2e5447', '#eeeeee', 'courier', 'ms sans serif', 12]
+    mono_sans = prefs_to_use[5]
+    # print("line", looky(seeline()).lineno, "mono_sans:", mono_sans)
+    if mono_sans not in MONOSPACED_SANS:
+        mono_sans = get_mono_sans_font_thats_on_users_computer()
+    # print("line", looky(seeline()).lineno, "mono_sans:", mono_sans)
+    prefs_to_use.append(mono_sans[0])
+    # print("line", looky(seeline()).lineno, "prefs_to_use:", prefs_to_use)
 
     keys = [
         # background, foreground
@@ -613,9 +662,8 @@ def make_formats_dict():
         'status', 'boilerplate', 'show_font', 'titlebar_0',
         'titlebar_1', 'titlebar_2', 'titlebar_3',
         'titlebar_hilited_0', 'titlebar_hilited_1', 
-        'titlebar_hilited_2', 'titlebar_hilited_3', 
-        'unshow_font', 'tab_font'
-    ]
+        'titlebar_hilited_2', 'titlebar_hilited_3',
+        'unshow_font', 'tab_font', 'mono_sans']
 
     values = []
 
@@ -642,11 +690,10 @@ def make_formats_dict():
     values.append((prefs_to_use[5], int(prefs_to_use[6] * 1.25)))
     values.append((prefs_to_use[5], int(prefs_to_use[6] * .75), 'italic'))
     values.append((prefs_to_use[4], int(prefs_to_use[6] * 0.75)))
+    values.append((prefs_to_use[7], int(prefs_to_use[6] * 1.00)))
 
     formats = dict(zip(keys, values))
     return formats
-
-formats = make_formats_dict()
 
 def get_color_schemes():
     conn = sqlite3.connect(current_file)

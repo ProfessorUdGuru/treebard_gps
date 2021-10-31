@@ -281,7 +281,10 @@ class LabelHilited2(Labelx):
 
 class LabelHilited3(Labelx):
     ''' 
-        Like Label with a different background and input font. 
+        Like Label with a different background and a monospaced sans-serif font. 
+        Because it's monospaced, this font is ideal for places such as dropdown
+        menus where a single label needs to have both flush left and flush right
+        text with variable space in the middle keeping both strings flush. 
     '''
     def __init__(self, master, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
@@ -289,7 +292,9 @@ class LabelHilited3(Labelx):
         self.config(
             bg=formats['highlight_bg'], 
             fg=formats['fg'],
-            font=formats['input_font'])
+            # font=formats['input_font']
+            font=formats['mono_sans']
+)
 
 class LabelTip(LabelHilited):
     ''' 

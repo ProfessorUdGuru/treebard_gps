@@ -10,6 +10,7 @@ from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonPlain, FrameHilited1,
     CanvasHilited, FrameHilited3, Toplevel, LabelBoilerplate)
 from custom_tabbed_widget import TabBook
+from dropdown import DropdownMenu
 from autofill import EntryAutoHilited    
 from scrolling import Scrollbar    
 from events_table import EventsTable
@@ -66,25 +67,11 @@ class Main(Frame):
         self.get_current_values()
 
     def make_menus(self):
-        
-        # menu = Label(self.master.menu, text='menu bar')
-        # menu.grid()
-
-
-        # self.top_menu.grid(column=0, row=0)
-# class TopMenu(wdg.Frame):
-    # def __init__(self, parent, *args, **kwargs):
-        # wdg.Frame.__init__(self, parent, *args, **kwargs)
-        # self.parent = parent
         self.make_top_menu()
         self.make_icon_menu()
 
     def make_top_menu(self):
-
-        # self.top_menu = Frame(self.master.menu)
-        # menubar = tk.Menu(self.top_menu)
-        top_menu = tk.Menu(self.master.menu)
-        top_menu = top_menu
+        top_menu = DropdownMenu(self.master.menu_frame, self.root)
 
         menubar_items = {
             'file': (
@@ -94,7 +81,6 @@ class Main(Frame):
                     lambda: open_tree(self.root), 'Ctrl+O'), 
                 ('Save', 
                     self.findings_table.redraw, 'Ctrl-S'),
-                    # self.top_menu.main.persons.findings_table.save, 'Ctrl-S'),
                 ('Save As...', 
                     lambda: save_as(self.root), 'Ctrl+Alt+S'), 
                 ('Save Copy As...', 
@@ -149,14 +135,7 @@ class Main(Frame):
                 ('Source Code', placeholder, ''), 
                 ('Donations', placeholder, ''))}
 
-        for k,v in menubar_items.items():
-            menoo = tk.Menu(top_menu, tearoff=0)
-            top_menu.add_cascade(label=k.title(), menu=menoo)
-            for tup in v:
-                menoo.add_command(label=tup[0], command=tup[1], accelerator=tup[2])
-        self.root.config(menu=top_menu)
-
-
+        top_menu.grid(column=0, row=0)
 
     def make_icon_menu(self):
         ribbon = {}        
@@ -164,9 +143,9 @@ class Main(Frame):
         for name in ICONS:
             file = '{}/images/{}.gif'.format(project_path, name)
             pil_img = Image.open(file)
-            tk_img = ImageTk.PhotoImage(pil_img)
+            tk_img = ImageTk.PhotoImage(pil_img, master=self.master)
             icon = ButtonPlain(
-                self.master.ribbon,
+                self.master.ribbon_frame,
                 image=tk_img,
                 command=lambda name=name: placeholder(name),
                 takefocus=0)
@@ -203,8 +182,6 @@ class Main(Frame):
     def make_widgets(self):
 
         self.make_scrollbars()
-
-        # self.make_menus()
 
         scridth = 20
         scridth_n = Frame(self, height=scridth)
@@ -290,12 +267,16 @@ class Main(Frame):
             prefs_tab, root=self.root, tabs=PREFS_TABS, side="se", 
             selected='general', case='upper', miny=0.5, minx=0.66)
 
+        # children of self.master i.e. root
+        # top_menu & ribbon_menu are gridded in Border class in rows 2 & 3
+
         # children of self
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
         self.columnconfigure(1, weight=1)
         self.columnconfigure(2, weight=1)
         self.rowconfigure(2, weight=1)
+        self.rowconfigure(3, weight=1)
         current_person_area.grid(column=1, row=1, sticky='ew', pady=18)
         self.main_tabs.grid(column=1, row=2, sticky='ew')
         footer.grid(column=1, row=3, sticky='ew')
@@ -338,7 +319,6 @@ class Main(Frame):
         self.top_pic_button.grid(column=0, row=0, sticky='news', padx=3, pady=3)
 
         # children of footer
-        # boilerplate.grid()
         self.foot_label.grid(column=0, row=0, pady=24)
 
     def get_current_values(self):
@@ -414,7 +394,7 @@ class Main(Frame):
                 current_drive, image_dir, img_stg)
 
             top = Image.open(new_stg)
-            img1 = ImageTk.PhotoImage(top)
+            img1 = ImageTk.PhotoImage(top, master=self.master)
 
             top_pic_button.config(image=img1)
             top_pic_button.image = img1

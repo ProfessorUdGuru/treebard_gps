@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from widgets import (
-    Frame, FrameHilited2, LabelHilited3, ToplevelHilited, LabelHilited
+    Frame, FrameHilited2, LabelHilited3, ToplevelHilited
 )
 from scrolling import Scrollbar
 from styles import config_generic, make_formats_dict
@@ -13,9 +13,8 @@ from dev_tools import looky, seeline
 
 
 
-
 '''
-    Replaces Tkinter Menu. Unlike Tkinter's dropdown menu, this widget...
+    Replaces Tkinter Menu. Unlike Tkinter's dropdown menu, this widget
         --is used and configured like other Tkinter widgets.
         --doesn't use Windows colors.
 
@@ -25,7 +24,9 @@ from dev_tools import looky, seeline
     I just found out, long after creating a replacement for the Windows border
     and putting it on all my main dialogs and the root window, that the 
     Tkinter dropdown menu doesn't even work with my "Toykinter" border. Not
-    that I wanted to use tkinter.Menu anyway since its colors can't be changed. Tkinter's dropdown menu doesn't use any of
+    that I wanted to use tkinter.Menu anyway since its colors can't be changed 
+    (maybe depending on the Windows theme in use). Tkinter's dropdown menu 
+    doesn't use any of
     Tkinter's geometry managers (`grid`, `pack` or `place`), since it's assumed that
     the menu is always going to be right below the Windows title bar. Since the
     Toykinter title bar is gridded like any other widget, the Tkinter menu bar
@@ -42,9 +43,9 @@ from dev_tools import looky, seeline
     click, but prior efforts to make a dropdown menu that works with both mouse
     and keyboard got bogged down in conflicting events and focus handling.
 
-    This widget is hard-coded to handle three levels of menu items. The Labels
-    permanently gridded horizontally across the menu bar. The first dropdown 
-    that pops open or closed on click and hover events. And the second and last
+    This widget is hard-coded to handle three levels of menu items: 1) The Labels
+    permanently gridded horizontally across the menu bar; 2) the first dropdown 
+    that pops open or closed on click and hover events; 3) the second and last
     dropdown which flies out to the right of its parent.
 
     Since there will never be more than one set of `drop0`, `drop1`, and `drop2`
@@ -52,21 +53,29 @@ from dev_tools import looky, seeline
     widget which is withdrawn, deiconified and populated with labels as needed.
 
     The dropdown is a Toplevel window since it's the only Tkinter widget that
-    can easily be made to overlap other widgets without pushing them to the side.
+    is made to overlap other widgets without pushing them to the side.
     The Toplevel is also the only widget that doesn't rely on `grid`, `pack` or 
     `place`. So it's not hard to get the Toplevel to appear next to its host 
-    widget.
+    widget. It's not as easy to make it stay there if the underlying window
+    moves, so if the window does move, the dropdown is just withdrawn.
 '''
 
+formats = make_formats_dict()
+
+IMPORT_TYPES = (
+    ("From Treebard", "", ">"), 
+    ("From GEDCOM", "", ">"))
+
+EXPORT_TYPES = (
+    ("To Treebard", "", ">"), 
+    ("To GEDCOM", "", ">"))
+
 class DropdownMenu(FrameHilited2):
-    def __init__(
-            self, master, drop_items, root, callback=None, 
-            *args, **kwargs):
+    def __init__(self, master, root, callback=None, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master 
         self.root = root
-        self.drop_items = drop_items
         self.callback = callback
     
         self.formats = make_formats_dict()
@@ -78,12 +87,45 @@ class DropdownMenu(FrameHilited2):
         self.ipady = 3
         self.screen_height = self.winfo_screenheight()
 
-        self.make_widgets()
+        self.recent_trees = [
+                ("Sanford Family Tree", "", "x"), 
+                ("Seinfeld Family Tree", "", ""), 
+                ("Jefferson Family Tree", "", "z")]
+
+        self.drop_items = {
+            "file": (
+                ("new", "create new tree", "n"),
+                ("open", "open existing tree", "..."), 
+                ("recent trees", self.show_list, ">", self.recent_trees),
+                ("import tree", self.show_list, ">", IMPORT_TYPES),
+                ("export tree", self.show_list, ">", EXPORT_TYPES)), 
+
+            "edit": (
+                ("cut", "cut", "x"), 
+                ("copy", "copy", "c"), 
+                ("paste", "paste", "v")), 
+
+            "tools": (
+                ("Relationship Calculator", "", ""), 
+                ("Date Calculator", "", ""), 
+                ("Dupes & Matches Detector", "", ""), 
+                ("Unlikelihood Detector", "", ""), 
+                ("Certainty Calculator", "", "")),           
+
+}
+
+        self.make_drop0()
+        self.drop1 = ToplevelHilited(self, bd=1, relief="raised")
+        self.drop2 = ToplevelHilited(self, bd=1, relief="raised")
+
+        for drop in (self.drop1, self.drop2):
+            drop.wm_overrideredirect(1)
+            drop.withdraw()
+            drop.columnconfigure(1, weight=1)
         
         self.root.bind("<Button-1>", self.close_drop_on_click_elsewhere, add="+")
 
-    def make_widgets(self):
-
+    def make_drop0(self):
         d = 0
         for key in self.drop_items:
             lab = LabelHilited3(self, text=key.title(), bd=1)
@@ -95,15 +137,6 @@ class DropdownMenu(FrameHilited2):
             lab.bind('<Leave>', self.open_drop1_on_hover, add="+")
             d += 1
 
-        self.drop1 = ToplevelHilited(self, bd=1, relief="raised")
-
-        self.drop2 = ToplevelHilited(self, bd=1, relief="raised")
-
-        for drop in (self.drop1, self.drop2):
-            drop.wm_overrideredirect(1)
-            drop.withdraw()
-            drop.columnconfigure(1, weight=1)
-
     def make_drop1(self, evt):
         for child in self.drop1.winfo_children():
             child.destroy()
@@ -111,17 +144,107 @@ class DropdownMenu(FrameHilited2):
         cmd = widg.cget("text").lower()
         for k,v in self.drop_items.items():
             if cmd == k:
+                format_strings = []
+                text = ""
+                lengths = []
+                widgets = []
                 row = 0
-                for item in self.drop_items[cmd]:
-                    lab = LabelHilited(self.drop1, text=item.title(), anchor='w')
+                for lst in self.drop_items[cmd]:
+                    lab = LabelHilited3(self.drop1, text=lst[0].title(), anchor='w')
+                    symval = lst[2]
+                    if symval == ">":
+                        text = "{}    >".format(lst[0].title())
+                    elif symval == "...":
+                        text = "{}...    {}".format(lst[0].title(), " ")
+                    elif len(symval) != 0:
+                        text = "{}    Ctrl+{}".format(lst[0].title(), symval.upper())
+                    elif len(symval) == 0:
+                        print("line", looky(seeline()).lineno, "symval:", symval)
+                        print("line", looky(seeline()).lineno, "lst:", lst)
+                        text = "{}    {}".format(lst[0].title(), " ")
+                    else:
+                        print("line", looky(seeline()).lineno, "case not handled:")
+
                     lab.grid(column=0, row=row, sticky='w', padx=12)
-                    spacer = LabelHilited(self.drop1)
-                    spacer.grid(column=1, row=row, sticky='ew')
-                    caret =  LabelHilited(self.drop1, text=">", anchor='e')
-                    caret.grid(column=2, row=row, sticky='e', padx=12)
+                    lab.bind("<Enter>", self.detect_drop2)
+                    lab.bind("<Leave>", self.close_drop2)
+                    format_strings.append(text)
+                    lengths.append(len(text))
+                    widgets.append(lab)
                     row += 1
+                maxx = max(lengths)
+                j = 0
+                for lst in self.drop_items[cmd]:
+                    diff = maxx - lengths[j]
+                    stgs = format_strings[j].split("    ")
+                    new_string = "{}{}{}".format(stgs[0], " " * (diff + 4), stgs[1])
+                    widgets[j].config(text=new_string)
+                    j += 1
+            
         self.position_drop1()
         self.drop1.deiconify()
+
+    def detect_drop2(self, evt):
+        row = evt.widget.grid_info()['row']
+        text = evt.widget.cget('text').lower()
+        for k,v in self.drop_items.items():
+            r = 0
+            for lst in v:
+                if r == row:
+                    sym = v[r][2]
+                    if sym == ">":
+                        # print("line", looky(seeline()).lineno, "v:", v)
+                        self.make_drop2(evt, row, sym, text)
+                        break
+                r += 1
+
+    def show_list(self, list_to_use):
+        print("line", looky(seeline()).lineno, "list_to_use:", list_to_use)
+        row = 0
+        for lst in list_to_use:
+            rightsym = LabelHilited3(self.drop2, anchor='e')
+            lab = LabelHilited3(self.drop2, text=lst[0], anchor='w')
+            lab.grid(column=0, row=row, sticky='w', padx=12)
+            spacer = LabelHilited3(self.drop2)
+            symval = lst[2]
+            sym = ""
+            if len(symval) != 0 and symval != ">":
+                sym = "Ctrl+{}".format(symval.upper())           
+            rightsym.config(text=sym)
+            spacer.grid(column=1, row=row, sticky='ew')
+            rightsym.grid(column=2, row=row, sticky='e', padx=12)
+            row += 1
+
+    def make_drop2(self, evt, row, sym, text):
+        print("line", looky(seeline()).lineno, "text:", text)
+        for child in self.drop2.winfo_children():
+            child.destroy()
+        self.host2 = evt.widget
+        for k,v in self.drop_items.items():
+            row = 0
+            for lst in v:
+                text = text.split("    ")[0]
+                print("line", looky(seeline()).lineno, "text:", text)        
+                print("line", looky(seeline()).lineno, "evt.widget.cget('text'):", evt.widget.cget('text'))
+                print("line", looky(seeline()).lineno, "v[row][0]:", v[row][0])
+                if text == v[row][0]:
+                    v[row][1](v[row][3])
+                else:
+                    print("line", looky(seeline()).lineno, "case not handled:")
+                row += 1
+        self.position_drop2()
+        self.drop2.deiconify()
+
+    def position_drop2(self):
+        self.update_idletasks()
+        self.drop2.geometry("+{}+{}".format(
+            self.drop1.winfo_rootx() + self.drop1.winfo_reqwidth(), 
+            self.host2.winfo_rooty()))        
+
+    def close_drop2(self, evt):
+        self.drop2.withdraw()
+        for child in self.drop2.winfo_children():
+            child.destroy()
 
     def position_drop1(self):
         self.update_idletasks()
@@ -167,6 +290,8 @@ class DropdownMenu(FrameHilited2):
             self.drop1.withdraw()
 
 
+
+
  
 
 
@@ -208,7 +333,7 @@ if __name__ == "__main__":
         window.vsb.grid(column=2, row=4, sticky='ns')
         window.hsb.grid(column=1, row=5, sticky='ew')
 
-        dropdown = DropdownMenu(canvas.menu, drop_items, root)
+        dropdown = DropdownMenu(canvas.menu_frame, root)
         dropdown.grid(column=0, row=0, sticky='ew')
 
         buttonbox = Frame(window)
@@ -235,38 +360,18 @@ if __name__ == "__main__":
 
         search_dlg_heading = Label(
             header, 
-            text='Person Search')
+            text='Sample App')
         search_dlg_heading.grid(column=0, row=0, pady=(24,0))
 
         instrux = Label(
-            header, text='Search for person by name(s) or id number:')
+            header, text='Lorem ipsum epsom litsum')
         instrux.grid(column=0, row=1, sticky='e', padx=24, pady=12)
 
     def cancel():
         root.quit()
 
-    drop_items = {
-        "file": {
-            "new": [ 
-                "create new tree", 
-                ["<Control-N>", "<Control-n>"],
-                ""],
-            "open": [ 
-                "open existing tree",
-                ["<Control-O>", "<Control-o>"], 
-                "..."], 
-            "recent files": [ 
-                "funx uses list items as params to open recent files",
-                [], 
-                ">"]}, 
-        "edit": {
-            "cut": ["cut", ["<Control-X>", "<Control-x>", ""]], 
-            "copy": ["copy", ["<Control-C>", "<Control-c>"], ""], 
-            "paste": ["paste", ["<Control-V>", "<Control-v>"], ""]}, 
-        "tools": {}}
-
     root = tk.Tk()
-    root.geometry("1600x400+200+200")
+    root.geometry("600x400+1200+200")
     root.config(bg="black")
 
     make_widgets()

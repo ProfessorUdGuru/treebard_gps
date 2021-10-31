@@ -1904,6 +1904,7 @@ if __name__ == '__main__':
 
 # BRANCH: front_page
 # add menubar
+# clicking any main tab closes the app, don't know when this started happening
 # get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
 # in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
 # add functionality to obvious menu choices incl. add new person, add/edit name, and others

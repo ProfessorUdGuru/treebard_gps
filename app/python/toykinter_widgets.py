@@ -4,6 +4,8 @@ from styles import make_formats_dict
 from widgets import Framex, FrameStay, Labelx, Frame, Label
 from files import project_path
 from PIL import Image, ImageTk
+import dev_tools as dt
+from dev_tools import looky, seeline
 
 
 
@@ -94,7 +96,6 @@ class StatusbarTooltips(Frame):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master # root or toplevel
-
         self.sizer = Sizer(self.master)
 
         self.grid_columnconfigure(0, weight=1)
@@ -129,13 +130,15 @@ class Sizer(Label):
             with padding. See StatusbarTooltips class in widgets.py
             for an example of how to place() and bind() this. 
         '''
-
+        print("line", looky(seeline()).lineno, "project_path, icon:", project_path, icon)
         self.master = master
+        print("line", looky(seeline()).lineno, "self.master:", self.master)
         self.click_x = 0
         self.click_y = 0
         file = '{}images/icons/{}.png'.format(project_path, icon)
+        print("line", looky(seeline()).lineno, "file:", file)
         img = Image.open(file)
-        self.tk_img = ImageTk.PhotoImage(img)
+        self.tk_img = ImageTk.PhotoImage(img, master=self.master)
 
         self.config(
             bg=formats['bg'], 
