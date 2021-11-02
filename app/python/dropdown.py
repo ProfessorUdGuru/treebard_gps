@@ -12,6 +12,7 @@ from dev_tools import looky, seeline
 
 
 
+# add more drop0 labels to dict
 
 
 '''
@@ -64,12 +65,12 @@ from dev_tools import looky, seeline
 formats = make_formats_dict()
 
 IMPORT_TYPES = (
-    ("From Treebard", "", ">"), 
-    ("From GEDCOM", "", ">"))
+    ("From Treebard", "", ""), 
+    ("From GEDCOM", "", ""))
 
 EXPORT_TYPES = (
-    ("To Treebard", "", ">"), 
-    ("To GEDCOM", "", ">"))
+    ("To Treebard", "", ""), 
+    ("To GEDCOM", "", ""))
 
 class DropdownMenu(FrameHilited2):
     def __init__(self, master, root, callback=None, *args, **kwargs):
@@ -103,7 +104,8 @@ class DropdownMenu(FrameHilited2):
                 ("open", "open existing tree", "..."), 
                 ("recent trees", self.show_list, ">", self.recent_trees),
                 ("import tree", self.show_list, ">", IMPORT_TYPES),
-                ("export tree", self.show_list, ">", EXPORT_TYPES)), 
+                ("export tree", self.show_list, ">", EXPORT_TYPES),
+                ("exit", self.close_app, "")),
 
             "edit": (
                 ("cut", "cut", "x"), 
@@ -111,11 +113,11 @@ class DropdownMenu(FrameHilited2):
                 ("paste", "paste", "v")), 
 
             "tools": (
-                ("Relationship Calculator", "", ""), 
-                ("Date Calculator", "", ""), 
-                ("Dupes & Matches Detector", "", ""), 
-                ("Unlikelihood Detector", "", ""), 
-                ("Certainty Calculator", "", "")),           
+                ("relationship calculator", "", ""), 
+                ("date calculator", "", ""), 
+                ("dupes & matches detector", "", ""), 
+                ("unlikelihood detector", "", ""), 
+                ("certainty calculator", "", "")),           
 
 }
 
@@ -128,7 +130,10 @@ class DropdownMenu(FrameHilited2):
             drop.withdraw()
             drop.columnconfigure(1, weight=1)
         
-        self.root.bind("<Button-1>", self.close_drop_on_click_elsewhere, add="+")
+        self.root.bind("<Button-1>", self.close_drop_on_click, add="+")
+
+    def close_app(self, evt):
+        self.root.quit()
 
     def make_drop0(self):
         d = 0
@@ -169,10 +174,7 @@ class DropdownMenu(FrameHilited2):
                         print("line", looky(seeline()).lineno, "case not handled:")
 
                     lab.grid(column=0, row=row, sticky='w')
-                    lab.bind('<Enter>', self.highlight)
-                    lab.bind('<Leave>', self.unhighlight)
-                    lab.bind("<Enter>", self.detect_drop2, add="+")
-                    lab.bind("<Leave>", self.close_drop2, add="+")
+                    self.bind_command(lab, text, v[row])
                     format_strings.append(text)
                     lengths.append(len(text))
                     widgets.append(lab)
@@ -180,14 +182,33 @@ class DropdownMenu(FrameHilited2):
                 maxx = max(lengths)
                 j = 0
                 for lst in self.drop_items[cmd]:
-                    diff = maxx - lengths[j]
+                    rightsym = False
+                    if len(lst[2]) != 0:
+                        rightsym = True
+                    if rightsym:
+                        diff = maxx - lengths[j] + 4
+                    else:
+                        diff = maxx - lengths[j]
                     stgs = format_strings[j].split("    ")
-                    new_string = "{}{}{}".format(stgs[0], " " * (diff + 4), stgs[1])
-                    widgets[j].config(text=new_string, width=maxx + 4)
+                    new_string = "{}{}{}".format(stgs[0], " " * (diff), stgs[1])
+                    if rightsym:
+                        widgets[j].config(text=new_string, width=maxx + 4)
+                    else:
+                        widgets[j].config(text=new_string, width=maxx)
                     j += 1
             
         self.position_drop1()
         self.drop1.deiconify()
+
+    def bind_command(self, lab, text, v_row): 
+        lab.bind('<Enter>', self.highlight)
+        lab.bind('<Leave>', self.unhighlight)
+        lab.bind("<Enter>", self.detect_drop2, add="+")
+        lab.bind("<Leave>", self.close_drop2, add="+")
+        lab.bind("<ButtonRelease-1>", self.close_drop_on_click, add="+")
+        if ">" in text:
+            return
+        lab.bind("<Button-1>", v_row[1], add="+")
 
     def highlight(self, evt):
         evt.widget.config(bg=formats["bg"])
@@ -212,43 +233,52 @@ class DropdownMenu(FrameHilited2):
             else:
                 self.expand = False
                 self.close_drop2()
-            
-
-        # self.drop_items = {
-            # "file": (
-                # ("new", "create new tree", "n"),
-                # ("open", "open existing tree", "..."), 
-                # ("recent trees", self.show_list, ">", self.recent_trees),
-                # ("import tree", self.show_list, ">", IMPORT_TYPES),
-                # ("export tree", self.show_list, ">", EXPORT_TYPES)), 
-
-            # "edit": (
-                # ("cut", "cut", "x"), 
-                # ("copy", "copy", "c"), 
-                # ("paste", "paste", "v")), 
-
-            # "tools": (
-                # ("Relationship Calculator", "", ""), 
-                # ("Date Calculator", "", ""), 
-                # ("Dupes & Matches Detector", "", ""), 
-                # ("Unlikelihood Detector", "", ""), 
-                # ("Certainty Calculator", "", ""))}
 
     def show_list(self, list_to_use):
+        format_strings = []
+        text = ""
+        lengths = []
+        widgets = []
         row = 0
         for lst in list_to_use:
-            rightsym = LabelHilited3(self.drop2, anchor='e')
-            lab = LabelHilited3(self.drop2, text=lst[0], anchor='w')
-            lab.grid(column=0, row=row, sticky='w', padx=12)
-            spacer = LabelHilited3(self.drop2)
+            lab = LabelHilited3(self.drop2, text=lst[0].title())
             symval = lst[2]
-            sym = ""
-            if len(symval) != 0 and symval != ">":
-                sym = "Ctrl+{}".format(symval.upper())           
-            rightsym.config(text=sym)
-            spacer.grid(column=1, row=row, sticky='ew')
-            rightsym.grid(column=2, row=row, sticky='e', padx=12)
+            if symval == ">":
+                text = "{}    >".format(lst[0].title())
+            elif symval == "...":
+                text = "{}...    {}".format(lst[0].title(), " ")
+            elif len(symval) != 0:
+                text = "{}    Ctrl+{}".format(lst[0].title(), symval.upper())
+            elif len(symval) == 0:
+                text = "{}    {}".format(lst[0].title(), " ")
+            else:
+                print("line", looky(seeline()).lineno, "case not handled:")
+
+            lab.grid(column=0, row=row, sticky='w')
+            lab.bind('<Enter>', self.highlight)
+            lab.bind('<Leave>', self.unhighlight)
+            lab.bind("<Button-1>", self.close_drop_on_click, add="+")
+            format_strings.append(text)
+            lengths.append(len(text))
+            widgets.append(lab)
             row += 1
+        maxx = max(lengths)
+        j = 0
+        for lst in list_to_use:
+            rightsym = False
+            if len(lst[2]) != 0:
+                rightsym = True
+            if rightsym:
+                diff = maxx - lengths[j] + 4
+            else:
+                diff = maxx - lengths[j]
+            stgs = format_strings[j].split("    ")
+            new_string = "{}{}{}".format(stgs[0], " " * (diff), stgs[1])
+            if rightsym:
+                widgets[j].config(text=new_string, width=maxx + 4)
+            else:
+                widgets[j].config(text=new_string, width=maxx)
+            j += 1
 
     def make_drop2(self, evt, row, sym, text):
         for child in self.drop2.winfo_children():
@@ -260,8 +290,6 @@ class DropdownMenu(FrameHilited2):
                 text = text.split("    ")[0]
                 if text == v[row][0]:
                     v[row][1](v[row][3])
-                # else:
-                    # print("line", looky(seeline()).lineno, "case not handled:")
                 row += 1
         self.position_drop2()
         self.drop2.deiconify()
@@ -271,7 +299,7 @@ class DropdownMenu(FrameHilited2):
     def position_drop2(self):
         self.drop2.geometry("+{}+{}".format(
             self.drop1.winfo_rootx() - 3 + self.drop1.winfo_reqwidth(), 
-            self.host2.winfo_rooty()))        
+            self.host2.winfo_rooty())) 
 
     def close_drop2(self, evt=None):
         if self.drop1_is_open is True and self.expand is True:
@@ -294,7 +322,15 @@ class DropdownMenu(FrameHilited2):
 
     def open_drop1_on_click(self, evt):
         if self.drop1_is_open is True:
-            self.close_drop1(evt)
+            if self.drop1_is_open is False:
+                return
+            if self.drop2_is_open is True and self.expand is False:
+                return
+            for child in self.drop1.winfo_children():
+                child.destroy()
+            self.drop1_is_open = False
+            self.expand = False
+            self.make_border(evt) 
             self.drop1.withdraw()
             return
         self.make_drop1(evt)
@@ -306,18 +342,7 @@ class DropdownMenu(FrameHilited2):
         if self.drop1_is_open is False:
             return
         self.make_drop1(evt)
-        self.clicked = evt.widget.cget("text").lower()
-
-    def close_drop1(self, evt=None):
-        if self.drop1_is_open is False:
-            return
-        if self.drop2_is_open is True and self.expand is False:
-            return
-        for child in self.drop1.winfo_children():
-            child.destroy()
-        self.drop1_is_open = False
-        self.expand = False
-        self.make_border(evt)  
+        self.clicked = evt.widget.cget("text").lower() 
 
     def make_border(self, evt):
         if self.drop1_is_open is True:
@@ -328,12 +353,13 @@ class DropdownMenu(FrameHilited2):
     def flatten_border(self, evt):
         evt.widget.config(relief="flat")
 
-    def close_drop_on_click_elsewhere(self, evt):
-        if evt.widget.master != self:
+    def close_drop_on_click(self, evt):
+        if evt.widget.master != self and ">" not in evt.widget.cget("text"):
             self.drop1.withdraw()
             self.drop2.withdraw()
             self.drop1_is_open = False
             self.drop2_is_open = False
+            self.expand = False
 
 
 
