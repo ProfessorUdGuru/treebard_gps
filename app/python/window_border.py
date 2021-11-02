@@ -3,7 +3,8 @@
 import tkinter as tk
 from files import current_file, project_path
 from widgets import (
-    LabelButtonImage, Frame, FrameTitleBar, LabelTitleBar, Toplevel, Canvas) 
+    LabelButtonImage, Frame, FrameTitleBar, LabelTitleBar, Toplevel, Canvas, 
+    FrameHilited3) 
 from toykinter_widgets import StatusbarTooltips
 from styles import make_formats_dict, NEUTRAL_COLOR, config_generic
 from PIL import Image, ImageTk
@@ -80,8 +81,8 @@ class Border(Canvas):
             self.master, height=3, name='top')
         self.title_bar = FrameTitleBar(self.master)
 
-        self.menu_frame = Frame(self.master)
-        self.ribbon_frame = Frame(self.master)
+        self.menu_frame = FrameHilited3(self.master)
+        self.ribbon_frame = FrameHilited3(self.master)
 
         self.border_left = FrameTitleBar(self.master, width=3, name='left')
         self.border_right = FrameTitleBar(self.master, width=3, name='right')
@@ -89,15 +90,15 @@ class Border(Canvas):
         self.statusbar = StatusbarTooltips(self.master)
 
         self.border_bottom = FrameTitleBar(self.master, height=3, name='bottom')
-        self.master.grid_columnconfigure(1, weight=1)
-        self.master.grid_rowconfigure(4, weight=1)
 
         self.border_top.config(cursor='sb_v_double_arrow')
         self.border_left.config(cursor='sb_h_double_arrow')
         self.border_right.config(cursor='sb_h_double_arrow')
         self.border_bottom.config(cursor='sb_v_double_arrow')
 
-        # children of root
+        # children of root i.e. self.master
+        self.master.columnconfigure(1, weight=1)
+        self.master.rowconfigure(4, weight=1)
         self.border_top.grid(column=0, row=0, columnspan=4, sticky='ew')
         self.title_bar.grid(column=1, row=1, columnspan=2, sticky='ew')
         if self.menubar is True:
@@ -113,8 +114,8 @@ class Border(Canvas):
         self.config(cursor='arrow')
 
         # children of self.title_bar
-        self.title_bar.grid_columnconfigure(0, weight=1)
-        self.title_bar.grid_columnconfigure(1, weight=0)
+        self.title_bar.columnconfigure(0, weight=1)
+        self.title_bar.columnconfigure(1, weight=0)
         self.title_frame = FrameTitleBar(self.title_bar)
         self.buttonbox = FrameTitleBar(self.title_bar)
 

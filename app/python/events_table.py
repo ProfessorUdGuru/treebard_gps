@@ -1903,18 +1903,15 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# add menubar
 # clicking any main tab closes the app, don't know when this started happening
 # get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
 # in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
-# add functionality to obvious menu choices incl. add new person, add/edit name, and others
 # add buttons to place tab for alias and edit/delete place but don't make them do anything
 # add colorizer, dates prefs, & fonts tabs
 # get rid of ttk combobox in dates settings tab
-# resize correctly when changing persons so cols not too wide (? isn't it stretching to fill the available space? Didn't I tell it to do that?
+# change events table to use mono_sans in cells so the width function will work well
 # activate mousewheel scrolling
-# statustips and rcm in search dialog and new person dialog and other recent dialogs
-# tooltip in attributes table says that adding a date will move the attrib to evts table
+# statustips and rcm in search dialog and new person dialog and other recent dialogs; tooltip in attributes table says that adding a date will move the attrib to evts table
 # Make scrollbar and/or window resize right when changing current persons. Since putting new event entry and button in a frame, this has gotten worse, sometimes when manually resizing, the window won't show the new event section at all or cuts off part of it. Make max y smaller vs screensize
 # add splash screen and open screen
 # add more camera graphics to images, change size and color to same color as first one, make one with no person the default
@@ -1934,7 +1931,9 @@ if __name__ == '__main__':
 # figure out how to dump db as a text file so it can be pushed to github
 # write blog post "refactor finished"
 
-# add to main do list 
+# add to main do list
+# refactor date calculator
+# menu: add functionality to obvious menu choices incl. add new person, add/edit name, and others 
 # combobox: when scrolling if the mouse strays off the scrollbar the dropdown undrops, I've seen a way to fix that but what was it?
 # add to main do list re: all dialogs: run the same code when clicking X on title bar
 # add to do list for new_event dialog: add person search button 

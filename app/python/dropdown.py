@@ -1,9 +1,8 @@
 # dropdown.py
 
 import tkinter as tk
-from widgets import (
-    Frame, FrameHilited2, LabelHilited3, ToplevelHilited
-)
+from files import make_tree, open_tree, save_as, save_copy_as, rename_tree  
+from widgets import Frame, FrameHilited2, LabelHilited3, ToplevelHilited
 from scrolling import Scrollbar
 from styles import config_generic, make_formats_dict
 from time import sleep    
@@ -12,7 +11,8 @@ from dev_tools import looky, seeline
 
 
 
-# add more drop0 labels to dict
+
+
 
 
 '''
@@ -72,6 +72,11 @@ EXPORT_TYPES = (
     ("To Treebard", "", ""), 
     ("To GEDCOM", "", ""))
 
+MOD_KEYS = ("Ctrl", "Alt", "Shift", "Ctrl+Alt", "Ctrl+Shift", "Alt+Shift")
+
+def placeholder(evt, name):
+    print('menu test:', name.upper())  
+
 class DropdownMenu(FrameHilited2):
     def __init__(self, master, root, callback=None, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
@@ -96,30 +101,110 @@ class DropdownMenu(FrameHilited2):
         self.recent_trees = [
                 ("Sanford Family Tree", "", "x"), 
                 ("Seinfeld Family Tree", "", ""), 
-                ("Jefferson Family Tree", "", "z")]
+                ("Jefferson Family Tree", "", "ASz"), 
+                ("Goldberg Family Tree", "", "CSz")]
 
         self.drop_items = {
             "file": (
-                ("new", "create new tree", "n"),
-                ("open", "open existing tree", "..."), 
+                ("new", lambda evt, root=self.root: make_tree(evt, root), "n"),
+                ("open", lambda evt, root=self.root: open_tree(evt, root), "..."), 
+                ("save", lambda evt, name="save (redraw)": placeholder(evt, name), "s"),
+                ("save as", lambda evt, root=self.root: save_as(evt, root), "CAs"),
+                ("save copy as", lambda evt: save_copy_as(), "t"),
+                ("rename", lambda evt, root=self.root: rename_tree(evt, root), "h"),
                 ("recent trees", self.show_list, ">", self.recent_trees),
                 ("import tree", self.show_list, ">", IMPORT_TYPES),
                 ("export tree", self.show_list, ">", EXPORT_TYPES),
+                ("close", lambda evt, name="close": placeholder(evt, name), "l"),
                 ("exit", self.close_app, "")),
 
             "edit": (
-                ("cut", "cut", "x"), 
-                ("copy", "copy", "c"), 
-                ("paste", "paste", "v")), 
+                ("cut", lambda evt, name="cut": placeholder(evt, name), "x"), 
+                ("copy", lambda evt, name="copy": placeholder(evt, name), "c"), 
+                ("paste", lambda evt, name="paste": placeholder(evt, name), "v")),
+
+            "units": (
+                ("add person", 
+                    lambda evt, name="add person": placeholder(evt, name), ""),
+                ("add place", 
+                    lambda evt, name="add place": placeholder(evt, name), ""),
+                ("add event",
+                    lambda evt, name="add event": placeholder(evt, name), ""),
+                ("add assertion", 
+                    lambda evt, name="add assertion": placeholder(evt, name), ""),
+                ("add source",  
+                    lambda evt, name="add source": placeholder(evt, name), ""),
+                ("add image",  
+                    lambda evt, name="add image": placeholder(evt, name), ""),),
+
+            "output": (
+                ("charts", 
+                    lambda evt, name="charts": placeholder(evt, name), ""),
+                ("reports", 
+                    lambda evt, name="reports": placeholder(evt, name), ""),),
+
+            "research": (
+                ("do list", 
+                    lambda evt, name="do list": placeholder(evt, name), ""),
+                ("add research goals", 
+                    lambda evt, name="research goals": placeholder(evt, name), ""),
+                ("contacts",
+                    lambda evt, name="contacts": placeholder(evt, name), ""),
+                ("correspondence",  
+                    lambda evt, name="correspondence": placeholder(evt, name), ""),),
 
             "tools": (
-                ("relationship calculator", "", ""), 
-                ("date calculator", "", ""), 
-                ("dupes & matches detector", "", ""), 
-                ("unlikelihood detector", "", ""), 
-                ("certainty calculator", "", "")),           
+                ("relationship calculator", 
+                    lambda evt, name="relationship calculator": placeholder(evt, name), ""), 
+                ("date calculator",  
+                    lambda evt, name="date calculator": placeholder(evt, name), ""), 
+                ("dupes & matches detector",  
+                    lambda evt, name="dupes & matches detector": placeholder(evt, name), ""), 
+                ("unlikelihood detector",  
+                    lambda evt, name="unlikelihood detector": placeholder(evt, name), ""), 
+                ("certainty calculator",  
+                    lambda evt, name="certainty calculator": placeholder(evt, name), "")),  
+
+            "help": (
+                ("about treebard", 
+                    lambda evt, name="about treebard": placeholder(
+                        evt, name), ""),
+                ("users' manual",  
+                    lambda evt, name="users' manual": placeholder(
+                        evt, name), ""),
+                ("genealogy tips & tricks", 
+                    lambda evt, name="genealogy tips & tricks": placeholder(
+                        evt, name), ""),
+                ("treebard website",
+                    lambda evt, name="treebard website": placeholder(
+                        evt, name), ""),
+                ("forum & blog", 
+                    lambda evt, name="forum & blog": placeholder(
+                        evt, name), ""),
+                ("help search",  
+                    lambda evt, name="help search": placeholder(
+                        evt, name), ""),
+                ("contact",
+                    lambda evt, name="contact": placeholder(
+                        evt, name), ""),
+                ("feature requests", 
+                    lambda evt, name="feature requests": placeholder(
+                    evt, name), ""),
+                ("source code",  
+                    lambda evt, name="source code": placeholder(
+                        evt, name), ""),
+                ("donations",  
+                    lambda evt, name="donations": placeholder(
+                        evt, name), ""),),         
 
 }
+
+
+
+
+
+
+
 
         self.make_drop0()
         self.drop1 = ToplevelHilited(self, bd=1, relief="raised")
@@ -128,7 +213,6 @@ class DropdownMenu(FrameHilited2):
         for drop in (self.drop1, self.drop2):
             drop.wm_overrideredirect(1)
             drop.withdraw()
-            drop.columnconfigure(1, weight=1)
         
         self.root.bind("<Button-1>", self.close_drop_on_click, add="+")
 
@@ -167,38 +251,47 @@ class DropdownMenu(FrameHilited2):
                     elif symval == "...":
                         text = "{}...    {}".format(lst[0].title(), " ")
                     elif len(symval) != 0:
-                        text = "{}    Ctrl+{}".format(lst[0].title(), symval.upper())
+                        if symval.startswith("CA"):
+                            symval = symval[2]
+                            mod_key = MOD_KEYS[3]
+                        else:
+                            mod_key = MOD_KEYS[0]
+                        text = "{}    {}+{}".format(lst[0].title(), mod_key, symval.upper())
                     elif len(symval) == 0:
-                        text = "{}    {}".format(lst[0].title(), " ")
+                        text = "{}    ".format(lst[0].title())
                     else:
                         print("line", looky(seeline()).lineno, "case not handled:")
 
-                    lab.grid(column=0, row=row, sticky='w')
+                    lab.grid(column=0, row=row, sticky='ew')
                     self.bind_command(lab, text, v[row])
                     format_strings.append(text)
                     lengths.append(len(text))
                     widgets.append(lab)
                     row += 1
-                maxx = max(lengths)
-                j = 0
-                for lst in self.drop_items[cmd]:
-                    rightsym = False
-                    if len(lst[2]) != 0:
-                        rightsym = True
-                    if rightsym:
-                        diff = maxx - lengths[j] + 4
-                    else:
-                        diff = maxx - lengths[j]
-                    stgs = format_strings[j].split("    ")
-                    new_string = "{}{}{}".format(stgs[0], " " * (diff), stgs[1])
-                    if rightsym:
-                        widgets[j].config(text=new_string, width=maxx + 4)
-                    else:
-                        widgets[j].config(text=new_string, width=maxx)
-                    j += 1
-            
+                self.fix_strings(
+                    lengths, self.drop_items[cmd], format_strings, widgets)
+     
         self.position_drop1()
         self.drop1.deiconify()
+
+    def fix_strings(self, lengths, stringslist, format_strings, widgets):
+        maxx = max(lengths)
+        j = 0
+        for lst in stringslist:
+            rightsym = False
+            if len(lst[2]) != 0:
+                rightsym = True
+            if rightsym:
+                diff = maxx - lengths[j] + 4
+            else:
+                diff = maxx - lengths[j]
+            stgs = format_strings[j].split("    ")
+            new_string = "{}{}{}".format(stgs[0], " " * (diff), stgs[1])
+
+            if not rightsym:
+                new_string = "{}    ".format(new_string)
+            widgets[j].config(text=new_string, width=maxx + 4)
+            j += 1
 
     def bind_command(self, lab, text, v_row): 
         lab.bind('<Enter>', self.highlight)
@@ -247,8 +340,25 @@ class DropdownMenu(FrameHilited2):
                 text = "{}    >".format(lst[0].title())
             elif symval == "...":
                 text = "{}...    {}".format(lst[0].title(), " ")
-            elif len(symval) != 0:
-                text = "{}    Ctrl+{}".format(lst[0].title(), symval.upper())
+            elif len(symval) != 0:                
+                if symval.startswith("AA"):
+                    symval = symval[2]
+                    mod_key = MOD_KEYS[0]
+                elif symval.startswith("SS"):
+                    symval = symval[2]
+                    mod_key = MOD_KEYS[1]
+                elif symval.startswith("CA"):
+                    symval = symval[2]
+                    mod_key = MOD_KEYS[2]
+                elif symval.startswith("CS"):
+                    symval = symval[2]
+                    mod_key = MOD_KEYS[3]
+                elif symval.startswith("AS"):
+                    symval = symval[2]
+                    mod_key = MOD_KEYS[4]
+                else:
+                    mod_key = MOD_KEYS[5]
+                text = "{}    {}+{}".format(lst[0].title(), mod_key, symval.upper())
             elif len(symval) == 0:
                 text = "{}    {}".format(lst[0].title(), " ")
             else:
@@ -262,23 +372,9 @@ class DropdownMenu(FrameHilited2):
             lengths.append(len(text))
             widgets.append(lab)
             row += 1
-        maxx = max(lengths)
-        j = 0
-        for lst in list_to_use:
-            rightsym = False
-            if len(lst[2]) != 0:
-                rightsym = True
-            if rightsym:
-                diff = maxx - lengths[j] + 4
-            else:
-                diff = maxx - lengths[j]
-            stgs = format_strings[j].split("    ")
-            new_string = "{}{}{}".format(stgs[0], " " * (diff), stgs[1])
-            if rightsym:
-                widgets[j].config(text=new_string, width=maxx + 4)
-            else:
-                widgets[j].config(text=new_string, width=maxx)
-            j += 1
+
+        self.fix_strings(
+            lengths, list_to_use, format_strings, widgets)
 
     def make_drop2(self, evt, row, sym, text):
         for child in self.drop2.winfo_children():
@@ -354,20 +450,24 @@ class DropdownMenu(FrameHilited2):
         evt.widget.config(relief="flat")
 
     def close_drop_on_click(self, evt):
-        if evt.widget.master != self and ">" not in evt.widget.cget("text"):
+        '''
+            Handle miscellaneous clicks that should or should not close 
+            the dropdown.
+        '''        
+        def close_it():
             self.drop1.withdraw()
             self.drop2.withdraw()
             self.drop1_is_open = False
             self.drop2_is_open = False
             self.expand = False
 
-
-
-
- 
-
-
-
+        if evt.widget.master != self:
+            widg = evt.widget
+            if widg.winfo_class() == "Label":
+                if ">" not in widg.cget("text"):
+                    close_it()               
+            else:
+                close_it()
 
 if __name__ == "__main__":
 

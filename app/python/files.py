@@ -185,7 +185,7 @@ def make_tree(parent, dialog=None):
     if dialog:
         dialog.destroy()
         
-def save_as(root):
+def save_as(root, evt=None):
 
     init_dir = get_opening_dir()
     current_file = get_current_file()[0]
@@ -212,9 +212,11 @@ def save_as(root):
     else:
         pass
 
-def save_copy_as(self):
-    ''' Like save_as except new file is not made current; 
-        old file remains current.'''
+def save_copy_as(evt=None):
+    ''' 
+        Like save_as except new file is not made current; 
+        old file remains current.
+    '''
 
     init_dir = get_opening_dir()
 
@@ -233,7 +235,7 @@ def save_copy_as(self):
     else:
         pass
 
-def rename_tree(root): 
+def rename_tree(root, evt=None): 
     ''' 
         Like save_as, a new file becomes current but the other features 
         are different from save_as: old file is deleted; 
