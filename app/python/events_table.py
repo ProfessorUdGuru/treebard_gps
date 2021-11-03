@@ -373,7 +373,7 @@ class EventsTable(Frame):
         self.widths = [[], [], [], [], []]
 
         self.screen_height = self.winfo_screenheight()
-        self.column_width_indecrement = 0
+        self.column_padding = 2
         self.new_row = 0
 
         event_types = get_all_event_types()
@@ -398,22 +398,13 @@ class EventsTable(Frame):
             Get length of each cell in the column and size the top row cells to 
             fit the longest content in the column. The whole column will follow
             this size. The method make_table_cells() has some influence in this
-            sizing process because column 0 (Event) sets itself to Tkinter's default
-            width=20 if you don't tell it not to and column 4 (Age) should be 
-            smaller than the others. Any of this could be improved, especially
-            if Tkinter would let us detect and set Labels and Entries to their
-            required width but they use different default characters so even
-            setting them to the same width doesn't work. One workaround might
-            be to have a button in the Preferences > Fonts tab or someplace which
-            increases or decreases the column width and redraws the table. Not
-            desirable, but I'm trying to avoid manually resizable columns since
-            I believe with religious fervor that they are inexcusable and I'm
-            waiting to be proven wrong. Thus for future reference: 
-            self.column_width_indecrement. If this works out, the button might
-            want to be on the Fonts tab since the setting would most often have to
-            be changed when redrawing the table in different fonts. Another thing to
-            consider is making the input and output fonts the same font family to
-            see if that helps.
+            sizing process because column 0 (Event) sets itself to Tkinter's 
+            default width=20 if you don't tell it not to, and column 4 (Age) 
+            should be smaller than the others. I'm trying to avoid manually 
+            resizable columns since I believe they're usually an unnecessary,
+            partially functioning nuisance and an alternative to making design 
+            decisions. What makes this work in a table is monospace fonts, 
+            which are a bit ugly, but not as ugly as unreadable table columns.
         '''
         self.header_widths = []
         for lst in self.widths:
@@ -430,7 +421,7 @@ class EventsTable(Frame):
                         if len(ent.grid_info()) != 0:
                             if ent.grid_info()['row'] == 2:
                                 ent.config(
-                                    width=self.header_widths[c] + self.column_width_indecrement)
+                                    width=self.header_widths[c] + self.column_padding)
                                 c += 1  
 
     def get_initial(self, evt):
@@ -1903,13 +1894,15 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# roles dlg not right--hard to see with same bg as main app--change bg color? Make wide border?
+# person_search button in main.py (or something) seems to be stretching the app too wide. Looks like it's in a column that isn't needed but it's packed, that's just how it looks.
+# on change of font size: dropdown font doesn't resize instantly; window/scrollbar don't resize till reloaded; everything has to be set to screensize so if it's too big it shows no bigger than window and with scrollbar showing; font size on roles dialog doesn't resize instantly
+# hook the border sizes to font sizes
 # get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
 # image gallery shd not be in tab traversal (button shd be takefocus=0) unless really necessary; if it has to come into focus on tab traversal, give the user a border or something that shows when it is in focus
+# roles dlg not right--hard to see with same bg as main app--change bg color? Make wide border? NO--JUST TEST IT WITH ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work
 # in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
 # add buttons to place tab for alias and edit/delete place but don't make them do anything
-# dates prefs, & fonts tabs
-# get rid of ttk combobox in dates settings tab
+# dates prefs tab, get rid of ttk comboboxes
 # change events table to use mono_sans in cells so the width function will work well
 # activate mousewheel scrolling
 # statustips and rcm in search dialog and new person dialog and other recent dialogs; tooltip in attributes table says that adding a date will move the attrib to evts table

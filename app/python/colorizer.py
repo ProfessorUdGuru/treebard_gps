@@ -380,7 +380,7 @@ class Colorizer(Frame):
             idx = all_schemes.index(color_scheme)
             # don't allow built-in color schemes to be deleted
             # currently all are set as built_in but that could be changed
-            #   to allow deletion: update `built_in` column of `formats` 
+            #   to allow deletion: update `built_in` column of `color_scheme` 
             #   table in db to `0`
             if all_schemes_plus[idx][4] == 0:
                 drop_name = drop_me.winfo_name()

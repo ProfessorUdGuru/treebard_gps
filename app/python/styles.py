@@ -23,9 +23,6 @@ from dev_tools import looky, seeline
     which is called here in `config_generic()`.
 '''
 
-
-MAX_WINDOW_HEIGHT = 0.95
-MAX_WINDOW_WIDTH = 0.995
 NEUTRAL_COLOR = '#878787'
 
 # # add a monospaced sans-serif font for cases like dropdown menus with text at both
@@ -705,7 +702,7 @@ def make_formats_dict():
         'titlebar_hilited_2', 'titlebar_hilited_3',
         'unshow_font', 'tab_font']
         # 'unshow_font', 'tab_font', 'mono_sans']
-
+    # print("line", looky(seeline()).lineno, "prefs_to_use[6]:", prefs_to_use[6])
     values = []
 
     values.append(prefs_to_use[0])

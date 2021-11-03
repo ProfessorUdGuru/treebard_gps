@@ -15,6 +15,7 @@ from autofill import EntryAutoHilited
 from scrolling import Scrollbar    
 from events_table import EventsTable
 from colorizer import Colorizer
+from font_picker import FontPicker
 from names import (
     get_name_with_id, make_all_names_list_for_person_select,
     open_new_person_dialog, get_any_name_with_id)
@@ -43,11 +44,6 @@ ICONS = (
     'open', 'cut', 'copy', 'paste', 'print', 'home', 'first', 
     'previous', 'next', 'last', 'search', 'add', 'settings', 
     'note', 'back', 'forward') 
-
-
-
-# def placeholder(name):
-    # print('menu test:', name.upper())  
 
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
@@ -204,15 +200,14 @@ class Main(Frame):
             prefs_tab, root=self.root, tabs=PREFS_TABS, side="se", 
             selected='general', case='upper', miny=0.5, minx=0.66)
 
-
-
-
-
         colorizer = Colorizer(
             options_tabs.store['colors'],
             self.root,
             tabbook=self.right_panel)
         colorizer.grid(column=0, row=0)
+
+        fontpicker = FontPicker(options_tabs.store['fonts'], self.root)
+        fontpicker.grid(column=0, row=0)
 
 
 
@@ -223,11 +218,11 @@ class Main(Frame):
         # children of self
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
-        self.columnconfigure(1, weight=1)
-        self.columnconfigure(2, weight=1)
+        # self.columnconfigure(1, weight=1)
+        # self.columnconfigure(2, weight=1)
         self.rowconfigure(2, weight=1)
         self.rowconfigure(3, weight=1)
-        current_person_area.grid(column=1, row=1, sticky='ew', pady=18)
+        current_person_area.grid(column=1, row=1, sticky='w', pady=18)
         self.main_tabs.grid(column=1, row=2, sticky='ew')
         footer.grid(column=1, row=3, sticky='ew')
 

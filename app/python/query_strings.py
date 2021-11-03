@@ -648,6 +648,12 @@ select_findings_roles_generic_finding = '''
     WHERE findings_roles.finding_id = ?
 '''
 
+select_format_font_scheme = '''
+    SELECT output_font, font_size
+    FROM format
+    WHERE format_id = 1
+'''
+
 select_image_id = '''
     SELECT image_id FROM image WHERE images = ?
 '''
@@ -1040,40 +1046,6 @@ update_findings_persons_age2 = '''
         AND person_id2 = ?
 '''
 
-# update_findings_persons_couple_old = '''
-    # UPDATE findings_persons
-    # SET (age, kin_type_id) = (?, ?)
-    # WHERE finding_id = ?  
-        # AND person_id = ?
-# '''
-
-# update_findings_persons_couple_new = '''
-    # UPDATE findings_persons
-    # SET (age, kin_type_id, person_id) = (?, ?, ?)
-    # WHERE finding_id = ? 
-        # AND (person_id != ? OR person_id is null)
-# '''
-                    
-# update_findings_persons_new_couple_age = '''
-    # UPDATE findings_persons 
-    # SET age = ?
-    # WHERE findings_persons_id = ?
-# '''
-
-# update_findings_persons_father = '''
-    # UPDATE findings_persons
-    # SET (age, person_id) = (?, ?)
-    # WHERE finding_id = ?
-        # AND kin_type_id = 2
-# '''
-
-# update_findings_persons_mother = '''
-    # UPDATE findings_persons
-    # SET (age, person_id) = (?, ?)
-    # WHERE finding_id = ?
-        # AND kin_type_id = 1
-# '''
-
 update_finding_places_new_event = '''
     UPDATE finding_places
     SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8) =
@@ -1102,6 +1074,12 @@ update_findings_roles_role_type = '''
 update_format_color_scheme = '''
     UPDATE format 
     SET (bg, highlight_bg, head_bg, fg) = (?,?,?,?) 
+    WHERE format_id = 1
+'''
+
+update_format_font = '''
+    UPDATE format
+    SET (output_font, font_size) = (?, ?)
     WHERE format_id = 1
 '''
 

@@ -189,9 +189,9 @@ def resize_scrolled_content(toplevel, canvas, window):
         Besides configuring the scrollbar when the content changes, this 
         gives a hideable scrollbar a place to grid (scridth) so the 
         scrollbar doesn't appear before it's needed due to its own
-        width. Extra space or "scridth" is added where the hidden scrollbars
-        will appear. Extra spacer frames (such as scridth_n and scridth_w in
-        main.py) are added to balance this out (don't do any of this with
+        width. Extra space or `scridth` is added where the hidden scrollbars
+        will appear. Extra spacer frames (such as `scridth_n` and `scridth_w` 
+        in main.py) are added to balance this out (don't do any of this with
         padding). The end result is a hideable scrollbar without a lop-sided 
         border around the canvas.
     '''
@@ -202,7 +202,7 @@ def resize_scrolled_content(toplevel, canvas, window):
 
     def resize_window():
         '''
-            Don't try to DETECT scrollbar width (scridth) in this function.
+            Don't try to DETECT scrollbar width (`scridth`) in this function.
             For some reason it causes certain combinations of values
             below to freeze the app. Hard-coded is good enough since there
             are only a few sizes of scrollbar. Add 10 to the scrollbar width 

@@ -31,7 +31,10 @@ IMPORTS STRUCTURE:
 
 
 
-      
+ 
+# setting to less than 1.0 below prevents maximize from working
+MAX_WINDOW_HEIGHT = 1.0
+MAX_WINDOW_WIDTH = 1.0    
 
 class Treebard():
 
@@ -65,6 +68,11 @@ def main():
     root.iconbitmap(default='{}favicon.ico'.format(project_path)) 
     Treebard(root)
 
+    screen_width = root.winfo_screenwidth()
+    screen_height = root.winfo_screenheight()
+    root.maxsize(
+        width=int(MAX_WINDOW_WIDTH * screen_width), 
+        height=int(MAX_WINDOW_HEIGHT * screen_height))
     config_generic(root)
 
     root.mainloop()
