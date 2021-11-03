@@ -1903,11 +1903,12 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# clicking any main tab closes the app, don't know when this started happening
+# roles dlg not right--hard to see with same bg as main app--change bg color? Make wide border?
 # get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
+# image gallery shd not be in tab traversal (button shd be takefocus=0) unless really necessary; if it has to come into focus on tab traversal, give the user a border or something that shows when it is in focus
 # in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
 # add buttons to place tab for alias and edit/delete place but don't make them do anything
-# add colorizer, dates prefs, & fonts tabs
+# dates prefs, & fonts tabs
 # get rid of ttk combobox in dates settings tab
 # change events table to use mono_sans in cells so the width function will work well
 # activate mousewheel scrolling
@@ -1928,7 +1929,9 @@ if __name__ == '__main__':
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?
 # edit ReadMe
-# figure out how to dump db as a text file so it can be pushed to github
+# figure out how to dump db as a text file so it can be pushed to github, first delete any unused tables
+# post new screenshots
+# edit readme
 # write blog post "refactor finished"
 
 # add to main do list

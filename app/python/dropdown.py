@@ -5,7 +5,6 @@ from files import make_tree, open_tree, save_as, save_copy_as, rename_tree
 from widgets import Frame, FrameHilited2, LabelHilited3, ToplevelHilited
 from scrolling import Scrollbar
 from styles import config_generic, make_formats_dict
-from time import sleep    
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -94,7 +93,7 @@ class DropdownMenu(FrameHilited2):
         self.clicked = None
 
         self.host1 = None
-        self.drop_delay = 0.025
+        self.drop_delay = 250
         self.ipady = 3
         self.screen_height = self.winfo_screenheight()
 
@@ -195,16 +194,7 @@ class DropdownMenu(FrameHilited2):
                         evt, name), ""),
                 ("donations",  
                     lambda evt, name="donations": placeholder(
-                        evt, name), ""),),         
-
-}
-
-
-
-
-
-
-
+                        evt, name), ""),)}
 
         self.make_drop0()
         self.drop1 = ToplevelHilited(self, bd=1, relief="raised")
@@ -309,7 +299,10 @@ class DropdownMenu(FrameHilited2):
     def unhighlight(self, evt):
         evt.widget.config(bg=formats["highlight_bg"])
 
-    def detect_drop2(self, evt):                
+    def detect_drop2(self, evt):    
+
+        def run_drop_delay(delay):
+            self.after(delay, self.make_drop2, evt, row, sym, text)            
 
         widg = evt.widget
         row = widg.grid_info()['row']
@@ -320,8 +313,7 @@ class DropdownMenu(FrameHilited2):
             if ">" in text:
                 if v[row][0] == text.rstrip(">").rstrip():
                     sym = ">"
-                    sleep(self.drop_delay)
-                    self.make_drop2(evt, row, sym, text)
+                    run_drop_delay(self.drop_delay)
                     break
             else:
                 self.expand = False
@@ -400,10 +392,16 @@ class DropdownMenu(FrameHilited2):
     def close_drop2(self, evt=None):
         if self.drop1_is_open is True and self.expand is True:
             return
-        sleep(self.drop_delay)
-        self.drop2.withdraw()
-        for child in self.drop2.winfo_children():
-            child.destroy()
+
+        def withdraw_drop2():
+            self.drop2.withdraw()
+            for child in self.drop2.winfo_children():
+                child.destroy()
+
+        def run_drop_delay(delay):
+            self.after(delay, withdraw_drop2)
+
+        run_drop_delay(self.drop_delay)
         self.drop2_is_open = False
         self.expand = False
 
@@ -461,10 +459,14 @@ class DropdownMenu(FrameHilited2):
             self.drop2_is_open = False
             self.expand = False
 
+        if self.drop1_is_open is False:
+            return
+
         if evt.widget.master != self:
             widg = evt.widget
             if widg.winfo_class() == "Label":
-                if ">" not in widg.cget("text"):
+                text = widg.cget("text")
+                if ">" not in text:
                     close_it()               
             else:
                 close_it()

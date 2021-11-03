@@ -1,34 +1,33 @@
-# colorizer (import as clz)
+# colorizer
 
 import tkinter as tk
-from tkinter import ttk
 from tkinter import colorchooser
 import sqlite3
 from widgets import (
-    Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay)
+    Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay, Entry)
+from scrolling import Scrollbar
 from styles import (
-    get_color_schemes, get_color_schemes_plus, make_formats_dict)
+    get_color_schemes, get_color_schemes_plus, make_formats_dict, get_all_descends, config_generic)
 from files import current_file
 from query_strings import (
-    color_scheme, delete_color_scheme, select_color_scheme_current, 
+    update_format_color_scheme, delete_color_scheme, select_color_scheme_current, 
     update_color_scheme_null, insert_color_scheme, 
 )
 import dev_tools as dt
+from dev_tools import looky, seeline
 
 
-
-
+# clicking APPLY crashes the program without error msg
 
 
 formats = make_formats_dict()
 
 class Colorizer(Frame):
-    def __init__(self, parent, tabbook, root, *args, **kwargs):
+    def __init__(self, parent, root, tabbook=None, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
-
         self.parent = parent
-        self.tabbook = tabbook
         self.root = root
+        self.tabbook = tabbook
 
         self.old_col = 0
         self.parent.columnconfigure(0, weight=1)

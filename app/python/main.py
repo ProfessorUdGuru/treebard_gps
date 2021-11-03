@@ -10,10 +10,11 @@ from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonPlain, FrameHilited1,
     CanvasHilited, FrameHilited3, Toplevel, LabelBoilerplate)
 from custom_tabbed_widget import TabBook
-from dropdown import DropdownMenu
+from dropdown import DropdownMenu, placeholder
 from autofill import EntryAutoHilited    
 from scrolling import Scrollbar    
 from events_table import EventsTable
+from colorizer import Colorizer
 from names import (
     get_name_with_id, make_all_names_list_for_person_select,
     open_new_person_dialog, get_any_name_with_id)
@@ -45,8 +46,8 @@ ICONS = (
 
 
 
-def placeholder(name):
-    print('menu test:', name.upper())  
+# def placeholder(name):
+    # print('menu test:', name.upper())  
 
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
@@ -71,70 +72,7 @@ class Main(Frame):
         self.make_icon_menu()
 
     def make_top_menu(self):
-        top_menu = DropdownMenu(self.master.menu_frame, self.root)
-
-        menubar_items = {
-            'file': (
-                ('New Tree', 
-                    lambda: make_tree(self.root), 'Ctrl+N'), 
-                ('Open...', 
-                    lambda: open_tree(self.root), 'Ctrl+O'), 
-                ('Save', 
-                    self.findings_table.redraw, 'Ctrl-S'),
-                ('Save As...', 
-                    lambda: save_as(self.root), 'Ctrl+Alt+S'), 
-                ('Save Copy As...', 
-                    save_copy_as, 'Ctrl+Alt+C'), 
-                ('Rename...', 
-                    lambda: rename_tree(self.root), ''), 
-                ('Close', placeholder, ''), 
-                ('Exit', self.root.quit, '')),
-            'edit': (
-                ('Cut', placeholder, 'Ctrl+X'), 
-                ('Copy', placeholder, 'Ctrl+C'), 
-                ('Paste', placeholder, 'Ctrl+V'), 
-                ('Edit', placeholder, '')),
-            'entities': (
-                ('Add Person, Place, or Source', placeholder, ''), 
-                ('Person', placeholder, ''), 
-                ('Place', placeholder, ''), 
-                ('Event', placeholder, ''), 
-                ('Attribute', placeholder, ''), 
-                ('Media', placeholder, '')),
-            'output': (
-                ('Charts', placeholder, ''), 
-                ('Reports', placeholder, '')),
-            'research': (
-                ('Do List', placeholder, ''), 
-                ('Research Goals', placeholder, ''), 
-                ('Contacts', placeholder, ''), 
-                ('Correspondence', placeholder, '')),
-            'utilities': (
-                ('Your Profile', placeholder, ''), 
-                ('Appearance Settings', placeholder, ''), 
-                ('Relationship Calculator', placeholder, ''), 
-                ('Date Calculator', placeholder, ''), 
-                ('Duplicates & Matches Detector', placeholder, ''), 
-                ('U-R-Your-Own-Grampaw Detector', placeholder, ''), 
-                ('Sure Thing Calculator', placeholder, ''), 
-                ('Go Figure Planmaker', placeholder, '')),
-            'window': (
-                ('Arrange All', placeholder, ''), 
-                ('Tile Horizontal', placeholder, ''), 
-                ('Tile Vertical', placeholder, ''), 
-                ('Close All But Home Window', placeholder, ''), 
-                ('Close Top Window', placeholder, '')),
-            'help': (('About Treebard', placeholder, ''), 
-                ("Users' Manual", placeholder, ''), 
-                ('Genealogy Tips & Tricks', placeholder, ''), 
-                ('Treebard Website', placeholder, ''), 
-                ('Treebard Forum', placeholder, ''), 
-                ('Help Contents, Search, & Index', placeholder, ''), 
-                ('Contact Treebard', placeholder, ''), 
-                ('Feature Requests', placeholder, ''), 
-                ('Source Code', placeholder, ''), 
-                ('Donations', placeholder, ''))}
-
+        top_menu = DropdownMenu(self.master.menu_frame, self.root) 
         top_menu.grid(column=0, row=0)
 
     def make_icon_menu(self):
@@ -157,7 +95,6 @@ class Main(Frame):
         
         ribbon['open'].config(command=lambda: open_tree(self.root))
         ribbon['home'].config(command=self.root.quit)
-
 
 
     def make_scrollbars(self):
@@ -267,8 +204,21 @@ class Main(Frame):
             prefs_tab, root=self.root, tabs=PREFS_TABS, side="se", 
             selected='general', case='upper', miny=0.5, minx=0.66)
 
+
+
+
+
+        colorizer = Colorizer(
+            options_tabs.store['colors'],
+            self.root,
+            tabbook=self.right_panel)
+        colorizer.grid(column=0, row=0)
+
+
+
+
         # children of self.master i.e. root
-        # top_menu & ribbon_menu are gridded in Border class in rows 2 & 3
+        # top_menu & ribbon_menu etc. are gridded in window_border.py
 
         # children of self
         scridth_n.grid(column=0, row=0, sticky='ew')
@@ -334,6 +284,7 @@ class Main(Frame):
         self.person_autofill_values = EntryAutoHilited.create_lists(
             all_names)
         self.person_entry.values = self.person_autofill_values
+        self.person_entry.focus_force()
 
     def open_person_search(self):
         person_search_dialog = PersonSearch(
@@ -403,94 +354,6 @@ class Main(Frame):
             self.tabbook_y = top.height
 
 
-
-
-
-
-# class TopMenu(wdg.Frame):
-    # def __init__(self, parent, *args, **kwargs):
-        # wdg.Frame.__init__(self, parent, *args, **kwargs)
-        # self.parent = parent
-
-        # self.make_menu()
-
-    # def make_menu(self):
-
-        # menubar = tk.Menu(self.parent)
-        # menubar = menubar
-
-        # menubar_items = {
-            # 'file': (
-                # ('New Tree', 
-                    # lambda: self.parent.files.make_tree(root), 'Ctrl+N'), 
-                # ('Open...', 
-                    # lambda: self.parent.files.open_tree(root), 'Ctrl+O'), 
-                # ('Save', 
-                    # self.parent.main.persons.findings_table.save, 'Ctrl-S'),
-                # ('Save As...', 
-                    # lambda: self.parent.files.save_as(root), 'Ctrl+Alt+S'), 
-                # ('Save Copy As...', 
-                    # self.parent.files.save_copy_as, 'Ctrl+Alt+C'), 
-                # ('Rename...', 
-                    # lambda: self.parent.files.rename_tree(root), ''), 
-                # ('Close', placeholder, ''), 
-                # ('Exit', root.quit, '')),
-            # 'edit': (
-                # ('Cut', placeholder, 'Ctrl+X'), 
-                # ('Copy', placeholder, 'Ctrl+C'), 
-                # ('Paste', placeholder, 'Ctrl+V'), 
-                # ('Edit', placeholder, '')),
-            # 'entities': (
-                # ('Add Person, Place, or Source', placeholder, ''), 
-                # ('Person', placeholder, ''), 
-                # ('Place', placeholder, ''), 
-                # ('Event', placeholder, ''), 
-                # ('Attribute', placeholder, ''), 
-                # ('Media', placeholder, '')),
-            # 'output': (
-                # ('Charts', placeholder, ''), 
-                # ('Reports', placeholder, '')),
-            # 'research': (
-                # ('Do List', placeholder, ''), 
-                # ('Research Goals', placeholder, ''), 
-                # ('Contacts', placeholder, ''), 
-                # ('Correspondence', placeholder, '')),
-            # 'utilities': (
-                # ('Your Profile', placeholder, ''), 
-                # ('Appearance Settings', placeholder, ''), 
-                # ('Relationship Calculator', placeholder, ''), 
-                # ('Date Calculator', placeholder, ''), 
-                # ('Duplicates & Matches Detector', placeholder, ''), 
-                # ('U-R-Your-Own-Grampaw Detector', placeholder, ''), 
-                # ('Sure Thing Calculator', placeholder, ''), 
-                # ('Go Figure Planmaker', placeholder, '')),
-            # 'window': (
-                # ('Arrange All', placeholder, ''), 
-                # ('Tile Horizontal', placeholder, ''), 
-                # ('Tile Vertical', placeholder, ''), 
-                # ('Close All But Home Window', placeholder, ''), 
-                # ('Close Top Window', placeholder, '')),
-            # 'help': (('About Treebard', placeholder, ''), 
-                # ("Users' Manual", placeholder, ''), 
-                # ('Genealogy Tips & Tricks', placeholder, ''), 
-                # ('Treebard Website', placeholder, ''), 
-                # ('Treebard Forum', placeholder, ''), 
-                # ('Help Contents, Search, & Index', placeholder, ''), 
-                # ('Contact Treebard', placeholder, ''), 
-                # ('Feature Requests', placeholder, ''), 
-                # ('Source Code', placeholder, ''), 
-                # ('Donations', placeholder, ''))}
-
-        # for k,v in menubar_items.items():
-            # menoo = tk.Menu(menubar, tearoff=0)
-            # menubar.add_cascade(label=k.title(), menu=menoo)
-            # for tup in v:
-                # menoo.add_command(label=tup[0], command=tup[1], accelerator=tup[2])
-
-        # # keystroke bindings for menu command accelerators
-
-        # # display the menu
-        # root.config(menu=menubar)
 
 
         

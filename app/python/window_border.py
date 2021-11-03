@@ -104,7 +104,7 @@ class Border(Canvas):
         if self.menubar is True:
             self.menu_frame.grid(column=1, row=2, columnspan=2, sticky='ew')
         if self.ribbon_menu is True:
-            self.ribbon_frame.grid(column=1, row=3, columnspan=2, sticky='ew')
+            self.ribbon_frame.grid(column=1, row=3, columnspan=2, sticky='w')
         self.grid(column=1, row=4, sticky='news')
         self.border_left.grid(column=0, row=1, rowspan=6, sticky='ns')
         self.border_right.grid(column=3, row=1, rowspan=6, sticky='ns')

@@ -28,12 +28,12 @@ MAX_WINDOW_HEIGHT = 0.95
 MAX_WINDOW_WIDTH = 0.995
 NEUTRAL_COLOR = '#878787'
 
-# add a monospaced sans-serif font for cases like dropdown menus with text at both
-#   flush left and flush right of the same label
-MONOSPACED_SANS = (
-    "cascadia code", "consolas", "dejavu sans mono", "liberation mono", 
-    "lucida console", "noto mono", "source code pro")
-# mono_sans = MONOSPACED_SANS[0]
+# # add a monospaced sans-serif font for cases like dropdown menus with text at both
+# #   flush left and flush right of the same label
+# MONOSPACED_SANS = (
+    # "cascadia code", "consolas", "dejavu sans mono", "liberation mono", 
+    # "lucida console", "noto mono", "source code pro")
+# # mono_sans = MONOSPACED_SANS[0]
 
 '''
     widget.winfo_class() is a built-in Tkinter method that refers to 
@@ -89,7 +89,7 @@ MONOSPACED_SANS = (
 
 bgStd = (
     'Frame', 'Toykinter', 'Main', 'Colorizer', 'Toplevel', 'FontPicker',
-    'StatusbarTooltips')
+    'StatusbarTooltips', 'EventsTable')
 
 bgHead = ('FrameHilited2',)
 
@@ -102,9 +102,9 @@ bgStd_fgStd = ('Sizer', )
 
 bgStd_fgStd_fontOut = ('Label', 'LabelFrame')
 
-bgStd_fgStd_fontIn = ('LabelButtonText',)
+# bgStd_fgStd_fontIn = ('LabelButtonText',)
 
-bgLite_fgStd_fontIn_insFg = ('Entry', 'Text', 'EntryAutofillHilited')
+bgLite_fgStd_fontIn_insFg = ('Entry', 'Text', 'EntryAutoHilited')
 
 bgStd_fgStd_fontIn_insFg = ('EntryAuto', 'EntryAutofill', 'EntryUnhilited')
 
@@ -284,6 +284,7 @@ def config_generic(parent):
     # And in the highlight/unhighlight methods do this:
     # bg=self.formats['blah'] ...instead of bg=formats['blah']
     # And give them their own config function here:
+       
 
     def config_border(widg):
         widg.formats = formats
@@ -299,6 +300,13 @@ def config_generic(parent):
             bg=formats['highlight_bg'],
             fg=formats['fg'],
             font=formats['output_font']) 
+
+    def config_labelbuttontext(lab):
+        lab.formats = formats
+        lab.config(
+            bg=formats['bg'],
+            fg=formats['fg'],
+            font=formats['input_font'])            
 
     def config_labeltab(lab):
         lab.formats = formats
@@ -472,6 +480,12 @@ def config_generic(parent):
             elif widg.winfo_subclass() == 'LabelStatusbar':
                 config_labelstatusbar(widg)
 
+            elif widg.winfo_subclass() == 'LabelTab':
+                config_labeltab(widg)
+
+            elif widg.winfo_subclass() in ('LabelButtonText', 'LabelDots'):
+                config_labelbuttontext(widg)
+
             elif widg.winfo_subclass() == 'LabelH1':
                 config_heading1(widg)
             elif widg.winfo_subclass() == 'LabelH2':
@@ -486,8 +500,6 @@ def config_generic(parent):
                 config_labelitalic(widg)
             elif widg.winfo_subclass() == 'LabelHilited':
                 config_labelhilited(widg)
-            elif widg.winfo_subclass() == 'LabelTab':
-                config_labeltab(widg)
             elif widg.winfo_subclass() == 'LabelTip':
                 config_labeltip(widg)
             elif widg.winfo_subclass() == 'LabelTip2':
@@ -601,39 +613,67 @@ def get_formats():
         x += 1
     return prefs_to_use
 
-def get_mono_sans_font_thats_on_users_computer():
-    mono_sans = (MONOSPACED_SANS[0], 12)
-    default_font = "TkDefaultFont"
-    # print("line", looky(seeline()).lineno, "default_font:", default_font)
-    f = 0
-    for i in MONOSPACED_SANS:
-        # ***** THIS BLOCK OF CODE creates an unwanted instance of Tk() since no 
-        #   instance of Tk() exists in this module, and the right instance can't be 
-        #   imported here. Because of this code, all instances of ImageTk.PhotoImage
-        #   need their master explicitly named in order to avoid  
-        #   `_tkinter.TclError: image "pyimage2" doesn't exist`.
-        #   Would be nice to solve this some other way but don't know how. So do this:
-        #   `x = ImageTk.PhotoImage(img, master=self.master)`.
-# POSSIBLE SOLUTION: MOVE THIS WHOLE MODULE TO A MODULE WHERE A REFERENCE TO root ALREADY EXISTS
-# OTHERWISE ALL masters have to be marked in ImageTk... but what's wrong with that??? In Tkinter all masters have to be named anyway
-        temp = Tk()
-        temp.withdraw()
-        test2 = Label(temp, text="test", font=mono_sans)
-        font_used = test2.config()['font'][3]
-        # Keep these 3 lines as explanation.
-        font_requested = test2.config()['font'][4]
-        # print("line", looky(seeline()).lineno, "font_used:", font_used)
-        # print("line", looky(seeline()).lineno, "font_requested:", font_requested)
-        temp.quit()
-        # ************************************
-        if str(font_used) == default_font:
-            mono_sans = (MONOSPACED_SANS[f], 12)
-            break
-        else:
-            break
-        f += 1
+# # DO NOT DELETE TILL NEW input_font IS TESTED AND LOOKS OK
+# def get_mono_sans_font_thats_on_users_computer():
+    '''
+        The commented code was an attempt to get a monospaced sans-serif font 
+        that is present on the user's computer. It worked but it introduced 
+        crash-making bugs since there was now a second instance of Tk() being 
+        run which is never a good idea. The font was needed to simplify the
+        labels in the main menu dropdowns so I've decided to go with one
+        font, Lucida Console, which should be on every computer. I also plan
+        to use this font on the events table so that it will be possible to
+        resize the columns predictably and accurately. The result of this 
+        decision is that it's no longer a good idea to have a user-selectable
+        sans font at all. The user can select the output font but the monospace
+        sans font will be the only input font on everything. This will simplify
+        things a lot and still give the user something to say about display
+        and appearance. I'm leaving the commented code in case someone knows a
+        better way to do what this was trying to do. The problem is that 
+        Tkinter silently changes a requested font to its default font if the
+        requested font is not available, so there's no error, so I can't use
+        try/except but have to try to detect when the default font is going to
+        be used. This so far has not been worth the trouble. If Tkinter's 
+        default font was monospaced, and not totally squashed-together ugly, I
+        would have no complaints. PS I just realized that the crashing (app
+        closes without an error message) might be caused not by the extra Tk()
+        instance but by MANY extra Tk() instances, since this code runs every
+        time make_formats_dict() is called. So this should be fixable but I
+        think the message was clear: simplify.
+    '''
+    # # mono_sans = (MONOSPACED_SANS[0], 12)
+    # # default_font = "TkDefaultFont"
+    # # # print("line", looky(seeline()).lineno, "default_font:", default_font)
+    # # f = 0
+    # # for i in MONOSPACED_SANS:
+        # # # ***** THIS BLOCK OF CODE creates an unwanted instance of Tk() since no 
+        # # #   instance of Tk() exists in this module, and the right instance can't be 
+        # # #   imported here. Because of this code, all instances of ImageTk.PhotoImage
+        # # #   need their master explicitly named in order to avoid  
+        # # #   `_tkinter.TclError: image "pyimage2" doesn't exist`.
+        # # #   Would be nice to solve this some other way but don't know how. So do this:
+        # # #   `x = ImageTk.PhotoImage(img, master=self.master)`.
+# # # POSSIBLE SOLUTION: MOVE THIS WHOLE MODULE TO A MODULE WHERE A REFERENCE TO root ALREADY EXISTS
+# # # OTHERWISE ALL masters have to be marked in ImageTk... but what's wrong with that??? In Tkinter all masters have to be named anyway
+        # # temp = Tk()
+        # # temp.withdraw()
+        # # test2 = Label(temp, text="test", font=mono_sans)
+        # # font_used = test2.config()['font'][3]
+        # # # Keep these 3 lines as explanation.
+        # # font_requested = test2.config()['font'][4]
+        # # # print("line", looky(seeline()).lineno, "font_used:", font_used)
+        # # # print("line", looky(seeline()).lineno, "font_requested:", font_requested)
+        # # temp.quit()
+        # # # ************************************
+        # # if str(font_used) == default_font:
+            # # mono_sans = (MONOSPACED_SANS[f], 12)
+            # # break
+        # # else:
+            # # break
+        # # f += 1
+    # mono_sans = ("dejavu sans mono", 12)
     # print("line", looky(seeline()).lineno, "mono_sans:", mono_sans)
-    return mono_sans
+    # return mono_sans
 
 def make_formats_dict():
     ''' 
@@ -641,15 +681,15 @@ def make_formats_dict():
         and a line below values.append...
     '''
     prefs_to_use = get_formats()
-    # print("line", looky(seeline()).lineno, "prefs_to_use:", prefs_to_use)
-# line 611 prefs_to_use: ['#232931', '#393e46', '#2e5447', '#eeeeee', 'courier', 'ms sans serif', 12]
-    mono_sans = prefs_to_use[5]
-    # print("line", looky(seeline()).lineno, "mono_sans:", mono_sans)
-    if mono_sans not in MONOSPACED_SANS:
-        mono_sans = get_mono_sans_font_thats_on_users_computer()
-    # print("line", looky(seeline()).lineno, "mono_sans:", mono_sans)
-    prefs_to_use.append(mono_sans[0])
-    # print("line", looky(seeline()).lineno, "prefs_to_use:", prefs_to_use)
+    # # print("line", looky(seeline()).lineno, "prefs_to_use:", prefs_to_use)
+# # line 611 prefs_to_use: ['#232931', '#393e46', '#2e5447', '#eeeeee', 'courier', 'ms sans serif', 12]
+    # mono_sans = prefs_to_use[5]
+    # # print("line", looky(seeline()).lineno, "mono_sans:", mono_sans)
+    # if mono_sans not in MONOSPACED_SANS:
+        # mono_sans = get_mono_sans_font_thats_on_users_computer()
+    # # print("line", looky(seeline()).lineno, "mono_sans:", mono_sans)
+    # prefs_to_use.append(mono_sans[0])
+    # # print("line", looky(seeline()).lineno, "prefs_to_use:", prefs_to_use)
 
     keys = [
         # background, foreground
@@ -663,7 +703,8 @@ def make_formats_dict():
         'titlebar_1', 'titlebar_2', 'titlebar_3',
         'titlebar_hilited_0', 'titlebar_hilited_1', 
         'titlebar_hilited_2', 'titlebar_hilited_3',
-        'unshow_font', 'tab_font', 'mono_sans']
+        'unshow_font', 'tab_font']
+        # 'unshow_font', 'tab_font', 'mono_sans']
 
     values = []
 
@@ -690,7 +731,7 @@ def make_formats_dict():
     values.append((prefs_to_use[5], int(prefs_to_use[6] * 1.25)))
     values.append((prefs_to_use[5], int(prefs_to_use[6] * .75), 'italic'))
     values.append((prefs_to_use[4], int(prefs_to_use[6] * 0.75)))
-    values.append((prefs_to_use[7], int(prefs_to_use[6] * 1.00)))
+    # values.append((prefs_to_use[7], int(prefs_to_use[6] * 1.00)))
 
     formats = dict(zip(keys, values))
     return formats

@@ -292,8 +292,8 @@ class LabelHilited3(Labelx):
         self.config(
             bg=formats['highlight_bg'], 
             fg=formats['fg'],
-            # font=formats['input_font']
-            font=formats['mono_sans']
+            font=formats['input_font']
+            # font=formats['mono_sans']
 )
 
 class LabelTip(LabelHilited):
@@ -413,15 +413,17 @@ class LabelButtonText(LabelButtonImage):
     def __init__(self, master, width=8, *args, **kwargs):
         LabelButtonImage.__init__(self, master, *args, **kwargs)
 
+        self.formats = make_formats_dict()
+
         self.config(
             anchor='center',
             borderwidth=1, 
             relief='raised', 
             takefocus=1,
-            bg=formats['bg'],
+            bg=self.formats['bg'],
             width=width,
-            font=formats['input_font'],
-            fg=formats['fg'])
+            font=self.formats['input_font'],
+            fg=self.formats['fg'])
 
 class LabelDots(LabelButtonText):
     ''' 

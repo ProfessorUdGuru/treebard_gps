@@ -15,7 +15,7 @@ from dev_tools import looky, seeline
     This is a Frame that can be gridded anywhere. No scrollbar needed, because
     tabbed widgets are meant to retain a fixed size and the space they are in
     has a scrollbar of its own. The space they are in should not resize, so set
-    `minx` and `miny` to accomodate the tab with the biggest content.
+    `minx` and `miny` to accommodate the tab with the biggest content.
 '''
 
 class LabelTab(Labelx):
@@ -189,7 +189,7 @@ class TabBook(Framex):
 
     def make_active(self, evt=None):
         ''' Open the selected tab & reconfigure it to look open. '''
-        
+
         self.formats = make_formats_dict()
 
         # position attributes are needed in the instance
