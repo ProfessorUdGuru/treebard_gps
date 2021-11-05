@@ -359,18 +359,21 @@ class EventsTable(Frame):
 
     instances = []
 
-    def __init__(self, master, root, treebard, attrib=False, *args, **kwargs):
+    def __init__(self, master, root, treebard, main, attrib=False, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
         self.root = root
         self.treebard = treebard
+        self.main_window = main
         self.attrib = attrib
+
+        self.main_canvas = main.master
 
         self.current_person = get_current_person()
 
         self.inwidg = None
         self.headers = []
-        self.widths = [[], [], [], [], []]
+        self.widths = [0, 0, 0, 0, 0]
 
         self.screen_height = self.winfo_screenheight()
         self.column_padding = 2
@@ -392,37 +395,6 @@ class EventsTable(Frame):
 
         self.make_header()
         self.make_table_cells()
-
-    def size_columns_to_content(self):
-        '''
-            Get length of each cell in the column and size the top row cells to 
-            fit the longest content in the column. The whole column will follow
-            this size. The method make_table_cells() has some influence in this
-            sizing process because column 0 (Event) sets itself to Tkinter's 
-            default width=20 if you don't tell it not to, and column 4 (Age) 
-            should be smaller than the others. I'm trying to avoid manually 
-            resizable columns since I believe they're usually an unnecessary,
-            partially functioning nuisance and an alternative to making design 
-            decisions. What makes this work in a table is monospace fonts, 
-            which are a bit ugly, but not as ugly as unreadable table columns.
-        '''
-        self.header_widths = []
-        for lst in self.widths:
-            # so an empty table can open if the current person is null
-            if len(lst) > 0 :
-                self.header_widths.append(max(lst))
-            else:
-                self.header_widths.append(0)
-        for row in self.cell_pool:
-            c = 0
-            for ent in row[1][0:5]:
-                if ent.winfo_class() == 'Entry':
-                    if ent.winfo_subclass() == 'EntryAuto':
-                        if len(ent.grid_info()) != 0:
-                            if ent.grid_info()['row'] == 2:
-                                ent.config(
-                                    width=self.header_widths[c] + self.column_padding)
-                                c += 1  
 
     def get_initial(self, evt):
         self.initial = evt.widget.get()
@@ -708,37 +680,33 @@ class EventsTable(Frame):
 
     def make_table_cells(self, qty=2000):
         '''
-            EntryAuto was used for all the text columns to keep the code 
+            EntryAuto is used for all the text columns to keep the code 
             symmetrical for all the text columns, with autofill defaulting to 
             False except for the places column.
         '''
         self.place_autofill_values = EntryAuto.create_lists(place_strings)
         self.table_cells = []
-        for i in range(int(qty/8)): # 250
+        for i in range(int(qty/8)):
             row = []
             for j in range(8):
                 if j < 5:
                     if j == 0:
                         cell = EntryAuto(
-                            self, 
+                            self, width=0,
                             autofill=True, 
                             values=self.event_autofill_values)
                     elif j == 2:
                         cell = EntryAuto(
-                            self, 
+                            self, width=0, 
                             autofill=True, 
                             values=self.place_autofill_values)
                     else:                        
-                        cell = EntryAuto(self)
+                        cell = EntryAuto(self, width=0,)
                     cell.initial = ''
                     cell.final = ''
                     cell.finding = None
                     cell.bind('<FocusIn>', self.get_initial, add="+")
                     cell.bind('<FocusOut>', self.get_final, add="+")
-                    if j == 0:
-                        cell.config(width=1)
-                    elif j == 4:
-                        cell.config(width=5)
                 elif j == 5:
                     cell = LabelDots(self, RolesDialog, finding_row=None)
                 elif j == 6:
@@ -887,20 +855,26 @@ class EventsTable(Frame):
                 else:
                     widg.grid(column=c, row=r, sticky='ew', pady=(3,0))
                 if c < 5:
-                    widg.insert(0, text)
-                    self.widths[c].append(len(text))                    
+                    if len(text) > self.widths[c]:
+                        self.widths[c] = len(text)
+                    widg.insert(0, text)                    
                 c += 1
             r += 1
+        z = 0
+        for widg in self.headers:
+            if self.widths[z] < len(HEADS[z]):
+                widg.config(width=len(HEADS[z]) + 2)
+            else:
+                widg.config(width=self.widths[z] + 2)
+            z += 1
 
         self.fix_tab_traversal()
         for row_num in range(self.grid_size()[1]):
             self.grid_rowconfigure(row_num, weight=0)
         self.new_row = row_num + 1
-        
-        self.size_columns_to_content()
 
         self.new_event_frame.grid(
-            column=0, row=self.new_row, pady=6, columnspan=3, sticky='ew')
+            column=0, row=self.new_row, pady=6, columnspan=5, sticky='ew')
         self.event_input.grid(column=0, row=0, padx=(0,12), sticky='w')
         self.add_event_button.grid(
             column=1, row=0, sticky='w')
@@ -917,8 +891,13 @@ class EventsTable(Frame):
         conn.close()
         self.forget_cells()
         self.new_row = 0 
+        self.widths = [0, 0, 0, 0, 0]
         self.set_cell_content()
-        self.size_columns_to_content()
+        self.resize_scrollbar(self.root, self.main_canvas)
+
+    def resize_scrollbar(self, root, canvas):
+        root.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox('all'))
 
     def forget_cells(self):
         self.update_idletasks()
@@ -933,7 +912,6 @@ class EventsTable(Frame):
         self.add_event_button.grid_forget()
 
     def make_header(self):
-        
         y = 0
         for heading in HEADS:
             head = LabelH3(self, text=heading.upper(), anchor='w')
@@ -1587,7 +1565,6 @@ class NewEventDialog(Toplevel):
         self.cancel()
         for instance in EventsTable.instances:
             instance.redraw(current_person=self.current_person)
-        # self.redraw(current_person=self.current_person)
 
     def couple_ok(self):                
         if len(self.other_person) != 0:
@@ -1894,9 +1871,12 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# person_search button in main.py (or something) seems to be stretching the app too wide. Looks like it's in a column that isn't needed but it's packed, that's just how it looks.
+# see resize_table_on_redraw for proof that a column width can be set correctly
+# main scrollbar and events table frame (self) shd resize on change currper; already tried and sb might be resizing right but table not, maybe used the wrong window (main ie self.main_window in redraw), maybe shd create a unique table resizing funx instead and also keep resizing sb or maybe just replace the window attrib with self which I tried and it messed up bad so I put it back TRY 1) JUST RESIZE TABLE ITSELF AS WELL AS MAIN SB OR -- tried this but not analyzed apparent lack of results -- the test is whether table gets SMALLER when it needs to-- seems like tk naturally gets bigger when it needs to 2) CREATE A UNIQUE RESIZE FUNX FOR REDRAW
 # on change of font size: dropdown font doesn't resize instantly; window/scrollbar don't resize till reloaded; everything has to be set to screensize so if it's too big it shows no bigger than window and with scrollbar showing; font size on roles dialog doesn't resize instantly
+# when sizing/resizing of evt table is fixed, do the same for self.att
 # hook the border sizes to font sizes
+# on change curr per the attributes table doesn't redraw
 # get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
 # image gallery shd not be in tab traversal (button shd be takefocus=0) unless really necessary; if it has to come into focus on tab traversal, give the user a border or something that shows when it is in focus
 # roles dlg not right--hard to see with same bg as main app--change bg color? Make wide border? NO--JUST TEST IT WITH ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work

@@ -190,10 +190,10 @@ class Main(Frame):
 
         self.show_top_pic(self.top_pic_button)
 
-        self.att = EventsTable(attributes_tab, self.root, self.treebard, attrib=True)
+        self.att = EventsTable(attributes_tab, self.root, self.treebard, self, attrib=True)
         EventsTable.instances.append(self.att)
 
-        self.findings_table = EventsTable(persons_tab, self.root, self.treebard)
+        self.findings_table = EventsTable(persons_tab, self.root, self.treebard, self)
         EventsTable.instances.append(self.findings_table)
 
         options_tabs = TabBook(
@@ -234,9 +234,9 @@ class Main(Frame):
 
         # children of persons_tab
         family_table.grid(column=0, row=0, sticky="news", padx=12, pady=12)
-        self.right_panel.grid(column=1, row=0, sticky='e', padx=12, pady=12)
+        self.right_panel.grid(column=1, row=0, sticky='w', padx=12, pady=12)
         self.findings_table.grid(
-            column=0, row=1, columnspan=2, sticky='news', padx=12, pady=12)
+            column=0, row=1, columnspan=2, padx=12, pady=12)
 
         # children of family_table
         family_canvas.grid(column=0, row=0, sticky="news")
@@ -244,7 +244,7 @@ class Main(Frame):
         family_sbh.grid(column=0, row=1, sticky="ew")
 
         # children of attributes tab
-        self.att.grid(column=0, row=0, sticky='e')
+        self.att.grid(column=0, row=0)
 
         # children of self.names_tab
 
