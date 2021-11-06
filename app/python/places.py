@@ -144,8 +144,8 @@ class NewPlaceDialog():
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
         # DO NOT DELETE THESE LINES, UNCOMMENT IN REAL APP
-        # self.treebard.scroll_mouse.append_to_list([canvas, window])
-        # self.treebard.scroll_mouse.configure_mousewheel_scrolling()
+        self.treebard.scroll_mouse.append_to_list([canvas, window])
+        self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
         window.vsb = Scrollbar(
             self.new_places_dialog, 

@@ -708,9 +708,9 @@ class EventsTable(Frame):
                     cell.bind('<FocusIn>', self.get_initial, add="+")
                     cell.bind('<FocusOut>', self.get_final, add="+")
                 elif j == 5:
-                    cell = LabelDots(self, RolesDialog, finding_row=None)
+                    cell = LabelDots(self, RolesDialog, self.treebard, finding_row=None)
                 elif j == 6:
-                    cell = LabelDots(self, NotesDialog, finding_row=None)
+                    cell = LabelDots(self, NotesDialog, self.treebard, finding_row=None)
                 elif j == 7:
                     cell = LabelButtonText(
                         self,
@@ -1275,9 +1275,8 @@ class NewEventDialog(Toplevel):
         scridth_w = Frame(window, width=scridth)
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
-        # DO NOT DELETE THESE LINES, UNCOMMENT IN REAL APP
-        # self.treebard.scroll_mouse.append_to_list([canvas, window])
-        # self.treebard.scroll_mouse.configure_mousewheel_scrolling()
+        self.treebard.scroll_mouse.append_to_list([canvas, window])
+        self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
         window.vsb = Scrollbar(
             self, 
@@ -1871,6 +1870,9 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
+# If no main_image has been input to db, tbard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. tbard will provide defaults which user can change. There's no reason to input a no_photo placeholder image as anything but a main_image so make it impossible, don't let user do it. New table in db called "settings".
+# in save_new_name() in names.py, how to indicate whether the image is supposed to be main_image (1) vs (0) which is now the default in the insert query to images_entities; if already a main_image it has to be changed to 0 programmatically
+# change default of main_image in images_entities table to 0 and in new person input make sure main_image is not being made 1 by default, then go thru images_entities by person_id and for each person make sure there's only one main_image set to 1
 # get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
 # top_pic shd not be in tab traversal (button shd be takefocus=0) unless really necessary; if it has to come into focus on tab traversal, give the user a border or something that shows when it is in focus
 # when changing font, window/scrollbar don't resize till reloaded; see notes in fonts_picker; when fixed get rid of the message
@@ -1881,10 +1883,8 @@ if __name__ == '__main__':
 # in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
 # add buttons to place tab for alias and edit/delete place but don't make them do anything
 # dates prefs tab, get rid of ttk comboboxes
-# change events table to use mono_sans in cells so the width function will work well
 # activate mousewheel scrolling
 # statustips and rcm in search dialog and new person dialog and other recent dialogs; tooltip in attributes table says that adding a date will move the attrib to evts table
-# Make scrollbar and/or window resize right when changing current persons. Since putting new event entry and button in a frame, this has gotten worse, sometimes when manually resizing, the window won't show the new event section at all or cuts off part of it. Make max y smaller vs screensize
 # add splash screen and open screen
 # add more camera graphics to images, change size and color to same color as first one, make one with no person the default
 

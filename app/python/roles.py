@@ -34,7 +34,7 @@ formats = make_formats_dict()
 
 class RolesDialog(Toplevel):
     def __init__(
-            self, master, finding_id, header, current_person, 
+            self, master, finding_id, header, current_person, treebard,
             pressed=None, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
@@ -42,6 +42,7 @@ class RolesDialog(Toplevel):
         self.finding_id = finding_id
         self.header = header
         self.current_person = current_person
+        self.treebard = treebard
         self.pressed = pressed
 
         self.role_types = []
@@ -84,8 +85,8 @@ class RolesDialog(Toplevel):
         scridth_n = Frame(self.window, height=scridth)
         scridth_w = Frame(self.window, width=scridth)
         # DO NOT DELETE THESE LINES, UNCOMMENT IN REAL APP
-        # self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
-        # self.treebard.scroll_mouse.configure_mousewheel_scrolling()
+        self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
+        self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
         self.window.vsb = Scrollbar(
             self, 

@@ -431,7 +431,7 @@ class PersonAdd(Toplevel):
         cur = conn.cursor()
         self.get_entered_values(cur, conn)
         self.findings_roles_id = findings_roles_id
-
+        # can these 2 queries be combined?
         cur.execute(select_image_id, (self.selected_image,))
         self.img_id = cur.fetchone()[0]
         cur.execute(select_name_type_id, (self.name_type,))

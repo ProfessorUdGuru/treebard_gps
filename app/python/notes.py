@@ -5,7 +5,7 @@ import sqlite3
 from window_border import Border 
 from widgets import (
     Toplevel, LabelH3, Button, Frame, LabelFrame, 
-    Radiobutton, Entry, Label, LabelMovable, LabelDots, LabelHeader)
+    Radiobutton, Entry, Label, LabelMovable, LabelHeader)
 from toykinter_widgets import  StatusbarTooltips, run_statusbar_tooltips
 from scrolling import ScrolledText, Scrollbar, resize_scrolled_content
 from messagesx import ErrorMessage
@@ -36,14 +36,15 @@ formats = make_formats_dict()
 
 class NotesDialog(Toplevel):
     def __init__(
-            self, master, finding_id, header, current_person, 
+            self, master, finding_id, header, current_person, treebard,
             pressed=None, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
-        self.current_person = current_person
         self.root = master
         self.finding_id = finding_id
         self.header = header
+        self.current_person = current_person
+        self.treebard = treebard
         self.pressed = pressed
 
         self.current_note_text = ''
@@ -90,8 +91,8 @@ class NotesDialog(Toplevel):
         scridth_n = Frame(self.window, height=scridth)
         scridth_w = Frame(self.window, width=scridth)
         # DO NOT DELETE THESE LINES, UNCOMMENT IN REAL APP
-        # self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
-        # self.treebard.scroll_mouse.configure_mousewheel_scrolling()
+        self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
+        self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
         self.window.vsb = Scrollbar(
             self, 

@@ -124,9 +124,8 @@ class PersonSearch(Toplevel):
         scridth_w = Frame(self.window, width=scridth)
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
-        # DO NOT DELETE THESE LINES, UNCOMMENT IN REAL APP
-        # self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
-        # self.treebard.scroll_mouse.configure_mousewheel_scrolling()
+        self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
+        self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
         self.window.vsb = Scrollbar(
             self, 

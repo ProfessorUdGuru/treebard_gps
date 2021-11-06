@@ -3,30 +3,38 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 import sqlite3
-from files import get_current_file
-from styles import root_drive, make_formats_dict, set_window_max_size
+from files import current_file, current_dir, current_drive, project_path
+# from files import get_current_file, current_drive, project_path
+from styles import make_formats_dict
 from widgets import (
     Frame, Canvas, Button, Label, Radiobutton, 
     LabelH3, MessageCopiable, LabelStay)
 from utes import create_tooltip
 from names import get_current_person
-from query_string import (
+from query_strings import (
     select_all_place_images, select_all_source_images, 
     select_all_person_images, select_current_person_id, 
     select_current_person_image, update_images_entities_zero,
     update_images_entities_one
 )
 import dev_tools as dt
+from dev_tools import looky, seeline
+
+
+
+
+
+formats = make_formats_dict()
 
 class Gallery(Frame):
 
     def __init__(
-            self, master, notebook, graphics_tab, root, 
-            canvas,
+            self, 
+            master, notebook, graphics_tab, root, canvas,
             *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
-        self.parent = master
+        self.master = master
         self.nbook = notebook
         self.t7 = graphics_tab
         self.root = root
@@ -36,29 +44,27 @@ class Gallery(Frame):
         self.width_strings = []
         self.height_strings = []
 
-        formats = make_formats_dict()
-
         self.current_person = get_current_person()[0]
 
-        set_window_max_size(self.parent)
+        # set_window_max_size(self.master)
         self.filter_pix_data()
         self.make_widgets()        
 
     def make_widgets(self):
 
-        if self.parent.winfo_class() == 'Toplevel':
+        if self.master.winfo_class() == 'Toplevel':
             gallery_canvas = Canvas(
-                self.parent,
+                self.master,
                 bd=0,
                 highlightthickness=0)
 
             self.gallery_content = Frame(gallery_canvas)
             gallery_canvas.grid(row=0, column=0, sticky='nsew')
 
-            self.parent.grid_columnconfigure(0, weight=1)
-            self.parent.grid_rowconfigure(0, weight=1)
+            self.master.grid_columnconfigure(0, weight=1)
+            self.master.grid_rowconfigure(0, weight=1)
         else:
-            self.gallery_content = Frame(self.parent)
+            self.gallery_content = Frame(self.master)
             self.gallery_content.grid(column=0, row=0)
 
         self.thumb_canvas = Canvas(
@@ -81,27 +87,28 @@ class Gallery(Frame):
         self.pic_canvas.bind('<B1-Motion>', self.scroll_move)     
 
         self.img_path = '{}treebard_gps\data\{}\images\{}'.format(
-            root_drive, self.image_dir, self.main_pic)
+            current_drive, self.image_dir, self.main_pic)
         img_big = Image.open(self.img_path)
         self.tk_img = ImageTk.PhotoImage(img_big)
         self.pic_canvas.image = self.tk_img
 
         z = 0
         self.current_pictures = sorted(self.current_pictures)
-
+        print("line", looky(seeline()).lineno, "self.current_pictures:", self.current_pictures)
         for img in self.current_pictures:
             pic_col = Frame(self.thumbstrip)
             pic_col.pack(side='left', expand=1, fill='y')
 
             pic_file = img
-            self.img_path = '{}treebard_gps\data\{}\images\{}'.format(root_drive, self.image_dir, pic_file)
+            self.img_path = '{}treebard_gps\data\{}\images\{}'.format(current_drive, self.image_dir, pic_file)
             idx = len(pic_file)
             bare = pic_file[0:idx-4]
             thumbsy = Image.open(self.img_path)
             self.width_strings.append(thumbsy.width)
             self.height_strings.append(thumbsy.height)
             thumbsy.thumbnail((185,85))
-            thumb_path = 'images/{}_tmb.png'.format(bare)
+            thumb_path = '{}images/{}_tmb.png'.format(project_path, bare)
+            # thumb_path = 'images/{}_tmb.png'.format(bare)
             # overwrites file by same name if it exists 
             thumbsy.save(thumb_path)
             small = ImageTk.PhotoImage(file=thumb_path, master=self.thumbstrip)
@@ -115,7 +122,7 @@ class Gallery(Frame):
             self.thumb_labels.append(thumb)
 
             # lambda used to save value in loop
-            if self.parent.winfo_class() == 'Toplevel':
+            if self.master.winfo_class() == 'Toplevel':
                 rad = Radiobutton(
                     pic_col,
                     takefocus=0,
@@ -133,7 +140,7 @@ class Gallery(Frame):
                     height=24,
                     width=24)   
                 rad.pack(expand=1, fill='both')
-                if self.parent.winfo_name() == 'source_tab':
+                if self.master.winfo_name() == 'source_tab':
                     pic_file = '{}, {}'.format(self.source, pic_file)
             
             create_tooltip(rad, pic_file)
@@ -216,9 +223,9 @@ class Gallery(Frame):
                 "Right Button", 
                 "Click with mouse or when highlighted click with spacebar.")) 
 
-        if self.parent.winfo_class() == 'Toplevel':
+        if self.master.winfo_class() == 'Toplevel':
      
-            box = Frame(self.parent)
+            box = Frame(self.master)
             box.grid(column=0, row=1, pady=12)
 
             close = Button(
@@ -227,7 +234,7 @@ class Gallery(Frame):
                 width=8, 
                 command=self.cancel_gallery)  
             close.grid()
-            self.parent.protocol('WM_DELETE_WINDOW', self.cancel_gallery)
+            self.master.protocol('WM_DELETE_WINDOW', self.cancel_gallery)
 
         self.thumb_canvas.create_window(0, 0, anchor='nw', window=self.thumbstrip)
         self.thumb_canvas.config(
@@ -248,7 +255,7 @@ class Gallery(Frame):
                     gchild.bind("<Enter>", self.thumb_start)
                     gchild.bind("<Motion>", self.thumb_move)
 
-        if self.parent.winfo_class() == 'Toplevel':
+        if self.master.winfo_class() == 'Toplevel':
 
             gallery_canvas.create_window(
                 0, 0, anchor=tk.NW, window=self.gallery_content)
@@ -258,18 +265,18 @@ class Gallery(Frame):
         self.config_labels()
             
     def resize_scrollbar(self):
-        self.parent.update_idletasks()                     
+        self.master.update_idletasks()                     
         self.pic_canvas.config(scrollregion=self.pic_canvas.bbox("all")) 
 
     def resize_window(self):
-        self.parent.update_idletasks()
+        self.master.update_idletasks()
         page_x = self.gallery_content.winfo_reqwidth()
         page_y = self.gallery_content.winfo_reqheight()+48
-        self.parent.geometry('{}x{}'.format(page_x, page_y))
+        self.master.geometry('{}x{}'.format(page_x, page_y))
 
     def cancel_gallery(self, event=None):
         self.root.focus_set()
-        self.parent.destroy() 
+        self.master.destroy() 
 
     def focus_clicked(self, evt):
         evt.widget.focus_set()
@@ -285,8 +292,8 @@ class Gallery(Frame):
         select_pic = self.current_pictures.index(self.thumb_dict[evt.widget])
 
         self.chosen_picfile = self.current_pictures[select_pic]
-        current_dir = files.get_current_file()[1]
-        self.img_path = '{}treebard_gps\data\{}\images\{}'.format(root_drive, current_dir, self.chosen_picfile)
+        # current_dir = get_current_file()[1]
+        self.img_path = '{}treebard_gps\data\{}\images\{}'.format(current_drive, current_dir, self.chosen_picfile)
 
         pix_data = self.get_current_pix_data()
         for tup in pix_data:
@@ -343,8 +350,8 @@ class Gallery(Frame):
         # scroll to top so controls are seen when tab opens
         self.canvas.yview_moveto(0.0)
         
-        if self.parent.winfo_class() == 'Toplevel':
-            self.parent.lower(belowThis=self.nbook)
+        if self.master.winfo_class() == 'Toplevel':
+            self.master.lower(belowThis=self.nbook)
 
         editlab.pack() # When this grids a big pic, the whole notebook gets big
         
@@ -366,10 +373,11 @@ class Gallery(Frame):
             if tup[3] == 1:
                 self.main_pic = tup[1]
                 self.caption_text = tup[2]
-                if self.parent.winfo_name() == 'source_tab':
+                if self.master.winfo_name() == 'source_tab':
                     self.source = tup[4]
 
         self.current_pictures = []
+        print("line", looky(seeline()).lineno, "pix_data:", pix_data)
         for tup in pix_data:
             self.current_pictures.append(tup[1]) 
             curr_entity = tup[0]
@@ -383,9 +391,9 @@ class Gallery(Frame):
         if self.counter == 0:
             self.counter = len(self.caption_path)    
         self.counter -= 1 
-        current_dir = files.get_current_file()[1]
+        # current_dir = get_current_file()[1]
         self.img_path = '{}treebard_gps\data\{}\images\{}'.format(
-            root_drive, current_dir, self.caption_path[self.counter][0])
+            current_drive, current_dir, self.caption_path[self.counter][0])
         self.caption_text = self.caption_path[self.counter][1]
 
         new = Image.open(self.img_path)
@@ -404,9 +412,9 @@ class Gallery(Frame):
         self.counter += 1 
         if self.counter == len(self.caption_path):
             self.counter = 0
-        current_dir = files.get_current_file()[1]
+        # current_dir = get_current_file()[1]
         self.img_path = '{}treebard_gps\\data\\{}\\images\\{}'.format(
-            root_drive, current_dir, self.caption_path[self.counter][0])
+            current_drive, current_dir, self.caption_path[self.counter][0])
         self.caption_text = self.caption_path[self.counter][1]
 
         new = Image.open(self.img_path)
@@ -422,13 +430,14 @@ class Gallery(Frame):
 
     def get_current_pix_data(self):
 
-        current_file_tup = files.get_current_file()
-        current_file = current_file_tup[0]
-        self.image_dir =  current_file_tup[1]
+        # current_file_tup = get_current_file()
+        # current_file = current_file_tup[0]
+        # self.image_dir =  current_file_tup[1]
+        self.image_dir = current_dir
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
 
-        if self.parent.winfo_name() == 'place_tab':
+        if self.master.winfo_name() == 'place_tab':
             cur.execute(select_all_place_images)
             # cur.execute('''
                 # SELECT places, images, caption, main_image
@@ -440,7 +449,7 @@ class Gallery(Frame):
                     # JOIN image
                         # ON image.image_id = images_entities.image_id 
                 # ''')
-        elif self.parent.winfo_name() == 'source_tab':
+        elif self.master.winfo_name() == 'source_tab':
             cur.execute(select_all_source_images)
             # cur.execute('''
                 # SELECT citations, images, caption, main_image, sources
@@ -454,7 +463,7 @@ class Gallery(Frame):
                     # JOIN image
                         # ON image.image_id = images_entities.image_id 
                 # ''')
-        elif self.parent.winfo_class() == 'Toplevel': # person images
+        elif self.master.winfo_class() == 'Toplevel': # person images
             cur.execute(select_all_person_images, (self.current_person,))
             # cur.execute(
             # '''
@@ -471,11 +480,13 @@ class Gallery(Frame):
             # ''',
             # (self.current_person,))
 
-        if self.parent.winfo_class() != 'Toplevel':
+        if self.master.winfo_class() != 'Toplevel':
             pix_data = cur.fetchall()
+            print("line", looky(seeline()).lineno, "pix_data:", pix_data)
         else:
             pix_data = cur.fetchall()
             pix_data = [list(i) for i in pix_data]
+            print("line", looky(seeline()).lineno, "pix_data:", pix_data)
         cur.close()
         conn.close()            
 
@@ -548,7 +559,7 @@ class Gallery(Frame):
     def set_main_pic(self, val): 
 
         radio_value = (val,)
-        current_file = files.get_current_file()[0]
+        # current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute("PRAGMA foreign_keys = 1")
         cur = conn.cursor()

@@ -434,11 +434,13 @@ class LabelDots(LabelButtonText):
             self, 
             master,
             dialog_class,
+            treebard,
             *args, **kwargs):
         LabelButtonText.__init__(self, master, *args, **kwargs)
 
         self.master = master
         self.dialog_class = dialog_class
+        self.treebard = treebard
         self.current_person = None
         
         self.root = master.master
@@ -454,6 +456,7 @@ class LabelDots(LabelButtonText):
             self.finding_id, 
             self.header, 
             self.current_person,
+            self.treebard,
             pressed=evt.widget)
 
 class LabelBoilerplate(Labelx):

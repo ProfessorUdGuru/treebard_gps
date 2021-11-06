@@ -9,11 +9,13 @@ from files import (
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonPlain, FrameHilited1,
     CanvasHilited, FrameHilited3, Toplevel, LabelBoilerplate)
+from styles import config_generic
 from custom_tabbed_widget import TabBook
 from dropdown import DropdownMenu, placeholder
 from autofill import EntryAutoHilited    
 from scrolling import Scrollbar    
 from events_table import EventsTable
+from gallery import Gallery
 from colorizer import Colorizer
 from font_picker import FontPicker
 from names import (
@@ -38,7 +40,7 @@ MAIN_TABS = (
 
 RIGHT_PANEL_TABS = (("images", "I"), ("do list", "O"))
 
-PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"))
+PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"), ("images", "M"))
 
 ICONS = (
     'open', 'cut', 'copy', 'paste', 'print', 'home', 'first', 
@@ -321,7 +323,20 @@ class Main(Frame):
         self.show_top_pic(self.top_pic_button)
 
     def open_person_gallery(self):
-        pass
+
+        person_gallery_dlg = Toplevel(self.root)
+
+        person_gallery_dlg.grid_columnconfigure(0, weight=1)
+        person_gallery_dlg.grid_rowconfigure(0, weight=1)
+# master, notebook, graphics_tab, root, canvas,
+        person_gallery = Gallery(
+            person_gallery_dlg, 
+            self.main_tabs, 
+            self.main_tabs.store['graphics'], # just pass main_tabs & extract this one in instance
+            self.root, 
+            self.master)
+
+        config_generic(person_gallery_dlg)
 
     def show_top_pic(self, top_pic_button):
         current_file_tup = get_current_file()

@@ -129,7 +129,7 @@ insert_image_new = '''
 
 insert_images_entities = '''
     INSERT INTO images_entities (image_id, main_image, person_id) 
-    VALUES (?, 1, ?) 
+    VALUES (?, 0, ?) 
 '''
 
 insert_kin_type_new = '''
@@ -265,6 +265,20 @@ select_all_nested_places = '''
 select_all_person_ids = '''
     SELECT person_id FROM person
 '''
+
+# select_all_person_images = '''
+    # SELECT names, images, caption, main_image
+    # FROM images_entities
+        # JOIN person
+            # ON images_entities.person_id = person.person_id
+        # JOIN image
+            # ON image.image_id = images_entities.image_id 
+        # JOIN name
+            # ON person.person_id = name.person_id
+    # WHERE images_entities.person_id = ?
+        # AND name_type_id = 1
+# '''
+
 
 select_all_person_images = '''
     SELECT names, images, caption, main_image
