@@ -7,21 +7,24 @@ from files import current_file
 from query_strings import update_format_font, select_format_font_scheme
 from widgets import Label, Frame, Scale, Button
 from styles import make_formats_dict, config_generic
+from messages import open_error_message, fonts_msg
+from scrolling import resize_scrolled_content    
 from custom_combobox_widget import Combobox
 import dev_tools as dt
 from dev_tools import looky, seeline
 
 
-
+dt.make_rollback_copy()
 
 
 formats = make_formats_dict()
 
 class FontPicker(Frame):
-    def __init__(self, master, root, *args, **kwargs):
+    def __init__(self, master, root, main, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
         self.root = root
+        self.main = main
         self.all_fonts = sorted(font.families())
 
         conn = sqlite3.connect(current_file)
@@ -91,7 +94,24 @@ class FontPicker(Frame):
         cur.close()
         conn.close()
 
+        # Running redraw() anywhere in this block of code doesn't help, but if 
+        #   run manually via ctrl+s it resizes the scrollbar correctly--why? 
+        #   The sb isn't tall enough EVEN IF MAKING FONT SMALLER but ok on reload. 
+        #   HINT: clicking APPLY button messes up the scrollbar EVEN IF NO CHANGE 
+        #   IS MADE TO FONT SIZE. So that should help find the bug.
+        #   HINT 2: CTRL+S also does nothing unless the Person Tab is active.
+        # self.main.findings_table.redraw()
+        # Try again after fixing all missing stuff in config_generic re: fonts
         config_generic(self.root)
+        resize_scrolled_content(self.root, self.main.master, self.main)
+
+        msg0 = open_error_message(
+            self, 
+            fonts_msg[0], 
+            "Redraw-on-Font-Change Bug", 
+            "OK")
+        msg0[0].grab_set()
+        msg0[1].config(aspect=400)
 
     def show_font_size(self, evt):
         self.fontSize = self.fontSizeVar.get()
@@ -100,7 +120,7 @@ if __name__ == "__main__":
 
     root = tk.Tk()
 
-    t = FontPicker(root, root)
+    t = FontPicker(root, root, main=None)
     t.grid()
 
     q = Label(root, text="This text represents everything outside of the "

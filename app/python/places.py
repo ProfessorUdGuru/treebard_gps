@@ -132,7 +132,7 @@ class NewPlaceDialog():
             width=int(size[0] * 0.85), height=int(size[1] * 0.95))
         self.new_places_dialog.columnconfigure(1, weight=1)
         self.new_places_dialog.rowconfigure(4, weight=1)
-        canvas = Border(self.new_places_dialog, size=3) # don't hard-code size            
+        canvas = Border(self.new_places_dialog)          
         canvas.title_1.config(text=self.title)
         canvas.title_2.config(text="input: {}".format(self.place_input))
 

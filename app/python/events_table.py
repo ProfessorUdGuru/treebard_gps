@@ -1262,7 +1262,7 @@ class NewEventDialog(Toplevel):
 
         self.columnconfigure(1, weight=1)
         self.rowconfigure(4, weight=1)
-        canvas = Border(self, size=3) # don't hard-code size   
+        canvas = Border(self)
 
         canvas.title_1.config(text="New Event Dialog")
         canvas.title_2.config(text="Current Person: {}, id #{}".format(
@@ -1871,14 +1871,12 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# see resize_table_on_redraw for proof that a column width can be set correctly
-# main scrollbar and events table frame (self) shd resize on change currper; already tried and sb might be resizing right but table not, maybe used the wrong window (main ie self.main_window in redraw), maybe shd create a unique table resizing funx instead and also keep resizing sb or maybe just replace the window attrib with self which I tried and it messed up bad so I put it back TRY 1) JUST RESIZE TABLE ITSELF AS WELL AS MAIN SB OR -- tried this but not analyzed apparent lack of results -- the test is whether table gets SMALLER when it needs to-- seems like tk naturally gets bigger when it needs to 2) CREATE A UNIQUE RESIZE FUNX FOR REDRAW
-# on change of font size: dropdown font doesn't resize instantly; window/scrollbar don't resize till reloaded; everything has to be set to screensize so if it's too big it shows no bigger than window and with scrollbar showing; font size on roles dialog doesn't resize instantly
-# when sizing/resizing of evt table is fixed, do the same for self.att
-# hook the border sizes to font sizes
-# on change curr per the attributes table doesn't redraw
 # get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, graphics tab shows on edit click in a gallery, sources/places tabs
-# image gallery shd not be in tab traversal (button shd be takefocus=0) unless really necessary; if it has to come into focus on tab traversal, give the user a border or something that shows when it is in focus
+# top_pic shd not be in tab traversal (button shd be takefocus=0) unless really necessary; if it has to come into focus on tab traversal, give the user a border or something that shows when it is in focus
+# when changing font, window/scrollbar don't resize till reloaded; see notes in fonts_picker; when fixed get rid of the message
+# on change of font size: dropdown font doesn't resize instantly; font size on roles/notes dialogs esp headers doesn't resize instantly
+# when sizing/resizing of evt table is fixed, do the same for self.att
+# add sb to roles/notes dlg & other dlg in case someone is using big fonts on small screen
 # roles dlg not right--hard to see with same bg as main app--change bg color? Make wide border? NO--JUST TEST IT WITH ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work
 # in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
 # add buttons to place tab for alias and edit/delete place but don't make them do anything

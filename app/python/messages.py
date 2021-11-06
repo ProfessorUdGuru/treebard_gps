@@ -167,3 +167,7 @@ dates_msg = (
     "That month doesn't have that many days. In leap years, February has 29 days. "
         "Leap years are evenly divisible by 4.",
 )
+
+fonts_msg = (
+    "Press ALT+P then CTRL+S to resize the scrollbar after changing fonts.",
+)

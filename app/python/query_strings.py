@@ -648,6 +648,12 @@ select_findings_roles_generic_finding = '''
     WHERE findings_roles.finding_id = ?
 '''
 
+select_format_font_size = '''
+    SELECT font_size, default_font_size
+    FROM format
+    WHERE format_id = 1
+'''
+
 select_format_font_scheme = '''
     SELECT output_font, font_size
     FROM format

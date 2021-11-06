@@ -1,12 +1,14 @@
 # window_border.py
 
 import tkinter as tk
+import sqlite3
 from files import current_file, project_path
 from widgets import (
     LabelButtonImage, Frame, FrameTitleBar, LabelTitleBar, Toplevel, Canvas, 
     FrameHilited3) 
 from toykinter_widgets import StatusbarTooltips
 from styles import make_formats_dict, NEUTRAL_COLOR, config_generic
+from query_strings import select_format_font_size
 from PIL import Image, ImageTk
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -30,7 +32,7 @@ def close(evt):
 class Border(Canvas):
 
     def __init__(
-            self, master, size=3, menubar=False, 
+            self, master, menubar=False, 
             ribbon_menu=False, *args, **kwargs):
         Canvas.__init__(self, master, *args, **kwargs)
 
@@ -47,26 +49,15 @@ class Border(Canvas):
             its host toplevel as parent. Setting font size should change the size of 
             fonts, title bar, and max/min/quit buttons. The settings are 3, 4, 7, 
             or 11 pixels. Currently the title bar size is hard-coded upon
-            instantiation, but should be linked to changes in font size.
+            instantiation, but should be linked to changes in font size (in progress--
+            still have to reload to see change).
         '''
 
         self.master = master # root
-        self.size = size
         self.menubar = menubar
         self.ribbon_menu = ribbon_menu
 
-        sizes = { 
-
-            3 : ['tiny', 20, 0.25], 
-            4 : ['small', 25, 0.75], 
-            7 : ['medium', 31, 0.25], 
-            11 : ['large', 45, 1.0]}
-
-        for k,v in sizes.items():
-            if self.size == k:
-                self.icon_size = v[0]
-                self.offset_x = v[1]
-                self.rel_y = v[2]
+        self.set_title_bar_size()
 
         self.changing_values = None
         self.maxxed = False
@@ -74,6 +65,39 @@ class Border(Canvas):
         self.formats = make_formats_dict()
 
         self.make_widgets()
+
+    def set_title_bar_size(self):
+        sizes = { 
+
+            3 : ['tiny', 20, 0.25], 
+            4 : ['small', 25, 0.75], 
+            7 : ['medium', 31, 0.25], 
+            11 : ['large', 45, 1.0]}
+
+        conn = sqlite3.connect(current_file)
+        cur = conn.execute(select_format_font_size)
+        font_size = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if font_size[0] is None:
+            font_size = font_size[1]
+        else:
+            font_size = font_size[0]
+        if font_size < 11:
+            self.size = 3
+        elif font_size < 14:
+            self.size = 4
+        elif font_size < 20:
+            self.size = 7
+        elif font_size < 30:
+            self.size = 11         
+
+        for k,v in sizes.items():
+            if self.size == k:
+                self.icon_size = v[0]
+                self.offset_x = v[1]
+                self.rel_y = v[2]
 
     def make_widgets(self):
 

@@ -609,84 +609,13 @@ def get_formats():
             prefs_to_use.append(all_prefs[x])
         x += 1
     return prefs_to_use
-
-# # DO NOT DELETE TILL NEW input_font IS TESTED AND LOOKS OK
-# def get_mono_sans_font_thats_on_users_computer():
-    '''
-        The commented code was an attempt to get a monospaced sans-serif font 
-        that is present on the user's computer. It worked but it introduced 
-        crash-making bugs since there was now a second instance of Tk() being 
-        run which is never a good idea. The font was needed to simplify the
-        labels in the main menu dropdowns so I've decided to go with one
-        font, Lucida Console, which should be on every computer. I also plan
-        to use this font on the events table so that it will be possible to
-        resize the columns predictably and accurately. The result of this 
-        decision is that it's no longer a good idea to have a user-selectable
-        sans font at all. The user can select the output font but the monospace
-        sans font will be the only input font on everything. This will simplify
-        things a lot and still give the user something to say about display
-        and appearance. I'm leaving the commented code in case someone knows a
-        better way to do what this was trying to do. The problem is that 
-        Tkinter silently changes a requested font to its default font if the
-        requested font is not available, so there's no error, so I can't use
-        try/except but have to try to detect when the default font is going to
-        be used. This so far has not been worth the trouble. If Tkinter's 
-        default font was monospaced, and not totally squashed-together ugly, I
-        would have no complaints. PS I just realized that the crashing (app
-        closes without an error message) might be caused not by the extra Tk()
-        instance but by MANY extra Tk() instances, since this code runs every
-        time make_formats_dict() is called. So this should be fixable but I
-        think the message was clear: simplify.
-    '''
-    # # mono_sans = (MONOSPACED_SANS[0], 12)
-    # # default_font = "TkDefaultFont"
-    # # # print("line", looky(seeline()).lineno, "default_font:", default_font)
-    # # f = 0
-    # # for i in MONOSPACED_SANS:
-        # # # ***** THIS BLOCK OF CODE creates an unwanted instance of Tk() since no 
-        # # #   instance of Tk() exists in this module, and the right instance can't be 
-        # # #   imported here. Because of this code, all instances of ImageTk.PhotoImage
-        # # #   need their master explicitly named in order to avoid  
-        # # #   `_tkinter.TclError: image "pyimage2" doesn't exist`.
-        # # #   Would be nice to solve this some other way but don't know how. So do this:
-        # # #   `x = ImageTk.PhotoImage(img, master=self.master)`.
-# # # POSSIBLE SOLUTION: MOVE THIS WHOLE MODULE TO A MODULE WHERE A REFERENCE TO root ALREADY EXISTS
-# # # OTHERWISE ALL masters have to be marked in ImageTk... but what's wrong with that??? In Tkinter all masters have to be named anyway
-        # # temp = Tk()
-        # # temp.withdraw()
-        # # test2 = Label(temp, text="test", font=mono_sans)
-        # # font_used = test2.config()['font'][3]
-        # # # Keep these 3 lines as explanation.
-        # # font_requested = test2.config()['font'][4]
-        # # # print("line", looky(seeline()).lineno, "font_used:", font_used)
-        # # # print("line", looky(seeline()).lineno, "font_requested:", font_requested)
-        # # temp.quit()
-        # # # ************************************
-        # # if str(font_used) == default_font:
-            # # mono_sans = (MONOSPACED_SANS[f], 12)
-            # # break
-        # # else:
-            # # break
-        # # f += 1
-    # mono_sans = ("dejavu sans mono", 12)
-    # print("line", looky(seeline()).lineno, "mono_sans:", mono_sans)
-    # return mono_sans
-
+  
 def make_formats_dict():
     ''' 
         To add a style, add a string to the end of keys list
         and a line below values.append...
     '''
     prefs_to_use = get_formats()
-    # # print("line", looky(seeline()).lineno, "prefs_to_use:", prefs_to_use)
-# # line 611 prefs_to_use: ['#232931', '#393e46', '#2e5447', '#eeeeee', 'courier', 'ms sans serif', 12]
-    # mono_sans = prefs_to_use[5]
-    # # print("line", looky(seeline()).lineno, "mono_sans:", mono_sans)
-    # if mono_sans not in MONOSPACED_SANS:
-        # mono_sans = get_mono_sans_font_thats_on_users_computer()
-    # # print("line", looky(seeline()).lineno, "mono_sans:", mono_sans)
-    # prefs_to_use.append(mono_sans[0])
-    # # print("line", looky(seeline()).lineno, "prefs_to_use:", prefs_to_use)
 
     keys = [
         # background, foreground
@@ -701,8 +630,6 @@ def make_formats_dict():
         'titlebar_hilited_0', 'titlebar_hilited_1', 
         'titlebar_hilited_2', 'titlebar_hilited_3',
         'unshow_font', 'tab_font']
-        # 'unshow_font', 'tab_font', 'mono_sans']
-    # print("line", looky(seeline()).lineno, "prefs_to_use[6]:", prefs_to_use[6])
     values = []
 
     values.append(prefs_to_use[0])

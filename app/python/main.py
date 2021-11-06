@@ -206,7 +206,7 @@ class Main(Frame):
             tabbook=self.right_panel)
         colorizer.grid(column=0, row=0)
 
-        fontpicker = FontPicker(options_tabs.store['fonts'], self.root)
+        fontpicker = FontPicker(options_tabs.store['fonts'], self.root, self)
         fontpicker.grid(column=0, row=0)
 
 
@@ -218,8 +218,6 @@ class Main(Frame):
         # children of self
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
-        # self.columnconfigure(1, weight=1)
-        # self.columnconfigure(2, weight=1)
         self.rowconfigure(2, weight=1)
         self.rowconfigure(3, weight=1)
         current_person_area.grid(column=1, row=1, sticky='w', pady=18)
@@ -252,7 +250,8 @@ class Main(Frame):
         options_tabs.grid(column=0, row=0, sticky="news", padx=12, pady=12)
 
         # children of current_person_area
-        self.current_person_label.pack(side="top", pady=24)
+        self.current_person_label.pack(side="top", pady=12)
+        # self.current_person_label.pack(side="top", pady=24)
         instrux.pack(side="left")
         self.person_entry.pack(side="left")
         person_change.pack(side="left", padx=6)
@@ -315,6 +314,8 @@ class Main(Frame):
                     self.current_person_name, self.current_person))
         self.findings_table.current_person = self.current_person
         self.findings_table.redraw(current_person=self.current_person)
+        self.att.current_person = self.current_person
+        self.att.redraw(current_person=self.current_person)
         self.person_entry.delete(0, 'end')
         
         self.show_top_pic(self.top_pic_button)

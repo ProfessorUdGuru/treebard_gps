@@ -73,8 +73,12 @@ EXPORT_TYPES = (
 
 MOD_KEYS = ("Ctrl", "Alt", "Shift", "Ctrl+Alt", "Ctrl+Shift", "Alt+Shift")
 
-def placeholder(evt, name):
-    print('menu test:', name.upper())  
+def placeholder(evt=None, name=""):
+    print('menu test:', name.upper()) 
+    print('evt:', evt) 
+
+# def placeholder(name):
+    # print('menu test:', name.upper()) 
 
 class DropdownMenu(FrameHilited2):
     def __init__(self, master, root, callback=None, *args, **kwargs):

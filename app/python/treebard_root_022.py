@@ -33,8 +33,9 @@ IMPORTS STRUCTURE:
 
  
 # setting to less than 1.0 below prevents maximize from working
-MAX_WINDOW_HEIGHT = 1.0
-MAX_WINDOW_WIDTH = 1.0    
+# setting to more than 1.0 prevents scrollbar from appearing since everything fits in the window but the window is big so you have to drag it by the title bar since it won't scroll unless you manually resize it. Conclusion: keep it 1.0.
+MAX_WINDOW_HEIGHT = 1.0 # if 1.0, sb is available immed
+MAX_WINDOW_WIDTH = 1.0 # if > 1.0, no sb bec window is big enuf to show all
 
 class Treebard():
 
@@ -46,7 +47,6 @@ class Treebard():
     def make_main_canvas_and_border(self):
         self.canvas = Border(
             self.root, 
-            size=4, # use 3, 4, 7, or 11
             menubar=True, 
             ribbon_menu=True)
         self.canvas.title_1.config(text="Treebard GPS")
@@ -63,7 +63,7 @@ def main():
 
     root = tk.Tk()
 
-    root.geometry('+100+50')
+    root.geometry('+75+10')
     root.overrideredirect(1)
     root.iconbitmap(default='{}favicon.ico'.format(project_path)) 
     Treebard(root)

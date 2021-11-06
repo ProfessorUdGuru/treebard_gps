@@ -78,7 +78,7 @@ class NotesDialog(Toplevel):
                 column=0, row=0, sticky='news', columnspan=4, 
                 ipadx=12, ipady=12, padx=(24,0), pady=18)
 
-        self.canvas = Border(self, size=3) # don't hard-code size   
+        self.canvas = Border(self)
 
         self.canvas.title_1.config(text="Notes Dialog")
         self.canvas.title_2.config(text="Current Person: {}, id #{}".format(
