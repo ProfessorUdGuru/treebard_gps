@@ -4,7 +4,8 @@ import tkinter as tk
 import sqlite3
 from PIL import Image, ImageTk
 from files import (
-    get_current_file, current_drive, make_tree, open_tree, 
+    current_file, current_dir, current_drive, make_tree, open_tree,
+    # get_current_file, current_drive, make_tree, open_tree, 
     save_as,save_copy_as, rename_tree, project_path)
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonPlain, FrameHilited1,
@@ -190,7 +191,7 @@ class Main(Frame):
             self.right_panel.store['images'],
             command=self.open_person_gallery)
 
-        self.show_top_pic(self.top_pic_button)
+        self.show_top_pic()
 
         self.att = EventsTable(attributes_tab, self.root, self.treebard, self, attrib=True)
         EventsTable.instances.append(self.att)
@@ -289,6 +290,8 @@ class Main(Frame):
             self.treebard,
             self.person_entry, 
             self.findings_table,
+            self.att,
+            self.show_top_pic,
             names_tab=self.main_tabs.store["names"],
             pic=None)    
 
@@ -320,7 +323,7 @@ class Main(Frame):
         self.att.redraw(current_person=self.current_person)
         self.person_entry.delete(0, 'end')
         
-        self.show_top_pic(self.top_pic_button)
+        self.show_top_pic()
 
     def open_person_gallery(self):
 
@@ -328,20 +331,16 @@ class Main(Frame):
 
         person_gallery_dlg.grid_columnconfigure(0, weight=1)
         person_gallery_dlg.grid_rowconfigure(0, weight=1)
-# master, notebook, graphics_tab, root, canvas,
+
         person_gallery = Gallery(
             person_gallery_dlg, 
             self.main_tabs, 
-            self.main_tabs.store['graphics'], # just pass main_tabs & extract this one in instance
+            self.main_tabs.store['graphics'],
             self.root, 
-            self.master)
+            self.master,
+            current_person_name=self.current_person_name)
 
-        config_generic(person_gallery_dlg)
-
-    def show_top_pic(self, top_pic_button):
-        current_file_tup = get_current_file()
-        current_file = current_file_tup[0]
-        image_dir = current_file_tup[1]
+    def show_top_pic(self):
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_images_entities_main_image)
@@ -353,13 +352,13 @@ class Main(Frame):
         if top_pic:
             img_stg = ''.join(top_pic)
             new_stg = '{}treebard_gps/data/{}/images/{}'.format(
-                current_drive, image_dir, img_stg)
+                current_drive, current_dir, img_stg)
 
             top = Image.open(new_stg)
             img1 = ImageTk.PhotoImage(top, master=self.master)
 
-            top_pic_button.config(image=img1)
-            top_pic_button.image = img1
+            self.top_pic_button.config(image=img1)
+            self.top_pic_button.image = img1
 
             self.tabbook_x = top.width
             self.tabbook_y = top.height

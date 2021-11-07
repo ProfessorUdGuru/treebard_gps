@@ -4,7 +4,6 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import sqlite3
 from files import current_file, current_dir, current_drive, project_path
-# from files import get_current_file, current_drive, project_path
 from styles import make_formats_dict
 from widgets import (
     Frame, Canvas, Button, Label, Radiobutton, 
@@ -23,22 +22,35 @@ from dev_tools import looky, seeline
 
 
 
-
 formats = make_formats_dict()
 
 class Gallery(Frame):
 
     def __init__(
-            self, 
-            master, notebook, graphics_tab, root, canvas,
+            self, master, tabbook, 
+            graphics_tab, 
+            root, canvas,
+            current_person_name=None, current_source_name=None, current_place_name=None,
             *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master
-        self.nbook = notebook
-        self.t7 = graphics_tab
+        self.tabbook = tabbook
+        self.graphics_tab = graphics_tab
         self.root = root
         self.canvas = canvas
+        if current_person_name:
+            self.current_entity_name = current_person_name
+        elif current_source_name:
+            self.current_entity_name = current_source_name
+        elif current_place_name:
+            self.current_entity_name = current_place_name
+        else:
+            print("line", looky(seeline()).lineno, "case_not_handled:")
+
+        # self.graphics_tab = self.tabbook.store['graphics']
+        print("line", looky(seeline()).lineno, "self.graphics_tab:", self.graphics_tab)
+
         self.counter = 0
         self.thumb_labels = []
         self.width_strings = []
@@ -46,9 +58,15 @@ class Gallery(Frame):
 
         self.current_person = get_current_person()[0]
 
-        # set_window_max_size(self.master)
-        self.filter_pix_data()
-        self.make_widgets()        
+        # set_window_max_size(self.master) # *********************************
+
+
+        pix_data = self.get_current_pix_data()
+        if len(pix_data) != 0:
+            self.filter_pix_data(pix_data)
+            self.make_widgets() 
+        elif self.master.winfo_class() == "Toplevel":
+            self.master.destroy()
 
     def make_widgets(self):
 
@@ -94,13 +112,13 @@ class Gallery(Frame):
 
         z = 0
         self.current_pictures = sorted(self.current_pictures)
-        print("line", looky(seeline()).lineno, "self.current_pictures:", self.current_pictures)
         for img in self.current_pictures:
             pic_col = Frame(self.thumbstrip)
             pic_col.pack(side='left', expand=1, fill='y')
 
             pic_file = img
-            self.img_path = '{}treebard_gps\data\{}\images\{}'.format(current_drive, self.image_dir, pic_file)
+            self.img_path = '{}treebard_gps\data\{}\images\{}'.format(
+                current_drive, self.image_dir, pic_file)
             idx = len(pic_file)
             bare = pic_file[0:idx-4]
             thumbsy = Image.open(self.img_path)
@@ -108,7 +126,6 @@ class Gallery(Frame):
             self.height_strings.append(thumbsy.height)
             thumbsy.thumbnail((185,85))
             thumb_path = '{}images/{}_tmb.png'.format(project_path, bare)
-            # thumb_path = 'images/{}_tmb.png'.format(bare)
             # overwrites file by same name if it exists 
             thumbsy.save(thumb_path)
             small = ImageTk.PhotoImage(file=thumb_path, master=self.thumbstrip)
@@ -155,7 +172,7 @@ class Gallery(Frame):
 
         panel = Frame(self.gallery_content)
 
-        subject = LabelH3(panel, text=self.curr_entity)
+        subject = LabelH3(panel, text=self.current_entity_name)
         subject.grid(column=0, row=0, sticky='ew')
 
         # labels with selectable multiline text
@@ -166,7 +183,7 @@ class Gallery(Frame):
             panel, 
             text='EDIT', 
             width=8, 
-            command=lambda graphics=self.t7: self.go_to_graphics(graphics))
+            command=lambda graphics=self.graphics_tab: self.go_to_graphics(graphics))
 
         self.previous_img.config(command=self.back)
         self.next_img.config(command=self.forward)
@@ -295,10 +312,15 @@ class Gallery(Frame):
         # current_dir = get_current_file()[1]
         self.img_path = '{}treebard_gps\data\{}\images\{}'.format(current_drive, current_dir, self.chosen_picfile)
 
+        # pix_data = self.get_current_pix_data()
+        # for tup in pix_data:
+            # if tup[1] == self.chosen_picfile:
+                # self.caption_text = tup[2]
+
         pix_data = self.get_current_pix_data()
         for tup in pix_data:
-            if tup[1] == self.chosen_picfile:
-                self.caption_text = tup[2]
+            if tup[0] == self.chosen_picfile:
+                self.caption_text = tup[1]
 
         new = Image.open(self.img_path)
         self.tk_img = ImageTk.PhotoImage(new)
@@ -345,53 +367,49 @@ class Gallery(Frame):
             image=edit_img)
 
         editlab.image = edit_img
-        self.nbook.select(graphics)
+
+        self.tabbook.active = self.tabbook.tabdict["graphics"][1]
+        self.tabbook.make_active()
 
         # scroll to top so controls are seen when tab opens
         self.canvas.yview_moveto(0.0)
         
         if self.master.winfo_class() == 'Toplevel':
-            self.master.lower(belowThis=self.nbook)
+            self.master.lower(belowThis=self.tabbook)
 
-        editlab.pack() # When this grids a big pic, the whole notebook gets big
+        editlab.pack() # When this grids a big pic, the whole tabbook gets big
         
-        # prevent large pics from blowing up size of the whole notebook
+        # prevent large pics from blowing up size of the whole tabbook
         #    when placed here by edit button on a gallery
         #    Will need more attention when ready to make the graphics tab.
         editlab.config(width=700, height=700)
 
-    def filter_pix_data(self):
+    def filter_pix_data(self, pix_data):
 
         def second_item(s):
             return s[1]
 
-        pix_data = self.get_current_pix_data()
-
         pix_data = sorted(pix_data, key=second_item) 
 
-        for tup in pix_data:
-            if tup[3] == 1:
-                self.main_pic = tup[1]
-                self.caption_text = tup[2]
+        for lst in pix_data:
+            if lst[2] == 1:
+                self.main_pic = lst[0]
+                self.caption_text = lst[1]
                 if self.master.winfo_name() == 'source_tab':
-                    self.source = tup[4]
+                    self.source = lst[3]
 
         self.current_pictures = []
-        print("line", looky(seeline()).lineno, "pix_data:", pix_data)
-        for tup in pix_data:
-            self.current_pictures.append(tup[1]) 
-            curr_entity = tup[0]
-        self.curr_entity = curr_entity
+        for lst in pix_data:
+            self.current_pictures.append(lst[0]) 
         self.caption_path = []
-        for tup in pix_data:
-            self.caption_path.append((tup[1], tup[2])) 
+        for lst in pix_data:
+            self.caption_path.append((lst[0], lst[1])) 
 
     def back(self, evt=None):
 
         if self.counter == 0:
             self.counter = len(self.caption_path)    
         self.counter -= 1 
-        # current_dir = get_current_file()[1]
         self.img_path = '{}treebard_gps\data\{}\images\{}'.format(
             current_drive, current_dir, self.caption_path[self.counter][0])
         self.caption_text = self.caption_path[self.counter][1]
@@ -412,7 +430,6 @@ class Gallery(Frame):
         self.counter += 1 
         if self.counter == len(self.caption_path):
             self.counter = 0
-        # current_dir = get_current_file()[1]
         self.img_path = '{}treebard_gps\\data\\{}\\images\\{}'.format(
             current_drive, current_dir, self.caption_path[self.counter][0])
         self.caption_text = self.caption_path[self.counter][1]
@@ -429,66 +446,32 @@ class Gallery(Frame):
         self.config_labels()
 
     def get_current_pix_data(self):
-
-        # current_file_tup = get_current_file()
-        # current_file = current_file_tup[0]
-        # self.image_dir =  current_file_tup[1]
         self.image_dir = current_dir
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
 
         if self.master.winfo_name() == 'place_tab':
             cur.execute(select_all_place_images)
-            # cur.execute('''
-                # SELECT places, images, caption, main_image
-                # FROM images_entities
-                    # JOIN place
-                        # ON images_entities.place_id = place.place_id 
-                    # JOIN current
-                        # ON current.place_id = place.place_id
-                    # JOIN image
-                        # ON image.image_id = images_entities.image_id 
-                # ''')
         elif self.master.winfo_name() == 'source_tab':
             cur.execute(select_all_source_images)
-            # cur.execute('''
-                # SELECT citations, images, caption, main_image, sources
-                # FROM images_entities
-                    # JOIN source
-                        # ON citation.source_id = source.source_id
-                    # JOIN citation
-                        # ON images_entities.citation_id = citation.citation_id
-                    # JOIN current
-                        # ON current.citation_id = citation.citation_id
-                    # JOIN image
-                        # ON image.image_id = images_entities.image_id 
-                # ''')
         elif self.master.winfo_class() == 'Toplevel': # person images
             cur.execute(select_all_person_images, (self.current_person,))
-            # cur.execute(
-            # '''
-                # SELECT names, images, caption, main_image
-                # FROM images_entities
-                    # JOIN person
-                        # ON images_entities.person_id = person.person_id
-                    # JOIN image
-                        # ON image.image_id = images_entities.image_id 
-                    # JOIN name
-                        # ON person.person_id = name.person_id
-                # WHERE images_entities.person_id = ?
-                    # AND name_type_id = 1
-            # ''',
-            # (self.current_person,))
 
         if self.master.winfo_class() != 'Toplevel':
             pix_data = cur.fetchall()
-            print("line", looky(seeline()).lineno, "pix_data:", pix_data)
         else:
             pix_data = cur.fetchall()
             pix_data = [list(i) for i in pix_data]
-            print("line", looky(seeline()).lineno, "pix_data:", pix_data)
         cur.close()
-        conn.close()            
+        conn.close() 
+
+        copy = list(pix_data)
+        pix_data = []
+        for pic in copy:
+            if not pic[0].startswith("default_image"):
+                pic_name = pic[0]
+                if not pic in pix_data:
+                    pix_data.append(pic)        
 
         return pix_data
 
@@ -559,42 +542,17 @@ class Gallery(Frame):
     def set_main_pic(self, val): 
 
         radio_value = (val,)
-        # current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute("PRAGMA foreign_keys = 1")
         cur = conn.cursor()
         cur.execute(select_current_person_id)
-        # cur.execute('''
-            # SELECT person_id 
-            # FROM current WHERE current_id = 1''')
         curr_per = cur.fetchone()
         curr_per = curr_per
         cur.execute(select_current_person_image, curr_per)
-        # cur.execute('''
-            # SELECT images 
-            # FROM image 
-                # JOIN images_entities 
-                    # ON image.image_id = images_entities.image_id 
-            # WHERE main_image = 1 
-                # AND images_entities.person_id = ?''', curr_per)
         old_top_pic = cur.fetchone()
         cur.execute(update_images_entities_zero, curr_per)
-        # cur.execute('''
-            # UPDATE images_entities 
-            # SET main_image = 0 
-            # WHERE main_image = 1 
-                # AND images_entities.person_id = ?''', curr_per)
         conn.commit()
         cur.execute(update_images_entities_one, radio_value)
-        # cur.execute('''
-            # UPDATE images_entities 
-            # SET main_image = 1
-            # WHERE image_id = (
-                # SELECT image_id 
-                # FROM image WHERE images = ?)
-            # AND person_id = 
-                # (SELECT current.person_id 
-                # FROM current WHERE current_id = 1)''', radio_value)
 
         conn.commit()
         cur.close()

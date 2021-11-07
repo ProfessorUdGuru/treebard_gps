@@ -185,7 +185,7 @@ class PersonAdd(Toplevel):
         self.master = master
         self.inwidg = inwidg
         self.root = root
-        self.inwidg2 = inwidg2       
+        self.inwidg2 = inwidg2
 
         self.xfr = self.inwidg.get()
         self.role_person_edited = False
@@ -204,7 +204,7 @@ class PersonAdd(Toplevel):
         self.geometry('+100+20')
 
         self.columnconfigure(1, weight=1)
-        self.canvas = Border(self, size=3) # don't hard-code size
+        self.canvas = Border(self)
         self.canvas.title_1.config(text="Add Person Dialog")
         self.canvas.title_2.config(text="")
 
@@ -215,9 +215,6 @@ class PersonAdd(Toplevel):
         scridth_w = Frame(self.window, width=scridth)
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
-        # DO NOT DELETE THESE LINES, UNCOMMENT IN REAL APP
-        # self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
-        # self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
         self.window.vsb = Scrollbar(
             self, 
@@ -393,7 +390,7 @@ class PersonAdd(Toplevel):
         self.gender_input.entry.delete(0, 'end')
         self.gender_input.entry.insert(0, 'unknown')
         self.image_input.entry.delete(0, 'end')
-        self.image_input.entry.insert(0, 'no_photo_001.gif')
+        self.image_input.entry.insert(0, 'default_image_unisex.jpg')
         self.name_type_input.entry.config(state='normal')
         self.name_type_input.entry.delete(0, 'end')
         self.name_type_input.entry.insert(0, 'birth name')
@@ -540,7 +537,7 @@ class PersonAdd(Toplevel):
         conn.close()
 
         self.image_input.delete(0, 'end')
-        self.image_input.insert(0, 'no_photo_001.gif')
+        self.image_input.insert(0, 'default_image_unisex.jpg')
 
         for widg in (self.name_type_input, self.name_input):
             widg.delete(0, 'end')

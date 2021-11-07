@@ -16,7 +16,7 @@ from query_strings import (
     select_finding_sorter, select_name_sort_order, select_person_death_date,
     select_person_birth_date, select_findings_persons_ma_id1, 
     select_findings_persons_ma_id2, select_findings_persons_pa_id1,
-    select_findings_persons_pa_id2,
+    select_findings_persons_pa_id2
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -66,15 +66,17 @@ def get_matches(search_input):
 
 class PersonSearch(Toplevel):
     def __init__(
-            self, master, root, treebard, entry, findings_table, 
-            names_tab, pic, *args, **kwargs):
+            self, master, root, treebard, entry, findings_table, attributes_table, 
+            show_top_pic, names_tab, pic, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
-        self.master = master # this is an instance of Main (a Frame)
+        self.master = master # this is the only instance of Main
         self.root = root
         self.treebard = treebard
         self.entry = entry
         self.findings_table = findings_table
+        self.attributes_table = attributes_table
+        self.show_top_pic = show_top_pic
         self.names_tab = names_tab
         self.pic = pic
 
@@ -405,6 +407,9 @@ class PersonSearch(Toplevel):
             use_name = list(self.new_current_person)
             self.new_current_person = "({}) {}".format(use_name[1], use_name[0])
         self.findings_table.redraw(evt, current_person=self.new_current_id)
+        self.attributes_table.redraw(evt, current_person=self.new_current_id)
+
+        self.show_top_pic()
 
         self.master.current_person_label.config(
             text="Current Person (ID): {} ({})".format(

@@ -278,19 +278,29 @@ select_all_person_ids = '''
     # WHERE images_entities.person_id = ?
         # AND name_type_id = 1
 # '''
+# PROBLEM: IF person has no birth_name, then he has no images
+# but if person has birth name and six images, the 6 images will be repeated
 
+# select_all_person_images = '''
+    # SELECT names, images, caption, main_image
+    # FROM images_entities
+        # JOIN person
+            # ON images_entities.person_id = person.person_id
+        # JOIN image
+            # ON image.image_id = images_entities.image_id 
+        # JOIN name
+            # ON person.person_id = name.person_id
+    # WHERE images_entities.person_id = ?
+# '''
 
 select_all_person_images = '''
-    SELECT names, images, caption, main_image
+    SELECT DISTINCT images, caption, main_image
     FROM images_entities
         JOIN person
             ON images_entities.person_id = person.person_id
         JOIN image
             ON image.image_id = images_entities.image_id 
-        JOIN name
-            ON person.person_id = name.person_id
     WHERE images_entities.person_id = ?
-        AND name_type_id = 1
 '''
 
 select_all_place_ids = '''

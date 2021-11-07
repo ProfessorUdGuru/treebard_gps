@@ -874,10 +874,14 @@ class ButtonPlain(Buttonx):
             bg=formats['bg'],  
             fg=formats['fg'],
             cursor='hand2')
-        self.bind('<Enter>', self.highlight)
+        self.bind('<FocusIn>', self.highlight)
+        self.bind('<FocusOut>', self.unhighlight)
 
     def highlight(self, evt):
-        self.config(cursor='hand2')
+        self.config(bg=formats['head_bg'])
+
+    def unhighlight(self, evt):
+        self.config(bg=formats['bg'])
     
 class Entryx(tk.Entry):
     def __init__(self, master, *args, **kwargs):
