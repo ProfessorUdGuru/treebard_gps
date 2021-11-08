@@ -35,6 +35,7 @@ current_drive = '{}\\'.format(split_path[0])
 current_database = '{}treebard_gps/data/sample_tree/sample_tree.tbd'.format(
     current_drive)
 project_path = '{}treebard_gps/app/python/'.format(current_drive)
+
 print("split_path[0]", split_path[0])
 print("argv", argv)
 print("argv[0]", argv[0])

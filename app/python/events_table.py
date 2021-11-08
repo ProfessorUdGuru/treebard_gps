@@ -1870,13 +1870,14 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# when all works in gallery change it to instance of Border
-# make sure gallery sizes right
+# why is there 2 inches extra space at bottom of gallery
+# when gallery opens give the picture focus so arrows will work immed
+# galleries in place and source tabs
 # get rid of nesting in styles.py & other places which would be slowing down on load by passing conn, cur
 # F10 makes menu appear/disappear
 # move footer to general tab in prefs
 # use less space at top for current person area
-# get all main tabs back into working order, redo names tab so it's not about making new person, get the 3 galleries back in order, sources/places tabs
+# get all main tabs back into working order, redo names tab so it's not about making new person
 # when changing font, window/scrollbar don't resize till reloaded; see notes in fonts_picker; when fixed get rid of the message
 # on change of font size: dropdown font doesn't resize instantly; font size on roles/notes dialogs esp headers doesn't resize instantly
 # when sizing/resizing of evt table is fixed, do the same for self.att

@@ -53,7 +53,8 @@ class Border(Canvas):
             still have to reload to see change).
         '''
 
-        self.master = master # root
+        self.master = master # toplevel
+        print("line", looky(seeline()).lineno, "self.master:", self.master)
         self.menubar = menubar
         self.ribbon_menu = ribbon_menu
 

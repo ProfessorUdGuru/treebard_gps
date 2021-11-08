@@ -5,12 +5,12 @@ import sqlite3
 from PIL import Image, ImageTk
 from files import (
     current_file, current_dir, current_drive, make_tree, open_tree,
-    # get_current_file, current_drive, make_tree, open_tree, 
     save_as,save_copy_as, rename_tree, project_path)
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonPlain, FrameHilited1,
     CanvasHilited, FrameHilited3, Toplevel, LabelBoilerplate)
 from styles import config_generic
+from window_border import Border
 from custom_tabbed_widget import TabBook
 from dropdown import DropdownMenu, placeholder
 from autofill import EntryAutoHilited    
@@ -48,6 +48,8 @@ ICONS = (
     'previous', 'next', 'last', 'search', 'add', 'settings', 
     'note', 'back', 'forward') 
 
+SCREEN_SIZE = []
+
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
@@ -59,8 +61,9 @@ class Main(Frame):
         self.current_person_name = ""
         self.tabbook_x = 300
         self.tabbook_y = 300
-        self.screen_width = self.winfo_screenwidth()
-        self.screen_height = self.winfo_screenheight()
+
+        SCREEN_SIZE.append(self.winfo_screenwidth())
+        SCREEN_SIZE.append(self.winfo_screenheight())
 
         self.make_widgets()
         self.make_menus()
@@ -180,8 +183,10 @@ class Main(Frame):
             command=family_canvas.xview)
         family_canvas.config(xscrollcommand=family_sbh.set)
 
-        minx = self.tabbook_x/self.screen_width
-        miny = self.tabbook_y/self.screen_height
+        # minx = self.tabbook_x/self.winfo_screenwidth()
+        # miny = self.tabbook_y/self.winfo_screenheight()
+        minx = self.tabbook_x/SCREEN_SIZE[0]
+        miny = self.tabbook_y/SCREEN_SIZE[1]
 
         self.right_panel = TabBook(
             persons_tab, root=self.root, tabs=RIGHT_PANEL_TABS, side="se", 
@@ -328,16 +333,16 @@ class Main(Frame):
     def open_person_gallery(self):
 
         person_gallery_dlg = Toplevel(self.root)
-
-        person_gallery_dlg.grid_columnconfigure(0, weight=1)
-        person_gallery_dlg.grid_rowconfigure(0, weight=1)
+        gallery_canvas = Border(person_gallery_dlg)
 
         person_gallery = Gallery(
-            person_gallery_dlg, 
+            gallery_canvas, 
             self.main_tabs, 
             self.main_tabs.store['graphics'],
             self.root, 
-            self.master,
+            self.treebard,
+            SCREEN_SIZE,
+            dialog=person_gallery_dlg,
             current_person_name=self.current_person_name)
 
     def show_top_pic(self):

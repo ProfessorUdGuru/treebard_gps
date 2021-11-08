@@ -1235,8 +1235,8 @@ class MessageCopiable(Textx):
         lines = self.count('1.0', 'end', 'displaylines')
         self.config(height=lines)
 
-        self.tag_configure('center', justify='center')
-        self.tag_add('center', '1.0', 'end')
+        self.tag_configure('left', justify='left')
+        self.tag_add('left', '1.0', 'end')
         self.config(state='disabled')
     # How to use:
     # www = MessageCopiable(root, width=32)
