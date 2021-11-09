@@ -99,8 +99,6 @@ bgStd_fgStd = ('Sizer', )
 
 bgStd_fgStd_fontOut = ('Label', 'LabelFrame')
 
-# bgStd_fgStd_fontIn = ('LabelButtonText',)
-
 bgLite_fgStd_fontIn_insFg = ('Entry', 'Text', 'EntryAutoHilited')
 
 bgStd_fgStd_fontIn_insFg = ('EntryAuto', 'EntryAutofill', 'EntryUnhilited')
@@ -411,7 +409,6 @@ def config_generic(parent):
             font=formats['output_font'])
         widg.config(state='readonly')
         widg.config(readonlybackground=widg.cget('background'))
-        # widg.config(readonlyforeground=widg.cget('foreground'))
 
     def config_scale(widg):
         widg.config(

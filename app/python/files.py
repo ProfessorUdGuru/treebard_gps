@@ -143,8 +143,9 @@ def get_new_tree_title(current_file):
 def change_tree_title(parent):
     current_file = get_current_file()[0]
     file_only = get_new_tree_title(current_file) 
-    parent.title('{}            Treebard Genieware Pattern Simulation'.format(
-        file_only))
+    # fix this for Border class
+    # parent.title('{}            Treebard Genieware Pattern Simulation'.format(
+        # file_only))
 
 def get_opening_dir():
     '''detects root drive of current working directory, 

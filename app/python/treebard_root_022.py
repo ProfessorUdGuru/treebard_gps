@@ -4,6 +4,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 from files import project_path, current_file
 from window_border import Border
+from opening import SplashScreen
 from scrolling import MousewheelScrolling
 from styles import config_generic, make_formats_dict
 from main import Main
@@ -41,6 +42,12 @@ class Treebard():
 
     def __init__(self, root):
         self.root = root
+
+
+
+
+
+
         self.make_main_canvas_and_border()
         self.configure_mousewheel_scrolling()
 
@@ -62,11 +69,8 @@ class Treebard():
 def main():
 
     root = tk.Tk()
-
     root.geometry('+75+10')
-    root.overrideredirect(1)
-    root.iconbitmap(default='{}favicon.ico'.format(project_path)) 
-    Treebard(root)
+    root.iconbitmap(default='{}favicon.ico'.format(project_path))
 
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
@@ -74,6 +78,10 @@ def main():
         width=int(MAX_WINDOW_WIDTH * screen_width), 
         height=int(MAX_WINDOW_HEIGHT * screen_height))
     config_generic(root)
+    splash = SplashScreen(root)
+    root.withdraw()
+    Treebard(root)
+    splash.open_treebard()
 
     root.mainloop()
 

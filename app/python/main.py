@@ -69,6 +69,9 @@ class Main(Frame):
         self.make_menus()
         self.get_current_values()
 
+        self.menus_show = True
+        self.root.bind("<KeyPress-F10>", self.make_menus_disappear)
+
     def make_menus(self):
         self.make_top_menu()
         self.make_icon_menu()
@@ -98,6 +101,15 @@ class Main(Frame):
         ribbon['open'].config(command=lambda: open_tree(self.root))
         ribbon['home'].config(command=self.root.quit)
 
+    def make_menus_disappear(self, evt):
+        if self.menus_show is True:
+            self.master.menu_frame.grid_remove()
+            self.master.ribbon_frame.grid_remove()
+            self.menus_show = False
+        else:
+            self.master.menu_frame.grid()
+            self.master.ribbon_frame.grid()
+            self.menus_show = True
 
     def make_scrollbars(self):
 
@@ -136,26 +148,8 @@ class Main(Frame):
         self.names_tab = Frame(self.main_tabs.store["names"])
         prefs_tab = Frame(self.main_tabs.store["preferences"])
 
-        footer = Frame(self)
-        footer.columnconfigure(0, weight=1)
-        footer.rowconfigure(0, weight=1)  
-              
-        self.foot_label = LabelBoilerplate(
-            footer, 
-            text="Treebard GPS is free, portable, open-source, public domain "
-                "software written in Python, Tkinter and SQLite.\nTreebard's "
-                "purpose is to showcase functionalities that could inspire "
-                "developers and users of genealogy database software to expect a "
-                "better user experience.\nGPS stands for "    
-                "'Genieware Pattern Simulation' because GPS is here to show "
-                "the way. Created 2014 - 2022 by Scott Robertson.\nEmail: "
-                "stumpednomore-at-gmail.com. Donations: http://gofundme/whearly. "
-                "forum/blog: http://treebard.proboards.com. website: "
-                "http://treebard.com. repo: https://github.com/ProfessorUdGuru/treebard_gps. ",
-            justify='center')
-
         self.current_person_label = LabelH2(current_person_area)
-        instrux = LabelH3(current_person_area, text="Change current person to: ")
+        instrux = LabelH3(current_person_area, text="Change current person to:")
         self.person_entry = EntryAutoHilited(
             current_person_area, 
             width=36,
@@ -185,8 +179,6 @@ class Main(Frame):
             command=family_canvas.xview)
         family_canvas.config(xscrollcommand=family_sbh.set)
 
-        # minx = self.tabbook_x/self.winfo_screenwidth()
-        # miny = self.tabbook_y/self.winfo_screenheight()
         minx = self.tabbook_x/SCREEN_SIZE[0]
         miny = self.tabbook_y/SCREEN_SIZE[1]
 
@@ -230,6 +222,27 @@ class Main(Frame):
             prefs_tab, root=self.root, tabs=PREFS_TABS, side="se", 
             selected='general', case='upper', miny=0.5, minx=0.66)
 
+        general = Frame(options_tabs.store['general'])
+        general.columnconfigure(0, weight=1)
+        general.rowconfigure(0, weight=1)  
+              
+        about = Label(
+            general, 
+            text="Treebard GPS is free, portable, open-source, public domain "
+                "software written in Python, Tkinter and SQLite. Treebard's "
+                "purpose is to showcase functionalities that could inspire "
+                "developers and users of genealogy database software to expect a "
+                "better user experience. GPS stands for "    
+                "'Genieware Pattern Simulation' because GPS is here to show "
+                "the way. Created 2014 - 2022 by Scott Robertson. Email: "
+                "stumpednomore-at-gmail.com. Donations: http://gofundme/whearly. "
+                "forum/blog: http://treebard.proboards.com. website: "
+                "http://treebard.com. repo: https://github.com/ProfessorUdGuru/treebard_gps. ",
+            justify='left', 
+            wraplength=960)
+        general.grid(column=0, row=0, sticky='news')
+        about.grid(column=0, row=0, sticky='news', padx=24, pady=24)
+
         colorizer = Colorizer(
             options_tabs.store['colors'],
             self.root,
@@ -239,9 +252,6 @@ class Main(Frame):
         fontpicker = FontPicker(options_tabs.store['fonts'], self.root, self)
         fontpicker.grid(column=0, row=0)
 
-
-
-
         # children of self.master i.e. root
         # top_menu & ribbon_menu etc. are gridded in window_border.py
 
@@ -249,10 +259,9 @@ class Main(Frame):
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
         self.rowconfigure(2, weight=1)
-        self.rowconfigure(3, weight=1)
-        current_person_area.grid(column=1, row=1, sticky='w', pady=18)
+        current_person_area.grid(
+            column=1, row=1, sticky='w', padx=(0,24), pady=(0,12))
         self.main_tabs.grid(column=1, row=2, sticky='ew')
-        footer.grid(column=1, row=3, sticky='ew')
 
         # children of main tabs
         persons_tab.grid(column=0, row=0, sticky='news')
@@ -288,20 +297,16 @@ class Main(Frame):
         options_tabs.grid(column=0, row=0, sticky="news", padx=12, pady=12)
 
         # children of current_person_area
-        self.current_person_label.pack(side="top", pady=12)
-        # self.current_person_label.pack(side="top", pady=24)
-        instrux.pack(side="left")
-        self.person_entry.pack(side="left")
-        person_change.pack(side="left", padx=6)
+        self.current_person_label.pack(side="left", fill="x", expand="0", padx=(0,12))
+        instrux.pack(side="left", padx=(0,12))
+        self.person_entry.pack(side="left", padx=(0,12))
+        person_change.pack(side="left", padx=(0,12))
         person_search.pack(side="right")
 
         # children of images tab
         self.right_panel.store['images'].columnconfigure(0, weight=1)
         self.right_panel.store['images'].rowconfigure(0, weight=1)
         self.top_pic_button.grid(column=0, row=0, sticky='news', padx=3, pady=3)
-
-        # children of footer
-        self.foot_label.grid(column=0, row=0, pady=24)
 
     def get_current_values(self):
         all_names = make_all_names_list_for_person_select()

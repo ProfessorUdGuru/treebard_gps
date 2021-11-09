@@ -54,7 +54,6 @@ class Border(Canvas):
         '''
 
         self.master = master # toplevel
-        print("line", looky(seeline()).lineno, "self.master:", self.master)
         self.menubar = menubar
         self.ribbon_menu = ribbon_menu
 
@@ -273,7 +272,7 @@ class Border(Canvas):
         '''
             Withdraw so return of Windows titlebar isn't visible.
             Return Windows titlebar so window can be iconified.
-        '''
+        '''        
         dlg = evt.widget.winfo_toplevel()
         dlg.withdraw() # this hides it
         self.master.update_idletasks()

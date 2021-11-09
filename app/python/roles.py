@@ -168,7 +168,6 @@ class RolesDialog(Toplevel):
 
         self.rolfrm = Frame(self.window)
         new_roles_area = Frame(self.window)
-
         self.make_roles_table()
 
         new_roles_header = LabelH3(new_roles_area, text='Create New Role')
@@ -261,7 +260,6 @@ class RolesDialog(Toplevel):
             name = get_any_name_with_id(lst[2])
             lst.append(lst[2])
             lst[2] = name
-
         cur.close()
         conn.close()
 
@@ -411,9 +409,9 @@ class RolesDialog(Toplevel):
             cur.execute(select_count_findings_roles, (self.finding_id,))
             role_count_per_finding = cur.fetchone()[0]
 
+            self.make_roles_list()
             cur.close()
             conn.close()
-            self.make_roles_list()
 
         role_count_per_finding = 0
         delete_role_from_db()
@@ -445,8 +443,6 @@ class RolesDialog(Toplevel):
             (chosen_role_type_id, self.edited_role_id))
         conn.commit()
 
-        cur.close()
-        conn.close()
 
         for child in self.rolfrm.winfo_children():
             if child.winfo_class() == 'Frame':
@@ -459,6 +455,8 @@ class RolesDialog(Toplevel):
 
         self.get_role_types()
         self.make_roles_list()
+        cur.close()
+        conn.close()
 
     def make_new_person(self, from_edit=False):
         if from_edit is False:
@@ -490,8 +488,6 @@ class RolesDialog(Toplevel):
             insert_findings_roles, 
             (self.finding_id, role_type_id, role_person_id))
         conn.commit()
-        cur.close()
-        conn.close()
         dont_destroy = []
         for child in self.rolfrm.winfo_children():
             if child.winfo_class() == 'Frame':
@@ -511,6 +507,8 @@ class RolesDialog(Toplevel):
         self.person_input.delete(0, 'end')
         resize_scrolled_content(self, self.canvas, self.window)
         self.make_roles_list()
+        cur.close()
+        conn.close()
 
     def change_role_person(self, edited_role_person):
         if "#" in edited_role_person:
@@ -525,8 +523,6 @@ class RolesDialog(Toplevel):
         cur.execute(
             update_findings_roles_person, (new_person_id, self.edited_role_id))
         conn.commit()
-        cur.close()
-        conn.close()
 
         for child in self.rolfrm.winfo_children():
             if child.winfo_class() == 'Frame':
@@ -536,5 +532,7 @@ class RolesDialog(Toplevel):
                     child.config(text=new_person_name)
         resize_scrolled_content(self, self.canvas, self.window)
         self.make_roles_list()
+        cur.close()
+        conn.close()
 
 

@@ -1870,43 +1870,42 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# get rid of nesting in styles.py & other places which would be slowing down on load by passing conn, cur
-# F10 makes menu appear/disappear
-# move footer to general tab in prefs
-# use less space at top for current person area
-# get all main tabs back into working order, redo names tab so it's not about making new person
-# when changing font, window/scrollbar don't resize till reloaded; see notes in fonts_picker; when fixed get rid of the message
-# on change of font size: dropdown font doesn't resize instantly; font size on roles/notes dialogs esp headers doesn't resize instantly
-# when sizing/resizing of evt table is fixed, do the same for self.att
-# add sb to roles/notes dlg & other dlg in case someone is using big fonts on small screen
-# roles dlg not right--hard to see with same bg as main app--change bg color? Make wide border? NO--JUST TEST IT WITH ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work
-# in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
-# add buttons to place tab for alias and edit/delete place but don't make them do anything
+# change splash screen graphic and add a picture to the open dialog, how about a built-in series of photos, different one each time, store in closing state, pictures of magnificent trees***********
+# why is it opening to the last tree used? (Hard-coded, stored in closing_state). User shd select it with the Open Tree button. Last one used shd just be in storage and autofill to the open dialog where it says file so user doesn't have to find it.
 # dates prefs tab, get rid of ttk comboboxes
-# make sure there's a way to make new person, new name, new place
+# Test ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER around a dialog HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work
+# get all main tabs back into working order
+# add Border/scrollbar to roles/notes dlg & other dlg in case someone is using big fonts on small screen
+# in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
 # statustips and rcm in search dialog and new person dialog and other recent dialogs; tooltip in attributes table says that adding a date will move the attrib to evts table
-# add splash screen and open screen
 # fix Border so that title bar changes color when not on top or in focus
 
 # BRANCH: pedigree
 # INSTEAD OF MAKING kintips for event column only to say child, spouse name not parents bec we have only 2 parents and it's redundant info (on the same page) but since there can be more than one spouse or child, it is important to make kintips for event rows re: child or spouse only DO THIS INSTEAD: since it's still redundant info, with the same info in a table up top (not even started), just highlight the spouse or child in the top table as the mouse hovers over them. Don't make it like gbx. The spouse should be WITH the relevant children and both families in the case of 2 spouses shd be visible at the same time with the 2 spouses also visible at the same time. ALSO if the highlighted row is not visible on the screen, it appears as a tooltip instead so user can always see it.
 
-
 # BRANCH: names_images
+# redo names tab so it's not about making new person
 # in save_new_name() in names.py, how to indicate whether the image is supposed to be main_image (1) vs (0) which is now the default in the insert query to images_entities; if already a main_image it has to be changed to 0 programmatically
 # don't let a default image be entered (see NEW PERSON DLG) if a non-default image already exists for that person; if the person already has a default image, it can be changed to a different default image, a real image, or to no image; think of other cases to handle
 # If user selects his own photo as default, prepend "default_image_" to user's file name.
 # If no main_image has been input to db, tbard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. tbard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
+
+# BRANCH: fonts
+# when changing font, window/scrollbar don't resize till reloaded; see notes in fonts_picker; when fixed get rid of the message
+# on change of font size: dropdown font doesn't resize instantly; font size on roles/notes dialogs esp headers doesn't resize instantly
 
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?
 # edit ReadMe
 # figure out how to dump db as a text file so it can be pushed to github, first delete any unused tables
 # post new screenshots
-# edit readme
+# edit official do list
 # write blog post "refactor finished"
 
+# BRANCH: post_refactor
 # add to main do list
+# make sure there's a way to make new person, new name, new place
+# add functionality to place tab & source tab for alias and edit/delete 
 # refactor date calculator
 # menu: add functionality to obvious menu choices incl. add new person, add/edit name, and others 
 # combobox: when scrolling if the mouse strays off the scrollbar the dropdown undrops, I've seen a way to fix that but what was it?
