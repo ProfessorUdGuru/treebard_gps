@@ -308,8 +308,19 @@ select_all_place_ids = '''
     FROM place
 '''
 
+# select_all_place_images = '''
+    # SELECT places, images, caption, main_image
+    # FROM images_entities
+        # JOIN place
+            # ON images_entities.place_id = place.place_id 
+        # JOIN current
+            # ON current.place_id = place.place_id
+        # JOIN image
+            # ON image.image_id = images_entities.image_id 
+# '''
+
 select_all_place_images = '''
-    SELECT places, images, caption, main_image
+    SELECT images, caption, main_image, places
     FROM images_entities
         JOIN place
             ON images_entities.place_id = place.place_id 
@@ -330,7 +341,7 @@ select_all_places_places = '''
 '''
 
 select_all_source_images = '''
-    SELECT citations, images, caption, main_image, sources
+    SELECT images, caption, main_image, sources, citations
     FROM images_entities
         JOIN source
             ON citation.source_id = source.source_id
@@ -341,6 +352,19 @@ select_all_source_images = '''
         JOIN image
             ON image.image_id = images_entities.image_id 
 '''
+
+# select_all_source_images = '''
+    # SELECT citations, images, caption, main_image, sources
+    # FROM images_entities
+        # JOIN source
+            # ON citation.source_id = source.source_id
+        # JOIN citation
+            # ON images_entities.citation_id = citation.citation_id
+        # JOIN current
+            # ON current.citation_id = citation.citation_id
+        # JOIN image
+            # ON image.image_id = images_entities.image_id 
+# '''
 
 select_color_scheme_current = '''
     SELECT bg, highlight_bg, head_bg, fg 

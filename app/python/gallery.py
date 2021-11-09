@@ -1,4 +1,4 @@
-# gallery.py (import as gl)
+# gallery
 
 import tkinter as tk
 from PIL import Image, ImageTk
@@ -10,6 +10,7 @@ from scrolling import Scrollbar, resize_scrolled_content
 from widgets import (
     Frame, Canvas, Button, Label, Radiobutton, FrameHilited4, 
     LabelH3, MessageCopiable, LabelStay)
+from toykinter_widgets import run_statusbar_tooltips
 from utes import create_tooltip
 from names import get_current_person
 from query_strings import (
@@ -31,8 +32,8 @@ class Gallery(Frame):
             self, master, tabbook, 
             graphics_tab, 
             root, treebard, SCREEN_SIZE, dialog=None,
-            current_person_name=None, current_source_name=None, current_place_name=None,
-            *args, **kwargs):
+            current_person_name=None, current_place_name=None, 
+            current_source_name=None, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master # canvas
@@ -41,84 +42,76 @@ class Gallery(Frame):
         self.root = root
         self.treebard = treebard
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = SCREEN_SIZE
-        self.dialog = dialog        
+        self.dialog = dialog
 
         if current_person_name:
             self.current_entity_name = current_person_name
-        elif current_source_name:
-            self.current_entity_name = current_source_name
         elif current_place_name:
             self.current_entity_name = current_place_name
+        elif current_source_name:
+            self.current_entity_name = current_source_name
         else:
             print("line", looky(seeline()).lineno, "case_not_handled:")
 
         self.counter = 0
         self.thumb_labels = []
-        self.width_strings = []
-        self.height_strings = []
+        self.maxwidth = 0
+        self.maxheight = 0
 
         self.current_person = get_current_person()[0]
 
         pix_data = self.get_current_pix_data()
-        if len(pix_data) != 0:
+        if self.dialog:
+            if len(pix_data) != 0:
+                self.filter_pix_data(pix_data)
+                self.make_widgets()
+                self.make_gallery()
+            else:
+                self.dialog.destroy()
+        else:
             self.filter_pix_data(pix_data)
-            self.make_widgets()
             self.make_gallery()
-        elif self.dialog:
-            self.dialog.destroy()
 
     def cancel(self):
         self.dialog.grab_release()
         self.dialog.destroy()
 
-    def make_widgets(self):
+    def make_widgets(self):        
+        self.dialog.geometry('+100+20')
+        self.master.title_1.config(text="Current Person Image Gallery")
+        self.master.title_2.config(text="")
+        self.master.create_window(0, 0, anchor='nw', window=self)
+        scridth = 16
+        scridth_n = Frame(self, height=scridth)
+        scridth_w = Frame(self, width=scridth)
+        scridth_n.grid(column=0, row=0, sticky='ew')
+        scridth_w.grid(column=0, row=1, sticky='ns')
+        self.treebard.scroll_mouse.append_to_list([self.master, self])
+        self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
-        if self.dialog:
-        
-            self.dialog.geometry('+100+20')
-            self.master.title_1.config(text="Current Person Image Gallery")
-            self.master.title_2.config(text="")
-            self.master.create_window(0, 0, anchor='nw', window=self)
-            scridth = 16
-            scridth_n = Frame(self, height=scridth)
-            scridth_w = Frame(self, width=scridth)
-            scridth_n.grid(column=0, row=0, sticky='ew')
-            scridth_w.grid(column=0, row=1, sticky='ns')
-            self.treebard.scroll_mouse.append_to_list([self.master, self])
-            self.treebard.scroll_mouse.configure_mousewheel_scrolling()
+        self.vsb = Scrollbar(
+            self.dialog, 
+            hideable=True, 
+            command=self.master.yview,
+            width=scridth)
+        self.hsb = Scrollbar(
+            self.dialog, 
+            hideable=True, 
+            width=scridth, 
+            orient='horizontal',
+            command=self.master.xview)
+        self.master.config(
+            xscrollcommand=self.hsb.set, 
+            yscrollcommand=self.vsb.set)
+        self.vsb.grid(column=2, row=4, sticky='ns')
+        self.hsb.grid(column=1, row=5, sticky='ew')
 
-            self.vsb = Scrollbar(
-                self.dialog, 
-                hideable=True, 
-                command=self.master.yview,
-                width=scridth)
-            self.hsb = Scrollbar(
-                self.dialog, 
-                hideable=True, 
-                width=scridth, 
-                orient='horizontal',
-                command=self.master.xview)
-            self.master.config(
-                xscrollcommand=self.hsb.set, 
-                yscrollcommand=self.vsb.set)
-            self.vsb.grid(column=2, row=4, sticky='ns')
-            self.hsb.grid(column=1, row=5, sticky='ew')
-
-            self.buttonbox = Frame(self)
-            self.b1 = Button(
-                self.buttonbox, text="EDIT", width=7, 
-                command=lambda graphics=self.graphics_tab: self.go_to_graphics(graphics))
-            self.b2 = Button(self.buttonbox, text="CLOSE", width=7, command=self.cancel)
-
-            scridth_n.grid(column=0, row=0, sticky='ew')
-            scridth_w.grid(column=0, row=1, sticky='ns')
-        else:
-            self.grid(column=0, row=0)
+        scridth_n.grid(column=0, row=0, sticky='ew')
+        scridth_w.grid(column=0, row=1, sticky='ns')
 
     def make_gallery(self):
 
-        thumb_frame = Frame(self)
-        
+        thumb_frame = Frame(self)        
 
         self.thumb_canvas = Canvas(thumb_frame, bg=formats['bg'])
 
@@ -132,6 +125,8 @@ class Gallery(Frame):
         viewer = FrameHilited4(self)
 
         self.thumbstrip = Frame(self.thumb_canvas)
+
+        self.buttonbox = Frame(self)
         self.prevbutt = Button(self.buttonbox, text='<<', width=7)
 
         self.pic_canvas = Canvas(viewer)
@@ -157,8 +152,10 @@ class Gallery(Frame):
             idx = len(pic_file)
             bare = pic_file[0:idx-4]
             thumbsy = Image.open(self.img_path)
-            self.width_strings.append(thumbsy.width)
-            self.height_strings.append(thumbsy.height)
+            if thumbsy.width > self.maxwidth:
+                self.maxwidth = thumbsy.width
+            if thumbsy.height > self.maxheight:
+                self.maxheight = thumbsy.height
             thumbsy.thumbnail((185,85))
             thumb_path = '{}images/{}_tmb.png'.format(project_path, bare)
             # overwrites file by same name if it exists 
@@ -180,32 +177,28 @@ class Gallery(Frame):
                     value=pic_file,
                     command=lambda pic_file=pic_file: self.set_main_pic(
                         pic_file))   
-                rad.grid(column=0, row=1)  
-
+                rad.grid(column=0, row=1)
                 if rad['value'] == self.main_pic:
                     rad.select()
-            else:                
-                rad = Frame(
-                    pic_col,
-                    height=24,
-                    width=24)   
-                rad.grid(column=0, row=0)   
-                if self.master.winfo_name() == 'source_tab':
-                    pic_file = '{}, {}'.format(self.source, pic_file)
-            
-            create_tooltip(rad, pic_file)
+            else:   
+                if self.master.winfo_name() == 'sourcetab':
+                    pic_file = '{}, {}'.format(self.source, pic_file) 
+            create_tooltip(pic_col, pic_file)
             z += 1
 
         self.pil_img = img_big
         self.fit_canvas_to_pic()
 
         self.thumb_dict = dict(zip(self.thumb_labels, self.current_pictures))
-        self.nextbutt = Button(self.buttonbox, text='>>', width=7)
-        
-        spacer = Frame(self.buttonbox)
-        from widgets import FrameStay
-        panel = FrameStay(self.buttonbox, bg="blue")
 
+        self.nextbutt = Button(self.buttonbox, text='>>', width=7)
+        self.b1 = Button(
+            self.buttonbox, text="EDIT", width=7, 
+            command=lambda graphics=self.graphics_tab: self.go_to_graphics(graphics))
+        self.b2 = Button(self.buttonbox, text="CLOSE", width=7, command=self.cancel)
+        
+        spacer = Frame(self.buttonbox)       
+        panel = Frame(self.buttonbox)
         subject = LabelH3(panel, text=self.current_entity_name)
 
         self.caption_lab = MessageCopiable(panel)
@@ -253,7 +246,8 @@ class Gallery(Frame):
         self.prevbutt.grid(column=0, row=0, sticky='e')
         self.nextbutt.grid(column=1, row=0, sticky='e', padx=(6,0))
         self.b1.grid(column=0, row=1, sticky='e')
-        self.b2.grid(column=1, row=1, sticky='e', padx=(6,0))
+        if self.dialog:
+            self.b2.grid(column=1, row=1, sticky='e', padx=(6,0))
         spacer.grid(column=2, row=0, rowspan=3, sticky='news')
         panel.grid(column=3, row=0, rowspan=3, pady=(0,24), padx=24, sticky='w')
 
@@ -264,23 +258,6 @@ class Gallery(Frame):
 
         self.pic_canvas.bind('<Key-Right>', lambda evt: self.forward())
 
-        # # add statusbar-tooltips
-
-        # self.visited = (
-            # (self.thumbstrip, 
-                # "Thumbnail Views", 
-                # "Click thumbnail to display. Hover below to see "
-                   # "file name. If radio, click to make main image."),
-            # (self.pic_canvas, 
-                # "Image", 
-                # "Arrow keys change image when it's in focus."),
-            # (self.prevbutt, 
-                # "Left Button", 
-                # "Click with mouse or when highlighted click with spacebar."),
-            # (self.nextbutt, 
-                # "Right Button", 
-                # "Click with mouse or when highlighted click with spacebar.")) 
-
         self.thumb_canvas.create_window(0, 0, anchor='nw', window=self.thumbstrip)
         self.thumb_canvas.config(
             scrollregion=(
@@ -289,11 +266,33 @@ class Gallery(Frame):
                 self.thumbstrip.winfo_reqheight()))
 
         self.config_labels()
-        config_generic(self.dialog)
 
+        visited = (
+            (self.thumbstrip, 
+                "Thumbnail Views", 
+                "Click thumbnail to display. Hover below to see "
+                   "file name. If radio, click to make main image."),
+            (self.pic_canvas, 
+                "Image", 
+                "Arrow keys change image when it's in focus."),
+            (self.prevbutt, 
+                "Left Button", 
+                "Click with mouse or when highlighted click with spacebar."),
+            (self.nextbutt, 
+                "Right Button", 
+                "Click with mouse or when highlighted click with spacebar.")) 
+        if self.dialog:
+            run_statusbar_tooltips(
+                visited, 
+                self.master.statusbar.status_label, 
+                self.master.statusbar.tooltip_label)
+
+            config_generic(self.dialog)
+
+        self.thumb_canvas.config(width=self.winfo_reqwidth(), height=130)
         if self.dialog:
             resize_scrolled_content(self.dialog, self.master, self)
-        self.thumb_canvas.config(width=self.winfo_reqwidth(), height=130)
+        self.pic_canvas.focus_set()
 
     def focus_clicked(self, evt):
         evt.widget.focus_set()
@@ -305,7 +304,6 @@ class Gallery(Frame):
         evt.widget.config(bg=formats['bg'])
 
     def show_clicked(self, evt):
-
         select_pic = self.current_pictures.index(self.thumb_dict[evt.widget])
 
         self.chosen_picfile = self.current_pictures[select_pic]
@@ -324,12 +322,10 @@ class Gallery(Frame):
         self.fit_canvas_to_pic()
 
         self.pic_canvas.image = self.tk_img
-
         self.pic_canvas.config(
             scrollregion=(0, 0, self.pil_img.width, self.pil_img.height))
 
         self.config_labels()
-
         self.counter = select_pic
 
     def scroll_start(self, event):
@@ -392,7 +388,7 @@ class Gallery(Frame):
             if lst[2] == 1:
                 self.main_pic = lst[0]
                 self.caption_text = lst[1]
-                if self.master.winfo_name() == 'source_tab':
+                if self.master.winfo_name() == 'sourcetab':
                     self.source = lst[3]
 
         self.current_pictures = []
@@ -446,19 +442,13 @@ class Gallery(Frame):
         self.image_dir = current_dir
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-
-        if self.master.winfo_name() == 'place_tab':
+        if self.master.winfo_name() == 'placetab':
             cur.execute(select_all_place_images)
-        elif self.master.winfo_name() == 'source_tab':
+        elif self.master.winfo_name() == 'sourcetab':
             cur.execute(select_all_source_images)
         elif self.dialog:
             cur.execute(select_all_person_images, (self.current_person,))
-
-        if self.dialog:
-            pix_data = cur.fetchall()
-        else:
-            pix_data = cur.fetchall()
-            pix_data = [list(i) for i in pix_data]
+        pix_data = cur.fetchall()
         cur.close()
         conn.close() 
 
@@ -473,34 +463,24 @@ class Gallery(Frame):
         return pix_data
 
     def fit_canvas_to_pic(self):
-        # make the buttons stay in one place as pics change
-        max_wd = max(self.width_strings)
-        max_ht = max(self.height_strings)
-        # scr_wd = self.root.winfo_screenwidth()
-        # scr_ht = self.root.winfo_screenheight()
 
+        # don't show overly large images at their full size
         FULL = 0.55
-
-        if max_wd <= self.SCREEN_WIDTH * FULL:
-        # if max_wd <= scr_wd * FULL:
-            gallery_wd = max_wd
+        if self.maxwidth <= self.SCREEN_WIDTH * FULL:
+            gallery_wd = self.maxwidth
         else:
             gallery_wd = self.SCREEN_WIDTH * FULL
-        if max_ht <= self.SCREEN_HEIGHT * FULL:
-            gallery_ht = max_ht
+        if self.maxheight <= self.SCREEN_HEIGHT * FULL:
+            gallery_ht = self.maxheight
         else:
             gallery_ht = self.SCREEN_HEIGHT * FULL
-            # gallery_ht = scr_ht * FULL
 
         self.pic_canvas.config(
             scrollregion=(0, 0, self.pil_img.width, self.pil_img.height),
             width=gallery_wd,
             height=gallery_ht)
 
-        # image = self.pic_canvas.create_image(0, 0, anchor='nw', image=self.tk_img)
-
-        # DON'T DELETE BELOW till this class is tested with large pics in place/source tabs
-          # it might be needed there
+        # position image in canvas depending on image size
         if (self.pil_img.width >= gallery_wd and 
                 self.pil_img.height >= gallery_ht):
             image = self.pic_canvas.create_image(

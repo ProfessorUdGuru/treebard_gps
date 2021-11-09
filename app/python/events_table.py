@@ -1870,9 +1870,6 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# why is there 2 inches extra space at bottom of gallery
-# when gallery opens give the picture focus so arrows will work immed
-# galleries in place and source tabs
 # get rid of nesting in styles.py & other places which would be slowing down on load by passing conn, cur
 # F10 makes menu appear/disappear
 # move footer to general tab in prefs
@@ -1889,6 +1886,7 @@ if __name__ == '__main__':
 # make sure there's a way to make new person, new name, new place
 # statustips and rcm in search dialog and new person dialog and other recent dialogs; tooltip in attributes table says that adding a date will move the attrib to evts table
 # add splash screen and open screen
+# fix Border so that title bar changes color when not on top or in focus
 
 # BRANCH: pedigree
 # INSTEAD OF MAKING kintips for event column only to say child, spouse name not parents bec we have only 2 parents and it's redundant info (on the same page) but since there can be more than one spouse or child, it is important to make kintips for event rows re: child or spouse only DO THIS INSTEAD: since it's still redundant info, with the same info in a table up top (not even started), just highlight the spouse or child in the top table as the mouse hovers over them. Don't make it like gbx. The spouse should be WITH the relevant children and both families in the case of 2 spouses shd be visible at the same time with the 2 spouses also visible at the same time. ALSO if the highlighted row is not visible on the screen, it appears as a tooltip instead so user can always see it.

@@ -131,6 +131,8 @@ class Main(Frame):
             selected='person', case='upper', miny=0.66, takefocus=0)
         persons_tab = Frame(self.main_tabs.store["person"])
         attributes_tab = Frame(self.main_tabs.store["attributes"])
+        places_tab = Frame(self.main_tabs.store["places"], name="placetab")
+        sources_tab = Frame(self.main_tabs.store["sources"], name="sourcetab")
         self.names_tab = Frame(self.main_tabs.store["names"])
         prefs_tab = Frame(self.main_tabs.store["preferences"])
 
@@ -198,11 +200,31 @@ class Main(Frame):
 
         self.show_top_pic()
 
-        self.att = EventsTable(attributes_tab, self.root, self.treebard, self, attrib=True)
+        self.findings_table = EventsTable(
+            persons_tab, self.root, self.treebard, self)
+        EventsTable.instances.append(self.findings_table)
+
+        self.att = EventsTable(
+            attributes_tab, self.root, self.treebard, self, attrib=True)
         EventsTable.instances.append(self.att)
 
-        self.findings_table = EventsTable(persons_tab, self.root, self.treebard, self)
-        EventsTable.instances.append(self.findings_table)
+        place_gallery = Gallery(
+            places_tab, 
+            self.main_tabs, 
+            self.main_tabs.store['graphics'],
+            self.root, 
+            self.treebard,
+            SCREEN_SIZE,
+            current_place_name="Laramie County, Wyoming, USA")
+
+        source_gallery = Gallery(
+            sources_tab, 
+            self.main_tabs, 
+            self.main_tabs.store['graphics'],
+            self.root, 
+            self.treebard,
+            SCREEN_SIZE,
+            current_source_name="1900 US Census")
 
         options_tabs = TabBook(
             prefs_tab, root=self.root, tabs=PREFS_TABS, side="se", 
@@ -235,6 +257,8 @@ class Main(Frame):
         # children of main tabs
         persons_tab.grid(column=0, row=0, sticky='news')
         attributes_tab.grid(column=0, row=0, sticky='news')
+        places_tab.grid(column=0, row=0, sticky='news')
+        sources_tab.grid(column=0, row=0, sticky='news')
         self.names_tab.grid(column=0, row=0, sticky='news')
         prefs_tab.grid(column=0, row=0, sticky='news')
 
@@ -251,6 +275,12 @@ class Main(Frame):
 
         # children of attributes tab
         self.att.grid(column=0, row=0)
+
+        # children of places tab
+        place_gallery.grid(column=0, row=0)
+
+        # children of sources tab
+        source_gallery.grid(column=0, row=0)
 
         # children of self.names_tab
 
