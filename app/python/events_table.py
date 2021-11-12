@@ -4,7 +4,6 @@
 
 import tkinter as tk
 import sqlite3
-# from files import current_file
 from files import get_current_file
 from window_border import Border 
 from widgets import (
@@ -525,7 +524,7 @@ class EventsTable(Frame):
                         None, 
                         self.final, couple, after_death))
                 conn.commit() 
-
+                print("line", looky(seeline()).lineno, "event_types:", event_types)
                 event_types = get_all_event_types()
                 self.event_autofill_values = EntryAuto.create_lists(event_types)
                 self.event_input.values = self.event_autofill_values
@@ -688,7 +687,6 @@ class EventsTable(Frame):
             symmetrical for all the text columns, with autofill defaulting to 
             False except for the places column.
         '''
-        # too early
         self.place_autofill_values = EntryAuto.create_lists(self.place_strings)
         self.table_cells = []
         for i in range(int(qty/8)):
@@ -733,8 +731,7 @@ class EventsTable(Frame):
             self.new_event_frame, 
             width=32, 
             autofill=True, 
-            # values=self.event_autofill_values
-)
+            values=self.event_autofill_values)
         self.add_event_button = Button(
             self.new_event_frame, 
             text="NEW EVENT OR ATTRIBUTE", 
@@ -1882,8 +1879,10 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# add new event autofill not working
-# make statustip for big pic on opening screen
+# change all dialogs to Border class
+# I think in names.py the StatusBar is being imported and instantiated redundantly or is it that the Border class hasn't been used there yet?
+# TEST every functionality due to recent restructuring
+# get the file commands to work from the opening window
 # possibly the need for a 2nd db was mistaken as I have been turning off the new stuff and everything still works so find all references to global_db_path and see what happens if they're turned off one by one APPARENTLY IT'S ONLY NEEDED FOR CLOSING STATE AND NOT AT ALL FOR FORMATS. But what if it works different when I'm not just opening the last-opened file? In that case, SOLUTION IS TO ACCESS THE DEFAULTS IN opening.py AND PUT EVERYTHING ELSE BACK THE WAY IT WAS. 
 # delete columns openpic_dir, default_openpic_dir from setting in .tbd, it has to be in treebard.db
 # have to keep a global copy of place tables or just move them to treebard.tbd. Maybe better to have a function that imports places from any given tree but both techniques have their drawbacks. Wait till make_new_tree is working so this can be tested while it's being written.

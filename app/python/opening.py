@@ -4,10 +4,13 @@ import tkinter as tk
 import sqlite3
 from os import listdir
 from os.path import isfile, join
+from window_border import Border
 from widgets import Toplevel, Canvas, Button, Frame, ButtonPlain
+from toykinter_widgets import run_statusbar_tooltips
 from PIL import Image, ImageTk
 from files import (
-    open_tree, make_tree, save_as, save_copy_as, rename_tree, app_path,
+    open_tree, make_tree, import_gedcom, open_sample, app_path,
+    # open_tree, make_tree, save_as, save_copy_as, rename_tree, app_path,
     prior_file, global_db_path, get_current_file)
 from styles import make_formats_dict, config_generic
 from utes import center_dialog
@@ -22,7 +25,7 @@ from dev_tools import looky, seeline
 
 
 
-current_file = ""
+
 formats = make_formats_dict()
 
 class SplashScreen(Toplevel):
@@ -58,7 +61,10 @@ class SplashScreen(Toplevel):
         self.master.wait_window(self)
         self.master.overrideredirect(0)
         self.master.deiconify()
-        self.master.overrideredirect(1)        
+        self.master.overrideredirect(1)
+
+    def close_dialog(self):
+        self.opening_dialog.destroy()
 
     def open_treebard(self, make_main_window):
 
@@ -72,16 +78,25 @@ class SplashScreen(Toplevel):
         '''
 
         self.opening_dialog = Toplevel(self.master)
-        self.opening_dialog.title('Open, Create, or Copy a Tree')
         self.opening_dialog.grab_set()
 
-        self.opening_dialog.columnconfigure(0, weight=1)
-        self.opening_dialog.rowconfigure(0, weight=1)
-        self.measure = Frame(self.opening_dialog)
+        self.canvas = Border(self.opening_dialog) # gridded in Border class
+        self.canvas.title_1.config(text='Open, Create, or Copy a Tree')
+        self.canvas.title_2.config(text="")
+
+        self.window = Frame(self.canvas)
+        self.canvas.create_window(0, 0, anchor="nw", window=self.window)
+
+        self.measure = Frame(self.window)
         self.measure.grid(column=0, row=0, sticky="ew")
 
         buttonbox = Frame(self.measure)
         buttonbox.grid(column=0, row=0, sticky="ew")
+
+        self.picbutton = ButtonPlain(
+            self.window,  
+            command=lambda win=make_main_window: self.open_prior_file(win))
+        self.picbutton.grid(column=0, row=1, sticky='news')
 
         opener = Button(
             buttonbox, 
@@ -96,41 +111,58 @@ class SplashScreen(Toplevel):
             command=lambda: make_tree(self.master, dialog=self.opening_dialog))
         new.grid(column=1, row=0, padx=24, pady=24)
 
-        saveas = Button(
+        importgedcom = Button(
             buttonbox, 
-            text='SAVE AS',
-            command=lambda: save_as(self.master))
-        saveas.grid(column=2, row=0, padx=24, pady=24)
+            text='IMPORT',
+            command=lambda: import_gedcom(self.master))
+        importgedcom.grid(column=2, row=0, padx=24, pady=24)
 
-        savecopyas = Button(
+        opensample = Button(
             buttonbox, 
-            text='SAVE COPY AS', 
-            command=lambda: save_copy_as())
-        savecopyas.grid(column=3, row=0, padx=24, pady=24)
+            text='SAMPLE TREE', 
+            command= open_sample)
+        opensample.grid(column=3, row=0, padx=24, pady=24)
 
-        rename = Button(
+        cancel = Button(
             buttonbox, 
-            text='RENAME TREE', 
-            command=lambda: rename_tree(self.master))
-        rename.grid(column=4, row=0, padx=24, pady=24)
-
-
-        self.openpic_frame = ButtonPlain(
-            self.opening_dialog, 
-            command=lambda win=make_main_window: self.open_prior_file(win))
-        self.openpic_frame.grid(column=0, row=1, sticky='news', padx=3, pady=3)
+            text='CANCEL', 
+            command=self.close_dialog)
+        cancel.grid(column=4, row=0, padx=24, pady=24)
  
         self.update_idletasks()
         self.picwidth = buttonbox.winfo_reqwidth() 
         self.show_openpic() 
+
+        visited = (
+            (opener, 
+                "Open Tree...", 
+                "Open an existing tree."),
+            (new, 
+                "New Tree...", 
+                "Create a new tree."),
+            (importgedcom, 
+                "Import GEDCOM...", 
+                "Create a new tree from an existing GEDCOM file."),
+            (opensample, 
+                "Open Sample Tree...", 
+                "Open the tree that comes with Treebard."),
+            (cancel, 
+                "Close Dialog", 
+                "Close this dialog leaving Treebard open."),
+            (self.picbutton, 
+                "Open Prior Tree", 
+                "Re-open the last tree that was used.")
+)        
+        run_statusbar_tooltips(
+            visited, 
+            self.canvas.statusbar.status_label, 
+            self.canvas.statusbar.tooltip_label)
 
         config_generic(self.opening_dialog)
         self.master.wait_window(self.opening_dialog)
         self.store_last_openpic()
 
     def open_prior_file(self, make_main_window):
-        global current_file
-        current_file = get_current_file()[0]
         self.opening_dialog.grab_release()
         self.opening_dialog.destroy()
         make_main_window()        
@@ -170,9 +202,10 @@ class SplashScreen(Toplevel):
         self.current_image = self.get_pic_dimensions()
 
         img1 = ImageTk.PhotoImage(self.current_image, master=self.master)
-        self.openpic_frame.config(image=img1)
-        self.openpic_frame.image = img1
-        self.measure.config(width=self.picwidth, height=self.picheight)
+        self.picbutton.config(image=img1)
+        self.picbutton.image = img1
+        self.canvas.config(width=self.picwidth + 2, height=self.picheight + 80)
+        self.picbutton.config(width=self.picwidth)
         dlg_pos = center_dialog(self.opening_dialog, frame=self.measure)
         self.opening_dialog.geometry(
             "+{}+{}".format(dlg_pos[0], int(dlg_pos[1] - (self.picheight / 2))))

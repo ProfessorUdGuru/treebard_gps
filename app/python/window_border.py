@@ -47,11 +47,20 @@ class Border(Canvas):
 
             This class can't use Toykinter as a master since Toykinter is the 
             whole app and is only instantiated once, so this class has to use 
-            its host toplevel as parent. Setting font size should change the size of 
-            fonts, title bar, and max/min/quit buttons. The settings are 3, 4, 7, 
-            or 11 pixels. Currently the title bar size is hard-coded upon
-            instantiation, but should be linked to changes in font size (in progress--
-            still have to reload to see change).
+            its host toplevel as parent. Setting font size should change the 
+            size of fonts, title bar, and max/min/quit buttons. The settings 
+            are 3, 4, 7, or 11 pixels. The size shown is linked to changes in 
+            font size (in progress--still have to switch to person tab and
+            redraw() to see change).
+
+            The hard part to remember when using this is that the parts of the
+            border including the canvas itself (`self` in the class) are gridded
+            in this class. This causes confusion because I'm always trying to
+            figure out where to grid the canvas and how to set columnconfigure()
+            and rowconfigure() but it's already done here since it has to be
+            the same wherever it's used. Also the dropdown menu and icon menu
+            occupy rows 2 and 3 whether they're used or not, and they're only
+            used in the root window.
         '''
 
         self.master = master # toplevel

@@ -64,6 +64,7 @@ class EntryAuto(EntryUnhilited):
         '''
         def do_it():
             hits = self.match_string()
+            print("line", looky(seeline()).lineno, "hits:", hits)
             self.show_hits(hits, self.pos)
 
         if self.autofill is False:
@@ -84,6 +85,7 @@ class EntryAuto(EntryUnhilited):
         hits = []
         got = self.get()
         use_list = self.values
+        print("line", looky(seeline()).lineno, "use_list:", use_list)
         for item in use_list:
             if item.lower().startswith(got.lower()):
                 hits.append(item)
