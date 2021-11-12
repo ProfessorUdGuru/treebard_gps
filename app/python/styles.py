@@ -1,10 +1,9 @@
 from os import path
 from tkinter import Tk, Label
 import sqlite3
-from files import get_current_file, global_db_path
+from files import get_current_file
 from query_strings import(
     select_opening_settings, 
-    # select_default_formats,
     select_all_color_schemes,
     select_all_color_schemes_plus
 )
@@ -583,15 +582,6 @@ def config_generic(parent):
 
     config_bgStd(parent)
 
-# def get_opening_settings():
-    # conn = sqlite3.connect(global_db_path)
-    # cur = conn.cursor()
-    # cur.execute(select_default_formats)
-    # default_formats = cur.fetchall()[0]
-    # cur.close()
-    # conn.close()
-    # return default_formats
-
 def get_opening_settings():
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
@@ -671,7 +661,6 @@ def make_formats_dict():
     return formats
 
 def get_color_schemes():
-    # conn = sqlite3.connect(global_db_path)
     conn = sqlite3.connect(current_file)
     cur=conn.cursor()
     cur.execute(select_all_color_schemes)
@@ -681,7 +670,6 @@ def get_color_schemes():
     return schemes
 
 def get_color_schemes_plus():
-    # conn = sqlite3.connect(global_db_path)
     conn = sqlite3.connect(current_file)
     cur=conn.cursor()
     cur.execute(select_all_color_schemes_plus)

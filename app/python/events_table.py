@@ -1879,10 +1879,15 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
+# new file works but the file is still named new_default_tree.db
+# get the file commands to work from the opening window except gedcom which shd open a standard message "this feature is not complete. Please visit proboards if you would like to assist in creating this feature."
+# test the feature which creates a new tree from the default tree if the user has deleted a file outside of treebard's controls see files.py valid_dummy
+# fix change_tree_title in files.py
+# get rid of globals in files.py
+# make big pic change or something so user knows when it's in focus so spacebar will be easy to use for non mousers when opening last used file? and/or just start with the pic in focus so spacebar is ready
 # change all dialogs to Border class
 # I think in names.py the StatusBar is being imported and instantiated redundantly or is it that the Border class hasn't been used there yet?
 # TEST every functionality due to recent restructuring
-# get the file commands to work from the opening window
 # possibly the need for a 2nd db was mistaken as I have been turning off the new stuff and everything still works so find all references to global_db_path and see what happens if they're turned off one by one APPARENTLY IT'S ONLY NEEDED FOR CLOSING STATE AND NOT AT ALL FOR FORMATS. But what if it works different when I'm not just opening the last-opened file? In that case, SOLUTION IS TO ACCESS THE DEFAULTS IN opening.py AND PUT EVERYTHING ELSE BACK THE WAY IT WAS. 
 # delete columns openpic_dir, default_openpic_dir from setting in .tbd, it has to be in treebard.db
 # have to keep a global copy of place tables or just move them to treebard.tbd. Maybe better to have a function that imports places from any given tree but both techniques have their drawbacks. Wait till make_new_tree is working so this can be tested while it's being written.

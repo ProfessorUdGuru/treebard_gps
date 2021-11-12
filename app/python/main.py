@@ -354,6 +354,8 @@ class Main(Frame):
             new_stg = '{}treebard_gps/data/{}/images/{}'.format(
                 current_drive, current_dir, img_stg)
 
+            print("line", looky(seeline()).lineno, "current_drive, current_dir, img_stg:", current_drive, current_dir, img_stg)
+
             top = Image.open(new_stg)
             img1 = ImageTk.PhotoImage(top, master=self.master)
 

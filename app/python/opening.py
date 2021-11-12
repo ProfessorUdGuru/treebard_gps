@@ -10,7 +10,6 @@ from toykinter_widgets import run_statusbar_tooltips
 from PIL import Image, ImageTk
 from files import (
     open_tree, make_tree, import_gedcom, open_sample, app_path,
-    # open_tree, make_tree, save_as, save_copy_as, rename_tree, app_path,
     prior_file, global_db_path, get_current_file)
 from styles import make_formats_dict, config_generic
 from utes import center_dialog
@@ -95,20 +94,23 @@ class SplashScreen(Toplevel):
 
         self.picbutton = ButtonPlain(
             self.window,  
-            command=lambda win=make_main_window: self.open_prior_file(win))
+            command=lambda funx=make_main_window: self.open_prior_file(funx))
         self.picbutton.grid(column=0, row=1, sticky='news')
 
         opener = Button(
             buttonbox, 
             text='OPEN TREE', 
-            command=lambda: open_tree(self.master, dialog=self.opening_dialog))
+            command=lambda root=self.master, 
+                funx=make_main_window, 
+                dlg=self.opening_dialog: open_tree(root, funx, dlg))
         opener.grid(column=0, row=0, padx=24, pady=24)
         opener.focus_set()
 
         new = Button(
             buttonbox, 
             text='NEW TREE',
-            command=lambda: make_tree(self.master, dialog=self.opening_dialog))
+            command=lambda root=self.master: make_tree(root))
+                # isnewfile=True: make_tree(root, dlg, isnewfile))
         new.grid(column=1, row=0, padx=24, pady=24)
 
         importgedcom = Button(

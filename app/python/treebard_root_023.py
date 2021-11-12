@@ -100,7 +100,6 @@ class Treebard():
             menubar=True, 
             ribbon_menu=True)
         self.canvas.title_1.config(text="Treebard GPS")
-        # self.canvas.title_2.config(text=current_file)
 
     def make_main_window(self):
         '''
@@ -131,7 +130,6 @@ def start():
         height=int(MAX_WINDOW_HEIGHT * screen_height))
     config_generic(root)
     splash = SplashScreen(root)
-    # root.withdraw()# DO NOT DELETE
     treebard = Treebard(root)
     splash.open_treebard(treebard.make_main_window)    
 

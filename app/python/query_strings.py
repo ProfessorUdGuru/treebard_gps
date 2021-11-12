@@ -1026,9 +1026,15 @@ update_current_person = '''
     WHERE current_id = 1
 '''
 
-update_current_tree = '''
+# update_current_tree = '''
+    # UPDATE closing_state 
+    # SET current_tree = ? 
+    # WHERE closing_state_id = 1
+# '''
+
+update_closing_state_tree = '''
     UPDATE closing_state 
-    SET current_tree = ? 
+    SET prior_tree = ? 
     WHERE closing_state_id = 1
 '''
 
