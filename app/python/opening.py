@@ -1,12 +1,20 @@
 # opening.py
 
 import tkinter as tk
-from widgets import Toplevel, Canvas, Button
+import sqlite3
+from os import listdir
+from os.path import isfile, join
+from widgets import Toplevel, Canvas, Button, Frame, ButtonPlain
 from PIL import Image, ImageTk
 from files import (
-    open_tree, make_tree, save_as, save_copy_as, rename_tree, project_path)
-from styles import make_formats_dict, config_generic 
+    open_tree, make_tree, save_as, save_copy_as, rename_tree, app_path,
+    prior_file, global_db_path, get_current_file)
+from styles import make_formats_dict, config_generic
 from utes import center_dialog
+from query_strings import (
+    select_app_setting_openpic_dir, select_closing_state_openpic,
+    update_closing_state_openpic
+)
 import dev_tools as dt
 from dev_tools import looky, seeline   
 
@@ -14,7 +22,7 @@ from dev_tools import looky, seeline
 
 
 
-
+current_file = ""
 formats = make_formats_dict()
 
 class SplashScreen(Toplevel):
@@ -28,7 +36,7 @@ class SplashScreen(Toplevel):
         self.overrideredirect(1)
         width = self.winfo_screenwidth()
         height = self.winfo_screenheight()
-        splash_file = "{}/images/splash_small.gif".format(project_path)
+        splash_file = "{}/images/splash.gif".format(app_path)
         pil_img = Image.open(splash_file)
         tk_img = ImageTk.PhotoImage(pil_img)
         splash_canvas = Canvas(
@@ -41,164 +49,168 @@ class SplashScreen(Toplevel):
 
         dlg_pos = center_dialog(self)
         self.geometry('{}x{}+{}+{}'.format(
-            str(int(width*0.33)), 
-            str(int(height*0.33)), 
+            str(int(width * 0.33)), 
+            str(int(height * 0.33)), 
             dlg_pos[0], 
             dlg_pos[1]))
 
-        self.after(500, self.destroy)
+        self.after(1000, self.destroy)
         self.master.wait_window(self)
         self.master.overrideredirect(0)
         self.master.deiconify()
-        self.master.overrideredirect(1)
+        self.master.overrideredirect(1)        
 
-    def open_treebard(self):
+    def open_treebard(self, make_main_window):
 
-        ''' This opening window is important because you never want to open 
+        ''' This opening dialog is important because you never want to open 
             a tree automatically. If the user has two trees that are similar,
             he might start working on the wrong tree without realizing it. Or
             if the wrong tree opens automatically and it's really huge, he
             might have to wait for it to open just so he can close it. So 
-            this opening dialog might be a bit of a nuisance to deal 
-            with on each loading of the app, but it's not optional. '''
+            dealing with this opening dialog on each loading of the app is not 
+            optional. 
+        '''
 
-        self.open_tbard = Toplevel(self.master)
-        self.open_tbard.title('Open, Create, or Copy a Tree')
-        self.open_tbard.grab_set()
+        self.opening_dialog = Toplevel(self.master)
+        self.opening_dialog.title('Open, Create, or Copy a Tree')
+        self.opening_dialog.grab_set()
+
+        self.opening_dialog.columnconfigure(0, weight=1)
+        self.opening_dialog.rowconfigure(0, weight=1)
+        self.measure = Frame(self.opening_dialog)
+        self.measure.grid(column=0, row=0, sticky="ew")
+
+        buttonbox = Frame(self.measure)
+        buttonbox.grid(column=0, row=0, sticky="ew")
 
         opener = Button(
-            self.open_tbard, 
+            buttonbox, 
             text='OPEN TREE', 
-            command=lambda: open_tree(self.master, dialog=self.open_tbard))
+            command=lambda: open_tree(self.master, dialog=self.opening_dialog))
         opener.grid(column=0, row=0, padx=24, pady=24)
         opener.focus_set()
 
         new = Button(
-            self.open_tbard, 
+            buttonbox, 
             text='NEW TREE',
-            command=lambda: make_tree(self.master, dialog=self.open_tbard))
+            command=lambda: make_tree(self.master, dialog=self.opening_dialog))
         new.grid(column=1, row=0, padx=24, pady=24)
 
         saveas = Button(
-            self.open_tbard, 
+            buttonbox, 
             text='SAVE AS',
             command=lambda: save_as(self.master))
         saveas.grid(column=2, row=0, padx=24, pady=24)
 
         savecopyas = Button(
-            self.open_tbard, 
+            buttonbox, 
             text='SAVE COPY AS', 
             command=lambda: save_copy_as())
         savecopyas.grid(column=3, row=0, padx=24, pady=24)
 
         rename = Button(
-            self.open_tbard, 
+            buttonbox, 
             text='RENAME TREE', 
             command=lambda: rename_tree(self.master))
         rename.grid(column=4, row=0, padx=24, pady=24)
 
-        config_generic(self.open_tbard)
 
-        dlg_pos = center_dialog(self.open_tbard)
-        self.open_tbard.geometry("+{}+{}".format(dlg_pos[0], dlg_pos[1])) 
+        self.openpic_frame = ButtonPlain(
+            self.opening_dialog, 
+            command=lambda win=make_main_window: self.open_prior_file(win))
+        self.openpic_frame.grid(column=0, row=1, sticky='news', padx=3, pady=3)
+ 
+        self.update_idletasks()
+        self.picwidth = buttonbox.winfo_reqwidth() 
+        self.show_openpic() 
 
-# def open_treebard():
+        config_generic(self.opening_dialog)
+        self.master.wait_window(self.opening_dialog)
+        self.store_last_openpic()
 
-    # ''' This opening window is important because you never want to open 
-        # a tree automatically. If the user has two trees that are similar,
-        # he might start working on the wrong tree without realizing it. Or
-        # if the wrong tree opens automatically and it's really huge, he
-        # might have to wait for it to open just so he can close it. So 
-        # this opening dialog might be a bit of a nuisance to deal 
-        # with on each loading of the app, but it's not optional. '''
+    def open_prior_file(self, make_main_window):
+        global current_file
+        current_file = get_current_file()[0]
+        self.opening_dialog.grab_release()
+        self.opening_dialog.destroy()
+        make_main_window()        
 
-    # open_tbard = Toplevel()
-    # open_tbard.title('Open, Create, or Copy a Tree')
+    def store_last_openpic(self):
+        conn = sqlite3.connect(global_db_path)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(update_closing_state_openpic, (self.openpic,))
+        conn.commit()
+        cur.close()
+        conn.close()
 
-    # opener = Button(
-        # open_tbard, 
-        # text='OPEN TREE', 
-        # command=lambda: open_tree(root, dialog=open_tbard))
-    # opener.grid(column=0, row=0, padx=24, pady=24)
-    # opener.focus_set()
+    def get_pic_dimensions(self):
 
-    # new = Button(
-        # open_tbard, 
-        # text='NEW TREE',
-        # command=lambda: make_tree(root, dialog=open_tbard))
-    # new.grid(column=1, row=0, padx=24, pady=24)
+        img_stg = ''.join(self.openpic)
+        new_stg = '{}/{}/{}'.format(app_path, self.openpic_dir, img_stg)
+        self.current_image = Image.open(new_stg)
+        resize_factor = self.picwidth / self.current_image.width
+        self.picwidth = int(resize_factor * self.current_image.width)
+        self.picheight = int(resize_factor * self.current_image.height)
+        self.current_image = self.current_image.resize(
+            (self.picwidth, self.picheight), 
+            Image.ANTIALIAS)
+        return self.current_image
 
-    # saveas = Button(
-        # open_tbard, 
-        # text='SAVE AS',
-        # command=lambda: save_as(root))
-    # saveas.grid(column=2, row=0, padx=24, pady=24)
+    def show_openpic(self):
+        '''
+            It seems like extra steps are needed to make `center_dialog()` take
+            the picture size into account. Getting the picture to be the same
+            width as the buttonbox was easy, but getting Tkinter to include the
+            height of the picture when centering the dialog vertically... 
+            it took hours.
+        '''
 
-    # savecopyas = Button(
-        # open_tbard, 
-        # text='SAVE COPY AS', 
-        # command=lambda: save_copy_as())
-    # savecopyas.grid(column=3, row=0, padx=24, pady=24)
+        self.select_opening_image()
+        self.current_image = self.get_pic_dimensions()
 
-    # rename = Button(
-        # open_tbard, 
-        # text='RENAME TREE', 
-        # command=lambda: rename_tree(root))
-    # rename.grid(column=4, row=0, padx=24, pady=24)
+        img1 = ImageTk.PhotoImage(self.current_image, master=self.master)
+        self.openpic_frame.config(image=img1)
+        self.openpic_frame.image = img1
+        self.measure.config(width=self.picwidth, height=self.picheight)
+        dlg_pos = center_dialog(self.opening_dialog, frame=self.measure)
+        self.opening_dialog.geometry(
+            "+{}+{}".format(dlg_pos[0], int(dlg_pos[1] - (self.picheight / 2))))
 
-    # config_generic(open_tbard)
+    def select_opening_image(self):
+        conn = sqlite3.connect(global_db_path)
+        cur = conn.cursor()
+        cur.execute(select_app_setting_openpic_dir)
+        openpic_dir = cur.fetchone()
+        userpath = False
+        if openpic_dir[0] is None:
+            self.openpic_dir = openpic_dir[1]
+        else:
+            self.openpic_dir = openpic_dir[0]
+            userpath = True
 
-    # dlg_pos = utes.center_dialog(open_tbard)
-    # open_tbard.geometry("+{}+{}".format(dlg_pos[0], dlg_pos[1])) 
+        # user can input any desired path to pictures in a settings tab
+        # if user's path is no good, use openpic_dir[1] after all
+        if userpath:
+            print("line", looky(seeline()).lineno, "provide full path including drive:")
+        else:
+            tbardpath = "{}/images/openpic/".format(app_path)
+            all_openpics = [f for f in listdir(tbardpath) if isfile(
+                join(tbardpath, f))]
 
+        cur.execute(select_closing_state_openpic)
+        last_openpic = cur.fetchone()[0]
+        cur.close()
+        conn.close()
+        last_in_list = len(all_openpics) - 1
+        p = 0
+        for pic in all_openpics:
+            if p + 1 > last_in_list:
+                self.openpic = all_openpics[0]
+                break
+            elif pic == last_openpic:
+                self.openpic = all_openpics[p + 1]
+                break
+            else:
+                p += 1
 
-
-
-# def open_treebard(self):
-
-    # ''' This opening window is important because you never want to open 
-        # a tree automatically. If the user has two trees that are similar,
-        # he might start working on the wrong tree without realizing it. Or
-        # if the wrong tree opens automatically and it's really huge, he
-        # might have to wait for it to open just so he can close it. So 
-        # this opening dialog might be a bit of a nuisance to deal 
-        # with on each loading of the app, but it's not optional. '''
-
-    # self.open_tbard = Toplevel()
-    # self.open_tbard.title('Open, Create, or Copy a Tree')
-
-    # open = Button(
-        # self.open_tbard, 
-        # text='OPEN TREE', 
-        # command=lambda: self.files.open_tree(root, dialog=self.open_tbard))
-    # open.grid(column=0, row=0, padx=24, pady=24)
-    # open.focus_set()
-
-    # new = Button(
-        # self.open_tbard, 
-        # text='NEW TREE',
-        # command=lambda: self.files.make_tree(root, dialog=self.open_tbard))
-    # new.grid(column=1, row=0, padx=24, pady=24)
-
-    # saveas = Button(
-        # self.open_tbard, 
-        # text='SAVE AS',
-        # command=lambda: self.files.save_as(root))
-    # saveas.grid(column=2, row=0, padx=24, pady=24)
-
-    # savecopyas = Button(
-        # self.open_tbard, 
-        # text='SAVE COPY AS', 
-        # command=lambda: self.files.save_copy_as())
-    # savecopyas.grid(column=3, row=0, padx=24, pady=24)
-
-    # rename = Button(
-        # self.open_tbard, 
-        # text='RENAME TREE', 
-        # command=lambda: self.files.rename_tree(root))
-    # rename.grid(column=4, row=0, padx=24, pady=24)
-
-    # ST.config_generic(self.open_tbard)
-
-    # dlg_pos = utes.center_dialog(self.open_tbard)
-    # self.open_tbard.geometry("+{}+{}".format(dlg_pos[0], dlg_pos[1])) 

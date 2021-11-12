@@ -3,6 +3,8 @@
 import tkinter as tk
 from styles import make_formats_dict
 import dev_tools as dt
+from dev_tools import looky, seeline
+
 
 # CENTERING
 
@@ -24,10 +26,9 @@ def center_window(win):
     win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
 def center_dialog(dlg, frame=None):
-    '''
-        Try to use center_window() above, it's better.
-    '''
+
     if frame:
+        print("line", looky(seeline()).lineno, "running in utes")
         dlg.update_idletasks()
         win_width = frame.winfo_reqwidth()
         win_height = frame.winfo_reqheight()
@@ -42,7 +43,7 @@ def center_dialog(dlg, frame=None):
 
     return right_pos, down_pos 
 
-formats = make_formats_dict()
+# formats = make_formats_dict()
 
 #   -   -   -   see widgets.py for statusbar tooltips   -   -   -   #
 

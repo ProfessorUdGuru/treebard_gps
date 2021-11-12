@@ -2,7 +2,7 @@
 
 import tkinter as tk
 import sqlite3
-from files import get_current_file, current_file
+from files import get_current_file
 from styles import config_generic
 from widgets import (
     Frame, Label, Button, LabelMovable, LabelH3, Entry, Toplevel)
@@ -41,6 +41,8 @@ NAME_TYPES_HIERARCHY = (
     'legally changed name', 'pseudonym', 'pen name', 'stage name', 'nickname', 
     'call name', 'official name', 'anglicized name', 'religious order name', 
     'other name type', 'given name')
+
+current_file = get_current_file()[0]
 
 def get_current_person():
     conn = sqlite3.connect(current_file)

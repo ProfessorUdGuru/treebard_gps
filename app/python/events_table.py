@@ -4,7 +4,8 @@
 
 import tkinter as tk
 import sqlite3
-from files import current_file
+# from files import current_file
+from files import get_current_file
 from window_border import Border 
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
@@ -21,7 +22,8 @@ from names import (
     open_new_person_dialog)
 from roles import RolesDialog
 from notes import NotesDialog
-from places import place_strings, ValidatePlace, places_places
+# from places import place_strings, ValidatePlace, places_places
+from places import ValidatePlace
 from scrolling import Scrollbar, resize_scrolled_content
 from messages import open_error_message, events_msg, open_yes_no_message
 from query_strings import (
@@ -63,7 +65,7 @@ formats = make_formats_dict()
 HEADS = (
     'event', 'date', 'place', 'particulars', 'age', 
     'roles', 'notes', 'sources')
-
+current_file = get_current_file()[0]
 def get_current_person():
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
@@ -369,7 +371,8 @@ class EventsTable(Frame):
 
         self.main_canvas = main.master
 
-        self.current_person = get_current_person()
+        self.main_canvas.title_2.config(text=current_file)
+        self.current_person = get_current_person() # too early
 
         self.inwidg = None
         self.headers = []
@@ -378,7 +381,6 @@ class EventsTable(Frame):
         self.screen_height = self.winfo_screenheight()
         self.column_padding = 2
         self.new_row = 0
-
         event_types = get_all_event_types()
         self.event_autofill_values = EntryAuto.create_lists(event_types)
         self.after_death_events = get_after_death_event_types()
@@ -392,6 +394,8 @@ class EventsTable(Frame):
             "<Control-s>", 
             lambda evt, curr_per=self.current_person: self.redraw(
                 evt, current_person=curr_per))
+
+        self.place_strings = make_all_nestings(select_all_place_ids)
 
         self.make_header()
         self.make_table_cells()
@@ -684,7 +688,8 @@ class EventsTable(Frame):
             symmetrical for all the text columns, with autofill defaulting to 
             False except for the places column.
         '''
-        self.place_autofill_values = EntryAuto.create_lists(place_strings)
+        # too early
+        self.place_autofill_values = EntryAuto.create_lists(self.place_strings)
         self.table_cells = []
         for i in range(int(qty/8)):
             row = []
@@ -694,12 +699,16 @@ class EventsTable(Frame):
                         cell = EntryAuto(
                             self, width=0,
                             autofill=True, 
-                            values=self.event_autofill_values)
+                            # too early
+                            values=self.event_autofill_values
+)
                     elif j == 2:
                         cell = EntryAuto(
                             self, width=0, 
                             autofill=True, 
-                            values=self.place_autofill_values)
+                            # too early
+                            values=self.place_autofill_values
+)
                     else:                        
                         cell = EntryAuto(self, width=0,)
                     cell.initial = ''
@@ -724,7 +733,8 @@ class EventsTable(Frame):
             self.new_event_frame, 
             width=32, 
             autofill=True, 
-            values=self.event_autofill_values)
+            # values=self.event_autofill_values
+)
         self.add_event_button = Button(
             self.new_event_frame, 
             text="NEW EVENT OR ATTRIBUTE", 
@@ -1019,6 +1029,7 @@ class EventsTable(Frame):
             self,
             new_event,
             self.current_person,
+            self.place_strings,
             self.place_autofill_values,   
             self.redraw)
         self.event_input.delete(0, 'end')
@@ -1026,7 +1037,7 @@ class EventsTable(Frame):
 class NewEventDialog(Toplevel):
     def __init__(
             self, master, treebard, events_table, new_event, 
-            current_person, place_autofill_values, 
+            current_person, place_strings, place_autofill_values, 
             redraw, finding=None, ma_pa=False, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
@@ -1035,6 +1046,7 @@ class NewEventDialog(Toplevel):
         self.events_table = events_table
         self.new_event = new_event
         self.current_person = current_person
+        self.place_strings = place_strings
         self.place_autofill_values = place_autofill_values
         self.redraw = redraw
         self.finding = finding
@@ -1670,9 +1682,9 @@ class NewEventDialog(Toplevel):
         cur.execute(insert_finding_places_new_event, tuple(ids))
         conn.commit()
 
-        place_strings.insert(0, self.place_string)
+        self.place_strings.insert(0, self.place_string)
 
-        self.place_autofill_values = EntryAuto.create_lists(place_strings)
+        self.place_autofill_values = EntryAuto.create_lists(self.place_strings)
             
         cur.close()
         conn.close()
@@ -1870,8 +1882,11 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# change splash screen graphic and add a picture to the open dialog, how about a built-in series of photos, different one each time, store in closing state, pictures of magnificent trees***********
-# why is it opening to the last tree used? (Hard-coded, stored in closing_state). User shd select it with the Open Tree button. Last one used shd just be in storage and autofill to the open dialog where it says file so user doesn't have to find it.
+# add new event autofill not working
+# make statustip for big pic on opening screen
+# possibly the need for a 2nd db was mistaken as I have been turning off the new stuff and everything still works so find all references to global_db_path and see what happens if they're turned off one by one APPARENTLY IT'S ONLY NEEDED FOR CLOSING STATE AND NOT AT ALL FOR FORMATS. But what if it works different when I'm not just opening the last-opened file? In that case, SOLUTION IS TO ACCESS THE DEFAULTS IN opening.py AND PUT EVERYTHING ELSE BACK THE WAY IT WAS. 
+# delete columns openpic_dir, default_openpic_dir from setting in .tbd, it has to be in treebard.db
+# have to keep a global copy of place tables or just move them to treebard.tbd. Maybe better to have a function that imports places from any given tree but both techniques have their drawbacks. Wait till make_new_tree is working so this can be tested while it's being written.
 # dates prefs tab, get rid of ttk comboboxes
 # Test ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER around a dialog HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work
 # get all main tabs back into working order

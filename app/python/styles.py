@@ -1,9 +1,11 @@
 from os import path
 from tkinter import Tk, Label
 import sqlite3
-from files import current_file
+from files import get_current_file, global_db_path
 from query_strings import(
-    select_opening_settings, select_all_color_schemes,
+    select_opening_settings, 
+    # select_default_formats,
+    select_all_color_schemes,
     select_all_color_schemes_plus
 )
 import dev_tools as dt
@@ -24,6 +26,8 @@ from dev_tools import looky, seeline
 '''
 
 NEUTRAL_COLOR = '#878787'
+
+current_file = get_current_file()[0]
 
 # # add a monospaced sans-serif font for cases like dropdown menus with text at both
 # #   flush left and flush right of the same label
@@ -86,7 +90,7 @@ NEUTRAL_COLOR = '#878787'
 
 bgStd = (
     'Frame', 'Toykinter', 'Main', 'Colorizer', 'Toplevel', 'FontPicker',
-    'StatusbarTooltips', 'EventsTable')
+    'StatusbarTooltips', 'EventsTable', 'Gallery')
 
 bgHead = ('FrameHilited2',)
 
@@ -579,6 +583,15 @@ def config_generic(parent):
 
     config_bgStd(parent)
 
+# def get_opening_settings():
+    # conn = sqlite3.connect(global_db_path)
+    # cur = conn.cursor()
+    # cur.execute(select_default_formats)
+    # default_formats = cur.fetchall()[0]
+    # cur.close()
+    # conn.close()
+    # return default_formats
+
 def get_opening_settings():
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
@@ -658,6 +671,7 @@ def make_formats_dict():
     return formats
 
 def get_color_schemes():
+    # conn = sqlite3.connect(global_db_path)
     conn = sqlite3.connect(current_file)
     cur=conn.cursor()
     cur.execute(select_all_color_schemes)
@@ -667,6 +681,7 @@ def get_color_schemes():
     return schemes
 
 def get_color_schemes_plus():
+    # conn = sqlite3.connect(global_db_path)
     conn = sqlite3.connect(current_file)
     cur=conn.cursor()
     cur.execute(select_all_color_schemes_plus)

@@ -2,12 +2,13 @@
 
 import tkinter as tk
 import sqlite3
-from files import current_file, project_path
+from files import current_file, app_path
 from widgets import (
     LabelButtonImage, Frame, FrameTitleBar, LabelTitleBar, Toplevel, Canvas, 
     FrameHilited3) 
 from toykinter_widgets import StatusbarTooltips
 from styles import make_formats_dict, NEUTRAL_COLOR, config_generic
+# from query_strings import select_default_format_font_size
 from query_strings import select_format_font_size
 from PIL import Image, ImageTk
 import dev_tools as dt
@@ -74,8 +75,10 @@ class Border(Canvas):
             7 : ['medium', 31, 0.25], 
             11 : ['large', 45, 1.0]}
 
+        # conn = sqlite3.connect(global_db_path)
         conn = sqlite3.connect(current_file)
         cur = conn.execute(select_format_font_size)
+        # cur = conn.execute(select_default_format_font_size)
         font_size = cur.fetchone()
         cur.close()
         conn.close()
@@ -392,10 +395,10 @@ class TitleBarButton(LabelButtonImage):
         '''
 
         font_icon_file = {
-            'tiny' : (10, '{}images/icons/{}_{}.png'.format(project_path, icon, 12)), 
-            'small' : (12, '{}images/icons/{}_{}.png'.format(project_path, icon, 17)), 
-            'medium' : (14, '{}images/icons/{}_{}.png'.format(project_path, icon, 21)), 
-            'large' : (18, '{}images/icons/{}_{}.png'.format(project_path, icon, 32))}
+            'tiny' : (10, '{}images/icons/{}_{}.png'.format(app_path, icon, 12)), 
+            'small' : (12, '{}images/icons/{}_{}.png'.format(app_path, icon, 17)), 
+            'medium' : (14, '{}images/icons/{}_{}.png'.format(app_path, icon, 21)), 
+            'large' : (18, '{}images/icons/{}_{}.png'.format(app_path, icon, 32))}
 
         for k,v in font_icon_file.items():
             if icon_size == k:
@@ -403,7 +406,6 @@ class TitleBarButton(LabelButtonImage):
                 file = v[1]
         img = Image.open(file)
         self.tk_img = ImageTk.PhotoImage(img, master=master)
-        # self.tk_img = ImageTk.PhotoImage(img)
 
         self.config(
             font=('arial', icon_size, 'bold'), 

@@ -2,7 +2,7 @@
 
 import tkinter as tk
 import sqlite3
-from files import project_path, current_file
+from files import app_path, current_file
 from window_border import Border
 from scrolling import MousewheelScrolling, Scrollbar, resize_scrolled_content
 from styles import config_generic, make_formats_dict

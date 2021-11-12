@@ -24,8 +24,7 @@ from widgets import (
     Entry, ButtonQuiet)
 from autofill import EntryAuto
 from toykinter_widgets import Separator
-from nested_place_strings import (
-    make_all_nestings, ManyManyRecursiveQuery)
+from nested_place_strings import make_all_nestings, ManyManyRecursiveQuery
 from query_strings import (
     select_place_id_hint, insert_place_new, update_finding_places_null,     
     select_place_hint, select_all_places, select_all_places_places, 
@@ -54,17 +53,30 @@ def get_all_places_places():
     conn.close()
     return places_places
 
-place_strings = make_all_nestings(select_all_place_ids)
-places_places = get_all_places_places()
+# place_strings = make_all_nestings(select_all_place_ids)
+# places_places = get_all_places_places()
 
-conn = sqlite3.connect(current_file)
-cur = conn.cursor()
-cur.execute(select_all_places)
-all_place_names = [i[0] for i in cur.fetchall()]
-cur.close()
-conn.close()
+# conn = sqlite3.connect(current_file)
+# cur = conn.cursor()
+# cur.execute(select_all_places)
+# all_place_names = [i[0] for i in cur.fetchall()]
+# cur.close()
+# conn.close()
 
-unique_place_names = set(all_place_names) 
+# unique_place_names = set(all_place_names) 
+
+def get_all_unique_place_names():
+
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    cur.execute(select_all_places)
+    all_place_names = [i[0] for i in cur.fetchall()]
+    cur.close()
+    conn.close()
+
+    unique_place_names = set(all_place_names)
+
+    return unique_place_names
 
 class NewPlaceDialog():
     def __init__(
@@ -283,7 +295,8 @@ class NewPlaceDialog():
                 else:
                     self.current_id = dkt["id"][self.radx]
                     self.select_first_radio()
-                    nesting = ManyManyRecursiveQuery(initial_id=self.current_id).radio_text
+                    nesting = ManyManyRecursiveQuery(
+                        initial_id=self.current_id).radio_text
                     rad_string = "{}: {}".format(self.current_id, nesting)
             elif len(dkt["id"]) == 0:
                 self.current_id = dkt["temp_id"]
@@ -515,8 +528,14 @@ class ValidatePlace():
         qty = len(self.place_dicts)
         nulls = 9 - qty
         ids = ids + [None] * nulls
-        print("line", looky(seeline()).lineno, "self.finding:", self.finding)
         ids.append(self.finding)
+
+
+
+        places_places = get_all_places_places()
+
+
+
         last = len(self.place_dicts) - 1
         q = 0
         for dkt in self.place_dicts:
@@ -536,7 +555,13 @@ class ValidatePlace():
                     cur.execute(insert_places_places_new, (child, parent))
                     conn.commit()
             q += 1
-        print("line", looky(seeline()).lineno, "ids:", ids)
+
+
+
+        place_strings = make_all_nestings(select_all_place_ids)
+
+
+
         cur.execute(update_finding_places, tuple(ids))
         conn.commit()   
         place_strings.insert(0, self.place_input)

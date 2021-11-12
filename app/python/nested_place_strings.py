@@ -8,7 +8,7 @@
 import tkinter as tk
 from tkinter import ttk
 import sqlite3
-from files import current_file
+from files import get_current_file
 from widgets import Entry, Button
 from autofill import EntryAuto
 from query_strings import (
@@ -105,6 +105,8 @@ from dev_tools import looky, seeline
 
         8       8       8   8   27          8           8       8   8   27
 '''
+
+current_file = get_current_file()[0]
 
 class ManyManyRecursiveQuery():
     '''

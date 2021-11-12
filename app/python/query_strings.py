@@ -180,6 +180,16 @@ select_all_color_schemes_plus = '''
     FROM color_scheme
 '''
 
+# select_all_color_schemes = '''
+    # SELECT bg, highlight_bg, head_bg, fg 
+    # FROM default_color_scheme
+# '''
+
+# select_all_color_schemes_plus = '''
+    # SELECT bg, highlight_bg, head_bg, fg, built_in, color_scheme_id 
+    # FROM default_color_scheme
+# '''
+
 select_all_event_types = '''
     SELECT event_types
     FROM event_type
@@ -266,33 +276,6 @@ select_all_person_ids = '''
     SELECT person_id FROM person
 '''
 
-# select_all_person_images = '''
-    # SELECT names, images, caption, main_image
-    # FROM images_entities
-        # JOIN person
-            # ON images_entities.person_id = person.person_id
-        # JOIN image
-            # ON image.image_id = images_entities.image_id 
-        # JOIN name
-            # ON person.person_id = name.person_id
-    # WHERE images_entities.person_id = ?
-        # AND name_type_id = 1
-# '''
-# PROBLEM: IF person has no birth_name, then he has no images
-# but if person has birth name and six images, the 6 images will be repeated
-
-# select_all_person_images = '''
-    # SELECT names, images, caption, main_image
-    # FROM images_entities
-        # JOIN person
-            # ON images_entities.person_id = person.person_id
-        # JOIN image
-            # ON image.image_id = images_entities.image_id 
-        # JOIN name
-            # ON person.person_id = name.person_id
-    # WHERE images_entities.person_id = ?
-# '''
-
 select_all_person_images = '''
     SELECT DISTINCT images, caption, main_image
     FROM images_entities
@@ -307,17 +290,6 @@ select_all_place_ids = '''
     SELECT place_id
     FROM place
 '''
-
-# select_all_place_images = '''
-    # SELECT places, images, caption, main_image
-    # FROM images_entities
-        # JOIN place
-            # ON images_entities.place_id = place.place_id 
-        # JOIN current
-            # ON current.place_id = place.place_id
-        # JOIN image
-            # ON image.image_id = images_entities.image_id 
-# '''
 
 select_all_place_images = '''
     SELECT images, caption, main_image, places
@@ -353,18 +325,11 @@ select_all_source_images = '''
             ON image.image_id = images_entities.image_id 
 '''
 
-# select_all_source_images = '''
-    # SELECT citations, images, caption, main_image, sources
-    # FROM images_entities
-        # JOIN source
-            # ON citation.source_id = source.source_id
-        # JOIN citation
-            # ON images_entities.citation_id = citation.citation_id
-        # JOIN current
-            # ON current.citation_id = citation.citation_id
-        # JOIN image
-            # ON image.image_id = images_entities.image_id 
-# '''
+select_closing_state_openpic = '''
+    SELECT openpic
+    FROM closing_state
+    WHERE closing_state_id = 1
+'''
 
 select_color_scheme_current = '''
     SELECT bg, highlight_bg, head_bg, fg 
@@ -457,12 +422,25 @@ select_current_person_image = '''
     WHERE main_image = 1 
         AND images_entities.person_id = ?
 '''
+# select_current_tree = '''
+    # SELECT current_tree 
+    # FROM closing_state 
+    # WHERE closing_state_id = 1
+# '''
 
-select_current_tree = '''
-    SELECT current_tree 
+select_closing_state_prior_tree = '''
+    SELECT prior_tree 
     FROM closing_state 
     WHERE closing_state_id = 1
 '''
+
+# select_default_date_format = '''
+    # SELECT default_date_formats, default_abt, default_est, default_cal,
+        # default_bef_aft, default_bc_ad, default_os_ns, default_span, 
+        # default_range
+    # FROM default_date_format
+    # WHERE default_date_format_id = 1
+# '''
 
 select_date_format = '''
     SELECT date_formats, abt, est, cal, bef_aft, bc_ad, os_ns, span, range
@@ -696,6 +674,12 @@ select_findings_roles_generic_finding = '''
     WHERE findings_roles.finding_id = ?
 '''
 
+select_default_format_font_size = '''
+    SELECT default_font_size
+    FROM default_format
+    WHERE default_format_id = 1
+'''
+
 select_format_font_size = '''
     SELECT font_size, default_font_size
     FROM format
@@ -841,6 +825,19 @@ select_notes_refresh = '''
     JOIN findings_notes 
         ON note.note_id = findings_notes.note_id 
     WHERE finding_id = ?
+'''
+
+select_default_formats = '''
+    SELECT 
+        default_bg,
+        default_highlight_bg,
+        default_head_bg, 
+        default_fg,
+        default_output_font,
+        default_input_font, 
+        default_font_size            
+    FROM default_format
+    WHERE default_format_id = 1
 '''
 
 select_opening_settings = '''
@@ -1002,6 +999,18 @@ select_role_type_id = '''
     SELECT role_type_id 
     FROM role_type 
     WHERE role_types = ?
+'''
+
+select_app_setting_openpic_dir = '''
+    SELECT openpic_dir, default_openpic_dir
+    FROM app_setting
+    WHERE app_setting_id = 1
+'''
+
+update_closing_state_openpic = '''
+    UPDATE closing_state
+    SET openpic = ?
+    WHERE closing_state_id = 1
 '''
 
 update_color_scheme_null = '''

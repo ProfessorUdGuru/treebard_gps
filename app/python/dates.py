@@ -2,13 +2,13 @@
 
 import tkinter as tk
 import sqlite3
-from files import current_file
+from files import get_current_file
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
 from styles import make_formats_dict
 from messages import open_error_message, dates_msg, open_input_message
+# from query_strings import select_date_format, select_default_date_format
 from query_strings import select_date_format
-
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -99,7 +99,7 @@ from dev_tools import looky, seeline
     to me that all date inputs should be treated as compound, and if the second
     term in the list was empty, then it could just be ignored. Another early 
     problem was caused by letting the user input months as numbers. Disallowing
-    this simplified the programmer's task big time. Treebard policy is to
+    this simplified the programmer's task big-time. Treebard policy is to
     disallow numerical month DISPLAY because of cultural differences in the 
     ordering of numerical date values which would make for ambiguity from one 
     country to another. This would make sharing trees a big hassle in some cases.
@@ -111,6 +111,17 @@ from dev_tools import looky, seeline
 '''
 
 formats = make_formats_dict()
+current_file = get_current_file()[0]
+
+
+# def get_default_date_formats():
+    # conn = sqlite3.connect(global_db_path)
+    # cur = conn.cursor()
+    # cur.execute(select_default_date_format)
+    # default_date_prefs = cur.fetchone()
+    # cur.close()
+    # conn.close()
+    # return default_date_prefs
 
 def get_date_formats():
     conn = sqlite3.connect(current_file)
@@ -121,6 +132,7 @@ def get_date_formats():
     conn.close()
     return date_prefs
 
+# date_prefs = get_default_date_formats()
 date_prefs = get_date_formats()
 
 # "." can't be used as a separator as it would prevent the user
@@ -745,7 +757,6 @@ def make_date_string(final):
         link, prefix2, year2, month2, day2, suffix2)
 
 def format_stored_date(stored_date):
-    # print("line", looky(seeline()).lineno, "stored_date:", stored_date)
     if stored_date == "-0000-00-00----0000-00-00-":
         return ""
     dateform = date_prefs[0]

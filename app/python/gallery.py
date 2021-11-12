@@ -3,7 +3,7 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 import sqlite3
-from files import current_file, current_dir, current_drive, project_path
+from files import get_current_file, current_drive, app_path
 from styles import make_formats_dict, config_generic
 from window_border import Border    
 from scrolling import Scrollbar, resize_scrolled_content
@@ -23,7 +23,7 @@ import dev_tools as dt
 from dev_tools import looky, seeline
 
 
-
+current_file, current_dir = get_current_file()
 formats = make_formats_dict()
 
 class Gallery(Frame):
@@ -157,7 +157,7 @@ class Gallery(Frame):
             if thumbsy.height > self.maxheight:
                 self.maxheight = thumbsy.height
             thumbsy.thumbnail((185,85))
-            thumb_path = '{}images/{}_tmb.png'.format(project_path, bare)
+            thumb_path = '{}images/{}_tmb.png'.format(app_path, bare)
             # overwrites file by same name if it exists 
             thumbsy.save(thumb_path)
             small = ImageTk.PhotoImage(file=thumb_path, master=self.thumbstrip)

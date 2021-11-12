@@ -7,7 +7,7 @@ from tkinter import messagebox
 from tkinter import filedialog
 from PIL import Image, ImageTk
 import sqlite3
-from query_strings import (select_current_tree, update_current_tree)
+from query_strings import (select_closing_state_prior_tree, update_current_tree)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -19,9 +19,9 @@ from dev_tools import looky, seeline
 # WHEN ALL HAS BEEN TESTED (SINCE I MOVED ALL FILES TO D: DRIVE), THEN
 # IT'S OK TO DELETE THE COMMENTED LINES BELOW
 # POSSIBLE root_drive OR conn_fig HAS BEEN REFERENCED SOMEWHERE SO THEY'D
-# HAVE TO BE CHANGED TO root_drive AND current_database
+# HAVE TO BE CHANGED TO current_drive AND current_database or something
 # for some reason the relative paths used throughout the app no longer work
-# since these changes but all I've had to do to fix it is to import project_path
+# since these changes but all I've had to do to fix it is to import app_path
 # from files and add it to the relative paths with another {} in the format string
 
 # root_drive = '{}{}'.format(path.abspath('.').split(path.sep)[0], path.sep)
@@ -32,50 +32,55 @@ from dev_tools import looky, seeline
 current_path = argv[0]
 split_path = path.splitdrive(current_path)
 current_drive = '{}\\'.format(split_path[0])
-current_database = '{}treebard_gps/data/sample_tree/sample_tree.tbd'.format(
-    current_drive)
-project_path = '{}treebard_gps/app/python/'.format(current_drive)
+app_path = '{}treebard_gps/app/python/'.format(current_drive)
+global_db_path = "{}treebard_gps/data/settings/treebard.db".format(current_drive)
 
 print("split_path[0]", split_path[0])
 print("argv", argv)
 print("argv[0]", argv[0])
 print("current_drive", current_drive)
-print("current_database", current_database)
-print("project_path", project_path)
-# OUTPUT:
-# current_drive C:\
-# conn_fig C:\treebard_gps/data/sample_tree/sample_tree.tbd
-# current_path D:\treebard_gps\app\python\treebard_root_020.py
-# split_path[0] D:
-# argv ['D:\\treebard_gps\\app\\python\\treebard_root_020.py']
-# argv[0] D:\treebard_gps\app\python\treebard_root_020.py
-# current_drive D:\
-# current_database D:\treebard_gps/data/sample_tree/sample_tree.tbd
+# print("current_database", current_database)
+print("app_path", app_path)
+print("global_db_path", global_db_path)
 
-def get_current_file():
-    conn = sqlite3.connect(current_database)
+
+
+prior_file = ""
+current_file = ""
+current_dir = ""
+
+def get_prior_tree():
+    conn = sqlite3.connect(global_db_path)
     cur = conn.cursor()
-    cur.execute(select_current_tree)
-    cur_tup = cur.fetchone()
-
-    if cur_tup:
-        cur_tup = cur_tup[0]
+    cur.execute(select_closing_state_prior_tree)
+    prior_file = cur.fetchone()
+    cur.close()
+    conn.close()
+    if prior_file:
+        prior_file = prior_file[0]
     else:
-        cur_tup = ''
+        prior_file = ''
 
-    if cur_tup == 'default_new_tree.db':
-        current_file = cur_tup
+    return prior_file
+
+def get_current_file(): # change to get_prior_file and write another funx to get current file from user/open dlg etc.; THIS FUNX BASES current_file ON prior_file SO THIS IS USED ON PIC CLICK, NOT RUN AUTOMATICALLY
+    global prior_file, current_file
+    prior_file = get_prior_tree()
+    if prior_file is None:
+        return
+
+    if prior_file == 'default_new_tree.db': # is this still needed? Seems like I did this as part of a procedure that would open and/or copy the default tree if it were needed, but the details escape me now. Probably part of make_new_tree() since it would be using the default tree as a template.
+        current_file = prior_file
         current_dir = '{}treebard_gps/data/settings'.format(
             current_drive)
 
-    elif len(cur_tup) > 0:
-        current_dir = cur_tup.rstrip('.tbd')
+    # dir has to be automade with same name as the .tbd file
+    elif len(prior_file) > 0:
+        current_dir = prior_file.rstrip('.tbd')
         current_file = '{}treebard_gps/data/{}/{}'.format(
-            current_drive, current_dir, cur_tup)
+            current_drive, current_dir, prior_file)
     else:
         current_file = ''
-    cur.close()
-    conn.close()
     file_ok = path.exists(current_file)
     if file_ok is False:
         valid_dummy = 'default_new_tree.db'
@@ -87,7 +92,6 @@ def get_current_file():
         current_dir = '{}treebard_gps/data/settings'.format(
             current_drive)
     return current_file, current_dir
-current_file, current_dir = get_current_file()
 
 def set_current_file(new_current_file):
     if new_current_file.strip() != '':
@@ -141,7 +145,7 @@ def get_new_tree_title(current_file):
     return file_only
 
 def change_tree_title(parent):
-    current_file = get_current_file()[0]
+    # current_file = get_current_file()[0]
     file_only = get_new_tree_title(current_file) 
     # fix this for Border class
     # parent.title('{}            Treebard Genieware Pattern Simulation'.format(

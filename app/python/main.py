@@ -4,15 +4,16 @@ import tkinter as tk
 import sqlite3
 from PIL import Image, ImageTk
 from files import (
-    current_file, current_dir, current_drive, make_tree, open_tree,
-    save_as,save_copy_as, rename_tree, project_path)
+    get_current_file, current_drive, make_tree, open_tree,
+    # current_file, current_dir, current_drive, make_tree, open_tree,
+    save_as,save_copy_as, rename_tree, app_path)
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonPlain, FrameHilited1,
     CanvasHilited, FrameHilited3, Toplevel, LabelBoilerplate)
 from styles import config_generic
 from window_border import Border
 from custom_tabbed_widget import TabBook
-from dropdown import DropdownMenu, placeholder
+# from dropdown import DropdownMenu, placeholder
 from autofill import EntryAutoHilited    
 from scrolling import Scrollbar    
 from events_table import EventsTable
@@ -24,7 +25,7 @@ from names import (
     open_new_person_dialog, get_any_name_with_id)
 from search import PersonSearch
 from query_strings import select_images_entities_main_image
-from utes import create_tooltip
+# from utes import create_tooltip
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -43,12 +44,14 @@ RIGHT_PANEL_TABS = (("images", "I"), ("do list", "O"))
 
 PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"), ("images", "M"))
 
-ICONS = (
-    'open', 'cut', 'copy', 'paste', 'print', 'home', 'first', 
-    'previous', 'next', 'last', 'search', 'add', 'settings', 
-    'note', 'back', 'forward') 
+# ICONS = (
+    # 'open', 'cut', 'copy', 'paste', 'print', 'home', 'first', 
+    # 'previous', 'next', 'last', 'search', 'add', 'settings', 
+    # 'note', 'back', 'forward') 
 
 SCREEN_SIZE = []
+
+current_file, current_dir = get_current_file()
 
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
@@ -66,50 +69,7 @@ class Main(Frame):
         SCREEN_SIZE.append(self.winfo_screenheight())
 
         self.make_widgets()
-        self.make_menus()
         self.get_current_values()
-
-        self.menus_show = True
-        self.root.bind("<KeyPress-F10>", self.make_menus_disappear)
-
-    def make_menus(self):
-        self.make_top_menu()
-        self.make_icon_menu()
-
-    def make_top_menu(self):
-        top_menu = DropdownMenu(self.master.menu_frame, self.root) 
-        top_menu.grid(column=0, row=0)
-
-    def make_icon_menu(self):
-        ribbon = {}        
-        r = 0
-        for name in ICONS:
-            file = '{}/images/{}.gif'.format(project_path, name)
-            pil_img = Image.open(file)
-            tk_img = ImageTk.PhotoImage(pil_img, master=self.master)
-            icon = ButtonPlain(
-                self.master.ribbon_frame,
-                image=tk_img,
-                command=lambda name=name: placeholder(name),
-                takefocus=0)
-            icon.image = tk_img
-            icon.grid(column=r, row=0)
-            create_tooltip(icon, name.title())
-            ribbon[name] = icon
-            r += 1
-        
-        ribbon['open'].config(command=lambda: open_tree(self.root))
-        ribbon['home'].config(command=self.root.quit)
-
-    def make_menus_disappear(self, evt):
-        if self.menus_show is True:
-            self.master.menu_frame.grid_remove()
-            self.master.ribbon_frame.grid_remove()
-            self.menus_show = False
-        else:
-            self.master.menu_frame.grid()
-            self.master.ribbon_frame.grid()
-            self.menus_show = True
 
     def make_scrollbars(self):
 
@@ -190,7 +150,8 @@ class Main(Frame):
             self.right_panel.store['images'],
             command=self.open_person_gallery)
 
-        self.show_top_pic()
+        if len(current_dir) != 0:
+            self.show_top_pic()
 
         self.findings_table = EventsTable(
             persons_tab, self.root, self.treebard, self)
@@ -388,7 +349,6 @@ class Main(Frame):
         top_pic = cur.fetchone()
         cur.close()
         conn.close()
-
         if top_pic:
             img_stg = ''.join(top_pic)
             new_stg = '{}treebard_gps/data/{}/images/{}'.format(
