@@ -52,6 +52,7 @@ PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"),
 SCREEN_SIZE = []
 
 current_file, current_dir = get_current_file()
+print("line", looky(seeline()).lineno, "current_file, current_dir:", current_file, current_dir)
 
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
@@ -355,6 +356,8 @@ class Main(Frame):
                 current_drive, current_dir, img_stg)
 
             print("line", looky(seeline()).lineno, "current_drive, current_dir, img_stg:", current_drive, current_dir, img_stg)
+
+# line 357 current_drive, current_dir, img_stg: D:/ D:/treebard_gps/data/settings sample_00001-i.jpg
 
             top = Image.open(new_stg)
             img1 = ImageTk.PhotoImage(top, master=self.master)

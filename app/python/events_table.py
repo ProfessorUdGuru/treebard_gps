@@ -1879,7 +1879,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# new file works but the file is still named new_default_tree.db
+# when new tree is created, close the current file and open the new file
 # get the file commands to work from the opening window except gedcom which shd open a standard message "this feature is not complete. Please visit proboards if you would like to assist in creating this feature."
 # test the feature which creates a new tree from the default tree if the user has deleted a file outside of treebard's controls see files.py valid_dummy
 # fix change_tree_title in files.py
