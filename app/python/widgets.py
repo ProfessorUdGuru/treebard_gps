@@ -3,7 +3,6 @@
 import tkinter as tk
 from tkinter import ttk
 import sqlite3
-from files import current_drive, app_path
 from tkinter import messagebox
 from styles import make_formats_dict, NEUTRAL_COLOR
 from utes import create_tooltip

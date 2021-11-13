@@ -23,7 +23,7 @@ import dev_tools as dt
 from dev_tools import looky, seeline
 
 
-current_file, current_dir = get_current_file()
+# current_file, current_dir = get_current_file()
 formats = make_formats_dict()
 
 class Gallery(Frame):
@@ -43,6 +43,8 @@ class Gallery(Frame):
         self.treebard = treebard
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = SCREEN_SIZE
         self.dialog = dialog
+
+        self.current_file, self.current_dir = get_current_file()
 
         if current_person_name:
             self.current_entity_name = current_person_name
@@ -133,7 +135,6 @@ class Gallery(Frame):
         self.pic_canvas.bind('<Button-1>', self.focus_clicked)
         self.pic_canvas.bind('<Button-1>', self.scroll_start, add='+')
         self.pic_canvas.bind('<B1-Motion>', self.scroll_move)  
-
         self.img_path = '{}treebard_gps\data\{}\images\{}'.format(
             current_drive, self.image_dir, self.main_pic)
         img_big = Image.open(self.img_path)
@@ -308,7 +309,7 @@ class Gallery(Frame):
 
         self.chosen_picfile = self.current_pictures[select_pic]
         self.img_path = '{}treebard_gps\data\{}\images\{}'.format(
-            current_drive, current_dir, self.chosen_picfile)
+            current_drive, self.current_dir, self.chosen_picfile)
 
         pix_data = self.get_current_pix_data()
         for tup in pix_data:
@@ -404,7 +405,7 @@ class Gallery(Frame):
             self.counter = len(self.caption_path)    
         self.counter -= 1 
         self.img_path = '{}treebard_gps\data\{}\images\{}'.format(
-            current_drive, current_dir, self.caption_path[self.counter][0])
+            current_drive, self.current_dir, self.caption_path[self.counter][0])
         self.caption_text = self.caption_path[self.counter][1]
 
         new = Image.open(self.img_path)
@@ -424,7 +425,7 @@ class Gallery(Frame):
         if self.counter == len(self.caption_path):
             self.counter = 0
         self.img_path = '{}treebard_gps\\data\\{}\\images\\{}'.format(
-            current_drive, current_dir, self.caption_path[self.counter][0])
+            current_drive, self.current_dir, self.caption_path[self.counter][0])
         self.caption_text = self.caption_path[self.counter][1]
 
         new = Image.open(self.img_path)
@@ -439,8 +440,8 @@ class Gallery(Frame):
         self.config_labels()
 
     def get_current_pix_data(self):
-        self.image_dir = current_dir
-        conn = sqlite3.connect(current_file)
+        self.image_dir = self.current_dir
+        conn = sqlite3.connect(self.current_file)
         cur = conn.cursor()
         if self.master.winfo_name() == 'placetab':
             cur.execute(select_all_place_images)
@@ -524,7 +525,7 @@ class Gallery(Frame):
     def set_main_pic(self, val): 
 
         radio_value = (val,)
-        conn = sqlite3.connect(current_file)
+        conn = sqlite3.connect(self.current_file)
         conn.execute("PRAGMA foreign_keys = 1")
         cur = conn.cursor()
         cur.execute(select_current_person_id)

@@ -9,8 +9,7 @@ from widgets import Toplevel, Canvas, Button, Frame, ButtonPlain
 from toykinter_widgets import run_statusbar_tooltips
 from PIL import Image, ImageTk
 from files import (
-    open_tree, make_tree, import_gedcom, open_sample, app_path,
-    prior_file, global_db_path, get_current_file)
+    open_tree, make_tree, import_gedcom, open_sample, app_path,global_db_path, get_current_file)
 from styles import make_formats_dict, config_generic
 from utes import center_dialog
 from query_strings import (
@@ -28,10 +27,13 @@ from dev_tools import looky, seeline
 formats = make_formats_dict()
 
 class SplashScreen(Toplevel):
-    def __init__(self, master, *args, **kwargs):
+    def __init__(self, master, treebard, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
-        master = self.master
+        # master = self.master
+        self.master = master
+        self.treebard = treebard
+        
 
         self.master.iconify()
         self.master.overrideredirect(1)
@@ -100,17 +102,23 @@ class SplashScreen(Toplevel):
         opener = Button(
             buttonbox, 
             text='OPEN TREE', 
-            command=lambda root=self.master, 
+            command=lambda treebard=self.treebard, 
+            # command=lambda root=self.master, 
                 funx=make_main_window, 
-                dlg=self.opening_dialog: open_tree(root, funx, dlg))
+                dlg=self.opening_dialog: open_tree(treebard, funx, dlg))
+                # dlg=self.opening_dialog: open_tree(root, funx, dlg))
         opener.grid(column=0, row=0, padx=24, pady=24)
         opener.focus_set()
 
         new = Button(
             buttonbox, 
-            text='NEW TREE',
-            command=lambda root=self.master: make_tree(root))
-                # isnewfile=True: make_tree(root, dlg, isnewfile))
+            text='NEW TREE', 
+            command=lambda root=self.master,
+                treebard=self.treebard,
+            # command=lambda root=self.master, 
+                funx=make_main_window, 
+                dlg=self.opening_dialog: make_tree(root, treebard, funx, dlg))
+                # dlg=self.opening_dialog: make_tree(root, funx, dlg))
         new.grid(column=1, row=0, padx=24, pady=24)
 
         importgedcom = Button(

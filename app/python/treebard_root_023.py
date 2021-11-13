@@ -103,9 +103,8 @@ class Treebard():
 
     def make_main_window(self):
         '''
-            This is delayed till when the current file is known.
-            Currently it's called in opening.py to open the file that was last
-            opened.
+            This is delayed till when the current file is known, so it's called 
+            in opening.py.
         '''
         self.main = Main(self.canvas, self.root, self)
         
@@ -129,8 +128,8 @@ def start():
         width=int(MAX_WINDOW_WIDTH * screen_width), 
         height=int(MAX_WINDOW_HEIGHT * screen_height))
     config_generic(root)
-    splash = SplashScreen(root)
     treebard = Treebard(root)
+    splash = SplashScreen(root, treebard)
     splash.open_treebard(treebard.make_main_window)    
 
     root.mainloop()

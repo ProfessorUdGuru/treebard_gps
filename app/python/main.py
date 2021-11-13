@@ -3,17 +3,13 @@
 import tkinter as tk
 import sqlite3
 from PIL import Image, ImageTk
-from files import (
-    get_current_file, current_drive, make_tree, open_tree,
-    # current_file, current_dir, current_drive, make_tree, open_tree,
-    save_as,save_copy_as, rename_tree, app_path)
+from files import current_drive, get_current_file
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonPlain, FrameHilited1,
     CanvasHilited, FrameHilited3, Toplevel, LabelBoilerplate)
 from styles import config_generic
 from window_border import Border
 from custom_tabbed_widget import TabBook
-# from dropdown import DropdownMenu, placeholder
 from autofill import EntryAutoHilited    
 from scrolling import Scrollbar    
 from events_table import EventsTable
@@ -24,8 +20,8 @@ from names import (
     get_name_with_id, make_all_names_list_for_person_select,
     open_new_person_dialog, get_any_name_with_id)
 from search import PersonSearch
-from query_strings import select_images_entities_main_image
-# from utes import create_tooltip
+from query_strings import (
+    select_images_entities_main_image, select_current_person_id)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -51,8 +47,7 @@ PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"),
 
 SCREEN_SIZE = []
 
-current_file, current_dir = get_current_file()
-print("line", looky(seeline()).lineno, "current_file, current_dir:", current_file, current_dir)
+# current_file, current_dir = get_current_file()
 
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
@@ -68,6 +63,8 @@ class Main(Frame):
 
         SCREEN_SIZE.append(self.winfo_screenwidth())
         SCREEN_SIZE.append(self.winfo_screenheight())
+
+        # self.current_dir = get_current_file()[1]
 
         self.make_widgets()
         self.get_current_values()
@@ -147,20 +144,35 @@ class Main(Frame):
             persons_tab, root=self.root, tabs=RIGHT_PANEL_TABS, side="se", 
             selected='images', case='upper', miny=0.25, minx=0.20, takefocus=0)
 
+
+
+
+
+
         self.top_pic_button = ButtonPlain(
             self.right_panel.store['images'],
             command=self.open_person_gallery)
+        current_file, current_dir = get_current_file()
+        print("line", looky(seeline()).lineno, "current_file, current_dir:", current_file, current_dir)
 
-        if len(current_dir) != 0:
-            self.show_top_pic()
+
+
+
+
+
 
         self.findings_table = EventsTable(
             persons_tab, self.root, self.treebard, self)
         EventsTable.instances.append(self.findings_table)
+        self.current_person = self.findings_table.current_person
 
         self.att = EventsTable(
             attributes_tab, self.root, self.treebard, self, attrib=True)
         EventsTable.instances.append(self.att)
+
+        # tricky: this does not run on redraw, just on load
+        if len(current_dir) != 0:
+            self.show_top_pic(current_file, current_dir, self.current_person)
 
         place_gallery = Gallery(
             places_tab, 
@@ -272,7 +284,7 @@ class Main(Frame):
 
     def get_current_values(self):
         all_names = make_all_names_list_for_person_select()
-        self.current_person = self.findings_table.current_person
+        # self.current_person = self.findings_table.current_person
         self.current_person_name = get_any_name_with_id(self.current_person)
         if type(self.current_person_name) is tuple:
             use_name = list(self.current_person_name)
@@ -324,8 +336,8 @@ class Main(Frame):
         self.att.current_person = self.current_person
         self.att.redraw(current_person=self.current_person)
         self.person_entry.delete(0, 'end')
-        
-        self.show_top_pic()
+        current_file, current_dir = get_current_file()
+        self.show_top_pic(current_file, current_dir, self.current_person)
 
     def open_person_gallery(self):
 
@@ -342,22 +354,26 @@ class Main(Frame):
             dialog=person_gallery_dlg,
             current_person_name=self.current_person_name)
 
-    def show_top_pic(self):
+    def show_top_pic(self, current_file, current_dir, current_person):
+        # print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
+            
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        cur.execute(select_images_entities_main_image)
-
+        if current_person is None:
+            cur.execute(select_current_person_id)
+            current_person = cur.fetchone()[0]
+        print("line", looky(seeline()).lineno, "current_person:", current_person)
+        cur.execute(select_images_entities_main_image, (current_person,))        
         top_pic = cur.fetchone()
+        print("line", looky(seeline()).lineno, "top_pic:", top_pic)
         cur.close()
         conn.close()
         if top_pic:
+            # ? wrong has to be passed or it will get setting which is what's open when it looks for a value AND THAT IS AFTER I MANUALLY DELETED A TREE SO IT GETS THE DEFAULT TREE'S CURRENT DIR solution is to add a correction after the valid dummy procedure
             img_stg = ''.join(top_pic)
+            print("line", looky(seeline()).lineno, "current_drive, current_dir, img_stg:", current_drive, current_dir, img_stg)
             new_stg = '{}treebard_gps/data/{}/images/{}'.format(
                 current_drive, current_dir, img_stg)
-
-            print("line", looky(seeline()).lineno, "current_drive, current_dir, img_stg:", current_drive, current_dir, img_stg)
-
-# line 357 current_drive, current_dir, img_stg: D:/ D:/treebard_gps/data/settings sample_00001-i.jpg
 
             top = Image.open(new_stg)
             img1 = ImageTk.PhotoImage(top, master=self.master)

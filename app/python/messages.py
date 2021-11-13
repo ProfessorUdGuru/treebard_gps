@@ -58,6 +58,11 @@ def open_yes_no_message(parent, message, title, ok_lab, cancel_lab):
     return msg, lab, ok_butt, cancel_butt, buttonbox
 
 def open_input_message(parent, message, title, ok_lab, cancel_lab, user_input):
+    '''
+        To avoid a circular import, a simpler version of this (fixed with a 
+        neutral color) is available at files.py which should be importable
+        to just about any module.
+    '''
     def ok():
         cancel()
 
@@ -171,3 +176,5 @@ dates_msg = (
 fonts_msg = (
     "Press ALT+P then CTRL+S to resize the scrollbar after changing fonts.",
 )
+
+# files_msg = ("Give the tree a unique name. Treebard will use your wording as the title. Treebard will save 'Smith Family Tree' as a file at `{current drive}/treebard_gps/data/smith_family_tree/smith_family_tree.tbd`",)

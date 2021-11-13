@@ -2,7 +2,7 @@
 
 import tkinter as tk
 import sqlite3
-from files import app_path, current_file
+from files import app_path, get_current_file
 from window_border import Border
 from scrolling import MousewheelScrolling, Scrollbar, resize_scrolled_content
 from styles import config_generic, make_formats_dict
@@ -25,7 +25,7 @@ from dev_tools import looky, seeline
 
 
 
-
+current_file, current_dir = get_current_file()
 formats = make_formats_dict()
 COL_HEADS = ('ID', 'Name', 'Birth', 'Death', 'Mother', 'Father')
 
@@ -408,8 +408,9 @@ class PersonSearch(Toplevel):
             self.new_current_person = "({}) {}".format(use_name[1], use_name[0])
         self.findings_table.redraw(evt, current_person=self.new_current_id)
         self.attributes_table.redraw(evt, current_person=self.new_current_id)
-
-        self.show_top_pic()
+        print("line", looky(seeline()).lineno, "self.findings_table.current_person:", self.findings_table.current_person)
+        print("line", looky(seeline()).lineno, "current_file, current_dir:", current_file, current_dir)
+        self.show_top_pic(current_file, current_dir, self.new_current_id)
 
         self.master.current_person_label.config(
             text="Current Person (ID): {} ({})".format(

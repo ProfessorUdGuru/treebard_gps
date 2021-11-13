@@ -370,9 +370,7 @@ class EventsTable(Frame):
 
         self.main_canvas = main.master
 
-        self.main_canvas.title_2.config(text=current_file)
-        self.current_person = get_current_person() # too early
-
+        self.current_person = get_current_person()
         self.inwidg = None
         self.headers = []
         self.widths = [0, 0, 0, 0, 0]
@@ -524,7 +522,6 @@ class EventsTable(Frame):
                         None, 
                         self.final, couple, after_death))
                 conn.commit() 
-                print("line", looky(seeline()).lineno, "event_types:", event_types)
                 event_types = get_all_event_types()
                 self.event_autofill_values = EntryAuto.create_lists(event_types)
                 self.event_input.values = self.event_autofill_values
@@ -1879,11 +1876,15 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# when new tree is created, close the current file and open the new file
+# test the feature which creates a new tree from the default tree if the user has deleted a file outside of treebard's controls see files.py valid_dummy THIS WORKS which you can test by making a change to the tree. But close and reopen it, and the change (I tried changing current person) doesn't show. But close and reopen it a second time, and it does. OR SOMETHING LIKE THAT. It is flaky and instead of patching it up I have to rethink it and come up with a better solution. Auto-replace it? And open a dlg telling the user to delete it correctly? And giving a button to do so right on the dlg? As a CONFIRM button; not telling the user what/why/how but by auto-replace I mean putting a copy of the default tree in its place with the same name. This is OK for now but has to be fixed right away. The main idea is that if the absence of a needed filename is ever detected, flaky patches go into effect and that should be cut off at the pass.
+# retest click pick to open prior tree
+# when you press Open button then Cancel, sample tree opens (or is this bec I deleted some files manually?)
+# add a parameter to pass current_person to Main on instantiation, it shd never be None
+# try to move open_input_message() from files.py to messages.py by making if a parameter of new_tree() where it's called in opening.py
+# remove stuff from default tree both copies same so it's a real default tree for starting new trees with, and start a real new tree
 # get the file commands to work from the opening window except gedcom which shd open a standard message "this feature is not complete. Please visit proboards if you would like to assist in creating this feature."
-# test the feature which creates a new tree from the default tree if the user has deleted a file outside of treebard's controls see files.py valid_dummy
-# fix change_tree_title in files.py
 # get rid of globals in files.py
+# fix the same menu and icon commands that already work from the opening dialog as well as Recent Files which could be columns in closing_state?
 # make big pic change or something so user knows when it's in focus so spacebar will be easy to use for non mousers when opening last used file? and/or just start with the pic in focus so spacebar is ready
 # change all dialogs to Border class
 # I think in names.py the StatusBar is being imported and instantiated redundantly or is it that the Border class hasn't been used there yet?

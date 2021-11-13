@@ -3,9 +3,8 @@
 from sys import argv
 from os import path, rename, mkdir, listdir
 from shutil import copy2
-from tkinter import messagebox
-from tkinter import filedialog
-from tkinter.simpledialog import askstring
+from tkinter import (
+    messagebox, filedialog, Label, Entry, Toplevel, StringVar, Frame, Button)
 from PIL import Image, ImageTk
 import sqlite3
 from query_strings import (
@@ -39,8 +38,9 @@ print("global_db_path:", global_db_path)
 # split_path: ['D:', 'treebard_gps', 'app', 'python', 'treebard_root_023.py']
 # current_drive: D:/
 # app_name: treebard_root_023.py
+TBARD_NEUTRAL = "#878787"
+TBARD_NEUTRAL2 = "#999999"
 
-prior_file = ""
 current_file = ""
 
 def get_prior_tree():
@@ -57,16 +57,17 @@ def get_prior_tree():
 
     return prior_file
 
-def get_current_file(): # change to get_prior_file and write another funx to get current file from user/open dlg etc.; THIS FUNX BASES current_file ON prior_file SO THIS IS USED ON PIC CLICK, NOT RUN AUTOMATICALLY
-    global prior_file, current_file # prior_file not a global bec this code doesn't change it?
+def get_current_file():
+
+    global current_file
+
     prior_file = get_prior_tree()
     if prior_file is None:
         return
 
-    if prior_file == 'default_new_tree.db': # is this still needed? Seems like I did this as part of a procedure that would open and/or copy the default tree if it were needed, but the details escape me now. Probably part of make_new_tree() since it would be using the default tree as a template.
+    if prior_file == 'default_new_tree.db':
         current_file = prior_file
-        current_dir = '{}treebard_gps/data/settings'.format(
-            current_drive)
+        current_dir = '{}treebard_gps/data/settings'.format(current_drive)
 
     elif len(prior_file) > 0:
         current_dir = prior_file.rstrip('.tbd')
@@ -74,16 +75,27 @@ def get_current_file(): # change to get_prior_file and write another funx to get
             current_drive, current_dir, prior_file)
     else:
         current_file = ''
+    print("line", looky(seeline()).lineno, "current_file:", current_file)
     file_ok = path.exists(current_file)
+    print("line", looky(seeline()).lineno, "file_ok:", file_ok)
+
     if file_ok is False:
-        valid_dummy = 'default_new_tree.db'
         # last-used tree was moved/deleted outside of Treebard controls,
         #    so don't let SQLite make a blank db by that name
-        set_current_file(valid_dummy)
-        current_file = '{}treebard_gps/data/settings/{}'.format(
-            current_drive, valid_dummy)
-        current_dir = '{}treebard_gps/data/settings'.format(
+        set_current_file("sample_tree.tbd")
+        current_file = "{}treebard_gps/data/sample_tree/sample_tree.tbd".format(
             current_drive)
+        current_dir = "{}treebard_gps/data/sample_tree".format(
+            current_drive)
+    # if file_ok is False:
+        # valid_dummy = 'default_new_tree.db'
+        # # last-used tree was moved/deleted outside of Treebard controls,
+        # #    so don't let SQLite make a blank db by that name
+        # set_current_file(valid_dummy)
+        # current_file = '{}treebard_gps/data/settings/{}'.format(
+            # current_drive, valid_dummy)
+        # current_dir = '{}treebard_gps/data/settings'.format(
+            # current_drive)
     return current_file, current_dir
 
 def set_current_file(current_file):
@@ -97,7 +109,8 @@ def set_current_file(current_file):
     cur.close()
     conn.close()
 
-def open_tree(root, funx, dialog=None):
+def open_tree(treebard, funx, dialog=None):
+# def open_tree(root, funx, dialog=None):
     ''' 
         Re: what shows up pre-loaded into the dialog's 
             directory input: tkinter's default behavior is 
@@ -109,7 +122,7 @@ def open_tree(root, funx, dialog=None):
         4) and if that doesn't work, dialog opens with 
             My Documents the pre-loaded directory
     '''
-
+    print("line", looky(seeline()).lineno, "running:")
     init_dir = get_opening_dir()
     current_file = get_current_file()[0]
 
@@ -125,23 +138,27 @@ def open_tree(root, funx, dialog=None):
     current_path = open_dialog.split('/')
     current_file = current_path[len(current_path)-1]
     set_current_file(current_file)
-    change_tree_title(root)
+    change_tree_title(treebard)
+    # change_tree_title(root)
     funx()
     if dialog:
         dialog.destroy() 
 
 def get_new_tree_title(current_file):
-    ext_idx = current_file.rfind('.')
-    slash_idx = current_file.rfind('/')+1
-    file_only = current_file[slash_idx:ext_idx]
+    print("line", looky(seeline()).lineno, "current_file:", current_file)
+# line 148 current_file: D:/treebard_gps/data/sprunk_tree/sprunk_tree.tbd
+    file_only = current_file.split("/")[4].rstrip(".tbd").replace("_", " ").title()
+    print("line", looky(seeline()).lineno, "file_only:", file_only)
+    # ext_idx = current_file.rfind('.')
+    # slash_idx = current_file.rfind('/')+1
+    # file_only = current_file[slash_idx:ext_idx]
     return file_only
 
-def change_tree_title(parent):
-    # current_file = get_current_file()[0]
+def change_tree_title(treebard):
+    current_file = get_current_file()[0]
     file_only = get_new_tree_title(current_file) 
-    # fix this for Border class
-    # parent.title('{}            Treebard Genieware Pattern Simulation'.format(
-        # file_only))
+    print("line", looky(seeline()).lineno, "file_only:", file_only)
+    treebard.canvas.title_2.config(text=file_only)
 
 def get_opening_dir():
     '''detects root drive of current working directory, 
@@ -151,16 +168,28 @@ def get_opening_dir():
     # init_dir = current_drive + 'treebard_gps/data/sample_tree' # during dev
     return init_dir
 
-def make_tree(root):
+def make_tree(root, treebard, make_main_window, opening_dialog):
     '''
-        I'm using Tkinter's simpledialog instead of its file dialog because
-        user is not currently a big part of the filename and directory process
-        when creating a new tree, and this way I can keep it simple for now.
+        I'm using a more palatable custom replacement for Tkinter's simpledialog instead of Tkinter's built-in file dialog because currently the user doesn't get to decide both project folders and project names, right now they both have to be the same, and this way I can keep it simple for now.
         Since Treebard is portable I don't think it's a good idea to let the
-        user store files just anywhere but I haven't thought it through yet.
+        user store files just anywhere but there might be a reason I haven't
+        thought of. To keep Treebard simple and portable, the user can put
+        Treebard on any drive and then Treebard makes decisions from there as
+        to where files are saved and what to call project directories, based on the
+        user's initial input of a tree title. The user can still keep copies 
+        of his files anywhere but I think to be portable, everything the
+        program needs has to be kept in one folder. Anyway, 
+        simpledialog wasn't configurable, but my reason for using it was that it's
+        needed here in files.py and I don't want to restructure my imports so
+        that Treebard's messages can be imported from widgets.py. However I guess a custom dialog
+        could be imported from an impartial module where it could be created
+        by inheriting directly from tkinter Toplevel and then I would be able
+        to include it in Treebard's colorizer scheme.
+
     '''
 
-    new_tree_name = askstring("Input", "New Tree Name")
+    new_tree_name = open_input_message(
+        root, files_msg[0], "Give the Tree a Unique Title", "OK", "CANCEL")
     current_dir = new_tree_name.lower().replace(" ", "_").strip()
     if len(current_dir) == 0:
         return
@@ -175,13 +204,12 @@ def make_tree(root):
         src_dir = "{}/{}".format(default_new_tree_images, img)
         dest_dir = "{}/images/{}".format(dir_path, img)
         copy2(src_dir, dest_dir)
-
     set_current_file(current_file)
-    change_tree_title(root);print("new_tree_name:", new_tree_name)
-    # open new tree
+    change_tree_title(treebard)
+    opening_dialog.destroy()
+    root.focus_set()
+    make_main_window()
 
-
-        
 def save_as(root, evt=None):
 
     init_dir = get_opening_dir()
@@ -300,5 +328,65 @@ def open_sample(self):
     # open the sample tree that came with treebard
     pass
 
+class Dialogue(Toplevel):
+    def __init__(self, master, *args, **kwargs):
+        Toplevel.__init__(self, master, *args, **kwargs)
+        self.config(bg=TBARD_NEUTRAL)
 
+files_msg = ("Treebard will use your title as the tree's display title.\n"
+    "Treebard will save 'Smith Family Tree' as a database file at\n`{current "
+    "drive}/treebard_gps/data/smith_family_tree/smith_family_tree.tbd`",)
 
+def open_input_message(root, message, title, ok_lab, cancel_lab):
+    '''
+        To avoid a circular import, this couldn't be imported in the usual way.
+        There aren't supposed to be any widgets made in this general namespace
+        since it would auto-create another instance of Tk(), so this is a 
+        custom dialog used only here. Tkinter's simpledialog worked here but 
+        it's stark white and apparently that can't be changed. 
+
+        After creating this, I realized that the same-named function could be 
+        passed here as a parameter of make_tree(), but I don't know if it could 
+        be formatted with config_generic which can't be imported here. I didn't 
+        try it yet. If it can be done it should be, but the code below should
+        in that case be renamed in messages.py so as to not disturb
+        current callings of messages.open_input_message()
+    '''
+    def ok():
+        cancel()
+
+    def cancel():
+        msg.destroy()
+        root.grab_set()
+
+    def show():
+        gotten = got.get()
+        return gotten
+
+    got = StringVar()
+
+    msg = Dialogue(root)
+    msg.grab_set()
+    msg.title(title)
+    msg.columnconfigure(0, weight=1)
+    msg.rowconfigure(0, weight=1)
+    lab = Label(
+        msg, text=message, justify='left', bg=TBARD_NEUTRAL2, 
+        font=("courier", 14, "bold"))
+    lab.grid(column=0, row=0, sticky='news', padx=12, pady=12, columnspan=2)
+    inPut = Entry(
+        msg, textvariable=got, bg=TBARD_NEUTRAL2, width=48, 
+        font=("dejavu sans mono", 14))
+    inPut.grid(column=0, row=1, padx=12)
+    buttonbox = Frame(msg, bg=TBARD_NEUTRAL)
+    buttonbox.grid(column=0, row=2, sticky='e', padx=(0,12), pady=12)
+    ok_butt = Button(
+        buttonbox, text=ok_lab, command=cancel, width=7, bg=TBARD_NEUTRAL2)
+    ok_butt.grid(column=0, row=0, padx=6, sticky='e')
+    cancel_butt = Button(
+        buttonbox, text=cancel_lab, command=cancel, width=7, bg=TBARD_NEUTRAL2)
+    cancel_butt.grid(column=1, row=0, padx=6, sticky='e')
+    inPut.focus_set()
+    root.wait_window(msg)
+    gotten = show()
+    return gotten
