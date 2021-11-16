@@ -109,7 +109,7 @@ from dev_tools import looky, seeline
     who want to customize their own applications.
 '''
 
-current_file = get_current_file()[0]
+# currentFile = get_current_file()[0]
 formats = make_formats_dict()
 
 def get_date_formats(tree_is_open=0):
@@ -123,10 +123,9 @@ def get_date_formats(tree_is_open=0):
         current_file = global_db_path
         query = select_default_date_format
 
-    elif tree_is_open == 1:
-        current_file = current_file
+    elif tree_is_open == 1:        
+        current_file = get_current_file()[0]
         query = select_date_format
-
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(query)

@@ -285,7 +285,6 @@ def get_birth_findings(
 
         sorter = split_sorter(offspring_details[1])
         date = format_stored_date(offspring_details[0], date_prefs)
-        # date = format_stored_date(offspring_details[0])
 
         particulars = offspring_details[2]
         place = get_place_string((offspring_event_id,), cur)
@@ -1884,24 +1883,27 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# Then split get_current_tree into 4 procedures and stop with the if/else confusion.
-# 1) done
-# 2) done except to open the dlg at the bottom of files.py which shd be finished/improved
-# 3) when opening a file with the dialog, who cares what the prior file was? My reason for running get_current_file was probably not very good back when I wrote this code. A missing file will not be available in the dialog.
-# 4) when creating a new file, again the prior file and missing file are irrelevant.
-# THE ONLY WAY TO PROCEED IS TO FOCUS ON ONE PROCEDURE AT A TIME AND KEEP THE CODE SEPARATE FOR THE FOUR PROCEDURES ABOVE. START WITH THE SIMPLEST. don't mix these 4 procedures together and then try to tease them apart with if/else.
-
-# rolled back to last night's version since everything I did today was wrong. First thing to do is delete the section that deals with missing files since it doesn't work right and introduces bugs that are hard to find. Then get rid of the global. Then create a new tree and delete it manually and follow the error messages. Create one line of code at a time and test after each change. The goal is to just open a message when a file doesn't exist and tell the user the right way to delete files. The other goal is to rethink this and keep it simple.
-# test the feature which creates a new tree from the default tree if the user has deleted a file outside of treebard's controls see files.py valid_dummy THIS WORKS which you can test by making a change to the tree. But close and reopen it, and the change (I tried changing current person) doesn't show. But close and reopen it a second time, and it does. OR SOMETHING LIKE THAT. It is flaky and instead of patching it up I have to rethink it and come up with a better solution. Auto-replace it? And open a dlg telling the user to delete it correctly? And giving a button to do so right on the dlg? As a CONFIRM button; not telling the user what/why/how but by auto-replace I mean putting a copy of the default tree in its place with the same name. This is OK for now but has to be fixed right away. The main idea is that if the absence of a needed filename is ever detected, flaky patches go into effect and that should be cut off at the pass.
-# retest click pick to open prior tree
-# when you press Open button then Cancel, sample tree opens (or is this bec I deleted some files manually?)
-# add a parameter to pass current_person to Main on instantiation, it shd never be None
-# try to move open_input_message() from files.py to messages.py by making if a parameter of new_tree() where it's called in opening.py
+# try to move open_input_message() from files.py to messages.py by making it a parameter of make_tree() where it's called in opening.py DONE, NOW JUST GET RID OF THE NEW VERSION open_input_message2() AND CONVERT IT TO open_input_message()
+# error if click search in empty tree?
+# error if make birth event:
+# Exception in Tkinter callback
+# Traceback (most recent call last):
+  # File "C:\Users\Lutherman\AppData\Local\Programs\Python\Python39\lib\tkinter\__init__.py", line 1884, in __call__
+    # return self.func(*args)
+  # File "D:\treebard_gps\app\python\events_table.py", line 1041, in make_new_event
+    # self.new_event_dialog = NewEventDialog(
+  # File "D:\treebard_gps\app\python\events_table.py", line 1091, in __init__
+    # self.get_some_info()
+  # File "D:\treebard_gps\app\python\events_table.py", line 1104, in get_some_info
+    # self.new_finding = cur.fetchone()[0] + 1
+# TypeError: unsupported operand type(s) for +: 'NoneType' and 'int'
+# save for files dev docs: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run
 # remove stuff from default tree both copies same so it's a real default tree for starting new trees with, and start a real new tree
 # get the file commands to work from the opening window except gedcom which shd open a standard message "this feature is not complete. Please visit proboards if you would like to assist in creating this feature."
-# get rid of globals in files.py
 # fix the same menu and icon commands that already work from the opening dialog as well as Recent Files which could be columns in closing_state?
 # make big pic change or something so user knows when it's in focus so spacebar will be easy to use for non mousers when opening last used file? and/or just start with the pic in focus so spacebar is ready
+# make Add Person button work
+
 # change all dialogs to Border class
 # I think in names.py the StatusBar is being imported and instantiated redundantly or is it that the Border class hasn't been used there yet?
 # TEST every functionality due to recent restructuring

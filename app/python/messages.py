@@ -13,6 +13,9 @@ from dev_tools import looky, seeline
 
 
 
+TBARD_NEUTRAL = "#878787"
+TBARD_NEUTRAL2 = "#999999"
+
 def open_error_message(parent, message, title, buttlab):
 
     def close():
@@ -95,6 +98,65 @@ def open_input_message(parent, message, title, ok_lab, cancel_lab, user_input):
     got = show()
     return user_input, got
 
+class Dialogue(Toplevel):
+    def __init__(self, master, *args, **kwargs):
+        Toplevel.__init__(self, master, *args, **kwargs)
+        self.config(bg=TBARD_NEUTRAL)
+
+def open_input_message2(parent, message, title, ok_lab, cancel_lab):
+    '''
+        To avoid a circular import, this couldn't be imported in the usual way.
+        There aren't supposed to be any widgets made in this general namespace
+        since it would auto-create another instance of Tk(), so this is a 
+        custom dialog used only here. Tkinter's simpledialog worked here but 
+        it's stark white and apparently that can't be changed. 
+
+        After creating this, I realized that the same-named function could be 
+        passed here as a parameter of make_tree(), but I don't know if it could 
+        be formatted with config_generic which can't be imported here. I didn't 
+        try it yet. If it can be done it should be, but the code below should
+        in that case be renamed in messages.py so as to not disturb
+        current callings of messages.open_input_message()
+    '''
+    def ok():
+        cancel()
+
+    def cancel():
+        msg.destroy()
+        parent.grab_set()
+
+    def show():
+        gotten = got.get()
+        return gotten
+
+    got = StringVar()
+
+    msg = Dialogue(parent)
+    msg.grab_set()
+    msg.title(title)
+    msg.columnconfigure(0, weight=1)
+    msg.rowconfigure(0, weight=1)
+    lab = Label(
+        msg, text=message, justify='left', bg=TBARD_NEUTRAL2, 
+        font=("courier", 14, "bold"))
+    lab.grid(column=0, row=0, sticky='news', padx=12, pady=12, columnspan=2)
+    inPut = Entry(
+        msg, textvariable=got, bg=TBARD_NEUTRAL2, width=48, 
+        font=("dejavu sans mono", 14))
+    inPut.grid(column=0, row=1, padx=12)
+    buttonbox = Frame(msg, bg=TBARD_NEUTRAL)
+    buttonbox.grid(column=0, row=2, sticky='e', padx=(0,12), pady=12)
+    ok_butt = Button(
+        buttonbox, text=ok_lab, command=cancel, width=7, bg=TBARD_NEUTRAL2)
+    ok_butt.grid(column=0, row=0, padx=6, sticky='e')
+    cancel_butt = Button(
+        buttonbox, text=cancel_lab, command=cancel, width=7, bg=TBARD_NEUTRAL2)
+    cancel_butt.grid(column=1, row=0, padx=6, sticky='e')
+    inPut.focus_set()
+    parent.wait_window(msg)
+    gotten = show()
+    return gotten
+
 places_err = (
     "A place cannot contain itself.\n\nSelect a "
     "chain of places that are nested inside each other.",
@@ -175,4 +237,4 @@ fonts_msg = (
     "Press ALT+P then CTRL+S to resize the scrollbar after changing fonts.",
 )
 
-# files_msg = ("Give the tree a unique name. Treebard will use your wording as the title. Treebard will save 'Smith Family Tree' as a file at `{current drive}/treebard_gps/data/smith_family_tree/smith_family_tree.tbd`",)
+opening_msg = ("The requested file has been moved, deleted or renamed outside of Treebard's controls. To use the file, restore it to its original folder and name. Any file changes should be made from within Treebard using Treebard's tools.",)

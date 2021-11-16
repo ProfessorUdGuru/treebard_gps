@@ -9,8 +9,9 @@ from widgets import Toplevel, Canvas, Button, Frame, ButtonPlain
 from toykinter_widgets import run_statusbar_tooltips
 from PIL import Image, ImageTk
 from files import (
-    open_tree, make_tree, import_gedcom, open_sample, app_path, global_db_path, get_current_file)
+    open_tree, make_tree, import_gedcom, open_sample, app_path, global_db_path, get_current_file, set_closing)
 from styles import make_formats_dict, config_generic
+from messages import open_error_message, opening_msg, open_input_message2
 from utes import center_dialog
 from query_strings import (
     select_app_setting_openpic_dir, select_closing_state_openpic,
@@ -62,7 +63,8 @@ class SplashScreen(Toplevel):
         self.master.deiconify()
         self.master.overrideredirect(1)
 
-    def close_dialog(self):
+    def close_dialog(self, evt=None):
+        print("line", looky(seeline()).lineno, "running:")
         self.opening_dialog.destroy()
 
     def open_treebard(self, make_main_window):
@@ -81,6 +83,7 @@ class SplashScreen(Toplevel):
         self.canvas = Border(self.opening_dialog, tree_is_open=0)
         self.canvas.title_1.config(text='Open, Create, or Copy a Tree')
         self.canvas.title_2.config(text="")
+        self.canvas.quitt.bind("<Button-1>", self.close_dialog)
 
         self.window = Frame(self.canvas)
         self.canvas.create_window(0, 0, anchor="nw", window=self.window)
@@ -93,15 +96,16 @@ class SplashScreen(Toplevel):
 
         self.picbutton = ButtonPlain(
             self.window,  
-            command=lambda funx=make_main_window: self.open_prior_file(funx))
+            command=lambda funx=self.treebard.make_main_window: self.open_prior_file(funx))
         self.picbutton.grid(column=0, row=1, sticky='news')
 
         opener = Button(
             buttonbox, 
             text='OPEN TREE', 
-            command=lambda treebard=self.treebard, 
-                funx=make_main_window, 
-                dlg=self.opening_dialog: open_tree(treebard, funx, dlg))
+            command=lambda tbard=self.treebard, 
+                # funx=make_main_window, 
+                dlg=self.opening_dialog: open_tree(tbard, dlg))
+                # dlg=self.opening_dialog: open_tree(treebard, funx, dlg))
         opener.grid(column=0, row=0, padx=24, pady=24)
         opener.focus_set()
 
@@ -109,11 +113,11 @@ class SplashScreen(Toplevel):
             buttonbox, 
             text='NEW TREE', 
             command=lambda root=self.master,
-                treebard=self.treebard,
-            # command=lambda root=self.master, 
-                funx=make_main_window, 
-                dlg=self.opening_dialog: make_tree(root, treebard, funx, dlg))
-                # dlg=self.opening_dialog: make_tree(root, funx, dlg))
+                treebard=self.treebard, 
+                dlg=self.opening_dialog,
+                errfunx=open_input_message2: make_tree(
+                    root, self.treebard, dlg, errfunx))
+                # dlg=self.opening_dialog: make_tree(root, self.treebard, dlg))
         new.grid(column=1, row=0, padx=24, pady=24)
 
         importgedcom = Button(
@@ -171,11 +175,11 @@ class SplashScreen(Toplevel):
         self.opening_dialog.grab_release()
         self.opening_dialog.destroy()
         current_file = get_current_file()
-        print("line", looky(seeline()).lineno, "current_file:", current_file)
-        # file_ok = path.exists(current_file)
         if path.exists(current_file[0]) is False:
-            # handle_missing_file(current_file, current_dir)
-        # if current_file is None:
+            msg = open_error_message(self.master, opening_msg[0], "Missing File Error", "OK")
+            msg[0].grab_set()
+            msg[1].config(aspect=400)
+            set_closing()
             return
         make_main_window()        
 

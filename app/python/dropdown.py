@@ -1,7 +1,9 @@
 # dropdown.py
 
 import tkinter as tk
-from files import make_tree, open_tree, save_as, save_copy_as, rename_tree  
+from files import (
+    make_tree, open_tree, save_as, save_copy_as, rename_tree, close_tree, 
+    exit_app)  
 from widgets import Frame, FrameHilited2, LabelHilited3, ToplevelHilited
 from scrolling import Scrollbar
 from styles import config_generic, make_formats_dict
@@ -78,11 +80,12 @@ def placeholder(evt=None, name=""):
     print('evt:', evt) 
 
 class DropdownMenu(FrameHilited2):
-    def __init__(self, master, root, callback=None, *args, **kwargs):
+    def __init__(self, master, root, treebard, callback=None, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master 
         self.root = root
+        self.treebard = treebard
         self.callback = callback
     
         self.formats = make_formats_dict()
@@ -107,7 +110,8 @@ class DropdownMenu(FrameHilited2):
         self.drop_items = {
             "file": (
                 ("new", lambda evt, root=self.root: make_tree(evt, root), "n"),
-                ("open", lambda evt, root=self.root: open_tree(evt, root), "..."), 
+                ("open", lambda evt, tbard=self.treebard: open_tree(
+                    evt, tbard), "..."), 
                 ("save", lambda evt, name="save (redraw)": placeholder(evt, name), "s"),
                 ("save as", lambda evt, root=self.root: save_as(evt, root), "CAs"),
                 ("save copy as", lambda evt: save_copy_as(), "t"),
@@ -115,7 +119,8 @@ class DropdownMenu(FrameHilited2):
                 ("recent trees", self.show_list, ">", self.recent_trees),
                 ("import tree", self.show_list, ">", IMPORT_TYPES),
                 ("export tree", self.show_list, ">", EXPORT_TYPES),
-                ("close", lambda evt, name="close": placeholder(evt, name), "l"),
+                ("close", lambda evt, tbard=self.treebard: close_tree(
+                    evt, tbard), "l"),
                 ("exit", self.close_app, "")),
 
             "edit": (

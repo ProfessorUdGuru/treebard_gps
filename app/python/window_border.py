@@ -2,7 +2,7 @@
 
 import tkinter as tk
 import sqlite3
-from files import get_current_file, app_path, global_db_path
+from files import get_current_file, app_path, global_db_path, set_closing
 from widgets import (
     LabelButtonImage, Frame, FrameTitleBar, LabelTitleBar, Toplevel, Canvas, 
     FrameHilited3) 
@@ -24,10 +24,20 @@ from dev_tools import looky, seeline
 
 
 def close(evt):
+    '''
+        I don't know why this was made to only withdraw a dialog if not root.
+        Maybe because I was enamored with the notion of permanent dialogs at
+        one time. If so, withdraw() should be changed. Anyway, it's easy to
+        override this binding by binding to a different close function in the
+        more appropriate place so extra closing tasks can be run custom.
+    '''
+
     dlg = evt.widget.winfo_toplevel()
     if dlg.winfo_name() == 'tk':
+        set_closing()
         dlg.quit()
     else:
+        print("line", looky(seeline()).lineno, "running:")
         dlg.withdraw()
 
 class Border(Canvas):

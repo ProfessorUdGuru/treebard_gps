@@ -106,7 +106,8 @@ from dev_tools import looky, seeline
         8       8       8   8   27          8           8       8   8   27
 '''
 
-current_file = get_current_file()[0]
+# current_file = get_current_file()[0]
+# print("line", looky(seeline()).lineno, "current_file:", current_file)
 
 class ManyManyRecursiveQuery():
     '''
@@ -155,6 +156,13 @@ class ManyManyRecursiveQuery():
                 return
 
         self.uppers_dicts = []
+
+        current_file = get_current_file()
+        if current_file:
+            current_file = current_file[0]
+        else:
+            print("line", looky(seeline()).lineno, "file is missing:")
+            return
 
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -247,6 +255,13 @@ class ManyManyRecursiveQuery():
             string_part = cur.fetchone()[0]
             return string_part
 
+        current_file = get_current_file()
+        if current_file:
+            current_file = current_file[0]
+        else:
+            print("line", looky(seeline()).lineno, "file is missing:")
+            return
+
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
 
@@ -282,6 +297,14 @@ class ManyManyRecursiveQuery():
         conn.close()
 
 def make_all_nestings(query):
+
+    current_file = get_current_file()
+    if current_file:
+        current_file = current_file[0]
+    else:
+        print("line", looky(seeline()).lineno, "file is missing:")
+        return
+
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     

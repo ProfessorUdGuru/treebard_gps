@@ -62,8 +62,6 @@ class Main(Frame):
         SCREEN_SIZE.append(self.winfo_screenwidth())
         SCREEN_SIZE.append(self.winfo_screenheight())
 
-        # self.current_dir = get_current_file()[1]
-
         self.make_widgets()
         self.get_current_values()
 

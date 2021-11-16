@@ -292,7 +292,6 @@ class LabelHilited3(Labelx):
             bg=formats['highlight_bg'], 
             fg=formats['fg'],
             font=formats['input_font']
-            # font=formats['mono_sans']
 )
 
 class LabelTip(LabelHilited):

@@ -596,7 +596,7 @@ def get_opening_settings():
         conn.close()
             
         current_file = get_current_file()[0]
-        print("line", looky(seeline()).lineno, "current_file:", current_file)
+        # print("line", looky(seeline()).lineno, "current_file:", current_file)
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_opening_settings)

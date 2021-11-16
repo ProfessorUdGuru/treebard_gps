@@ -5,7 +5,7 @@
 import tkinter as tk
 import sqlite3    
 from PIL import Image, ImageTk
-from files import app_path, global_db_path, current_drive
+from files import app_path, global_db_path, current_drive, open_tree
 from dropdown import DropdownMenu, placeholder
 from window_border import Border
 from opening import SplashScreen
@@ -15,9 +15,7 @@ from main import Main
 from widgets import Toplevel, Button, Frame, ButtonPlain
 from dates import get_date_formats   
 from utes import create_tooltip
-from query_strings import (
-    update_closing_state_tree_is_open, update_closing_state_tree_is_closed,
-    select_date_format)
+from query_strings import (update_closing_state_tree_is_open, select_date_format)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -65,7 +63,7 @@ class Treebard():
         self.make_icon_menu()
 
     def make_top_menu(self):
-        top_menu = DropdownMenu(self.canvas.menu_frame, self.root) 
+        top_menu = DropdownMenu(self.canvas.menu_frame, self.root, self) 
         top_menu.grid(column=0, row=0)
 
     def make_icon_menu(self):
@@ -86,7 +84,7 @@ class Treebard():
             ribbon[name] = icon
             r += 1
         
-        ribbon['open'].config(command=lambda: open_tree(self.root))
+        ribbon['open'].config(command=lambda: open_tree(self))
         ribbon['home'].config(command=self.root.quit)
 
     def make_menus_disappear(self, evt):
@@ -114,7 +112,9 @@ class Treebard():
         '''
         self.main = Main(self.canvas, self.root, self)
         
-        self.canvas.create_window(0, 0, anchor='nw', window=self.main)
+        self.main_window = self.canvas.create_window(
+            0, 0, anchor='nw', window=self.main)
+        print("line", looky(seeline()).lineno, "self.main_window:", self.main_window)
         self.configure_mousewheel_scrolling()
 
         conn = sqlite3.connect(global_db_path)
@@ -145,19 +145,8 @@ def start():
     config_generic(root)
     treebard = Treebard(root)
     splash = SplashScreen(root, treebard)
-    splash.open_treebard(treebard.make_main_window)    
-    root.bind("<Destroy>", stop)
+    splash.open_treebard(treebard.make_main_window)  
     root.mainloop()
-
-def stop(evt):
-
-    conn = sqlite3.connect(global_db_path)
-    conn.execute("PRAGMA foreign_keys = 1")
-    cur = conn.cursor()
-    cur.execute(update_closing_state_tree_is_closed)
-    conn.commit()
-    cur.close()
-    conn.close()
 
 if __name__ == '__main__':
     start()
