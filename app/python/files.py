@@ -41,9 +41,7 @@ print("global_db_path:", global_db_path)
 TBARD_NEUTRAL = "#878787"
 TBARD_NEUTRAL2 = "#999999"
 
-current_file = ""
-
-def get_prior_tree():
+def get_prior_file():
     conn = sqlite3.connect(global_db_path)
     cur = conn.cursor()
     cur.execute(select_closing_state_prior_tree)
@@ -59,9 +57,7 @@ def get_prior_tree():
 
 def get_current_file():
 
-    global current_file
-
-    prior_file = get_prior_tree()
+    prior_file = get_prior_file()
     if prior_file is None:
         return
 
@@ -75,28 +71,28 @@ def get_current_file():
             current_drive, current_dir, prior_file)
     else:
         current_file = ''
-    print("line", looky(seeline()).lineno, "current_file:", current_file)
-    file_ok = path.exists(current_file)
-    print("line", looky(seeline()).lineno, "file_ok:", file_ok)
 
-    if file_ok is False:
-        # last-used tree was moved/deleted outside of Treebard controls,
-        #    so don't let SQLite make a blank db by that name
-        set_current_file("sample_tree.tbd")
-        current_file = "{}treebard_gps/data/sample_tree/sample_tree.tbd".format(
-            current_drive)
-        current_dir = "{}treebard_gps/data/sample_tree".format(
-            current_drive)
+    # file_missing = False
+
+    # file_ok = path.exists(current_file)
+
     # if file_ok is False:
-        # valid_dummy = 'default_new_tree.db'
-        # # last-used tree was moved/deleted outside of Treebard controls,
-        # #    so don't let SQLite make a blank db by that name
-        # set_current_file(valid_dummy)
-        # current_file = '{}treebard_gps/data/settings/{}'.format(
-            # current_drive, valid_dummy)
-        # current_dir = '{}treebard_gps/data/settings'.format(
-            # current_drive)
+        # print("line", looky(seeline()).lineno, "running:")
+        # handle_missing_file(current_file, current_dir)
+    
     return current_file, current_dir
+
+# def handle_missing_file(current_file, current_dir):
+    # '''
+        # Prior tree was moved/deleted/renamed outside of Treebard controls, 
+        # so don't let SQLite make a blank db by that name, and clean up the
+        # file deletion procedure.
+    # '''
+
+    # print("line", looky(seeline()).lineno, "current_file, current_dir:", current_file, current_dir)
+    # # open dialog
+
+    
 
 def set_current_file(current_file):
     if len(current_file.strip()) == 0:
@@ -110,7 +106,6 @@ def set_current_file(current_file):
     conn.close()
 
 def open_tree(treebard, funx, dialog=None):
-# def open_tree(root, funx, dialog=None):
     ''' 
         Re: what shows up pre-loaded into the dialog's 
             directory input: tkinter's default behavior is 
@@ -122,9 +117,7 @@ def open_tree(treebard, funx, dialog=None):
         4) and if that doesn't work, dialog opens with 
             My Documents the pre-loaded directory
     '''
-    print("line", looky(seeline()).lineno, "running:")
     init_dir = get_opening_dir()
-    current_file = get_current_file()[0]
 
     open_dialog = filedialog.askopenfilename(
         initialdir=init_dir,
@@ -133,39 +126,31 @@ def open_tree(treebard, funx, dialog=None):
         filetypes=(
             ('Treebard family trees','*.tbd'),
             ('all files','*.*')))
-    if len(current_file) == 0:
+    if len(open_dialog) == 0:
+    # if len(current_file) == 0:
         return
     current_path = open_dialog.split('/')
     current_file = current_path[len(current_path)-1]
     set_current_file(current_file)
     change_tree_title(treebard)
-    # change_tree_title(root)
     funx()
     if dialog:
         dialog.destroy() 
 
 def get_new_tree_title(current_file):
-    print("line", looky(seeline()).lineno, "current_file:", current_file)
-# line 148 current_file: D:/treebard_gps/data/sprunk_tree/sprunk_tree.tbd
     file_only = current_file.split("/")[4].rstrip(".tbd").replace("_", " ").title()
-    print("line", looky(seeline()).lineno, "file_only:", file_only)
-    # ext_idx = current_file.rfind('.')
-    # slash_idx = current_file.rfind('/')+1
-    # file_only = current_file[slash_idx:ext_idx]
     return file_only
 
 def change_tree_title(treebard):
     current_file = get_current_file()[0]
     file_only = get_new_tree_title(current_file) 
-    print("line", looky(seeline()).lineno, "file_only:", file_only)
     treebard.canvas.title_2.config(text=file_only)
 
 def get_opening_dir():
     '''detects root drive of current working directory, 
         e.g. if running from flash drive or hard drive
         then detects user's save directory'''
-    init_dir = current_drive + 'treebard_gps/data' # later
-    # init_dir = current_drive + 'treebard_gps/data/sample_tree' # during dev
+    init_dir = current_drive + 'treebard_gps/data'
     return init_dir
 
 def make_tree(root, treebard, make_main_window, opening_dialog):

@@ -47,8 +47,6 @@ PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"),
 
 SCREEN_SIZE = []
 
-# current_file, current_dir = get_current_file()
-
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
@@ -143,24 +141,10 @@ class Main(Frame):
         self.right_panel = TabBook(
             persons_tab, root=self.root, tabs=RIGHT_PANEL_TABS, side="se", 
             selected='images', case='upper', miny=0.25, minx=0.20, takefocus=0)
-
-
-
-
-
-
         self.top_pic_button = ButtonPlain(
             self.right_panel.store['images'],
             command=self.open_person_gallery)
-        current_file, current_dir = get_current_file()
-        print("line", looky(seeline()).lineno, "current_file, current_dir:", current_file, current_dir)
-
-
-
-
-
-
-
+        # current_file, current_dir = get_current_file()
         self.findings_table = EventsTable(
             persons_tab, self.root, self.treebard, self)
         EventsTable.instances.append(self.findings_table)
@@ -169,8 +153,13 @@ class Main(Frame):
         self.att = EventsTable(
             attributes_tab, self.root, self.treebard, self, attrib=True)
         EventsTable.instances.append(self.att)
-
-        # tricky: this does not run on redraw, just on load
+        # current_file = get_current_file()
+        # if current_file is not None:
+            # current_file, current_dir = get_current_file()
+        # else:
+            # return
+        current_file, current_dir = get_current_file()
+        # this does not run on redraw, just on load
         if len(current_dir) != 0:
             self.show_top_pic(current_file, current_dir, self.current_person)
 
@@ -355,23 +344,17 @@ class Main(Frame):
             current_person_name=self.current_person_name)
 
     def show_top_pic(self, current_file, current_dir, current_person):
-        # print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
-            
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         if current_person is None:
             cur.execute(select_current_person_id)
             current_person = cur.fetchone()[0]
-        print("line", looky(seeline()).lineno, "current_person:", current_person)
         cur.execute(select_images_entities_main_image, (current_person,))        
         top_pic = cur.fetchone()
-        print("line", looky(seeline()).lineno, "top_pic:", top_pic)
         cur.close()
         conn.close()
         if top_pic:
-            # ? wrong has to be passed or it will get setting which is what's open when it looks for a value AND THAT IS AFTER I MANUALLY DELETED A TREE SO IT GETS THE DEFAULT TREE'S CURRENT DIR solution is to add a correction after the valid dummy procedure
             img_stg = ''.join(top_pic)
-            print("line", looky(seeline()).lineno, "current_drive, current_dir, img_stg:", current_drive, current_dir, img_stg)
             new_stg = '{}treebard_gps/data/{}/images/{}'.format(
                 current_drive, current_dir, img_stg)
 

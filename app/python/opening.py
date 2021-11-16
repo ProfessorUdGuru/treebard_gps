@@ -2,14 +2,14 @@
 
 import tkinter as tk
 import sqlite3
-from os import listdir
+from os import listdir, path
 from os.path import isfile, join
 from window_border import Border
 from widgets import Toplevel, Canvas, Button, Frame, ButtonPlain
 from toykinter_widgets import run_statusbar_tooltips
 from PIL import Image, ImageTk
 from files import (
-    open_tree, make_tree, import_gedcom, open_sample, app_path,global_db_path, get_current_file)
+    open_tree, make_tree, import_gedcom, open_sample, app_path, global_db_path, get_current_file)
 from styles import make_formats_dict, config_generic
 from utes import center_dialog
 from query_strings import (
@@ -30,10 +30,8 @@ class SplashScreen(Toplevel):
     def __init__(self, master, treebard, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
-        # master = self.master
         self.master = master
-        self.treebard = treebard
-        
+        self.treebard = treebard        
 
         self.master.iconify()
         self.master.overrideredirect(1)
@@ -69,19 +67,18 @@ class SplashScreen(Toplevel):
 
     def open_treebard(self, make_main_window):
 
-        ''' This opening dialog is important because you never want to open 
+        ''' The opening dialog is important because you never want to open 
             a tree automatically. If the user has two trees that are similar,
             he might start working on the wrong tree without realizing it. Or
             if the wrong tree opens automatically and it's really huge, he
-            might have to wait for it to open just so he can close it. So 
-            dealing with this opening dialog on each loading of the app is not 
-            optional. 
+            might have to wait for it to open just so he can close it. So the 
+            user has to select a tree to open every time the app loads. 
         '''
 
         self.opening_dialog = Toplevel(self.master)
         self.opening_dialog.grab_set()
-
-        self.canvas = Border(self.opening_dialog) # gridded in Border class
+        # gridded in Border class:
+        self.canvas = Border(self.opening_dialog, tree_is_open=0)
         self.canvas.title_1.config(text='Open, Create, or Copy a Tree')
         self.canvas.title_2.config(text="")
 
@@ -103,10 +100,8 @@ class SplashScreen(Toplevel):
             buttonbox, 
             text='OPEN TREE', 
             command=lambda treebard=self.treebard, 
-            # command=lambda root=self.master, 
                 funx=make_main_window, 
                 dlg=self.opening_dialog: open_tree(treebard, funx, dlg))
-                # dlg=self.opening_dialog: open_tree(root, funx, dlg))
         opener.grid(column=0, row=0, padx=24, pady=24)
         opener.focus_set()
 
@@ -175,6 +170,13 @@ class SplashScreen(Toplevel):
     def open_prior_file(self, make_main_window):
         self.opening_dialog.grab_release()
         self.opening_dialog.destroy()
+        current_file = get_current_file()
+        print("line", looky(seeline()).lineno, "current_file:", current_file)
+        # file_ok = path.exists(current_file)
+        if path.exists(current_file[0]) is False:
+            # handle_missing_file(current_file, current_dir)
+        # if current_file is None:
+            return
         make_main_window()        
 
     def store_last_openpic(self):

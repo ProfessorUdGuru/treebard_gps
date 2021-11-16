@@ -402,13 +402,23 @@ select_couple_event_roles = '''
     '''
 
 select_current_person = '''
-    SELECT name.person_id, names 
+    SELECT current.person_id, names 
     FROM name 
     JOIN person 
         ON person.person_id = name.person_id 
     JOIN current 
-        ON name.person_id = current.person_id
+        ON person.person_id = current.person_id
 '''
+
+
+# select_current_person = '''
+    # SELECT name.person_id, names 
+    # FROM name 
+    # JOIN person 
+        # ON person.person_id = name.person_id 
+    # JOIN current 
+        # ON name.person_id = current.person_id
+# '''
 
 select_current_person_id = '''
     SELECT person_id 
@@ -434,13 +444,19 @@ select_closing_state_prior_tree = '''
     WHERE closing_state_id = 1
 '''
 
-# select_default_date_format = '''
-    # SELECT default_date_formats, default_abt, default_est, default_cal,
-        # default_bef_aft, default_bc_ad, default_os_ns, default_span, 
-        # default_range
-    # FROM default_date_format
-    # WHERE default_date_format_id = 1
-# '''
+select_default_date_format = '''
+    SELECT default_date_formats, default_abt, default_est, default_cal,
+        default_bef_aft, default_bc_ad, default_os_ns, default_span, 
+        default_range
+    FROM default_date_format
+    WHERE default_date_format_id = 1
+'''
+
+select_closing_state_tree_is_open = '''
+    SELECT tree_is_open
+    FROM closing_state
+    WHERE closing_state_id = 1
+'''
 
 select_date_format = '''
     SELECT date_formats, abt, est, cal, bef_aft, bc_ad, os_ns, span, range
@@ -687,7 +703,7 @@ select_format_font_size = '''
 '''
 
 select_format_font_scheme = '''
-    SELECT output_font, font_size
+    SELECT output_font, font_size, default_output_font, default_font_size
     FROM format
     WHERE format_id = 1
 '''
@@ -871,6 +887,19 @@ select_opening_settings = '''
     WHERE format_id = 1
 '''
 
+select_opening_settings_on_load = '''
+    SELECT 
+        default_bg,
+        default_highlight_bg,
+        default_head_bg, 
+        default_fg,
+        default_output_font,
+        default_input_font, 
+        default_font_size            
+    FROM default_format
+    WHERE default_format_id = 1
+'''
+
 select_person_birth_date = '''
     SELECT 
         finding_id,
@@ -1021,6 +1050,18 @@ select_app_setting_openpic_dir = '''
 update_closing_state_openpic = '''
     UPDATE closing_state
     SET openpic = ?
+    WHERE closing_state_id = 1
+'''
+
+update_closing_state_tree_is_closed = '''
+    UPDATE closing_state
+    SET tree_is_open = 0
+    WHERE closing_state_id = 1
+'''
+
+update_closing_state_tree_is_open = '''
+    UPDATE closing_state
+    SET tree_is_open = 1
     WHERE closing_state_id = 1
 '''
 

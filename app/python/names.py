@@ -42,18 +42,19 @@ NAME_TYPES_HIERARCHY = (
     'call name', 'official name', 'anglicized name', 'religious order name', 
     'other name type', 'given name')
 
-current_file = get_current_file()[0]
-
 def get_current_person():
+    current_person_id = 1
+    current_person = ""
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_current_person)
-    current_person = cur.fetchone()
-    current_person_id = current_person[0]
-    current_person = current_person[1]
-    return current_person_id, current_person
+    result = cur.fetchone()
+    # current_person_id, current_person = result
+    return result
 
 def get_name_types():
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_all_name_types)
@@ -65,6 +66,7 @@ def get_name_types():
     return name_types
 
 def get_name_with_id(iD):
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_name_with_id, (iD,))
@@ -79,6 +81,7 @@ def get_name_with_id(iD):
         return ''
 
 def get_any_name_with_id(iD):
+    current_file = get_current_file()[0]
     birth_name = get_name_with_id(iD)
     if len(birth_name) == 0:
         use_name = 'name unknown'
@@ -101,6 +104,7 @@ def make_values_list_for_person_select():
     ''' 
         birth names only, probably not useful for autofills 
     '''
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_birth_names_ids)
@@ -122,6 +126,7 @@ def make_all_names_list_for_person_select():
     ''' 
         all name types, best for autofill values 
     '''
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_all_names_ids)
@@ -139,24 +144,8 @@ def make_all_names_list_for_person_select():
         people.append(line)
     return people
 
-# CONFIRM BEFORE DELETING that this is not used anywhere
-# def get_all_persons():
-    # conn = sqlite3.connect(current_file)
-    # cur = conn.cursor()
-    # cur.execute(select_all_person_ids)
-    # person_ids = cur.fetchall()
-    # person_ids = [i[0] for i in person_ids]
-    # cur.close()
-    # conn.close()
-    # persons = []
-    # for id in person_ids:
-        # name = get_name_with_id(id)
-        # if len(name) != 0:
-            # name = '{}  #{}'.format(name, id)
-            # persons.append(name)
-    # return persons
-
 def get_all_persons():
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_all_person_ids)
@@ -399,13 +388,10 @@ class PersonAdd(Toplevel):
         self.name_input.delete(0, 'end')
         get2 = self.inwidg2
         if get2 and len(get2.get()) != 0:
-            print("line", looky(seeline()).lineno, "running:")
             self.name_input.insert(0, get2.get())
         elif get2 and len(get2.get()) == 0:
-            print("line", looky(seeline()).lineno, "running:")
             self.name_input.insert(0, self.xfr)
         elif get2 is None:
-            print("line", looky(seeline()).lineno, "running:")
             self.name_input.insert(0, self.xfr)
 
     def make_sort_order_to_store(self): 
@@ -425,6 +411,7 @@ class PersonAdd(Toplevel):
             self.order = " ".join(order)
 
     def prepare_to_add_person(self, findings_roles_id=None):
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -514,6 +501,7 @@ class PersonAdd(Toplevel):
         self.name_type_id = cur.fetchone()[0] + 1
 
     def save_new_name(self):
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         conn.execute('PRAGMA foreign_keys = 1')
@@ -554,7 +542,8 @@ class PersonAdd(Toplevel):
         self.inwidg.values = all_birth_names
         return self.new_person_id
 
-    def make_temp_person_id(self): 
+    def make_temp_person_id(self):
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_max_person_id)
@@ -584,6 +573,7 @@ class PersonAdd(Toplevel):
             self.reset()
             self.name_input.focus_set()
  
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_all_person_ids)

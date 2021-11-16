@@ -3,7 +3,7 @@
 import tkinter as tk
 from tkinter import font
 import sqlite3
-from files import current_file
+from files import get_current_file
 from query_strings import update_format_font, select_format_font_scheme
 from widgets import Label, Frame, Scale, Button
 from styles import make_formats_dict, config_generic
@@ -14,7 +14,7 @@ import dev_tools as dt
 from dev_tools import looky, seeline
 
 
-dt.make_rollback_copy()
+
 
 
 formats = make_formats_dict()
@@ -26,14 +26,22 @@ class FontPicker(Frame):
         self.root = root
         self.main = main
         self.all_fonts = sorted(font.families())
-
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_format_font_scheme)
-        font_scheme = cur.fetchone()
+        font_scheme = list(cur.fetchone())
         cur.close()
         conn.close()
-        self.font_scheme = list(font_scheme)
+        copy = []
+        z = 0
+        for i in font_scheme[0:2]:
+            if i is None:
+                copy.append(font_scheme[z + 2])
+            else:
+                copy.append(font_scheme[z])
+            z += 1
+        self.font_scheme = copy
         self.make_widgets()
 
     def make_widgets(self):
@@ -61,6 +69,7 @@ class FontPicker(Frame):
             length=200,
             variable=self.fontSizeVar,
             command=self.show_font_size)
+        print("line", looky(seeline()).lineno, "self.font_size, self.fontSize:", self.font_size, self.fontSize)
         self.font_size.set(self.fontSize)
  
         lab = Label(self, text="Select Output Font")
@@ -86,6 +95,7 @@ class FontPicker(Frame):
         self.font_scheme[1] = self.fontSizeVar.get()
         if len(self.cbo.get()) != 0:
             self.font_scheme[0] = self.cbo.get()
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()

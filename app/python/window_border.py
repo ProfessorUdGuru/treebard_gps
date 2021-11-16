@@ -2,14 +2,14 @@
 
 import tkinter as tk
 import sqlite3
-from files import current_file, app_path
+from files import get_current_file, app_path, global_db_path
 from widgets import (
     LabelButtonImage, Frame, FrameTitleBar, LabelTitleBar, Toplevel, Canvas, 
     FrameHilited3) 
 from toykinter_widgets import StatusbarTooltips
 from styles import make_formats_dict, NEUTRAL_COLOR, config_generic
-# from query_strings import select_default_format_font_size
-from query_strings import select_format_font_size
+from query_strings import (
+    select_format_font_size, select_default_format_font_size)
 from PIL import Image, ImageTk
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -34,7 +34,7 @@ class Border(Canvas):
 
     def __init__(
             self, master, menubar=False, 
-            ribbon_menu=False, *args, **kwargs):
+            ribbon_menu=False, tree_is_open=1, *args, **kwargs):
         Canvas.__init__(self, master, *args, **kwargs)
 
         '''
@@ -66,6 +66,7 @@ class Border(Canvas):
         self.master = master # toplevel
         self.menubar = menubar
         self.ribbon_menu = ribbon_menu
+        self.tree_is_open = tree_is_open
 
         self.set_title_bar_size()
 
@@ -84,10 +85,15 @@ class Border(Canvas):
             7 : ['medium', 31, 0.25], 
             11 : ['large', 45, 1.0]}
 
-        # conn = sqlite3.connect(global_db_path)
+        if self.tree_is_open == 0:
+            query = select_default_format_font_size
+            current_file = global_db_path
+        elif self.tree_is_open == 1:
+            query = select_format_font_size
+            current_file = get_current_file()[0]
+
         conn = sqlite3.connect(current_file)
-        cur = conn.execute(select_format_font_size)
-        # cur = conn.execute(select_default_format_font_size)
+        cur = conn.execute(query)
         font_size = cur.fetchone()
         cur.close()
         conn.close()

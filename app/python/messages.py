@@ -6,7 +6,6 @@ from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
 from widgets import (Toplevel, Label, Button, Frame, MessageHilited, Entry)
 from styles import config_generic
-from files import current_file
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -94,7 +93,6 @@ def open_input_message(parent, message, title, ok_lab, cancel_lab, user_input):
     inPut.focus_set()
     parent.wait_window(msg)
     got = show()
-    print("line", looky(seeline()).lineno, "got:", got)
     return user_input, got
 
 places_err = (

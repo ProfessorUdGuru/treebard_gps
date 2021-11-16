@@ -23,7 +23,8 @@ import dev_tools as dt
 from dev_tools import looky, seeline
 
 
-# current_file, current_dir = get_current_file()
+
+
 formats = make_formats_dict()
 
 class Gallery(Frame):
@@ -45,6 +46,9 @@ class Gallery(Frame):
         self.dialog = dialog
 
         self.current_file, self.current_dir = get_current_file()
+
+        self.main_pic = "default_image_unisex.jpg"
+        self.caption_text = ""
 
         if current_person_name:
             self.current_entity_name = current_person_name
@@ -386,6 +390,7 @@ class Gallery(Frame):
         pix_data = sorted(pix_data, key=second_item) 
 
         for lst in pix_data:
+            print("line", looky(seeline()).lineno, "lst:", lst)
             if lst[2] == 1:
                 self.main_pic = lst[0]
                 self.caption_text = lst[1]
@@ -440,6 +445,7 @@ class Gallery(Frame):
         self.config_labels()
 
     def get_current_pix_data(self):
+        
         self.image_dir = self.current_dir
         conn = sqlite3.connect(self.current_file)
         cur = conn.cursor()

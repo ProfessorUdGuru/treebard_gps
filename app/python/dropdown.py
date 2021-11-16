@@ -77,9 +77,6 @@ def placeholder(evt=None, name=""):
     print('menu test:', name.upper()) 
     print('evt:', evt) 
 
-# def placeholder(name):
-    # print('menu test:', name.upper()) 
-
 class DropdownMenu(FrameHilited2):
     def __init__(self, master, root, callback=None, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)

@@ -12,7 +12,7 @@ from widgets import (
     LabelHilited)
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
-from dates import validate_date, format_stored_date, OK_MONTHS
+from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
 from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator
 from styles import make_formats_dict, config_generic
@@ -58,14 +58,19 @@ from dev_tools import looky, seeline
 
 
 
-
+date_prefs = get_date_formats()
 formats = make_formats_dict()
 
 HEADS = (
     'event', 'date', 'place', 'particulars', 'age', 
     'roles', 'notes', 'sources')
-current_file = get_current_file()[0]
+
 def get_current_person():
+    current_file = get_current_file()
+    if current_file is not None:
+        current_file = get_current_file()[0]
+    else:
+        return
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_current_person_id)
@@ -75,6 +80,7 @@ def get_current_person():
     return current_person
 
 def update_particulars(input_string, finding):
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     conn.execute('PRAGMA foreign_keys = 1')
     cur = conn.cursor()
@@ -86,6 +92,7 @@ def update_particulars(input_string, finding):
     conn.close()
 
 def get_all_event_types():
+    current_file, current_dir = get_current_file()
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_all_event_types)
@@ -95,6 +102,7 @@ def get_all_event_types():
     return event_types
 
 def get_after_death_event_types():
+    current_file, current_dir = get_current_file()
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_event_type_after_death)
@@ -104,6 +112,7 @@ def get_after_death_event_types():
     return after_death_event_types 
 
 def get_couple_kin_types():
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_all_kin_type_ids_couple)
@@ -113,6 +122,7 @@ def get_couple_kin_types():
     return couple_kin_type_ids
 
 def get_couple_event_types():
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_all_event_types_couple)
@@ -138,7 +148,8 @@ def get_generic_findings(
         current_person, non_empty_roles, non_empty_notes):
     cur.execute(select_findings_details_generic, finding_id)
     generic_details = [i for i in cur.fetchone()]
-    dkt["date"] = format_stored_date(generic_details[3])
+    dkt["date"] = format_stored_date(generic_details[3], date_prefs)
+    # dkt["date"] = format_stored_date(generic_details[3])
 
     dkt["event"], dkt["particulars"], dkt["age"] = generic_details[0:3]
     dkt["sorter"] = split_sorter(generic_details[4])
@@ -204,7 +215,8 @@ def get_couple_findings(
 
         cur.execute(select_findings_details_couple_generic, finding_id)
         couple_generics = list(cur.fetchone())
-        couple_generics[1] = format_stored_date(couple_generics[1])
+        couple_generics[1] = format_stored_date(couple_generics[1], date_prefs)
+        # couple_generics[1] = format_stored_date(couple_generics[1])
         place = get_place_string(finding_id, cur)
         dkt["place"] = place
         sorter = split_sorter(couple_generics[2])
@@ -272,7 +284,8 @@ def get_birth_findings(
         child_name = get_name_with_id(child_id)
 
         sorter = split_sorter(offspring_details[1])
-        date = format_stored_date(offspring_details[0])
+        date = format_stored_date(offspring_details[0], date_prefs)
+        # date = format_stored_date(offspring_details[0])
 
         particulars = offspring_details[2]
         place = get_place_string((offspring_event_id,), cur)
@@ -322,6 +335,7 @@ def get_findings():
     
     findings_data = {}
     current_person = get_current_person()
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
 
@@ -381,6 +395,8 @@ class EventsTable(Frame):
         event_types = get_all_event_types()
         self.event_autofill_values = EntryAuto.create_lists(event_types)
         self.after_death_events = get_after_death_event_types()
+        if self.after_death_events is None:
+            return
         self.events_only_even_without_dates = ["birth", "death"] + self.after_death_events
 
         self.root.bind(
@@ -456,6 +472,7 @@ class EventsTable(Frame):
                 delete_generic_finding()
 
             current_person = self.current_person
+            current_file = get_current_file()[0]
             conn = sqlite3.connect(current_file)
             conn.execute('PRAGMA foreign_keys = 1')
             cur = conn.cursor()
@@ -610,7 +627,8 @@ class EventsTable(Frame):
 
             cur.execute(update_finding_date, (self.final, sorter, self.finding))
             conn.commit()
-            formatted_date = format_stored_date(self.final)
+            formatted_date = format_stored_date(self.final, date_prefs)
+            # formatted_date = format_stored_date(self.final)
             widg.delete(0, 'end')
             widg.insert(0, formatted_date)
             for instance in EventsTable.instances:
@@ -646,6 +664,7 @@ class EventsTable(Frame):
                         (self.final, self.finding, self.current_person))
                 conn.commit()
 
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -886,6 +905,8 @@ class EventsTable(Frame):
     def redraw(self, evt=None, current_person=None):
         if evt:
             self.current_person = current_person
+
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -982,6 +1003,7 @@ class EventsTable(Frame):
 
     def count_birth_death_events(self, new_event):
         too_many = False
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_findings_for_person, (self.current_person,))
@@ -1053,6 +1075,7 @@ class NewEventDialog(Toplevel):
         self.new_kin_type_codes = [None, None]
 
         self.current_name = get_name_with_id(self.current_person)
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -1074,6 +1097,7 @@ class NewEventDialog(Toplevel):
         conn.close()
 
     def get_some_info(self):
+        current_file = get_current_file()[0]
         conn =  sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -1093,10 +1117,8 @@ class NewEventDialog(Toplevel):
 
     def ask_if_after_death(self):
 
-        def ok_new_evt_type():
-            conn = sqlite3.connect(current_file)
-            conn.execute('PRAGMA foreign_keys = 1')
-            cur = conn.cursor()
+        def ok_new_evt_type(conn, cur):
+
             evt_is_after_death = posthumousvar.get()
             cur.execute(insert_event_type_new, (
                 self.event_type_id, 
@@ -1115,8 +1137,6 @@ class NewEventDialog(Toplevel):
             self.focus_set() 
             self.lift()
             self.grab_set()
-            cur.close()
-            conn.close()
 
         def cancel_new_evt_type():
             nonlocal never_mind
@@ -1124,6 +1144,7 @@ class NewEventDialog(Toplevel):
             self.asker.destroy()
             never_mind = True
 
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -1154,7 +1175,7 @@ class NewEventDialog(Toplevel):
         buttonframe = Frame(self.asker)
         butt1 = Button(
             buttonframe, text="OK", width=6, 
-            command=ok_new_evt_type)
+            command=lambda conn, cur: ok_new_evt_type(conn, cur))
         butt2 = Button(
             buttonframe, text="CANCEL", width=6, 
             command=cancel_new_evt_type)
@@ -1182,6 +1203,7 @@ class NewEventDialog(Toplevel):
             id_couple_event.destroy()
 
         def input_evt_type_now():
+            current_file = get_current_file()[0]
             conn = sqlite3.connect(current_file)
             conn.execute('PRAGMA foreign_keys = 1')
             cur = conn.cursor()
@@ -1519,6 +1541,7 @@ class NewEventDialog(Toplevel):
         self.destroy()
 
     def add_event(self):
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -1540,12 +1563,12 @@ class NewEventDialog(Toplevel):
                 (self.new_finding, self.event_type_id,))
             conn.commit()
 
-            self.couple_ok() 
+            self.couple_ok(cur, conn) 
         if len(self.place_string) == 0:
             cur.execute(insert_finding_places_new, (self.new_finding,))
             conn.commit()
         else:
-            self.update_db_place()
+            self.update_db_place(conn, cur)
 
         new_event_date = validate_date(
             self.root,
@@ -1571,20 +1594,16 @@ class NewEventDialog(Toplevel):
         for instance in EventsTable.instances:
             instance.redraw(current_person=self.current_person)
 
-    def couple_ok(self):                
+    def couple_ok(self, cur, conn):                
         if len(self.other_person) != 0:
             other_person_all = self.other_person.split(" #")
             other_person_id = other_person_all[1]
         else:
             other_person_id = None
 
-        self.talk_to_db(other_person_id)
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
+        self.talk_to_db(other_person_id, conn, cur)
         self.create_birth_event(other_person_id, cur, conn)
-        cur.close()
-        conn.close()
+
 
     def create_birth_event(self, child_id, cur, conn):
 
@@ -1608,21 +1627,14 @@ class NewEventDialog(Toplevel):
                     widg.focus_set()
                     break
 
-    def talk_to_db(self, other_person_id):
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
-
+    def talk_to_db(self, other_person_id, conn, cur):
         self.make_new_kin_type(cur, conn)
-
         cur.execute(
             insert_findings_persons_new_couple,
             (self.new_finding, self.current_person, self.age_1, 
                 self.kin_type_list[0][0], other_person_id, self.age_2, 
                 self.kin_type_list[1][0]))
         conn.commit()
-        cur.close()
-        conn.close()
 
     def make_new_kin_type(self, cur, conn):
         self.kin_type_list = list(
@@ -1640,11 +1652,9 @@ class NewEventDialog(Toplevel):
                 new_id = cur.fetchone()[0]
                 item[0] = new_id 
 
-    def update_db_place(self):
+    def update_db_place(self, conn, cur):
         if self.place_dicts is None: return
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
+
         ids = []
         for dkt in self.place_dicts:            
             ids.append(dkt["id"])
@@ -1679,9 +1689,6 @@ class NewEventDialog(Toplevel):
         self.place_strings.insert(0, self.place_string)
 
         self.place_autofill_values = EntryAuto.create_lists(self.place_strings)
-            
-        cur.close()
-        conn.close()
 
     def validate_kin_types(self):
 
@@ -1690,6 +1697,7 @@ class NewEventDialog(Toplevel):
             self.grab_set()
             widg.focus_set()
 
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -1876,6 +1884,14 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
+# Then split get_current_tree into 4 procedures and stop with the if/else confusion.
+# 1) done
+# 2) done except to open the dlg at the bottom of files.py which shd be finished/improved
+# 3) when opening a file with the dialog, who cares what the prior file was? My reason for running get_current_file was probably not very good back when I wrote this code. A missing file will not be available in the dialog.
+# 4) when creating a new file, again the prior file and missing file are irrelevant.
+# THE ONLY WAY TO PROCEED IS TO FOCUS ON ONE PROCEDURE AT A TIME AND KEEP THE CODE SEPARATE FOR THE FOUR PROCEDURES ABOVE. START WITH THE SIMPLEST. don't mix these 4 procedures together and then try to tease them apart with if/else.
+
+# rolled back to last night's version since everything I did today was wrong. First thing to do is delete the section that deals with missing files since it doesn't work right and introduces bugs that are hard to find. Then get rid of the global. Then create a new tree and delete it manually and follow the error messages. Create one line of code at a time and test after each change. The goal is to just open a message when a file doesn't exist and tell the user the right way to delete files. The other goal is to rethink this and keep it simple.
 # test the feature which creates a new tree from the default tree if the user has deleted a file outside of treebard's controls see files.py valid_dummy THIS WORKS which you can test by making a change to the tree. But close and reopen it, and the change (I tried changing current person) doesn't show. But close and reopen it a second time, and it does. OR SOMETHING LIKE THAT. It is flaky and instead of patching it up I have to rethink it and come up with a better solution. Auto-replace it? And open a dlg telling the user to delete it correctly? And giving a button to do so right on the dlg? As a CONFIRM button; not telling the user what/why/how but by auto-replace I mean putting a copy of the default tree in its place with the same name. This is OK for now but has to be fixed right away. The main idea is that if the absence of a needed filename is ever detected, flaky patches go into effect and that should be cut off at the pass.
 # retest click pick to open prior tree
 # when you press Open button then Cancel, sample tree opens (or is this bec I deleted some files manually?)
@@ -1920,6 +1936,7 @@ if __name__ == '__main__':
 # figure out how to dump db as a text file so it can be pushed to github, first delete any unused tables
 # post new screenshots
 # edit official do list
+# website: change "units of genealogy" to "elements of genealogy"
 # write blog post "refactor finished"
 
 # BRANCH: post_refactor

@@ -130,13 +130,10 @@ class Sizer(Label):
             with padding. See StatusbarTooltips class in widgets.py
             for an example of how to place() and bind() this. 
         '''
-        print("line", looky(seeline()).lineno, "app_path, icon:", app_path, icon)
         self.master = master
-        print("line", looky(seeline()).lineno, "self.master:", self.master)
         self.click_x = 0
         self.click_y = 0
         file = '{}images/icons/{}.png'.format(app_path, icon)
-        print("line", looky(seeline()).lineno, "file:", file)
         img = Image.open(file)
         self.tk_img = ImageTk.PhotoImage(img, master=self.master)
 

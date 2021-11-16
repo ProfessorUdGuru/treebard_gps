@@ -2,7 +2,7 @@
 
 import tkinter as tk
 import sqlite3
-from files import current_file
+from files import get_current_file
 from window_border import Border 
 from widgets import (
     Frame, Toplevel, Label, LabelButtonText, ButtonQuiet,
@@ -249,6 +249,8 @@ class RolesDialog(Toplevel):
             first_butt.focus_set()
 
     def make_roles_list(self):
+
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_roles, (self.finding_id,))
@@ -294,6 +296,7 @@ class RolesDialog(Toplevel):
         resize_scrolled_content(self, self.canvas, self.window)
 
     def get_role_types(self):
+        current_file = get_current_file()[0]
         self.role_types = []
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -318,7 +321,8 @@ class RolesDialog(Toplevel):
             chosen_role_type = self.make_new_role_type(chosen_role_type)
         self.make_new_role(chosen_role_type)
 
-    def make_new_role_type(self, new_role_type):   
+    def make_new_role_type(self, new_role_type):
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -400,7 +404,8 @@ class RolesDialog(Toplevel):
     def delete_role(self):
 
         def delete_role_from_db():
-            nonlocal role_count_per_finding            
+            nonlocal role_count_per_finding  
+            current_file = get_current_file()[0]
             conn = sqlite3.connect(current_file)
             conn.execute('PRAGMA foreign_keys = 1')
             cur = conn.cursor()
@@ -429,7 +434,7 @@ class RolesDialog(Toplevel):
         resize_scrolled_content(self, self.canvas, self.window)
 
     def update_role_type(self, edited_role_type):
-
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -479,6 +484,7 @@ class RolesDialog(Toplevel):
         else:
             role_person_id = self.person_input.get().split('  #')[1]
 
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -517,6 +523,8 @@ class RolesDialog(Toplevel):
             new_person_data = edited_role_person
         new_person_id = new_person_data[1]
         new_person_name = new_person_data[0]
+
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()

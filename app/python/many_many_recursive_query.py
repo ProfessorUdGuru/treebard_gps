@@ -3,7 +3,7 @@
 import tkinter as tk
 from tkinter import ttk
 import sqlite3
-from files import current_file
+from files import get_current_file
 from widgets import EntryAutofill
 from query_strings import (
    select_place_id2, select_count_place_id, select_place, select_all_place_ids)
@@ -57,6 +57,8 @@ from dev_tools import looky, seeline
                 8       8       8   8   27          8           8       8   8   27
 '''
 
+
+
 class ManyManyRecursiveQuery():
     '''
         This class had widget references built into it.
@@ -69,7 +71,6 @@ class ManyManyRecursiveQuery():
             self.initial_id = int(inwidg.get().strip())
         else:
             self.initial_id = initial_id
-        print("line", looky(seeline()).lineno, "self.initial_id:", self.initial_id)
         self.new_id_tree = []
         self.id_tree = [[self.initial_id]]
         self.final = []
@@ -102,6 +103,7 @@ class ManyManyRecursiveQuery():
 
         self.uppers_dicts = []
 
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_place, (self.initial_id,))
@@ -210,7 +212,7 @@ class ManyManyRecursiveQuery():
             cur.execute(select_place, (identity,))
             string_part = cur.fetchone()[0]
             return string_part
-
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
 
@@ -222,10 +224,8 @@ class ManyManyRecursiveQuery():
         final_values_lists = []
         final_strings = []
         for lst in self.final_id_list:
-            print("line", looky(seeline()).lineno, "lst:", lst)
             one_part = []
             for identity in lst:
-                print("line", looky(seeline()).lineno, "identity:", identity)
                 if identity is None:
                     break
                 string_part = get_string_with_id(identity)
@@ -244,7 +244,6 @@ if __name__ == '__main__':
 
     def get_current_place():
         mm = ManyManyRecursiveQuery(ent, combo)
-        print("line", looky(seeline()).lineno, "mm.final_id_list:", mm.final_id_list)
 
     def clear_combo(evt):
         combo.delete(0, 'end')

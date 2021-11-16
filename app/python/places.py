@@ -33,7 +33,7 @@ from query_strings import (
     insert_places_places_new, select_all_place_ids, select_finding_places_id,
     insert_finding_places_new_event, select_places_places_id, 
     select_all_finding_places_findings)
-from files import current_file
+from files import get_current_file
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
 from messages import open_error_message, places_err
@@ -44,7 +44,10 @@ import sqlite3
 
 
 
+
 def get_all_places_places():
+    
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_all_places_places)
@@ -53,20 +56,8 @@ def get_all_places_places():
     conn.close()
     return places_places
 
-# place_strings = make_all_nestings(select_all_place_ids)
-# places_places = get_all_places_places()
-
-# conn = sqlite3.connect(current_file)
-# cur = conn.cursor()
-# cur.execute(select_all_places)
-# all_place_names = [i[0] for i in cur.fetchall()]
-# cur.close()
-# conn.close()
-
-# unique_place_names = set(all_place_names) 
-
 def get_all_unique_place_names():
-
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_all_places)
@@ -199,6 +190,7 @@ class NewPlaceDialog():
         self.new_places_dialog.focus_set()
 
     def ok_hint(self):
+        current_file = get_current_file()[0]
         edit_row = self.edit_rows[self.got_nest]
         new_hint = edit_row.ent.get()
         conn = sqlite3.connect(current_file)
@@ -253,6 +245,7 @@ class NewPlaceDialog():
             self.radvars.append(self.var)
             i += 1
 
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
             
@@ -403,6 +396,7 @@ class ValidatePlace():
             elif len(ids_hints) > 1: self.dupes = True
             return ids_hints
 
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -468,6 +462,7 @@ class ValidatePlace():
             occur which insert to any of the place tables till these temp IDs
             are either used or discarded.
         '''
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -509,6 +504,7 @@ class ValidatePlace():
         return self.place_dicts
 
     def input_to_db(self):
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()

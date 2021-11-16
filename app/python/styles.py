@@ -1,11 +1,11 @@
 from os import path
 from tkinter import Tk, Label
 import sqlite3
-from files import get_current_file
+from files import get_current_file, global_db_path
 from query_strings import(
-    select_opening_settings, 
-    select_all_color_schemes,
-    select_all_color_schemes_plus
+    select_opening_settings, select_all_color_schemes, 
+    select_all_color_schemes_plus, select_closing_state_tree_is_open,
+    select_opening_settings_on_load
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -25,8 +25,6 @@ from dev_tools import looky, seeline
 '''
 
 NEUTRAL_COLOR = '#878787'
-
-current_file = get_current_file()[0]
 
 # # add a monospaced sans-serif font for cases like dropdown menus with text at both
 # #   flush left and flush right of the same label
@@ -583,13 +581,30 @@ def config_generic(parent):
     config_bgStd(parent)
 
 def get_opening_settings():
-    conn = sqlite3.connect(current_file)
+    conn = sqlite3.connect(global_db_path)
     cur = conn.cursor()
-    cur.execute(select_opening_settings)
-    user_formats = cur.fetchall()[0]
-    cur.close()
-    conn.close()
-    return user_formats
+    cur.execute(select_closing_state_tree_is_open)
+    tree_is_open = cur.fetchone()[0]
+    if tree_is_open == 0:
+        cur.execute(select_opening_settings_on_load)
+        default_formats = cur.fetchone()
+        cur.close()
+        conn.close()            
+        return default_formats
+    elif tree_is_open == 1:
+        cur.close()
+        conn.close()
+            
+        current_file = get_current_file()[0]
+        print("line", looky(seeline()).lineno, "current_file:", current_file)
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_opening_settings)
+        user_formats = cur.fetchone()
+        # user_formats = cur.fetchall()[0]
+        cur.close()
+        conn.close()
+        return user_formats
 
 def get_formats():
     '''
@@ -661,6 +676,7 @@ def make_formats_dict():
     return formats
 
 def get_color_schemes():
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur=conn.cursor()
     cur.execute(select_all_color_schemes)
@@ -670,6 +686,7 @@ def get_color_schemes():
     return schemes
 
 def get_color_schemes_plus():
+    current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur=conn.cursor()
     cur.execute(select_all_color_schemes_plus)

@@ -408,8 +408,6 @@ class PersonSearch(Toplevel):
             self.new_current_person = "({}) {}".format(use_name[1], use_name[0])
         self.findings_table.redraw(evt, current_person=self.new_current_id)
         self.attributes_table.redraw(evt, current_person=self.new_current_id)
-        print("line", looky(seeline()).lineno, "self.findings_table.current_person:", self.findings_table.current_person)
-        print("line", looky(seeline()).lineno, "current_file, current_dir:", current_file, current_dir)
         self.show_top_pic(current_file, current_dir, self.new_current_id)
 
         self.master.current_person_label.config(

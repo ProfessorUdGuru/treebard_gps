@@ -2,13 +2,12 @@
 
 import tkinter as tk
 import sqlite3
-from files import get_current_file
+from files import get_current_file, global_db_path
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
 from styles import make_formats_dict
 from messages import open_error_message, dates_msg, open_input_message
-# from query_strings import select_date_format, select_default_date_format
-from query_strings import select_date_format
+from query_strings import select_date_format, select_default_date_format
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -110,29 +109,33 @@ from dev_tools import looky, seeline
     who want to customize their own applications.
 '''
 
-formats = make_formats_dict()
 current_file = get_current_file()[0]
+formats = make_formats_dict()
 
+def get_date_formats(tree_is_open=0):
+    '''
+        This runs on load in case the user wants to use the date calculator
+        without opening a tree. It runs again when a tree loads so the user 
+        preferences for that tree will be used.
+    '''
 
-# def get_default_date_formats():
-    # conn = sqlite3.connect(global_db_path)
-    # cur = conn.cursor()
-    # cur.execute(select_default_date_format)
-    # default_date_prefs = cur.fetchone()
-    # cur.close()
-    # conn.close()
-    # return default_date_prefs
+    if tree_is_open == 0:
+        current_file = global_db_path
+        query = select_default_date_format
 
-def get_date_formats():
+    elif tree_is_open == 1:
+        current_file = current_file
+        query = select_date_format
+
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
-    cur.execute(select_date_format)
+    cur.execute(query)
     date_prefs = cur.fetchone()
     cur.close()
-    conn.close()
+    conn.close()        
+        
     return date_prefs
 
-# date_prefs = get_default_date_formats()
 date_prefs = get_date_formats()
 
 # "." can't be used as a separator as it would prevent the user
@@ -243,9 +246,7 @@ widg = None
 def validate_date(
     parent,
     inwidg,
-    # initial,
     final,
-    # finding
 ):
 
     global root, widg
@@ -756,7 +757,9 @@ def make_date_string(final):
         prefix1, year1, month1, day1, suffix1,
         link, prefix2, year2, month2, day2, suffix2)
 
-def format_stored_date(stored_date):
+def format_stored_date(stored_date, date_prefs=date_prefs):
+    ''' Used in events_table.py'''
+
     if stored_date == "-0000-00-00----0000-00-00-":
         return ""
     dateform = date_prefs[0]
@@ -790,7 +793,8 @@ def format_stored_date(stored_date):
         if len(part) == 0:
             pass
         elif y in (0, 6):
-            part = find_prefix(part)
+            part = find_prefix(part, date_prefs)
+            # part = find_prefix(part)
             if y == 0:
                 prefix1 = part                
             elif y == 6:
@@ -814,7 +818,8 @@ def format_stored_date(stored_date):
             elif y == 9:
                 day2 = part
         elif y in (4, 10):
-            part = find_suffix(part)
+            part = find_suffix(part, date_prefs)
+            # part = find_suffix(part)
             if y == 4:
                 suffix1 = part
             elif y == 10:
@@ -892,7 +897,7 @@ def format_stored_date(stored_date):
 
     return formatted_date
 
-def find_prefix(part):
+def find_prefix(part, date_prefs):
     if part == 'abt':
         prefix = date_prefs[1]
     elif part == 'est':
@@ -909,7 +914,8 @@ def find_prefix(part):
         prefix = ""
     return prefix
 
-def find_suffix(part):
+def find_suffix(part, date_prefs):
+# def find_suffix(part):
     if part in ("bc, ad"):
         bc_ad = date_prefs[5].split("/")
         if part == "bc":

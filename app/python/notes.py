@@ -16,7 +16,7 @@ from names import get_name_with_id
 from message_strings import note_dlg_msg
 from utes import center_window, create_tooltip
 from custom_listbox_widget import Listbox
-from files import current_file
+from files import get_current_file
 from query_strings import (
     update_note, select_count_subtopic, insert_note, insert_findings_notes,
     select_notes_refresh, update_note_private, update_note_subtopic,
@@ -235,7 +235,7 @@ class NotesDialog(Toplevel):
     def save_changes(self):
 
         self.save_new_subtopic()
-
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -279,6 +279,7 @@ class NotesDialog(Toplevel):
             'WM_DELETE_WINDOW', self.close_subtopic_dialog)
 
     def submit_new_note(self):
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -330,6 +331,7 @@ class NotesDialog(Toplevel):
         self.refresh()
 
     def refresh_notes_per_finding(self):
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_notes_refresh, (self.finding_id,))
@@ -359,6 +361,7 @@ class NotesDialog(Toplevel):
 
     def save_privacy_setting(self):
         privacy_setting = self.privacy.get()
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -381,6 +384,7 @@ class NotesDialog(Toplevel):
             self.current_note_text = v[1]
 
     def store_new_subtopic_name(self):
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -408,7 +412,7 @@ class NotesDialog(Toplevel):
             return
         self.note_input.text.delete(1.0, 'end')
         self.note_input.text.insert(1.0, self.current_note_text) 
-
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(
@@ -481,6 +485,7 @@ class NotesDialog(Toplevel):
         if subtopic is None:
             return
 
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -589,6 +594,7 @@ class NotesDialog(Toplevel):
             save_order.append([text, q])
             q += 1
 
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()

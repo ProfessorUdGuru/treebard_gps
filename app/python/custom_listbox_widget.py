@@ -125,15 +125,12 @@ class Listbox(FrameHilited4):
                 
                 self.new_subtopic_name = textvars[clicked].get()
                 if self.valuate is False:
-                    print('128 running')
                     rename_input.destroy()
                     return
                 elif(len(self.new_subtopic_name) == 0 or 
                         self.new_subtopic_name == old_subtopic_name):
-                    print('133 running')
                     pass                   
                 elif self.new_subtopic_name != old_subtopic_name:
-                    print('136 running')
                     self.store_new_subtopic_name()
                 self.valuate = False
                 rename_input.destroy()        

@@ -28,7 +28,6 @@ def center_window(win):
 def center_dialog(dlg, frame=None):
 
     if frame:
-        print("line", looky(seeline()).lineno, "running in utes")
         dlg.update_idletasks()
         win_width = frame.winfo_reqwidth()
         win_height = frame.winfo_reqheight()

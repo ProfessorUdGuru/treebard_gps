@@ -3,8 +3,9 @@
 # This version is needed because in _022 and preceding, I'd gotten into the habit of opening a hard-coded tree selection. So I wrote a lot of procedures in an order that didn't take into account that this was not how it was going to be done. I have to start over somewhat on the structure, not the structure but when things happen during the opening process, so the user can open the app without opening a tree, and thus still have access to file menu, help menu, tools menu, etc. User format preferences will not go into effect till he opens a specific tree, since user prefs are stored per tree and there will be only one set of formats (the defaults) stored in a separate global database. This version is broken from the start but for a whole version that works, it is stored in treebard_gps_backups/treebard_gps_20211110x. The best way will probably be to start a new model for the restructuring with only a Border, Dropdown, and Icon Menu. Anything else would be haphazard patchwork.
 
 import tkinter as tk
+import sqlite3    
 from PIL import Image, ImageTk
-from files import app_path, current_file
+from files import app_path, global_db_path, current_drive
 from dropdown import DropdownMenu, placeholder
 from window_border import Border
 from opening import SplashScreen
@@ -12,7 +13,11 @@ from scrolling import MousewheelScrolling
 from styles import config_generic, make_formats_dict
 from main import Main
 from widgets import Toplevel, Button, Frame, ButtonPlain
+from dates import get_date_formats   
 from utes import create_tooltip
+from query_strings import (
+    update_closing_state_tree_is_open, update_closing_state_tree_is_closed,
+    select_date_format)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -98,7 +103,8 @@ class Treebard():
         self.canvas = Border(
             self.root, 
             menubar=True, 
-            ribbon_menu=True)
+            ribbon_menu=True,
+            tree_is_open=0)
         self.canvas.title_1.config(text="Treebard GPS")
 
     def make_main_window(self):
@@ -110,6 +116,15 @@ class Treebard():
         
         self.canvas.create_window(0, 0, anchor='nw', window=self.main)
         self.configure_mousewheel_scrolling()
+
+        conn = sqlite3.connect(global_db_path)
+        conn.execute("PRAGMA foreign_keys = 1")
+        cur = conn.cursor()
+        cur.execute(update_closing_state_tree_is_open)
+        conn.commit()
+        cur.close()
+        conn.close()
+        date_prefs = get_date_formats(tree_is_open=1)
 
     def configure_mousewheel_scrolling(self):
         self.scroll_mouse = MousewheelScrolling(self.root, self.canvas)
@@ -131,8 +146,18 @@ def start():
     treebard = Treebard(root)
     splash = SplashScreen(root, treebard)
     splash.open_treebard(treebard.make_main_window)    
-
+    root.bind("<Destroy>", stop)
     root.mainloop()
+
+def stop(evt):
+
+    conn = sqlite3.connect(global_db_path)
+    conn.execute("PRAGMA foreign_keys = 1")
+    cur = conn.cursor()
+    cur.execute(update_closing_state_tree_is_closed)
+    conn.commit()
+    cur.close()
+    conn.close()
 
 if __name__ == '__main__':
     start()
