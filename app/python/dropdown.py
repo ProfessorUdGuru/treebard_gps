@@ -1,12 +1,17 @@
 # dropdown.py
 
 import tkinter as tk
+import sqlite3
 from files import (
-    make_tree, open_tree, save_as, save_copy_as, rename_tree, close_tree, 
-    exit_app)  
+    handle_new_tree_event, handle_open_event, save_as, save_copy_as, 
+    rename_tree, close_tree, exit_app, global_db_path, get_recent_files,
+    new_file_path, change_tree_title, set_current_file, save_recent_tree)  
 from widgets import Frame, FrameHilited2, LabelHilited3, ToplevelHilited
 from scrolling import Scrollbar
+from messages import open_input_message2, opening_msg
 from styles import config_generic, make_formats_dict
+from query_strings import (
+    select_closing_state_recent_files, update_closing_state_recent_files)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -80,14 +85,16 @@ def placeholder(evt=None, name=""):
     print('evt:', evt) 
 
 class DropdownMenu(FrameHilited2):
-    def __init__(self, master, root, treebard, callback=None, *args, **kwargs):
+    def __init__(
+            self, master, root, treebard, callback=None, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master 
         self.root = root
         self.treebard = treebard
         self.callback = callback
-    
+
+        self.recent_trees = []
         self.formats = make_formats_dict()
 
         self.drop1_is_open = False
@@ -101,34 +108,37 @@ class DropdownMenu(FrameHilited2):
         self.ipady = 3
         self.screen_height = self.winfo_screenheight()
 
-        self.recent_trees = [
-                ("Sanford Family Tree", "", "x"), 
-                ("Seinfeld Family Tree", "", ""), 
-                ("Jefferson Family Tree", "", "ASz"), 
-                ("Goldberg Family Tree", "", "CSz")]
+        self.drop1 = ToplevelHilited(self, bd=1, relief="raised")
+        self.drop2 = ToplevelHilited(self, bd=1, relief="raised")
+        self.current_file = ""
 
         self.drop_items = {
             "file": (
-                ("new", lambda evt, root=self.root: make_tree(evt, root), "n"),
-                ("open", lambda evt, tbard=self.treebard: open_tree(
-                    evt, tbard), "..."), 
+                ("new", lambda evt, root=self.root, tbard=self.treebard, 
+                    openfunx=open_input_message2, 
+                    msg=opening_msg: handle_new_tree_event(
+                        evt, root, tbard, openfunx, msg),
+                    "n"),
+                ("open", lambda evt, tbard=self.treebard: handle_open_event(
+                    evt, tbard), "..."),
                 ("save", lambda evt, name="save (redraw)": placeholder(evt, name), "s"),
                 ("save as", lambda evt, root=self.root: save_as(evt, root), "CAs"),
                 ("save copy as", lambda evt: save_copy_as(), "t"),
                 ("rename", lambda evt, root=self.root: rename_tree(evt, root), "h"),
-                ("recent trees", self.show_list, ">", self.recent_trees),
+                ("recent trees", lambda evt: self.show_recent_trees(evt), 
+                    ">", self.recent_trees),
+                # ("recent trees", self.show_list, ">", self.recent_trees),
                 ("import tree", self.show_list, ">", IMPORT_TYPES),
                 ("export tree", self.show_list, ">", EXPORT_TYPES),
-                ("close", lambda evt, tbard=self.treebard: close_tree(
-                    evt, tbard), "l"),
-                ("exit", self.close_app, "")),
+                ("close", lambda evt, tbard=self.treebard: close_tree(evt, tbard), ""),
+                ("exit", lambda evt, root=self.root: exit_app(evt, root), "")),
 
             "edit": (
                 ("cut", lambda evt, name="cut": placeholder(evt, name), "x"), 
                 ("copy", lambda evt, name="copy": placeholder(evt, name), "c"), 
                 ("paste", lambda evt, name="paste": placeholder(evt, name), "v")),
 
-            "units": (
+            "elements": (
                 ("add person", 
                     lambda evt, name="add person": placeholder(evt, name), ""),
                 ("add place", 
@@ -203,17 +213,12 @@ class DropdownMenu(FrameHilited2):
                         evt, name), ""),)}
 
         self.make_drop0()
-        self.drop1 = ToplevelHilited(self, bd=1, relief="raised")
-        self.drop2 = ToplevelHilited(self, bd=1, relief="raised")
 
         for drop in (self.drop1, self.drop2):
             drop.wm_overrideredirect(1)
             drop.withdraw()
         
         self.root.bind("<Button-1>", self.close_drop_on_click, add="+")
-
-    def close_app(self, evt):
-        self.root.quit()
 
     def make_drop0(self):
         d = 0
@@ -324,6 +329,37 @@ class DropdownMenu(FrameHilited2):
             else:
                 self.expand = False
                 self.close_drop2()
+
+    def show_recent_trees(self, evt):
+        def populate_drop2_recent_files():
+            x = 0
+            for i in range(20):
+                lab = LabelHilited3(self.drop2, anchor="w")
+                if len(recent_files) >= x + 1:
+                    lab.config(text=recent_files[x])
+                    lab.grid(sticky='ew')
+                    lab.bind("<ButtonRelease-1>", use_recent_tree, add="+")
+                    lab.bind('<Enter>', self.highlight)
+                    lab.bind('<Leave>', self.unhighlight)
+                else:
+                    break
+                x += 1   
+
+        def use_recent_tree(event):
+            nonlocal recent_files
+            close_tree(treebard=self.treebard)
+            tree_title = event.widget.cget("text")
+            current_file = "{}.tbd".format(tree_title.replace(" ", "_").lower())
+            set_current_file(current_file)            
+            save_recent_tree(tree_title, recent_files)
+            for child in self.drop2.winfo_children():
+                child.destroy()
+            populate_drop2_recent_files()
+            change_tree_title(self.treebard)
+            self.treebard.make_main_window()                
+
+        recent_files = get_recent_files() 
+        populate_drop2_recent_files()
 
     def show_list(self, list_to_use):
         format_strings = []

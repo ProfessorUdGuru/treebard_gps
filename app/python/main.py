@@ -5,9 +5,9 @@ import sqlite3
 from PIL import Image, ImageTk
 from files import current_drive, get_current_file
 from widgets import (
-    Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonPlain, FrameHilited1,
+    Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, FrameHilited1,
     CanvasHilited, FrameHilited3, Toplevel, LabelBoilerplate)
-from styles import config_generic
+# from styles import config_generic, make_formats_dict
 from window_border import Border
 from custom_tabbed_widget import TabBook
 from autofill import EntryAutoHilited    
@@ -45,7 +45,8 @@ PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"),
     # 'previous', 'next', 'last', 'search', 'add', 'settings', 
     # 'note', 'back', 'forward') 
 
-SCREEN_SIZE = []
+# self.SCREEN_SIZE = []
+# print("line", looky(seeline()).lineno, "self.SCREEN_SIZE:", self.SCREEN_SIZE)
 
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
@@ -58,9 +59,9 @@ class Main(Frame):
         self.current_person_name = ""
         self.tabbook_x = 300
         self.tabbook_y = 300
-
-        SCREEN_SIZE.append(self.winfo_screenwidth())
-        SCREEN_SIZE.append(self.winfo_screenheight())
+        self.SCREEN_SIZE = []
+        self.SCREEN_SIZE.append(self.winfo_screenwidth())
+        self.SCREEN_SIZE.append(self.winfo_screenheight())
 
         self.make_widgets()
         self.get_current_values()
@@ -85,6 +86,8 @@ class Main(Frame):
         self.hsb.grid(column=1, row=5, sticky='ew')
 
     def make_widgets(self):
+
+        # formats = make_formats_dict()
 
         self.make_scrollbars()
 
@@ -133,16 +136,15 @@ class Main(Frame):
             command=family_canvas.xview)
         family_canvas.config(xscrollcommand=family_sbh.set)
 
-        minx = self.tabbook_x/SCREEN_SIZE[0]
-        miny = self.tabbook_y/SCREEN_SIZE[1]
+        minx = self.tabbook_x/self.SCREEN_SIZE[0]
+        miny = self.tabbook_y/self.SCREEN_SIZE[1]
 
         self.right_panel = TabBook(
             persons_tab, root=self.root, tabs=RIGHT_PANEL_TABS, side="se", 
             selected='images', case='upper', miny=0.25, minx=0.20, takefocus=0)
-        self.top_pic_button = ButtonPlain(
+        self.top_pic_button = ButtonBigPic(
             self.right_panel.store['images'],
             command=self.open_person_gallery)
-        # current_file, current_dir = get_current_file()
         self.findings_table = EventsTable(
             persons_tab, self.root, self.treebard, self)
         EventsTable.instances.append(self.findings_table)
@@ -151,11 +153,6 @@ class Main(Frame):
         self.att = EventsTable(
             attributes_tab, self.root, self.treebard, self, attrib=True)
         EventsTable.instances.append(self.att)
-        # current_file = get_current_file()
-        # if current_file is not None:
-            # current_file, current_dir = get_current_file()
-        # else:
-            # return
         current_file, current_dir = get_current_file()
         # this does not run on redraw, just on load
         if len(current_dir) != 0:
@@ -167,7 +164,7 @@ class Main(Frame):
             self.main_tabs.store['graphics'],
             self.root, 
             self.treebard,
-            SCREEN_SIZE,
+            self.SCREEN_SIZE,
             current_place_name="Laramie County, Wyoming, USA")
 
         source_gallery = Gallery(
@@ -176,7 +173,7 @@ class Main(Frame):
             self.main_tabs.store['graphics'],
             self.root, 
             self.treebard,
-            SCREEN_SIZE,
+            self.SCREEN_SIZE,
             current_source_name="1900 US Census")
 
         options_tabs = TabBook(
@@ -337,7 +334,7 @@ class Main(Frame):
             self.main_tabs.store['graphics'],
             self.root, 
             self.treebard,
-            SCREEN_SIZE,
+            self.SCREEN_SIZE,
             dialog=person_gallery_dlg,
             current_person_name=self.current_person_name)
 

@@ -331,6 +331,12 @@ select_closing_state_openpic = '''
     WHERE closing_state_id = 1
 '''
 
+select_closing_state_recent_files = '''
+    SELECT recent_files
+    FROM closing_state
+    WHERE closing_state_id = 1
+'''
+
 select_color_scheme_current = '''
     SELECT bg, highlight_bg, head_bg, fg 
     FROM format 
@@ -1053,6 +1059,18 @@ update_closing_state_openpic = '''
     WHERE closing_state_id = 1
 '''
 
+update_closing_state_recent_files = '''
+    UPDATE closing_state
+    SET recent_files = ?
+    WHERE closing_state_id = 1
+'''
+
+update_closing_state_tree = '''
+    UPDATE closing_state 
+    SET prior_tree = ? 
+    WHERE closing_state_id = 1
+'''
+
 update_closing_state_tree_is_closed = '''
     UPDATE closing_state
     SET tree_is_open = 0
@@ -1076,18 +1094,6 @@ update_current_person = '''
     UPDATE current
     SET person_id = ?
     WHERE current_id = 1
-'''
-
-# update_current_tree = '''
-    # UPDATE closing_state 
-    # SET current_tree = ? 
-    # WHERE closing_state_id = 1
-# '''
-
-update_closing_state_tree = '''
-    UPDATE closing_state 
-    SET prior_tree = ? 
-    WHERE closing_state_id = 1
 '''
 
 update_event_types = '''

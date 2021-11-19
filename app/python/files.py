@@ -9,7 +9,9 @@ from PIL import Image, ImageTk
 import sqlite3
 from query_strings import (
     select_closing_state_prior_tree, update_closing_state_tree,
-    update_closing_state_tree_is_closed)
+    update_closing_state_tree_is_closed, update_closing_state_recent_files, 
+    select_closing_state_recent_files)
+from utes import titlize
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -87,6 +89,15 @@ def set_current_file(current_file):
     cur.close()
     conn.close()
 
+def handle_open_event(evt, treebard):
+    '''
+        This `handle...` callback, like others in this module with a similar 
+        name, takes `evt` as its obligatory first parameter while getting its 
+        extra parameters from a lambda that's used to call it. This callback 
+        then runs the main function, passing along the extra parameters.
+    '''
+    open_tree(treebard)
+
 def open_tree(treebard, dialog=None):
     ''' 
         Re: what shows up pre-loaded into the dialog's 
@@ -99,7 +110,6 @@ def open_tree(treebard, dialog=None):
         4) and if that doesn't work, dialog opens with 
             My Documents the pre-loaded directory
     '''
-    # init_dir = get_opening_dir()
 
     open_dialog = filedialog.askopenfilename(
         initialdir=init_dir,
@@ -111,58 +121,100 @@ def open_tree(treebard, dialog=None):
     if len(open_dialog) == 0:
         return
     current_path = open_dialog.split('/')
-    current_file = current_path[len(current_path)-1]
+    current_file = current_path[len(current_path) - 1]
     set_current_file(current_file)
+    tree_title = current_file.replace("_", " ").rstrip(".tbd")
+    # tree_title = current_file.replace("_", " ").rstrip(".tbd").title()
+    tree_title = titlize(tree_title)
+    filter_tree_title(tree_title) 
     change_tree_title(treebard)
     treebard.make_main_window()
     if dialog:
         dialog.destroy() 
 
-def get_new_tree_title(current_file):
-    file_only = current_file.split("/")[4].rstrip(".tbd").replace("_", " ").title()
-    return file_only
+def filter_tree_title(tree_title):
+
+    stored_string = ""
+    recent_files = get_recent_files()
+    if len(tree_title) == 0: return
+    if recent_files is None: return
+    save_recent_tree(tree_title, recent_files)
+
+def save_recent_tree(tree_title, recent_files):
+    if tree_title not in recent_files:
+        recent_files.insert(0, tree_title)
+    else:
+        recent_files.insert(0, recent_files.pop(recent_files.index(tree_title)))
+    if len(recent_files) > 20:
+        recent_files = recent_files[0:20]
+
+    stored_string = "_+_".join(recent_files)
+    conn = sqlite3.connect(global_db_path)
+    conn.execute('PRAGMA foreign_keys = 1')
+    cur = conn.cursor()
+    cur.execute(update_closing_state_recent_files, (stored_string,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+def get_recent_files():
+    conn = sqlite3.connect(global_db_path)
+    cur = conn.cursor()
+    cur.execute(select_closing_state_recent_files)
+    stored_string = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    if len(stored_string) == 0:
+        return []
+    recent_files = stored_string.split("_+_")
+    return recent_files
+
+# def titlize(stg):
+    # '''
+        # function by Yugal Jindle. Python's `title()` method doesn't work right
+        # if there are apostrophes etc. in the word, since it breaks words at
+        # punctuation. According to https://bugs.python.org/issue7008, the
+        # `string.capwords()` method is also buggy and should be deprecated. This
+        # is to make "Linda's Tree" not be "Linda'S Tree".
+    # '''
+    # lst = []
+    # for temp in stg.split(" "): lst.append(temp.capitalize())
+    # return ' '.join(lst)
+
+def get_tree_title(current_file):
+    # file_only = current_file.split("/")[4].rstrip(".tbd").replace("_", " ").title()
+    file_only = current_file.split("/")[4].rstrip(".tbd").replace("_", " ")
+    tree_title = titlize(file_only)
+    return tree_title
 
 def change_tree_title(treebard):
     current_file = get_current_file()[0]
-    file_only = get_new_tree_title(current_file) 
+    file_only = get_tree_title(current_file) 
     treebard.canvas.title_2.config(text=file_only)
 
-def make_tree(root, treebard, opening_dialog, open_input_message):
+def handle_new_tree_event(evt, root, treebard, open_input_message, opening_msg):
+    make_tree(root, treebard, open_input_message, opening_msg)
+
+def make_tree(root, treebard, open_input_message, opening_msg, opening_dialog=None):
     '''
-        I'm using a more palatable custom replacement for Tkinter's simpledialog instead of Tkinter's built-in file dialog because currently the user doesn't get to decide both project folders and project names, right now they both have to be the same, and this way I can keep it simple for now.
-        Since Treebard is portable I don't think it's a good idea to let the
-        user store files just anywhere but there might be a reason I haven't
-        thought of. To keep Treebard simple and portable, the user can put
-        Treebard on any drive and then Treebard makes decisions from there as
-        to where files are saved and what to call project directories, based on the
-        user's initial input of a tree title. The user can still keep copies 
-        of his files anywhere but I think to be portable, everything the
-        program needs has to be kept in one folder. Anyway, 
-        simpledialog wasn't configurable, but my reason for using it was that it's
-        needed here in files.py and I don't want to restructure my imports so
-        that Treebard's messages can be imported from widgets.py. However I guess a custom dialog
-        could be imported from an impartial module where it could be created
-        by inheriting directly from tkinter Toplevel and then I would be able
-        to include it in Treebard's colorizer scheme.
+        The user can still keep copies of his files anywhere but I think to be 
+        portable, everything the program needs has to be kept in one folder.
+        So at this time, Treebard creates the program files and folder based on
+        a title suggested by the user when he makes a new tree.
 
     '''
 
     new_tree_name = open_input_message(
-    # new_tree_name = open_input_message(
-        root, files_msg[0], "Give the Tree a Unique Title", "OK", "CANCEL")
+        root, opening_msg[1], "Give the Tree a Unique Title", "OK", "CANCEL")
     current_dir = new_tree_name.lower().replace(" ", "_").strip()
-    print("line", looky(seeline()).lineno, "current_dir:", current_dir)
     if len(current_dir) == 0:
         return
     new_path = new_file_path
     current_file = "{}.tbd".format(current_dir)
-    print("line", looky(seeline()).lineno, "current_file:", current_file)
     dir_path = "{}{}".format(new_path, current_dir)
-    print("line", looky(seeline()).lineno, "dir_path:", dir_path)
     mkdir(dir_path)
     mkdir("{}/images".format(dir_path))
     file_path = "{}/{}".format(dir_path, current_file)
-    print("line", looky(seeline()).lineno, "file_path:", file_path)
     copy2(default_new_tree, file_path)
     for img in listdir(default_new_tree_images):
         src_dir = "{}/{}".format(default_new_tree_images, img)
@@ -170,14 +222,17 @@ def make_tree(root, treebard, opening_dialog, open_input_message):
         copy2(src_dir, dest_dir)
     set_current_file(current_file)
     change_tree_title(treebard)
-    opening_dialog.destroy()
+    if opening_dialog:
+        opening_dialog.destroy()
     root.focus_set()
-    print("line", looky(seeline()).lineno, "make_main_window is running:")
     treebard.make_main_window()
+    tree_title = current_file.replace("_", " ").rstrip(".tbd")
+    # tree_title = current_file.replace("_", " ").rstrip(".tbd").title()
+    tree_title = titlize(tree_title)
+    filter_tree_title(tree_title) 
 
 def save_as(root, evt=None):
 
-    # init_dir = get_opening_dir()
     current_file = get_current_file()[0]
     saveas_dialog = filedialog.asksaveasfilename(
         initialdir = init_dir,
@@ -208,8 +263,6 @@ def save_copy_as(evt=None):
         old file remains current.
     '''
 
-    # init_dir = get_opening_dir()
-
     current_file = get_current_file()[0]
 
     # New name is chosen for old file.
@@ -232,8 +285,6 @@ def rename_tree(root, evt=None):
         if new filename already exists, it can't be overwritten 
         so rename will fail.
     '''
-
-    # init_dir = get_opening_dir()
 
     current_file = get_current_file()[0]
 
@@ -270,24 +321,28 @@ def set_closing(evt=None):
     conn.close()
 
 def close_tree(evt=None, treebard=None):
+# def close_tree(evt, treebard):
     # disable tabs pertaining to indiv. tree (but not places)
     # disable all menu items and icon menu except Open & ?
-    # update title
-    print("line", looky(seeline()).lineno, "treebard:", treebard)
     treebard.canvas.delete(treebard.main_window)
     treebard.canvas.title_2.config(text="For All Ages")
     set_closing()
 
-def exit_app(root):
-    if tree_is_open == 1:
-        close_tree()
+def exit_app(evt, root):
+    def close_app():
+        root.after(1500, root.quit)
+    set_closing()
+    close_app()
 
-def import_gedcom(root):
+def import_gedcom(root, open_error_message, msg):
     # do the gedcom stuff
     # run make_new
     # update title
-    pass
-
+    msg = open_error_message(root, msg, "Feature Doesn't Exist", "OK")
+    msg[0].grab_set()
+    msg[1].config(aspect=400)
+    return
+    
 def export_gedcom(root):
     # do the gedcom stuff
     pass
@@ -306,66 +361,3 @@ def delete_tree(root):
 def open_sample(self):
     # open the sample tree that came with treebard
     pass
-
-# class Dialogue(Toplevel):
-    # def __init__(self, master, *args, **kwargs):
-        # Toplevel.__init__(self, master, *args, **kwargs)
-        # self.config(bg=TBARD_NEUTRAL)
-
-files_msg = ("Treebard will use your title as the tree's display title.\n"
-    "Treebard will save 'Smith Family Tree' as a database file at\n`{current "
-    "drive}/treebard_gps/data/smith_family_tree/smith_family_tree.tbd`",)
-
-# def open_input_message(parent, message, title, ok_lab, cancel_lab):
-    # '''
-        # To avoid a circular import, this couldn't be imported in the usual way.
-        # There aren't supposed to be any widgets made in this general namespace
-        # since it would auto-create another instance of Tk(), so this is a 
-        # custom dialog used only here. Tkinter's simpledialog worked here but 
-        # it's stark white and apparently that can't be changed. 
-
-        # After creating this, I realized that the same-named function could be 
-        # passed here as a parameter of make_tree(), but I don't know if it could 
-        # be formatted with config_generic which can't be imported here. I didn't 
-        # try it yet. If it can be done it should be, but the code below should
-        # in that case be renamed in messages.py so as to not disturb
-        # current callings of messages.open_input_message()
-    # '''
-    # def ok():
-        # cancel()
-
-    # def cancel():
-        # msg.destroy()
-        # parent.grab_set()
-
-    # def show():
-        # gotten = got.get()
-        # return gotten
-
-    # got = StringVar()
-
-    # msg = Dialogue(parent)
-    # msg.grab_set()
-    # msg.title(title)
-    # msg.columnconfigure(0, weight=1)
-    # msg.rowconfigure(0, weight=1)
-    # lab = Label(
-        # msg, text=message, justify='left', bg=TBARD_NEUTRAL2, 
-        # font=("courier", 14, "bold"))
-    # lab.grid(column=0, row=0, sticky='news', padx=12, pady=12, columnspan=2)
-    # inPut = Entry(
-        # msg, textvariable=got, bg=TBARD_NEUTRAL2, width=48, 
-        # font=("dejavu sans mono", 14))
-    # inPut.grid(column=0, row=1, padx=12)
-    # buttonbox = Frame(msg, bg=TBARD_NEUTRAL)
-    # buttonbox.grid(column=0, row=2, sticky='e', padx=(0,12), pady=12)
-    # ok_butt = Button(
-        # buttonbox, text=ok_lab, command=cancel, width=7, bg=TBARD_NEUTRAL2)
-    # ok_butt.grid(column=0, row=0, padx=6, sticky='e')
-    # cancel_butt = Button(
-        # buttonbox, text=cancel_lab, command=cancel, width=7, bg=TBARD_NEUTRAL2)
-    # cancel_butt.grid(column=1, row=0, padx=6, sticky='e')
-    # inPut.focus_set()
-    # parent.wait_window(msg)
-    # gotten = show()
-    # return gotten

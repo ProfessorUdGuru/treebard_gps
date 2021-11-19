@@ -60,11 +60,7 @@ def open_yes_no_message(parent, message, title, ok_lab, cancel_lab):
     return msg, lab, ok_butt, cancel_butt, buttonbox
 
 def open_input_message(parent, message, title, ok_lab, cancel_lab, user_input):
-    '''
-        To avoid a circular import, a simpler version of this (fixed with a 
-        neutral color) is available at files.py which should be importable
-        to just about any module.
-    '''
+
     def ok():
         cancel()
 
@@ -98,26 +94,8 @@ def open_input_message(parent, message, title, ok_lab, cancel_lab, user_input):
     got = show()
     return user_input, got
 
-class Dialogue(Toplevel):
-    def __init__(self, master, *args, **kwargs):
-        Toplevel.__init__(self, master, *args, **kwargs)
-        self.config(bg=TBARD_NEUTRAL)
-
 def open_input_message2(parent, message, title, ok_lab, cancel_lab):
-    '''
-        To avoid a circular import, this couldn't be imported in the usual way.
-        There aren't supposed to be any widgets made in this general namespace
-        since it would auto-create another instance of Tk(), so this is a 
-        custom dialog used only here. Tkinter's simpledialog worked here but 
-        it's stark white and apparently that can't be changed. 
 
-        After creating this, I realized that the same-named function could be 
-        passed here as a parameter of make_tree(), but I don't know if it could 
-        be formatted with config_generic which can't be imported here. I didn't 
-        try it yet. If it can be done it should be, but the code below should
-        in that case be renamed in messages.py so as to not disturb
-        current callings of messages.open_input_message()
-    '''
     def ok():
         cancel()
 
@@ -130,8 +108,7 @@ def open_input_message2(parent, message, title, ok_lab, cancel_lab):
         return gotten
 
     got = StringVar()
-
-    msg = Dialogue(parent)
+    msg = Toplevel(parent)
     msg.grab_set()
     msg.title(title)
     msg.columnconfigure(0, weight=1)
@@ -237,4 +214,15 @@ fonts_msg = (
     "Press ALT+P then CTRL+S to resize the scrollbar after changing fonts.",
 )
 
-opening_msg = ("The requested file has been moved, deleted or renamed outside of Treebard's controls. To use the file, restore it to its original folder and name. Any file changes should be made from within Treebard using Treebard's tools.",)
+opening_msg = ("The requested file has been moved, deleted or renamed outside "
+        "of Treebard's controls. To use the file, restore it to its original folder "
+        "and name. Any file changes should be made from within Treebard using "
+        "Treebard's tools.",
+    "Treebard will use your title as the tree's display title.\n"
+        "Treebard will save 'Smith Family Tree' as a database file at\n`{current "
+        "drive}/treebard_gps/data/smith_family_tree/smith_family_tree.tbd`",
+    "This feature is not complete. Please visit https://treebard.proboards.com if "
+        "you would like to assist or advise regarding this feature.",
+)
+
+

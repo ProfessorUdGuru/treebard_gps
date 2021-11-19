@@ -1,10 +1,21 @@
 # utes.py
 
 import tkinter as tk
-from styles import make_formats_dict
 import dev_tools as dt
 from dev_tools import looky, seeline
 
+# capitalize right
+def titlize(stg):
+    '''
+        function by Yugal Jindle. Python's `title()` method doesn't work right
+        if there are apostrophes etc. in the word, since it breaks words at
+        punctuation. According to https://bugs.python.org/issue7008, the
+        `string.capwords()` method is also buggy and should be deprecated. This
+        is to make "Linda's Tree" not be "Linda'S Tree".
+    '''
+    lst = []
+    for temp in stg.split(" "): lst.append(temp.capitalize())
+    return ' '.join(lst)
 
 # CENTERING
 
@@ -41,8 +52,6 @@ def center_dialog(dlg, frame=None):
         down_pos = int(dlg.winfo_screenheight()/2 - win_height/2)
 
     return right_pos, down_pos 
-
-# formats = make_formats_dict()
 
 #   -   -   -   see widgets.py for statusbar tooltips   -   -   -   #
 

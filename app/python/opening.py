@@ -5,17 +5,18 @@ import sqlite3
 from os import listdir, path
 from os.path import isfile, join
 from window_border import Border
-from widgets import Toplevel, Canvas, Button, Frame, ButtonPlain
+from widgets import Toplevel, Canvas, Button, Frame, ButtonBigPic
 from toykinter_widgets import run_statusbar_tooltips
 from PIL import Image, ImageTk
 from files import (
-    open_tree, make_tree, import_gedcom, open_sample, app_path, global_db_path, get_current_file, set_closing)
+    open_tree, make_tree, import_gedcom, open_sample, app_path, global_db_path,
+    get_current_file, set_closing, change_tree_title, filter_tree_title)
 from styles import make_formats_dict, config_generic
 from messages import open_error_message, opening_msg, open_input_message2
-from utes import center_dialog
+from utes import center_dialog, titlize
 from query_strings import (
     select_app_setting_openpic_dir, select_closing_state_openpic,
-    update_closing_state_openpic
+    update_closing_state_openpic, select_closing_state_recent_files
 )
 import dev_tools as dt
 from dev_tools import looky, seeline   
@@ -64,7 +65,6 @@ class SplashScreen(Toplevel):
         self.master.overrideredirect(1)
 
     def close_dialog(self, evt=None):
-        print("line", looky(seeline()).lineno, "running:")
         self.opening_dialog.destroy()
 
     def open_treebard(self, make_main_window):
@@ -94,36 +94,35 @@ class SplashScreen(Toplevel):
         buttonbox = Frame(self.measure)
         buttonbox.grid(column=0, row=0, sticky="ew")
 
-        self.picbutton = ButtonPlain(
+        self.picbutton = ButtonBigPic(
             self.window,  
             command=lambda funx=self.treebard.make_main_window: self.open_prior_file(funx))
         self.picbutton.grid(column=0, row=1, sticky='news')
+        self.picbutton.focus_set()
 
         opener = Button(
             buttonbox, 
             text='OPEN TREE', 
             command=lambda tbard=self.treebard, 
-                # funx=make_main_window, 
                 dlg=self.opening_dialog: open_tree(tbard, dlg))
-                # dlg=self.opening_dialog: open_tree(treebard, funx, dlg))
         opener.grid(column=0, row=0, padx=24, pady=24)
-        opener.focus_set()
 
         new = Button(
             buttonbox, 
             text='NEW TREE', 
             command=lambda root=self.master,
-                treebard=self.treebard, 
-                dlg=self.opening_dialog,
-                errfunx=open_input_message2: make_tree(
-                    root, self.treebard, dlg, errfunx))
-                # dlg=self.opening_dialog: make_tree(root, self.treebard, dlg))
+                treebard=self.treebard,
+                errfunx=open_input_message2,
+                errmsg=opening_msg, 
+                opening_dialog=self.opening_dialog: make_tree(
+                    root, self.treebard, errfunx, errmsg, opening_dialog))
         new.grid(column=1, row=0, padx=24, pady=24)
 
         importgedcom = Button(
             buttonbox, 
             text='IMPORT',
-            command=lambda: import_gedcom(self.master))
+            command=lambda: import_gedcom(
+                self.master, open_error_message, opening_msg[2]))
         importgedcom.grid(column=2, row=0, padx=24, pady=24)
 
         opensample = Button(
@@ -181,7 +180,12 @@ class SplashScreen(Toplevel):
             msg[1].config(aspect=400)
             set_closing()
             return
-        make_main_window()        
+        make_main_window() 
+        tree_title = current_file[1].replace("_", " ")
+        # tree_title = current_file[1].replace("_", " ").title() 
+        tree_title = titlize(tree_title)
+        filter_tree_title(tree_title)
+        change_tree_title(self.treebard)      
 
     def store_last_openpic(self):
         conn = sqlite3.connect(global_db_path)
@@ -220,10 +224,14 @@ class SplashScreen(Toplevel):
         img1 = ImageTk.PhotoImage(self.current_image, master=self.master)
         self.picbutton.config(image=img1)
         self.picbutton.image = img1
-        self.canvas.config(width=self.picwidth + 2, height=self.picheight + 80)
+        bd_ht = 2
+        frm_ht = 80
+        self.canvas.config(
+            width=self.picwidth + 2, height=self.picheight + bd_ht + frm_ht)
         self.picbutton.config(width=self.picwidth)
         dlg_pos = center_dialog(self.opening_dialog, frame=self.measure)
         self.opening_dialog.geometry(
+            # "+{}+{}".format(dlg_pos[0], (int(dlg_pos[1] - (self.picheight / 2)) + 2)))
             "+{}+{}".format(dlg_pos[0], int(dlg_pos[1] - (self.picheight / 2))))
 
     def select_opening_image(self):

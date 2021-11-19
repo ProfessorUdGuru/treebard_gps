@@ -22,7 +22,7 @@ from names import (
 from roles import RolesDialog
 from notes import NotesDialog
 # from places import place_strings, ValidatePlace, places_places
-from places import ValidatePlace
+from places import ValidatePlace, get_all_places_places
 from scrolling import Scrollbar, resize_scrolled_content
 from messages import open_error_message, events_msg, open_yes_no_message
 from query_strings import (
@@ -149,7 +149,6 @@ def get_generic_findings(
     cur.execute(select_findings_details_generic, finding_id)
     generic_details = [i for i in cur.fetchone()]
     dkt["date"] = format_stored_date(generic_details[3], date_prefs)
-    # dkt["date"] = format_stored_date(generic_details[3])
 
     dkt["event"], dkt["particulars"], dkt["age"] = generic_details[0:3]
     dkt["sorter"] = split_sorter(generic_details[4])
@@ -1100,8 +1099,12 @@ class NewEventDialog(Toplevel):
         conn =  sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        cur.execute(select_max_finding_id)
-        self.new_finding = cur.fetchone()[0] + 1
+        cur.execute(select_max_finding_id)        
+        result = cur.fetchone()[0]
+        if result is None:
+            self.new_finding = 1
+        else:
+            self.new_finding = result + 1
         cur.execute(select_event_type_id, (self.new_event,))
         result = cur.fetchone()
         if result is not None:
@@ -1674,6 +1677,7 @@ class NewEventDialog(Toplevel):
                 cur.execute(insert_places_places_new, (child, parent))
                 conn.commit()
             else:
+                places_places = get_all_places_places()
                 if (child, parent) not in places_places:
                     places_places.append((child, parent))
                     cur.execute(insert_places_places_new, (child, parent))
@@ -1883,32 +1887,10 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# try to move open_input_message() from files.py to messages.py by making it a parameter of make_tree() where it's called in opening.py DONE, NOW JUST GET RID OF THE NEW VERSION open_input_message2() AND CONVERT IT TO open_input_message()
-# error if click search in empty tree?
-# error if make birth event:
-# Exception in Tkinter callback
-# Traceback (most recent call last):
-  # File "C:\Users\Lutherman\AppData\Local\Programs\Python\Python39\lib\tkinter\__init__.py", line 1884, in __call__
-    # return self.func(*args)
-  # File "D:\treebard_gps\app\python\events_table.py", line 1041, in make_new_event
-    # self.new_event_dialog = NewEventDialog(
-  # File "D:\treebard_gps\app\python\events_table.py", line 1091, in __init__
-    # self.get_some_info()
-  # File "D:\treebard_gps\app\python\events_table.py", line 1104, in get_some_info
-    # self.new_finding = cur.fetchone()[0] + 1
-# TypeError: unsupported operand type(s) for +: 'NoneType' and 'int'
-# save for files dev docs: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run
-# remove stuff from default tree both copies same so it's a real default tree for starting new trees with, and start a real new tree
-# get the file commands to work from the opening window except gedcom which shd open a standard message "this feature is not complete. Please visit proboards if you would like to assist in creating this feature."
-# fix the same menu and icon commands that already work from the opening dialog as well as Recent Files which could be columns in closing_state?
-# make big pic change or something so user knows when it's in focus so spacebar will be easy to use for non mousers when opening last used file? and/or just start with the pic in focus so spacebar is ready
-# make Add Person button work
 
 # change all dialogs to Border class
 # I think in names.py the StatusBar is being imported and instantiated redundantly or is it that the Border class hasn't been used there yet?
 # TEST every functionality due to recent restructuring
-# possibly the need for a 2nd db was mistaken as I have been turning off the new stuff and everything still works so find all references to global_db_path and see what happens if they're turned off one by one APPARENTLY IT'S ONLY NEEDED FOR CLOSING STATE AND NOT AT ALL FOR FORMATS. But what if it works different when I'm not just opening the last-opened file? In that case, SOLUTION IS TO ACCESS THE DEFAULTS IN opening.py AND PUT EVERYTHING ELSE BACK THE WAY IT WAS. 
-# delete columns openpic_dir, default_openpic_dir from setting in .tbd, it has to be in treebard.db
 # have to keep a global copy of place tables or just move them to treebard.tbd. Maybe better to have a function that imports places from any given tree but both techniques have their drawbacks. Wait till make_new_tree is working so this can be tested while it's being written.
 # dates prefs tab, get rid of ttk comboboxes
 # Test ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER around a dialog HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work
@@ -1963,7 +1945,12 @@ if __name__ == '__main__':
 
 
 
-# ADD TO DEV DOCS FOR EVENTS TABLE.PY: is it possible to get rid of persons_persons table? There seems to be a one-to-one relationship between the finding_id in a couple event and the persons_persons_id in that event. So look at what persons_persons is being used for. Can the finding_id be used instead? Seems like they aren't exactly the same thing because finding_id has 2 records in findings_persons for each event where the two people are related, but 1 record in persons_persons. Try to remember why I created this table to begin with. Something to do with ??? I have no idea but it's very recent so shd have left a trail of blather in some rollback with the rationale behind this annoying data item. Look at August rollbacks for a hint. For ex on aug 28 I wrote "But let's say you want to search how many 2 people are linked to each other. This would be a very simple search if each event in which the 2 are coupled is a separate persons_persons_id.) Another question: have I put the fk in the wrong table? Now I'm putting persons_persons_id in findings_persons table. Should I instead be putting finding_id in persons_persons table? Then there's a directly discernible reason for each row in the p_P table to exist instead of just these 2 mysterious columns. But it would be a drastic redesign to move finding_id to persons_persons out of findings_persons where it is now and it seems like I'm very close to making the code work, since it already works for same-name couple (spouse/spouse), all I need is to make the code work for diff-name couples (wife/husband) and since it's already close, I shd resist the temptation to rip the building down to the foundations, change the foundations, and start over completely because that's what I'd have to do, I'd have to refactor the events_table code again and I kinda refuse." But what was the original reason to make the table? Here it is, same day: "select_findings_details_couple is inadequate since it looks for pairs of matched kin_type_id but wife & husband have different ids whereas spouse & spouse have the same. Need a better way to select partnerships eg maybe a new table called couples so that each coupling will have a separate couple_id (persons_persons_id). It should be a table called persons_persons because it is many to many, each person can have any number of links to each other person including more than one link to the same person in case the same couple gets married twice etc. Then put fk persons_persons_id in findings_persons. The persons_persons table might be useful for other relationship problems later on such as people with real parents, foster parents, and adoptive parents for example." So in short, the problem I was having was that I was doing something by searching for matching kin type to find spouses, but this didn't work eg with "wife" and "husband" because the kin types didn't match. So I had to register the relationship as a single record in a table to easily detect the relationship.
+# ADD TO MAIN DO LIST FOR: 
+# files: when new empty tree is made, "name unknown" is a person in the db autofill list shd not include this, search shd not include this. see jones diatribes re: names
+
+# DEV DOCS:
+# files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run
+
 
 
 

@@ -822,6 +822,29 @@ class Button(Buttonx):
             bg=formats['bg'],
             fg=formats['fg'])
 
+class ButtonBigPic(Buttonx):
+    ''' 
+        Used for top_pic on person tab and tree decoration on opening_dialog.
+    '''
+
+    def __init__(self, master, *args, **kwargs):
+        Buttonx.__init__(self, master, *args, **kwargs)
+
+        self.config(
+            bd=0, 
+            relief="flat",
+            bg=formats['highlight_bg'],  
+            fg=formats['bg'],
+            cursor='hand2')
+        self.bind('<FocusIn>', self.highlight)
+        self.bind('<FocusOut>', self.unhighlight)
+
+    def highlight(self, evt):
+        self.config(bg=formats['fg'])
+
+    def unhighlight(self, evt):
+        self.config(bg=formats['bg'])
+
 class ButtonFlatHilited(Buttonx):
     '''
         A button with no relief or border. Used for the Combobox dropdown.
@@ -846,22 +869,8 @@ class ButtonFlatHilited(Buttonx):
                 activebackground=formats['fg'],
                 activeforeground=formats['bg'])
 
-class ButtonQuiet(Buttonx):
-    ''' Same color as background, no text. '''
-    def __init__(self, master, *args, **kwargs):
-        Buttonx.__init__(self, master, *args, **kwargs)
-
-        self.config(
-            text='',
-            width=3,
-            overrelief=tk.GROOVE, 
-            activebackground=formats['head_bg'],
-            bg=formats['bg'],  
-            fg=formats['fg'],
-            font=formats['boilerplate'])
-
 class ButtonPlain(Buttonx):
-    ''' Sans serif font. '''
+    ''' Used for icon menu '''
     def __init__(self, master, *args, **kwargs):
         Buttonx.__init__(self, master, *args, **kwargs)
 
@@ -880,6 +889,20 @@ class ButtonPlain(Buttonx):
 
     def unhighlight(self, evt):
         self.config(bg=formats['bg'])
+
+class ButtonQuiet(Buttonx):
+    ''' Same color as background, no text. '''
+    def __init__(self, master, *args, **kwargs):
+        Buttonx.__init__(self, master, *args, **kwargs)
+
+        self.config(
+            text='',
+            width=3,
+            overrelief=tk.GROOVE, 
+            activebackground=formats['head_bg'],
+            bg=formats['bg'],  
+            fg=formats['fg'],
+            font=formats['boilerplate'])
     
 class Entryx(tk.Entry):
     def __init__(self, master, *args, **kwargs):
