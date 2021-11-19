@@ -7,10 +7,11 @@ from window_border import Border
 from scrolling import MousewheelScrolling, Scrollbar, resize_scrolled_content
 from styles import config_generic, make_formats_dict
 from widgets import (
-    Toplevel, Frame, Button, MessageHilited, Entry, LabelH2, Label, LabelH3,
+    Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3,
     LabelNegative)
 from names import open_new_person_dialog, get_any_name_with_id
 from dates import OK_PREFIXES, format_stored_date
+from toykinter_widgets import run_statusbar_tooltips
 from query_strings import (
     select_person_distinct_like, select_name_details,
     select_finding_sorter, select_name_sort_order, select_person_death_date,
@@ -203,23 +204,21 @@ class PersonSearch(Toplevel):
         self.search_table.grid(
             column=0, row=1, sticky='news', padx=48, pady=48)
 
-        # # STATUSTIPS
-        # visited = [
-            # (self.search_input, 
-            # "Person Search Input", 
-            # "Type any part of any name or ID number; table will fill "
-                # "with matches."),
-            # (self.search_table.mainframe, 
-            # "Person Search Table", 
-            # "Select highlighted row with Enter or Space key to change "
-                # "current person, or double-click any row.")]
 
-        # tips = stt.StatusBarTooltips(self) 
-
-        # tips.status.grid(column=0, row=3, sticky='w', ipadx=3, ipady=3)
-        # tips.tooltip.grid(column=0, row=3, sticky='e', ipadx=3, ipady=3)
-
-        # tips.run_statusbar_tooltips(visited, tips.status, tips.tooltip)
+        visited = [
+            (self.search_input, 
+                "Person Search Input", 
+                "Type any part of any name or ID number; table will fill "
+                    "with matches."),
+            (self.search_table, 
+                "Person Search Table", 
+                "Select highlighted row with Enter or Space key to change "
+                    "current person, or click any row.")]   
+     
+        run_statusbar_tooltips(
+            visited, 
+            self.canvas.statusbar.status_label, 
+            self.canvas.statusbar.tooltip_label)
 
         # # RIGHT-CLICK CONTEXT HELP
         # self.master.master.rc_menu.help_per_context = {

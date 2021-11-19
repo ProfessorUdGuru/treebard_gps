@@ -4,7 +4,7 @@ from sys import argv
 from os import path, rename, mkdir, listdir
 from shutil import copy2
 from tkinter import (
-    messagebox, filedialog, Label, Entry, Toplevel, StringVar, Frame, Button)
+    messagebox, filedialog, Label, Entry, StringVar, Frame, Button)
 from PIL import Image, ImageTk
 import sqlite3
 from query_strings import (

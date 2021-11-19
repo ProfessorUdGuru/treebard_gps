@@ -231,7 +231,6 @@ class SplashScreen(Toplevel):
         self.picbutton.config(width=self.picwidth)
         dlg_pos = center_dialog(self.opening_dialog, frame=self.measure)
         self.opening_dialog.geometry(
-            # "+{}+{}".format(dlg_pos[0], (int(dlg_pos[1] - (self.picheight / 2)) + 2)))
             "+{}+{}".format(dlg_pos[0], int(dlg_pos[1] - (self.picheight / 2))))
 
     def select_opening_image(self):

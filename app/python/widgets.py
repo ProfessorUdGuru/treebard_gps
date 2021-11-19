@@ -154,36 +154,6 @@ class LabelFrame(LabelFramex):
                 bg=formats['bg'], 
                 fg=formats['fg'], 
                 font=formats['output_font']) 
-
-class Messagex(tk.Message):
-    def __init__(self, master, *args, **kwargs):
-        tk.Message.__init__(self, master, *args, **kwargs)
-        pass
-
-    def winfo_subclass(self):
-        ''' 
-            Like built-in tkinter method
-            w.winfo_class() except it gets subclass names.
-        '''
-        subclass = type(self).__name__
-        return subclass
-
-class Message(Messagex):
-    def __init__(self, master, *args, **kwargs):
-        Messagex.__init__(self, master, *args, **kwargs)
-
-        self.config(
-            bg=formats['bg'], fg=formats['fg'], font=formats['output_font'])
-
-class MessageHilited(Messagex):
-    def __init__(self, master, *args, **kwargs):
-        Messagex.__init__(self, master, *args, **kwargs)
-
-        self.config(
-            bd=3, relief='raised',
-            bg=formats['highlight_bg'], 
-            fg=formats['fg'], 
-            font=formats['output_font']) 
       
 class Labelx(tk.Label):
     def __init__(self, master, *args, **kwargs):
@@ -233,9 +203,6 @@ class LabelItalic(Labelx):
             font=formats['show_font'])
 
 class LabelHeader(Labelx):
-    ''' 
-        Like MessageHilited with line breaks.  
-    '''
     def __init__(self, master, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
 
@@ -243,7 +210,7 @@ class LabelHeader(Labelx):
             bg=formats['highlight_bg'], 
             fg=formats['fg'],
             font=formats['heading3'],
-            bd=3,
+            bd=1,
             relief='raised')
 
 class LabelHilited(Labelx):

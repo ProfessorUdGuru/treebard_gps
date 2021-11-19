@@ -64,9 +64,7 @@ class RolesDialog(Toplevel):
                 self.finding_id, self.header)
             self.window.columnconfigure(0, weight=1)
             self.window.rowconfigure(0, weight=1)
-            self.header_msg = LabelHeader(
-                self.window,
-                text=header_text)
+            self.header_msg = LabelHeader(self.window, text=header_text)
             self.header_msg.grid(
                 column=0, row=0, sticky='news', 
                 ipadx=12, ipady=12, padx=(24,0), pady=18)

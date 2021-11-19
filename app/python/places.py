@@ -20,7 +20,7 @@ Validation and input to database has been tested for these cases:
 
 import tkinter as tk
 from widgets import (
-    Toplevel, Frame, Button, Label, RadiobuttonBig, MessageHilited, 
+    Toplevel, Frame, Button, Label, RadiobuttonBig, LabelHeader, 
     Entry, ButtonQuiet)
 from autofill import EntryAuto
 from toykinter_widgets import Separator
@@ -111,8 +111,7 @@ class NewPlaceDialog():
 
             window.columnconfigure(1, weight=1)
             window.rowconfigure(1, weight=1)
-            lab = MessageHilited(
-                window, text=self.message, justify='left', aspect=500)
+            lab = LabelHeader(window, text=self.message, justify='left')
             lab.grid(column=1, row=1, sticky='news', ipady=18)
 
         def ok():
@@ -146,7 +145,6 @@ class NewPlaceDialog():
         scridth_w = Frame(window, width=scridth)
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
-        # DO NOT DELETE THESE LINES, UNCOMMENT IN REAL APP
         self.treebard.scroll_mouse.append_to_list([canvas, window])
         self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 

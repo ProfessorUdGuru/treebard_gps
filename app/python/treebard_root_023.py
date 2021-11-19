@@ -12,7 +12,7 @@ from opening import SplashScreen
 from scrolling import MousewheelScrolling
 from styles import config_generic, make_formats_dict
 from main import Main
-from widgets import Toplevel, Button, Frame, ButtonPlain
+from widgets import Button, Frame, ButtonPlain
 from dates import get_date_formats   
 from utes import create_tooltip
 from query_strings import (update_closing_state_tree_is_open, select_date_format)

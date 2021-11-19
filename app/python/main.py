@@ -7,7 +7,6 @@ from files import current_drive, get_current_file
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, FrameHilited1,
     CanvasHilited, FrameHilited3, Toplevel, LabelBoilerplate)
-# from styles import config_generic, make_formats_dict
 from window_border import Border
 from custom_tabbed_widget import TabBook
 from autofill import EntryAutoHilited    

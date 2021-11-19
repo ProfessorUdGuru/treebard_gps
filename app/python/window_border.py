@@ -8,6 +8,7 @@ from widgets import (
     FrameHilited3) 
 from toykinter_widgets import StatusbarTooltips
 from styles import make_formats_dict, NEUTRAL_COLOR, config_generic
+from utes import center_dialog
 from query_strings import (
     select_format_font_size, select_default_format_font_size)
 from PIL import Image, ImageTk
@@ -451,6 +452,40 @@ class TitleBarButtonSolidBG(TitleBarButton):
         '''
 
         self.config(bg=formats['highlight_bg'])
+
+class Dialogue(Toplevel):
+    '''
+        Generic unscrolled dialogue with Toykinter border. Border class is a
+        Canvas which is gridded in its home class. Rows are reserved for the
+        menu bar and icon ribbon menu although usually not used so they are
+        False by default, but their unused rows have to be taken into account
+        (ignored) here. This is used for error messages and the like which
+        don't change size and will never need to scroll.
+    '''
+
+    def __init__(self, master, *args, **kwargs):
+        Toplevel.__init__(self, master, *args, **kwargs)
+        self.withdraw()
+        self.columnconfigure(1, weight=1)
+        self.canvas = Border(self)
+        self.window = Frame(self.canvas)
+        self.canvas.create_window(0, 0, anchor='nw', window=self.window)
+
+    def resize_window(self, lab):
+        '''
+            Added to requested width and height are allowances for widgets not
+            in self.window e.g. borders, statusbar.
+        '''
+        self.update_idletasks()    
+        width = self.window.winfo_reqwidth() + 6
+        height= self.window.winfo_reqheight() + 42
+        dlg_pos = center_dialog(self)
+        self.geometry('{}x{}+{}+{}'.format(
+            width,
+            height,
+            dlg_pos[0], 
+            dlg_pos[1]))
+        self.deiconify()
 
 
 

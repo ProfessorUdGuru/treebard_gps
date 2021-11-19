@@ -381,18 +381,6 @@ def config_generic(parent):
         '''
         sep.colorize() 
 
-    def config_messages(widg):
-        widg.config( 
-            bg=formats['bg'], 
-            fg=formats['fg'],
-            font=formats['output_font'])
-
-    def config_messageshilited(widg):
-        widg.config( 
-            bg=formats['highlight_bg'], 
-            fg=formats['fg'],
-            font=formats['output_font'])
-
     def config_labelcopiable(widg):
         widg.config(state='normal')
         widg.config(
@@ -541,14 +529,6 @@ def config_generic(parent):
 
             elif widg.winfo_subclass() == 'ButtonFlatHilited':
                 config_buttonflathilited(widg)
-
-        elif widg.winfo_class() == 'Message':
-
-            if widg.winfo_subclass() == 'Message':
-                config_messages(widg)
-
-            elif widg.winfo_subclass() == 'MessageHilited':
-                config_messageshilited(widg)
 
         elif widg.winfo_class() in ('Radiobutton', 'Checkbutton'):
 

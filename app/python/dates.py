@@ -323,7 +323,7 @@ def find_word_errors(terms):
                     "Repeated Compound Date Link", 
                     "OK")
                 msg[0].grab_set()
-                msg[1].config(aspect=400)
+                # msg[1].config(aspect=400)
                 msg[2].config(
                     command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
                 return               
@@ -344,7 +344,7 @@ def find_word_errors(terms):
             "Too Many Months Input", 
             "OK")
         msg[0].grab_set()
-        msg[1].config(aspect=400)
+        # msg[1].config(aspect=400)
         msg[2].config(
             command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
         return
@@ -355,7 +355,7 @@ def find_word_errors(terms):
             "Too Many Months Input", 
             "OK")
         msg[0].grab_set()
-        msg[1].config(aspect=400)
+        # msg[1].config(aspect=400)
         msg[2].config(
             command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
         return
@@ -378,7 +378,7 @@ def find_word_errors(terms):
                         "Day Input Without Month", 
                         "OK")
                     msg[0].grab_set()
-                    msg[1].config(aspect=400)
+                    # msg[1].config(aspect=400)
                     msg[2].config(
                         command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
                     return
@@ -391,7 +391,7 @@ def find_word_errors(terms):
                     "Day Input Without Month", 
                     "OK")
                 msg[0].grab_set()
-                msg[1].config(aspect=400)
+                # msg[1].config(aspect=400)
                 msg[2].config(
                     command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
                 return
@@ -411,7 +411,7 @@ def find_word_errors(terms):
                 "Too Many Prefixes or Suffixes", 
                 "OK")
             msg[0].grab_set()
-            msg[1].config(aspect=400)
+            # msg[1].config(aspect=400)
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
@@ -442,7 +442,7 @@ def find_number_errors(compounds):
                             "Too Many Years Input", 
                             "OK")
                         msg[0].grab_set()
-                        msg[1].config(aspect=400)
+                        # msg[1].config(aspect=400)
                         msg[2].config(
                             command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
                         return
@@ -457,7 +457,7 @@ def find_number_errors(compounds):
                 "Too Many Numerical Terms Input", 
                 "OK")
             msg[0].grab_set()
-            msg[1].config(aspect=400)
+            # msg[1].config(aspect=400)
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
@@ -468,7 +468,7 @@ def find_number_errors(compounds):
                 "Too Many Terms Input", 
                 "OK")
             msg[0].grab_set()
-            msg[1].config(aspect=400)
+            # msg[1].config(aspect=400)
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
@@ -480,7 +480,7 @@ def find_number_errors(compounds):
                 "Numerical Terms Input Lacking", 
                 "OK")
             msg[0].grab_set()
-            msg[1].config(aspect=400)
+            # msg[1].config(aspect=400)
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
@@ -488,6 +488,9 @@ def find_number_errors(compounds):
     return compounds
 
 def clarify_year(numbers, lst):
+    '''
+        For years < 100 if user types without preceding zeroes.
+    '''
     copy = lst
     numbers, year = open_input_message(root, "Type the year as a four-digit "
         "number. For example, the year 33 should be typed as 0033.", 
@@ -617,7 +620,7 @@ def make_date_dict(final):
                 "Indistinct Compound Date", 
                 "OK")
             msg[0].grab_set()
-            msg[1].config(aspect=400)
+            # msg[1].config(aspect=400)
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
@@ -678,7 +681,7 @@ def check_days_in_months(date_dict):
                     "Too Many Days for the Month", 
                     "OK")
                 msg[0].grab_set()
-                msg[1].config(aspect=400)
+                # msg[1].config(aspect=400)
                 msg[2].config(
                     command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
                 return

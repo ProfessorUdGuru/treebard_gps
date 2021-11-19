@@ -8,8 +8,7 @@ from files import get_current_file
 from window_border import Border 
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
-    LabelH3, Button, Entry, MessageHilited, EntryHilited1,
-    LabelHilited)
+    LabelH3, Button, Entry, EntryHilited1, LabelHeader, LabelHilited)
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
@@ -21,7 +20,6 @@ from names import (
     open_new_person_dialog)
 from roles import RolesDialog
 from notes import NotesDialog
-# from places import place_strings, ValidatePlace, places_places
 from places import ValidatePlace, get_all_places_places
 from scrolling import Scrollbar, resize_scrolled_content
 from messages import open_error_message, events_msg, open_yes_no_message
@@ -501,7 +499,7 @@ class EventsTable(Frame):
             "Delete Event Confirmation", 
             "OK", "CANCEL")
         msg[0].grab_set()
-        msg[1].config(aspect=400)
+        # msg[1].config(aspect=400)
         msg[2].config(command=ok_delete_event)
         msg[3].config(command=cancel_delete_event)
 
@@ -567,7 +565,7 @@ class EventsTable(Frame):
                         "Incompatible Event Type Error", 
                         "OK")
                     msg4[0].grab_set()
-                    msg4[1].config(aspect=400)
+                    # msg4[1].config(aspect=400)
                     msg4[2].config(command=err_done5)
                     return
 
@@ -586,7 +584,7 @@ class EventsTable(Frame):
                     "Offspring Event Edit Error", 
                     "OK")
                 msg[0].grab_set()
-                msg[1].config(aspect=400)
+                # msg[1].config(aspect=400)
                 msg[2].config(command=err_done4)
                 return
 
@@ -597,7 +595,7 @@ class EventsTable(Frame):
                     "Change to Offspring Event Error", 
                     "OK")
                 msg[0].grab_set()
-                msg[1].config(aspect=400)
+                # msg[1].config(aspect=400)
                 msg[2].config(command=err_done7)
                 return
                 
@@ -1034,7 +1032,7 @@ class EventsTable(Frame):
                 "Multiple Birth or Death Events", 
                 "OK")
             msg[0].grab_set()
-            msg[1].config(aspect=400)
+            # msg[1].config(aspect=400)
             msg[2].config(command=err_done6)
             return
         self.new_event_dialog = NewEventDialog(
@@ -1284,10 +1282,7 @@ class NewEventDialog(Toplevel):
         def show_message():
             window.columnconfigure(1, weight=1)
             window.rowconfigure(1, weight=1)
-            self.new_evt_msg = MessageHilited(
-                window, 
-                justify='left', 
-                aspect=1200)
+            self.new_evt_msg = LabelHeader(window, justify='left')
             self.new_evt_msg.grid(column=1, row=1, sticky='news', ipady=18)
 
         self.columnconfigure(1, weight=1)
@@ -1403,7 +1398,7 @@ class NewEventDialog(Toplevel):
                     "Offspring Event Creation Error", 
                     "OK") 
                 msg[0].grab_set()
-                msg[1].config(aspect=400)
+                # msg[1].config(aspect=400)
                 msg[2].config(command=err_done8)
                 return           
             else:
@@ -1717,7 +1712,7 @@ class NewEventDialog(Toplevel):
                     "No Kin Type Selected", 
                     "OK")
                 msg[0].grab_set()
-                msg[1].config(aspect=400)
+                # msg[1].config(aspect=400)
                 msg[2].config(
                     command=lambda widg=kin_type_input: err_done2(widg))
                 return
@@ -1765,7 +1760,7 @@ class NewEventDialog(Toplevel):
                 "Duplicate Persons in Couple", 
                 "OK")
             msg[0].grab_set()
-            msg[1].config(aspect=400)
+            # msg[1].config(aspect=400)
             msg[2].config(command=err_done)  
 
     def validate_place(self, evt):
@@ -1887,18 +1882,26 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-
-# change all dialogs to Border class
-# I think in names.py the StatusBar is being imported and instantiated redundantly or is it that the Border class hasn't been used there yet?
-# TEST every functionality due to recent restructuring
-# have to keep a global copy of place tables or just move them to treebard.tbd. Maybe better to have a function that imports places from any given tree but both techniques have their drawbacks. Wait till make_new_tree is working so this can be tested while it's being written.
+# change all dialogs to Border class add scroolbar if needed and add statustips INCL: CHANGE ORDER OF SUBTOPICS, MAKE KINTYPE, ADD PERSON IN COUPLES DLG, ETC FIND EVERY ONE just search Toplevel in all files.
+# dates < 100 shd be suffixed AD or BC
+# re: date error it seems like when I click ok it's deleting a row from the table?
+# don't know if this is a problem but autofill seems to be inheriting place lists from previous tree (ONLY IF TREES ARE CHANGED; doesn't happen if tree is newly opened), then user still has to input them as places to db but somehow tbard is presenting the places as if they were already in the tree then they're not till re-input. Maybe shd fix globality of places before proceeding with error messages.
+# CHANGE ORDER OF SUBTOPICS ok button on dlg:
+# Exception in Tkinter callback
+# Traceback (most recent call last):
+  # File "C:\Users\Lutherman\AppData\Local\Programs\Python\Python39\lib\tkinter\__init__.py", line 1884, in __call__
+    # return self.func(*args)
+  # File "D:\treebard_gps\app\python\notes.py", line 621, in save_close_reorder_dlg
+    # note_id = cur.fetchone()[0]
+# TypeError: 'NoneType' object is not subscriptable
+# have to keep a global copy of place tables or just move them to treebard.tbd. Maybe better to have a function that imports places from any given tree but both techniques have their drawbacks.
 # dates prefs tab, get rid of ttk comboboxes
 # Test ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER around a dialog HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work
 # get all main tabs back into working order
-# add Border/scrollbar to roles/notes dlg & other dlg in case someone is using big fonts on small screen
 # in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
-# statustips and rcm in search dialog and new person dialog and other recent dialogs; tooltip in attributes table says that adding a date will move the attrib to evts table
+# rcm in search dialog and new person dialog and other recent dialogs including real help text; tooltip in attributes table says that adding a date will move the attrib to evts table
 # fix Border so that title bar changes color when not on top or in focus
+# TEST every functionality due to recent restructuring
 
 # BRANCH: pedigree
 # INSTEAD OF MAKING kintips for event column only to say child, spouse name not parents bec we have only 2 parents and it's redundant info (on the same page) but since there can be more than one spouse or child, it is important to make kintips for event rows re: child or spouse only DO THIS INSTEAD: since it's still redundant info, with the same info in a table up top (not even started), just highlight the spouse or child in the top table as the mouse hovers over them. Don't make it like gbx. The spouse should be WITH the relevant children and both families in the case of 2 spouses shd be visible at the same time with the 2 spouses also visible at the same time. ALSO if the highlighted row is not visible on the screen, it appears as a tooltip instead so user can always see it.

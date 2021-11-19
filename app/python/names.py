@@ -10,7 +10,7 @@ from window_border import Border
 from custom_combobox_widget import Combobox  
 from scrolling import MousewheelScrolling, Scrollbar, resize_scrolled_content 
 from autofill import EntryAuto
-from toykinter_widgets import StatusbarTooltips, run_statusbar_tooltips
+from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from message_strings import person_add_msg
 from messages import open_yes_no_message, names_msg, open_error_message
@@ -50,7 +50,6 @@ def get_current_person():
     cur = conn.cursor()
     cur.execute(select_current_person)
     result = cur.fetchone()
-    # current_person_id, current_person = result
     return result
 
 def get_name_types():
@@ -299,8 +298,6 @@ class PersonAdd(Toplevel):
         autosort.grid(column=1, row=6, padx=6, pady=6, sticky='w')
         self.order_frm.grid(column=2, row=6, columnspan=4, pady=24, sticky='w')
 
-        self.new_person_statusbar = StatusbarTooltips(
-            self.master, resizer=False)
         visited = (
             (self.gender_input, 
                 "Gender Input", 
@@ -323,8 +320,8 @@ class PersonAdd(Toplevel):
 )        
         run_statusbar_tooltips(
             visited, 
-            self.new_person_statusbar.status_label, 
-            self.new_person_statusbar.tooltip_label)
+            self.canvas.statusbar.status_label, 
+            self.canvas.statusbar.tooltip_label)
 
         self.preset()
 
@@ -492,7 +489,7 @@ class PersonAdd(Toplevel):
             "Unknown Name Type", 
             "OK", "CANCEL")
         msg[0].grab_set()
-        msg[1].config(aspect=400)
+        # msg[1].config(aspect=400)
         msg[2].config(command=ok_new_name_type)
         msg[3].config(command=cancel_new_name_type)
         msg[2].bind("<Button-1>", show_choice)
@@ -606,7 +603,7 @@ class PersonAdd(Toplevel):
                 "Duplicate Name in Tree", 
                 "OK", "CANCEL")
             msg[0].grab_set()
-            msg[1].config(aspect=400)
+            # msg[1].config(aspect=400)
             msg[2].config(command=ok_new_name)
             msg[3].config(command=cancel_new_name)
             if self.make_dupe is True:  

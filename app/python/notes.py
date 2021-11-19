@@ -6,9 +6,8 @@ from window_border import Border
 from widgets import (
     Toplevel, LabelH3, Button, Frame, LabelFrame, 
     Radiobutton, Entry, Label, LabelMovable, LabelHeader)
-from toykinter_widgets import  StatusbarTooltips, run_statusbar_tooltips
+from toykinter_widgets import run_statusbar_tooltips
 from scrolling import ScrolledText, Scrollbar, resize_scrolled_content
-from messagesx import ErrorMessage
 from messages import open_yes_no_message, notes_msg
 from right_click_menu import RightClickMenu, make_rc_menus
 from styles import make_formats_dict, config_generic
@@ -72,9 +71,7 @@ class NotesDialog(Toplevel):
             self.header = "\n".join(self.header)
             header_text = "Notes for Conclusion #{}: {}".format(
                 self.finding_id, self.header)
-            self.header_msg = LabelHeader(
-                self.window,
-                text=header_text)
+            self.header_msg = LabelHeader(self.window, text=header_text)
             self.header_msg.grid(
                 column=0, row=0, sticky='news', columnspan=4, 
                 ipadx=12, ipady=12, padx=(24,0), pady=18)
@@ -90,7 +87,6 @@ class NotesDialog(Toplevel):
         scridth = 16
         scridth_n = Frame(self.window, height=scridth)
         scridth_w = Frame(self.window, width=scridth)
-        # DO NOT DELETE THESE LINES, UNCOMMENT IN REAL APP
         self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
         self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
@@ -147,11 +143,6 @@ class NotesDialog(Toplevel):
 
         self.note_input = ScrolledText(self.window)
 
-        note_submit = Button(
-            self.window, 
-            text='SUBMIT CHANGES',
-            command=self.save_changes)
-
         order = Button(
             self.window, 
             text='CHANGE ORDER OF SUBTOPICS', 
@@ -159,6 +150,10 @@ class NotesDialog(Toplevel):
 
         radframe = LabelFrame(self.window, text='Make selected note...')
 
+        note_submit = Button(
+            self.window, 
+            text='SUBMIT CHANGES',
+            command=self.save_changes)
         self.public = Radiobutton(
             radframe, 
             text='...public', 
@@ -179,11 +174,30 @@ class NotesDialog(Toplevel):
 
         visited = (
             (self.toc, 
-                'this is a notes_statusbar message', 
-                'this is a tooltip'), 
+                'Table of Contents', 
+                'Arrow or click subtopic to view note or create new note.'), 
             (note_submit, 
-                'this is also a notes_statusbar message', 
-                'this is another tooltip'))
+                'Submit Button', 
+                ''),
+            (self.public, 
+                'Public Note Option', 
+                'Public notes will be shared when sharing tree.'),
+            (self.private, 
+                'Private Note Option', 
+                "Private notes stay on the tree creator's copy of Treebard."),
+            (order, 
+                'Reorder Subtopics Button', 
+                'Press to reorder subtopics in table of contents.'),
+            (self.note_input, 
+                'Note Input & Readout', 
+                'Create and edit notes of any length.'),
+            (self.selected_subtopic, 
+                '', 
+                'Subtopic of selected note.'),
+            (left_panel, 
+                '', 
+                'Table of contents; each note requires a unique title.'),
+)
 
         run_statusbar_tooltips(
             visited, 
@@ -504,7 +518,7 @@ class NotesDialog(Toplevel):
             "Delete Note Dialog", 
             "OK", "CANCEL")
         msg[0].grab_set()
-        msg[1].config(aspect=400)
+        # msg[1].config(aspect=400)
         msg[2].config(command=ok_delete)
         msg[3].config(command=cancel_delete)
 
