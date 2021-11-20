@@ -13,7 +13,7 @@ from autofill import EntryAuto
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from message_strings import person_add_msg
-from messages import open_yes_no_message, names_msg, open_error_message
+from messages import open_yes_no_message, names_msg
 from images import get_all_pics    
 from query_strings import (
     select_current_person, select_name_with_id, select_all_names_ids,

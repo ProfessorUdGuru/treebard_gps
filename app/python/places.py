@@ -36,7 +36,7 @@ from query_strings import (
 from files import get_current_file
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
-from messages import open_error_message, places_err
+from messages import open_message, places_err
 import dev_tools as dt
 from dev_tools import looky, seeline
 import sqlite3
@@ -486,7 +486,7 @@ class ValidatePlace():
         for dkt in self.place_dicts:
             val = dkt['id']
             if val in seen:
-                msg = open_error_message(
+                msg = open_message(
                     self.root, 
                     places_err[0], 
                     "Duplicate Place IDs", 

@@ -2,13 +2,14 @@
 
 import tkinter as tk
 import sqlite3
-from window_border import Border 
+from window_border import Border, Dialogue 
 from widgets import (
     Toplevel, LabelH3, Button, Frame, LabelFrame, 
     Radiobutton, Entry, Label, LabelMovable, LabelHeader)
 from toykinter_widgets import run_statusbar_tooltips
 from scrolling import ScrolledText, Scrollbar, resize_scrolled_content
-from messages import open_yes_no_message, notes_msg
+from messages import (
+    open_yes_no_message, notes_msg, open_message)
 from right_click_menu import RightClickMenu, make_rc_menus
 from styles import make_formats_dict, config_generic
 from names import get_name_with_id
@@ -238,13 +239,9 @@ class NotesDialog(Toplevel):
         center_window(self)
 
     def open_links_dialog(self):
-        links = Toplevel(self.root)
-        links.title('Link Notes to Multiple Entities')
-        instrux = LabelH3(
-            links, 
-            text='The current note can be linked to any number of Entities\n'
-                'such as Persons, Places, Assertions, Conclusions, or Sources.')
-        instrux.grid(padx=24, pady=24)
+        msg = open_message(
+            self.root, notes_msg[1], "Link Notes to Multiple Entities", "OK")
+        msg[0].grab_set()
 
     def save_changes(self):
 
@@ -265,32 +262,47 @@ class NotesDialog(Toplevel):
         self.refresh()
 
     def save_new_subtopic(self):
+
+        def show():                
+            gotten = self.got.get()
+            return gotten
+
+        def open_input_message(msg):
+            self.got = tk.StringVar()
+            self.subtopic_dialog = Dialogue(self.root)
+            self.subtopic_dialog.canvas.title_1.config(text="New Note: Subtopic Input")
+            self.subtopic_dialog.canvas.title_2.config(text="")
+            headlab = LabelHeader(
+                self.subtopic_dialog.window, text=msg)
+            self.subtopic_input = Entry(
+                self.subtopic_dialog.window, width=64, textvariable=self.got)
+            self.subtopic_input.focus_set()
+            buttonbox = Frame(self.subtopic_dialog.window)
+            new_note_ok = Button(
+                buttonbox, 
+                text='Submit Note and Subtitle', 
+                command=self.submit_new_note)
+            new_note_cancel = Button(
+                buttonbox, text='Cancel', command=self.close_subtopic_dialog)
+
+            headlab.grid(
+                column=0, row=0, pady=(12,0), columnspan=2, ipadx=6, ipady=3)
+            self.subtopic_input.grid(column=0, row=1, padx=12, pady=12, columnspan=2)
+            buttonbox.grid(column=1, row=2, sticky='we', padx=24, pady=24)
+            new_note_ok.grid(column=0, row=0, sticky='e', padx=12)
+            new_note_cancel.grid(column=1, row=0, sticky='e', padx=12)
+
+            self.subtopic_dialog.bind('<Escape>', self.close_subtopic_dialog)
+
+            self.subtopic_dialog.resize_window(headlab)
+
+            self.root.wait_window(self.subtopic_dialog)
+            got = show()
+            return got
+
         if self.selected_subtopic.cget('text') != self.new_subtopic_label_text:
             return
-        self.subtopic_dialog = Toplevel(self.root)
-        self.subtopic_dialog.title('New Note: Subtopic Input Dialog')
-        headlab = LabelH3(
-            self.subtopic_dialog, text='Unique subtopic name for new note:')
-        self.subtopic_input = Entry(self.subtopic_dialog, width=64)
-        self.subtopic_input.focus_set()
-        buttonbox = Frame(self.subtopic_dialog)
-        self.subtopic_dialog.grid_columnconfigure(0, weight=1)
-        new_note_ok = Button(
-            buttonbox, 
-            text='Submit Note and Subtitle', 
-            command=self.submit_new_note)
-        new_note_cancel = Button(
-            buttonbox, text='Cancel', command=self.close_subtopic_dialog)
-
-        headlab.grid(column=0, row=0, pady=(24,0), columnspan=2)
-        self.subtopic_input.grid(column=0, row=1, padx=24, pady=24, columnspan=2)
-        buttonbox.grid(column=1, row=2, sticky='we', padx=24, pady=24)
-        new_note_ok.grid(column=0, row=0, sticky='e', padx=12)
-        new_note_cancel.grid(column=1, row=0, sticky='e', padx=12)
-
-        self.subtopic_dialog.bind('<Escape>', self.close_subtopic_dialog)
-        self.subtopic_dialog.protocol(
-            'WM_DELETE_WINDOW', self.close_subtopic_dialog)
+        got = open_input_message(notes_msg[2])
 
     def submit_new_note(self):
         current_file = get_current_file()[0]
@@ -302,22 +314,44 @@ class NotesDialog(Toplevel):
         new_subtopic = self.subtopic_input.get()
         cur.execute(select_count_subtopic, (new_subtopic,))
         count = cur.fetchone()[0]
+
         if count > 0:
-            non_unique_subtopic = ErrorMessage(
+            msg1 = open_message(
                 self, 
-                message="Each subtopic can be\nused once in a tree.")
-            non_unique_subtopic.title('Non-unique Note Title Error')
+                notes_msg[3], 
+                'Non-unique Note Title', 
+                "OK")
+            msg1[0].grab_set()
             self.subtopic_input.focus_set()            
             return
 
         if len(new_subtopic) == 0:
-            blank_subtopic = ErrorMessage(
+            msg2 = open_message(
                 self, 
-                message="Blank notes are OK\n"
-                    "but not blank note titles.")
-            blank_subtopic.title('Blank Note Title Error')
+                notes_msg[4], 
+                'Blank Note Title', 
+                "OK")
+            msg2[0].grab_set()
             self.subtopic_input.focus_set()
             return
+
+
+        # if count > 0:
+            # non_unique_subtopic = ErrorMessage(
+                # self, 
+                # message="Each subtopic can be\nused once in a tree.")
+            # non_unique_subtopic.title('Non-unique Note Title Error')
+            # self.subtopic_input.focus_set()            
+            # return
+
+        # if len(new_subtopic) == 0:
+            # blank_subtopic = ErrorMessage(
+                # self, 
+                # message="Blank notes are OK\n"
+                    # "but not blank note titles.")
+            # blank_subtopic.title('Blank Note Title Error')
+            # self.subtopic_input.focus_set()
+            # return
         cur.execute(insert_note, (new_note_text, new_subtopic))
         conn.commit()
         cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'note'")
@@ -344,6 +378,9 @@ class NotesDialog(Toplevel):
         self.close_subtopic_dialog()
         self.refresh()
 
+    def close_subtopic_dialog(self, evt=None):
+        self.subtopic_dialog.destroy()
+
     def refresh_notes_per_finding(self):
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
@@ -369,9 +406,6 @@ class NotesDialog(Toplevel):
     def close_notes_dialog(self, evt=None):
         self.destroy()
         self.master.focus_set()
-
-    def close_subtopic_dialog(self, evt=None):
-        self.subtopic_dialog.destroy()
 
     def save_privacy_setting(self):
         privacy_setting = self.privacy.get()
@@ -552,21 +586,22 @@ class NotesDialog(Toplevel):
         if self.toc.size() <= 2:
             return
 
-        self.order_dlg = Toplevel(self)
+        self.order_dlg = Dialogue(self)
         self.order_dlg.grab_set()
-        self.order_dlg.protocol('WM_DELETE_WINDOW', self.ignore_changes)
         self.order_dlg.bind('<Return>', self.save_close_reorder_dlg)
         self.order_dlg.bind('<Escape>', self.ignore_changes)
-        self.order_dlg.grid_columnconfigure(0, weight=1)
-        self.order_dlg.title('Reorder Subtopics')
+        # self.order_dlg.grid_columnconfigure(0, weight=1)
+        self.order_dlg.canvas.title_1.config(text="Re-order Subtopics")
+        self.order_dlg.canvas.title_2.config(text="")
+        # self.order_dlg.title('Reorder Subtopics')
 
         instrux = (
-            'Tab or Shift + Tab selects movable subtopic.\n'
+            'Tab or Shift + Tab selects movable subtopic. '
             'Arrow keys change subtopic order up or down.')
          
-        top = LabelH3(self.order_dlg, text=instrux, anchor='center')
+        top = LabelHeader(self.order_dlg.window, text=instrux, wraplength=450)
 
-        self.labels = Frame(self.order_dlg)
+        self.labels = Frame(self.order_dlg.window)
 
         e = 0
         for subtopic in self.subtopics:           
@@ -578,16 +613,21 @@ class NotesDialog(Toplevel):
         first.focus_set()
 
         close2 = Button(
-            self.order_dlg, 
+            self.order_dlg.window, 
             text='OK', 
             command=self.save_close_reorder_dlg)
 
-        top.grid(column=0, row=0, pady=(24,0), padx=24, columnspan=2)
+        top.grid(
+            column=0, row=0, pady=(12,0), padx=12, 
+            columnspan=2, ipadx=6, ipady=3)
         self.labels.grid(column=0, row=1, columnspan=2, padx=24, pady=24)
         self.labels.grid_columnconfigure(0, weight=1)
         close2.grid(column=1, row=2, sticky='se', padx=12, pady=(0,12))
 
         center_window(self.order_dlg)
+
+        self.order_dlg.resize_window(top)
+
 
     def ignore_changes(self, evt=None):
         self.order_dlg.grab_release()
@@ -614,8 +654,13 @@ class NotesDialog(Toplevel):
         cur = conn.cursor()
 
         for lst in save_order:
+            print("line", looky(seeline()).lineno, "lst:", lst)
             cur.execute(select_note_id, (lst[0],))
-            note_id = cur.fetchone()[0]
+            result = cur.fetchone()
+            if result:
+                note_id = result[0]
+            else:
+                continue
             cur.execute(
                 update_findings_notes, 
                 (lst[1], self.finding_id, note_id))

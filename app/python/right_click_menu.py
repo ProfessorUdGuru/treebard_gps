@@ -2,7 +2,8 @@
 
 import tkinter as tk
 from styles import config_generic
-from widgets import Toplevel, LabelStylable, Button
+from messages import open_message
+from widgets import LabelStylable, Button
 import dev_tools as dt
 
 
@@ -38,6 +39,11 @@ def make_rc_menus(
         rc_menu.help_per_context[k] = v
 
 class RightClickMenu(tk.Menu):
+    '''
+        This is how you config() the menu items post-constructor, or do it in 
+        the instance, see below:
+        self.entryconfigure('Copy', state='disabled')
+    '''
 
     def __init__(self, master, *args, **kwargs):
         tk.Menu.__init__(self, master, *args, **kwargs)
@@ -55,9 +61,6 @@ class RightClickMenu(tk.Menu):
         self.add_command(label='Paste', command=self.paste)
         self.add_separator()
         self.add_command(label='Context Help', command=self.context_help)
-        # # EXAMPLE don't delete, this is how you config() the menu items
-        # #     post-constructor, or do it in the instance, see below.
-        # self.entryconfigure('Copy', state='disabled')
 
     def copy(self):
         print('Copied')
@@ -66,17 +69,11 @@ class RightClickMenu(tk.Menu):
         print('Pasted')
 
     def context_help(self):
-        help = Toplevel(self.master)
-        help.title(self.help_title)
-        text = LabelStylable(
-            help,
-            width=75)
-        text.grid(padx=24, pady=24)
-        text.insert('end', self.message)
-        off = Button(help, text='Done', command=help.destroy)
-        off.grid(padx=24, pady=24, sticky='e')
-        config_generic(help)
-        off.focus_set()
+        msg = open_message(
+            self.master, 
+            self.message, 
+            self.help_title, 
+            "DONE")
 
     def attach_rt_clk_menu(self, evt):
         self.widg = evt.widget

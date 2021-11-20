@@ -7,7 +7,7 @@ from files import get_current_file
 from query_strings import update_format_font, select_format_font_scheme
 from widgets import Label, Frame, Scale, Button
 from styles import make_formats_dict, config_generic
-from messages import open_error_message, fonts_msg
+from messages import open_message, fonts_msg
 from scrolling import resize_scrolled_content    
 from custom_combobox_widget import Combobox
 import dev_tools as dt
@@ -115,7 +115,7 @@ class FontPicker(Frame):
         config_generic(self.root)
         resize_scrolled_content(self.root, self.main.master, self.main)
 
-        msg0 = open_error_message(
+        msg0 = open_message(
             self, 
             fonts_msg[0], 
             "Redraw-on-Font-Change Bug", 

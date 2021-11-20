@@ -12,7 +12,7 @@ from files import (
     open_tree, make_tree, import_gedcom, open_sample, app_path, global_db_path,
     get_current_file, set_closing, change_tree_title, filter_tree_title)
 from styles import make_formats_dict, config_generic
-from messages import open_error_message, opening_msg, open_input_message2
+from messages import open_message, opening_msg, open_input_message2
 from utes import center_dialog, titlize
 from query_strings import (
     select_app_setting_openpic_dir, select_closing_state_openpic,
@@ -122,7 +122,7 @@ class SplashScreen(Toplevel):
             buttonbox, 
             text='IMPORT',
             command=lambda: import_gedcom(
-                self.master, open_error_message, opening_msg[2]))
+                self.master, open_message, opening_msg[2]))
         importgedcom.grid(column=2, row=0, padx=24, pady=24)
 
         opensample = Button(
@@ -175,7 +175,7 @@ class SplashScreen(Toplevel):
         self.opening_dialog.destroy()
         current_file = get_current_file()
         if path.exists(current_file[0]) is False:
-            msg = open_error_message(self.master, opening_msg[0], "Missing File Error", "OK")
+            msg = open_message(self.master, opening_msg[0], "Missing File Error", "OK")
             msg[0].grab_set()
             msg[1].config(aspect=400)
             set_closing()

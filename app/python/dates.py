@@ -6,7 +6,7 @@ from files import get_current_file, global_db_path
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
 from styles import make_formats_dict
-from messages import open_error_message, dates_msg, open_input_message
+from messages import open_message, dates_msg, open_input_message
 from query_strings import select_date_format, select_default_date_format
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -317,7 +317,7 @@ def find_word_errors(terms):
     for term in terms:
         if term.lower() in ("and", "to"):
             if compound_date_link is not None:
-                msg = open_error_message(
+                msg = open_message(
                     root, 
                     dates_msg[0], 
                     "Repeated Compound Date Link", 
@@ -338,7 +338,7 @@ def find_word_errors(terms):
     months = len(month_words)
 
     if months > 1 and compound_date_link is None:
-        msg = open_error_message(
+        msg = open_message(
             root, 
             dates_msg[1], 
             "Too Many Months Input", 
@@ -349,7 +349,7 @@ def find_word_errors(terms):
             command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
         return
     if months > 2:
-        msg = open_error_message(
+        msg = open_message(
             root, 
             dates_msg[2], 
             "Too Many Months Input", 
@@ -372,7 +372,7 @@ def find_word_errors(terms):
                 if len(month_words2) == months:
                     pass
                 else: 
-                    msg = open_error_message(
+                    msg = open_message(
                         root, 
                         dates_msg[3], 
                         "Day Input Without Month", 
@@ -385,7 +385,7 @@ def find_word_errors(terms):
             elif months == 0 and n == 1:
                 pass
             elif months == 0 and n > 1:
-                msg = open_error_message(
+                msg = open_message(
                     root, 
                     dates_msg[3], 
                     "Day Input Without Month", 
@@ -405,7 +405,7 @@ def find_word_errors(terms):
             elif elem.upper() in OK_SUFFIXES:
                 suffixes += 1
         if prefixes > 1 or suffixes > 1:
-            msg = open_error_message(
+            msg = open_message(
                 root, 
                 dates_msg[4], 
                 "Too Many Prefixes or Suffixes", 
@@ -436,7 +436,7 @@ def find_number_errors(compounds):
             if item.isdigit() is True:
                 if len(item) > 2: 
                     if over_two_digits > 0:
-                        msg = open_error_message(
+                        msg = open_message(
                             root, 
                             dates_msg[5], 
                             "Too Many Years Input", 
@@ -451,7 +451,7 @@ def find_number_errors(compounds):
                 nums += 1
 
         if nums >= 3:
-            msg = open_error_message(
+            msg = open_message(
                 root, 
                 dates_msg[6], 
                 "Too Many Numerical Terms Input", 
@@ -462,7 +462,7 @@ def find_number_errors(compounds):
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
         elif lenlist > 5:
-            msg = open_error_message(
+            msg = open_message(
                 root, 
                 dates_msg[7], 
                 "Too Many Terms Input", 
@@ -474,7 +474,7 @@ def find_number_errors(compounds):
             return
 
         if lenlist == 1 and lst[0].isalpha() is True:
-            msg = open_error_message(
+            msg = open_message(
                 root, 
                 dates_msg[8], 
                 "Numerical Terms Input Lacking", 
@@ -614,7 +614,7 @@ def make_date_dict(final):
         f += 1
     if compound is True:
         if date_dict[0] == date_dict[1]:
-            msg = open_error_message(
+            msg = open_message(
                 root, 
                 dates_msg[9], 
                 "Indistinct Compound Date", 
@@ -675,7 +675,7 @@ def check_days_in_months(date_dict):
             elif dkt["month"] in DAYS_30:
                 maxdays = 30 
             if dkt.get("day") and int(dkt["day"]) > maxdays:
-                msg = open_error_message(
+                msg = open_message(
                     root, 
                     dates_msg[10], 
                     "Too Many Days for the Month", 

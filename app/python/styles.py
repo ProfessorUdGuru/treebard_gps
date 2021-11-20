@@ -104,6 +104,8 @@ bgLite_fgStd_fontIn_insFg = ('Entry', 'Text', 'EntryAutoHilited')
 
 bgStd_fgStd_fontIn_insFg = ('EntryAuto', 'EntryAutofill', 'EntryUnhilited')
 
+bgLite_fgStd_fontH3 = ('LabelHeader',)
+
 bgLite_fgStd_fontOut = ()
 
 bgLite_fgStd_fontIn = ('LabelHilited3',)
@@ -169,7 +171,13 @@ def config_generic(parent):
         widg.config(
             bg=formats['head_bg'], 
             fg=formats['fg'],
-            font=formats['output_font'])  
+            font=formats['output_font']) 
+
+    def config_bgHead_fgStd_fontH3(widg):
+        widg.config(
+            bg=formats['highlight_bg'], 
+            fg=formats['fg'],
+            font=formats['heading3'])  
 
     def config_bgLite_fgStd_fontIn(widg):
         widg.config(
@@ -456,6 +464,9 @@ def config_generic(parent):
 
             elif widg.winfo_subclass() in bgHead_fgStd_fontOut:
                 config_bgHead_fgStd_fontOut(widg)
+
+            elif widg.winfo_subclass() in bgLite_fgStd_fontH3:
+                config_bgHead_fgStd_fontH3(widg)
 
             elif widg.winfo_subclass() in bgLite_fgStd_fontIn:
                 config_bgLite_fgStd_fontIn(widg)

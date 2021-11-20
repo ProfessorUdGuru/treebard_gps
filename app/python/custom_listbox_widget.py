@@ -177,7 +177,6 @@ class Listbox(FrameHilited4):
         print('self.new_subtopic_name is', self.new_subtopic_name)
 
     def on_ctrl_click(self, evt):
-        print('evt.widget is', evt.widget)
         self.pass_ctrl_click()
 
     def pass_ctrl_click(self):

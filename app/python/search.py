@@ -71,7 +71,7 @@ class PersonSearch(Toplevel):
             show_top_pic, names_tab, pic, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
-        self.master = master # this is the only instance of Main
+        self.master = master # Main
         self.root = root
         self.treebard = treebard
         self.entry = entry

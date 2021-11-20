@@ -334,11 +334,11 @@ def exit_app(evt, root):
     set_closing()
     close_app()
 
-def import_gedcom(root, open_error_message, msg):
+def import_gedcom(root, open_message, msg):
     # do the gedcom stuff
     # run make_new
     # update title
-    msg = open_error_message(root, msg, "Feature Doesn't Exist", "OK")
+    msg = open_message(root, msg, "Feature Doesn't Exist", "OK")
     msg[0].grab_set()
     msg[1].config(aspect=400)
     return

@@ -4,7 +4,7 @@ from tkinter import StringVar
 import sqlite3
 from window_border import Dialogue
 from scrolling import Scrollbar, resize_scrolled_content
-from widgets import Label, Button, Frame, LabelHeader, Entry
+from widgets import Label, Button, Frame, LabelHeader, Entry, Radiobutton
 from styles import config_generic
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -13,7 +13,7 @@ from dev_tools import looky, seeline
 
 
 
-def open_error_message(master, message, title, buttlab):
+def open_message(master, message, title, buttlab):
 
     def close():
         '''
@@ -94,7 +94,7 @@ def open_input_message(master, message, title, ok_lab, cancel_lab, user_input):
 
     buttonbox.grid(
         column=0, row=2, sticky='e', padx=(0,12), pady=12, columnspan=2)
-    ok_butt = Button(buttonbox, text=ok_lab, command=cancel, width=6)
+    ok_butt = Button(buttonbox, text=ok_lab, command=ok, width=6)
     ok_butt.grid(column=0, row=0, sticky='e')
     cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
     cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
@@ -108,7 +108,7 @@ def open_input_message(master, message, title, ok_lab, cancel_lab, user_input):
 
 def open_input_message2(master, message, title, ok_lab, cancel_lab):
     '''
-        For more primary-level input vs. just error-level input.
+        For more primary-level input vs. error-level input.
     '''
 
     def ok():
@@ -153,6 +153,59 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
     gotten = show()
     return gotten
 
+
+def open_option_message(
+        master, message, title, ok_lab, cancel_lab, radvar, radtext):
+    '''
+        Like open_input_message but gets input from Radiobuttons. Made this to
+        use in `ask_if_after_death()` and `id_couple_event` in events_table.py 
+        but because of complexity, I ended up copying most of this to the 
+        module instead of trying to import and adapt it. So this function as a 
+        whole is actually untested.
+    '''
+    def ok():
+        cancel()
+
+    def cancel():
+        msg.destroy()
+
+    def show():
+        gotten = got.get()
+        return gotten
+
+    got = StringVar()
+
+    msg = Dialogue(master)
+    msg.canvas.title_1.config(text=title)
+    msg.canvas.title_2.config(text="")
+    lab = LabelHeader(
+        msg.window, text=message, justify='left', wraplength=450)
+    lab.grid(
+        column=0, row=0, sticky='news', padx=12, pady=12, 
+        columnspan=2, ipadx=6, ipady=3)    
+    for i in range(2):
+        rad = Radiobutton(
+            msg.window,  
+            text=radtext[i],
+            value=i,
+            variable=radvar,
+            anchor='w')
+        rad.grid(column=0, row=i+1, sticky='ew')
+        if i == 0:
+            rad.focus_set()
+    buttonbox = Frame(msg.window)
+    buttonbox.grid(
+        column=0, row=3, sticky='e', padx=(0,12), pady=12, columnspan=2)
+    ok_butt = Button(buttonbox, text=ok_lab, command=ok, width=6)
+    ok_butt.grid(column=0, row=0, sticky='e')
+    cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
+    cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
+    msg.grab_set()
+    msg.resize_window(lab)
+    master.wait_window(msg)
+    got = show()
+    return msg, got
+
 places_err = (
     "A place cannot contain itself.\n\nSelect a "
     "chain of places that are nested inside each other.",
@@ -186,6 +239,7 @@ events_msg = (
     "Offspring events can't be created directly. Create a new person "
         "and give them parents, and the parents' offspring events "
         "will be created automatically.",
+    "Does the new event type occur after death?",
 )
 
 names_msg = (
@@ -197,6 +251,11 @@ names_msg = (
 
 notes_msg = (
     "Any note can be linked to any number of entities.",
+    "The current note can be linked to any number of elements "
+        "such as persons, places, assertions, conclusions, or sources.",
+    "Type a unique subtopic name for the new note.",
+    "Each subtopic can be used once in a tree.",
+    "Blank notes are OK but not blank note titles.",
 )
 
 dates_msg = (

@@ -5,7 +5,7 @@
 import tkinter as tk
 import sqlite3
 from files import get_current_file
-from window_border import Border 
+from window_border import Border, Dialogue 
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
     LabelH3, Button, Entry, EntryHilited1, LabelHeader, LabelHilited)
@@ -22,7 +22,9 @@ from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places
 from scrolling import Scrollbar, resize_scrolled_content
-from messages import open_error_message, events_msg, open_yes_no_message
+from messages import (
+    open_message, events_msg, open_yes_no_message)
+    
 from query_strings import (
     select_finding_places_nesting, select_current_person_id, 
     select_all_event_types_couple, select_all_kin_type_ids_couple,
@@ -499,7 +501,6 @@ class EventsTable(Frame):
             "Delete Event Confirmation", 
             "OK", "CANCEL")
         msg[0].grab_set()
-        # msg[1].config(aspect=400)
         msg[2].config(command=ok_delete_event)
         msg[3].config(command=cancel_delete_event)
 
@@ -559,13 +560,12 @@ class EventsTable(Frame):
                 if result:
                     event_type_id, couple_event_new = result 
                 if couple_event_old != couple_event_new:
-                    msg4 = open_error_message(
+                    msg4 = open_message(
                         self, 
                         events_msg[4], 
                         "Incompatible Event Type Error", 
                         "OK")
                     msg4[0].grab_set()
-                    # msg4[1].config(aspect=400)
                     msg4[2].config(command=err_done5)
                     return
 
@@ -578,18 +578,17 @@ class EventsTable(Frame):
             event_types = get_all_event_types()
             self.final = self.final.strip().lower()
             if (self.initial == 'offspring' and len(self.final) != 0):
-                msg = open_error_message(
+                msg = open_message(
                     self, 
                     events_msg[3], 
                     "Offspring Event Edit Error", 
                     "OK")
                 msg[0].grab_set()
-                # msg[1].config(aspect=400)
                 msg[2].config(command=err_done4)
                 return
 
             if self.final == 'offspring':
-                msg = open_error_message(
+                msg = open_message(
                     self, 
                     events_msg[7], 
                     "Change to Offspring Event Error", 
@@ -1026,7 +1025,7 @@ class EventsTable(Frame):
         if new_event in ("birth", "death"):
             too_many = self.count_birth_death_events(new_event)
         if too_many is True: 
-            msg = open_error_message(
+            msg = open_message(
                 self, 
                 events_msg[6], 
                 "Multiple Birth or Death Events", 
@@ -1151,41 +1150,46 @@ class NewEventDialog(Toplevel):
 
         never_mind = False
 
-        text = ( 
+        posthumoustext = ( 
             "Before-death event type: e.g. 'promotion', "
             "'business venture', 'graduation'.",
             "After-death event type: e.g. 'funeral', 'probate', "
             "'reading of the will', 'posthumous ______'.")
         posthumousvar = tk.IntVar(None, 0)
-        self.asker = Toplevel(self)
-        self.asker.title("Select Before- or After-Death Event Type")
-        lab = LabelH3(
-            self.asker, 
-            text="Does the new event type occur after death?")
-        
+
+        self.asker = Dialogue(self)
+        self.asker.canvas.title_1.config(text="Before- or After-Death Event Type")
+        self.asker.canvas.title_2.config(text="")
+        lab = LabelHeader(
+            self.asker.window, 
+            text=events_msg[9], 
+            justify='left', wraplength=450)
+        lab.grid(
+            column=0, row=0, sticky='news', padx=12, pady=12, 
+            columnspan=2, ipadx=6, ipady=3)    
         for i in range(2):
             rad = Radiobutton(
-                self.asker,  
-                text=text[i],
+                self.asker.window,  
+                text=posthumoustext[i],
                 value=i,
                 variable=posthumousvar,
                 anchor='w')
-            rad.grid(column=0, row=i+1)
-
-        buttonframe = Frame(self.asker)
-        butt1 = Button(
-            buttonframe, text="OK", width=6, 
-            command=lambda conn, cur: ok_new_evt_type(conn, cur))
-        butt2 = Button(
-            buttonframe, text="CANCEL", width=6, 
-            command=cancel_new_evt_type)
-
-        lab.grid(column=0, row=0, pady=12)
-        buttonframe.grid(column=0, row=3, sticky='e', pady=(0,12))
-        butt1.grid(column=0, row=0, sticky='e', padx=12, pady=6)
-        butt2.grid(column=1, row=0, sticky='e', padx=12, pady=6)
+            rad.grid(column=0, row=i+1, sticky='ew')
+            if i == 0:
+                rad.focus_set()
+        buttonbox = Frame(self.asker.window)
+        buttonbox.grid(
+            column=0, row=3, sticky='e', padx=(0,12), pady=12, columnspan=2)
+        ok_butt = Button(
+            buttonbox, text="OK", 
+            command=lambda conn=conn, cur=cur: ok_new_evt_type(conn, cur), 
+            width=6)
+        ok_butt.grid(column=0, row=0, sticky='e')
+        cancel_butt = Button(
+            buttonbox, text="CANCEL", command=cancel_new_evt_type, width=6)
+        cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
         self.asker.grab_set()
-        butt1.focus_set()
+        self.asker.resize_window(lab)
         
         self.wait_window(self.asker)
         if never_mind is False:
@@ -1193,7 +1197,7 @@ class NewEventDialog(Toplevel):
         else:
             self.destroy()
         cur.close()
-        conn.close()        
+        conn.close()       
 
     def input_new_event_type(self):  
 
@@ -1230,31 +1234,85 @@ class NewEventDialog(Toplevel):
 
         never_mind = False
 
-        text = ( 
+
+
+
+
+
+       # posthumoustext = ( 
+            # "Before-death event type: e.g. 'promotion', "
+            # "'business venture', 'graduation'.",
+            # "After-death event type: e.g. 'funeral', 'probate', "
+            # "'reading of the will', 'posthumous ______'.")
+        # posthumousvar = tk.IntVar(None, 0)
+
+        # self.asker = Dialogue(self)
+        # self.asker.canvas.title_1.config(text="Before- or After-Death Event Type")
+        # self.asker.canvas.title_2.config(text="")
+        # lab = LabelHeader(
+            # self.asker.window, 
+            # text=events_msg[9], 
+            # justify='left', wraplength=450)
+        # lab.grid(
+            # column=0, row=0, sticky='news', padx=12, pady=12, 
+            # columnspan=2, ipadx=6, ipady=3)    
+        # for i in range(2):
+            # rad = Radiobutton(
+                # self.asker.window,  
+                # text=posthumoustext[i],
+                # value=i,
+                # variable=posthumousvar,
+                # anchor='w')
+            # rad.grid(column=0, row=i+1, sticky='ew')
+            # if i == 0:
+                # rad.focus_set()
+        # buttonbox = Frame(self.asker.window)
+        # buttonbox.grid(
+            # column=0, row=3, sticky='e', padx=(0,12), pady=12, columnspan=2)
+        # ok_butt = Button(
+            # buttonbox, text="OK", 
+            # command=lambda conn=conn, cur=cur: ok_new_evt_type(conn, cur), 
+            # width=6)
+        # ok_butt.grid(column=0, row=0, sticky='e')
+        # cancel_butt = Button(
+            # buttonbox, text="CANCEL", command=cancel_new_evt_type, width=6)
+        # cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
+        # self.asker.grab_set()
+        # self.asker.resize_window(lab)
+
+
+
+
+
+
+
+        coupletext = ( 
             "Generic event type: one primary participant or a parent, e.g. "
                 "'birth', 'career', 'adopted a child'.",
             "Couple event type: two equal participants, e.g. 'marriage', "
                 "'wedding', 'engagement'.")
         couplevar = tk.IntVar(None, 0)
-        id_couple_event = Toplevel(self.root)
-        id_couple_event.title("Select Couple or Generic Event Type")
+        id_couple_event = Dialogue(self.root)
+        # id_couple_event.title("Select Couple or Generic Event Type")
+        id_couple_event.canvas.title_1.config(text="Select Couple or Generic Event Type")
+        id_couple_event.canvas.title_2.config(text="")
         self.withdraw()
         id_couple_event.grab_set()
 
         lab = LabelH3(
-            id_couple_event, 
+            id_couple_event.window, 
             text="Is the new event type a couple event?")
         
         for i in range(2):
             rad = Radiobutton(
-                id_couple_event,  
-                text=text[i],
+                id_couple_event.window,  
+                text=coupletext[i],
                 value=i,
                 variable=couplevar,
                 anchor='w')
-            rad.grid(column=0, row=i+1)
+            rad.grid(column=0, row=i+1, sticky='ew')
 
-        buttonframe = Frame(id_couple_event)
+        buttonframe = Frame(id_couple_event.window)
         butt1 = Button(
             buttonframe, text="OK", width=6, 
             command=ask_next_question)
@@ -1267,6 +1325,7 @@ class NewEventDialog(Toplevel):
         butt1.grid(column=0, row=0, sticky='e', padx=12, pady=6)
         butt2.grid(column=1, row=0, sticky='e', padx=12, pady=6)
         butt1.focus_set()
+        id_couple_event.resize_window(lab)
         
         self.wait_window(id_couple_event)
         if never_mind is False:
@@ -1392,7 +1451,7 @@ class NewEventDialog(Toplevel):
             if self.ma_pa is True:
                 self.show_other_person()
             elif self.new_event == "offspring":
-                msg = open_error_message(
+                msg = open_message(
                     self, 
                     events_msg[8], 
                     "Offspring Event Creation Error", 
@@ -1706,7 +1765,7 @@ class NewEventDialog(Toplevel):
         new_kin_types = []
         for kin_type_input in [self.kin_type_input1, self.kin_type_input2]:
             if len(kin_type_input.get()) == 0:
-                msg = open_error_message(
+                msg = open_message(
                     self, 
                     events_msg[1], 
                     "No Kin Type Selected", 
@@ -1754,7 +1813,7 @@ class NewEventDialog(Toplevel):
             new_partner = open_new_person_dialog(self, input_widget, self.root)
             self.validate_kin_types()
         elif self.current_person == int(person_and_id[1]):
-            msg = open_error_message(
+            msg = open_message(
                 self, 
                 events_msg[0], 
                 "Duplicate Persons in Couple", 
@@ -1786,46 +1845,50 @@ class NewEventDialog(Toplevel):
         self.grab_set()
         self.lift()
 
-class NewKinTypeDialog(Toplevel):
+class NewKinTypeDialog(Dialogue):
 
     def __init__(
             self, master, new_kin_types,  
             new_event_dialog, *args, **kwargs):
-        Toplevel.__init__(self, master, *args, **kwargs)
+        Dialogue.__init__(self, master, *args, **kwargs)
         self.root = master
         self.new_event_dialog = new_event_dialog
 
         self.kinradvars = [None, None]
 
-        self.title("New Kin Types Dialog")
-        self.columnconfigure('all', weight=1)
+        self.canvas.title_1.config(text="New Kin Types")
+        self.canvas.title_2.config(text="")
+        # self.columnconfigure('all', weight=1)
         self.make_widgets()
         column = 0
+        q = 0
         for item in new_kin_types:
-            self.make_widgets_for_one(item, column)            
+            self.make_widgets_for_one(item, column, q)            
             column += 1
+            q += 1
         self.grab_set()
 
     def make_widgets(self):
-        buttons = Frame(self)
+        buttons = Frame(self.window)
         buttons.grid(column=0, row=1, columnspan=2, sticky='e')
         ok_rads = Button(buttons, text="OK", command=self.ok_new_kin_type)
         ok_rads.grid(column=0, row=0, padx=12, pady=12)
-        cancel_rads = Button(buttons, text="CANCEL", command=self.cancel_new_kin_type)
+        cancel_rads = Button(
+            buttons, text="CANCEL", command=self.cancel_new_kin_type)
         cancel_rads.grid(column=1, row=0, padx=12, pady=12)
 
-    def make_widgets_for_one(self, item, column): 
+    def make_widgets_for_one(self, item, column, q): 
         if item is None:
             return
-        radframe = Frame(self)
+        radframe = Frame(self.window)
         radframe.grid(column=column, row=0, sticky="news", padx=12, pady=(6,0))
         radios = []
         radvar = tk.StringVar(None, "B")
         self.kinradvars[column] = radvar
-        head = LabelH3(radframe, text="Create new kin type: {}".format(item))
-        head.grid(column=0, row=0, padx=12, pady=(6,0))
-        instrux = Label(radframe, text="Describe this kin type's role:")
-        instrux.grid(column=0, row=1, padx=12, pady=(6,0))
+        lab = LabelH3(radframe, text="Create new kin type: {}".format(item))
+        lab.grid(column=0, row=0, padx=12, pady=(6,0))
+        lab2 = Label(radframe, text="Describe this kin type's role:")
+        lab2.grid(column=0, row=1, padx=12, pady=(6,0))
         kinrads = [
             ("parent", "B"), ("sibling", "C"), 
             ("partner", "D"), ("child", "E")]
@@ -1839,9 +1902,10 @@ class NewKinTypeDialog(Toplevel):
                 anchor="w")
             rad.grid(column=0, row=d, sticky='we', padx=12, pady=(6,0))
             radios.append(rad)  
+            if q == 0 and d == 2:
+                rad.focus_set()
             d += 1
-        d = d
-        radios[0].focus_set()
+        self.resize_window(self.window)
 
     def show(self):
         self.root.wait_window(self)
@@ -1882,18 +1946,12 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# change all dialogs to Border class add scroolbar if needed and add statustips INCL: CHANGE ORDER OF SUBTOPICS, MAKE KINTYPE, ADD PERSON IN COUPLES DLG, ETC FIND EVERY ONE just search Toplevel in all files.
+# fix labeldots to respond to spacebar
+# redesign open_input_message to be used in dates.py, files.py, and notes.py and combine open_input_message2; make it easy to reconfigure OK and CANCEL command or to leave out lab2, try to use the principle of composition vs inheritance (make a class) for the widgets. Use frames for head, input, button, and input can have either entry or radio, button can have one or two buttons etc, There can be 2 labels, there can be a label on top of the entry, etc. In messages bind to escape & return eg: self.subtopic_dialog.bind('<Escape>', self.close_subtopic_dialog)
+# add statustips and rcm to every dialog.
 # dates < 100 shd be suffixed AD or BC
 # re: date error it seems like when I click ok it's deleting a row from the table?
 # don't know if this is a problem but autofill seems to be inheriting place lists from previous tree (ONLY IF TREES ARE CHANGED; doesn't happen if tree is newly opened), then user still has to input them as places to db but somehow tbard is presenting the places as if they were already in the tree then they're not till re-input. Maybe shd fix globality of places before proceeding with error messages.
-# CHANGE ORDER OF SUBTOPICS ok button on dlg:
-# Exception in Tkinter callback
-# Traceback (most recent call last):
-  # File "C:\Users\Lutherman\AppData\Local\Programs\Python\Python39\lib\tkinter\__init__.py", line 1884, in __call__
-    # return self.func(*args)
-  # File "D:\treebard_gps\app\python\notes.py", line 621, in save_close_reorder_dlg
-    # note_id = cur.fetchone()[0]
-# TypeError: 'NoneType' object is not subscriptable
 # have to keep a global copy of place tables or just move them to treebard.tbd. Maybe better to have a function that imports places from any given tree but both techniques have their drawbacks.
 # dates prefs tab, get rid of ttk comboboxes
 # Test ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER around a dialog HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work
@@ -1921,6 +1979,7 @@ if __name__ == '__main__':
 # IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?
 # edit ReadMe
 # figure out how to dump db as a text file so it can be pushed to github, first delete any unused tables
+# add to after death event types in default, default_untouched, and sample db's: autopsy, inquest
 # post new screenshots
 # edit official do list
 # website: change "units of genealogy" to "elements of genealogy"
