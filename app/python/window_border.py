@@ -149,7 +149,7 @@ class Border(Canvas):
         self.border_right.config(cursor='sb_h_double_arrow')
         self.border_bottom.config(cursor='sb_v_double_arrow')
 
-        # children of root i.e. self.master
+        # children of toplevel i.e. self.master
         self.master.columnconfigure(1, weight=1)
         self.master.rowconfigure(4, weight=1)
         self.border_top.grid(column=0, row=0, columnspan=4, sticky='ew')
@@ -478,7 +478,7 @@ class Dialogue(Toplevel):
         '''
         self.update_idletasks()    
         width = self.window.winfo_reqwidth() + 6
-        height= self.window.winfo_reqheight() + 42
+        height = self.window.winfo_reqheight() + 42
         dlg_pos = center_dialog(self)
         self.geometry('{}x{}+{}+{}'.format(
             width,

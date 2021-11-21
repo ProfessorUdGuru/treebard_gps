@@ -414,6 +414,8 @@ class LabelDots(LabelButtonText):
         self.header = []
         self.config(width=5, font=formats['heading3'])
         self.bind('<Button-1>', self.open_dialog)
+        self.bind('<Return>', self.open_dialog)
+        self.bind('<space>', self.open_dialog)
 
     def open_dialog(self, evt):
         dlg = self.dialog_class(

@@ -28,7 +28,7 @@ char_dict = {
 vowels = ('a', 'e', 'i', 'o', 'u')
 consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z')
 
-name = "William Bradley Pitt"
+name = "Stephen Edwin King"
 name = name.split()
 lowered = []
 for nick in name:
@@ -220,6 +220,7 @@ root.mainloop()
 
 # 674
 # Fred McFeely Rogers (March 20, 1928 – February 27, 2003) (Mister Rogers Neighborhood)
+# Matthew Paige Damon, actor (October 8, 1970 Cambridge, Massachusetts)
 
 # 178
 # Terry Robert Miller born feb 9 1934 Neosho, Newton Co MO
@@ -258,6 +259,9 @@ root.mainloop()
 
 # 718
 # Joseph Levitch (comedian Jerry Lewis) March 16, 1926 - August 20, 2017 Newark, New Jersey, U.S.
+
+# 663
+# Stephen Edwin King, born September 21, 1947 Portland, Maine
 
 # 336
 # patricia lee smith 336 (singer Patti Smith)
@@ -318,7 +322,7 @@ root.mainloop()
 # Kristina Kroesen
 
 # 279
-# Cynthia Ann Stephanie Lauper Born: 22 June 1953 (age 66 years), Astoria, NY
+# Cynthia Ann Stephanie Lauper Born: 22 June 1953 Astoria, NY
 # Ann Elizabeth McCarthy (leo)
 
 # 729

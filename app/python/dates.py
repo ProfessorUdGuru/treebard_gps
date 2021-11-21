@@ -6,7 +6,7 @@ from files import get_current_file, global_db_path
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
 from styles import make_formats_dict
-from messages import open_message, dates_msg, open_input_message
+from messages import open_message, dates_msg, InputMessage, open_input_message
 from query_strings import select_date_format, select_default_date_format
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -109,7 +109,7 @@ from dev_tools import looky, seeline
     who want to customize their own applications.
 '''
 
-# currentFile = get_current_file()[0]
+
 formats = make_formats_dict()
 
 def get_date_formats(tree_is_open=0):
@@ -491,10 +491,27 @@ def clarify_year(numbers, lst):
     '''
         For years < 100 if user types without preceding zeroes.
     '''
+
     copy = lst
-    numbers, year = open_input_message(root, "Type the year as a four-digit "
-        "number. For example, the year 33 should be typed as 0033.", 
-        "Clarify Year", "OK", "CANCEL", numbers)
+    head2 = "{} or {}?".format(numbers[0], numbers[1])
+
+    msg = InputMessage(
+        root, root=root, title="Clarify Year", ok_txt="OK", cancel_txt="CANCEL", 
+        head1=dates_msg[11], head2=head2, grab=True, entry=True, wraplength=300)
+    year = msg.show().strip()
+
+    if len(year) != 4:
+        msg = open_message(
+            root, 
+            dates_msg[12], 
+            "No Year Entered", 
+            "OK")
+        msg[0].grab_set()
+        root.wait_window(msg[0])
+        widg.delete(0, 'end')
+        widg.focus_set()
+        return
+
     a = 0
     for num in numbers:
         if int(num) == int(year):
@@ -557,7 +574,10 @@ def make_date_dict(final):
                 nums.append(item)
                 if len(item) < 3:
                     if under_two > 0:
-                        year, day, lst = clarify_year(nums, lst)
+                        if clarify_year(nums, lst) is None:
+                            return
+                        else:
+                            year, day, lst = clarify_year(nums, lst)
                         date_dict[b]["year"] = year
                     else:
                         under_two += 1
@@ -567,6 +587,7 @@ def make_date_dict(final):
         return lst
 
     def find_day(lst, b):
+        if lst is None: return
         i = 0
         for item in lst:
             if item.isdigit():
@@ -596,6 +617,7 @@ def make_date_dict(final):
     order = ["ad", "ad"]        
     e = 0
     for lst in comps:
+        if lst is None: return
         for item in lst:
             if item.upper() in BC:
                 order[e] = "bc"
@@ -620,7 +642,6 @@ def make_date_dict(final):
                 "Indistinct Compound Date", 
                 "OK")
             msg[0].grab_set()
-            # msg[1].config(aspect=400)
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
@@ -670,8 +691,11 @@ def check_days_in_months(date_dict):
             maxdays = 31
             if dkt["month"] == "f":
                 maxdays = 28
-                if int(dkt["year"]) % 4 == 0:
-                    maxdays = 29
+                if dkt.get("year") is not None:
+                    if int(dkt["year"]) % 4 == 0:
+                        maxdays = 29
+                    else:
+                        return
             elif dkt["month"] in DAYS_30:
                 maxdays = 30 
             if dkt.get("day") and int(dkt["day"]) > maxdays:

@@ -1946,8 +1946,10 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# fix labeldots to respond to spacebar
-# redesign open_input_message to be used in dates.py, files.py, and notes.py and combine open_input_message2; make it easy to reconfigure OK and CANCEL command or to leave out lab2, try to use the principle of composition vs inheritance (make a class) for the widgets. Use frames for head, input, button, and input can have either entry or radio, button can have one or two buttons etc, There can be 2 labels, there can be a label on top of the entry, etc. In messages bind to escape & return eg: self.subtopic_dialog.bind('<Escape>', self.close_subtopic_dialog)
+# new note subtopic works as is so instead of replacing the input dialog now, keep it in place and refactor the listbox and note code now. Only when the code has been considerable simplified, replace the subtopic input dialog with the new class.
+# new class shd work in notes.py and old funx did but don't know why. seems like the value got is just hanging out at the end of a funx but not going anywhere, but it works in the previous funx version 
+# redesign open_input_message to be used in opening.py, files.py, and notes.py and combine open_input_message2; make it easy to reconfigure OK and CANCEL command or to leave out lab2, try to use the principle of composition vs inheritance (make a class) for the widgets. Use frames for head, input, button, and input can have either entry or radio, button can have one or two buttons etc, There can be 2 labels, there can be a label on top of the entry, etc. In messages bind to escape & return eg: self.subtopic_dialog.bind('<Escape>', self.close_subtopic_dialog)
+# AFTER GETTING notes.py to work, refactor notes.py AND listbox widget to simplify the code and make it easy to understand, maintain, and extend. If a Toykinter scrollbar can't be used, then don't use a scrollbar at all, for example a page down button or more button since the complication of using a scrollbar isn't justify by how seldom the scrollbar would actually be needed. Start over from scratch and redo the listbox, don't use Tab traversal, just arrows, Tab gets in and out, arrows just cycle the items and show the notes. Get rid of the ListboxSelected virtual event and simplify everything. Don't try to do what tk.Listbox can do, just keep it simple.
 # add statustips and rcm to every dialog.
 # dates < 100 shd be suffixed AD or BC
 # re: date error it seems like when I click ok it's deleting a row from the table?
@@ -1980,6 +1982,7 @@ if __name__ == '__main__':
 # edit ReadMe
 # figure out how to dump db as a text file so it can be pushed to github, first delete any unused tables
 # add to after death event types in default, default_untouched, and sample db's: autopsy, inquest
+# finish numerology.py: user uses arrow keys to move w, u, y to vowel or consonant row (if text in (u,w,y):don't move; bind to arrow, turn red show instrux
 # post new screenshots
 # edit official do list
 # website: change "units of genealogy" to "elements of genealogy"

@@ -9,9 +9,10 @@ from widgets import (
 from toykinter_widgets import run_statusbar_tooltips
 from scrolling import ScrolledText, Scrollbar, resize_scrolled_content
 from messages import (
-    open_yes_no_message, notes_msg, open_message)
+    open_yes_no_message, notes_msg, open_message, InputMessage)
 from right_click_menu import RightClickMenu, make_rc_menus
-from styles import make_formats_dict, config_generic
+from styles import config_generic
+# from styles import make_formats_dict, config_generic
 from names import get_name_with_id
 from message_strings import note_dlg_msg
 from utes import center_window, create_tooltip
@@ -32,7 +33,7 @@ from dev_tools import looky, seeline
 
 
 
-formats = make_formats_dict()
+# formats = make_formats_dict()
 
 class NotesDialog(Toplevel):
     def __init__(
@@ -252,7 +253,7 @@ class NotesDialog(Toplevel):
         cur = conn.cursor()
 
         new_note_text = self.note_input.text.get(1.0, 'end-1c')
-        subtopic = self.current_subtopic
+        subtopic = self.current_subtopic # ******************************
         cur.execute(update_note, (new_note_text, subtopic))
         conn.commit()
         cur.close()
@@ -260,6 +261,15 @@ class NotesDialog(Toplevel):
 
         self.master.current_note_text = new_note_text
         self.refresh()
+
+    # def save_new_subtopic(self):
+        
+        # if self.selected_subtopic.cget('text') != self.new_subtopic_label_text:
+            # print("line", looky(seeline()).lineno, "running:")
+            # return
+        # msg = InputMessage(self, root=self.root, title="New Note: Subtopic Input", ok_txt="SUBMIT NOTE & SUBTITLE", cancel_txt="CANCEL", head1=notes_msg[2], entry=True, grab=True)
+        # got = msg.show().strip()
+        # print("line", looky(seeline()).lineno, "got:", got)
 
     def save_new_subtopic(self):
 
@@ -303,6 +313,7 @@ class NotesDialog(Toplevel):
         if self.selected_subtopic.cget('text') != self.new_subtopic_label_text:
             return
         got = open_input_message(notes_msg[2])
+        print("line", looky(seeline()).lineno, "got:", got)
 
     def submit_new_note(self):
         current_file = get_current_file()[0]
@@ -335,23 +346,6 @@ class NotesDialog(Toplevel):
             self.subtopic_input.focus_set()
             return
 
-
-        # if count > 0:
-            # non_unique_subtopic = ErrorMessage(
-                # self, 
-                # message="Each subtopic can be\nused once in a tree.")
-            # non_unique_subtopic.title('Non-unique Note Title Error')
-            # self.subtopic_input.focus_set()            
-            # return
-
-        # if len(new_subtopic) == 0:
-            # blank_subtopic = ErrorMessage(
-                # self, 
-                # message="Blank notes are OK\n"
-                    # "but not blank note titles.")
-            # blank_subtopic.title('Blank Note Title Error')
-            # self.subtopic_input.focus_set()
-            # return
         cur.execute(insert_note, (new_note_text, new_subtopic))
         conn.commit()
         cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'note'")
@@ -419,10 +413,12 @@ class NotesDialog(Toplevel):
         conn.close()
 
     def get_selected_subtopic(self):
+        print("line", looky(seeline()).lineno, "running:")
         if self.toc.curselection() is not None:
             self.current_subtopic_index = self.toc.curselection()            
         else:
-            return
+            print("line", looky(seeline()).lineno, "self.toc.curselection() is None:")
+            return # **********************************
         self.current_subtopic = self.toc.get(self.current_subtopic_index)
         if len(self.notesdict) != 0:
             for k,v in self.notesdict.items():            
@@ -527,8 +523,9 @@ class NotesDialog(Toplevel):
                 self.pressed.config(text='     ')        
 
             self.refresh()
-
+        print("line", looky(seeline()).lineno, "self.toc.curselection():", self.toc.curselection())
         selected = self.toc.curselection()
+        print("line", looky(seeline()).lineno, "self.toc.curselection():", self.toc.curselection())
         subtopic = self.toc.get(selected)
         if subtopic is None:
             return

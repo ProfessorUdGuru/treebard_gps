@@ -1,7 +1,6 @@
 # error_messages.py
 
-from tkinter import StringVar
-import sqlite3
+from tkinter import StringVar, IntVar
 from window_border import Dialogue
 from scrolling import Scrollbar, resize_scrolled_content
 from widgets import Label, Button, Frame, LabelHeader, Entry, Radiobutton
@@ -13,7 +12,7 @@ from dev_tools import looky, seeline
 
 
 
-def open_message(master, message, title, buttlab):
+def open_message(master, message, title, buttlab, inwidg=None):
 
     def close():
         '''
@@ -63,6 +62,163 @@ def open_yes_no_message(master, message, title, ok_lab, cancel_lab):
     msg.resize_window(lab)
 
     return msg, lab, ok_butt, cancel_butt, buttonbox
+
+class InputMessage(Dialogue):
+    def __init__(
+            self, master, return_focus_to=None, root=None, title="", ok_txt="", 
+            cancel_txt="", head1="", head2="", wraplength=450, radtext=[], 
+            radfocal=0, entry=False, radio=False, scrolled=False, 
+            grab=False, treebard=None, *args, **kwargs):
+        Dialogue.__init__(self, master, *args, **kwargs)
+
+        self.master = master
+        self.return_focus_to = return_focus_to
+        self.root = root
+        self.title = title
+        self.head1 = head1
+        self.head2 = head2
+        self.ok_txt = ok_txt
+        self.cancel_txt = cancel_txt
+        self.wraplength = wraplength
+        self.radtext = radtext
+        self.radfocal = radfocal
+        self.entry = entry
+        self.radio = radio
+        self.scrolled = scrolled
+        self.grab = grab
+        self.treebard = treebard
+
+        self.canvas.title_1.config(text=title)
+        self.canvas.title_2.config(text="")
+
+        self.got = StringVar()
+        self.radvar = IntVar(None, 0)
+        if scrolled is True:
+            self.make_scrollbars()
+        self.make_containers()
+        self.make_widgets()
+        self.make_inputs()
+
+        self.bind("<Return>", self.ok)
+        self.bind("<Escape>", self.cancel)
+
+        if scrolled is True:
+            resize_scrolled_content(self, self.canvas, self.window)
+        else:
+            self.resize_window(self.head)
+
+        if self.grab is True: self.grab_set()
+        self.deiconify()
+        self.master.wait_window(self)
+        self.run_post_op()
+
+    def make_scrollbars(self):
+
+        scridth = 16
+        scridth_n = Frame(self.window, height=scridth)
+        scridth_w = Frame(self.window, width=scridth)
+        scridth_n.grid(column=0, row=0, sticky='ew')
+        scridth_w.grid(column=0, row=1, sticky='ns')
+        if self.treebard:
+            self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
+            self.treebard.scroll_mouse.configure_mousewheel_scrolling()
+
+        self.window.vsb = Scrollbar(
+            self, 
+            hideable=True, 
+            command=self.canvas.yview,
+            width=scridth)
+        self.window.hsb = Scrollbar(
+            self, 
+            hideable=True, 
+            width=scridth, 
+            orient='horizontal',
+            command=self.canvas.xview)
+        self.canvas.config(
+            xscrollcommand=self.window.hsb.set, 
+            yscrollcommand=self.window.vsb.set)
+        self.window.vsb.grid(column=2, row=4, sticky='ns')
+        self.window.hsb.grid(column=1, row=5, sticky='ew')
+
+        scridth_n.grid(column=0, row=0, sticky='ew')
+        scridth_w.grid(column=0, row=1, sticky='ns')
+
+    def make_containers(self):
+
+        self.header = Frame(self.window)
+        self.inputs = Frame(self.window)
+        self.buttons = Frame(self.window)
+
+        self.header.grid(column=1, row=1, sticky="news")
+        self.inputs.grid(column=1, row=2, sticky="news")
+        self.buttons.grid(
+            column=1, row=3, sticky="e", padx=12, pady=(18,12), columnspan=2)
+
+    def make_widgets(self):
+        self.head = LabelHeader(
+            self.header, text=self.head1, justify='left', 
+            wraplength=self.wraplength)
+        self.head.grid(
+            column=0, row=0, sticky='news', padx=12, pady=12, 
+            columnspan=2, ipadx=6, ipady=3)
+        head2 = Label(
+            self.header, text=self.head2)
+        head2.grid(column=0, row=1)        
+        maxx = max(len(self.ok_txt), len(self.cancel_txt))
+        self.b1 = Button(
+            self.buttons, text=self.ok_txt, command=self.ok, width=maxx)
+        self.b1.grid(column=0, row=0, sticky='e', ipadx=3)
+        b2 = Button(
+            self.buttons, text=self.cancel_txt, command=self.cancel, width=maxx)
+        b2.grid(column=1, row=0, padx=(6,0), sticky='e', ipadx=3)
+
+    def make_inputs(self):
+
+        if self.entry is True:
+            self.inPut = Entry(self.inputs, textvariable=self.got)
+            self.inPut.grid(column=1, row=1, padx=12)
+            self.inPut.focus_set()
+        if self.radio is True:
+            self.radframe = Frame(self.inputs)
+            self.radframe.grid()
+            radios = []
+            for i in range(len(self.radtext)):
+                rad = Radiobutton(
+                    self.radframe,  
+                    text=self.radtext[i],
+                    value=i,
+                    variable=self.radvar,
+                    anchor='w')
+                rad.grid(column=0, row=i, sticky='ew')
+                radios.append(rad)    
+            radios[self.radfocal].focus_set()
+        
+    def run_post_op(self):
+
+        if self.grab is True: self.grab_release()
+        if self.return_focus_to:
+            self.return_focus_to.focus_set()
+        self.root.lift()
+
+    def ok(self, evt=None):
+        self.cancel()
+
+    def cancel(self, evt=None):
+        self.destroy()
+
+    def show(self):
+        if self.entry:
+            gotten = self.got.get()
+            return gotten
+        elif self.radio:
+            chosen = self.radvar.get()
+            return chosen
+
+
+
+
+
+
 
 def open_input_message(master, message, title, ok_lab, cancel_lab, user_input):
 
@@ -286,6 +442,12 @@ dates_msg = (
         "identical dates. ",
     "That month doesn't have that many days. In leap years, February has 29 days. "
         "Leap years are evenly divisible by 4.",
+    "Type the year as a four-digit number. For example, the year 33 should be "
+        "typed as 0033.",
+    "A 4-digit year must be entered. For years prior to the year 1000, add "
+        "leading zeroes. For example, for the year 12 AD or the year 12 BC, "
+        "type '0012' without the quotation marks. Or for the year 108, type "
+        "'0108'.",
 )
 
 fonts_msg = (
