@@ -133,6 +133,16 @@ class FrameHilited5(Framex):
         Framex.__init__(self, master, *args, **kwargs)
         self.config(bg=formats['highlight_bg'], bd=1, relief='solid')
 
+class FrameHilited6(Framex):
+    ''' 
+        Frame hilited by sunken border only.
+    '''
+
+    def __init__(self, master, *args, **kwargs):
+        Framex.__init__(self, master, *args, **kwargs)
+        self.bd = 2
+        self.config(bg=formats['bg'], bd=self.bd, relief='sunken')
+
 class LabelFramex(tk.LabelFrame):
     def __init__(self, master, *args, **kwargs):
         tk.LabelFrame.__init__(self, master, *args, **kwargs)
@@ -1171,11 +1181,25 @@ class Text(Textx):
             font=formats['input_font'],
             insertbackground=formats['fg'])
 
-        self.bind("<Tab>", self.focus_next_window)
+        # self.bind_class('Text', '<Tab>', self.focus_next_window)
+        # self.bind_class('Text', '<Shift-Tab>', self.focus_prev_window)
 
+        self.bind("<Tab>", self.focus_next_window)
+        self.bind("<Shift-Tab>", self.focus_prev_window)
+
+    # make the Text widget use tab key for traversal like other widgets
+    # I think return('break') prevents the built-in binding to Tab
     def focus_next_window(self, evt):
         evt.widget.tk_focusNext().focus()
-        return("break")
+        return('break')
+
+    def focus_prev_window(self, evt):
+        evt.widget.tk_focusPrev().focus()
+        return('break')
+
+    # def focus_next_window(self, evt):
+        # evt.widget.tk_focusNext().focus()
+        # return("break")
 
 class LabelStylable(Textx):
     def __init__(self, master, *args, **kwargs):

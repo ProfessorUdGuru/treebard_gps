@@ -12,7 +12,6 @@ from messages import (
     open_yes_no_message, notes_msg, open_message, InputMessage)
 from right_click_menu import RightClickMenu, make_rc_menus
 from styles import config_generic
-# from styles import make_formats_dict, config_generic
 from names import get_name_with_id
 from message_strings import note_dlg_msg
 from utes import center_window, create_tooltip
@@ -549,7 +548,6 @@ class NotesDialog(Toplevel):
             "Delete Note Dialog", 
             "OK", "CANCEL")
         msg[0].grab_set()
-        # msg[1].config(aspect=400)
         msg[2].config(command=ok_delete)
         msg[3].config(command=cancel_delete)
 

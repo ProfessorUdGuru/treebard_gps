@@ -87,7 +87,7 @@ NEUTRAL_COLOR = '#878787'
 
 bgStd = (
     'Frame', 'Toykinter', 'Main', 'Colorizer', 'Toplevel', 'FontPicker',
-    'StatusbarTooltips', 'EventsTable', 'Gallery')
+    'StatusbarTooltips', 'EventsTable', 'Gallery', 'FrameHilited6')
 
 bgHead = ('FrameHilited2',)
 

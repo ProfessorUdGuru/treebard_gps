@@ -93,7 +93,7 @@ class Combobox(FrameHilited3):
         #   clicked twice to put it back into the alternating drop/undrop
         #   cycle as expected. Without this binding, the click on the title
         #   bar lowers the dropdown below the root window which is good 
-        #   enough for now. To get around it, use the custom_window_border.py.
+        #   enough for now. To get around it, use the window_border.py.
 
         # expose only unique methods of Entry e.g. not self.config (self is a Frame and
         #    the Entry, Toplevel, Canvas, and window have to be configured together) so

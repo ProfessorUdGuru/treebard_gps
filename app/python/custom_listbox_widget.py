@@ -313,7 +313,7 @@ class Listbox(FrameHilited4):
         window_bottom = window_top + self.view_height
         window_ratio = self.view_height / self.list_height
         list_ratio = widget_pos_in_list / self.list_height
-        widget_ratio = widget_ht / self.list_height
+        widget_ratio = widget_ht / self.list_height # i.e. 1/len(self.items)
         up_ratio = list_ratio - window_ratio + widget_ratio 
 
         if widget_pos_in_screen > window_bottom - 0.75 * widget_ht:
@@ -332,13 +332,10 @@ class Listbox(FrameHilited4):
         len_items = len(self.items)
         widg_ht = int(
             self.listbox_content.winfo_reqheight()/len_items)
-        self.trigger_down = self.view_height - widg_ht * 3
-        self.trigger_up = self.view_height - widg_ht * 2
         self.update_idletasks()
         items = self.listbox_content.winfo_children()
         next_item = evt.widget.tk_focusNext()
         prev_item = evt.widget.tk_focusPrev()
-        rel_ht = evt.widget.winfo_y()
         if evt.keysym == 'Down':
             if next_item in items:
                 self.select_item(evt, next_item=next_item)

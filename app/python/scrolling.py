@@ -11,8 +11,8 @@ import dev_tools as dt
 
 '''
 	One purpose of this module is to tell right here how to make a canvas and 
-    scrollbar do different things under a variety of circumstances. Please
-    contact me if there are any mistakes in this Tkinter scrollbar tutorial.
+    scrollbar do different things under a variety of circumstances.
+ 
     I wrote this because I needed a cheat sheet, not because I'm an expert.
 
     I. MAKE SCROLLBARS:
@@ -461,18 +461,19 @@ class ScrolledText(Framex):
             command=self.text.yview)
         self.text.configure(yscrollcommand=self.ysb.set)
         self.ysb.grid(column=1, row=0, sticky='ns')
-
-        self.bind_class('Text', '<Tab>', self.focus_next_window)
-        self.bind_class('Text', '<Shift-Tab>', self.focus_prev_window)
+# don't do this here, it's already done in the parent class
+        # self.bind_class('Text', '<Tab>', self.focus_next_window)
+        # self.bind_class('Text', '<Shift-Tab>', self.focus_prev_window)
 
     # make the Text widget use tab key for traversal like other widgets
-    def focus_next_window(self, event):
-        event.widget.tk_focusNext().focus()
-        return('break')
+    # I think return('break') prevents the built-in binding to Tab
+    # def focus_next_window(self, event):
+        # event.widget.tk_focusNext().focus()
+        # return('break')
 
-    def focus_prev_window(self, event):
-        event.widget.tk_focusPrev().focus()
-        return('break')
+    # def focus_prev_window(self, event):
+        # event.widget.tk_focusPrev().focus()
+        # return('break')
 
 if __name__ == '__main__':
 

@@ -111,8 +111,8 @@ def create_tooltip(widget, text):
         toolTip.hidetip()
 
     toolTip = ToolTip(widget)
-    widget.bind('<Enter>', enter)
-    widget.bind('<Leave>', leave)
+    widget.bind('<Enter>', enter, add="+")
+    widget.bind('<Leave>', leave, add="+")
 
 #   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   #
 
