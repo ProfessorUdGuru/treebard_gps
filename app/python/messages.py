@@ -161,9 +161,8 @@ class InputMessage(Dialogue):
         self.head.grid(
             column=0, row=0, sticky='news', padx=12, pady=12, 
             columnspan=2, ipadx=6, ipady=3)
-        head2 = Label(
-            self.header, text=self.head2)
-        head2.grid(column=0, row=1)        
+        head2 = Label(self.header, text=self.head2)
+        head2.grid(column=0, row=1, padx=12)        
         maxx = max(len(self.ok_txt), len(self.cancel_txt))
         self.b1 = Button(
             self.buttons, text=self.ok_txt, command=self.ok, width=maxx)
@@ -412,6 +411,14 @@ notes_msg = (
     "Type a unique subtopic name for the new note.",
     "Each subtopic can be used once in a tree.",
     "Blank notes are OK but not blank note titles.",
+    "The selected note will be unlinked from the current event or attribute "
+        "only. To permanently delete the note and its topic listing and all "
+        "its links, press CANCEL and delete the note in the Links tab.",
+    "The selected note will be deleted and will no longer be linked to any "
+        "tree element that it's currently linked to. To prevent permanent "
+        "loss of this text, you might prefer to (1) unlink it from elements "
+        "selectively in the Links tab, or (2) change its setting to 'private' "
+        "so it won't be shared. To proceed with permanent deletion, press OK.",
 )
 
 dates_msg = (

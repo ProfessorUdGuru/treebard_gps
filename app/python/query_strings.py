@@ -31,6 +31,17 @@ delete_finding_places = '''
     DELETE FROM finding_places
     WHERE finding_id = ?
 '''
+# this query probably not used anymore
+delete_findings_notes = '''
+    DELETE FROM findings_notes
+    WHERE note_id = ? 
+    AND finding_id = ?
+'''
+
+delete_findings_notes_linked = '''
+    DELETE FROM findings_notes
+    WHERE findings_notes_id = ?
+'''
 
 delete_findings_notes_finding = '''
     DELETE FROM findings_notes
@@ -52,20 +63,19 @@ delete_findings_roles_finding = '''
     WHERE finding_id = ?
 ''' 
 
-delete_findings_notes = '''
-    DELETE FROM findings_notes
-    WHERE note_id = ? 
-    AND finding_id = ?
-'''
-
 delete_findings_role = '''
     DELETE FROM findings_roles 
     WHERE findings_roles_id = ?
 '''
-
+# this is probably not used anymore
 delete_note = '''
     DELETE FROM note
     WHERE note_id = ? 
+'''
+
+delete_note_topic = '''
+    DELETE FROM note
+    WHERE subtopic = ?
 '''
 
 insert_color_scheme = '''
@@ -105,9 +115,15 @@ insert_finding_places_new_event = '''
     VALUES ({})
 '''.format(','.join(['?'] * 10))
 
+# this might not be used anymore
 insert_findings_notes = '''
     INSERT INTO findings_notes 
     VALUES (null, ?, ?, ?)
+'''
+
+insert_findings_notes_new = '''
+    INSERT INTO findings_notes 
+    VALUES (null, ?, ?, 0)
 '''
 
 insert_findings_persons_new_couple = '''
@@ -416,16 +432,6 @@ select_current_person = '''
         ON person.person_id = current.person_id
 '''
 
-
-# select_current_person = '''
-    # SELECT name.person_id, names 
-    # FROM name 
-    # JOIN person 
-        # ON person.person_id = name.person_id 
-    # JOIN current 
-        # ON name.person_id = current.person_id
-# '''
-
 select_current_person_id = '''
     SELECT person_id 
     FROM current WHERE current_id = 1'''
@@ -438,11 +444,6 @@ select_current_person_image = '''
     WHERE main_image = 1 
         AND images_entities.person_id = ?
 '''
-# select_current_tree = '''
-    # SELECT current_tree 
-    # FROM closing_state 
-    # WHERE closing_state_id = 1
-# '''
 
 select_closing_state_prior_tree = '''
     SELECT prior_tree 
@@ -468,6 +469,19 @@ select_date_format = '''
     SELECT date_formats, abt, est, cal, bef_aft, bc_ad, os_ns, span, range
     FROM date_format
     WHERE date_format_id = 1
+'''
+
+select_default_formats = '''
+    SELECT 
+        default_bg,
+        default_highlight_bg,
+        default_head_bg, 
+        default_fg,
+        default_output_font,
+        default_input_font, 
+        default_font_size            
+    FROM default_format
+    WHERE default_format_id = 1
 '''
 
 select_event_type_id = '''
@@ -618,6 +632,12 @@ select_findings_for_person = '''
     WHERE person_id = ?
 '''
 
+select_findings_notes_order = '''
+    SELECT order_subtopic, findings_notes_id
+    FROM findings_notes
+    WHERE finding_id = ?
+'''
+
 select_findings_persons_age = '''
     SELECT age
     FROM findings_persons
@@ -729,18 +749,6 @@ select_images_entities_main_image = '''
         AND images_entities.person_id = ?
 '''
 
-# select_images_entities_main_image = '''
-    # SELECT images
-    # FROM images_entities
-        # JOIN person
-            # ON images_entities.person_id = person.person_id 
-        # JOIN current
-            # ON current.person_id = person.person_id
-        # JOIN image
-            # ON image.image_id = images_entities.image_id 
-    # WHERE images_entities.main_image = 1
-# '''
-
 select_kin_type_string = '''
     SELECT kin_types FROM kin_type WHERE kin_type_id = ?
 '''
@@ -842,10 +850,44 @@ select_nestings_and_ids = '''
     WHERE nest0 = (SELECT place_id FROM place WHERE places = ?)
 '''
 
+select_notes_linked = '''
+    SELECT findings_notes_id
+    FROM findings_notes
+    JOIN note
+        ON note.note_id = findings_notes.note_id
+    WHERE subtopic = ?
+        AND finding_id = ?
+'''
+
+select_notes_per_finding = '''
+    SELECT subtopic, notes
+    FROM note 
+    JOIN findings_notes
+        ON findings_notes.note_id = note.note_id
+    WHERE finding_id = ?
+    ORDER BY order_subtopic
+'''
+
 select_note_id = '''
     SELECT note_id
     FROM note
     WHERE subtopic = ?
+'''
+
+select_note_privacy = '''
+    SELECT private
+    FROM note
+    WHERE subtopic = ?
+'''
+
+# probably ok to delete
+select_private_note = '''
+    SELECT private
+    FROM note
+    JOIN findings_notes 
+        ON note.note_id = findings_notes.note_id
+    WHERE note.subtopic = ?
+    AND finding_id = ? 
 '''
 
 select_notes_refresh = '''
@@ -858,19 +900,6 @@ select_notes_refresh = '''
     JOIN findings_notes 
         ON note.note_id = findings_notes.note_id 
     WHERE finding_id = ?
-'''
-
-select_default_formats = '''
-    SELECT 
-        default_bg,
-        default_highlight_bg,
-        default_head_bg, 
-        default_fg,
-        default_output_font,
-        default_input_font, 
-        default_font_size            
-    FROM default_format
-    WHERE default_format_id = 1
 '''
 
 select_opening_settings = '''
@@ -1008,15 +1037,6 @@ select_places_places_id = '''
         AND (place_id2 = ? OR place_id2 is null)
 '''
 
-select_private_note = '''
-    SELECT private
-    FROM note
-    JOIN findings_notes 
-        ON note.note_id = findings_notes.note_id
-    WHERE note.subtopic = ?
-    AND finding_id = ? 
-'''
-
 select_related_places = '''
     SELECT nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8
     FROM nested_places
@@ -1134,11 +1154,18 @@ update_finding_places_null = '''
     WHERE finding_id = ?    
 '''
 
+# this one is probably not being used anymore
 update_findings_notes = '''
     UPDATE findings_notes 
     SET order_subtopic = ? 
     WHERE finding_id = ?
         AND note_id = ? 
+'''
+
+update_findings_notes_order = '''
+    UPDATE findings_notes
+    SET order_subtopic = ?
+    WHERE findings_notes_id = ?
 '''
 
 update_findings_persons_1 = '''
@@ -1240,6 +1267,19 @@ update_note = '''
     WHERE subtopic = ?            
 '''
 
+update_note_edit = '''
+    UPDATE note 
+    SET notes = ?
+    WHERE subtopic = ?
+'''
+
+update_note_privacy = '''
+    UPDATE note
+    SET private = ?
+    WHERE subtopic = ?
+'''
+
+# this is probably not being used anymore
 update_note_private = '''
     UPDATE note 
     SET private = ? 
@@ -1250,6 +1290,12 @@ update_note_subtopic = '''
     UPDATE note 
     SET subtopic = ? 
     WHERE note_id = ? 
+'''
+
+update_note_topic = '''
+    UPDATE note
+    SET subtopic = ?
+    WHERE subtopic = ?
 '''
 
 update_place_hint = '''

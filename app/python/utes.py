@@ -19,22 +19,22 @@ def titlize(stg):
 
 # CENTERING
 
-def center_window(win):
-    '''
-    Code by Honest Abe at StackOverflow.
-    Centers a window in the screen taking account of non-tk elements.
-    Doesn't currently work with resize_window() and/or resize_scrollbar().
-    '''
-    win.update_idletasks()
-    width = win.winfo_reqwidth()
-    frm_width = win.winfo_rootx() - win.winfo_x()
-    win_width = width + 2 * frm_width
-    height = win.winfo_reqheight()
-    titlebar_height = win.winfo_rooty() - win.winfo_y()
-    win_height = height + titlebar_height + frm_width
-    x = win.winfo_screenwidth() // 2 - win_width // 2
-    y = win.winfo_screenheight() // 2 - win_height // 2
-    win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
+# def center_window(win):
+    # '''
+    # Code by Honest Abe at StackOverflow.
+    # Centers a window in the screen taking account of non-tk elements.
+    # Doesn't currently work with resize_window() and/or resize_scrollbar().
+    # '''
+    # win.update_idletasks()
+    # width = win.winfo_reqwidth()
+    # frm_width = win.winfo_rootx() - win.winfo_x()
+    # win_width = width + 2 * frm_width
+    # height = win.winfo_reqheight()
+    # titlebar_height = win.winfo_rooty() - win.winfo_y()
+    # win_height = height + titlebar_height + frm_width
+    # x = win.winfo_screenwidth() // 2 - win_width // 2
+    # y = win.winfo_screenheight() // 2 - win_height // 2
+    # win.geometry('{}x{}+{}+{}'.format(width, height, x, y))
 
 def center_dialog(dlg, frame=None):
 
@@ -50,8 +50,25 @@ def center_dialog(dlg, frame=None):
         win_height = dlg.winfo_reqheight()
         right_pos = int(dlg.winfo_screenwidth()/2 - win_width/2)
         down_pos = int(dlg.winfo_screenheight()/2 - win_height/2)
+    print("line", looky(seeline()).lineno, "right_pos, down_pos:", right_pos, down_pos)
+    dlg.geometry("+{}+{}".format(right_pos, down_pos))
 
-    return right_pos, down_pos 
+# def center_dialog(dlg, frame=None):
+
+    # if frame:
+        # dlg.update_idletasks()
+        # win_width = frame.winfo_reqwidth()
+        # win_height = frame.winfo_reqheight()
+        # right_pos = int(dlg.winfo_screenwidth()/2 - win_width/2)
+        # down_pos = int(dlg.winfo_screenheight()/2 - win_height/2)
+    # else:
+        # dlg.update_idletasks()
+        # win_width = dlg.winfo_reqwidth()
+        # win_height = dlg.winfo_reqheight()
+        # right_pos = int(dlg.winfo_screenwidth()/2 - win_width/2)
+        # down_pos = int(dlg.winfo_screenheight()/2 - win_height/2)
+    # print("line", looky(seeline()).lineno, "right_pos, down_pos:", right_pos, down_pos)
+    # return right_pos, down_pos 
 
 #   -   -   -   see widgets.py for statusbar tooltips   -   -   -   #
 
@@ -119,3 +136,40 @@ def create_tooltip(widget, text):
 # make a canvas scroll with mousewheel
 def scroll_on_mousewheel(evt, canvas):
     canvas.yview_scroll(int(-1*(evt.delta/120)), 'units')
+
+# Tkinter keysyms for keys that actually type a character with len(keysym) > 1:
+
+OK_PRINT_KEYS = (
+    "space",
+    "parenleft",
+    "parenright",
+    "underscore",
+    "minus",
+    "asterisk",
+    "slash",
+    "period",
+    "comma",
+    "equal",
+    "plus",
+    "ampersand",
+    "asciicircum",
+    "percent",
+    "dollar",
+    "numbersign",
+    "at",
+    "exclam",
+    "asciitilde",
+    "quoteleft",
+    "bar",
+    "backslash",
+    "less",
+    "greater",
+    "colon",
+    "semicolon",
+    "quotedbl",
+    "quoteright",
+    "bracketleft",
+    "braceleft",
+    "bracketright",
+    "braceright",
+)

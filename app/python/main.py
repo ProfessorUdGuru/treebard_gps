@@ -33,11 +33,12 @@ from dev_tools import looky, seeline
 MAIN_TABS = (
     ("person", "P"), ("attributes", "B"), ("places", "L"), ("sources", "S"), 
     ("names", "N"), ("reports", "R"), ("charts", "A"), ("projects", "J"), 
-    ("graphics", "G"), ("types", "T"), ("preferences", "E"))
+    ("graphics", "G"), ("links", "K"), ("types", "T"), ("preferences", "E"))
 
 RIGHT_PANEL_TABS = (("images", "I"), ("do list", "O"))
 
-PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"), ("images", "M"))
+PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"), 
+    ("images", "M"))
 
 # ICONS = (
     # 'open', 'cut', 'copy', 'paste', 'print', 'home', 'first', 

@@ -479,6 +479,9 @@ class Dialogue(Toplevel):
         self.update_idletasks()    
         width = self.window.winfo_reqwidth() + 6
         height = self.window.winfo_reqheight() + 42
+        # this needs to be fixed since I removed the return value from 
+        #   center_dialog() and made it self-contained by running geometry()
+        #   inside the function
         dlg_pos = center_dialog(self)
         self.geometry('{}x{}+{}+{}'.format(
             width,
