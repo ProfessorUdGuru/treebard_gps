@@ -18,7 +18,7 @@ from images import get_all_pics
 from query_strings import (
     select_current_person, select_name_with_id, select_all_names_ids,
     select_all_person_ids, select_image_id, select_max_person_id,    
-    insert_images_entities, select_name_type_id, insert_name, 
+    insert_images_elements, select_name_type_id, insert_name, 
     select_all_images, select_all_name_types, insert_person_new,
     select_person_gender, select_max_name_type_id, insert_name_type_new,
     insert_image_new, select_name_with_id_any, select_birth_names_ids)
@@ -509,7 +509,7 @@ class PersonAdd(Toplevel):
             (self.new_person_id, self.full_name, self.name_type_id, self.order))
         conn.commit()
 
-        cur.execute(insert_images_entities, (self.img_id, self.new_person_id))
+        cur.execute(insert_images_elements, (self.img_id, self.new_person_id))
         conn.commit()
 
         new_name_string = "{}  #{}".format(self.full_name, self.new_person_id)

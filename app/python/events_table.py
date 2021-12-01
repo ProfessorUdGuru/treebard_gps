@@ -623,7 +623,6 @@ class EventsTable(Frame):
             cur.execute(update_finding_date, (self.final, sorter, self.finding))
             conn.commit()
             formatted_date = format_stored_date(self.final, date_prefs)
-            # formatted_date = format_stored_date(self.final)
             widg.delete(0, 'end')
             widg.insert(0, formatted_date)
             for instance in EventsTable.instances:
@@ -1946,7 +1945,6 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# recently I had to add a bunch of values together to get utes.center_dialog() to work, look into it since I changed the function to be self-contained (no more having to return values and then having to remember to call geometry() with those values), and look for center_dialog() everywhere and also look for center_window() and replace it since it takes into account the window title bar stuff which is now irrelevant
 # add statustips and rcm to every dialog. tooltip in attributes table says that adding a date will move the attrib to evts table
 # dates < 100 shd be suffixed AD or BC
 # re: date error it seems like when I click ok it's deleting a row from the table?
@@ -1963,8 +1961,9 @@ if __name__ == '__main__':
 # INSTEAD OF MAKING kintips for event column only to say child, spouse name not parents bec we have only 2 parents and it's redundant info (on the same page) but since there can be more than one spouse or child, it is important to make kintips for event rows re: child or spouse only DO THIS INSTEAD: since it's still redundant info, with the same info in a table up top (not even started), just highlight the spouse or child in the top table as the mouse hovers over them. Don't make it like gbx. The spouse should be WITH the relevant children and both families in the case of 2 spouses shd be visible at the same time with the 2 spouses also visible at the same time. ALSO if the highlighted row is not visible on the screen, it appears as a tooltip instead so user can always see it.
 
 # BRANCH: names_images
+# change images_entities to images_elements and find all code that needs to be updated
 # redo names tab so it's not about making new person
-# in save_new_name() in names.py, how to indicate whether the image is supposed to be main_image (1) vs (0) which is now the default in the insert query to images_entities; if already a main_image it has to be changed to 0 programmatically
+# in save_new_name() in names.py, how to indicate whether the image is supposed to be main_image (1) vs (0) which is now the default in the insert query to images_elements; if already a main_image it has to be changed to 0 programmatically
 # don't let a default image be entered (see NEW PERSON DLG) if a non-default image already exists for that person; if the person already has a default image, it can be changed to a different default image, a real image, or to no image; think of other cases to handle
 # If user selects his own photo as default, prepend "default_image_" to user's file name.
 # If no main_image has been input to db, tbard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. tbard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
@@ -1997,13 +1996,13 @@ if __name__ == '__main__':
 # add tooltips/status bar messages
 # get rid of ttk combobox in new person dialog 
 # incorporate config_generic all dialogs
-# replace windows border on all dialogs see new event dialog for example
-# notes dialog:
-# get all error messages from messages.py
 # rc_menu--need access to the referenced widgets but they're made inside of functions.
 # add statusbar messages
 
+# put unworlding.com back online, edit all
 
+# BRANCH: links
+# make the ADD LINKS diaog in notes.py do something. Start with person (link current note to other people), then do place (link current note to a places_places_id), then an event. Make sure the note actually shows up at least for the event which has an interface for showing what notes are linked to what events. When that works, add ADD LINKS functionality to the Links Tab for the other stuff in links_links db table.
 
 
 # ADD TO MAIN DO LIST FOR: 

@@ -471,7 +471,7 @@ class Dialogue(Toplevel):
         self.window = Frame(self.canvas)
         self.canvas.create_window(0, 0, anchor='nw', window=self.window)
 
-    def resize_window(self, lab):
+    def resize_window(self):
         '''
             Added to requested width and height are allowances for widgets not
             in self.window e.g. borders, statusbar.
@@ -479,15 +479,8 @@ class Dialogue(Toplevel):
         self.update_idletasks()    
         width = self.window.winfo_reqwidth() + 6
         height = self.window.winfo_reqheight() + 42
-        # this needs to be fixed since I removed the return value from 
-        #   center_dialog() and made it self-contained by running geometry()
-        #   inside the function
-        dlg_pos = center_dialog(self)
-        self.geometry('{}x{}+{}+{}'.format(
-            width,
-            height,
-            dlg_pos[0], 
-            dlg_pos[1]))
+        self.geometry("{}x{}".format(width, height))
+        center_dialog(self)
         self.deiconify()
 
 

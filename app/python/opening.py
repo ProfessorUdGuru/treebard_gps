@@ -51,12 +51,15 @@ class SplashScreen(Toplevel):
         splash_canvas.create_image(width*0.33/2, height*0.33/2, image=tk_img)
         splash_canvas.pack()
 
-        dlg_pos = center_dialog(self)
-        self.geometry('{}x{}+{}+{}'.format(
-            str(int(width * 0.33)), 
-            str(int(height * 0.33)), 
-            dlg_pos[0], 
-            dlg_pos[1]))
+        center_dialog(self)
+
+
+        # dlg_pos = center_dialog(self)
+        # self.geometry('{}x{}+{}+{}'.format(
+            # str(int(width * 0.33)), 
+            # str(int(height * 0.33)), 
+            # dlg_pos[0], 
+            # dlg_pos[1]))
 
         self.after(1000, self.destroy)
         self.master.wait_window(self)
@@ -229,9 +232,10 @@ class SplashScreen(Toplevel):
         self.canvas.config(
             width=self.picwidth + 2, height=self.picheight + bd_ht + frm_ht)
         self.picbutton.config(width=self.picwidth)
-        dlg_pos = center_dialog(self.opening_dialog, frame=self.measure)
-        self.opening_dialog.geometry(
-            "+{}+{}".format(dlg_pos[0], int(dlg_pos[1] - (self.picheight / 2))))
+        center_dialog(self.opening_dialog, frame=self.window)
+        # center_dialog(self.opening_dialog, frame=self.measure)
+        # self.opening_dialog.geometry(
+            # "+{}+{}".format(dlg_pos[0], int(dlg_pos[1] - (self.picheight / 2))))
 
     def select_opening_image(self):
         conn = sqlite3.connect(global_db_path)

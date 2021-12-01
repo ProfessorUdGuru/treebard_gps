@@ -406,8 +406,12 @@ names_msg = (
 
 notes_msg = (
     "Any note can be linked to any number of entities.",
-    "The current note can be linked to any number of elements "
-        "such as persons, places, assertions, conclusions, or sources.",
+    "The current note can be linked to any number of other elements "
+        "inclucing persons, places, assertions, conclusions, citations, "
+        "names, sources, projects, do list items, contacts, images, etc. "
+        "For each link, select an element type, then fill in the name of the "
+        "element. Pressing OK will save the link input, leaving the dialog "
+        "open for further link inputs till DONE is pressed.",
     "Type a unique subtopic name for the new note.",
     "Each subtopic can be used once in a tree.",
     "Blank notes are OK but not blank note titles.",

@@ -550,11 +550,7 @@ class ValidatePlace():
                     conn.commit()
             q += 1
 
-
-
         place_strings = make_all_nestings(select_all_place_ids)
-
-
 
         cur.execute(update_finding_places, tuple(ids))
         conn.commit()   

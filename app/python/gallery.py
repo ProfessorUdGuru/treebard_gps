@@ -16,8 +16,8 @@ from names import get_current_person
 from query_strings import (
     select_all_place_images, select_all_source_images, 
     select_all_person_images, select_current_person_id, 
-    select_current_person_image, update_images_entities_zero,
-    update_images_entities_one
+    select_current_person_image, update_images_elements_zero,
+    update_images_elements_one
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -539,9 +539,9 @@ class Gallery(Frame):
         curr_per = curr_per
         cur.execute(select_current_person_image, curr_per)
         old_top_pic = cur.fetchone()
-        cur.execute(update_images_entities_zero, curr_per)
+        cur.execute(update_images_elements_zero, curr_per)
         conn.commit()
-        cur.execute(update_images_entities_one, radio_value)
+        cur.execute(update_images_elements_one, radio_value)
 
         conn.commit()
         cur.close()

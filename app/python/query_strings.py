@@ -31,12 +31,6 @@ delete_finding_places = '''
     DELETE FROM finding_places
     WHERE finding_id = ?
 '''
-# this query probably not used anymore
-delete_findings_notes = '''
-    DELETE FROM findings_notes
-    WHERE note_id = ? 
-    AND finding_id = ?
-'''
 
 delete_findings_notes_linked = '''
     DELETE FROM findings_notes
@@ -66,16 +60,6 @@ delete_findings_roles_finding = '''
 delete_findings_role = '''
     DELETE FROM findings_roles 
     WHERE findings_roles_id = ?
-'''
-# this is probably not used anymore
-delete_note = '''
-    DELETE FROM note
-    WHERE note_id = ? 
-'''
-
-delete_note_topic = '''
-    DELETE FROM note
-    WHERE subtopic = ?
 '''
 
 insert_color_scheme = '''
@@ -115,12 +99,6 @@ insert_finding_places_new_event = '''
     VALUES ({})
 '''.format(','.join(['?'] * 10))
 
-# this might not be used anymore
-insert_findings_notes = '''
-    INSERT INTO findings_notes 
-    VALUES (null, ?, ?, ?)
-'''
-
 insert_findings_notes_new = '''
     INSERT INTO findings_notes 
     VALUES (null, ?, ?, 0)
@@ -143,8 +121,8 @@ insert_image_new = '''
     VALUES (null, ?, '')
 '''
 
-insert_images_entities = '''
-    INSERT INTO images_entities (image_id, main_image, person_id) 
+insert_images_elements = '''
+    INSERT INTO images_elements (image_id, main_image, person_id) 
     VALUES (?, 0, ?) 
 '''
 
@@ -195,16 +173,6 @@ select_all_color_schemes_plus = '''
     SELECT bg, highlight_bg, head_bg, fg, built_in, color_scheme_id 
     FROM color_scheme
 '''
-
-# select_all_color_schemes = '''
-    # SELECT bg, highlight_bg, head_bg, fg 
-    # FROM default_color_scheme
-# '''
-
-# select_all_color_schemes_plus = '''
-    # SELECT bg, highlight_bg, head_bg, fg, built_in, color_scheme_id 
-    # FROM default_color_scheme
-# '''
 
 select_all_event_types = '''
     SELECT event_types
@@ -294,12 +262,12 @@ select_all_person_ids = '''
 
 select_all_person_images = '''
     SELECT DISTINCT images, caption, main_image
-    FROM images_entities
+    FROM images_elements
         JOIN person
-            ON images_entities.person_id = person.person_id
+            ON images_elements.person_id = person.person_id
         JOIN image
-            ON image.image_id = images_entities.image_id 
-    WHERE images_entities.person_id = ?
+            ON image.image_id = images_elements.image_id 
+    WHERE images_elements.person_id = ?
 '''
 
 select_all_place_ids = '''
@@ -309,13 +277,13 @@ select_all_place_ids = '''
 
 select_all_place_images = '''
     SELECT images, caption, main_image, places
-    FROM images_entities
+    FROM images_elements
         JOIN place
-            ON images_entities.place_id = place.place_id 
+            ON images_elements.place_id = place.place_id 
         JOIN current
             ON current.place_id = place.place_id
         JOIN image
-            ON image.image_id = images_entities.image_id 
+            ON image.image_id = images_elements.image_id 
 '''
 
 select_all_places = '''
@@ -330,15 +298,15 @@ select_all_places_places = '''
 
 select_all_source_images = '''
     SELECT images, caption, main_image, sources, citations
-    FROM images_entities
+    FROM images_elements
         JOIN source
             ON citation.source_id = source.source_id
         JOIN citation
-            ON images_entities.citation_id = citation.citation_id
+            ON images_elements.citation_id = citation.citation_id
         JOIN current
             ON current.citation_id = citation.citation_id
         JOIN image
-            ON image.image_id = images_entities.image_id 
+            ON image.image_id = images_elements.image_id 
 '''
 
 select_closing_state_openpic = '''
@@ -365,18 +333,6 @@ select_count_finding_id_sources = '''
         WHERE finding_id = ?
 '''
 
-select_count_findings_notes_note_id = '''
-    SELECT COUNT (findings_notes_id) 
-    FROM findings_notes
-    WHERE note_id = ?
-'''
-
-select_count_findings_notes_finding_id = '''
-    SELECT COUNT (findings_notes_id)
-    FROM findings_notes
-    WHERE finding_id = ?
-'''
-
 select_count_findings_roles = '''
     SELECT COUNT (findings_roles_id)
     FROM findings_roles
@@ -392,12 +348,6 @@ select_count_places = '''
 select_count_place_id = '''
     SELECT COUNT (place_id) 
     FROM place WHERE place_id = ?
-'''
-
-select_count_subtopic = '''
-    SELECT COUNT (subtopic)
-    FROM note
-    WHERE subtopic = ?
 '''
 
 select_couple_event_ids = '''
@@ -439,10 +389,10 @@ select_current_person_id = '''
 select_current_person_image = '''
     SELECT images 
     FROM image 
-        JOIN images_entities 
-            ON image.image_id = images_entities.image_id 
+        JOIN images_elements 
+            ON image.image_id = images_elements.image_id 
     WHERE main_image = 1 
-        AND images_entities.person_id = ?
+        AND images_elements.person_id = ?
 '''
 
 select_closing_state_prior_tree = '''
@@ -633,7 +583,7 @@ select_findings_for_person = '''
 '''
 
 select_findings_notes_order = '''
-    SELECT order_subtopic, findings_notes_id
+    SELECT topic_order, findings_notes_id
     FROM findings_notes
     WHERE finding_id = ?
 '''
@@ -738,15 +688,15 @@ select_image_id = '''
     SELECT image_id FROM image WHERE images = ?
 '''
 
-select_images_entities_main_image = '''
+select_images_elements_main_image = '''
     SELECT images
-    FROM images_entities
+    FROM images_elements
         JOIN person
-            ON images_entities.person_id = person.person_id 
+            ON images_elements.person_id = person.person_id 
         JOIN image
-            ON image.image_id = images_entities.image_id 
-    WHERE images_entities.main_image = 1
-        AND images_entities.person_id = ?
+            ON image.image_id = images_elements.image_id 
+    WHERE images_elements.main_image = 1
+        AND images_elements.person_id = ?
 '''
 
 select_kin_type_string = '''
@@ -855,51 +805,29 @@ select_notes_linked = '''
     FROM findings_notes
     JOIN note
         ON note.note_id = findings_notes.note_id
-    WHERE subtopic = ?
+    WHERE topic = ?
         AND finding_id = ?
 '''
 
 select_notes_per_finding = '''
-    SELECT subtopic, notes
+    SELECT topic, notes
     FROM note 
     JOIN findings_notes
         ON findings_notes.note_id = note.note_id
     WHERE finding_id = ?
-    ORDER BY order_subtopic
+    ORDER BY topic_order
 '''
 
 select_note_id = '''
     SELECT note_id
     FROM note
-    WHERE subtopic = ?
+    WHERE topic = ?
 '''
 
 select_note_privacy = '''
     SELECT private
     FROM note
-    WHERE subtopic = ?
-'''
-
-# probably ok to delete
-select_private_note = '''
-    SELECT private
-    FROM note
-    JOIN findings_notes 
-        ON note.note_id = findings_notes.note_id
-    WHERE note.subtopic = ?
-    AND finding_id = ? 
-'''
-
-select_notes_refresh = '''
-    SELECT 
-        findings_notes.note_id, 
-        subtopic, 
-        notes, 
-        order_subtopic 
-    FROM note 
-    JOIN findings_notes 
-        ON note.note_id = findings_notes.note_id 
-    WHERE finding_id = ?
+    WHERE topic = ?
 '''
 
 select_opening_settings = '''
@@ -1154,7 +1082,6 @@ update_finding_places_null = '''
     WHERE finding_id = ?    
 '''
 
-# this one is probably not being used anymore
 update_findings_notes = '''
     UPDATE findings_notes 
     SET order_subtopic = ? 
@@ -1164,7 +1091,7 @@ update_findings_notes = '''
 
 update_findings_notes_order = '''
     UPDATE findings_notes
-    SET order_subtopic = ?
+    SET topic_order = ?
     WHERE findings_notes_id = ?
 '''
 
@@ -1237,15 +1164,15 @@ update_format_font = '''
     WHERE format_id = 1
 '''
 
-update_images_entities_zero = '''
-    UPDATE images_entities 
+update_images_elements_zero = '''
+    UPDATE images_elements 
     SET main_image = 0 
     WHERE main_image = 1 
-        AND images_entities.person_id = ?
+        AND images_elements.person_id = ?
 '''
 
-update_images_entities_one = '''
-    UPDATE images_entities 
+update_images_elements_one = '''
+    UPDATE images_elements 
     SET main_image = 1
     WHERE image_id = (
         SELECT image_id 
@@ -1261,41 +1188,22 @@ update_kin_type_kin_code = '''
     WHERE kin_type_id = ?
 '''
 
-update_note = '''
-    UPDATE note
-    SET notes = ?
-    WHERE subtopic = ?            
-'''
-
 update_note_edit = '''
     UPDATE note 
     SET notes = ?
-    WHERE subtopic = ?
+    WHERE topic = ?
 '''
 
 update_note_privacy = '''
     UPDATE note
     SET private = ?
-    WHERE subtopic = ?
-'''
-
-# this is probably not being used anymore
-update_note_private = '''
-    UPDATE note 
-    SET private = ? 
-    WHERE note_id = ? 
-'''
-
-update_note_subtopic = '''
-    UPDATE note 
-    SET subtopic = ? 
-    WHERE note_id = ? 
+    WHERE topic = ?
 '''
 
 update_note_topic = '''
     UPDATE note
-    SET subtopic = ?
-    WHERE subtopic = ?
+    SET topic = ?
+    WHERE topic = ?
 '''
 
 update_place_hint = '''

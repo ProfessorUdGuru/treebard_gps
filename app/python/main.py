@@ -20,7 +20,7 @@ from names import (
     open_new_person_dialog, get_any_name_with_id)
 from search import PersonSearch
 from query_strings import (
-    select_images_entities_main_image, select_current_person_id)
+    select_images_elements_main_image, select_current_person_id)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -33,7 +33,8 @@ from dev_tools import looky, seeline
 MAIN_TABS = (
     ("person", "P"), ("attributes", "B"), ("places", "L"), ("sources", "S"), 
     ("names", "N"), ("reports", "R"), ("charts", "A"), ("projects", "J"), 
-    ("graphics", "G"), ("links", "K"), ("types", "T"), ("preferences", "E"))
+    ("graphics", "G"), ("links", "K"), ("search", "H"), ("types", "T"), 
+    ("preferences", "E"))
 
 RIGHT_PANEL_TABS = (("images", "I"), ("do list", "O"))
 
@@ -344,7 +345,7 @@ class Main(Frame):
         if current_person is None:
             cur.execute(select_current_person_id)
             current_person = cur.fetchone()[0]
-        cur.execute(select_images_entities_main_image, (current_person,))        
+        cur.execute(select_images_elements_main_image, (current_person,))        
         top_pic = cur.fetchone()
         cur.close()
         conn.close()

@@ -106,8 +106,7 @@ from dev_tools import looky, seeline
         8       8       8   8   27          8           8       8   8   27
 '''
 
-# current_file = get_current_file()[0]
-# print("line", looky(seeline()).lineno, "current_file:", current_file)
+
 
 class ManyManyRecursiveQuery():
     '''
