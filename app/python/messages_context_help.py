@@ -1,4 +1,4 @@
-# message_strings.py (import as ms)
+# messages_context_help.py
 
 from widgets import LabelH3
 import dev_tools as dt
@@ -10,7 +10,7 @@ import dev_tools as dt
 
 # Custom messages used in one place:
 
-# rcm_widgets = ( # in DatePrefsWidgets class in root module
+# rcm_widgets = (
     # self.test1, 
     # self.tester_widgets['Date Input I'], 
     # self.tester_widgets['Date Input II'],
@@ -27,7 +27,7 @@ import dev_tools as dt
     # dates.date_pref_combos['Between...And...'], 
     # self.submit, 
     # self.revert)
-dates_prefs_msg = (
+date_prefs_help_msg = (
     ('The Date Entry Demo section at the top of the Date Preferences '
     'tab allows you to test various ways of inputting and displaying '
     'dates. Nothing you enter here will affect your tree, but the '
@@ -235,7 +235,7 @@ dates_prefs_msg = (
     'religious traditions and political correctness, Treebard\'s '
     'default epoch markers are "CE" for "current era" and "BCE" '
     'for "before current era". The dividing line is still the same: '
-    'the year that the Christian church traditionally holds as the '
+    'the year that the Christian religion traditionally holds as the '
     'birth year of Jesus.', 
     'Epoch Date Suffix'),
 
@@ -320,27 +320,26 @@ dates_prefs_msg = (
     'to user-wide defaults will have equal effect in both trees.', 
     'Revert Button'))
 
-# rcm_widgets = (self.subtopic_input.ent, self.note_input.text) # in notes.py
-note_dlg_msg = (
-    ('Type the name of a subtopic i.e. title for this note as a subcategory of this event. For example, if the event was a wedding, there could be notes with subtitles such as "Uncle Buck--Incident at Reception", "Change of Venue at Last Minute" and "Ringbearer Got Lost"', 'Event Note Subtopic'),
-    ('Type or paste text of any length. The Particulars column in the events table can hold one very short note, and notes field can be used for more detail. On the events table, in the row pertaining to a given event, the button in the Notes column will read \'...\' if any notes exist for that event. Clicking a blank button will open the notes dialog anyway so the first note(s) can be created. All notes need a subtitle. This is part of the feature which allows any note to be linked to more than one entity so that duplication of notes is not necessary. The left panel is a table of contents listing note subtitles linked to this event or other entity. Clicking a subtitle in the left panel of the notes dialog opens that note for reading or editing. There\'s a dialog you can open to reorder the note subtitles as they appear in the left panel. Above the left panel you can tell a new note where to appear, either above or below the note you\'ve selected in the left panel.', 'Event Note Input'))
+# rcm_widgets = (
+    # self.note_header, self.note.text, self.toc_head, self.linker, radframe, 
+    # self.order)
+notes_dlg_help_msg = (
+    ('Type the name of a topic i.e. title for this note as a subcategory of this event. For example, if the event was a wedding, there could be notes with topics such as "Uncle Buck--Incident at Reception", "Change of Venue at Last Minute" and "Ringbearer Got Lost"', 'Event Note Topic'),
+    ('Type or paste text of any length. The Particulars column in the events table can hold one short note, whereas this notes field can be used for any amount of detail. On the events table, in the row pertaining to a given event, the button in the Notes column will read \'...\' if any notes exist for that event. Clicking a blank button will open the notes dialog so the first note(s) can be created. All notes need a topic. This is part of the feature which allows any note to be linked to more than one entity so that copy/pasting and duplicate storing of notes is unnecessary. The left panel is a table of contents listing note topics linked to this event or other entity. Clicking a topic in the left panel of the notes dialog opens that note for reading or editing. There\'s a dialog you can open to reorder the note topics as they appear in the left panel. Above the left panel you can tell a new note where to appear, either above or below the note you\'ve selected in the left panel.', 'Note Input'),
+    ("Lorem ipsum",
+    "title"),
+    ("Lorem ipsum",
+    "title"),
+    ("Lorem ipsum",
+    "title"),
+    ("Lorem ipsum",
+    "title"),
+)
 
-# rcm_widgets = (self,) # in pedigree_chart.py
-pedigree_person_tab_msg = (
-    ('Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-    'Cras ac arcu quis justo maximus ultrices ac dignissim risus. '
-    'In vitae facilisis nisl, eu pretium magna. Cras eros lacus, '
-    'elementum nec odio vitae, dignissim vulputate diam. '
-    'Pellentesque eget nulla semper, rhoncus leo tristique, '
-    'hendrerit ligula. Vestibulum feugiat mattis aliquet. Nunc et '
-    'diam sed quam aliquam elementum sit amet ac dui. Aliquam '
-    'convallis mi nec elit rutrum luctus. Vestibulum sed erat '
-    'vitae est faucibus ullamcorper. Curabitur lacinia non arcu '
-    'vitae varius.', 
-    'title 1'),)
-
-# rcm_widgets = (self.name_input.input, self.name_type_input.input) # in root module
-person_add_msg = (
+# rcm_widgets = (self.name_input, self.name_type_input, 
+        # self.gender_input.entry, self.image_input.entry, 
+        # self.name_type_input.entry, autosort, self.order_frm)
+person_add_help_msg = (
     ('Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
     'Cras ac arcu quis justo maximus ultrices ac dignissim risus. '
     'In vitae facilisis nisl, eu pretium magna. Cras eros lacus, '
@@ -367,10 +366,7 @@ person_add_msg = (
     'consectetur adipiscing elit. Integer vel tellus nec '
     'orci finibus ornare. Praesent pellentesque aliquet augue, '
     'nec feugiat augue posuere a.', 
-    'title 2'))
-
-# rcm_widgets = (self.top_pic_button,) # in root module
-persons_tab_msg = (
+    'title 2'),
     ('Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
     'Cras ac arcu quis justo maximus ultrices ac dignissim risus. '
     'In vitae facilisis nisl, eu pretium magna. Cras eros lacus, '
@@ -381,12 +377,163 @@ persons_tab_msg = (
     'convallis mi nec elit rutrum luctus. Vestibulum sed erat '
     'vitae est faucibus ullamcorper. Curabitur lacinia non arcu '
     'vitae varius.', 
-    'Main Image for Current Person'),)
+    'title 1'),
+    ('Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+    'Cras ac arcu quis justo maximus ultrices ac dignissim risus. '
+    'In vitae facilisis nisl, eu pretium magna. Cras eros lacus, '
+    'elementum nec odio vitae, dignissim vulputate diam. '
+    'Pellentesque eget nulla semper, rhoncus leo tristique, '
+    'hendrerit ligula. Vestibulum feugiat mattis aliquet. Nunc et '
+    'diam sed quam aliquam elementum sit amet ac dui. Aliquam '
+    'convallis mi nec elit rutrum luctus. Vestibulum sed erat '
+    'vitae est faucibus ullamcorper. Curabitur lacinia non arcu '
+    'vitae varius.', 
+    'title 1'),
+    ('Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+    'Cras ac arcu quis justo maximus ultrices ac dignissim risus. '
+    'In vitae facilisis nisl, eu pretium magna. Cras eros lacus, '
+    'elementum nec odio vitae, dignissim vulputate diam. '
+    'Pellentesque eget nulla semper, rhoncus leo tristique, '
+    'hendrerit ligula. Vestibulum feugiat mattis aliquet. Nunc et '
+    'diam sed quam aliquam elementum sit amet ac dui. Aliquam '
+    'convallis mi nec elit rutrum luctus. Vestibulum sed erat '
+    'vitae est faucibus ullamcorper. Curabitur lacinia non arcu '
+    'vitae varius.', 
+    'title 1'),
+    ('Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+    'Cras ac arcu quis justo maximus ultrices ac dignissim risus. '
+    'In vitae facilisis nisl, eu pretium magna. Cras eros lacus, '
+    'elementum nec odio vitae, dignissim vulputate diam. '
+    'Pellentesque eget nulla semper, rhoncus leo tristique, '
+    'hendrerit ligula. Vestibulum feugiat mattis aliquet. Nunc et '
+    'diam sed quam aliquam elementum sit amet ac dui. Aliquam '
+    'convallis mi nec elit rutrum luctus. Vestibulum sed erat '
+    'vitae est faucibus ullamcorper. Curabitur lacinia non arcu '
+    'vitae varius.', 
+    'title 1'),
+    ('Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
+    'Cras ac arcu quis justo maximus ultrices ac dignissim risus. '
+    'In vitae facilisis nisl, eu pretium magna. Cras eros lacus, '
+    'elementum nec odio vitae, dignissim vulputate diam. '
+    'Pellentesque eget nulla semper, rhoncus leo tristique, '
+    'hendrerit ligula. Vestibulum feugiat mattis aliquet. Nunc et '
+    'diam sed quam aliquam elementum sit amet ac dui. Aliquam '
+    'convallis mi nec elit rutrum luctus. Vestibulum sed erat '
+    'vitae est faucibus ullamcorper. Curabitur lacinia non arcu '
+    'vitae varius.', 
+    'title 1'))
+
+# rcm_widgets = (
+    # self.person_entry, person_change, person_search, 
+    # self.top_pic_button, self.findings_table.event_input, 
+    # self.findings_table.add_event_button, self.att.event_input, 
+    # self.att.add_event_button, self.fontpicker.output_sample, 
+    # self.fontpicker.font_size, self.fontpicker.cbo.entry, 
+    # self.fontpicker.apply_button, colorizer.colors_content, 
+    # colorizer.try_button, colorizer.copy_button, 
+    # colorizer.apply_button, colorizer.new_button, 
+    # colorizer.entries_combos[0], colorizer.entries_combos[1], 
+    # colorizer.entries_combos[2], colorizer.entries_combos[3], 
+    # colorizer.domain_tips[0], colorizer.domain_tips[1], 
+    # colorizer.domain_tips[2], colorizer.domain_tips[3], 
+    # self.findings_table.headers[0], self.findings_table.headers[1], 
+    # self.findings_table.headers[2], self.findings_table.headers[3], 
+    # self.findings_table.headers[4], self.findings_table.headers[5], 
+    # self.findings_table.headers[6], self.findings_table.headers[7], 
+    # self.att.headers[0], self.att.headers[1], self.att.headers[2], 
+    # self.att.headers[3], self.att.headers[4], self.att.headers[5], 
+    # self.att.headers[6], self.att.headers[7])
+	
+main_help_msg = (
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title")
+
+)
 
 # rcm_widgets = (
     # self.role_type_input, self.person_input, self.add_butt, 
-    # self.done_butt, self.close_butt) # in root module
-role_dlg_msg = (
+    # self.done_butt, self.close_butt, self.role_type_input.entry)
+roles_dlg_help_msg = (
     ('Type or select the role type for a new role. A role type can be anything you want. For example, at a wedding event there\'s a bride and groom who are primary participants in the event. Don\'t input them here. But many other roles exist such as bible bearer, ring bearer, flower girl, best man, religious official, usher, witness, candle-lighter, photographer or anything you want. In a document describing an event, many names might be mentioned that you might want to research further, or record in case they end up being related to the family or the family\'s story in some way. Role types can\'t be blank, but you can select \'other\' or \'unknown\'. For example, a group photo from a wedding has names listed on the back, but you don\'t know who some of the people are. Just input the names and select \'unknown\' role type. They\'ll be added to the database same as anyone else, so if the name pops up again, you won\'t have to go searching for it in notes. Built-in role types can\'t be deleted but they can be hidden in the Types Settings Tab in Preferences. Custom role types can be deleted or hidden.', 'New Role: Role Type Input'),
 
     ('For a role you don\'t always know the names of the people involved, but maybe you want to research it. You can enter roles with no names, or known names with \'other\' or \'unknown\' selected as the role type. You can create new people here. If you add a role with a new person, a dialog will open so you can specify the new person\'s name type such as birth name or nickname; gender if known; image if any; and preferred sort order for alphabetization. If you input a name that already exists in the database, another dialog will ask whether you intended to create a new person by the same name. This will help prevent duplicate persons which would have to be merged later if not caught when trying to input them. You can input as many John Smiths as you want, since each person entered has a unique ID in the database. Later if you find that two persons in the database are really the same person, the two can be merged so that your work doesn\'t have to be done over. If you know the name of someone who participated in an event but you don\'t know what role they played, you can still input the name and select \'other\' or \'unknown\' as the role type.', 'New Role: Person Input'),
@@ -398,10 +545,13 @@ role_dlg_msg = (
     'DONE Button'),
 
     ('Use the CLOSE button to close the roles dialog if you\'re not adding any more new roles. Even if you\'ve typed all or part of a new role, what you typed will be ignored. Roles you already entered will not be affected. They can be deleted or edited with the EDIT buttons in the roles table rows.', 
-    'CLOSE Button'))
+    'CLOSE Button'),
 
-# rcm_widgets = (self.search_input.ent, self.search_dlg_heading) # Search class in root module
-search_person_msg = (
+    ("Lorem ipsum",
+    "Role Type Input"))
+
+# rcm_widgets = (self.search_input, self.search_dlg_heading, self.search_table)
+search_person_help_msg = (
     ('This person search tool is especially helpful if you know only '
     'part of the name you\'re looking for. Also, if there\'s more than '
     'one person with an identical name, the other way to select a '
@@ -432,12 +582,134 @@ search_person_msg = (
     '"Nickname: Louie", along with any other names, ID numbers, '
     'nicknames, pseudonyms, married names, mis-spellings, and any '
     'other name information you\'ve entered for Fred Jenkins. ', 
-    'Person Search Table'))
+    'Person Search Table'), 
+
+    ("lorem ipsum", "title")
+)
+
+# rcm_widgets = (
+    # self.date_input, self.place_input, self.particulars_input, 
+    # self.age1_input)
+new_event_dlg_help_msg = (
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title")
+)
+
+# rcm_widgets = (
+    # self.radios["parent"], self.radios["sibling"], 
+    # self.radios["partner"], self.radios["child"])
+new_kin_type_dlg_help_msg = (
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title")
+)
+
+# rcm_widgets = (
+    # self.thumbstrip, self.pic_canvas, self.prevbutt, self.nextbutt, 
+    # self.b1)
+gallery_help_msg = (    
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title")
+)
+
+# rcm_widgets = (
+    # self.note_header, self.note.text, self.toc_head, self.linker, 
+    # radframe, self.order)
+notes_dlg_help_msg = (
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"))
+
+# rcm_widgets = (opener, new, importgedcom, opensample, cancel, self.picbutton)
+opening_dlg_help_msg = (
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title")
+)
+
+# rcm_widgets = (lab, rad, editx)
+places_dlg_help_msg = (
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title"),
+    ("lorem ipsum",
+        "title")
+)
+
+# rcm_widgets = ()
+links_dlg_msg = ()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # Messages used generically by all the widgets made in a loop:
 
 # roles dialog editx buttons in root module
-gen_edit_role_rows = (
+role_edit_help_msg = (
         'Clicking the Edit button will open a row of edit inputs. '
         'You can use them to delete a role or to change the role '
         'type or role person for the row you clicked. You can also '

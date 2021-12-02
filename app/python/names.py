@@ -12,7 +12,7 @@ from scrolling import MousewheelScrolling, Scrollbar, resize_scrolled_content
 from autofill import EntryAuto
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
-from message_strings import person_add_msg
+from messages_context_help import person_add_help_msg
 from messages import open_yes_no_message, names_msg
 from images import get_all_pics    
 from query_strings import (
@@ -325,11 +325,14 @@ class PersonAdd(Toplevel):
 
         self.preset()
 
-        rcm_widgets = (self.name_input, self.name_type_input)
+        rcm_widgets = (
+            self.name_input, self.name_type_input, self.gender_input.entry,
+            self.image_input.entry, self.name_type_input.entry, autosort, 
+            self.order_frm)
         make_rc_menus(
             rcm_widgets, 
             self.rc_menu, 
-            person_add_msg)
+            person_add_help_msg)
 
         config_generic(self)
         resize_scrolled_content(self, self.canvas, self.window)
@@ -489,7 +492,6 @@ class PersonAdd(Toplevel):
             "Unknown Name Type", 
             "OK", "CANCEL")
         msg[0].grab_set()
-        # msg[1].config(aspect=400)
         msg[2].config(command=ok_new_name_type)
         msg[3].config(command=cancel_new_name_type)
         msg[2].bind("<Button-1>", show_choice)
@@ -603,7 +605,6 @@ class PersonAdd(Toplevel):
                 "Duplicate Name in Tree", 
                 "OK", "CANCEL")
             msg[0].grab_set()
-            # msg[1].config(aspect=400)
             msg[2].config(command=ok_new_name)
             msg[3].config(command=cancel_new_name)
             if self.make_dupe is True:  

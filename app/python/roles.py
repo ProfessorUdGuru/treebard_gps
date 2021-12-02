@@ -10,7 +10,7 @@ from widgets import (
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
 from right_click_menu import RightClickMenu, make_rc_menus
-from message_strings import role_dlg_msg, gen_edit_role_rows
+from messages_context_help import roles_dlg_help_msg, role_edit_help_msg
 from styles import make_formats_dict, config_generic
 from names import (
     get_any_name_with_id, make_all_names_list_for_person_select, PersonAdd,
@@ -82,7 +82,7 @@ class RolesDialog(Toplevel):
         scridth = 16
         scridth_n = Frame(self.window, height=scridth)
         scridth_w = Frame(self.window, width=scridth)
-        # DO NOT DELETE THESE LINES, UNCOMMENT IN REAL APP
+      
         self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
         self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
@@ -113,10 +113,10 @@ class RolesDialog(Toplevel):
         visited = (
             (self.header_msg, 
                 '', 
-                'Type, date, place & particulars of this event if known.'),
+                'Event-type, date, place & particulars of this event if known.'),
             (self.edit_role_type, 
                 'Edit Role Type Input', 
-                'Existing roletype can be changed to a different type.'), 
+                'Existing role type can be changed to a different type.'), 
             (self.edit_role_person, 
                 'Edit Role Person Input', 
                 'Existing role person can be changed or new person made.'),
@@ -134,7 +134,7 @@ class RolesDialog(Toplevel):
                 'Select role type or create a new one.'), 
             (self.person_input, 
                 'New Role: Person Input', 
-                'Select role person, add new one, or leave blank.'),
+                'Select role person or add new person.'),
             (self.add_butt, 
                 'Add New Role Button', 
                 'Make a new role and leave dialog open.'), 
@@ -152,11 +152,11 @@ class RolesDialog(Toplevel):
 
         rcm_widgets = (
             self.role_type_input, self.person_input, self.add_butt, 
-            self.done_butt, self.close_butt)
+            self.done_butt, self.close_butt, self.role_type_input.entry)
         make_rc_menus(
             rcm_widgets, 
             self.rc_menu,
-            role_dlg_msg)
+            roles_dlg_help_msg)
 
         config_generic(self) 
 
@@ -241,7 +241,7 @@ class RolesDialog(Toplevel):
             editx.bind('<Leave>', on_unhover)
             editx.bind('<Button-1>', get_clicked_row)
             editx.bind('<space>', get_clicked_row)
-            self.rc_menu.loop_made[editx] = gen_edit_role_rows
+            self.rc_menu.loop_made[editx] = role_edit_help_msg
             n += 1
         if first_butt:
             first_butt.focus_set()

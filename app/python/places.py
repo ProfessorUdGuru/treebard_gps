@@ -22,9 +22,15 @@ import tkinter as tk
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, LabelHeader, 
     Entry, ButtonQuiet)
+from files import get_current_file
+from window_border import Border
+from scrolling import Scrollbar, resize_scrolled_content
 from autofill import EntryAuto
-from toykinter_widgets import Separator
+from toykinter_widgets import Separator, run_statusbar_tooltips
+from right_click_menu import RightClickMenu, make_rc_menus
+from messages_context_help import places_dlg_help_msg
 from nested_place_strings import make_all_nestings, ManyManyRecursiveQuery
+from messages import open_message, places_err
 from query_strings import (
     select_place_id_hint, insert_place_new, update_finding_places_null,     
     select_place_hint, select_all_places, select_all_places_places, 
@@ -33,10 +39,6 @@ from query_strings import (
     insert_places_places_new, select_all_place_ids, select_finding_places_id,
     insert_finding_places_new_event, select_places_places_id, 
     select_all_finding_places_findings)
-from files import get_current_file
-from window_border import Border
-from scrolling import Scrollbar, resize_scrolled_content
-from messages import open_message, places_err
 import dev_tools as dt
 from dev_tools import looky, seeline
 import sqlite3
@@ -82,8 +84,7 @@ class NewPlaceDialog():
             place_input,
             treebard,
             do_on_ok=None,
-            selection=None
-):
+            selection=None):
 
         self.parent = parent
         self.place_dicts = place_dicts
@@ -101,6 +102,7 @@ class NewPlaceDialog():
         self.edit_hint_id = 0
         self.hint_to_edit = None
         self.edit_rows = {}
+        self.rc_menu = RightClickMenu(self.parent)
         self.make_widgets()
         self.add_new_place_option = False
         self.error = False
@@ -111,8 +113,9 @@ class NewPlaceDialog():
 
             window.columnconfigure(1, weight=1)
             window.rowconfigure(1, weight=1)
-            lab = LabelHeader(window, text=self.message, justify='left')
-            lab.grid(column=1, row=1, sticky='news', ipady=18)
+            lab = LabelHeader(
+                window, text=self.message, justify='left', wraplength=600)
+            lab.grid(column=1, row=1, sticky='news', ipady=6, ipadx=6)
 
         def ok():
             if self.do_on_ok:
@@ -134,32 +137,32 @@ class NewPlaceDialog():
             width=int(size[0] * 0.85), height=int(size[1] * 0.95))
         self.new_places_dialog.columnconfigure(1, weight=1)
         self.new_places_dialog.rowconfigure(4, weight=1)
-        canvas = Border(self.new_places_dialog)          
-        canvas.title_1.config(text=self.title)
-        canvas.title_2.config(text="input: {}".format(self.place_input))
+        self.canvas = Border(self.new_places_dialog)          
+        self.canvas.title_1.config(text=self.title)
+        self.canvas.title_2.config(text="input: {}".format(self.place_input))
 
-        window = Frame(canvas)
-        canvas.create_window(0, 0, anchor='nw', window=window)
+        window = Frame(self.canvas)
+        self.canvas.create_window(0, 0, anchor='nw', window=window)
         scridth = 16
         scridth_n = Frame(window, height=scridth)
         scridth_w = Frame(window, width=scridth)
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
-        self.treebard.scroll_mouse.append_to_list([canvas, window])
+        self.treebard.scroll_mouse.append_to_list([self.canvas, window])
         self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
         window.vsb = Scrollbar(
             self.new_places_dialog, 
             hideable=True, 
-            command=canvas.yview,
+            command=self.canvas.yview,
             width=scridth)
         window.hsb = Scrollbar(
             self.new_places_dialog, 
             hideable=True, 
             width=scridth, 
             orient='horizontal',
-            command=canvas.xview)
-        canvas.config(
+            command=self.canvas.xview)
+        self.canvas.config(
             xscrollcommand=window.hsb.set, 
             yscrollcommand=window.vsb.set)
         window.vsb.grid(column=2, row=4, sticky='ns')
@@ -183,7 +186,7 @@ class NewPlaceDialog():
         show_message()
         self.lay_out_radios()
 
-        resize_scrolled_content(self.new_places_dialog, canvas, window)
+        resize_scrolled_content(self.new_places_dialog, self.canvas, window)
 
         self.new_places_dialog.focus_set()
 
@@ -304,7 +307,7 @@ class NewPlaceDialog():
                 text=rad_string, 
                 anchor="w")
 
-            lab = Label(
+            lab2 = Label(
                 self.nest_level, 
                 text="hint: {}".format(hint),
                 anchor='w', bg='red')
@@ -316,7 +319,7 @@ class NewPlaceDialog():
 
             self.nest_level.columnconfigure(1, weight=1)
             rad.grid(column=0, row=row, sticky='we', columnspan=2)
-            lab.grid(column=1, row=row+1, sticky='w', padx=6)
+            lab2.grid(column=1, row=row+1, sticky='w', padx=6)
             editx.grid(column=0, row=row+1, pady=(0,3), sticky='e')
 
             editx.bind('<Enter>', self.on_hover)
@@ -326,6 +329,29 @@ class NewPlaceDialog():
             editx.bind('<FocusIn>', self.on_hover)
             editx.bind('<FocusOut>', self.on_unhover)
             self.radx += 1
+
+            visited = (
+                (lab,
+                    "",
+                    "Name and ID of place."),
+                (rad,
+                    "Place Select",
+                    "Select this option if it is correct."),
+                (editx,
+                    "Hint Edit Button",
+                    "Optionally create/edit place hints (for duplicate "
+                        "place names or ?)."))
+            run_statusbar_tooltips(
+                visited, 
+                self.canvas.statusbar.status_label, 
+                self.canvas.statusbar.tooltip_label) 
+
+            rcm_widgets = (lab, rad, editx)
+            make_rc_menus(
+                rcm_widgets, 
+                self.rc_menu,
+                places_dlg_help_msg)
+
             row += 2
 
         sep = Separator(self.frm, 3)
@@ -430,10 +456,10 @@ class ValidatePlace():
                 self.root,
                 self.place_dicts,
                 "Clarify place selections where there is not exactly one ID "
-                "number.\n\nPress the EDIT button to add or edit hints for "
-                "duplicate place names or any place name.\n\nWhen entering "
+                "number. Press the EDIT button to add or edit hints for "
+                "duplicate place names or any place name. When entering "
                 "new place names, ID numbers have been assigned which you can "
-                "just OK.\n\nIf the right options are not listed, press CANCEL "
+                "just OK. If the right options are not listed, press CANCEL "
                 "and use the Places Tab to create or edit the place.", 
                 "New and Duplicate Places Dialog",
                 ("OK", "CANCEL"),

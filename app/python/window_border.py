@@ -19,27 +19,14 @@ from dev_tools import looky, seeline
 
 
 
-
-
-
-
-
 def close(evt):
-    '''
-        I don't know why this was made to only withdraw a dialog if not root.
-        Maybe because I was enamored with the notion of permanent dialogs at
-        one time. If so, withdraw() should be changed. Anyway, it's easy to
-        override this binding by binding to a different close function in the
-        more appropriate place so extra closing tasks can be run custom.
-    '''
-
     dlg = evt.widget.winfo_toplevel()
     if dlg.winfo_name() == 'tk':
         set_closing()
         dlg.quit()
     else:
-        print("line", looky(seeline()).lineno, "running:")
-        dlg.withdraw()
+        dlg.grab_release()
+        dlg.destroy()
 
 class Border(Canvas):
 
@@ -459,7 +446,7 @@ class Dialogue(Toplevel):
         Canvas which is gridded in its home class. Rows are reserved for the
         menu bar and icon ribbon menu although usually not used so they are
         False by default, but their unused rows have to be taken into account
-        (ignored) here. This is used for error messages and the like which
+        (ignored) here. This is used for error messages and small dialogs which
         don't change size and will never need to scroll.
     '''
 

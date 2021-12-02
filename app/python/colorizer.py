@@ -7,12 +7,12 @@ from widgets import (
     Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay, Entry)
 from scrolling import Scrollbar
 from styles import (
-    get_color_schemes, get_color_schemes_plus, make_formats_dict, get_all_descends, config_generic)
+    get_color_schemes, get_color_schemes_plus, make_formats_dict, 
+    get_all_descends, config_generic)
 from files import get_current_file
 from query_strings import (
     update_format_color_scheme, delete_color_scheme, select_color_scheme_current, 
-    update_color_scheme_null, insert_color_scheme, 
-)
+    update_color_scheme_null, insert_color_scheme)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -181,7 +181,7 @@ class Colorizer(Frame):
     def make_samples(self):
 
         all_schemes_plus = get_color_schemes_plus()
-
+        
         y = 0
         for scheme in all_schemes_plus:
             frm = FrameStay(
@@ -335,6 +335,7 @@ class Colorizer(Frame):
             pady=6)
 
         self.entries_combos = []
+        self.domain_tips = []
         j = 1
         for name in l_col:
             lab = Label(
@@ -348,6 +349,7 @@ class Colorizer(Frame):
             self.entries_combos.append(ent)
             ent.bind('<FocusOut>', clear_select)
             ent.bind('<Double-Button-1>', self.open_color_chooser)
+            self.domain_tips.append(lab)
             j += 1
 
     def drop_scheme_from_db(self, frame, scheme):
@@ -368,6 +370,11 @@ class Colorizer(Frame):
         conn.close()    
 
     def delete_sample(self, evt):
+        '''
+            Don't allow built-in color schemes to be deleted. Currently all are
+            set as built_in, but that could be changed to allow deletion: 
+            update `built_in` column of `color_scheme` table in db to `0`.
+        '''
         dflt = self.colors_content.winfo_children()[0]
         drop_me = self.colors_content.focus_get()
         all_schemes_plus = get_color_schemes_plus()
@@ -375,16 +382,11 @@ class Colorizer(Frame):
         all_schemes = []
         for scheme_plus in all_schemes_plus:
             all_schemes.append(scheme_plus[0:4])
-        if color_scheme in all_schemes: # try set intersection?
+        if color_scheme in all_schemes:
             idx = all_schemes.index(color_scheme)
-            # don't allow built-in color schemes to be deleted
-            # currently all are set as built_in but that could be changed
-            #   to allow deletion: update `built_in` column of `color_scheme` 
-            #   table in db to `0`
             if all_schemes_plus[idx][4] == 0:
                 drop_name = drop_me.winfo_name()
                 self.drop_scheme_from_db(drop_name, color_scheme)
-
                 drop_me.destroy()
                 self.resize_color_samples_scrollbar()
                 # reset to default scheme; only current scheme can be deleted

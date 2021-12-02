@@ -7,6 +7,8 @@ from custom_combobox_widget import Combobox
 from autofill import EntryAuto, EntryAutoHilited
 from styles import make_formats_dict
 from messages import open_message, dates_msg, InputMessage, open_input_message
+from right_click_menu import RightClickMenu, make_rc_menus
+from messages_context_help import date_prefs_help_msg
 from query_strings import select_date_format, select_default_date_format
 import dev_tools as dt
 from dev_tools import looky, seeline

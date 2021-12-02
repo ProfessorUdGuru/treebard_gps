@@ -5,30 +5,26 @@ from styles import config_generic
 from messages import open_message
 from widgets import LabelStylable, Button
 import dev_tools as dt
+from dev_tools import looky, seeline
 
 
 
-def make_rc_menus(
-        rcm_widgets, 
-        rc_menu,
-        rcm_msg):
+def make_rc_menus(rcm_widgets, rc_menu, rcm_msg):
     '''
         To include a widget in the right-click context help, list the widget
         in rcm_widgets in the instance and store each widget's message 
-        and title in message_strings.py. Example of usage from notes.py: near
+        and title in messages_context_help.py. Example of usage from notes.py: near
         bottom of make_widgets() i.e. after making all widgets, do this...
-
-            rcm_widgets = (self.subtopic_input.ent, self.note_input.text)
-            rcm.make_rc_menus(
+            `rcm_widgets = (self.subtopic_input.ent, self.note_input.text)`
+            `make_rc_menus(
                 rcm_widgets, 
                 self.rc_menu, 
-                ms.note_dlg_msg)
-
-        ...and in __init__ right before calling make_widgets() do this...
-
-        self.rc_menu = rcm.RightClickMenu(self.root)
+                note_dlg_help_msg)`
+        ...and in `__init__` before calling `make_widgets()` do this...
+            `self.rc_menu = RightClickMenu(self.root)`
+        ... and import to the module where rcm widgets are accessible:
+            `from right_click_menu import RightClickMenu, make_rc_menus`
     '''
-
     rc_menu.help_per_context = dict(zip(rcm_widgets, rcm_msg))
     
     for widg in rcm_widgets:

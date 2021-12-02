@@ -7,6 +7,8 @@ from os.path import isfile, join
 from window_border import Border
 from widgets import Toplevel, Canvas, Button, Frame, ButtonBigPic
 from toykinter_widgets import run_statusbar_tooltips
+from right_click_menu import RightClickMenu, make_rc_menus
+from messages_context_help import opening_dlg_help_msg
 from PIL import Image, ImageTk
 from files import (
     open_tree, make_tree, import_gedcom, open_sample, app_path, global_db_path,
@@ -53,14 +55,6 @@ class SplashScreen(Toplevel):
 
         center_dialog(self)
 
-
-        # dlg_pos = center_dialog(self)
-        # self.geometry('{}x{}+{}+{}'.format(
-            # str(int(width * 0.33)), 
-            # str(int(height * 0.33)), 
-            # dlg_pos[0], 
-            # dlg_pos[1]))
-
         self.after(1000, self.destroy)
         self.master.wait_window(self)
         self.master.overrideredirect(0)
@@ -80,9 +74,9 @@ class SplashScreen(Toplevel):
             user has to select a tree to open every time the app loads. 
         '''
 
+        self.rc_menu = RightClickMenu(self.master)
         self.opening_dialog = Toplevel(self.master)
         self.opening_dialog.grab_set()
-        # gridded in Border class:
         self.canvas = Border(self.opening_dialog, tree_is_open=0)
         self.canvas.title_1.config(text='Open, Create, or Copy a Tree')
         self.canvas.title_2.config(text="")
@@ -168,6 +162,13 @@ class SplashScreen(Toplevel):
             visited, 
             self.canvas.statusbar.status_label, 
             self.canvas.statusbar.tooltip_label)
+
+        rcm_widgets = (
+            opener, new, importgedcom, opensample, cancel, self.picbutton)
+        make_rc_menus(
+            rcm_widgets, 
+            self.rc_menu,
+            opening_dlg_help_msg)
 
         config_generic(self.opening_dialog)
         self.master.wait_window(self.opening_dialog)

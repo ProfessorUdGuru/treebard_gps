@@ -11,6 +11,7 @@ from custom_combobox_widget import Combobox
 from autofill import EntryAutoHilited
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
+from messages_context_help import notes_dlg_help_msg, links_dlg_msg
 from styles import config_generic, make_formats_dict
 from names import get_name_with_id, make_all_names_list_for_person_select
 from places import make_all_nestings    
@@ -56,7 +57,7 @@ class NotesDialog(Toplevel):
         self.current_name = get_name_with_id(self.current_person)
 
         self.privacy = tk.IntVar()
-        # self.rc_menu = RightClickMenu(self.root)
+        self.rc_menu = RightClickMenu(self.root)
 
         self.formats = make_formats_dict()
 
@@ -87,9 +88,6 @@ class NotesDialog(Toplevel):
                 self.private, self.close):
             widg.bind("<Key-Up>", self.focus_topicslist)
             widg.bind("<Key-Down>", self.focus_topicslist)
-           
-        # self.bind_all("<Key-Up>", self.focus_topicslist)
-        # self.bind_all("<Key-Down>", self.focus_topicslist)
 
         self.bind('<Escape>', self.close_notes_dialog)
 
@@ -106,9 +104,9 @@ class NotesDialog(Toplevel):
         scridth = 16
         scridth_n = Frame(self.window, height=scridth)
         scridth_w = Frame(self.window, width=scridth)
-        # DO NOT DELETE:
-        # self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
-        # self.treebard.scroll_mouse.configure_mousewheel_scrolling()
+     
+        self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
+        self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
         self.window.vsb = Scrollbar(
             self, 
@@ -221,6 +219,14 @@ class NotesDialog(Toplevel):
             self.canvas.statusbar.status_label, 
             self.canvas.statusbar.tooltip_label)
 
+        rcm_widgets = (
+            self.note_header, self.note.text, self.toc_head, self.linker, 
+            radframe, self.order)
+        make_rc_menus(
+            rcm_widgets, 
+            self.rc_menu,
+            notes_dlg_help_msg)
+
         self.note_header.focus_set()
         self.note_header.bind("<FocusIn>", self.display_note)
         self.note_header.bind("<KeyRelease>", self.display_note)
@@ -228,12 +234,6 @@ class NotesDialog(Toplevel):
         self.note_header.bind("<FocusOut>", self.make_new_note)
 
     def focus_topicslist(self, evt):
-        # widg = evt.widget
-        # print("line", looky(seeline()).lineno, "widg:", widg)
-        # if widg not in (
-                # self.note_header, self.order, self.linker, self.public, 
-                # self.private, self.close):
-            # return
         last = self.topiclabs[self.length - 1]
         first = self.topiclabs[0]
         sym = evt.keysym
@@ -307,7 +307,6 @@ class NotesDialog(Toplevel):
         self.link_input.delete(0, 'end')
         
         if self.link_type not in ELEMENTS:
-# "persons", "places", "assertions", "conclusions", "citations", "names", "sources", "projects", "do list items", "contacts", "images", "notes", "repositories")
             return
         elif self.link_type == "persons":
             self.link_input.values = self.all_names
@@ -321,16 +320,6 @@ class NotesDialog(Toplevel):
         print("line", looky(seeline()).lineno, "got:", got)
         if self.link_type == "persons":
             element_id = got.split("  #")[1]
-        print("line", looky(seeline()).lineno, "element_id:", element_id)
-
-
-
-
-
-
-
-
-
 
     def ignore_changes(self, evt=None):
         self.order_dlg.grab_release()
@@ -367,9 +356,10 @@ class NotesDialog(Toplevel):
         scridth = 16
         scridth_n = Frame(self.order_dlg_window, height=scridth)
         scridth_w = Frame(self.order_dlg_window, width=scridth)
-        # DO NOT DELETE:
-        # self.treebard.scroll_mouse.append_to_list([self.order_dlg_canvas, self.order_dlg_window])
-        # self.treebard.scroll_mouse.configure_mousewheel_scrolling()
+       
+        self.treebard.scroll_mouse.append_to_list(
+            [self.order_dlg_canvas, self.order_dlg_window])
+        self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
         self.order_dlg_window.vsb = Scrollbar(
             self.order_dlg, 
@@ -831,11 +821,6 @@ if __name__ == "__main__":
     b.focus_set()
     config_generic(root)
     root.mainloop()
-
-# don't start with places, it's the hardest one. Start with persons.
-# the places link shd not be to a nesting like "Aspen, Pitkin County, Colorado, USA", for which there is no ID, but to a nested pair like "Aspen, Pitkin County" for which there is an ID. This is a link to a single place: a place called Aspen whose immediate parent happens to be a place called Pitkin County, but the actual link is to the place called Aspen, whose parent is just part of that single place's description. 
-# add dialog that opens on submit with combo & autofill to link note to any element, can be run over & over to link to any number of elements
-# move links related code to links.py after the dialog is used to link other things than just notes
 
 # rcm help dialog: Navigating the Table of Contents. The Table of Contents is entered and navigated by clicking an item in the list or by pressing the up or down arrow key from anywhere in the notes dialog except from within the note input itself. For example, if the topic title input is in focus, pressing the up arrow will start traversing the list from the bottom, or pressing the down arrow will start traversing from the top. As you traverse the list of topics, it will scroll automatically if there are too many topics to fit in the window, or you can use the vertical scrollbar which will appear if it's needed. There's no horizontal scrollbar for long titles, but if you can't read a title due to its length, pointing at it with the mouse will show a tooltip with the full title. Inside the note input, the arrow keys will navigate up and down line-by-line. To move in and out of the note input, the table of contents, or other widgets, use the Tab key to go forward or Shift+Tab key to go backward. The note title input above the note input displays the topic of the current note. To change which note is displayed, traverse the table of contents as described above, or change the topic manually by typing in the note title input. The note input will display no text if the input doesn't show an existing topic, so in order to create a new note, just type a new topic and a new note, in either order, and the note will be created automatically when you tab out of these two inputs. You can enter any number of notes without pressing DONE to close the dialog, since every change you make is automatically saved. The notes dialog generally opens from a specific element such as an event row in the events table, and will automatically be linked to that element. To unlink a note from the current element, press the delete key when its topic is selected in the table of contents. To change a note topic, highlight the topic in the table of contents and press BackSpace on the keyboard. All note topics within a single tree must be unique, for example, there can't be two topics entitled "Spring Wedding", but there can be a "Robert & Marian's Spring Wedding" as well as a "Fido and Barfy's Spring Wedding". Or a "Spring Wedding 1" and Spring Wedding 2" if you like numbers. Any text will be accepted as a note topic as long as it's unique within the entire tree. This makes it easy to link any note to any number of persons, places, events, or citations. So you won't be copy-pasting notes that need to be seen in more than one place, and the database won't be storing the same text twice. To edit or replace a stored note without renaming it, just change the text and the changes will be saved on tabbing out of the note field. To save a blank note, give it any title you want and type a space in the note input field. If a note is too trivial and short to deserve its own topic, then you can use the Particulars column in the events table. Due to the vast limitations of GEDCOM and the whole idea of sharing data from person to person when everyone uses different software, the bar has been raised by Treebard so that this all-important Note functionality can work the way it should. No genieware should suffer from the lack of any of the features described above, at the very least. The ability to link any note to any number of various elements is unique to Treebard.
 

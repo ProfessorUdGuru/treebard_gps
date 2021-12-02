@@ -69,7 +69,6 @@ class FontPicker(Frame):
             length=200,
             variable=self.fontSizeVar,
             command=self.show_font_size)
-        print("line", looky(seeline()).lineno, "self.font_size, self.fontSize:", self.font_size, self.fontSize)
         self.font_size.set(self.fontSize)
  
         lab = Label(self, text="Select Output Font")
@@ -112,6 +111,7 @@ class FontPicker(Frame):
         #   HINT 2: CTRL+S also does nothing unless the Person Tab is active.
         # self.main.findings_table.redraw()
         # Try again after fixing all missing stuff in config_generic re: fonts
+        # PS I don't know if above is still a problem, hopefully it's just something I forgot to delete.
         config_generic(self.root)
         resize_scrolled_content(self.root, self.main.master, self.main)
 

@@ -31,7 +31,7 @@ def open_message(master, message, title, buttlab, inwidg=None):
     button.grid(column=0, row=1, padx=6, pady=(0,12))
     button.focus_set()
 
-    msg.resize_window(lab)
+    msg.resize_window()
 
     return msg, lab, button
 

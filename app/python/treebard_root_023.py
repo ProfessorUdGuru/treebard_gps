@@ -1,6 +1,6 @@
 # treebard_root_023.py
 
-# This version is needed because in _022 and preceding, I'd gotten into the habit of opening a hard-coded tree selection. So I wrote a lot of procedures in an order that didn't take into account that this was not how it was going to be done. I have to start over somewhat on the structure, not the structure but when things happen during the opening process, so the user can open the app without opening a tree, and thus still have access to file menu, help menu, tools menu, etc. User format preferences will not go into effect till he opens a specific tree, since user prefs are stored per tree and there will be only one set of formats (the defaults) stored in a separate global database. This version is broken from the start but for a whole version that works, it is stored in treebard_gps_backups/treebard_gps_20211110x.
+# This version is needed because in _022 and preceding, I'd gotten into the habit of opening a hard-coded tree selection. So I wrote a lot of procedures in an order that didn't take into account that this was not how it was going to be done. I have to start over somewhat on when things happen during the opening process, so the user can open the app without opening a tree, and thus still have access to file menu, help menu, tools menu, etc. User format preferences will not go into effect till he opens a specific tree, since user prefs are stored per tree and there will be only one set of formats (the defaults) stored in a separate global database.
 
 import tkinter as tk
 import sqlite3    
@@ -15,7 +15,8 @@ from main import Main
 from widgets import Button, Frame, ButtonPlain
 from dates import get_date_formats   
 from utes import create_tooltip
-from query_strings import (update_closing_state_tree_is_open, select_date_format)
+from query_strings import (
+    update_closing_state_tree_is_open, select_date_format)
 import dev_tools as dt
 from dev_tools import looky, seeline
 

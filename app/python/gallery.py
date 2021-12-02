@@ -5,12 +5,13 @@ from PIL import Image, ImageTk
 import sqlite3
 from files import get_current_file, current_drive, app_path
 from styles import make_formats_dict, config_generic
-from window_border import Border    
 from scrolling import Scrollbar, resize_scrolled_content
 from widgets import (
     Frame, Canvas, Button, Label, Radiobutton, FrameHilited4, 
     LabelH3, MessageCopiable, LabelStay)
 from toykinter_widgets import run_statusbar_tooltips
+from right_click_menu import RightClickMenu, make_rc_menus
+from messages_context_help import gallery_help_msg
 from utes import create_tooltip
 from names import get_current_person
 from query_strings import (
@@ -44,6 +45,8 @@ class Gallery(Frame):
         self.treebard = treebard
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = SCREEN_SIZE
         self.dialog = dialog
+
+        self.rc_menu = RightClickMenu(self.root)
 
         self.current_file, self.current_dir = get_current_file()
 
@@ -275,8 +278,8 @@ class Gallery(Frame):
         visited = (
             (self.thumbstrip, 
                 "Thumbnail Views", 
-                "Click thumbnail to display. Hover below to see "
-                   "file name. If radio, click to make main image."),
+                "Click thumbnail to display. Hover to see the file name. "
+                    "Select radio button to make this the main image."),
             (self.pic_canvas, 
                 "Image", 
                 "Arrow keys change image when it's in focus."),
@@ -285,12 +288,23 @@ class Gallery(Frame):
                 "Click with mouse or when highlighted click with spacebar."),
             (self.nextbutt, 
                 "Right Button", 
-                "Click with mouse or when highlighted click with spacebar.")) 
+                "Click with mouse or when highlighted click with spacebar."),
+            (self.b1,
+                "Edit Button",
+                "Open the current image in the Graphics Tab.")) 
         if self.dialog:
             run_statusbar_tooltips(
                 visited, 
                 self.master.statusbar.status_label, 
                 self.master.statusbar.tooltip_label)
+
+            rcm_widgets = (
+                self.thumbstrip, self.pic_canvas, self.prevbutt, self.nextbutt, 
+                self.b1)
+            make_rc_menus(
+                rcm_widgets, 
+                self.rc_menu,
+                gallery_help_msg)
 
             config_generic(self.dialog)
 

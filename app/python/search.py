@@ -12,6 +12,8 @@ from widgets import (
 from names import open_new_person_dialog, get_any_name_with_id
 from dates import OK_PREFIXES, format_stored_date
 from toykinter_widgets import run_statusbar_tooltips
+from right_click_menu import RightClickMenu, make_rc_menus
+from messages_context_help import search_person_help_msg
 from query_strings import (
     select_person_distinct_like, select_name_details,
     select_finding_sorter, select_name_sort_order, select_person_death_date,
@@ -107,6 +109,8 @@ class PersonSearch(Toplevel):
         self.ma_id = None
         self.pa_id = None
         self.offspring_event = None
+
+        self.rc_menu = RightClickMenu(self.root)
 
         self.make_widgets()
 
@@ -204,8 +208,7 @@ class PersonSearch(Toplevel):
         self.search_table.grid(
             column=0, row=1, sticky='news', padx=48, pady=48)
 
-
-        visited = [
+        visited = (
             (self.search_input, 
                 "Person Search Input", 
                 "Type any part of any name or ID number; table will fill "
@@ -213,59 +216,19 @@ class PersonSearch(Toplevel):
             (self.search_table, 
                 "Person Search Table", 
                 "Select highlighted row with Enter or Space key to change "
-                    "current person, or click any row.")]   
+                    "current person, or click any row."))   
      
         run_statusbar_tooltips(
             visited, 
             self.canvas.statusbar.status_label, 
             self.canvas.statusbar.tooltip_label)
 
-        # # RIGHT-CLICK CONTEXT HELP
-        # self.master.master.rc_menu.help_per_context = {
-            # self.search_input : (
-                # 'This person search tool is especially helpful if you know only '
-                # 'part of the name you\'re looking for. Also, if there\'s more than '
-                # 'one person with an identical name, the other way to select a '
-                # 'person--the autofill person select field--won\'t work for '
-                # 'duplicate names unless you know the ID. This search dialog '
-                # 'will help you '
-                # 'differentiate among several people with similar names by '
-                # 'showing birth and death dates and parent names for each '
-                # 'person. Just type any part of any name, ID number, nickname, '
-                # 'a.k.a., etc. and the search table will fill with matching '
-                # 'names. Tab out of the input field to the table and navigate '
-                # 'up and down using the Tab or Ctrl+Tab keys or the Up/Down arrow ' 
-                # 'keys. You can select a new current person but you don\'t have '
-                # 'to. The search tool is also an easy way to look up a name '
-                # 'or ID number you need.', 
-                # 'Person Search Input Context Help'),
-            # self.search_dlg_heading : (
-                # 'After tabbing into the search results table, you can '
-                # 'navigate up and down the table with Tab or Ctrl+Tab keys, or '
-                # 'Up/Down arrow keys. To choose a new current person, press '
-                # 'Enter or Spacebar when the person you want is highlighted, '
-                # 'or double-click any row whether it\'s highlighted or not. '
-                # 'The table can be sorted '
-                # 'ascendingly or descendingly by single clicks of the column '
-                # 'heads. If you typed "lou" and '
-                # '"Fred Jenkins" pops up, what\'s going on? Point at the name '
-                # 'and a nametip will pop up giving the needed information: '
-                # '"Nickname: Louie", along with any other names, ID numbers, '
-                # 'nicknames, pseudonyms, married names, mis-spellings, and any '
-                # 'other name information you\'ve entered for Fred Jenkins. '
-                # 'And because this search tool is so '
-                # 'powerful, you have to close it before you\'ll be able to '
-                # 'close this help dialog. Just kidding. No I\'m not. Remind '
-                # 'me to fix that.', 
-                # 'Person Search Table Context Help')}
-
-        # when adding a widg & msg to rc_help.help_per_context above, 
-        #    remember to add widg to tuple below
-
-        # for widg in (self.search_input, self.search_dlg_heading):
-            # widg.bind(
-                # "<Button-3>", 
-                # self.master.master.rc_menu.attach_rt_clk_menu)
+        rcm_widgets = (
+            self.search_input, self.search_dlg_heading, self.search_table)
+        make_rc_menus(
+            rcm_widgets, 
+            self.rc_menu, 
+            search_person_help_msg) 
 
         self.make_header_row()
         config_generic(self)

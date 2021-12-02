@@ -14,6 +14,9 @@ from scrolling import Scrollbar
 from events_table import EventsTable
 from gallery import Gallery
 from colorizer import Colorizer
+from toykinter_widgets import run_statusbar_tooltips
+from right_click_menu import RightClickMenu, make_rc_menus
+from messages_context_help import main_help_msg
 from font_picker import FontPicker
 from names import (
     get_name_with_id, make_all_names_list_for_person_select,
@@ -41,14 +44,6 @@ RIGHT_PANEL_TABS = (("images", "I"), ("do list", "O"))
 PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"), 
     ("images", "M"))
 
-# ICONS = (
-    # 'open', 'cut', 'copy', 'paste', 'print', 'home', 'first', 
-    # 'previous', 'next', 'last', 'search', 'add', 'settings', 
-    # 'note', 'back', 'forward') 
-
-# self.SCREEN_SIZE = []
-# print("line", looky(seeline()).lineno, "self.SCREEN_SIZE:", self.SCREEN_SIZE)
-
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
@@ -63,6 +58,8 @@ class Main(Frame):
         self.SCREEN_SIZE = []
         self.SCREEN_SIZE.append(self.winfo_screenwidth())
         self.SCREEN_SIZE.append(self.winfo_screenheight())
+
+        self.rc_menu = RightClickMenu(self.root)
 
         self.make_widgets()
         self.get_current_values()
@@ -88,8 +85,6 @@ class Main(Frame):
 
     def make_widgets(self):
 
-        # formats = make_formats_dict()
-
         self.make_scrollbars()
 
         scridth = 20
@@ -107,7 +102,8 @@ class Main(Frame):
         prefs_tab = Frame(self.main_tabs.store["preferences"])
 
         self.current_person_label = LabelH2(current_person_area)
-        instrux = LabelH3(current_person_area, text="Change current person to:")
+        change_current_person = LabelH3(
+            current_person_area, text="Change current person to:")
         self.person_entry = EntryAutoHilited(
             current_person_area, 
             width=36,
@@ -208,8 +204,8 @@ class Main(Frame):
             tabbook=self.right_panel)
         colorizer.grid(column=0, row=0)
 
-        fontpicker = FontPicker(options_tabs.store['fonts'], self.root, self)
-        fontpicker.grid(column=0, row=0)
+        self.fontpicker = FontPicker(options_tabs.store['fonts'], self.root, self)
+        self.fontpicker.grid(column=0, row=0)
 
         # children of self.master i.e. root
         # top_menu & ribbon_menu etc. are gridded in window_border.py
@@ -257,7 +253,7 @@ class Main(Frame):
 
         # children of current_person_area
         self.current_person_label.pack(side="left", fill="x", expand="0", padx=(0,12))
-        instrux.pack(side="left", padx=(0,12))
+        change_current_person.pack(side="left", padx=(0,12))
         self.person_entry.pack(side="left", padx=(0,12))
         person_change.pack(side="left", padx=(0,12))
         person_search.pack(side="right")
@@ -267,9 +263,177 @@ class Main(Frame):
         self.right_panel.store['images'].rowconfigure(0, weight=1)
         self.top_pic_button.grid(column=0, row=0, sticky='news', padx=3, pady=3)
 
+        visited = (
+            (self.person_entry,
+                "New Current Person Entry",
+                "Any name of new current person and their ID will auto-fill "
+                    "when you start typing; a new person can be entered also. "),
+            (person_change,
+                "New Current Person OK Button",
+                "Press OK to change current person as per input to the left."),
+            (person_search,
+                "Person Search Button",
+                "Any name or ID of any person in the tree can be searched, "
+                    "or a new person can be created."),
+            (self.top_pic_button,
+                "Current Person Main Image",
+                "The current person's main image can be clicked to open a "
+                    "gallery  of all that person's linked images."),
+            (self.findings_table.event_input,
+                "New Event or Attribute Input",
+                "Input for new events or attributes including new event types."),
+            (self.findings_table.add_event_button,
+                "New Event or Attribute Input Button",
+                "Press to submit new event or attribute indicated to the left."),
+            (self.att.event_input,
+                "New Event or Attribute Input",
+                "Input for new events or attributes including new event types."),
+            (self.att.add_event_button,
+                "New Event or Attribute Input Button",
+                "Press to submit new event or attribute indicated to the left."),
+            (self.fontpicker.output_sample,
+                "",
+                "Sample of selected font."),
+            (self.fontpicker.font_size,
+                "Font Size Select",
+                "Select the font size for normal text."),
+            (self.fontpicker.cbo.entry,
+                "Font Family Select",
+                "Select the font family for output text."),
+            (self.fontpicker.apply_button,
+                "Apply Button",
+                "Apply selections to all output text. Input font family is "
+					"chosen by Treebard."),
+            (colorizer.colors_content,
+                "Color Scheme Samples",
+                "Click color scheme to try."),
+            (colorizer.try_button,
+                "Try Color Scheme Button",
+                "Try selected color scheme when tabbing through samples."),
+            (colorizer.copy_button,
+                "Copy Color Scheme Button",
+                "Press to fill inputs with selected color scheme; "
+                    "change one or more copied color."),
+            (colorizer.apply_button,
+                "Apply Color Scheme Button",
+                "Apply selected color scheme to everything."),
+            (colorizer.new_button,
+                "New Color Scheme Button",
+                "Store new color scheme using colors filled into the "
+                    "four inputs."),
+            (colorizer.entries_combos[0],
+                "Background Color 1 Input",
+                "Type hex color string or double-click to open color chooser."),
+            (colorizer.entries_combos[1],
+                "Background Color 2 Input",
+                "Type hex color string or double-click to open color chooser."),
+            (colorizer.entries_combos[2],
+                "Background Color 3 Input",
+                "Type hex color string or double-click to open color chooser."),
+            (colorizer.entries_combos[3],
+                "Font Color Input",
+                "Type hex color string or double-click to open color chooser."),
+            (colorizer.domain_tips[0],
+                "",
+                "Choose the main background color."),
+            (colorizer.domain_tips[1],
+                "",
+                "Choose the main highlight color."),
+            (colorizer.domain_tips[2],
+                "",
+                "Choose the secondary highlight color."),
+            (colorizer.domain_tips[3],
+                "",
+                "If background colors are dark, choose a light color for fonts, "
+                    "or vice-versa."),
+            (self.findings_table.headers[0],
+                "",
+                "Press delete key to delete this event."),
+            (self.findings_table.headers[1],
+                "",
+                "Enter simple or compound date in free order with text for "
+                    "month, e.g.: '28 f 1845 to 1846 mar 31'."),
+            (self.findings_table.headers[2],
+                "",
+                "Existing places will auto-fill when you start typing, "
+                    "starting with places used most recently."),
+            (self.findings_table.headers[3],
+                "",
+                "Use for short notes. Press button in Notes column to input "
+                    "longer notes."),
+            (self.findings_table.headers[4],
+                "",
+                "Age at time of event, in any format."),
+            (self.findings_table.headers[5],
+                "",
+                "Create, add and edit roles adjunct to this event."),
+            (self.findings_table.headers[6],
+                "",
+                "Create, add and edit notes regarding this event."),
+            (self.findings_table.headers[7],
+                "",
+                "View and edit sources, citations and assertions linked to "
+                    "this event."), 
+            (self.att.headers[0],
+                "",
+                "Press delete key to delete this attribute."),
+            (self.att.headers[1],
+                "",
+                "Entering a date here will move this attribute to the Events "
+                    "Table."),
+            (self.att.headers[2],
+                "",
+                "Existing places will auto-fill when you start typing, "
+                    "starting with places used most recently."),
+            (self.att.headers[3],
+                "",
+                "Leave date column blank to move event to Attributes Tab; "
+                    "attribute dates could go here."),
+            (self.att.headers[4],
+                "",
+                "Age at time of attribute, if applicable."),
+            (self.att.headers[5],
+                "",
+                "Create, add and edit roles adjunct to this attribute."),
+            (self.att.headers[6],
+                "",
+                "Create, add and edit notes regarding this attribute."),
+            (self.att.headers[7],
+                "",
+                "View and edit sources, citations and assertions linked to "
+                    "this attribute."))
+        run_statusbar_tooltips(
+            visited, 
+            self.master.statusbar.status_label, 
+            self.master.statusbar.tooltip_label)
+
+        rcm_widgets = (
+            self.person_entry, person_change, person_search, 
+            self.top_pic_button, self.findings_table.event_input, 
+            self.findings_table.add_event_button, self.att.event_input, 
+            self.att.add_event_button, self.fontpicker.output_sample, 
+            self.fontpicker.font_size, self.fontpicker.cbo.entry, 
+            self.fontpicker.apply_button, colorizer.colors_content, 
+            colorizer.try_button, colorizer.copy_button, 
+            colorizer.apply_button, colorizer.new_button, 
+            colorizer.entries_combos[0], colorizer.entries_combos[1], 
+            colorizer.entries_combos[2], colorizer.entries_combos[3], 
+            colorizer.domain_tips[0], colorizer.domain_tips[1], 
+            colorizer.domain_tips[2], colorizer.domain_tips[3], 
+            self.findings_table.headers[0], self.findings_table.headers[1], 
+            self.findings_table.headers[2], self.findings_table.headers[3], 
+            self.findings_table.headers[4], self.findings_table.headers[5], 
+            self.findings_table.headers[6], self.findings_table.headers[7], 
+            self.att.headers[0], self.att.headers[1], self.att.headers[2], 
+            self.att.headers[3], self.att.headers[4], self.att.headers[5], 
+            self.att.headers[6], self.att.headers[7])
+        make_rc_menus(
+            rcm_widgets, 
+            self.rc_menu, 
+            main_help_msg) 
+
     def get_current_values(self):
         all_names = make_all_names_list_for_person_select()
-        # self.current_person = self.findings_table.current_person
         self.current_person_name = get_any_name_with_id(self.current_person)
         if type(self.current_person_name) is tuple:
             use_name = list(self.current_person_name)
