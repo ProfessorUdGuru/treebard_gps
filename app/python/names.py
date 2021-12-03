@@ -326,9 +326,8 @@ class PersonAdd(Toplevel):
         self.preset()
 
         rcm_widgets = (
-            self.name_input, self.name_type_input, self.gender_input.entry,
-            self.image_input.entry, self.name_type_input.entry, autosort, 
-            self.order_frm)
+            self.name_input, self.name_type_input.entry, self.gender_input.entry,
+            self.image_input.entry, autosort, self.order_frm)
         make_rc_menus(
             rcm_widgets, 
             self.rc_menu, 

@@ -28,7 +28,9 @@ char_dict = {
 vowels = ('a', 'e', 'i', 'o', 'u')
 consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z')
 
-name = "Stephen Edwin King"
+
+
+name = "Rowan Sebastian Atkinson"
 name = name.split()
 lowered = []
 for nick in name:
@@ -263,6 +265,12 @@ root.mainloop()
 # 663
 # Stephen Edwin King, born September 21, 1947 Portland, Maine
 
+# 933
+# Jeffrey Bryne Griffy
+
+# 393
+# Rowan Sebastian Atkinson, Born 6 January 1955, Consett, County Durham, England
+
 # 336
 # patricia lee smith 336 (singer Patti Smith)
 
@@ -304,9 +312,6 @@ root.mainloop()
 
 # 911
 # Christine Ellen Hynde (Chrissie Hynde, The Pretenders)
-
-# 933
-# Jeffrey Bryne Griffy
 
 # 819
 # Richard Buckminster Fuller born July 12, 1895 Milton, Massachusetts

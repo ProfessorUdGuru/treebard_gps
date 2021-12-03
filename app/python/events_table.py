@@ -1968,7 +1968,8 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# add rcm to every dialog, get config_generic to change color of rcm dlg, colorizer.colors_content rcm doesn't work even though colorizer.colors_content statustips do
+# add rcm to every dialog, get config_generic to change color of rcm dlg, colorizer.colors_content rcm doesn't work even though colorizer.colors_content statustips do; for now I trigger the rcm message from the scrollbar instead of the samples window itself; try moving to the loop message method which is at bottom of messages_context_help for example of how to do it
+# center the rcm dialog in screen
 # CANCEL and X don't work on make new kin type dlg, test same on all dlgs
 # dates < 100 shd be suffixed AD or BC
 # re: date error it seems like when I click ok it's deleting a row from the table?
@@ -1979,6 +1980,7 @@ if __name__ == '__main__':
 # get all main tabs back into working order
 # in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
 # fix Border so that title bar changes color when not on top or in focus
+# add to Search dlg: checkbox "Speed Up Search" with tooltip "If selected, search will begin after three characters are typed." Have it selected by default.
 # TEST every functionality due to recent restructuring
 
 # BRANCH: pedigree

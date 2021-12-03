@@ -413,7 +413,7 @@ class Main(Frame):
             self.findings_table.add_event_button, self.att.event_input, 
             self.att.add_event_button, self.fontpicker.output_sample, 
             self.fontpicker.font_size, self.fontpicker.cbo.entry, 
-            self.fontpicker.apply_button, colorizer.colors_content, 
+            self.fontpicker.apply_button, colorizer.hscroll, 
             colorizer.try_button, colorizer.copy_button, 
             colorizer.apply_button, colorizer.new_button, 
             colorizer.entries_combos[0], colorizer.entries_combos[1], 

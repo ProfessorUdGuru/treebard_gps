@@ -53,12 +53,12 @@ class Colorizer(Frame):
             width=840,
             height=118
 ) 
-        hscroll = Scrollbar(
+        self.hscroll = Scrollbar(
             stripview, orient='horizontal', command=self.colors_canvas.xview)
-        self.colors_canvas.configure(xscrollcommand=hscroll.set)
+        self.colors_canvas.configure(xscrollcommand=self.hscroll.set)
         
         self.colors_canvas.grid(column=0, row=0, sticky='news')
-        hscroll.grid(column=0, row=1, sticky="ew")
+        self.hscroll.grid(column=0, row=1, sticky="ew")
 
         self.colors_content = Frame(self.colors_canvas)
 

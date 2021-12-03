@@ -200,7 +200,7 @@ class Gallery(Frame):
         self.thumb_dict = dict(zip(self.thumb_labels, self.current_pictures))
 
         self.nextbutt = Button(self.buttonbox, text='>>', width=7)
-        self.b1 = Button(
+        self.editbutt = Button(
             self.buttonbox, text="EDIT", width=7, 
             command=lambda graphics=self.graphics_tab: self.go_to_graphics(graphics))
         self.b2 = Button(self.buttonbox, text="CLOSE", width=7, command=self.cancel)
@@ -253,7 +253,7 @@ class Gallery(Frame):
         self.buttonbox.columnconfigure(2, weight=10)
         self.prevbutt.grid(column=0, row=0, sticky='e')
         self.nextbutt.grid(column=1, row=0, sticky='e', padx=(6,0))
-        self.b1.grid(column=0, row=1, sticky='e')
+        self.editbutt.grid(column=0, row=1, sticky='e')
         if self.dialog:
             self.b2.grid(column=1, row=1, sticky='e', padx=(6,0))
         spacer.grid(column=2, row=0, rowspan=3, sticky='news')
@@ -289,7 +289,7 @@ class Gallery(Frame):
             (self.nextbutt, 
                 "Right Button", 
                 "Click with mouse or when highlighted click with spacebar."),
-            (self.b1,
+            (self.editbutt,
                 "Edit Button",
                 "Open the current image in the Graphics Tab.")) 
         if self.dialog:
@@ -300,7 +300,7 @@ class Gallery(Frame):
 
             rcm_widgets = (
                 self.thumbstrip, self.pic_canvas, self.prevbutt, self.nextbutt, 
-                self.b1)
+                self.editbutt)
             make_rc_menus(
                 rcm_widgets, 
                 self.rc_menu,
