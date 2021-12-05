@@ -11,7 +11,7 @@ from widgets import (
     LabelH3, MessageCopiable, LabelStay)
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
-from messages_context_help import gallery_help_msg
+from messages_context_help import gallery_help_msg, gallery_thumbnail_help_msg
 from utes import create_tooltip
 from names import get_current_person
 from query_strings import (
@@ -175,6 +175,7 @@ class Gallery(Frame):
                 image=small)
             thumb.grid(column=0, row=0)
             thumb.image = small
+            self.rc_menu.loop_made[thumb] = gallery_thumbnail_help_msg
 
             self.thumb_labels.append(thumb)
 
@@ -297,16 +298,14 @@ class Gallery(Frame):
                 visited, 
                 self.master.statusbar.status_label, 
                 self.master.statusbar.tooltip_label)
-
-            rcm_widgets = (
-                self.thumbstrip, self.pic_canvas, self.prevbutt, self.nextbutt, 
-                self.editbutt)
-            make_rc_menus(
-                rcm_widgets, 
-                self.rc_menu,
-                gallery_help_msg)
-
             config_generic(self.dialog)
+
+        rcm_widgets = (
+            self.pic_canvas, self.prevbutt, self.nextbutt, self.editbutt)
+        make_rc_menus(
+            rcm_widgets, 
+            self.rc_menu,
+            gallery_help_msg)
 
         self.thumb_canvas.config(width=self.winfo_reqwidth(), height=130)
         if self.dialog:
@@ -352,12 +351,6 @@ class Gallery(Frame):
 
     def scroll_move(self, event):
         self.pic_canvas.scan_dragto(event.x, event.y, gain=5)
-
-    def thumb_start(self, event):
-        self.thumb_canvas.scan_mark(event.x, event.y)
-
-    def thumb_move(self, event):
-        self.thumb_canvas.scan_dragto(event.x, event.y, gain=1)
 
     def go_to_graphics(self, graphics):
         '''

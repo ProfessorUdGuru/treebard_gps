@@ -151,8 +151,8 @@ class RolesDialog(Toplevel):
             self.canvas.statusbar.tooltip_label)
 
         rcm_widgets = (
-            self.role_type_input, self.person_input, self.add_butt, 
-            self.done_butt, self.close_butt, self.role_type_input.entry)
+            self.role_type_input.entry, self.person_input, self.add_butt, 
+            self.done_butt, self.close_butt)
         make_rc_menus(
             rcm_widgets, 
             self.rc_menu,

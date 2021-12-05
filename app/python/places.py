@@ -28,7 +28,9 @@ from scrolling import Scrollbar, resize_scrolled_content
 from autofill import EntryAuto
 from toykinter_widgets import Separator, run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
-from messages_context_help import places_dlg_help_msg
+from messages_context_help import (
+    places_dialog_label_help_msg, places_dlg_help_msg, 
+    places_dialog_radio_help_msg, places_dialog_hint_help_msg)
 from nested_place_strings import make_all_nestings, ManyManyRecursiveQuery
 from messages import open_message, places_err
 from query_strings import (
@@ -269,6 +271,7 @@ class NewPlaceDialog():
 
         lab = Label(self.frm, text=place_string)
         lab.grid(column=0, row=self.rowdx, sticky='w')
+        self.rc_menu.loop_made[lab] = places_dialog_label_help_msg
             
         self.nest_level = Frame(self.frm)
         self.nest_level.grid(column=0, row=self.rowdx+1, sticky='w', padx=(0,3), columnspan=2)
@@ -306,6 +309,7 @@ class NewPlaceDialog():
                 value=self.current_id,
                 text=rad_string, 
                 anchor="w")
+            self.rc_menu.loop_made[rad] = places_dialog_radio_help_msg
 
             lab2 = Label(
                 self.nest_level, 
@@ -316,6 +320,7 @@ class NewPlaceDialog():
                 self.nest_level, 
                 width=2, 
                 command=lambda hint=hint: self.grid_edit_row(hint))
+            self.rc_menu.loop_made[editx] = places_dialog_hint_help_msg
 
             self.nest_level.columnconfigure(1, weight=1)
             rad.grid(column=0, row=row, sticky='we', columnspan=2)
@@ -346,7 +351,7 @@ class NewPlaceDialog():
                 self.canvas.statusbar.status_label, 
                 self.canvas.statusbar.tooltip_label) 
 
-            rcm_widgets = (lab, rad, editx)
+            rcm_widgets = ()
             make_rc_menus(
                 rcm_widgets, 
                 self.rc_menu,
@@ -407,7 +412,7 @@ class ValidatePlace():
         self.new = False
         self.dupes = False
 
-        self.new_place_dialog = None # added 20210913
+        self.new_place_dialog = None
 
         self.see_whats_needed()
 

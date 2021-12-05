@@ -11,7 +11,7 @@ from custom_combobox_widget import Combobox
 from autofill import EntryAutoHilited
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
-from messages_context_help import notes_dlg_help_msg, links_dlg_msg
+from messages_context_help import notes_dlg_help_msg, links_dlg_help_msg
 from styles import config_generic, make_formats_dict
 from names import get_name_with_id, make_all_names_list_for_person_select
 from places import make_all_nestings    

@@ -201,6 +201,7 @@ class Main(Frame):
         colorizer = Colorizer(
             options_tabs.store['colors'],
             self.root,
+            self.rc_menu,
             tabbook=self.right_panel)
         colorizer.grid(column=0, row=0)
 
@@ -410,23 +411,16 @@ class Main(Frame):
         rcm_widgets = (
             self.person_entry, person_change, person_search, 
             self.top_pic_button, self.findings_table.event_input, 
-            self.findings_table.add_event_button, self.att.event_input, 
-            self.att.add_event_button, self.fontpicker.output_sample, 
+            self.att.event_input,self.fontpicker.output_sample, 
             self.fontpicker.font_size, self.fontpicker.cbo.entry, 
-            self.fontpicker.apply_button, colorizer.hscroll, 
+            self.fontpicker.apply_button,  
             colorizer.try_button, colorizer.copy_button, 
             colorizer.apply_button, colorizer.new_button, 
-            colorizer.entries_combos[0], colorizer.entries_combos[1], 
-            colorizer.entries_combos[2], colorizer.entries_combos[3], 
-            colorizer.domain_tips[0], colorizer.domain_tips[1], 
-            colorizer.domain_tips[2], colorizer.domain_tips[3], 
+            colorizer.entries_combos[0], colorizer.entries_combos[3],
             self.findings_table.headers[0], self.findings_table.headers[1], 
             self.findings_table.headers[2], self.findings_table.headers[3], 
             self.findings_table.headers[4], self.findings_table.headers[5], 
-            self.findings_table.headers[6], self.findings_table.headers[7], 
-            self.att.headers[0], self.att.headers[1], self.att.headers[2], 
-            self.att.headers[3], self.att.headers[4], self.att.headers[5], 
-            self.att.headers[6], self.att.headers[7])
+            self.findings_table.headers[6], self.findings_table.headers[7])
         make_rc_menus(
             rcm_widgets, 
             self.rc_menu, 

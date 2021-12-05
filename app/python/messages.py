@@ -59,7 +59,7 @@ def open_yes_no_message(master, message, title, ok_lab, cancel_lab):
     cancel_butt.grid(column=1, row=0, padx=6)
     ok_butt.focus_set()
 
-    msg.resize_window(lab)
+    msg.resize_window()
 
     return msg, lab, ok_butt, cancel_butt, buttonbox
 
@@ -105,7 +105,7 @@ class InputMessage(Dialogue):
         if scrolled is True:
             resize_scrolled_content(self, self.canvas, self.window)
         else:
-            self.resize_window(self.head)
+            self.resize_window()
 
         if self.grab is True: self.grab_set()
         self.deiconify()
@@ -255,7 +255,7 @@ def open_input_message(master, message, title, ok_lab, cancel_lab, user_input):
     cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
     inPut.focus_set()
 
-    msg.resize_window(lab)
+    msg.resize_window()
 
     master.wait_window(msg)
     got = show()
@@ -303,7 +303,7 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
     cancel_butt.grid(column=1, row=0, padx=6, sticky='e')
     inPut.focus_set()
 
-    msg.resize_window(lab)
+    msg.resize_window()
     master.wait_window(msg)
     gotten = show()
     return gotten
@@ -356,7 +356,7 @@ def open_option_message(
     cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
     cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
     msg.grab_set()
-    msg.resize_window(lab)
+    msg.resize_window()
     master.wait_window(msg)
     got = show()
     return msg, got

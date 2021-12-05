@@ -473,7 +473,7 @@ class EventsTable(Frame):
                 delete_generic_finding()
 
             current_person = self.current_person
-            current_file = get_current_file()[0]
+            # current_file = get_current_file()[0]
             conn = sqlite3.connect(current_file)
             conn.execute('PRAGMA foreign_keys = 1')
             cur = conn.cursor()
@@ -494,6 +494,7 @@ class EventsTable(Frame):
             cur.close()
             conn.close()
 
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
@@ -1453,7 +1454,7 @@ class NewEventDialog(Toplevel):
 
         rcm_widgets = (
             self.date_input, self.place_input, self.particulars_input, 
-            self.age1_input)
+            self.age1_input, self.new_evt_msg)
         make_rc_menus(
             rcm_widgets, 
             self.rc_menu,
@@ -1968,8 +1969,10 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# add rcm to every dialog, get config_generic to change color of rcm dlg, colorizer.colors_content rcm doesn't work even though colorizer.colors_content statustips do; for now I trigger the rcm message from the scrollbar instead of the samples window itself; try moving to the loop message method which is at bottom of messages_context_help for example of how to do it
-# center the rcm dialog in screen
+# get config_generic to change color of rcm dlg
+# delete kin types such as testing from all 3 db's
+# center the rcm dialog in screen and add vertical scrollbar hidden = True, include mousewheel scrolling and have to use grab set or some of them don't work right
+# resizing thescrollbar is accomodating the stuff on persons tab but not the stuff on other tabs esp places or sources. also when changing fonts you shd nothave to switch to persons tab and then resize sb manually, it shd know what all is in the root window and resize everything automatically or when I tell it to, the user shd not have to resize sb manually
 # CANCEL and X don't work on make new kin type dlg, test same on all dlgs
 # dates < 100 shd be suffixed AD or BC
 # re: date error it seems like when I click ok it's deleting a row from the table?
@@ -1978,7 +1981,9 @@ if __name__ == '__main__':
 # dates prefs tab, get rid of ttk comboboxes, add statustips & rcm
 # Test ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER around a dialog HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work
 # get all main tabs back into working order
+# in the Gallery there should be a way to know when the viewport is in focus, and there are 2 widgets not changing color on colorize: the background on left and right of a narrow main pic and the border around the scrollbar slider under the thumbstrip.
 # in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
+# in the File menu items add an item "Restore Sample Tree to default values" and have it grayed out if the sample tree is not actually open.
 # fix Border so that title bar changes color when not on top or in focus
 # add to Search dlg: checkbox "Speed Up Search" with tooltip "If selected, search will begin after three characters are typed." Have it selected by default.
 # TEST every functionality due to recent restructuring
@@ -1997,6 +2002,9 @@ if __name__ == '__main__':
 # BRANCH: fonts
 # when changing font, window/scrollbar don't resize till reloaded; see notes in fonts_picker; when fixed get rid of the message
 # on change of font size: dropdown font doesn't resize instantly; font size on roles/notes dialogs esp headers doesn't resize instantly
+
+# BRANCH: gallery
+# refactor gallery structure only: statustips don't work in places tab or sources tab since statustips go in a dialog and these tabs, unlike the persons gallery, are not dialogs. Best way to fix this is to get rid of the idea of putting some galleries in tabs with one (the one that works well) in a dialog. They shd all work the same for the sake of my sanity and consistency for user and for coder as well. Also the scrollbars don't work right for the very big images. There shd be nothing in any tab that's ever bigger than the persons tab events table, ever. If all 3 galleries had their own dialogs it would simplify a lot of perennial problems I've had with this, it would make it easier to resize the scrollbars, it would solve the problem of statusbar tips, and it would not be hard to do, best of all it would give me a real places tab (with a main pic only) and a real sources tab (with a main pic only) and both would work the same as the current person tab: you'd change the current place to show its stuff and its pic, same for the current source or citation, and clicking the main pic would open the gallery. Then the tabs could be used for what they're needed for, like searching and linking and stuff.
 
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?
@@ -2030,13 +2038,16 @@ if __name__ == '__main__':
 # BRANCH: links
 # make the ADD LINKS diaog in notes.py do something. Start with person (link current note to other people), then do place (link current note to a places_places_id), then an event. Make sure the note actually shows up at least for the event which has an interface for showing what notes are linked to what events. When that works, add ADD LINKS functionality to the Links Tab for the other stuff in links_links db table.
 
-
 # ADD TO MAIN DO LIST FOR: 
 # files: when new empty tree is made, "name unknown" is a person in the db autofill list shd not include this, search shd not include this. see jones diatribes re: names
 
 # DEV DOCS:
 # files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run
 # notes: Since note topics are unique throughout the whole tree, the topic text can be used similarly to the primary key, so that's what I usually do. I created a primary key anyway to be consistent, and because if I don't, then SQLite will create one automatically.
+
+# ADD FAQ SECTION TO treebard.com Treebard Topics:
+# Q: The context help topics are helpful but wordy, with too much info about why Treebard does things a certain way, and it boils down to this: you're ranting in an unbusinesslike way.
+# A: True. I'm creating Treebard in my spare time, and I have a lot of time, because I refuse to do anything else. Just kidding, though my wife might not think so. Treebard GPS is not meant to be your average daily-grind, run-of-the-mill, just-another-genieware program for sale to any sucker who'll buy it. It's not even for sale, it's free. The purpose of this preliminary version of Treebard is to show the way to myself and other would-be developers of genieware. So the context help messages are not only there to tell you how to use Treebard, but also to explain why Treebard is different here and there. Never is the interface anywhere near as convoluted as my explanations of it. In fact, my philosophy on Help Topics is that they should not be needed. But they still need to exist. My main goal with the interface is that it should hide the complexity of what has to go on behind the scenes in order for Treebard to raise the bar for genieware of the future. Including Treebard version 1 which has a seed in Treebard version 0 which exists, sort of, but hasn't been coded yet. By the time this project attracts more programmers to help make it more businesslike, it should have a more businesslike facade, I guess. Well if it really has to, anyway. But it will still be free. So why don't we just be ourselves and talk too much and have a good time?
 
 
 

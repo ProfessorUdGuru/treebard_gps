@@ -10,6 +10,7 @@ from styles import (
     get_color_schemes, get_color_schemes_plus, make_formats_dict, 
     get_all_descends, config_generic)
 from files import get_current_file
+from messages_context_help import color_preferences_swatches_help_msg
 from query_strings import (
     update_format_color_scheme, delete_color_scheme, select_color_scheme_current, 
     update_color_scheme_null, insert_color_scheme)
@@ -23,10 +24,11 @@ current_file = get_current_file()[0]
 formats = make_formats_dict()
 
 class Colorizer(Frame):
-    def __init__(self, parent, root, tabbook=None, *args, **kwargs):
+    def __init__(self, parent, root, rc_menu, tabbook=None, *args, **kwargs):
         Frame.__init__(self, parent, *args, **kwargs)
         self.parent = parent
         self.root = root
+        self.rc_menu = rc_menu
         self.tabbook = tabbook
 
         self.old_col = 0
@@ -204,6 +206,7 @@ class Colorizer(Frame):
                     text=color, fg=scheme[3])
                 lab.grid(column=y, row=z, ipadx=6, ipady=6)
                 lab.bind('<Button-1>', self.config_local)
+                self.rc_menu.loop_made[lab] = color_preferences_swatches_help_msg
                 z += 1
             y += 1
 

@@ -121,7 +121,6 @@ class FontPicker(Frame):
             "Redraw-on-Font-Change Bug", 
             "OK")
         msg0[0].grab_set()
-        msg0[1].config(aspect=400)
 
     def show_font_size(self, evt):
         self.fontSize = self.fontSizeVar.get()
