@@ -30,7 +30,7 @@ def open_message(master, message, title, buttlab, inwidg=None):
     button = Button(msg.window, text=buttlab, command=close, width=6)
     button.grid(column=0, row=1, padx=6, pady=(0,12))
     button.focus_set()
-
+    config_generic(msg)
     msg.resize_window()
 
     return msg, lab, button
@@ -59,6 +59,7 @@ def open_yes_no_message(master, message, title, ok_lab, cancel_lab):
     cancel_butt.grid(column=1, row=0, padx=6)
     ok_butt.focus_set()
 
+    config_generic(msg)
     msg.resize_window()
 
     return msg, lab, ok_butt, cancel_butt, buttonbox
@@ -108,6 +109,8 @@ class InputMessage(Dialogue):
             self.resize_window()
 
         if self.grab is True: self.grab_set()
+
+        config_generic(self)
         self.deiconify()
         self.master.wait_window(self)
         self.run_post_op()
@@ -254,7 +257,8 @@ def open_input_message(master, message, title, ok_lab, cancel_lab, user_input):
     cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
     cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
     inPut.focus_set()
-
+    
+    config_generic(msg)
     msg.resize_window()
 
     master.wait_window(msg)
@@ -303,6 +307,7 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
     cancel_butt.grid(column=1, row=0, padx=6, sticky='e')
     inPut.focus_set()
 
+    config_generic(msg)
     msg.resize_window()
     master.wait_window(msg)
     gotten = show()
@@ -356,6 +361,8 @@ def open_option_message(
     cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
     cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
     msg.grab_set()
+
+    config_generic(msg)
     msg.resize_window()
     master.wait_window(msg)
     got = show()

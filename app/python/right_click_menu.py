@@ -54,7 +54,20 @@ def make_rc_menus(rcm_widgets, rc_menu, rcm_msg):
         k.bind("<Button-3>", rc_menu.attach_rt_clk_menu)
         rc_menu.help_per_context[k] = v
 
-class RightClickMenu(tk.Menu):
+class Menux(tk.Menu):
+    def __init__(self, master, *args, **kwargs):
+        tk.Menu.__init__(self, master, *args, **kwargs)
+        pass
+
+    def winfo_subclass(self):
+        ''' 
+            Like built-in tkinter method
+            w.winfo_class() except it gets subclass names.
+        '''
+        subclass = type(self).__name__
+        return subclass
+
+class RightClickMenu(Menux):
     '''
         This is how you config() the menu items post-constructor, or do it in 
         the instance, see below:
@@ -62,7 +75,7 @@ class RightClickMenu(tk.Menu):
     '''
 
     def __init__(self, master, *args, **kwargs):
-        tk.Menu.__init__(self, master, *args, **kwargs)
+        Menux.__init__(self, master, *args, **kwargs)
 
         self.master = master
         self.message = ''

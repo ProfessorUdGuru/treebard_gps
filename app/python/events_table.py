@@ -1184,6 +1184,7 @@ class NewEventDialog(Toplevel):
             buttonbox, text="CANCEL", command=cancel_new_evt_type, width=6)
         cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
         self.after_death_asker.grab_set()
+        config_generic(self.after_death_asker)
         self.after_death_asker.resize_window()
         
         self.wait_window(self.after_death_asker)
@@ -1242,6 +1243,7 @@ class NewEventDialog(Toplevel):
         id_couple_event.canvas.title_2.config(text="")
         self.withdraw()
         id_couple_event.grab_set()
+        config_generic(id_couple_event)
 
         lab = LabelH3(
             id_couple_event.window, 
@@ -1460,6 +1462,7 @@ class NewEventDialog(Toplevel):
             self.rc_menu,
             new_event_dlg_help_msg) 
 
+        config_generic(self)
         self.focus_first_empty()
 
     def show_one_person(self):
@@ -1861,6 +1864,7 @@ class NewKinTypeDialog(Dialogue):
             self.make_widgets_for_one(item, column, q)            
             column += 1
             q += 1
+        config_generic(self)
         self.grab_set()
 
     def make_widgets(self):
@@ -1969,10 +1973,8 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# get config_generic to change color of rcm dlg
 # delete kin types such as testing from all 3 db's
-# center the rcm dialog in screen and add vertical scrollbar hidden = True, include mousewheel scrolling and have to use grab set or some of them don't work right
-# resizing thescrollbar is accomodating the stuff on persons tab but not the stuff on other tabs esp places or sources. also when changing fonts you shd nothave to switch to persons tab and then resize sb manually, it shd know what all is in the root window and resize everything automatically or when I tell it to, the user shd not have to resize sb manually
+# center the rcm dialog in screen and add vertical scrollbar hidden = True, include mousewheel scrolling and have to use grab set or some of them don't work rightve to resize sb manually
 # CANCEL and X don't work on make new kin type dlg, test same on all dlgs
 # dates < 100 shd be suffixed AD or BC
 # re: date error it seems like when I click ok it's deleting a row from the table?

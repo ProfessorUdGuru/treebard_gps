@@ -809,20 +809,21 @@ class ButtonBigPic(Buttonx):
     def __init__(self, master, *args, **kwargs):
         Buttonx.__init__(self, master, *args, **kwargs)
 
+        self.formats = make_formats_dict()
         self.config(
             bd=0, 
             relief="flat",
-            bg=formats['highlight_bg'],  
-            fg=formats['bg'],
+            bg=self.formats['highlight_bg'],  
+            fg=self.formats['bg'],
             cursor='hand2')
         self.bind('<FocusIn>', self.highlight)
         self.bind('<FocusOut>', self.unhighlight)
 
     def highlight(self, evt):
-        self.config(bg=formats['fg'])
+        self.config(bg=self.formats['fg'])
 
     def unhighlight(self, evt):
-        self.config(bg=formats['bg'])
+        self.config(bg=self.formats['bg'])
 
 class ButtonFlatHilited(Buttonx):
     '''
@@ -1316,7 +1317,7 @@ class Radiobutton(Radiobuttonx):
             bg=formats['bg'],
             fg=formats['fg'], 
             activebackground=formats['highlight_bg'],
-            selectcolor=formats['bg'], 
+            selectcolor=formats['highlight_bg'], 
             padx=6, pady=6) 
 
 class RadiobuttonBig(Radiobutton):

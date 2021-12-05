@@ -233,7 +233,8 @@ class Border(Canvas):
             widg.bind('<B1-Motion>', self.stop_edge_sizer)
             widg.bind('<ButtonRelease-1>', self.stop_edge_sizer)
 
-        config_generic(self.master)
+        config_generic(self)
+        # config_generic(self.master)
 
     def recolorize_on_restore(self, evt):
         evt.widget.config(bg=NEUTRAL_COLOR)

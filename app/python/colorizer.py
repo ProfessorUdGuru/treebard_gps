@@ -21,7 +21,7 @@ from dev_tools import looky, seeline
 
 
 current_file = get_current_file()[0]
-formats = make_formats_dict()
+# self.formats = make_formats_dict()
 
 class Colorizer(Frame):
     def __init__(self, parent, root, rc_menu, tabbook=None, *args, **kwargs):
@@ -30,6 +30,8 @@ class Colorizer(Frame):
         self.root = root
         self.rc_menu = rc_menu
         self.tabbook = tabbook
+
+        self.formats = make_formats_dict()
 
         self.old_col = 0
         self.parent.columnconfigure(0, weight=1)
@@ -50,11 +52,10 @@ class Colorizer(Frame):
         self.colors_canvas = Canvas(
             stripview, 
             bd=1, highlightthickness=1, 
-            highlightbackground=formats['highlight_bg'], 
-            bg=formats['bg'],
+            highlightbackground=self.formats['highlight_bg'], 
+            bg=self.formats['bg'],
             width=840,
-            height=118
-) 
+            height=118) 
         self.hscroll = Scrollbar(
             stripview, orient='horizontal', command=self.colors_canvas.xview)
         self.colors_canvas.configure(xscrollcommand=self.hscroll.set)
@@ -98,7 +99,7 @@ class Colorizer(Frame):
             self.colors_table,
             anchor='w', 
             text=' Domain',
-            font=formats['output_font'])
+            font=self.formats['output_font'])
 
         self.h2 = Label(
             self.colors_table,
@@ -106,10 +107,10 @@ class Colorizer(Frame):
             text=' Color')
 
         opening_colors = (
-            formats['bg'], 
-            formats['highlight_bg'], 
-            formats['head_bg'], 
-            formats['fg'])
+            self.formats['bg'], 
+            self.formats['highlight_bg'], 
+            self.formats['head_bg'], 
+            self.formats['fg'])
 
         displabel = self.make_colors_table(opening_colors)
 
@@ -146,7 +147,8 @@ class Colorizer(Frame):
         self.recolorize()
 
     def recolorize(self):
-
+        # self.formats = make_formats_dict()
+        # print("line", looky(seeline()).lineno, "self.formats['bg']:", self.formats['bg'])
         color_scheme = []
         for child in self.colors_content.winfo_children():
             if self.parent.focus_get() == child:

@@ -23,6 +23,7 @@ from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, LabelHeader, 
     Entry, ButtonQuiet)
 from files import get_current_file
+from styles import config_generic
 from window_border import Border
 from scrolling import Scrollbar, resize_scrolled_content
 from autofill import EntryAuto
@@ -187,7 +188,7 @@ class NewPlaceDialog():
         self.frm.grid(column=1, row=2, sticky='news', pady=12)
         show_message()
         self.lay_out_radios()
-
+        config_generic(self.new_places_dialog)
         resize_scrolled_content(self.new_places_dialog, self.canvas, window)
 
         self.new_places_dialog.focus_set()

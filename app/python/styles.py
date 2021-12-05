@@ -1,5 +1,5 @@
 from os import path
-from tkinter import Tk, Label
+# from tkinter import Tk, Label
 import sqlite3
 from files import get_current_file, global_db_path
 from query_strings import(
@@ -20,7 +20,7 @@ from dev_tools import looky, seeline
     added to config_generic, even if the class it's inheriting from is already
     a sub-class that already has its own config sub-function.
 
-    Some of the more complex custom widgets have their own method w.colorize()
+    Some of the more complex custom widgets have their own method, w.colorize()
     which is called here in `config_generic()`.
 '''
 
@@ -85,22 +85,26 @@ NEUTRAL_COLOR = '#878787'
     For font styles see `prefs_to_use[6]` in `make_formats_dict()`.
 '''
 
+bgStay_fgStay = ('FrameStay', 'LabelStay')
+
 bgStd = (
     'Frame', 'Toykinter', 'Main', 'Colorizer', 'Toplevel', 'FontPicker',
-    'StatusbarTooltips', 'EventsTable', 'Gallery', 'FrameHilited6')
+    'StatusbarTooltips', 'EventsTable', 'Gallery', 'FrameHilited6',
+    'Dialogue', 'Border', 'Canvas')
 
 bgHead = ('FrameHilited2',)
 
 bgLite = (
     'FrameHilited', 'FrameHilited1', 'FrameHilited3', 'FrameHilited4', 
-    'LabelTitleBar', 'Sizer', 'ToolTip', 'TabBook',
+    'LabelTitleBar', 'Sizer', 'ToolTip', 'TabBook', 'CanvasHilited',
     'ToplevelHilited', 'TitleBarButtonSolidBG')
 
 bgStd_fgStd = ('Sizer', )
 
 bgStd_fgStd_fontOut = ('Label', 'LabelFrame')
 
-bgLite_fgStd_fontIn_insFg = ('Entry', 'Text', 'EntryAutoHilited')
+bgLite_fgStd_fontIn_insFg = (
+    'Entry', 'Text', 'EntryAutoHilited', 'EntryHilited1')
 
 bgStd_fgStd_fontIn_insFg = ('EntryAuto', 'EntryAutofill', 'EntryUnhilited')
 
@@ -133,6 +137,10 @@ def get_all_descends (ancestor, deep_list):
     for item in lst:
         deep_list.append(item)
         get_all_descends(item, deep_list)
+    # for widg in deep_list:
+        # if widg.winfo_class() == 'Toplevel':
+            # if widg.winfo_subclass == 'Toplevel':
+                # print("line", looky(seeline()).lineno, "widg:", widg)
     return deep_list
 
 def config_generic(parent):
@@ -142,6 +150,9 @@ def config_generic(parent):
         individually. This is also called in colorizer to change the color 
         of everything instantly. 
     '''
+
+    def config_bgStay_fgStay(widg):
+        pass
 
     def config_bgStd(widg):
         widg.config(bg=formats['bg'])
@@ -279,67 +290,6 @@ def config_generic(parent):
             fg=formats['fg'], 
             font=formats['boilerplate'])
 
-    # ************* special event widgets ********************
-
-    # widgets that have highlight/unhighlight events need some
-    #    special treatment to keep up with changes of the
-    #    color scheme. In the class definition do this:
-    # self.formats = make_formats_dict()
-    # And in the highlight/unhighlight methods do this:
-    # bg=self.formats['blah'] ...instead of bg=formats['blah']
-    # And give them their own config function here:
-       
-
-    def config_border(widg):
-        widg.formats = formats
-        widg.config(bg=formats['bg'])
-        widg.colorize_border()
-
-    def config_labelhilited(lab):
-        '''
-            When used for Combobox arrow, it has to respond to events.
-        '''
-        lab.formats = formats 
-        lab.config(
-            bg=formats['highlight_bg'],
-            fg=formats['fg'],
-            font=formats['output_font']) 
-
-    def config_labelbuttontext(lab):
-        lab.formats = formats
-        lab.config(
-            bg=formats['bg'],
-            fg=formats['fg'],
-            font=formats['input_font'])            
-
-    def config_labeltab(lab):
-        lab.formats = formats
-        if lab.chosen is False:
-            lab.config(
-                bg=formats['highlight_bg'],
-                fg=formats['fg'],
-                font=formats['tab_font'])
-        else:
-            lab.config(
-                bg=formats['bg'],
-                fg=formats['fg'],
-                font=formats['tab_font'])
-
-    def config_labelmovable(lab):
-        lab.formats = formats
-        lab.config(
-            bg=formats['highlight_bg'], 
-            fg=formats['fg'],
-            font=formats['output_font'])
-
-    def config_entrydefaulttext(ent):
-        ent.formats = formats
-        ent.config(
-            background=formats['highlight_bg'],
-            font=formats['show_font'])
-
-    # ***********************************
-
     def config_buttons(button):
         button.config(
             bg=formats['bg'],  
@@ -367,6 +317,14 @@ def config_generic(parent):
             fg=formats['fg'], 
             activebackground=formats['highlight_bg'],
             selectcolor=formats['highlight_bg'])
+
+    def config_radiobuttons_big(radio):
+        radio.config(
+            bg=formats['bg'],
+            fg=formats['fg'], 
+            activebackground=formats['highlight_bg'],
+            selectcolor=formats['highlight_bg'],
+            font=formats['output_font'])
 
     def config_buttons_quiet(button):
         button.config(
@@ -415,31 +373,118 @@ def config_generic(parent):
             troughcolor=formats['highlight_bg'],
             activebackground=formats['head_bg'])
 
-    formats = make_formats_dict()
+    # ************* special event widgets ********************
 
+    # widgets that have highlight/unhighlight events need some
+    #    special treatment to keep up with changes of the
+    #    color scheme. In the class definition do this:
+    # self.formats = make_formats_dict()
+    # And in the highlight/unhighlight methods do this:
+    # bg=self.formats['blah'] ...instead of bg=formats['blah']
+    # And give them their own config function here:
+       
+
+    # def config_border(widg):
+        # widg.formats = formats
+        # widg.config(bg=formats['bg'])
+        # widg.colorize_border()
+
+    def config_labelhilited(lab):
+        '''
+            When used for Combobox arrow, it has to respond to events.
+        '''
+        lab.formats = formats 
+        lab.config(
+            bg=formats['highlight_bg'],
+            fg=formats['fg'],
+            font=formats['output_font']) 
+
+    def config_labelbuttontext(lab):
+        lab.formats = formats
+        lab.config(
+            bg=formats['bg'],
+            fg=formats['fg'],
+            font=formats['input_font'])            
+
+    def config_labeltab(lab):
+        lab.formats = formats
+        if lab.chosen is False:
+            lab.config(
+                bg=formats['highlight_bg'],
+                fg=formats['fg'],
+                font=formats['tab_font'])
+        else:
+            lab.config(
+                bg=formats['bg'],
+                fg=formats['fg'],
+                font=formats['tab_font'])
+
+    def config_labelmovable(lab):
+        lab.formats = formats
+        lab.config(
+            bg=formats['highlight_bg'], 
+            fg=formats['fg'],
+            font=formats['output_font'])
+
+    def config_entrydefaulttext(ent):
+        ent.formats = formats
+        ent.config(
+            background=formats['highlight_bg'],
+            font=formats['show_font'])
+
+    def config_button_bigpic(widg):
+        widg.formats = formats
+        widg.config(bg=formats['highlight_bg'], fg=formats['bg'])
+
+    # *****************end of special event widgets******************
+
+    formats = make_formats_dict()
+    print("line", looky(seeline()).lineno, "formats['bg']:", formats['bg'])
     ancestor_list = []
     all_widgets_in_root = get_all_descends(
         parent, ancestor_list)
 
     for widg in (all_widgets_in_root):
-        if (widg.winfo_class() == 'Label' and 
-            widg.winfo_subclass() == 'LabelStay'):
-                pass
+
+        if widg.winfo_subclass() in bgStd:
+            config_bgStd(widg)
+
+        elif widg.winfo_subclass() in bgHead:
+            config_bgHead(widg)
+
+        elif widg.winfo_subclass() in bgLite:
+            config_bgLite(widg) 
+      
+        elif widg.winfo_subclass() in bgStd_fgStd:
+            config_bgStd_fgStd(widg)
+
+        elif widg.winfo_subclass() in bgStd_fgStd_fontOut:
+            config_bgStd_fgStd_fontOut(widg)
+
+        elif widg.winfo_subclass() in bgLite_fgStd_fontOut:
+            config_bgLite_fgStd_fontOut(widg)
+
+        elif widg.winfo_subclass() in bgHead_fgStd_fontOut:
+            config_bgHead_fgStd_fontOut(widg)
+
+        elif widg.winfo_subclass() in bgLite_fgStd_fontH3:
+            config_bgHead_fgStd_fontH3(widg)
+
+        elif widg.winfo_subclass() in bgLite_fgStd_fontIn:
+            config_bgLite_fgStd_fontIn(widg)
+
+        elif widg.winfo_subclass() in bgLite_fgStd_fontIn_insFg:
+            config_bgLite_fgStd_fontIn_insFg(widg)
+
+        elif widg.winfo_subclass() in bgStd_fgStd_fontOut_disAbl:
+            config_bgStd_fgStd_fontOut_disAbl(widg)
+
+        elif widg.winfo_subclass() in bgStd_fgStd_fontIn_insFg:
+            config_bgStd_fgStd_fontIn_insFg(widg)
 
         elif widg.winfo_class() == 'Frame':
-            if widg.winfo_subclass() == 'FrameStay':
-                pass
 
-            elif widg.winfo_subclass() in bgStd:
-                config_bgStd(widg)
-
-            elif widg.winfo_subclass() in bgHead:
-                config_bgHead(widg)
-
-            elif widg.winfo_subclass() in bgLite:
-                config_bgLite(widg)
-
-            elif widg.winfo_subclass() == 'Combobox':
+            if widg.winfo_subclass() == 'Combobox':
                 widg.colorize()
 
             elif widg.winfo_subclass() == 'Separator':
@@ -450,28 +495,7 @@ def config_generic(parent):
 
         elif widg.winfo_class() == 'Label': 
 
-            if widg.winfo_subclass() in bgHead:
-                config_bgHead(widg) 
-          
-            elif widg.winfo_subclass() in bgStd_fgStd:
-                config_bgStd_fgStd(widg)
-
-            elif widg.winfo_subclass() in bgStd_fgStd_fontOut:
-                config_bgStd_fgStd_fontOut(widg)
-
-            elif widg.winfo_subclass() in bgLite_fgStd_fontOut:
-                config_bgLite_fgStd_fontOut(widg)
-
-            elif widg.winfo_subclass() in bgHead_fgStd_fontOut:
-                config_bgHead_fgStd_fontOut(widg)
-
-            elif widg.winfo_subclass() in bgLite_fgStd_fontH3:
-                config_bgHead_fgStd_fontH3(widg)
-
-            elif widg.winfo_subclass() in bgLite_fgStd_fontIn:
-                config_bgLite_fgStd_fontIn(widg)
-
-            elif widg.winfo_subclass() == 'LabelStatusbar':
+            if widg.winfo_subclass() == 'LabelStatusbar':
                 config_labelstatusbar(widg)
 
             elif widg.winfo_subclass() == 'LabelTab':
@@ -507,25 +531,11 @@ def config_generic(parent):
 
         elif widg.winfo_class() == 'Entry':
 
-            if widg.winfo_subclass() in bgLite_fgStd_fontIn_insFg:
-                config_bgLite_fgStd_fontIn_insFg(widg)
-
-            elif widg.winfo_subclass() in bgStd_fgStd_fontIn_insFg:
-                config_bgStd_fgStd_fontIn_insFg(widg)
-
-            elif widg.winfo_subclass() == 'LabelCopiable':
+            if widg.winfo_subclass() == 'LabelCopiable':
                 config_labelcopiable(widg)
 
             elif widg.winfo_subclass() == 'EntryHilited2':
                 config_entryhilited2(widg)
-
-        elif widg.winfo_class() == 'Text':
-
-            if widg.winfo_subclass() in bgLite_fgStd_fontIn_insFg:
-                config_bgLite_fgStd_fontIn_insFg(widg)
-
-            elif widg.winfo_subclass() in bgStd_fgStd_fontOut_disAbl:
-                config_bgStd_fgStd_fontOut_disAbl(widg)
 
         elif widg.winfo_class() == 'Button':
 
@@ -541,6 +551,9 @@ def config_generic(parent):
             elif widg.winfo_subclass() == 'ButtonFlatHilited':
                 config_buttonflathilited(widg)
 
+            elif widg.winfo_subclass() == 'ButtonBigPic':
+                config_button_bigpic(widg)
+
         elif widg.winfo_class() in ('Radiobutton', 'Checkbutton'):
 
             if widg.winfo_subclass() == 'RadiobuttonHilited':
@@ -549,21 +562,15 @@ def config_generic(parent):
             elif widg.winfo_subclass() in ('Radiobutton', 'Checkbutton'):
                 config_radiobuttons(widg)
 
+            elif widg.winfo_subclass() == 'RadiobuttonBig':
+                config_radiobuttons_big(widg)
+
         elif widg.winfo_class() == 'Scale':
             config_scale(widg)
 
         elif widg.winfo_class() == 'Canvas':
 
-            if widg.winfo_subclass() == 'Canvas':
-                config_bgStd(widg)
-
-            elif widg.winfo_subclass() == 'CanvasHilited':
-                config_bgLite(widg)
-
-            elif widg.winfo_subclass() == 'Border':
-                config_border(widg)
-
-            elif widg.winfo_subclass() == 'Scrollbar':
+            if widg.winfo_subclass() == 'Scrollbar':
                 # to figure out where all the scrollbars are:
                 # print("line", looky(seeline()).lineno, "widg:", widg)
                 # this is called in `styles.config_generic()`:
