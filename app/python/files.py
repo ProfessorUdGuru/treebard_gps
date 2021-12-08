@@ -195,7 +195,8 @@ def change_tree_title(treebard):
 def handle_new_tree_event(evt, root, treebard, open_input_message, opening_msg):
     make_tree(root, treebard, open_input_message, opening_msg)
 
-def make_tree(root, treebard, open_input_message, opening_msg, opening_dialog=None):
+def make_tree(
+    root, treebard, open_input_message, opening_msg, opening_dialog=None):
     '''
         The user can still keep copies of his files anywhere but I think to be 
         portable, everything the program needs has to be kept in one folder.

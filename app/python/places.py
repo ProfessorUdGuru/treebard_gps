@@ -105,7 +105,7 @@ class NewPlaceDialog():
         self.edit_hint_id = 0
         self.hint_to_edit = None
         self.edit_rows = {}
-        self.rc_menu = RightClickMenu(self.parent)
+        self.rc_menu = RightClickMenu(self.parent, treebard=self.treebard)
         self.make_widgets()
         self.add_new_place_option = False
         self.error = False

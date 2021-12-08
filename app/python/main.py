@@ -59,7 +59,7 @@ class Main(Frame):
         self.SCREEN_SIZE.append(self.winfo_screenwidth())
         self.SCREEN_SIZE.append(self.winfo_screenheight())
 
-        self.rc_menu = RightClickMenu(self.root)
+        self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
         self.make_widgets()
         self.get_current_values()
@@ -456,7 +456,7 @@ class Main(Frame):
         if "#" not in self.person_entry.get():
             old_current_person = self.current_person
             self.current_person = open_new_person_dialog(
-                self, self.person_entry, self.root)
+                self, self.person_entry, self.root, self.treebard)
             if self.current_person is None:
                 self.current_person = old_current_person
         else:

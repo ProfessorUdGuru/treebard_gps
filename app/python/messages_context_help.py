@@ -446,18 +446,18 @@ new_event_dlg_help_msg = (
     ("When you start typing a new event in the New Event or Attribute Input, it will autofill with the last event type used that begins with the characters you're typing. When the correct event type has filled into the input, press the NEW EVENT OR ATTRIBUTE button to open the New Event Dialog. It will display the event type you selected and the current person's name and ID number. At the top of the dialog there will be inputs for date, place, particulars and age as pertaining to this person and this event. Any of these fields can be left blank. If you leave the date blank, the event will be displayed on the attributes table. If you fill in a date, the event will be displayed on the events table. See the final paragraph in this topic for more information on how to get the event to display in the right table. See the context help topics in the Date Preferences Tab for a lot more information.\n\nIf this event applies to only the current person (i.e. if it isn't a couple event such as 'marriage'), there's nothing more to do, except to respond to a dialog which will open so you can tell Treebard whether or not the event is the sort of thing that would take place after the person's death, such as reading of the will or anything that would be expressed as 'posthumous _____'. Then the event will appear immediately, interfiled by date in the Events Table, or on the Attributes Tab if no date is input.\n\nBut if the event is a couple event such as wedding, elopement, separation, etc., then another set of widgets will appear in the bottom half of the dialog. Here you will be able to input the name and age of the other person such as the spouse, if you have this information. You will be required to enter a kin type such as 'husband' or 'wife' for each partner, whether you know the partner's name or not. If you want to create a kin type that's not already in Treebard, type anything you want in one of the kin type inputs, and a New Kin Type Dialog will open so you can specify that this is a Partner kin type vs. some other kind.\n\nIn Treebard, when a man or woman becomes a parent biologically, that person experiences an 'offspring' event. This event is created automatically by the program when you create the child's birth event and give the child parents. If you try to create an offspring event in the New Event or Attribute Input, Treebard will notify you that this will be done automatically.\n\nTreebard is aware that separating events and attributes by whether or not the event is dated is not always perfectly accurate, but you have a lot of control over where an event or attribute appears. As an example, my grandparents all had gray hair when they were old, but my paternal grandmother also had gray hair when she was young. It would be interesting to note as an event that her hair turned gray 'estimated 1920 to 1930'. But for most people whose normal hair color was known, it would be silly to add a date to say when someone had a hair color; that would be a natural attribute. But take job vs. career for example. Either one could be on the events table by giving it a date, even if an estimated or approximate date. But to say someone was a farmer by trade could go either way. If the statement is from a dated source, personally I would prefer to see it as a dated event, even though it is more like an attribute. But if you wanted, you could just add a date informally to the Particulars column, in which case, the event would be found on the Attributes Table. In spite of any shortcomings, Treebard feels that this is a better system than interfiling dated and undated events on a single table which then tries to sort itself by date and can't.",
         "New Event Dialog: General Information"))
 
-# rcm_widgets = (
-    # self.radios["parent"], self.radios["sibling"], 
-    # self.radios["partner"], self.radios["child"])
-new_kin_type_dlg_help_msg = (
-    ("This feature is not currently being used.",
-        "New Kin Type Dialog: Parent Select"),
-    ("This feature is not currently being used.",
-        "New Kin Type Dialog: Sibling Select"),
-    ("This item should be selected when creating a new kin type, if the kin type is a partner such as 'wife, husband, mistress, business partner' etc.",
-        "New Kin Type Dialog: Partner Select"),
-    ("This feature is not currently being used.",
-        "New Kin Type Dialog: Child Select"))
+# # rcm_widgets = (
+    # # self.radios["parent"], self.radios["sibling"], 
+    # # self.radios["partner"], self.radios["child"])
+# new_kin_type_dlg_help_msg = (
+    # ("This feature is not currently being used.",
+        # "New Kin Type Dialog: Parent Select"),
+    # ("This feature is not currently being used.",
+        # "New Kin Type Dialog: Sibling Select"),
+    # ("This item should be selected when creating a new kin type, if the kin type is a partner such as 'wife, husband, mistress, business partner' etc.",
+        # "New Kin Type Dialog: Partner Select"),
+    # ("This feature is not currently being used.",
+        # "New Kin Type Dialog: Child Select"))
 
 # rcm_widgets = (
     # self.pic_canvas, self.prevbutt, self.nextbutt, self.b1)

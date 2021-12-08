@@ -108,7 +108,7 @@ insert_findings_persons_new_couple = '''
     INSERT INTO findings_persons (
         finding_id, person_id1, age1, kin_type_id1, 
         person_id2, age2, kin_type_id2)
-    VALUES (?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, 128, ?, ?, 129)
 '''
 
 insert_findings_roles = '''

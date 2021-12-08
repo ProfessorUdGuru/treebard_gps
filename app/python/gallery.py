@@ -46,7 +46,7 @@ class Gallery(Frame):
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = SCREEN_SIZE
         self.dialog = dialog
 
-        self.rc_menu = RightClickMenu(self.root)
+        self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
         self.current_file, self.current_dir = get_current_file()
 

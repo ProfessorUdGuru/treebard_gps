@@ -57,7 +57,7 @@ class NotesDialog(Toplevel):
         self.current_name = get_name_with_id(self.current_person)
 
         self.privacy = tk.IntVar()
-        self.rc_menu = RightClickMenu(self.root)
+        self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
         self.formats = make_formats_dict()
 

@@ -2,7 +2,8 @@
 
 import tkinter as tk
 from styles import config_generic
-from messages import open_message
+from messages import InputMessage
+# from messages import open_message
 from widgets import LabelStylable, Button
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -74,10 +75,12 @@ class RightClickMenu(Menux):
         self.entryconfigure('Copy', state='disabled')
     '''
 
-    def __init__(self, master, *args, **kwargs):
+    def __init__(self, master, treebard=None, *args, **kwargs):
         Menux.__init__(self, master, *args, **kwargs)
 
         self.master = master
+        self.treebard = treebard
+
         self.message = ''
         self.help_title = ''
         self.widg = None
@@ -97,12 +100,28 @@ class RightClickMenu(Menux):
     def paste(self):
         print('Pasted')
 
+    # def context_help(self):
+        # msg = open_message(
+            # self.master, 
+            # self.message, 
+            # self.help_title, 
+            # "DONE")
+
     def context_help(self):
-        msg = open_message(
+        print("line", looky(seeline()).lineno, "self.treebard:", self.treebard)
+        msg = InputMessage(
             self.master, 
-            self.message, 
-            self.help_title, 
-            "DONE")
+            head1=self.message, 
+            title=self.help_title, 
+            cancel_txt="DONE",
+            scrolled=True,
+            ok_button=False,
+            treebard=self.treebard)
+
+# master, return_focus_to=None, root=None, title="", ok_txt="", 
+            # cancel_txt="", head1="", head2="", wraplength=450, radtext=[], 
+            # radfocal=0, entry=False, radio=False, scrolled=False, 
+            # grab=False, treebard=None
 
     def attach_rt_clk_menu(self, evt):
         self.widg = evt.widget

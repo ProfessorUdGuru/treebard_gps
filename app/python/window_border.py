@@ -217,7 +217,9 @@ class Border(Canvas):
         self.maxx.bind('<Button-1>', self.toggle_max_restore)
         self.restore.bind('<Button-1>', self.toggle_max_restore)
         self.quitt.bind('<Button-1>', close)
-        x = [i.bind('<Map>', self.recolorize_on_restore) for i in (self.minn, self.quitt)]
+        x = [i.bind(
+            '<Map>', 
+            self.recolorize_on_restore) for i in (self.minn, self.quitt)]
 
         for widg in (
                 self.title_bar, self.title_frame, self.logo, self.title_1, 
@@ -233,8 +235,7 @@ class Border(Canvas):
             widg.bind('<B1-Motion>', self.stop_edge_sizer)
             widg.bind('<ButtonRelease-1>', self.stop_edge_sizer)
 
-        config_generic(self)
-        # config_generic(self.master)
+        config_generic(self.master)
 
     def recolorize_on_restore(self, evt):
         evt.widget.config(bg=NEUTRAL_COLOR)

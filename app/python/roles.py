@@ -53,7 +53,7 @@ class RolesDialog(Toplevel):
         people = make_all_names_list_for_person_select()        
         self.all_names = EntryAuto.create_lists(people)
 
-        self.rc_menu = RightClickMenu(self.root)
+        self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
         self.make_widgets()
 
     def make_widgets(self):

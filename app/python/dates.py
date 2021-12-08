@@ -6,8 +6,7 @@ from files import get_current_file, global_db_path
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
 from styles import make_formats_dict
-from messages import open_message, dates_msg, InputMessage, open_input_message
-from right_click_menu import RightClickMenu, make_rc_menus
+from messages import open_message, dates_msg, InputMessage
 from messages_context_help import date_prefs_help_msg
 from query_strings import select_date_format, select_default_date_format
 import dev_tools as dt
@@ -498,8 +497,9 @@ def clarify_year(numbers, lst):
     head2 = "{} or {}?".format(numbers[0], numbers[1])
 
     msg = InputMessage(
-        root, root=root, title="Clarify Year", ok_txt="OK", cancel_txt="CANCEL", 
-        head1=dates_msg[11], head2=head2, grab=True, entry=True, wraplength=300)
+        root, root=root, title="Clarify Year", ok_txt="OK", 
+        cancel_txt="CANCEL", head1=dates_msg[11], head2=head2, 
+        grab=True, entry=True, wraplength=300)
     year = msg.show().strip()
 
     if len(year) != 4:

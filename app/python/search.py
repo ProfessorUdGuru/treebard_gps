@@ -110,7 +110,7 @@ class PersonSearch(Toplevel):
         self.pa_id = None
         self.offspring_event = None
 
-        self.rc_menu = RightClickMenu(self.root)
+        self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
         self.make_widgets()
 
@@ -200,7 +200,7 @@ class PersonSearch(Toplevel):
                 inwidg=self.entry,
                 root=self.root,
                 inwidg2=self.search_input: open_new_person_dialog(
-                    master, inwidg, root, inwidg2))
+                    master, inwidg, root, self.treebard, inwidg2))
 
         self.person_adder.grid(column=2, row=1, padx=12, pady=12)
 

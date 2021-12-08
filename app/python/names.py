@@ -162,15 +162,16 @@ def get_all_persons():
         persons.append(name)
     return persons
 
-def open_new_person_dialog(master, inwidg, root, inwidg2=None):
-    person_add = PersonAdd(master, inwidg, root, inwidg2)
+def open_new_person_dialog(master, inwidg, root, treebard, inwidg2=None):
+    person_add = PersonAdd(master, inwidg, root, treebard, inwidg2)
     root.wait_window(person_add)
     new_person_id = person_add.show()
+    print("line", looky(seeline()).lineno, "new_person_id:", new_person_id)
     return new_person_id
 
 class PersonAdd(Toplevel):
     def __init__(
-            self, master, inwidg, root, inwidg2, *args, **kwargs):
+            self, master, inwidg, root, treebard, inwidg2, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
         self.master = master
         self.inwidg = inwidg
@@ -179,7 +180,7 @@ class PersonAdd(Toplevel):
 
         self.xfr = self.inwidg.get()
         self.role_person_edited = False
-        self.rc_menu = RightClickMenu(self.root)
+        self.rc_menu = RightClickMenu(self.root, treebard=treebard)
 
         self.new_person_id = None
         self.full_name = ""
@@ -242,6 +243,7 @@ class PersonAdd(Toplevel):
         self.maxsize(
             int(self.winfo_screenwidth() * 0.90),
             int(self.winfo_screenheight() * 0.90))
+        self.grab_set()
 
     def make_inputs(self):
 
@@ -410,6 +412,7 @@ class PersonAdd(Toplevel):
             self.order = " ".join(order)
 
     def prepare_to_add_person(self, findings_roles_id=None):
+    
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -427,6 +430,7 @@ class PersonAdd(Toplevel):
         else:
             self.create_new_name_type(
                 self.name_type_input.entry.get(), cur, conn)
+            # print("this name type doesn't exist. create the type in the types tab, then try again.")
         cur.close()
         conn.close()
 
@@ -437,8 +441,8 @@ class PersonAdd(Toplevel):
     def cancel_new_person(self):
         self.grab_release()
         self.inwidg.focus_set()
-        if self.master.winfo_class() == "Toplevel":
-            self.master.destroy()
+        # if self.master.winfo_class() == "Toplevel":
+            # self.master.destroy()
         self.destroy()        
 
     def get_entered_values(self, cur, conn):

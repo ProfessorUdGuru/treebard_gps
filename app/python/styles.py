@@ -1,5 +1,4 @@
 from os import path
-# from tkinter import Tk, Label
 import sqlite3
 from files import get_current_file, global_db_path
 from query_strings import(
@@ -25,13 +24,6 @@ from dev_tools import looky, seeline
 '''
 
 NEUTRAL_COLOR = '#878787'
-
-# # add a monospaced sans-serif font for cases like dropdown menus with text at both
-# #   flush left and flush right of the same label
-# MONOSPACED_SANS = (
-    # "cascadia code", "consolas", "dejavu sans mono", "liberation mono", 
-    # "lucida console", "noto mono", "source code pro")
-# # mono_sans = MONOSPACED_SANS[0]
 
 '''
     widget.winfo_class() is a built-in Tkinter method that refers to 
@@ -96,7 +88,7 @@ bgHead = ('FrameHilited2',)
 
 bgLite = (
     'FrameHilited', 'FrameHilited1', 'FrameHilited3', 'FrameHilited4', 
-    'LabelTitleBar', 'Sizer', 'ToolTip', 'TabBook', 'CanvasHilited',
+    'LabelTitleBar', 'ToolTip', 'TabBook', 'CanvasHilited',
     'ToplevelHilited', 'TitleBarButtonSolidBG')
 
 bgStd_fgStd = ('Sizer', )
@@ -137,10 +129,6 @@ def get_all_descends (ancestor, deep_list):
     for item in lst:
         deep_list.append(item)
         get_all_descends(item, deep_list)
-    # for widg in deep_list:
-        # if widg.winfo_class() == 'Toplevel':
-            # if widg.winfo_subclass == 'Toplevel':
-                # print("line", looky(seeline()).lineno, "widg:", widg)
     return deep_list
 
 def config_generic(parent):
@@ -439,7 +427,6 @@ def config_generic(parent):
     # *****************end of special event widgets******************
 
     formats = make_formats_dict()
-    print("line", looky(seeline()).lineno, "formats['bg']:", formats['bg'])
     ancestor_list = []
     all_widgets_in_root = get_all_descends(
         parent, ancestor_list)

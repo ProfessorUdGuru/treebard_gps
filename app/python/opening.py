@@ -74,8 +74,8 @@ class SplashScreen(Toplevel):
             user has to select a tree to open every time the app loads. 
         '''
 
-        self.rc_menu = RightClickMenu(self.master)
         self.opening_dialog = Toplevel(self.master)
+        self.opening_dialog.rc_menu = RightClickMenu(self.master)
         self.opening_dialog.grab_set()
         self.canvas = Border(self.opening_dialog, tree_is_open=0)
         self.canvas.title_1.config(text='Open, Create, or Copy a Tree')
@@ -167,7 +167,7 @@ class SplashScreen(Toplevel):
             opener, new, importgedcom, opensample, cancel, self.picbutton)
         make_rc_menus(
             rcm_widgets, 
-            self.rc_menu,
+            self.opening_dialog.rc_menu,
             opening_dlg_help_msg)
 
         config_generic(self.opening_dialog)

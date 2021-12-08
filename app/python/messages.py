@@ -69,7 +69,7 @@ class InputMessage(Dialogue):
             self, master, return_focus_to=None, root=None, title="", ok_txt="", 
             cancel_txt="", head1="", head2="", wraplength=450, radtext=[], 
             radfocal=0, entry=False, radio=False, scrolled=False, 
-            grab=False, treebard=None, *args, **kwargs):
+            grab=False, treebard=None, ok_button=True, *args, **kwargs):
         Dialogue.__init__(self, master, *args, **kwargs)
 
         self.master = master
@@ -88,6 +88,7 @@ class InputMessage(Dialogue):
         self.scrolled = scrolled
         self.grab = grab
         self.treebard = treebard
+        self.ok_button = ok_button
 
         self.canvas.title_1.config(text=title)
         self.canvas.title_2.config(text="")
@@ -104,16 +105,53 @@ class InputMessage(Dialogue):
         self.bind("<Escape>", self.cancel)
 
         if scrolled is True:
+            good_height = int(self.winfo_screenheight() * 0.9)
+            self.maxsize(800, good_height)        
             resize_scrolled_content(self, self.canvas, self.window)
+            self.center_dialog(self, win_height=good_height)
         else:
             self.resize_window()
 
         if self.grab is True: self.grab_set()
 
-        config_generic(self)
+        self.grab_from = self.grab_current()
+        if self.grab_from:
+            print("line", looky(seeline()).lineno, "self.grab_from:", self.grab_from) 
+            self.grab_set()
+            
         self.deiconify()
         self.master.wait_window(self)
         self.run_post_op()
+
+    def center_dialog(self, frame=None, win_height=None):
+        '''
+            If frame is True, it works but not if the window has more content
+            that what will fit in the screen vertically. In this case I had
+            to use win_height which is a minimum height based on the screen
+            height. This is based on center_dialog() function in utes.py
+            which didn't work here. Possibly the `frame` parameter should be 
+            removed.
+        '''
+        if win_height:
+            self.update_idletasks()
+            win_width = frame.winfo_reqwidth()
+            win_height = win_height
+            right_pos = int(self.winfo_screenwidth()/2 - win_width/2)
+            down_pos = int(self.winfo_screenheight()/2 - win_height/2)
+        elif frame:
+            self.update_idletasks()
+            win_width = frame.winfo_reqwidth()
+            win_height = frame.winfo_reqheight()
+            right_pos = int(self.winfo_screenwidth()/2 - win_width/2)
+            down_pos = int(self.winfo_screenheight()/2 - win_height/2)
+        else:
+            self.update_idletasks()
+            win_width = self.winfo_reqwidth()
+            win_height = self.winfo_reqheight()
+            right_pos = int(self.winfo_screenwidth()/2 - win_width/2)
+            down_pos = int(self.winfo_screenheight()/2 - win_height/2)
+        print("line", looky(seeline()).lineno, "right_pos, down_pos:", right_pos, down_pos)
+        self.geometry("+{}+{}".format(right_pos, down_pos))
 
     def make_scrollbars(self):
 
@@ -122,6 +160,8 @@ class InputMessage(Dialogue):
         scridth_w = Frame(self.window, width=scridth)
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
+
+        print("line", looky(seeline()).lineno, "self.treebard:", self.treebard)
         if self.treebard:
             self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
             self.treebard.scroll_mouse.configure_mousewheel_scrolling()
@@ -167,12 +207,13 @@ class InputMessage(Dialogue):
         head2 = Label(self.header, text=self.head2)
         head2.grid(column=0, row=1, padx=12)        
         maxx = max(len(self.ok_txt), len(self.cancel_txt))
-        self.b1 = Button(
-            self.buttons, text=self.ok_txt, command=self.ok, width=maxx)
-        self.b1.grid(column=0, row=0, sticky='e', ipadx=3)
-        b2 = Button(
+        if self.ok_button is True:
+            self.b1 = Button(
+                self.buttons, text=self.ok_txt, command=self.ok, width=maxx)
+            self.b1.grid(column=0, row=0, sticky='e', ipadx=3)
+        self.b2 = Button(
             self.buttons, text=self.cancel_txt, command=self.cancel, width=maxx)
-        b2.grid(column=1, row=0, padx=(6,0), sticky='e', ipadx=3)
+        self.b2.grid(column=1, row=0, padx=(6,0), sticky='e', ipadx=3)
 
     def make_inputs(self):
 
@@ -180,7 +221,7 @@ class InputMessage(Dialogue):
             self.inPut = Entry(self.inputs, textvariable=self.got)
             self.inPut.grid(column=1, row=1, padx=12)
             self.inPut.focus_set()
-        if self.radio is True:
+        elif self.radio is True:
             self.radframe = Frame(self.inputs)
             self.radframe.grid()
             radios = []
@@ -194,13 +235,21 @@ class InputMessage(Dialogue):
                 rad.grid(column=0, row=i, sticky='ew')
                 radios.append(rad)    
             radios[self.radfocal].focus_set()
+        elif self.ok_button is False:
+            self.b2.focus_set()
         
     def run_post_op(self):
 
-        if self.grab is True: self.grab_release()
+        if self.grab is True: 
+            self.grab_release()
+
+        if self.grab_from:
+            self.grab_from.grab_set()
+
         if self.return_focus_to:
             self.return_focus_to.focus_set()
-        self.root.lift()
+        if self.root:
+            self.root.lift()
 
     def ok(self, evt=None):
         self.cancel()
@@ -375,10 +424,10 @@ places_err = (
 
 events_msg = (
     "The same person was used twice.",
-    "Please enter a kin type for each person.",
+    # "Please enter a kin type for each person.",
     "A second person must be entered for a couple event.",
     "Offspring events can't be changed to other event types. You "
-    "can delete the event and make a new event.",
+        "can delete the event and make a new event.",
     "A couple event can't be changed to a non-couple event, or "
         "vice-versa. For example, a marriage can be changed to "
         "a wedding but a death can't be changed to a divorce. "
@@ -401,7 +450,7 @@ events_msg = (
     "Offspring events can't be created directly. Create a new person "
         "and give them parents, and the parents' offspring events "
         "will be created automatically.",
-    "Does the new event type occur after death?",
+    # "Does the new event type occur after death?",
 )
 
 names_msg = (
