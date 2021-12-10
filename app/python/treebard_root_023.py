@@ -111,8 +111,7 @@ class Treebard():
             This is delayed till when the current file is known, so it's called 
             in opening.py.
         '''
-        self.main = Main(self.canvas, self.root, self)
-        
+        self.main = Main(self.canvas, self.root, self)        
         self.main_window = self.canvas.create_window(
             0, 0, anchor='nw', window=self.main)
         self.configure_mousewheel_scrolling()

@@ -12,6 +12,7 @@ from custom_tabbed_widget import TabBook
 from autofill import EntryAutoHilited    
 from scrolling import Scrollbar    
 from events_table import EventsTable
+from dates import DatePreferences    
 from gallery import Gallery
 from colorizer import Colorizer
 from toykinter_widgets import run_statusbar_tooltips
@@ -63,6 +64,8 @@ class Main(Frame):
 
         self.make_widgets()
         self.get_current_values()
+
+        print("line", looky(seeline()).lineno, "self.master.tree_is_open:", self.master.tree_is_open)
 
     def make_scrollbars(self):
 
@@ -207,6 +210,10 @@ class Main(Frame):
 
         self.fontpicker = FontPicker(options_tabs.store['fonts'], self.root, self)
         self.fontpicker.grid(column=0, row=0)
+        print("line", looky(seeline()).lineno, "self.master.tree_is_open:", self.master.tree_is_open)
+        date_preferences = DatePreferences(options_tabs.store['dates'])
+        date_preferences.grid(column=0, row=0)
+
 
         # children of self.master i.e. root
         # top_menu & ribbon_menu etc. are gridded in window_border.py

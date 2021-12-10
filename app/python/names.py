@@ -13,7 +13,7 @@ from autofill import EntryAuto
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import person_add_help_msg
-from messages import open_yes_no_message, names_msg
+from messages import open_yes_no_message, names_msg, open_message
 from images import get_all_pics    
 from query_strings import (
     select_current_person, select_name_with_id, select_all_names_ids,
@@ -412,6 +412,12 @@ class PersonAdd(Toplevel):
             self.order = " ".join(order)
 
     def prepare_to_add_person(self, findings_roles_id=None):
+
+        def err_done():
+            self.name_type_input.delete(0, 'end')
+            msg[0].grab_release()
+            msg[0].destroy()
+            self.name_type_input.entry.focus_set()
     
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
@@ -428,9 +434,17 @@ class PersonAdd(Toplevel):
             self.name_type_id = name_type_id[0]            
             self.check_for_dupes()
         else:
-            self.create_new_name_type(
-                self.name_type_input.entry.get(), cur, conn)
+            # self.create_new_name_type(
+                # self.name_type_input.entry.get(), cur, conn)
             # print("this name type doesn't exist. create the type in the types tab, then try again.")
+            msg = open_message(
+                self, 
+                names_msg[1], 
+                "Unknown Name Type", 
+                "OK")
+            msg[0].grab_set()
+            msg[2].config(command=err_done)
+            return
         cur.close()
         conn.close()
 
@@ -462,45 +476,46 @@ class PersonAdd(Toplevel):
             conn.commit()
             self.selected_image = selected_image    
 
-    def create_new_name_type(self, new_name_type, cur, conn):
-        def ok_new_name_type():
-            cur.execute(insert_name_type_new, (self.name_type_id, new_name_type))
-            conn.commit()
-            msg[0].destroy()
-            self.lift()
-            self.name_type_input.entry.focus_set()
+    # def create_new_name_type(self, new_name_type, cur, conn):
 
-        def cancel_new_name_type():
-            go = False
-            msg[0].destroy()
-            self.lift()
-            self.name_type_input.entry.focus_set()
+        # def ok_new_name_type(cur, conn):
+            # cur.execute(insert_name_type_new, (self.name_type_id, new_name_type))
+            # conn.commit()
+            # msg[0].destroy()
+            # self.lift()
+            # self.name_type_input.entry.focus_set()
 
-        def show_choice(evt):
-            button_text = evt.widget.cget["text"]
-            if button_text == "OK":
-                go = True
-            elif button_text == "CANCEL":
-                go = False
-            show(go)
+        # def cancel_new_name_type():
+            # go = False
+            # msg[0].destroy()
+            # self.lift()
+            # self.name_type_input.entry.focus_set()
 
-        def show():          
-            self.wait_window(msg[0])
-            if go is True:
-                self.check_for_dupes()
+        # def show_choice(evt):
+            # button_text = evt.widget.cget["text"]
+            # if button_text == "OK":
+                # go = True
+            # elif button_text == "CANCEL":
+                # go = False
+            # show(go)
+
+        # def show():          
+            # self.wait_window(msg[0])
+            # if go is True:
+                # self.check_for_dupes()
         
-        msg = open_yes_no_message(
-            self, 
-            names_msg[1], 
-            "Unknown Name Type", 
-            "OK", "CANCEL")
-        msg[0].grab_set()
-        msg[2].config(command=ok_new_name_type)
-        msg[3].config(command=cancel_new_name_type)
-        msg[2].bind("<Button-1>", show_choice)
+        # msg = open_yes_no_message(
+            # self, 
+            # names_msg[1], 
+            # "Unknown Name Type", 
+            # "OK", "CANCEL")
+        # msg[0].grab_set()
+        # msg[2].config(command=ok_new_name_type)
+        # msg[3].config(command=cancel_new_name_type)
+        # msg[2].bind("<Button-1>", show_choice)
 
-        cur.execute(select_max_name_type_id)
-        self.name_type_id = cur.fetchone()[0] + 1
+        # cur.execute(select_max_name_type_id)
+        # self.name_type_id = cur.fetchone()[0] + 1
 
     def save_new_name(self):
         current_file = get_current_file()[0]

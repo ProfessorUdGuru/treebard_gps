@@ -424,7 +424,6 @@ places_err = (
 
 events_msg = (
     "The same person was used twice.",
-    # "Please enter a kin type for each person.",
     "A second person must be entered for a couple event.",
     "Offspring events can't be changed to other event types. You "
         "can delete the event and make a new event.",
@@ -450,14 +449,15 @@ events_msg = (
     "Offspring events can't be created directly. Create a new person "
         "and give them parents, and the parents' offspring events "
         "will be created automatically.",
-    # "Does the new event type occur after death?",
+    "The event type doesn't exist. Create a new event type in the Types "
+        "tab, and try again.",
 )
 
 names_msg = (
     "This birth name already exists. To create a "
         "new person by the same name, click OK. The "
         "two persons can be merged later if desired.",
-    "That name type doesn't exist yet. Create it?",
+    "The name type doesn't exist. Create it in the Types Tab and try again.",
 )
 
 notes_msg = (
@@ -489,7 +489,10 @@ dates_msg = (
         "separated by 'and' or 'to'.",
     "For compound dates connected by 'and' or 'to', two months are possible. For "
         "single dates there can only be one month.",
-    "If no month is input, no day can be input",
+    "If no month is input, no day can be input. The date will be deleted and the "
+        "event will be moved to the Attributes Table. To return the event to the "
+        "Events Table, give it a valid date. Numerical date input is not "
+        "possible.",
     "Each part of a compound date can have one prefix and one suffix. Each single "
         "date can have one prefix and one suffix. Prefixes include est, abt, bef, aft, "
         "and cal. Suffixes include AD, BC, CE, BCE, NS and OS.",
@@ -515,6 +518,10 @@ dates_msg = (
         "leading zeroes. For example, for the year 12 AD or the year 12 BC, "
         "type '0012' without the quotation marks. Or for the year 108, type "
         "'0108'.",
+    "All years should have four digits, e.g. '1894', '0033', '0925'. The year "
+        "'9999' is maximum in either the CE or BCE era (AD or BC). The date "
+        "been deleted and the event has been moved to the Attributes Table. "
+        "To return the event to the Events Table, give it a valid date.",
 )
 
 fonts_msg = (

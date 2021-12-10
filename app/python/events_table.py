@@ -9,7 +9,6 @@ from window_border import Border, Dialogue
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
     LabelH3, Button, Entry, EntryHilited1, LabelHeader, LabelHilited)
-from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
 from nested_place_strings import make_all_nestings
@@ -24,8 +23,7 @@ from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places
 from scrolling import Scrollbar, resize_scrolled_content
-from messages import (
-    open_message, events_msg, open_yes_no_message)
+from messages import open_message, events_msg, open_yes_no_message
     
 from query_strings import (
     select_finding_places_nesting, select_current_person_id, 
@@ -57,6 +55,10 @@ from query_strings import (
 
 import dev_tools as dt
 from dev_tools import looky, seeline
+
+
+
+
 
 
 
@@ -150,7 +152,8 @@ def get_generic_findings(
         current_person, non_empty_roles, non_empty_notes):
     cur.execute(select_findings_details_generic, finding_id)
     generic_details = [i for i in cur.fetchone()]
-    dkt["date"] = format_stored_date(generic_details[3], date_prefs)
+    date_prefs = get_date_formats(tree_is_open=1)
+    dkt["date"] = format_stored_date(generic_details[3], date_prefs=date_prefs)
 
     dkt["event"], dkt["particulars"], dkt["age"] = generic_details[0:3]
     dkt["sorter"] = split_sorter(generic_details[4])
@@ -216,7 +219,9 @@ def get_couple_findings(
 
         cur.execute(select_findings_details_couple_generic, finding_id)
         couple_generics = list(cur.fetchone())
-        couple_generics[1] = format_stored_date(couple_generics[1], date_prefs)
+        date_prefs = get_date_formats(tree_is_open=1)
+        couple_generics[1] = format_stored_date(
+            couple_generics[1], date_prefs=date_prefs)
         place = get_place_string(finding_id, cur)
         dkt["place"] = place
         sorter = split_sorter(couple_generics[2])
@@ -282,7 +287,8 @@ def get_birth_findings(
         child_name = get_name_with_id(child_id)
 
         sorter = split_sorter(offspring_details[1])
-        date = format_stored_date(offspring_details[0], date_prefs)
+        date_prefs = get_date_formats(tree_is_open=1)
+        date = format_stored_date(offspring_details[0], date_prefs=date_prefs)
 
         particulars = offspring_details[2]
         place = get_place_string((offspring_event_id,), cur)
@@ -496,7 +502,7 @@ class EventsTable(Frame):
 
         msg = open_yes_no_message(
             self, 
-            events_msg[5], 
+            events_msg[4], 
             "Delete Event Confirmation", 
             "OK", "CANCEL")
         msg[0].grab_set()
@@ -510,6 +516,13 @@ class EventsTable(Frame):
     def update_db(self, widg, col_num):
 
         def update_event_type():
+
+
+            def err_done3():
+                msg[0].destroy()
+                widg.focus_set()
+                widg.delete(0, 'end')
+                widg.insert(0, initval)
 
             def err_done4():
                 msg[0].destroy()
@@ -545,7 +558,7 @@ class EventsTable(Frame):
                 if couple_event_old != couple_event_new:
                     msg4 = open_message(
                         self, 
-                        events_msg[4], 
+                        events_msg[3], 
                         "Incompatible Event Type Error", 
                         "OK")
                     msg4[0].grab_set()
@@ -563,7 +576,7 @@ class EventsTable(Frame):
             if (self.initial == 'offspring' and len(self.final) != 0):
                 msg = open_message(
                     self, 
-                    events_msg[3], 
+                    events_msg[2], 
                     "Offspring Event Edit Error", 
                     "OK")
                 msg[0].grab_set()
@@ -573,7 +586,7 @@ class EventsTable(Frame):
             if self.final == 'offspring':
                 msg = open_message(
                     self, 
-                    events_msg[7], 
+                    events_msg[6], 
                     "Change to Offspring Event Error", 
                     "OK")
                 msg[0].grab_set()
@@ -586,7 +599,14 @@ class EventsTable(Frame):
                 initial = self.initial
                 self.delete_event(self.finding, widg, initial)
             else:
-                print("event type doesn't exist. make new event type first in Types Tab, then try again.")
+                msg = open_message(
+                    self.root, 
+                    events_msg[8], 
+                    "Unknown Event Type", 
+                    "OK") 
+                msg[0].grab_set()
+                msg[2].config(command=err_done3)
+                return 
 
         def update_date():
             self.final = validate_date(
@@ -603,7 +623,9 @@ class EventsTable(Frame):
 
             cur.execute(update_finding_date, (self.final, sorter, self.finding))
             conn.commit()
-            formatted_date = format_stored_date(self.final, date_prefs)
+            date_prefs = get_date_formats(tree_is_open=1)
+            formatted_date = format_stored_date(
+                self.final, date_prefs=date_prefs)
             widg.delete(0, 'end')
             widg.insert(0, formatted_date)
             for instance in EventsTable.instances:
@@ -693,7 +715,6 @@ class EventsTable(Frame):
                         cell = EntryAuto(
                             self, width=0, 
                             autofill=True, 
-                            # too early
                             values=self.place_autofill_values)
                     else:                        
                         cell = EntryAuto(self, width=0,)
@@ -982,9 +1003,8 @@ class EventsTable(Frame):
 
     def make_new_event(self):
         '''
-            Disallow creation of second birth or death event or event types that don't exist yet, get values
-            for couple_type_event and after_death_event booleans, open
-            dialog.
+            Disallow creation of second birth or death event or types 
+            that don't exist yet.
         '''
 
         def err_done6():
@@ -999,7 +1019,7 @@ class EventsTable(Frame):
         if too_many is True: 
             msg = open_message(
                 self, 
-                events_msg[6], 
+                events_msg[5], 
                 "Multiple Birth or Death Events", 
                 "OK")
             msg[0].grab_set()
@@ -1023,6 +1043,8 @@ class NewEventDialog(Toplevel):
             redraw, finding=None, ma_pa=False, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
+        self.withdraw()
+
         self.root = master
         self.treebard = treebard
         self.events_table = events_table
@@ -1032,15 +1054,14 @@ class NewEventDialog(Toplevel):
         self.place_autofill_values = place_autofill_values
         self.redraw = redraw
         self.finding = finding
-        self.ma_pa = ma_pa
 
+        self.couple_event = None
         self.visited = []
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
         self.place_dicts = None
-        self.new_event_type = False
-        self.never_mind = False
+        self.unknown_event_type = False
 
         self.current_name = get_name_with_id(self.current_person)
         current_file = get_current_file()[0]
@@ -1053,13 +1074,20 @@ class NewEventDialog(Toplevel):
 
         self.focus_new_event_dialog()
         self.get_some_info()
-        if self.new_event_type is False:
+        if self.unknown_event_type is False:
             self.make_widgets()
 
         cur.close()
         conn.close()
 
     def get_some_info(self):
+
+        def err_done2():
+            self.destroy()
+            msg[0].destroy()
+            self.events_table.event_input.focus_set()
+            self.events_table.event_input.delete(0, 'end')
+
         current_file = get_current_file()[0]
         conn =  sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -1075,7 +1103,15 @@ class NewEventDialog(Toplevel):
         if result is not None:
             self.event_type_id, self.couple_event = result
         else:
-            print("ERROR: event type does not exist. create it in types tab then try again.")
+            self.unknown_event_type = True
+            msg = open_message(
+                self.root, 
+                events_msg[8], 
+                "Unknown Event Type", 
+                "OK") 
+            msg[0].grab_set()
+            msg[2].config(command=err_done2)
+            return 
         cur.close()
         conn.close()
 
@@ -1143,18 +1179,16 @@ class NewEventDialog(Toplevel):
         self.frm.grid(column=1, row=2, sticky='news', pady=12)
         self.frm.columnconfigure(0, weight=1)
         show_message()
-        self.make_inputs()
 
+        self.make_inputs()
         resize_scrolled_content(self, self.new_event_canvas, window)
 
     def make_inputs(self):
 
         def err_done8():
             msg[0].destroy() 
-            self.destroy()   
+            self.destroy()  
 
-        self.offspring_input = None
-        self.parent1_input = None
         self.other_person_input = None
         self.age2_input = None        
 
@@ -1192,12 +1226,11 @@ class NewEventDialog(Toplevel):
         lab3.grid(column=0, row=3, sticky="e")
         self.particulars_input.grid(column=1, row=3, sticky="w", padx=(3,0))
         if self.couple_event == 0:
-            if self.ma_pa is True:
-                self.show_other_person()
-            elif self.new_event == "offspring":
+            if self.new_event == "offspring":
+                self.withdraw()
                 msg = open_message(
-                    self, 
-                    events_msg[8], 
+                    self.root, 
+                    events_msg[7], 
                     "Offspring Event Creation Error", 
                     "OK") 
                 msg[0].grab_set()
@@ -1209,7 +1242,6 @@ class NewEventDialog(Toplevel):
             self.show_other_person()
         self.b1.config(command=self.add_event)
 
-        # self.visited = [
         self.visited.extend([
             (self.date_input,
                 "Date Input",
@@ -1223,19 +1255,6 @@ class NewEventDialog(Toplevel):
             (self.age1_input,
                 "Age Input",
                 "Current person's age at time of event.")])
-            # These widgets are appended at construction because when not needed they are None.
-            # (self.age2_input,
-                # "Age Input 2",
-                # "Other person's age at time of event."),
-            # (self.other_person_input,
-                # "Other Person Input",
-                # "Birth name of the other person."),
-            # (self.offspring_input,
-                # "Offspring Input",
-                # "Birth name of the child."),
-            # (self.parent1_input,
-                # "Parent Input",
-                # "Birth name of the parent.")
 
         run_statusbar_tooltips(
             self.visited, 
@@ -1252,6 +1271,7 @@ class NewEventDialog(Toplevel):
 
         config_generic(self)
         self.focus_first_empty()
+        self.deiconify()
 
     def show_one_person(self):
         self.new_evt_msg.config(text="Information about the new event "
@@ -1282,35 +1302,17 @@ class NewEventDialog(Toplevel):
             "relating to the current person and other primary participants "
             "in the event.")
         sep1 = Separator(self.frm, width=3)
-        sep2 = Separator(self.frm, width=3)
         sep1.grid(column=0, row=1, columnspan=2, sticky="ew", pady=(12,0))
-        sep2.grid(column=0, row=3, columnspan=2, sticky="ew", pady=(12,0))
 
         name1 = Label(self.couple_data_inputs, text=self.current_name)
-        parent1 = Label(self.couple_data_inputs, text="mother")
-        offspring = Label(self.couple_data_inputs, text="Name of Child")
-        self.parent1_input = EntryAutoHilited(
-            self.couple_data_inputs, width=32, 
-            autofill=True, values=self.all_names)
-        self.offspring_input = EntryAutoHilited(
-            self.couple_data_inputs, width=32, 
-            autofill=True, values=self.all_names)
-        self.offspring_input.bind(
-            "<FocusOut>", 
-            lambda evt, 
-                widg=self.offspring_input: self.catch_dupe_or_new_person(
-                    evt, widg))
         age1 = Label(self.couple_data_inputs, text="Age")
         self.age1_input = EntryHilited1(self.couple_data_inputs, width=6)
-        mother_is_it = LabelHilited(self.couple_data_inputs, text="mother")
-        self.mother_or_father = LabelHilited(
-            self.couple_data_inputs, text="(current person)")
 
         spacer = Frame(self.couple_data_inputs)
 
         name2 = Label(self.couple_data_inputs, text="Partner")
         self.other_person_input = EntryAutoHilited(
-            self.couple_data_inputs, width=32, autofill=True, 
+            self.couple_data_inputs, width=48, autofill=True, 
             values=self.all_names)
         self.other_person_input.bind(
             "<FocusOut>", 
@@ -1320,48 +1322,8 @@ class NewEventDialog(Toplevel):
 
         age2 = Label(self.couple_data_inputs, text="Age")
         self.age2_input = EntryHilited1(self.couple_data_inputs, width=6)
-        radframe = Frame(self.couple_data_inputs)
         father_is_it = LabelHilited(self.couple_data_inputs, text="father")
-
-        if self.new_event == "offspring":
-            self.ma_pa = True
-            self.lab0.config(
-                text="offspring (child of {})".format(self.current_name))
-            age1.config(text="Current Person Age")
-            offspring.grid(column=0, row=0, sticky='e', pady=(9,1))
-            self.offspring_input.grid(
-                column=1, row=0, sticky='w', padx=(3,0), pady=(9,1))
-            self.mother_or_father.grid(
-                column=1, row=2, sticky="w", padx=(2,0), ipadx=1)
-            radframe.grid(column=4, row=2, sticky="w", padx=(2,0))
-            self.offspringvar = tk.IntVar(None, 0)
-            pardlabs = ("mother", "father")
-            for i in range(2):
-                rad = Radiobutton(
-                    radframe,  
-                    text=pardlabs[i],
-                    value=i+1,
-                    variable=self.offspringvar,
-                    anchor='w',
-                    command=radio_reflex)
-                rad.grid(column=i, row=0)
-            self.visited.append((
-                self.offspring_input,
-                "Offspring Input", "Birth name of the child.")),
-        elif self.ma_pa is False:
-            name1.grid(column=0, row=0, sticky="w", columnspan=2, pady=(9,1))
-        else:
-            parent1.grid(column=0, row=0, sticky='e', pady=(9,1))
-            self.parent1_input.grid(
-                column=1, row=0, sticky='w', padx=(3,0), pady=(9,1))
-            name1.config(text="mother")
-            name2.config(text="father")
-            mother_is_it.grid(column=1, row=2, sticky="w", padx=(2,0), ipadx=1)
-            father_is_it.grid(column=4, row=2, sticky="w", padx=(2,0), ipadx=1)
-
-            self.visited.append(
-                (self.parent1_input, 
-                "Parent Input", "Birth name of the parent."))
+        name1.grid(column=0, row=0, sticky="w", columnspan=2, pady=(9,1))
 
         age1.grid(column=0, row=1, sticky="e", pady=(0,1))
         self.age1_input.grid(
@@ -1383,8 +1345,6 @@ class NewEventDialog(Toplevel):
             (self.other_person_input,
                 "Other Person Input",
                 "Birth name of the other person.")])
-
-
 
     def close_new_event_dialog(self):
         self.root.focus_set()
@@ -1414,8 +1374,8 @@ class NewEventDialog(Toplevel):
                 insert_finding_new_couple, 
                 (self.new_finding, self.event_type_id,))
             conn.commit()
-
             self.couple_ok(cur, conn) 
+
         if len(self.place_string) == 0:
             cur.execute(insert_finding_places_new, (self.new_finding,))
             conn.commit()
@@ -1474,8 +1434,7 @@ class NewEventDialog(Toplevel):
     def focus_first_empty(self):
         for widg in (
                 self.date_input, self.place_input, self.particulars_input, 
-                self.offspring_input, self.parent1_input, self.age1_input, 
-                self.other_person_input, self.age2_input):
+                self.age1_input, self.other_person_input, self.age2_input):
             if widg:
                 filled_in = widg.get()
                 if len(filled_in) == 0:
@@ -1578,7 +1537,6 @@ if __name__ == '__main__':
 
     auto = EntryAuto(root, width=50, autofill=True, values=place_autofill_values)
 
-
     auto.focus_set()   
 
     move = tk.Entry(root)
@@ -1592,23 +1550,16 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# default image not showing up for new people
-# new evt dlg make name input longer
-# NewEventDialog has to be refactored. The goal is to open ONE dialog. Delete all references to the NewKinTypeDialog first since all it does is say whether or not a couple event is a couple event. Then if everything's still broken, and it will be, how to make all other dialogs and error messages completely unnecessary except for rcm. The adjunct dialogs include after_death, id_couple_event, open_new_person_dialog. IDEAS: 1) don't validate anything till everything is filled in, you can't use focusout to open a dialog, there will always be trouble, user won't do things in the right order. 2) don't let the user make new kin types here, they have to do it in the Types Tab. 3) let the user decide if a 2nd set of widgets is needed, they can click a button. 4) don't let user select kintypes at all, just use generic kintypes for a couple like partner1 & partner2, and let user change this somewhere else later on. Where are kintypes even being used??? Why are they so important, especially right now, and esp since there's no longer a kin column anyway. 5) get rid of the after_death and id_couple_event dialogs by asking the user these 2 questions with radio button in the new event input area before the dlg opens. OR BETTER YET: don't allow new types to be made on the fly, ever. If new events can't be made here, then the radiobuttons aren't even needed. All types have to be made in the types tab to save bloat and spaghetti and excess dialogs flying all over the place with grab sets being traded off from dlg to dlg and wait windows banging up against wait windows. 6) actually do put checkbuttons in the new event row under events table, for couple_event_type and after_death_event and don't have them rely on each other (not a set of either/or radiobuttons), for ex a woman could file for divorce, her husband could jump off a cliff the next day, and the divorce might conceivably be granted sometime thereafter due to bureaucratic bungling so you can't say for sure that no after-death event could possibly ever be a couple event 7) kin types partner1 and partner2 never have to display. When they try to (sometime, somewhere), an input message can ask user to select them at that time.
-# test ok_new_name_type in names.py
-# CANCEL and X don't work on make new kin type dlg, test same on all dlgs
-# dates < 100 shd be suffixed AD or BC
-# re: date error it seems like when I click ok it's deleting a row from the table?
-# have to keep a global copy of place tables or just move them to treebard.tbd. Maybe better to have a function that imports places from any given tree but both techniques have their drawbacks.
-# don't know if this is still a problem after making places global, but autofill seems to be inheriting place lists from previous tree (ONLY IF TREES ARE CHANGED; doesn't happen if tree is newly opened), then user still has to input them as places to db but somehow tbard is presenting the places as if they were already in the tree then they're not till re-input.
-# dates prefs tab, get rid of ttk comboboxes, add statustips & rcm
+# dates prefs tab, statustips & rcm
+# fix all Comboboxes so the dropdown is not longer than needed if short values list
+# move places, types, and ??? to treebard.db
 # Test ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER around a dialog HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work
 # get all main tabs back into working order
 # in the Gallery there should be a way to know when the viewport is in focus, and there are 2 widgets not changing color on colorize: the background on left and right of a narrow main pic and the border around the scrollbar slider under the thumbstrip.
 # in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
 # in the File menu items add an item "Restore Sample Tree to default values" and have it grayed out if the sample tree is not actually open.
 # fix Border so that title bar changes color when not on top or in focus; title1/title2 wrong color, but ok on click title bar, bec they start with the right color whereas the title bar starts with the NEUTRAL_COLOR, have to make them change at the same time
-# add to Search dlg: checkbox "Speed Up Search" with tooltip "If selected, search will begin after three characters are typed." Have it selected by default.
+# add to Search dlg: checkbox "Speed Up Search" with tooltip "Search will begin after three characters are typed. Don't select this for number searches." Have it selected by default.
 # did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thot the new class was supposed to replace all these as was done apparently already in dates.py. I thot the new class was made so these three overlapping large functions could be deleted from messages.py
 # TEST every functionality due to recent restructuring
 

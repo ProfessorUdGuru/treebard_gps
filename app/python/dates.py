@@ -1,14 +1,21 @@
-# dates
+# dates.py
 
 import tkinter as tk
 import sqlite3
 from files import get_current_file, global_db_path
+from widgets import Frame, LabelH3, Label, FrameHilited, LabelH2, Button
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
 from styles import make_formats_dict
 from messages import open_message, dates_msg, InputMessage
 from messages_context_help import date_prefs_help_msg
-from query_strings import select_date_format, select_default_date_format
+from query_strings import (
+    select_date_format, select_default_date_format, delete_date_format_all,
+    insert_date_format_default, update_date_format_date_formats, 
+    update_date_format_est, update_date_format_abt, update_date_format_cal,
+    update_date_format_befaft, update_date_format_epoch, 
+    update_date_format_julegreg, update_date_format_span, 
+    update_date_format_range)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -16,9 +23,8 @@ from dev_tools import looky, seeline
 
 
 
-
 '''
-    Treebard's policy is to let the user input dates with extreme freedom while
+    Treebard's policy is to let the user input dates with lots of freedom while
     displaying dates without regard for how the date was input, but rather
     in reference to stored user preferences. So this module is kinda complex
     but since it's written strictly in accordance with the needs of Treebard,
@@ -55,7 +61,7 @@ from dev_tools import looky, seeline
     transition. Treebard uglifies no date. The transition took place at different 
     times in different countries, in fact it has only recently taken place in some 
     countries. The user can mark his dates "old style" or "new style" in whatever 
-    formatting he prefers, but dates like "14 Oct 1752/1753" cannot exist in 
+    formatting he prefers, but dates like "14 Oct 1752/1753" don't exist in 
     Treebard.
 
     Globals are used for `root` and `widg` because we are validating a single
@@ -63,29 +69,12 @@ from dev_tools import looky, seeline
     change. These values are set once per use and don't change during the 
     procedure.
 
-    There are places where this code appears redundant, for example while 
-    initially weeding out bad user input, some facts have to be found (e.g. 
-    which number represents the year); facts which will 
-    be needed later. Instead of passing these findings along, sometimes they're 
-    rediscovered later when they're needed, in order to 
-    keep the various procedures better separated 
-    from each other. If we were dealing with big data here, this might be 
-    inexcusable, but in this case, where all this code exists for the purpose of
-    validating one single string, I think it's better to keep the code easy to 
-    read than to try and kill two birds with one stone and end up with complex,
-    confusing procedures that are not strictly separated from each other. I'd rather do something easy twice than confuse two processes out of
-    sheer neatnickism and end up with tangled procedures.
-
-    But there can't be total separation of concerns because for example,
-    you gotta know what the year is or what the month is when you gotta know, 
-    so finding bad dates relies on finding out some other things too.
-
-    Also I assume that everything this module does could be imported from any
+    I assume that everything this module does could be imported from any
     number of libraries but I enjoyed writing this module three times and I
     like having easy access to the procedures I'm using and knowing that the
     code was custom-written for my needs and doesn't contain a bunch of extra
-    stuff that I don't need. "DATES" is a huge topic and no doubt the available
-    libraries for dealing with them are way over my head.
+    stuff that I don't need. DATES is a huge topic and no doubt the available
+    libraries for dealing with them are over my head.
 
     I've tried making this a class, but a big class to validate one string? The
     result is a bunch of instance variables that can be changed all over a big
@@ -99,12 +88,12 @@ from dev_tools import looky, seeline
     to me that all date inputs should be treated as compound, and if the second
     term in the list was empty, then it could just be ignored. Another early 
     problem was caused by letting the user input months as numbers. Disallowing
-    this simplified the programmer's task big-time. Treebard policy is to
+    this simplified the programmer's task a lot. Treebard policy is to
     disallow numerical month DISPLAY because of cultural differences in the 
     ordering of numerical date values which would make for ambiguity from one 
     country to another. This would make sharing trees a big hassle in some cases.
     Extending this policy to date INPUT seemed only logical when considering how 
-    much less code bloat would exist if it were done.
+    much less code complications would exist if it were done.
 
     Treebard GPS has to remain accessible to neophyte coders such as genealogists
     who want to customize their own applications.
@@ -205,8 +194,7 @@ for pair in PAIRS:
 
 DATE_PREF_COMBOS = (
     ("18 April 1906", "18 Apr 1906", "18 Apr. 1906", "April 18, 1906", 
-        "Apr 18, 1906", "Apr. 18, 1906", "1906-04-18", "1906/04/18", 
-        "1906.04.18"),
+        "Apr 18, 1906", "Apr. 18, 1906"),
     EST, ABT, CAL,
     ABB_PAIRS[0], ABB_PAIRS[1], ABB_PAIRS[2],
     ("from [date 1] to [date 2]", "fr. [date 1] to [date 2]", 
@@ -226,16 +214,10 @@ RANGE_FORMATS = (
 FORMAT_TO_STRIP = ("from", "fr.", "frm", "fr", "btwn", "bet", "bet.", ",", "between")
 
 DATE_FORMAT_LOOKUP = dict(zip(DATE_PREF_COMBOS[0], DATE_FORMATS))
-# print("line", looky(seeline()).lineno, "DATE_FORMAT_LOOKUP:", DATE_FORMAT_LOOKUP)
-# line 215 DATE_FORMAT_LOOKUP: {'18 April 1906': 'dmy', '18 Apr 1906': 'dmy_abb', '18 Apr. 1906': 'dmy_dot', 'April 18, 1906': 'mdy', 'Apr 18, 1906': 'mdy_abb', 'Apr. 18, 1906': 'mdy_dot'}
 
 SPAN_FORMAT_LOOKUP = dict(zip(DATE_PREF_COMBOS[7], SPAN_FORMATS))
-# print("line", looky(seeline()).lineno, "SPAN_FORMAT_LOOKUP:", SPAN_FORMAT_LOOKUP)
-# line 212 SPAN_FORMAT_LOOKUP: {'from [date 1] to [date 2]': 'from_to', 'fr. [date 1] to [date 2]': 'fr._to', 'frm [date 1] to [date 2]': 'frm_to', 'fr [date 1] to [date 2]': 'fr_to'}
 
 RANGE_FORMAT_LOOKUP = dict(zip(DATE_PREF_COMBOS[8], RANGE_FORMATS))
-# print("line", looky(seeline()).lineno, "RANGE_FORMAT_LOOKUP:", RANGE_FORMAT_LOOKUP)
-# line 221 RANGE_FORMAT_LOOKUP: {'btwn [date 1] & [date 2]': 'btwn_&', 'btwn [date 1] and [date 2]': 'btwn_and', 'bet [date 1] & [date 2]': 'bet_&', 'bet [date 1] and [date 2]': 'bet_and', 'bet. [date 1] & [date 2]': 'bet._&', 'bet. [date 1] and [date 2]': 'bet._and'}
 
 OK_PREFIXES = ABT+EST+CAL+BEF+AFT
 OK_SUFFIXES = BC+AD+JULIAN+GREGORIAN
@@ -243,11 +225,7 @@ OK_SUFFIXES = BC+AD+JULIAN+GREGORIAN
 root = None
 widg = None
 
-def validate_date(
-    parent,
-    inwidg,
-    final,
-):
+def validate_date(parent, inwidg, final):
 
     global root, widg
 
@@ -324,7 +302,6 @@ def find_word_errors(terms):
                     "Repeated Compound Date Link", 
                     "OK")
                 msg[0].grab_set()
-                # msg[1].config(aspect=400)
                 msg[2].config(
                     command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
                 return               
@@ -345,7 +322,6 @@ def find_word_errors(terms):
             "Too Many Months Input", 
             "OK")
         msg[0].grab_set()
-        # msg[1].config(aspect=400)
         msg[2].config(
             command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
         return
@@ -356,7 +332,6 @@ def find_word_errors(terms):
             "Too Many Months Input", 
             "OK")
         msg[0].grab_set()
-        # msg[1].config(aspect=400)
         msg[2].config(
             command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
         return
@@ -379,9 +354,9 @@ def find_word_errors(terms):
                         "Day Input Without Month", 
                         "OK")
                     msg[0].grab_set()
-                    # msg[1].config(aspect=400)
                     msg[2].config(
-                        command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
+                        command=lambda widg=widg, dlg=msg[0]: err_done0(
+                            widg, dlg))
                     return
             elif months == 0 and n == 1:
                 pass
@@ -392,7 +367,6 @@ def find_word_errors(terms):
                     "Day Input Without Month", 
                     "OK")
                 msg[0].grab_set()
-                # msg[1].config(aspect=400)
                 msg[2].config(
                     command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
                 return
@@ -412,7 +386,6 @@ def find_word_errors(terms):
                 "Too Many Prefixes or Suffixes", 
                 "OK")
             msg[0].grab_set()
-            # msg[1].config(aspect=400)
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
@@ -443,9 +416,9 @@ def find_number_errors(compounds):
                             "Too Many Years Input", 
                             "OK")
                         msg[0].grab_set()
-                        # msg[1].config(aspect=400)
                         msg[2].config(
-                            command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
+                            command=lambda widg=widg, dlg=msg[0]: err_done0(
+                                widg, dlg))
                         return
                     else:
                         over_two_digits += 1
@@ -458,7 +431,6 @@ def find_number_errors(compounds):
                 "Too Many Numerical Terms Input", 
                 "OK")
             msg[0].grab_set()
-            # msg[1].config(aspect=400)
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
@@ -469,7 +441,6 @@ def find_number_errors(compounds):
                 "Too Many Terms Input", 
                 "OK")
             msg[0].grab_set()
-            # msg[1].config(aspect=400)
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
@@ -481,7 +452,6 @@ def find_number_errors(compounds):
                 "Numerical Terms Input Lacking", 
                 "OK")
             msg[0].grab_set()
-            # msg[1].config(aspect=400)
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
             return
@@ -583,9 +553,20 @@ def make_date_dict(final):
                         date_dict[b]["year"] = year
                     else:
                         under_two += 1
-                elif len(item) > 2:                       
+                elif 5 > len(item) > 2 :                       
                     date_dict[b]["year"] = item
-                    break                
+                    break 
+                elif len(item) > 4:
+                    msg = open_message(
+                        root, 
+                        dates_msg[13], 
+                        "Year Greater than 9999", 
+                        "OK")
+                    msg[0].grab_set()
+                    msg[2].config(
+                        command=lambda widg=widg, dlg=msg[0]: err_done0(
+                            widg, dlg))
+                    return
         return lst
 
     def find_day(lst, b):
@@ -655,6 +636,7 @@ def assign_prefixes(date_dict, item, f):
     if item in ABT:
         term = "abt"
     elif item in EST:
+        print("line", looky(seeline()).lineno, "item:", item)
         term = "est"
     elif item in CAL:
         term = "cal"
@@ -707,7 +689,6 @@ def check_days_in_months(date_dict):
                     "Too Many Days for the Month", 
                     "OK")
                 msg[0].grab_set()
-                # msg[1].config(aspect=400)
                 msg[2].config(
                     command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
                 return
@@ -786,9 +767,9 @@ def make_date_string(final):
         link, prefix2, year2, month2, day2, suffix2)
 
 def format_stored_date(stored_date, date_prefs=date_prefs):
-    ''' Used in events_table.py'''
+    ''' Also used in events_table.py. '''
 
-    if stored_date == "-0000-00-00----0000-00-00-":
+    if stored_date == "-0000-00-00-------":
         return ""
     dateform = date_prefs[0]
     formatted_date = ""
@@ -822,7 +803,6 @@ def format_stored_date(stored_date, date_prefs=date_prefs):
             pass
         elif y in (0, 6):
             part = find_prefix(part, date_prefs)
-            # part = find_prefix(part)
             if y == 0:
                 prefix1 = part                
             elif y == 6:
@@ -847,7 +827,6 @@ def format_stored_date(stored_date, date_prefs=date_prefs):
                 day2 = part
         elif y in (4, 10):
             part = find_suffix(part, date_prefs)
-            # part = find_suffix(part)
             if y == 4:
                 suffix1 = part
             elif y == 10:
@@ -943,7 +922,6 @@ def find_prefix(part, date_prefs):
     return prefix
 
 def find_suffix(part, date_prefs):
-# def find_suffix(part):
     if part in ("bc, ad"):
         bc_ad = date_prefs[5].split("/")
         if part == "bc":
@@ -973,8 +951,279 @@ def convert_month(part, dateform):
             break
     return month
 
-        
+# DATE PREFERENCES TAB
 
+prefcombos = {}
+
+def revert_to_default():
+    
+    current_file = get_current_file()[0]
+    conn = sqlite3.connect(current_file)
+    conn.execute('PRAGMA foreign_keys = 1')
+    cur = conn.cursor()
+
+    cur.execute(delete_date_format_all)
+    conn.commit()
+
+    cur.execute(insert_date_format_default)
+    conn.commit()
+
+    cur.close()
+    conn.close()
+
+    for combo in prefcombos.values():
+        combo.entry.delete(0, 'end')
+
+def get_new_date_prefs(): 
+
+    date_form = None
+    est_form = None
+    abt_form = None
+    cal_form = None
+    befaft_form = None
+    epoch_form = None
+    julegreg_form = None
+    span_form = None
+    range_form = None
+
+    for combo in prefcombos.values():
+        if len(combo.entry.get()) != 0:
+            var_form = combo.entry.get()
+            if combo == prefcombos['General']:
+                date_form = var_form
+                for k,v in DATE_FORMAT_LOOKUP.items():
+                    if date_form == k:
+                        date_form = v
+            elif combo == prefcombos['Estimated']:
+                est_form = var_form
+            elif combo == prefcombos['Approximate']:
+                abt_form = var_form
+            elif combo == prefcombos['Calculated']:
+                cal_form = var_form
+            elif combo == prefcombos['Before/After']:
+                befaft_form = var_form
+            elif combo == prefcombos['Epoch']:
+                epoch_form = var_form
+            elif combo == prefcombos['Julian/Gregorian']:
+                julegreg_form = var_form
+            elif combo == prefcombos['From...To...']:
+                span_form = var_form
+                for k,v in SPAN_FORMAT_LOOKUP.items():
+                    if span_form == k:
+                        span_form = v
+            elif combo == prefcombos['Between...And...']:
+                range_form = var_form
+                for k,v in RANGE_FORMAT_LOOKUP.items():
+                    if range_form == k:
+                        range_form = v
+    set_new_date_prefs(
+        date_form, est_form, abt_form, cal_form, befaft_form, epoch_form, 
+        julegreg_form, span_form, range_form)
+
+def set_new_date_prefs(
+        date_form, est_form, abt_form, cal_form, befaft_form, epoch_form,
+        julegreg_form, span_form, range_form):
+
+    for combo in prefcombos.values():
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        if date_form and combo is prefcombos['General']:
+            cur.execute(update_date_format_date_formats, (date_form,))
+        elif est_form and combo is prefcombos['Estimated']:
+            cur.execute(update_date_format_est, (est_form,))
+        elif abt_form and combo is prefcombos['Approximate']:
+            cur.execute(update_date_format_abt, (abt_form,))
+        elif cal_form and combo is prefcombos['Calculated']:
+            cur.execute(update_date_format_cal, (cal_form,))
+        elif befaft_form and combo is prefcombos['Before/After']:
+            cur.execute(update_date_format_befaft, (befaft_form,))
+        elif epoch_form and combo is prefcombos['Epoch']:
+            cur.execute(update_date_format_epoch, (epoch_form,))
+        elif julegreg_form and combo is prefcombos['Julian/Gregorian']:
+            cur.execute(update_date_format_julegreg, (julegreg_form,))
+        elif span_form and combo is prefcombos['From...To...']:
+            cur.execute(update_date_format_span, (span_form,))
+        elif range_form and combo is prefcombos['Between...And...']:
+            cur.execute(update_date_format_range, (range_form,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        combo.entry.delete(0, 'end')
+
+class DatePreferences(Frame):
+    def __init__(self, master, *args, **kwargs):
+        Frame.__init__(self, master, *args, **kwargs)
+
+        self.master = master
+
+        self.make_widgets_top()
+        self.make_widgets_bottom()
+        self.instruct()
+
+    def show_test_date_formatted(self, evt):
+        widg = evt.widget
+        storable_date = validate_date(
+            self.master,
+            widg,
+            widg.get())
+        
+        date_prefs = get_date_formats(tree_is_open=1)
+        formatted_date = format_stored_date(
+            storable_date, date_prefs=date_prefs)
+        widg.delete(0, 'end')
+        widg.insert(0, formatted_date)
+
+    def make_widgets_top(self):
+
+        self.test_frm = Frame(self)
+
+        self.tester_head = LabelH3(
+            self.test_frm,
+            text="Date Entry Demo (doesn't affect your tree)")
+
+        DATE_ENTRIES = ['Date Input I', 'Date Input II', 'Date Input III']
+        tester_widgets = {}
+        g = 0
+        for lab in DATE_ENTRIES:
+            lbl = Label(self.test_frm, text=DATE_ENTRIES[g])
+            lbl.grid(column=0, row= g+1, padx=24, sticky='e')
+            dent = EntryAutoHilited(self.test_frm)
+            dent.grid(column=1, row=g+1, sticky='ew')
+            dent.config(width=64)
+            dent.bind("<FocusOut>", self.show_test_date_formatted)
+            tester_widgets[lab] = dent
+            g += 1
+
+    def make_widgets_bottom(self):
+
+        prefs_area = Frame(self)
+        buttonbox = Frame(self)
+
+        pref_head = LabelH2(
+            prefs_area, text='Set Date Display Preferences')
+        pref_head2 = Label(
+            prefs_area, 
+            text='first value in each dropdown list is default')
+        pfx_lab = LabelH3(prefs_area, text='Prefixes')
+        sfx_lab = LabelH3(prefs_area, text='Suffixes')
+        cmpd_lab = LabelH3(prefs_area, text='Compound Dates')
+
+        PREF_HEADS = (
+            "General", "Estimated", "Approximate", "Calculated", 
+            "Before/After", "Epoch", "Julian/Gregorian", 
+            "From...To...", "Between...And...")
+
+        date_pref_heads = {}
+        p = 0
+        for heading in PREF_HEADS:
+            lab = LabelH3(prefs_area, text=PREF_HEADS[p])
+            date_pref_heads[heading] = lab
+            combo = Combobox(
+                prefs_area,
+                root,
+                values=DATE_PREF_COMBOS[p])
+            prefcombos[heading] = combo
+            p += 1
+
+        submit = Button(
+            buttonbox, 
+            text='SUBMIT PREFERENCES',
+            command=get_new_date_prefs, 
+            width=30)
+
+        revert = Button(
+            buttonbox, 
+            text='REVERT TO DEFAULT VALUES',
+            command=revert_to_default,
+            width=30)
+
+        # children of self
+        self.test_frm.grid(column=0, row=0, pady=12)
+        prefs_area.grid(column=0, row=1, pady=12)
+        buttonbox.grid(column=0, row=2, pady=12)
+
+        # children of self.test_frm
+        self.tester_head.grid(column=1, row=0, columnspan=4, sticky='we')
+
+        # children of prefs_area
+        pref_head.grid(column=0, row=0, columnspan=3, sticky='w', padx=(12,0))
+        pref_head2.grid(
+            column=0, row=1, columnspan=3, sticky='w', padx=(12,0))
+        date_pref_heads['General'].grid(column=3, row=0, padx=12)
+        prefcombos['General'].grid(column=3, row=1, padx=12, pady=(0,12))
+        pfx_lab.grid(column=0, row=2, sticky='w', pady=12, padx=12)
+        sfx_lab.grid(column=0, row=5, sticky='w', pady=12, padx=12)
+        cmpd_lab.grid(column=2, row=5, sticky='w', pady=12, padx=12)
+
+        date_pref_heads['Estimated'].grid(column=0, row=3, padx=12)
+        prefcombos['Estimated'].grid(column=0, row=4, padx=12, pady=(0,18))
+        date_pref_heads['Approximate'].grid(column=1, row=3, padx=12)
+        prefcombos['Approximate'].grid(column=1, row=4, padx=12, pady=(0,18))
+        date_pref_heads['Calculated'].grid(column=2, row=3, padx=12)
+        prefcombos['Calculated'].grid(column=2, row=4, padx=12, pady=(0,18))
+        date_pref_heads['Before/After'].grid(column=3, row=3, padx=12)
+        prefcombos['Before/After'].grid(column=3, row=4, padx=12, pady=(0,18))
+        date_pref_heads['Epoch'].grid(column=0, row=6, padx=12)
+        prefcombos['Epoch'].grid(column=0, row=7, padx=12, pady=(0,12))
+        date_pref_heads['Julian/Gregorian'].grid(column=1, row=6, padx=12)
+        prefcombos['Julian/Gregorian'].grid(
+            column=1, row=7, padx=12, pady=(0,12))
+        date_pref_heads['From...To...'].grid(column=2, row=6, padx=12)
+        prefcombos['From...To...'].grid(column=2, row=7, padx=12, pady=(0,12))
+        date_pref_heads['Between...And...'].grid(column=3, row=6, padx=12)
+        prefcombos['Between...And...'].grid(
+            column=3, row=7, padx=12, pady=(0,12))
+
+        # children of buttonbox
+        submit.grid(column=0, row=0, padx=(0,12))
+        revert.grid(column=1, row=0, padx=(12,0))
+
+        self.dates_visited = (
+            (self.test_frm, 
+                "", 
+                "Use top area to test input; bottom area for display settings."), 
+            # (self.tester, "Demo Date Entry Inputs", 
+                # "Enter date parts in any order. "
+                # "Right-click any area for more info."), 
+            (prefcombos['General'], 
+                "General Date Format",
+                "Select a general type of date display."), 
+            (prefcombos['Estimated'], 
+                "Estimated Date Prefix",
+                "Use estimated dates for unsourced guessed dates."), 
+            (prefcombos['Approximate'], 
+                "Approximate Date Prefix",
+                "Use approximated dates for sourced imprecise dates."), 
+            (prefcombos['Calculated'], 
+                "Calculated Date Prefix",
+                "Calculated dates derived from other data such as age."), 
+            (prefcombos['Before/After'], 
+                "Before or After Date Prefix",
+                "When you know something happened before or after some date."), 
+            (prefcombos['Epoch'], 
+                "Epoch Date Suffix",
+                "'BC' and 'AD' now have more politically correct variations."), 
+            (prefcombos['Julian/Gregorian'], 
+                "Calendar Era Date Suffix",
+                "Mark dates 'old style' or 'new style' for events during "
+                "calendar transition times."), 
+            (prefcombos['From...To...'], 
+                "Format Two Dates in a Span",
+                "Something started at one time and lasted till another time."), 
+            (prefcombos['Between...And...'], 
+                "Format Two Dates in a Range",
+                "Something happened somewhere within a range between two dates."),  
+            (submit, 
+                "Submit Changes",
+                "The changes you selected will be saved."), 
+            (revert, 
+                "Revert to Defaults",
+                "Date formats will revert to Treebard's out-of-the-box defaults.")) 
+
+    def instruct(self):
+        pass # old rcm code temp moved to messages_context_help.py
 
 if __name__ == "__main__":
 
@@ -993,6 +1242,8 @@ if __name__ == "__main__":
     traverse.grid()
 
     root.mainloop()
+
+
 
 
     

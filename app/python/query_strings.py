@@ -21,6 +21,8 @@ delete_color_scheme = '''
     DELETE FROM color_scheme 
     WHERE color_scheme_id = ?
 '''
+
+delete_date_format_all = '''DELETE FROM date_format'''
    
 delete_finding = '''
     DELETE FROM finding
@@ -65,6 +67,13 @@ delete_findings_role = '''
 insert_color_scheme = '''
     INSERT INTO color_scheme 
     VALUES (null, ?, ?, ?, ?, 0, 0)
+'''
+
+insert_date_format_default = '''
+    INSERT INTO date_format 
+    VALUES (
+        1, 'dmy', 'abt', 'est', 'cal', 'bef/aft', 'BCE/CE', 
+        'OS/NS', 'from_to', 'btwn_&')
 '''
 
 insert_event_type_new = '''
@@ -1042,6 +1051,60 @@ update_current_person = '''
     UPDATE current
     SET person_id = ?
     WHERE current_id = 1
+'''
+
+update_date_format_abt = '''
+    UPDATE date_format 
+    SET abt = ? 
+    WHERE date_format_id = 1
+'''
+
+update_date_format_befaft = '''
+    UPDATE date_format 
+    SET bef_aft = ? 
+    WHERE date_format_id = 1
+'''
+
+update_date_format_cal = '''
+    UPDATE date_format 
+    SET cal = ? 
+    WHERE date_format_id = 1
+'''
+
+update_date_format_date_formats = '''
+    UPDATE date_format 
+    SET date_formats = ? 
+    WHERE date_format_id = 1
+'''
+
+update_date_format_epoch = '''
+    UPDATE date_format 
+    SET bc_ad = ? 
+    WHERE date_format_id = 1
+'''
+
+update_date_format_est = '''
+    UPDATE date_format 
+    SET est = ? 
+    WHERE date_format_id = 1
+'''
+
+update_date_format_julegreg = '''
+    UPDATE date_format 
+    SET os_ns = ? 
+    WHERE date_format_id = 1
+'''
+
+update_date_format_range = '''
+    UPDATE date_format 
+    SET range = ? 
+    WHERE date_format_id = 1
+'''
+
+update_date_format_span = '''
+    UPDATE date_format 
+    SET span = ? 
+    WHERE date_format_id = 1
 '''
 
 update_event_types = '''

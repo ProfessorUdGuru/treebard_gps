@@ -184,9 +184,9 @@ class SplashScreen(Toplevel):
             msg[1].config(aspect=400)
             set_closing()
             return
+        # date_prefs = get_date_formats(tree_is_open=1)
         make_main_window() 
         tree_title = current_file[1].replace("_", " ")
-        # tree_title = current_file[1].replace("_", " ").title() 
         tree_title = titlize(tree_title)
         filter_tree_title(tree_title)
         change_tree_title(self.treebard)      

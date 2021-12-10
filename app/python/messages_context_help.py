@@ -278,6 +278,345 @@ date_prefs_help_msg = (
     'Date display settings for all your trees will change accordingly. ', 
     'Date Settings Tab: REVERT Button'))
 
+
+
+
+
+       # rc_date_menu = rcm.RightClickMenu(self)
+
+        # rc_date_menu.help_per_context = {
+            # self.test1 : (
+                # 'The Date Entry Demo section at the top of the Date Preferences '
+                # 'tab allows you to test various ways of inputting and displaying '
+                # 'dates. Nothing you enter here will affect your tree, but the '
+                # 'three input fields are exact working models of every date input '
+                # 'field in Treebard.\n\n'
+                # 'For more info, right-click for context help in each of the three '
+                # 'input fields.', 
+                # 'Date Entry Demo Context Help'),
+
+            # self.tester_widgets['Date Input I'] : (
+                # 'Treebard date input is extremely free. You can input date parts in '
+                # 'any order that they occur to you. You can input every date in a '
+                # 'different style but each date will still be displayed according to '
+                # 'your preferred display format.\n\n'
+                # 'For example, "March" pops into your head, or "1888". Whatever. '
+                # 'Just type it into the field. The next thing that occurs to you '
+                # 'may be that it\'s an estimated or approximate date, a calculated '
+                # 'date, or even B.C. Doesn\'t matter, just type "est" or "abt" or '
+                # '"cal" or "bc" next, in any order. You can type "April", "Apr", '
+                # '"Ap., "Ap," "ap", or even "apricot" if you want. As long as it '
+                # 'starts with "ap", Treebard will know it\'s April and not August. '
+                # 'If you prefer you can type "4" or "04". Treebard doesn\'t care.\n\n'
+                # 'While date style entry and order is extremely free, abbreviation '
+                # 'style for date prefixes and suffixes is limited to what\'s easiest '
+                # 'to remember: type the simplest, lower-case version of the suffix '
+                # 'or prefix, like this: for an estimated date, type "est". For a '
+                # 'calculated date, type "cal", etc. To display a date like '
+                # '"Before 1824", just type "1824 bef" or "bef 1824", either way. For '
+                # '"after 1242 B.C." you could type "bc 1242 aft" with the parts in ' 
+                # 'any order and Treebard will display the date the way you want it '
+                # 'displayed.\n\n'
+                # 'To enter a range--a compound date referring to a range of time '
+                # 'between two dates--enter two dates any way you want with the word '
+                # '"and" between them. If you enter "1885 and 19 bc", Treebard will '
+                # 'display "Between 19 BC and 1885 AD" in whatever display format you '
+                # 'choose. A span is a compound date that refers to an event or '
+                # 'attribute known to have occurred throughout that time span such '
+                # 'as a career "from 1920 to 1945". To enter a span, input two dates '
+                # 'with the word "to" between them. If you don\'t know one of the '
+                # 'dates, enter a question mark in place of that date. If you '
+                # 'don\'t know either of the dates, sorry!', 
+                # 'Date Input Fields Context Help (1 of 3)'),
+
+            # self.tester_widgets['Date Input II'] : (
+                # 'If you input a date such as "10 1 1888" that could be either '
+                # 'Oct 1 1888 or Jan 10 1888, Treebard will open a dialog so you '
+                # 'can clarify which date part is month and which is year. For '
+                # 'example, if you input "1 2 3 bc", Treebard will ask which is '
+                # 'year, which is month, and which is day. This dialog is filled '
+                # 'out for you to the extent that Treebard is able to figure it '
+                # 'out and you can fill in the rest. In order to see this dialog '
+                # 'less often, enter months as "ja, f, mar, ap, may, jun, jul, au, '
+                # 's, oc, no, d" instead of using numbers. If you input years that '
+                # 'have fewer than four digits, add preceding zeroes, for example: '
+                # '"0034" for 34 AD instead of "34". Another trick is to add a comma '
+                # 'after the number that represents the day, as in "June 12, 1902". ' 
+                # 'Except that you can also type "12, jun 1902" and Treebard will have '
+                # 'no problem with that either. So you could type "4, 4 0004" and '
+                # 'Treebard won\'t have to ask for clarification.\n\nThere\'s one '
+                # 'restriction you should know about. Most people will want to use '
+                # 'spaces to separate date parts as in "feb 14 1818". This is the '
+                # 'easiest way to do it. But if you want, instead of using spaces '
+                # 'to separate date parts, you can use dots (.), '
+                # 'asterisks (*), forward slashes (/), or dashes (-) as '
+                # 'separators. The restriction is that if you add a suffix and/or '
+                # 'prefix, you have to type it like this: "bc-f-14-1818-est" with '
+                # 'only one consistent separator. Not like this: "bc f-14-1818 est". '
+                # 'Whatever separator you use in any given date entry, use it '
+                # 'throughout the whole input.\n\nHowever there is an exception '
+                # 'to the restriction on separators. When typing a compound date '
+                # 'with the two dates separated by "and" or "to", only spaces can '
+                # 'separate the "and" or "to" from the dates on either side.\n\n'
+                # 'The nine dropdown selectors on the Date Preferences tab give '
+                # 'you the ability to decide how all your dates will look. '
+                # 'For example, you can see "est" displayed in front of an '
+                # 'estimated date or you can see "est\'d", etc. These preferences '
+                # 'will be covered further down in this tutorial. The way you input '
+                # 'a date has nothing to do with how it will be displayed.', 
+                # 'Date Input Fields Context Help (2 of 3)'),
+
+            # self.tester_widgets['Date Input III'] : (
+                # 'In order to make Treebard trees truly portable and sharable, '
+                # 'display styles for dates are limited to styles which are '
+                # 'unambiguous, although you can enter a date any way you want. '
+                # 'Treebard has no option for displaying bad dates, in fact '
+                # 'Treebard refuses to store them. For example, "March 10" is a '
+                # 'bad date because there is no year. In case you have a hint '
+                # 'like that, note fields are the right place to store them. In '
+                # 'this way, every stored date can be used in calculations such '
+                # 'as subtracting one date from another to find out how old someone '
+                # 'was when something happened.\n\nTreebard deletes bad date input '
+                # 'and tells you why so you can retype the date the right way.', 
+                # 'Date Input Fields Context Help (3 of 3)'),
+
+            # self.pref_lab : (
+                # 'Ten different choices can be made in regards to how you want '
+                # 'Treebard to display dates. Display style has nothing to do '
+                # 'with how a date is entered. By making choices in the bottom '
+                # 'part of the Date Preferences tab and then inputting sample data in '
+                # 'the three input fields at the top of the Date Preferences tab, '
+                # 'you can see how dates of different types will be displayed.', 
+                # 'Date Display Preferences Context Help'),
+
+            # self.general : (
+                # 'Treebard has its own defaults which you can use by ignoring '
+                # 'the options on the Date Display Preferences tab. You can '
+                # 'change options at any time '
+                # 'or revert to Treebard\'s defaults if you want. Changes will '
+                # 'be reflected in how dates display next time you reload the '
+                # 'program. Changing date display styles does not affect your tree '
+                # 'in any way since all dates are stored in a single consistent '
+                # 'format to make the program work more efficiently.\n\nThe two '
+                # 'radio buttons labeled "This Tree" and '
+                # '"All Trees" let you set your own defaults individually for '
+                # 'the current tree or set defaults that will apply to all your '
+                # 'trees. Once you set defaults that apply to all your trees, you '
+                # 'can still change date display settings for any single tree '
+                # 'by opening that tree and using this tool with "This Tree" '
+                # 'checked.\n\nTreebard\'s own out-of-the-box defaults never '
+                # 'change so you can always revert to them. Doing so erases '
+                # 'all your previous changes.', 
+                # 'Where Date Display Preferences Apply Context Help'),
+
+            # date_pref_combos['General'] : (
+                # 'While you can enter dates in any way you like, Treebard only '
+                # 'allows dates to display in ways that are unambiguous. In this '
+                # 'way, users can share their trees with confidence that their '
+                # 'dates will not be misread by people from other parts of the '
+                # 'world.\n\nThe best way to display dates is using spelled-out '
+                # 'or partially spelled-out months such as "Jan", "Jan." or '
+                # '"January". If you prefer to use numbers for months, the '
+                # 'so-called ISO format is used, in which larger date parts come '
+                # 'first. For example, "1888-01-10" is always Jan. 10, 1888 and has '
+                # 'no other interpration since the year appears first, followed '
+                # 'by month, then day, in every case.\n\nOn the other hand, if '
+                # 'display like "10-1-1888" were allowed, in some countries this '
+                # 'would be interpreted as Oct. 1, 1888 while in other countries '
+                # 'it would mean Jan. 10, 1888. So you can enter dates that way '
+                # 'if you like, but there is no option to display them that way.', 
+                # 'General Date Display Context Help'),
+
+            # date_pref_combos['Estimated'] : (
+                # 'Estimated and approximated dates could be used in distinct ways. '
+                # 'What follows is Treebard\'s suggestion on how this could be done.\n\n'
+                # 'Sometimes the user wants to enter a date when he doesn\'t have '
+                # 'one, for example to get an event to appear in the right order in '
+                # 'the events table. Suppose a source states that someone '
+                # 'attended school through '
+                # 'the 5th grade. We can guess that his school career ended around '
+                # 'age 11 and enter a guess in place of a known date that we don\'t '
+                # 'have. Making a distinction between estimated dates and '
+                # 'approximate dates can mark the date as a pure guess (estimated) '
+                # 'or a sourced guess (approximate). So in this case, the date '
+                # 'arrived at for the end of his schooling should be an approximate '
+                # 'date--not estimated--because a source document such as census states '
+                # 'that the person quit school after grade 5. It\'s not quite a guess, '
+                # 'because there\'s a source: the census.\n\nHowever, in the case where '
+                # 'a date is desired but there is no source other than possibly '
+                # 'common sense, an estimated date would be used. For example, we '
+                # 'might normally assume, even with no source, that a woman got '
+                # 'married sometime after the age of 13. The range "btwn est 1883 '
+                # 'and est 1893" would indicate that the date was just a guess, while '
+                # 'causing the marriage event to fall reasonably close to where '
+                # 'it belongs within the events table.', 
+                # 'Estimated Date Prefix Context Help'),
+
+            # date_pref_combos['Approximate'] : (
+                # 'In Treebard\'s opinion, the difference between estimated dates '
+                # 'and approximate dates is that estimated dates have no source; '
+                # 'they\'re just a reasonable '
+                # 'guess by the researcher based on the facts of life. On the other '
+                # 'hand, an approximate date should have some sort of source to back '
+                # 'it up.', 
+                # 'Approximate Date Prefix Context Help'),
+
+            # date_pref_combos['Calculated'] : (
+                # 'Calculated dates are not literally from a source but are '
+                # 'calculated from data that is from a source, such as an age or '
+                # 'another date listed on a source document.\n\nYou can use ' 
+                # 'Treebard\'s Date Calculator to subtract one date from another. '
+                # 'This will give you an exact number of years, months and days '
+                # 'to enter in an age field. Or if you have an age of any '
+                # 'precision, the Date Calculator will give you a date of '
+                # 'matching precision.', 
+                # 'Calculated Date Prefix Context Help'),
+
+            # date_pref_combos['Before/After'] : (
+                # 'Type the prefix "bef" or "aft" in a date field to indicate '
+                # 'that you don\'t know the exact date when an event took place, '
+                # 'but that evidence shows it must have taken place before or after '
+                # 'some specific date. For example, if a census states that Mary '
+                # 'was a widow in 1880, it can be deduced that her husband might '
+                # 'have died "bef 1880". This is not proof, but her 1880 census '
+                # 'can be used as evidence for the husband\'s "bef 1880" death date. '
+                # 'In reality, she could be a single mother or her husband could be '
+                # 'on vacation or practicing for divorce, so "before/after" dates '
+                # 'help us mark the difference between evidenced dates and '
+                # 'proven ones.', 
+                # 'Before/After Date Prefix Context Help'),
+
+            # date_pref_combos['Epoch'] : (
+                # 'Back in the stone ages when only the Christian religion existed, '
+                # 'everyone was equally comfortable separating the major epochs of '
+                # 'recorded history at the year when Jesus was thought to have been '
+                # 'born. In modern times, "AD" for "Anno Domini" and "BC" for '
+                # '"before Christ" might not be everyone\'s cup of tea. They are '
+                # 'not Treebard\'s defaults. But the easiest input markers to remember '
+                # 'are still "bc" and "ad" so that\'s what we use for input.\n\nIn '
+                # 'practice, you should never have to type "ad" as you normally '
+                # 'wouldn\'t want it displayed. Treebard adds it to years prior to '
+                # '1000 AD since we\'re used to seeing 4-digit dates. And if one '
+                # 'date in a compound date is BC but the other is AD, Treebard will '
+                # 'add the AD to '
+                # 'the right date if you don\'t. Treebard always assumes that any '
+                # 'date not marked "bc" is AD.\n\nFor the sake of honoring diverse '
+                # 'religious traditions and political correctness, Treebard\'s '
+                # 'default epoch markers are "CE" for "current era" and "BCE" '
+                # 'for "before current era". The dividing line is still the same: '
+                # 'the year that the Christian church traditionally holds as the '
+                # 'birth year of Jesus.', 
+                # 'Epoch Date Suffix Context Help'),
+
+            # date_pref_combos['Julian/Gregorian'] : (
+                # 'Some programs display dual dates such as "1751/1752" to '
+                # 'indicate that an event took place while the transition '
+                # 'was going on from the Julian Calendar to the Gregorian '
+                # 'calendar. Unfortunately, every country adopted the '
+                # 'Gregorian calendar in a different year. So it would '
+                # 'take a lot of stored per-country data for a computer '
+                # 'program to know what span of time to display dual dates '
+                # 'in, depending on what country the event took place in. '
+                # 'And then this data would rarely be used, and more rarely '
+                # 'appreciated. Some countries have only recently made the '
+                # 'transition.\n\nInstead of pretending that all events took '
+                # 'place in the USA and then using the transition period '
+                # 'pertinent to the USA, Treebard would like to avoid '
+                # 'displaying ugly dual dates altogether. If you know '
+                # 'you\'re entering a date that falls within a calendar '
+                # 'transition period, just mark the input "ns" for new style date '
+                # '(Gregorian calendar) or "os" for old style date (Julian '
+                # 'calendar).\n\nIn Treebard\'s opinion, most uneducated '
+                # 'people in the olden days didn\'t know for sure when they ' 
+                # 'were born or exactly how old they were. And in the olden days, '
+                # 'most people were uneducated. This makes us wonder what good '
+                # 'it does to use fastidiously precise date strictures for '
+                # 'dates that are obviously imprecise if not downright sloppy maybe '
+                # '75% of the time, except for the royal families who could afford '
+                # 'a scribe to follow them around and record the exact date of '
+                # 'their every move.', 
+                # 'Julian/Gregorian Date Suffix Context Help'),
+
+            # date_pref_combos['From...To...'] : (
+                # 'A span is a compound date such as "from July 1845 to Jan. 1850" '
+                # 'which denotes a specific known period of time. Enter date spans '
+                # 'with the word "to" between the two dates. The word "to" should '
+                # 'have a space on each side of it even if a different separator '
+                # 'such as slash, dash, asterisk or dot is being used within the '
+                # 'dates themselves. Example: input such as "4 19 1888 to 3-20-1887" '
+                # 'will display as "from March 20, 1887 to April 19, 1888" in '
+                # 'whatever format you\'ve selected for date display. If you don\'t '
+                # 'know one of the dates, enter something like "? to 1492" or "1537 '
+                # 'to ?" and Treebard will know what to do.', 
+                # 'Span Compound Date Context Help'),
+
+            # date_pref_combos['Between...And...'] : (
+                # 'A range is a compound date such as "between July 1845 and Jan. '
+                # '1850" which denotes a known period of time during which an event '
+                # 'took place, when the exact date of the event is not known. Enter '
+                # 'date ranges with the word "and" between the two dates. The word '
+                # '"and" should have a space on each side of it even if a different ' 
+                # 'separator such as slash, dash, asterisk or dot is being used '
+                # 'within the dates themselves. Example: input such as "4 19 1888 '
+                # 'and 3-20-1887" will display as "between March 20, 1887 and April '
+                # '19, 1888" in whatever format you\'ve selected for date display.', 
+                # 'Range Compound Date Context Help'),
+
+            # self.submit : (
+                # 'When you\'ve selected one or more date display format changes '
+                # 'and told Treebard whether the changes should apply to '
+                # 'the currently open tree or to all your trees, click the Submit '
+                # 'button to store the changes. Changes made to only the current '
+                # 'tree have no effect on Treebard defaults or your own '
+                # 'application-wide defaults. Changes made to your '
+                # 'application-wide defaults have no effect on Treebard defaults, '
+                # 'which are still stored untouched and can be reverted to at '
+                # 'any time. You can change formats as often as you like. Changes '
+                # 'take effect next time you restart the program. Display formats '
+                # 'have nothing to do with how dates are entered or how they are '
+                # 'stored so you don\'t need to consider anything except how you '
+                # 'want dates to look when displayed.', 
+                # 'Submit Button Context Help'),
+
+            # self.revert : (
+                # 'To return to Treebard\'s out-of-the-box default date display '
+                # 'settings, click the Revert button. Date display settings ' 
+                # 'specific to your currently open tree will be deleted forever. ' 
+                # 'Date display settings for other trees will not be affected. '
+                # 'For example, in Tree A you can use Treebard\'s default '
+                # 'date display settings; in Trees B and C you can use your '
+                # 'own default date display settings; in Tree D you can use '
+                # 'custom date display formats that apply only to '
+                # 'that tree; and in Tree E you can use a different custom date '
+                # 'display format that only applies to that tree. Changes made '
+                # 'while Tree X is open have no effect on Tree Y unless both are '
+                # 'using your "user-wide" defaults, in which case changes made '
+                # 'to user-wide defaults will have equal effect in both trees.', 
+                # 'Revert Button Context Help')}
+
+        # for widg in (
+            # self.test1, 
+            # self.tester_widgets['Date Input I'], 
+            # self.tester_widgets['Date Input II'],
+            # self.tester_widgets['Date Input III'], 
+            # self.pref_lab, self.general, 
+            # date_pref_combos['General'], 
+            # date_pref_combos['Estimated'], 
+            # date_pref_combos['Approximate'], 
+            # date_pref_combos['Calculated'], 
+            # date_pref_combos['Before/After'], 
+            # date_pref_combos['Epoch'], 
+            # date_pref_combos['Julian/Gregorian'],
+            # date_pref_combos['From...To...'], 
+            # date_pref_combos['Between...And...'], 
+            # self.submit, 
+            # self.revert):
+                # widg.bind('<Button-3>', rc_date_menu.attach_rt_clk_menu)
+
+
+
+
+
 # rcm_widgets = (
     # self.note_header, self.note.text, self.toc_head, self.linker, radframe, 
     # self.order)
