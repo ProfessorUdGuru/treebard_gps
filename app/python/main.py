@@ -310,7 +310,7 @@ class Main(Frame):
                 "Apply Button",
                 "Apply selections to all output text. Input font family is "
 					"chosen by Treebard."),
-            (colorizer.colors_content,
+            (colorizer.swatch_window,
                 "Color Scheme Samples",
                 "Click color scheme to try."),
             (colorizer.try_button,

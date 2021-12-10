@@ -1122,8 +1122,10 @@ class DatePreferences(Frame):
             combo = Combobox(
                 prefs_area,
                 root,
+                height=300,
                 values=DATE_PREF_COMBOS[p])
             self.prefcombos[heading] = combo
+            # combo.config_values(DATE_PREF_COMBOS[p])
             p += 1
 
         self.submit = Button(

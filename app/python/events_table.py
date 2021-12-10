@@ -1550,18 +1550,15 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# prettify messages_context_help.py
-# fix all Comboboxes so the dropdown is not longer than needed if short values list
-# move places, types, and ??? to treebard.db
-# Test ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER around a dialog HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work
-# get all main tabs back into working order
+# fix rcm changed widget names in colorizer
 # in the Gallery there should be a way to know when the viewport is in focus, and there are 2 widgets not changing color on colorize: the background on left and right of a narrow main pic and the border around the scrollbar slider under the thumbstrip.
 # in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
 # in the File menu items add an item "Restore Sample Tree to default values" and have it grayed out if the sample tree is not actually open.
-# fix Border so that title bar changes color when not on top or in focus; title1/title2 wrong color, but ok on click title bar, bec they start with the right color whereas the title bar starts with the NEUTRAL_COLOR, have to make them change at the same time
+# fix Border so that title bar changes color when not on top or in focus; title1/title2 wrong color, but ok on click title bar, bec they start with the right color whereas the title bar starts with the NEUTRAL_COLOR, have to make them change at the same time; ALSO the root border seems to be always steelblue whereas the other dialogs try to change color as they shd
 # add to Search dlg: checkbox "Speed Up Search" with tooltip "Search will begin after three characters are typed. Don't select this for number searches." Have it selected by default.
 # did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thot the new class was supposed to replace all these as was done apparently already in dates.py. I thot the new class was made so these three overlapping large functions could be deleted from messages.py
 # edit comments and doc strings
+# get all main tabs back into working order
 # TEST every functionality due to recent restructuring
 
 # BRANCH: pedigree
@@ -1591,6 +1588,7 @@ if __name__ == '__main__':
 # post new screenshots
 # edit official do list
 # website: change "units of genealogy" to "elements of genealogy"
+# get rid of all the quote marks in the rcm messages, just use one long line per message
 # write blog post "refactor finished"
 
 # BRANCH: after_refactor

@@ -21,12 +21,11 @@ from dev_tools import looky, seeline
 
 
 current_file = get_current_file()[0]
-# self.formats = make_formats_dict()
 
 class Colorizer(Frame):
-    def __init__(self, parent, root, rc_menu, tabbook=None, *args, **kwargs):
-        Frame.__init__(self, parent, *args, **kwargs)
-        self.parent = parent
+    def __init__(self, master, root, rc_menu, tabbook=None, *args, **kwargs):
+        Frame.__init__(self, master, *args, **kwargs)
+        self.master = master
         self.root = root
         self.rc_menu = rc_menu
         self.tabbook = tabbook
@@ -34,22 +33,27 @@ class Colorizer(Frame):
         self.formats = make_formats_dict()
 
         self.old_col = 0
-        self.parent.columnconfigure(0, weight=1)
-        self.parent.rowconfigure(0, weight=1)
+        self.master.columnconfigure(0, weight=1)
+        self.master.rowconfigure(0, weight=1)
 
         self.root.bind('<Return>', self.apply_scheme)
 
         self.r_col = {}
 
-        self.make_widgets()
+        opening_colors = (
+            self.formats['bg'], 
+            self.formats['highlight_bg'], 
+            self.formats['head_bg'], 
+            self.formats['fg'])
+        self.make_widgets1()
+        self.make_widgets2(opening_colors)
 
-    def make_widgets(self):
+    def make_widgets1(self):
 
-        stripview = Frame(self.parent)
-        stripview.grid(column=0, row=0, padx=12, pady=12)
+        stripview = Frame(self.master)
 
-        self.parent.update_idletasks()
-        self.colors_canvas = Canvas(
+        self.master.update_idletasks()
+        self.swatch_canvas = Canvas(
             stripview, 
             bd=1, highlightthickness=1, 
             highlightbackground=self.formats['highlight_bg'], 
@@ -57,86 +61,88 @@ class Colorizer(Frame):
             width=840,
             height=118) 
         self.hscroll = Scrollbar(
-            stripview, orient='horizontal', command=self.colors_canvas.xview)
-        self.colors_canvas.configure(xscrollcommand=self.hscroll.set)
-        
-        self.colors_canvas.grid(column=0, row=0, sticky='news')
-        self.hscroll.grid(column=0, row=1, sticky="ew")
+            stripview, orient='horizontal', command=self.swatch_canvas.xview)
+        self.swatch_canvas.configure(xscrollcommand=self.hscroll.set)        
 
-        self.colors_content = Frame(self.colors_canvas)
+        self.swatch_window = Frame(self.swatch_canvas)
 
-        bbox1 = Frame(self.parent)
-        bbox1.grid(column=0, row=1, padx=12, pady=12, sticky='we')
-        bbox1.columnconfigure(1, weight=1)
-        bbox1.rowconfigure(1, weight=1)
+        buttons = Frame(stripview)
 
         self.try_button = Button(
-            bbox1, text='TRY', width=7, command=self.config_local)
-        self.try_button.grid(column=0, row=0, sticky='w')
-
+            buttons, text='TRY', width=7, command=self.config_local)
         self.copy_button = Button(
-            bbox1, text='COPY', width=7, command=self.copy_scheme)
-        self.copy_button.grid(column=1, row=0)
-
+            buttons, text='COPY', width=7, command=self.copy_scheme)
         self.apply_button = Button(
-            bbox1, text='APPLY', width=7, command=self.apply_scheme)
-        self.apply_button.grid(column=2, row=0, sticky='e')
+            buttons, text='APPLY', width=7, command=self.apply_scheme)
+        
+        self.new_scheme = Frame(self.master)
 
-        bottom = Frame(self.parent)
-        bottom.grid(column=0, row=2, padx=12, pady=12)
+        # children of self.master
+        stripview.grid(column=0, row=0)#, padx=12, pady=12
+        self.new_scheme.grid(column=0, row=2, pady=12)
 
-        addlab = LabelH3(bottom, text='New Color Scheme')
-        addlab.grid(column=0, row=0, padx=6, pady=6, columnspan=2)
+        # children of stripview
+        self.swatch_canvas.grid(column=0, row=0, sticky='news')
+        self.hscroll.grid(column=0, row=1, sticky="ew")
+        buttons.grid(column=0, row=2, sticky='e', pady=(12,0))
 
-        self.colors_table = Frame(bottom)
-        self.colors_table.grid(column=0, row=1, columnspan=2)
-        self.colors_table.columnconfigure(0, weight=1)
-        self.colors_table.rowconfigure(0, weight=1)
+        # children of buttons
+        self.try_button.grid(column=0, row=0, sticky='e')
+        self.copy_button.grid(column=1, row=0, padx=6)
+        self.apply_button.grid(column=2, row=0, sticky='w')
+
+        self.make_swatches()
+
+        self.swatch_canvas.create_window(
+            0, 0, anchor='nw', window=self.swatch_window)
+        self.resize_color_samples_scrollbar()
+
+    def make_widgets2(self, colors):
+
+        def clear_select(evt):
+            evt.widget.selection_clear()
 
         all_schemes = get_color_schemes()
 
-        self.h1 = Label(
-            self.colors_table,
-            anchor='w', 
-            text=' Domain',
-            font=self.formats['output_font'])
+        l_col = [
+            'background 1', 'background 2', 'background 3', 'font color']
 
-        self.h2 = Label(
-            self.colors_table,
-            anchor='w',
-            text=' Color')
+        self.entries_combos = []
+        self.domain_tips = []
 
-        opening_colors = (
-            self.formats['bg'], 
-            self.formats['highlight_bg'], 
-            self.formats['head_bg'], 
-            self.formats['fg'])
+        addlab = LabelH3(self.new_scheme, text='New Color Scheme')
 
-        displabel = self.make_colors_table(opening_colors)
+        h1 = Label(self.new_scheme, anchor='w', text='DOMAIN')
+        h2 = Label(self.new_scheme, anchor='w', text='COLOR')
 
-        bbox2 = Frame(bottom)
-        bbox2.grid(
-            column=0, row=2, 
-            padx=12, pady=12, 
-            sticky='ew', columnspan=2)
-        bbox2.columnconfigure(1, weight=1)
-        bbox2.rowconfigure(0, weight=1)
+        j = 2
+        for name in l_col:
+            lab = Label(self.new_scheme, anchor='w', text=name)
+            lab.grid(column=0, row=j, sticky='ew')
+            ent = Entry(self.new_scheme, width=12)
+            self.r_col[name] = ent
+            ent.grid(column=1, row=j, padx=(3,0))
+            self.entries_combos.append(ent)
+            ent.bind('<FocusOut>', clear_select)
+            ent.bind('<Double-Button-1>', self.open_color_chooser)
+            self.domain_tips.append(lab)
+            j += 1
 
         self.new_button = Button(
-            bbox2, 
-            text='CREATE NEW COLOR SAMPLE', 
+            self.new_scheme,
+            text='CREATE SWATCH', 
             command=self.make_new_sample)
-        self.new_button.grid(column=0, row=0, padx=6, pady=6, columnspan=2)
 
-        self.make_samples()
-
-        self.colors_canvas.create_window(
-            0, 0, anchor='nw', window=self.colors_content)
-        self.resize_color_samples_scrollbar()
+        # children of self.new_scheme
+        self.new_scheme.columnconfigure(0, weight=1)
+        addlab.grid(column=0, row=0, sticky='ew', columnspan=2)
+        h1.grid(column=0, row=1, sticky='we')
+        h2.grid(column=1, row=1, sticky='we')
+        self.new_button.grid(column=0, row=6, columnspan=2, pady=(12,0))
 
     def resize_color_samples_scrollbar(self):
-        self.colors_content.update_idletasks()                   
-        self.colors_canvas.config(scrollregion=self.colors_canvas.bbox("all")) 
+        self.swatch_window.update_idletasks()                   
+        self.swatch_canvas.config(scrollregion=self.swatch_canvas.bbox("all")) 
 
     def apply_scheme(self, evt=None):
         # APPLY button not invoked by RETURN key unless its tab is on top
@@ -147,16 +153,14 @@ class Colorizer(Frame):
         self.recolorize()
 
     def recolorize(self):
-        # self.formats = make_formats_dict()
-        # print("line", looky(seeline()).lineno, "self.formats['bg']:", self.formats['bg'])
         color_scheme = []
-        for child in self.colors_content.winfo_children():
-            if self.parent.focus_get() == child:
+        for child in self.swatch_window.winfo_children():
+            if self.master.focus_get() == child:
                 frm = child
 
         foc = self.root.focus_get()
 
-        if foc.master != self.colors_content:
+        if foc.master != self.swatch_window:
             return
 
         for child in frm.winfo_children():
@@ -182,14 +186,14 @@ class Colorizer(Frame):
         config_generic(self.root)
         self.root.config(bg=mbg)
 
-    def make_samples(self):
+    def make_swatches(self):
 
         all_schemes_plus = get_color_schemes_plus()
         
         y = 0
         for scheme in all_schemes_plus:
             frm = FrameStay(
-                self.colors_content,
+                self.swatch_window,
                 name = '{}{}'.format('cs_', str(scheme[5])),
                 bg='lightgray', 
                 takefocus=1, 
@@ -217,9 +221,9 @@ class Colorizer(Frame):
         self.clear_entries()
 
     def clear_entries(self):
-        for widg in self.colors_table.winfo_children():
+        for widg in self.new_scheme.winfo_children():
             if widg.winfo_class() == 'Entry':
-                widg.delete(0, tk.END)
+                widg.delete(0, 'end')
 
     def detect_colors(self, frm):
 
@@ -238,14 +242,14 @@ class Colorizer(Frame):
         
         trial_widgets = []
         all_widgets_in_tab1 = get_all_descends(
-            self.parent, trial_widgets)
-        all_widgets_in_tab1.append(self.parent)
+            self.master, trial_widgets)
+        all_widgets_in_tab1.append(self.master)
 
         for widg in (all_widgets_in_tab1):
             if (widg.winfo_class() == 'Label' and 
                 widg.winfo_subclass() == 'LabelStay'):
                     pass
-            elif (widg in self.colors_table.winfo_children() and 
+            elif (widg in self.new_scheme.winfo_children() and 
                 widg.grid_info()['row'] == 0):
                     widg.config(
                         bg=scheme[2],
@@ -262,7 +266,7 @@ class Colorizer(Frame):
                         activebackground=scheme[2])
             elif widg.winfo_class() == 'Entry':
                 widg.config(bg=scheme[1]),
-            elif widg in self.colors_content.winfo_children():
+            elif widg in self.swatch_window.winfo_children():
                 widg.config(bg='lightgray')
             elif widg.winfo_class() in ('Frame', 'Toplevel', 'Canvas'):
                 widg.config(bg=scheme[0])
@@ -283,7 +287,7 @@ class Colorizer(Frame):
 
         # if TRY button
         else:
-            for widg in self.colors_table.winfo_children():
+            for widg in self.new_scheme.winfo_children():
 
                 # if entries not all filled out
                 if (widg.winfo_class() == 'Entry' and
@@ -305,12 +309,12 @@ class Colorizer(Frame):
                             self.clear_entries()
 
                 # if no sample hilited
-                elif self.colors_content.focus_get().winfo_class() != 'Frame':
+                elif self.swatch_window.focus_get().winfo_class() != 'Frame':
                     return
                 elif (widg.winfo_class() == 'Entry' and
                     len(widg.get()) == 0):
                             color_scheme = self.detect_colors(
-                                self.parent.focus_get())
+                                self.master.focus_get())
                             self.preview_scheme(color_scheme)
 
     def change_border_color(self, evt):
@@ -318,44 +322,6 @@ class Colorizer(Frame):
 
     def unchange_border_color(self, evt):
         evt.widget.config(bg='lightgray', bd=1)
-
-    def make_colors_table(self, colors):
-
-        def clear_select(evt):
-            evt.widget.selection_clear()
-
-        l_col = [
-            'background 1', 'background 2', 'background 3', 'font color']
-
-        self.h1.grid(
-            column=0, row=0, 
-            sticky='ew', 
-            ipady=3,
-            pady=6)
-
-        self.h2.grid(
-            column=1, row=0, 
-            sticky='ew', 
-            ipady=3,
-            pady=6)
-
-        self.entries_combos = []
-        self.domain_tips = []
-        j = 1
-        for name in l_col:
-            lab = Label(
-                self.colors_table,
-                anchor='w',
-                text=name)
-            lab.grid(column=0, row=j, sticky='ew', padx=(6,12), pady=3)
-            ent = Entry(self.colors_table, width=12)
-            self.r_col[name] = ent
-            ent.grid(column=1, row=j, pady=3)
-            self.entries_combos.append(ent)
-            ent.bind('<FocusOut>', clear_select)
-            ent.bind('<Double-Button-1>', self.open_color_chooser)
-            self.domain_tips.append(lab)
-            j += 1
 
     def drop_scheme_from_db(self, frame, scheme):
         id = frame.split('_')[1]
@@ -376,12 +342,10 @@ class Colorizer(Frame):
 
     def delete_sample(self, evt):
         '''
-            Don't allow built-in color schemes to be deleted. Currently all are
-            set as built_in, but that could be changed to allow deletion: 
-            update `built_in` column of `color_scheme` table in db to `0`.
+            Don't allow built-in color schemes to be deleted. 
         '''
-        dflt = self.colors_content.winfo_children()[0]
-        drop_me = self.colors_content.focus_get()
+        dflt = self.swatch_window.winfo_children()[0]
+        drop_me = self.swatch_window.focus_get()
         all_schemes_plus = get_color_schemes_plus()
         color_scheme = tuple(self.detect_colors(drop_me))
         all_schemes = []
@@ -394,15 +358,14 @@ class Colorizer(Frame):
                 self.drop_scheme_from_db(drop_name, color_scheme)
                 drop_me.destroy()
                 self.resize_color_samples_scrollbar()
-                # reset to default scheme; only current scheme can be deleted
                 dflt.focus_set()
                 fix = []
-                for child in self.parent.focus_get().winfo_children():
+                for child in self.master.focus_get().winfo_children():
                     fix.append(child['bg']) 
                 child = child
                 fix.append(child['fg'])
                 entries = []
-                for child in self.colors_table.winfo_children():
+                for child in self.new_scheme.winfo_children():
                     if child.winfo_class() == 'Entry':
                         entries.append(child)
                 self.apply_button.invoke()
@@ -410,7 +373,7 @@ class Colorizer(Frame):
     def get_new_scheme(self):
         all_schemes = get_color_schemes()
         inputs = []
-        for widg in self.colors_table.winfo_children():
+        for widg in self.new_scheme.winfo_children():
             if widg.winfo_class() == 'Entry':
                 inputs.append(widg.get())
         inputs = tuple(inputs)
@@ -434,8 +397,6 @@ class Colorizer(Frame):
 
     def make_new_sample(self):
 
-        # validate colors
-
         back = self.r_col['background 1'].get()
         high = self.r_col['background 2'].get()
         table = self.r_col['background 3'].get()
@@ -451,7 +412,7 @@ class Colorizer(Frame):
             if len(tup[0]) == 0:
                 return
         
-        test_color = Frame(self.root) # don't grid this
+        test_color = Frame(self.root)
 
         for tup in try_these:
             try:
@@ -464,21 +425,21 @@ class Colorizer(Frame):
                 return
 
         self.get_new_scheme()
-        for child in self.colors_content.winfo_children():
+        for child in self.swatch_window.winfo_children():
             child.destroy()
-        self.make_samples()
+        self.make_swatches()
 
     def copy_scheme(self):
 
         colors = []
-        if self.root.focus_get().master == self.colors_content:
+        if self.root.focus_get().master == self.swatch_window:
             for child in self.root.focus_get().winfo_children():
                 colors.append(child['bg'])
                 child=child
             colors.append(child['fg'])
 
         color_entries = []
-        for child in self.colors_table.winfo_children():
+        for child in self.new_scheme.winfo_children():
             if child.grid_info()['row'] == 0:
                 pass
             elif child.grid_info()['column'] == 1:

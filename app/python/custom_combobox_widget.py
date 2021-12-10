@@ -46,6 +46,7 @@ class Combobox(FrameHilited3):
             root, 
             callback=None,
             height=480, 
+            # height=36, 
             values=[], 
             scrollbar_size=24, 
             *args, **kwargs):
@@ -185,11 +186,10 @@ class Combobox(FrameHilited3):
             this, the button width can be changed when the scrollbar
             appears and disappears.
         '''
-
+        
         # a sample button is made to get its height, then destroyed
         b = ButtonFlatHilited(self.content, text='Sample')
         one_height = b.winfo_reqheight()
-        b.destroy()
         self.fit_height = one_height * len(values)
 
         self.values = values
@@ -223,6 +223,8 @@ class Combobox(FrameHilited3):
             c += 1
         for b in self.buttons:
             b.config(command=self.callback)
+        if self.fit_height <= self.height:
+            self.height = self.fit_height
 
     def get_tip_widg(self, evt):
         '''
