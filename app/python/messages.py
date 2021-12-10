@@ -195,14 +195,14 @@ class InputMessage(Dialogue):
         self.header.grid(column=1, row=1, sticky="news")
         self.inputs.grid(column=1, row=2, sticky="news")
         self.buttons.grid(
-            column=1, row=3, sticky="e", padx=12, pady=(18,12), columnspan=2)
+            column=1, row=3, sticky="e", padx=12, columnspan=2)
 
     def make_widgets(self):
         self.head = LabelHeader(
             self.header, text=self.head1, justify='left', 
             wraplength=self.wraplength)
         self.head.grid(
-            column=0, row=0, sticky='news', padx=12, pady=12, 
+            column=0, row=0, sticky='news', padx=12,  
             columnspan=2, ipadx=6, ipady=3)
         head2 = Label(self.header, text=self.head2)
         head2.grid(column=0, row=1, padx=12)        

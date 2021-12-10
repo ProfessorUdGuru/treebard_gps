@@ -8,7 +8,6 @@ from custom_combobox_widget import Combobox
 from autofill import EntryAuto, EntryAutoHilited
 from styles import make_formats_dict
 from messages import open_message, dates_msg, InputMessage
-from messages_context_help import date_prefs_help_msg
 from query_strings import (
     select_date_format, select_default_date_format, delete_date_format_all,
     insert_date_format_default, update_date_format_date_formats, 
@@ -953,114 +952,114 @@ def convert_month(part, dateform):
 
 # DATE PREFERENCES TAB
 
-prefcombos = {}
-
-def revert_to_default():
-    
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    conn.execute('PRAGMA foreign_keys = 1')
-    cur = conn.cursor()
-
-    cur.execute(delete_date_format_all)
-    conn.commit()
-
-    cur.execute(insert_date_format_default)
-    conn.commit()
-
-    cur.close()
-    conn.close()
-
-    for combo in prefcombos.values():
-        combo.entry.delete(0, 'end')
-
-def get_new_date_prefs(): 
-
-    date_form = None
-    est_form = None
-    abt_form = None
-    cal_form = None
-    befaft_form = None
-    epoch_form = None
-    julegreg_form = None
-    span_form = None
-    range_form = None
-
-    for combo in prefcombos.values():
-        if len(combo.entry.get()) != 0:
-            var_form = combo.entry.get()
-            if combo == prefcombos['General']:
-                date_form = var_form
-                for k,v in DATE_FORMAT_LOOKUP.items():
-                    if date_form == k:
-                        date_form = v
-            elif combo == prefcombos['Estimated']:
-                est_form = var_form
-            elif combo == prefcombos['Approximate']:
-                abt_form = var_form
-            elif combo == prefcombos['Calculated']:
-                cal_form = var_form
-            elif combo == prefcombos['Before/After']:
-                befaft_form = var_form
-            elif combo == prefcombos['Epoch']:
-                epoch_form = var_form
-            elif combo == prefcombos['Julian/Gregorian']:
-                julegreg_form = var_form
-            elif combo == prefcombos['From...To...']:
-                span_form = var_form
-                for k,v in SPAN_FORMAT_LOOKUP.items():
-                    if span_form == k:
-                        span_form = v
-            elif combo == prefcombos['Between...And...']:
-                range_form = var_form
-                for k,v in RANGE_FORMAT_LOOKUP.items():
-                    if range_form == k:
-                        range_form = v
-    set_new_date_prefs(
-        date_form, est_form, abt_form, cal_form, befaft_form, epoch_form, 
-        julegreg_form, span_form, range_form)
-
-def set_new_date_prefs(
-        date_form, est_form, abt_form, cal_form, befaft_form, epoch_form,
-        julegreg_form, span_form, range_form):
-
-    for combo in prefcombos.values():
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
-        if date_form and combo is prefcombos['General']:
-            cur.execute(update_date_format_date_formats, (date_form,))
-        elif est_form and combo is prefcombos['Estimated']:
-            cur.execute(update_date_format_est, (est_form,))
-        elif abt_form and combo is prefcombos['Approximate']:
-            cur.execute(update_date_format_abt, (abt_form,))
-        elif cal_form and combo is prefcombos['Calculated']:
-            cur.execute(update_date_format_cal, (cal_form,))
-        elif befaft_form and combo is prefcombos['Before/After']:
-            cur.execute(update_date_format_befaft, (befaft_form,))
-        elif epoch_form and combo is prefcombos['Epoch']:
-            cur.execute(update_date_format_epoch, (epoch_form,))
-        elif julegreg_form and combo is prefcombos['Julian/Gregorian']:
-            cur.execute(update_date_format_julegreg, (julegreg_form,))
-        elif span_form and combo is prefcombos['From...To...']:
-            cur.execute(update_date_format_span, (span_form,))
-        elif range_form and combo is prefcombos['Between...And...']:
-            cur.execute(update_date_format_range, (range_form,))
-        conn.commit()
-        cur.close()
-        conn.close()
-        combo.entry.delete(0, 'end')
-
 class DatePreferences(Frame):
     def __init__(self, master, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master
 
+        self.prefcombos = {}
+
         self.make_widgets_top()
         self.make_widgets_bottom()
         self.instruct()
+
+    def revert_to_default(self):
+        
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+
+        cur.execute(delete_date_format_all)
+        conn.commit()
+
+        cur.execute(insert_date_format_default)
+        conn.commit()
+
+        cur.close()
+        conn.close()
+
+        for combo in self.prefcombos.values():
+            combo.entry.delete(0, 'end')
+
+    def get_new_date_prefs(self): 
+
+        date_form = None
+        est_form = None
+        abt_form = None
+        cal_form = None
+        befaft_form = None
+        epoch_form = None
+        julegreg_form = None
+        span_form = None
+        range_form = None
+
+        for combo in self.prefcombos.values():
+            if len(combo.entry.get()) != 0:
+                var_form = combo.entry.get()
+                if combo == self.prefcombos['General']:
+                    date_form = var_form
+                    for k,v in DATE_FORMAT_LOOKUP.items():
+                        if date_form == k:
+                            date_form = v
+                elif combo == self.prefcombos['Estimated']:
+                    est_form = var_form
+                elif combo == self.prefcombos['Approximate']:
+                    abt_form = var_form
+                elif combo == self.prefcombos['Calculated']:
+                    cal_form = var_form
+                elif combo == self.prefcombos['Before/After']:
+                    befaft_form = var_form
+                elif combo == self.prefcombos['Epoch']:
+                    epoch_form = var_form
+                elif combo == self.prefcombos['Julian/Gregorian']:
+                    julegreg_form = var_form
+                elif combo == self.prefcombos['From...To...']:
+                    span_form = var_form
+                    for k,v in SPAN_FORMAT_LOOKUP.items():
+                        if span_form == k:
+                            span_form = v
+                elif combo == self.prefcombos['Between...And...']:
+                    range_form = var_form
+                    for k,v in RANGE_FORMAT_LOOKUP.items():
+                        if range_form == k:
+                            range_form = v
+        self.set_new_date_prefs(
+            date_form, est_form, abt_form, cal_form, befaft_form, epoch_form, 
+            julegreg_form, span_form, range_form)
+
+    def set_new_date_prefs(self, 
+            date_form, est_form, abt_form, cal_form, befaft_form, epoch_form,
+            julegreg_form, span_form, range_form):
+
+        for combo in self.prefcombos.values():
+            current_file = get_current_file()[0]
+            conn = sqlite3.connect(current_file)
+            conn.execute('PRAGMA foreign_keys = 1')
+            cur = conn.cursor()
+            if date_form and combo is self.prefcombos['General']:
+                cur.execute(update_date_format_date_formats, (date_form,))
+            elif est_form and combo is self.prefcombos['Estimated']:
+                cur.execute(update_date_format_est, (est_form,))
+            elif abt_form and combo is self.prefcombos['Approximate']:
+                cur.execute(update_date_format_abt, (abt_form,))
+            elif cal_form and combo is self.prefcombos['Calculated']:
+                cur.execute(update_date_format_cal, (cal_form,))
+            elif befaft_form and combo is self.prefcombos['Before/After']:
+                cur.execute(update_date_format_befaft, (befaft_form,))
+            elif epoch_form and combo is self.prefcombos['Epoch']:
+                cur.execute(update_date_format_epoch, (epoch_form,))
+            elif julegreg_form and combo is self.prefcombos['Julian/Gregorian']:
+                cur.execute(update_date_format_julegreg, (julegreg_form,))
+            elif span_form and combo is self.prefcombos['From...To...']:
+                cur.execute(update_date_format_span, (span_form,))
+            elif range_form and combo is self.prefcombos['Between...And...']:
+                cur.execute(update_date_format_range, (range_form,))
+            conn.commit()
+            cur.close()
+            conn.close()
+            combo.entry.delete(0, 'end')
 
     def show_test_date_formatted(self, evt):
         widg = evt.widget
@@ -1084,7 +1083,7 @@ class DatePreferences(Frame):
             text="Date Entry Demo (doesn't affect your tree)")
 
         DATE_ENTRIES = ['Date Input I', 'Date Input II', 'Date Input III']
-        tester_widgets = {}
+        self.date_test = {}
         g = 0
         for lab in DATE_ENTRIES:
             lbl = Label(self.test_frm, text=DATE_ENTRIES[g])
@@ -1093,7 +1092,7 @@ class DatePreferences(Frame):
             dent.grid(column=1, row=g+1, sticky='ew')
             dent.config(width=64)
             dent.bind("<FocusOut>", self.show_test_date_formatted)
-            tester_widgets[lab] = dent
+            self.date_test[lab] = dent
             g += 1
 
     def make_widgets_bottom(self):
@@ -1101,7 +1100,7 @@ class DatePreferences(Frame):
         prefs_area = Frame(self)
         buttonbox = Frame(self)
 
-        pref_head = LabelH2(
+        self.pref_head = LabelH2(
             prefs_area, text='Set Date Display Preferences')
         pref_head2 = Label(
             prefs_area, 
@@ -1124,19 +1123,19 @@ class DatePreferences(Frame):
                 prefs_area,
                 root,
                 values=DATE_PREF_COMBOS[p])
-            prefcombos[heading] = combo
+            self.prefcombos[heading] = combo
             p += 1
 
-        submit = Button(
+        self.submit = Button(
             buttonbox, 
             text='SUBMIT PREFERENCES',
-            command=get_new_date_prefs, 
+            command=self.get_new_date_prefs, 
             width=30)
 
-        revert = Button(
+        self.revert = Button(
             buttonbox, 
             text='REVERT TO DEFAULT VALUES',
-            command=revert_to_default,
+            command=self.revert_to_default,
             width=30)
 
         # children of self
@@ -1148,79 +1147,37 @@ class DatePreferences(Frame):
         self.tester_head.grid(column=1, row=0, columnspan=4, sticky='we')
 
         # children of prefs_area
-        pref_head.grid(column=0, row=0, columnspan=3, sticky='w', padx=(12,0))
+        self.pref_head.grid(column=0, row=0, columnspan=3, sticky='w', padx=(12,0))
         pref_head2.grid(
             column=0, row=1, columnspan=3, sticky='w', padx=(12,0))
         date_pref_heads['General'].grid(column=3, row=0, padx=12)
-        prefcombos['General'].grid(column=3, row=1, padx=12, pady=(0,12))
+        self.prefcombos['General'].grid(column=3, row=1, padx=12, pady=(0,12))
         pfx_lab.grid(column=0, row=2, sticky='w', pady=12, padx=12)
         sfx_lab.grid(column=0, row=5, sticky='w', pady=12, padx=12)
         cmpd_lab.grid(column=2, row=5, sticky='w', pady=12, padx=12)
 
         date_pref_heads['Estimated'].grid(column=0, row=3, padx=12)
-        prefcombos['Estimated'].grid(column=0, row=4, padx=12, pady=(0,18))
+        self.prefcombos['Estimated'].grid(column=0, row=4, padx=12, pady=(0,18))
         date_pref_heads['Approximate'].grid(column=1, row=3, padx=12)
-        prefcombos['Approximate'].grid(column=1, row=4, padx=12, pady=(0,18))
+        self.prefcombos['Approximate'].grid(column=1, row=4, padx=12, pady=(0,18))
         date_pref_heads['Calculated'].grid(column=2, row=3, padx=12)
-        prefcombos['Calculated'].grid(column=2, row=4, padx=12, pady=(0,18))
+        self.prefcombos['Calculated'].grid(column=2, row=4, padx=12, pady=(0,18))
         date_pref_heads['Before/After'].grid(column=3, row=3, padx=12)
-        prefcombos['Before/After'].grid(column=3, row=4, padx=12, pady=(0,18))
+        self.prefcombos['Before/After'].grid(column=3, row=4, padx=12, pady=(0,18))
         date_pref_heads['Epoch'].grid(column=0, row=6, padx=12)
-        prefcombos['Epoch'].grid(column=0, row=7, padx=12, pady=(0,12))
+        self.prefcombos['Epoch'].grid(column=0, row=7, padx=12, pady=(0,12))
         date_pref_heads['Julian/Gregorian'].grid(column=1, row=6, padx=12)
-        prefcombos['Julian/Gregorian'].grid(
+        self.prefcombos['Julian/Gregorian'].grid(
             column=1, row=7, padx=12, pady=(0,12))
         date_pref_heads['From...To...'].grid(column=2, row=6, padx=12)
-        prefcombos['From...To...'].grid(column=2, row=7, padx=12, pady=(0,12))
+        self.prefcombos['From...To...'].grid(column=2, row=7, padx=12, pady=(0,12))
         date_pref_heads['Between...And...'].grid(column=3, row=6, padx=12)
-        prefcombos['Between...And...'].grid(
+        self.prefcombos['Between...And...'].grid(
             column=3, row=7, padx=12, pady=(0,12))
 
         # children of buttonbox
-        submit.grid(column=0, row=0, padx=(0,12))
-        revert.grid(column=1, row=0, padx=(12,0))
-
-        self.dates_visited = (
-            (self.test_frm, 
-                "", 
-                "Use top area to test input; bottom area for display settings."), 
-            # (self.tester, "Demo Date Entry Inputs", 
-                # "Enter date parts in any order. "
-                # "Right-click any area for more info."), 
-            (prefcombos['General'], 
-                "General Date Format",
-                "Select a general type of date display."), 
-            (prefcombos['Estimated'], 
-                "Estimated Date Prefix",
-                "Use estimated dates for unsourced guessed dates."), 
-            (prefcombos['Approximate'], 
-                "Approximate Date Prefix",
-                "Use approximated dates for sourced imprecise dates."), 
-            (prefcombos['Calculated'], 
-                "Calculated Date Prefix",
-                "Calculated dates derived from other data such as age."), 
-            (prefcombos['Before/After'], 
-                "Before or After Date Prefix",
-                "When you know something happened before or after some date."), 
-            (prefcombos['Epoch'], 
-                "Epoch Date Suffix",
-                "'BC' and 'AD' now have more politically correct variations."), 
-            (prefcombos['Julian/Gregorian'], 
-                "Calendar Era Date Suffix",
-                "Mark dates 'old style' or 'new style' for events during "
-                "calendar transition times."), 
-            (prefcombos['From...To...'], 
-                "Format Two Dates in a Span",
-                "Something started at one time and lasted till another time."), 
-            (prefcombos['Between...And...'], 
-                "Format Two Dates in a Range",
-                "Something happened somewhere within a range between two dates."),  
-            (submit, 
-                "Submit Changes",
-                "The changes you selected will be saved."), 
-            (revert, 
-                "Revert to Defaults",
-                "Date formats will revert to Treebard's out-of-the-box defaults.")) 
+        self.submit.grid(column=0, row=0, padx=(0,12))
+        self.revert.grid(column=1, row=0, padx=(12,0))
 
     def instruct(self):
         pass # old rcm code temp moved to messages_context_help.py

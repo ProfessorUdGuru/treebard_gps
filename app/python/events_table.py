@@ -1550,7 +1550,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# dates prefs tab, statustips & rcm
+# prettify messages_context_help.py
 # fix all Comboboxes so the dropdown is not longer than needed if short values list
 # move places, types, and ??? to treebard.db
 # Test ALL COLOR SCHEMES AND DELETE THE COLOR SCHEMES THAT ARE NO GOOD--THE BORDER around a dialog HAS TO MAKE THE DISTINCTION BETWEEN MAIN APP AND A DIALOG--HAVE TO SET built_in TO 0 before delete will work
@@ -1561,6 +1561,7 @@ if __name__ == '__main__':
 # fix Border so that title bar changes color when not on top or in focus; title1/title2 wrong color, but ok on click title bar, bec they start with the right color whereas the title bar starts with the NEUTRAL_COLOR, have to make them change at the same time
 # add to Search dlg: checkbox "Speed Up Search" with tooltip "Search will begin after three characters are typed. Don't select this for number searches." Have it selected by default.
 # did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thot the new class was supposed to replace all these as was done apparently already in dates.py. I thot the new class was made so these three overlapping large functions could be deleted from messages.py
+# edit comments and doc strings
 # TEST every functionality due to recent restructuring
 
 # BRANCH: pedigree

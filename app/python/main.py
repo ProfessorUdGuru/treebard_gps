@@ -210,10 +210,8 @@ class Main(Frame):
 
         self.fontpicker = FontPicker(options_tabs.store['fonts'], self.root, self)
         self.fontpicker.grid(column=0, row=0)
-        print("line", looky(seeline()).lineno, "self.master.tree_is_open:", self.master.tree_is_open)
-        date_preferences = DatePreferences(options_tabs.store['dates'])
-        date_preferences.grid(column=0, row=0)
-
+        self.date_options = DatePreferences(options_tabs.store['dates'])
+        self.date_options.grid(column=0, row=0)
 
         # children of self.master i.e. root
         # top_menu & ribbon_menu etc. are gridded in window_border.py
@@ -409,7 +407,45 @@ class Main(Frame):
             (self.att.headers[7],
                 "",
                 "View and edit sources, citations and assertions linked to "
-                    "this attribute."))
+                    "this attribute."),
+            (self.date_options.test_frm, 
+                "", 
+                "Use top area to test input; bottom area for display settings."),
+            (self.date_options.prefcombos['General'], 
+                "General Date Format",
+                "Select a general type of date display."), 
+            (self.date_options.prefcombos['Estimated'], 
+                "Estimated Date Prefix",
+                "Use estimated dates for unsourced guessed dates."), 
+            (self.date_options.prefcombos['Approximate'], 
+                "Approximate Date Prefix",
+                "Use approximated dates for sourced imprecise dates."), 
+            (self.date_options.prefcombos['Calculated'], 
+                "Calculated Date Prefix",
+                "Calculated dates derived from other data such as age."), 
+            (self.date_options.prefcombos['Before/After'], 
+                "Before or After Date Prefix",
+                "When you know something happened before or after some date."), 
+            (self.date_options.prefcombos['Epoch'], 
+                "Epoch Date Suffix",
+                "'BC' and 'AD' now have more politically correct variations."), 
+            (self.date_options.prefcombos['Julian/Gregorian'], 
+                "Calendar Era Date Suffix",
+                "Mark dates 'old style' or 'new style' for events during "
+                "calendar transition times."), 
+            (self.date_options.prefcombos['From...To...'], 
+                "Format Two Dates in a Span",
+                "Something started at one time and lasted till another time."), 
+            (self.date_options.prefcombos['Between...And...'], 
+                "Format Two Dates in a Range",
+                "Something happened within a range between two dates."),  
+            (self.date_options.submit, 
+                "Submit Changes",
+                "The changes you selected will be saved."), 
+            (self.date_options.revert, 
+                "Revert to Defaults",
+                "Date formats will revert to defaults."))
+
         run_statusbar_tooltips(
             visited, 
             self.master.statusbar.status_label, 
@@ -427,7 +463,24 @@ class Main(Frame):
             self.findings_table.headers[0], self.findings_table.headers[1], 
             self.findings_table.headers[2], self.findings_table.headers[3], 
             self.findings_table.headers[4], self.findings_table.headers[5], 
-            self.findings_table.headers[6], self.findings_table.headers[7])
+            self.findings_table.headers[6], self.findings_table.headers[7], 
+            self.date_options.tester_head,  
+            self.date_options.date_test['Date Input I'], 
+            self.date_options.date_test['Date Input II'],
+            self.date_options.date_test['Date Input III'], 
+            self.date_options.pref_head,
+            self.date_options.prefcombos['General'].entry, 
+            self.date_options.prefcombos['Estimated'].entry, 
+            self.date_options.prefcombos['Approximate'].entry, 
+            self.date_options.prefcombos['Calculated'].entry, 
+            self.date_options.prefcombos['Before/After'].entry, 
+            self.date_options.prefcombos['Epoch'].entry, 
+            self.date_options.prefcombos['Julian/Gregorian'].entry, 
+            self.date_options.prefcombos['From...To...'].entry, 
+            self.date_options.prefcombos['Between...And...'].entry, 
+            self.date_options.submit, self.date_options.revert)
+
+                
         make_rc_menus(
             rcm_widgets, 
             self.rc_menu, 
