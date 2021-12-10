@@ -77,7 +77,7 @@ def get_all_unique_place_names():
 class NewPlaceDialog():
     def __init__(
             self,
-            parent, 
+            master, 
             place_dicts,
             message, 
             title,
@@ -89,7 +89,7 @@ class NewPlaceDialog():
             do_on_ok=None,
             selection=None):
 
-        self.parent = parent
+        self.master = master # root
         self.place_dicts = place_dicts
         self.message = message
         self.title = title
@@ -105,7 +105,7 @@ class NewPlaceDialog():
         self.edit_hint_id = 0
         self.hint_to_edit = None
         self.edit_rows = {}
-        self.rc_menu = RightClickMenu(self.parent, treebard=self.treebard)
+        self.rc_menu = RightClickMenu(self.master, treebard=self.treebard)
         self.make_widgets()
         self.add_new_place_option = False
         self.error = False
@@ -133,14 +133,14 @@ class NewPlaceDialog():
             self.inwidg.delete(0, 'end')
             self.inwidg.insert(0, self.initial)
         size = (
-            self.parent.winfo_screenwidth(), self.parent.winfo_screenheight())
-        self.new_places_dialog = Toplevel(self.parent)
+            self.master.winfo_screenwidth(), self.master.winfo_screenheight())
+        self.new_places_dialog = Toplevel(self.master)
         self.new_places_dialog.geometry("+120+24")
         self.new_places_dialog.maxsize(
             width=int(size[0] * 0.85), height=int(size[1] * 0.95))
         self.new_places_dialog.columnconfigure(1, weight=1)
         self.new_places_dialog.rowconfigure(4, weight=1)
-        self.canvas = Border(self.new_places_dialog)          
+        self.canvas = Border(self.new_places_dialog, self.master)          
         self.canvas.title_1.config(text=self.title)
         self.canvas.title_2.config(text="input: {}".format(self.place_input))
 
@@ -556,11 +556,7 @@ class ValidatePlace():
         ids = ids + [None] * nulls
         ids.append(self.finding)
 
-
-
         places_places = get_all_places_places()
-
-
 
         last = len(self.place_dicts) - 1
         q = 0

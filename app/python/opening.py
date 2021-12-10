@@ -77,7 +77,7 @@ class SplashScreen(Toplevel):
         self.opening_dialog = Toplevel(self.master)
         self.opening_dialog.rc_menu = RightClickMenu(self.master)
         self.opening_dialog.grab_set()
-        self.canvas = Border(self.opening_dialog, tree_is_open=0)
+        self.canvas = Border(self.opening_dialog, self.master, tree_is_open=0)
         self.canvas.title_1.config(text='Open, Create, or Copy a Tree')
         self.canvas.title_2.config(text="")
         self.canvas.quitt.bind("<Button-1>", self.close_dialog)
@@ -181,15 +181,13 @@ class SplashScreen(Toplevel):
         if path.exists(current_file[0]) is False:
             msg = open_message(self.master, opening_msg[0], "Missing File Error", "OK")
             msg[0].grab_set()
-            msg[1].config(aspect=400)
             set_closing()
             return
-        # date_prefs = get_date_formats(tree_is_open=1)
         make_main_window() 
         tree_title = current_file[1].replace("_", " ")
         tree_title = titlize(tree_title)
         filter_tree_title(tree_title)
-        change_tree_title(self.treebard)      
+        change_tree_title(self.treebard)  
 
     def store_last_openpic(self):
         conn = sqlite3.connect(global_db_path)
@@ -214,13 +212,6 @@ class SplashScreen(Toplevel):
         return self.current_image
 
     def show_openpic(self):
-        '''
-            It seems like extra steps are needed to make `center_dialog()` take
-            the picture size into account. Getting the picture to be the same
-            width as the buttonbox was easy, but getting Tkinter to include the
-            height of the picture when centering the dialog vertically... 
-            it took hours.
-        '''
 
         self.select_opening_image()
         self.current_image = self.get_pic_dimensions()
@@ -234,9 +225,6 @@ class SplashScreen(Toplevel):
             width=self.picwidth + 2, height=self.picheight + bd_ht + frm_ht)
         self.picbutton.config(width=self.picwidth)
         center_dialog(self.opening_dialog, frame=self.window)
-        # center_dialog(self.opening_dialog, frame=self.measure)
-        # self.opening_dialog.geometry(
-            # "+{}+{}".format(dlg_pos[0], int(dlg_pos[1] - (self.picheight / 2))))
 
     def select_opening_image(self):
         conn = sqlite3.connect(global_db_path)

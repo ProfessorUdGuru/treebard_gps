@@ -138,7 +138,7 @@ class Gallery(Frame):
         self.buttonbox = Frame(self)
         self.prevbutt = Button(self.buttonbox, text='<<', width=7)
 
-        self.pic_canvas = Canvas(viewer)
+        self.pic_canvas = Canvas(viewer, highlightthickness=3, bd=3)
         self.pic_canvas.bind('<Button-1>', self.focus_clicked)
         self.pic_canvas.bind('<Button-1>', self.scroll_start, add='+')
         self.pic_canvas.bind('<B1-Motion>', self.scroll_move)  
@@ -229,10 +229,10 @@ class Gallery(Frame):
         self.picsize_lab.set_height()
 
         # children of self
-        thumb_frame.grid(column=0, row=0, padx=24, pady=24, columnspan=2, sticky='w')
+        thumb_frame.grid(column=0, row=0, columnspan=2, sticky='w')#, padx=24pady=24, 
         thumb_sbh.grid(column=0, row=1, sticky="ew")
-        viewer.grid(column=0, row=2, padx=24)
-        self.buttonbox.grid(column=0, row=3, pady=24, padx=24, sticky='ew')
+        viewer.grid(column=0, row=2)#, padx=24
+        self.buttonbox.grid(column=0, row=3, sticky='ew')#pady=24, padx=24, 
 
         # children of thumb_frame
         self.thumb_canvas.grid(column=0, row=0, sticky="news")
@@ -245,10 +245,10 @@ class Gallery(Frame):
         self.pic_canvas.grid(column=0, row=0, columnspan=2)
 
         # children of panel
-        subject.grid(column=0, row=0, sticky='w', pady=(12,0))
-        self.caption_lab.grid(column=0, row=1, pady=(12,12), sticky='w')
-        self.picfile_lab.grid(column=0, row=2, pady=(12,0), sticky='w')
-        self.picsize_lab.grid(column=0, row=3, pady=(0,24), sticky='w')
+        subject.grid(column=0, row=0, sticky='w')#, pady=(12,0)
+        self.caption_lab.grid(column=0, row=1, sticky='w')#, pady=(12,12)
+        self.picfile_lab.grid(column=0, row=2, sticky='w')#pady=(12,0), 
+        self.picsize_lab.grid(column=0, row=3, sticky='w')#pady=(0,24), 
 
         # children of self.buttonbox
         self.buttonbox.columnconfigure(2, weight=10)
@@ -256,15 +256,14 @@ class Gallery(Frame):
         self.nextbutt.grid(column=1, row=0, sticky='e', padx=(6,0))
         self.editbutt.grid(column=0, row=1, sticky='e')
         if self.dialog:
-            self.b2.grid(column=1, row=1, sticky='e', padx=(6,0))
+            self.b2.grid(column=1, row=1, sticky='e')#, padx=(6,0)
         spacer.grid(column=2, row=0, rowspan=3, sticky='news')
-        panel.grid(column=3, row=0, rowspan=3, pady=(0,24), padx=24, sticky='w')
+        panel.grid(column=3, row=0, rowspan=3, sticky='w')#pady=(0,24),padx=24,  
 
         for thumb in self.thumb_labels:
             thumb.bind('<Button-1>', self.show_clicked)
 
         self.pic_canvas.bind('<Key-Left>', lambda evt: self.back())
-
         self.pic_canvas.bind('<Key-Right>', lambda evt: self.forward())
 
         self.thumb_canvas.create_window(0, 0, anchor='nw', window=self.thumbstrip)
@@ -397,7 +396,6 @@ class Gallery(Frame):
         pix_data = sorted(pix_data, key=second_item) 
 
         for lst in pix_data:
-            print("line", looky(seeline()).lineno, "lst:", lst)
             if lst[2] == 1:
                 self.main_pic = lst[0]
                 self.caption_text = lst[1]
@@ -479,7 +477,7 @@ class Gallery(Frame):
     def fit_canvas_to_pic(self):
 
         # don't show overly large images at their full size
-        FULL = 0.55
+        FULL = 0.50
         if self.maxwidth <= self.SCREEN_WIDTH * FULL:
             gallery_wd = self.maxwidth
         else:

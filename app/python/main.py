@@ -65,8 +65,6 @@ class Main(Frame):
         self.make_widgets()
         self.get_current_values()
 
-        print("line", looky(seeline()).lineno, "self.master.tree_is_open:", self.master.tree_is_open)
-
     def make_scrollbars(self):
 
         self.vsb = Scrollbar(
@@ -479,7 +477,6 @@ class Main(Frame):
             self.date_options.prefcombos['From...To...'].entry, 
             self.date_options.prefcombos['Between...And...'].entry, 
             self.date_options.submit, self.date_options.revert)
-
                 
         make_rc_menus(
             rcm_widgets, 
@@ -545,7 +542,7 @@ class Main(Frame):
     def open_person_gallery(self):
 
         person_gallery_dlg = Toplevel(self.root)
-        gallery_canvas = Border(person_gallery_dlg)
+        gallery_canvas = Border(person_gallery_dlg, self.root)
 
         person_gallery = Gallery(
             gallery_canvas, 

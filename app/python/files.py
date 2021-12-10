@@ -124,7 +124,6 @@ def open_tree(treebard, dialog=None):
     current_file = current_path[len(current_path) - 1]
     set_current_file(current_file)
     tree_title = current_file.replace("_", " ").rstrip(".tbd")
-    # tree_title = current_file.replace("_", " ").rstrip(".tbd").title()
     tree_title = titlize(tree_title)
     filter_tree_title(tree_title) 
     change_tree_title(treebard)
@@ -169,20 +168,7 @@ def get_recent_files():
     recent_files = stored_string.split("_+_")
     return recent_files
 
-# def titlize(stg):
-    # '''
-        # function by Yugal Jindle. Python's `title()` method doesn't work right
-        # if there are apostrophes etc. in the word, since it breaks words at
-        # punctuation. According to https://bugs.python.org/issue7008, the
-        # `string.capwords()` method is also buggy and should be deprecated. This
-        # is to make "Linda's Tree" not be "Linda'S Tree".
-    # '''
-    # lst = []
-    # for temp in stg.split(" "): lst.append(temp.capitalize())
-    # return ' '.join(lst)
-
 def get_tree_title(current_file):
-    # file_only = current_file.split("/")[4].rstrip(".tbd").replace("_", " ").title()
     file_only = current_file.split("/")[4].rstrip(".tbd").replace("_", " ")
     tree_title = titlize(file_only)
     return tree_title

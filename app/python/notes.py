@@ -93,7 +93,7 @@ class NotesDialog(Toplevel):
 
     def make_widgets(self):
 
-        self.canvas = Border(self)
+        self.canvas = Border(self, self.root)
 
         self.canvas.title_1.config(text="Notes Dialog")
         self.canvas.title_2.config(text="Current Person: {}, id #{}".format(
@@ -333,7 +333,7 @@ class NotesDialog(Toplevel):
 
         self.order_dlg = Toplevel(self)
         self.order_dlg.columnconfigure(1, weight=1)
-        self.order_dlg_canvas = Border(self.order_dlg)
+        self.order_dlg_canvas = Border(self.order_dlg, self.root)
         self.order_dlg_window = Frame(self.order_dlg_canvas)
         self.order_dlg_canvas.create_window(
             0, 0, anchor='nw', window=self.order_dlg_window)

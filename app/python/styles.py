@@ -42,7 +42,7 @@ NEUTRAL_COLOR = '#878787'
     you'll get an error like this... so don't use any tk.widgets:
     Traceback (most recent call last):
       File "C:\treebard_gps\app\python\ccccc.py", line 33, in <module>
-        TS.config_generic(root)
+        config_generic(root)
       File "C:\treebard_gps\app\python\styles.py", line 449, in config_generic
         widg.winfo_subclass() == 'LabelStay'):
     AttributeError: 'Label' object has no attribute 'winfo_subclass'
@@ -88,8 +88,8 @@ bgHead = ('FrameHilited2',)
 
 bgLite = (
     'FrameHilited', 'FrameHilited1', 'FrameHilited3', 'FrameHilited4', 
-    'LabelTitleBar', 'ToolTip', 'TabBook', 'CanvasHilited',
-    'ToplevelHilited', 'TitleBarButtonSolidBG')
+    'ToolTip', 'TabBook', 'CanvasHilited', 'ToplevelHilited',
+    'TitleBarButtonSolidBG')
 
 bgStd_fgStd = ('Sizer', )
 
@@ -113,7 +113,7 @@ bgStd_fgStd_fontOut_disAbl = ('LabelStylable', 'MessageCopiable')
 '''
     The variable `formats` can't be global in this module because these are
     reconfiguration functions and the colors that were current when this 
-    module first loaded are changed when the recolorizer runs. A global 
+    module first loaded are changed when the colorizer runs. A global 
     variable would only run once when this module is imported so the config 
     subfunctions have been nested inside of the main config_generic() in order 
     to prevent connecting to the database once for each of the subfunctions.
@@ -137,6 +137,19 @@ def config_generic(parent):
         styling to tkinter widgets so widgets don't have to be styled 
         individually. This is also called in colorizer to change the color 
         of everything instantly. 
+
+        See the section marked special event widgets below:
+            Widgets that have highlight/unhighlight events need some
+               special treatment to keep up with event-driven color changes. 
+            In the class definition do this:
+                self.formats = make_formats_dict()
+            And in the highlight/unhighlight methods do this:
+                bg=self.formats['blah'] ...instead of bg=formats['blah']
+            And give them their own config function here
+                def config_border(widg):
+                    widg.formats = formats
+                    widg.config(bg=formats['bg'])
+                    widg.colorize_border()
     '''
 
     def config_bgStay_fgStay(widg):
@@ -363,20 +376,6 @@ def config_generic(parent):
 
     # ************* special event widgets ********************
 
-    # widgets that have highlight/unhighlight events need some
-    #    special treatment to keep up with changes of the
-    #    color scheme. In the class definition do this:
-    # self.formats = make_formats_dict()
-    # And in the highlight/unhighlight methods do this:
-    # bg=self.formats['blah'] ...instead of bg=formats['blah']
-    # And give them their own config function here:
-       
-
-    # def config_border(widg):
-        # widg.formats = formats
-        # widg.config(bg=formats['bg'])
-        # widg.colorize_border()
-
     def config_labelhilited(lab):
         '''
             When used for Combobox arrow, it has to respond to events.
@@ -423,6 +422,11 @@ def config_generic(parent):
     def config_button_bigpic(widg):
         widg.formats = formats
         widg.config(bg=formats['highlight_bg'], fg=formats['bg'])
+
+    def config_border(widg):
+        widg.formats = formats
+        widg.config(bg=formats['head_bg'], fg=formats['fg'])
+        widg.colorize_border()
 
     # *****************end of special event widgets******************
 
@@ -563,6 +567,9 @@ def config_generic(parent):
                 # this is called in `styles.config_generic()`:
                 widg.colorize()
 
+            elif widg.winfo_subclass() == 'Border':
+                config_border(widg)
+
     config_bgStd(parent)
 
 def get_opening_settings():
@@ -653,7 +660,6 @@ def make_formats_dict():
     values.append((prefs_to_use[5], int(prefs_to_use[6] * 1.25)))
     values.append((prefs_to_use[5], int(prefs_to_use[6] * .75), 'italic'))
     values.append((prefs_to_use[4], int(prefs_to_use[6] * 0.75)))
-    # values.append((prefs_to_use[7], int(prefs_to_use[6] * 1.00)))
 
     formats = dict(zip(keys, values))
     return formats

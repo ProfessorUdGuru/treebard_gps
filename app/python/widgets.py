@@ -1512,92 +1512,92 @@ class CanvasHilited(Canvasx):
 
 # ttk only below this point *********************************************
 
-class Notebookx(ttk.Notebook):
-    def __init__(self, master, *args, **kwargs):
-        ttk.Notebook.__init__(self, master, *args, **kwargs)
+# class Notebookx(ttk.Notebook):
+    # def __init__(self, master, *args, **kwargs):
+        # ttk.Notebook.__init__(self, master, *args, **kwargs)
 
-    def winfo_subclass(self):
-        subclass = type(self).__name__
-        return subclass
+    # def winfo_subclass(self):
+        # subclass = type(self).__name__
+        # return subclass
 
-class Tabs(Notebookx):
-    def __init__(self, master, tab_names, *args, **kwargs):
-        Notebookx.__init__(self, master, *args, **kwargs)
+# class Tabs(Notebookx):
+    # def __init__(self, master, tab_names, *args, **kwargs):
+        # Notebookx.__init__(self, master, *args, **kwargs)
 
-        self.master = master
-        self.tab_names = tab_names
+        # self.master = master
+        # self.tab_names = tab_names
 
-        self.store = {}
+        # self.store = {}
 
-        self.enable_traversal()
+        # self.enable_traversal()
 
-        for tup in self.tab_names:
-            tab_frm = Frame(self, name='{}_tab'.format(tup[0]))
-            self.add(tab_frm)
-            self.tab(tab_frm, text=tup[0].title(), underline=tup[1], padding='16')
-            self.store[tup[0]] = tab_frm
+        # for tup in self.tab_names:
+            # tab_frm = Frame(self, name='{}_tab'.format(tup[0]))
+            # self.add(tab_frm)
+            # self.tab(tab_frm, text=tup[0].title(), underline=tup[1], padding='16')
+            # self.store[tup[0]] = tab_frm
 
-class Comboboxx(ttk.Combobox):
-    '''
-        Provides a way of changing colors in the combobox listbox
-        dropdown/popdown as well as the ability to detect subclass.
-    '''
+# class Comboboxx(ttk.Combobox):
+    # '''
+        # Provides a way of changing colors in the combobox listbox
+        # dropdown/popdown as well as the ability to detect subclass.
+    # '''
 
-    def __init__(self, master, *args, **kwargs):
-        ttk.Combobox.__init__(self, master, *args, **kwargs)
+    # def __init__(self, master, *args, **kwargs):
+        # ttk.Combobox.__init__(self, master, *args, **kwargs)
 
-    def winfo_subclass(self):
-        subclass = type(self).__name__
-        return subclass
+    # def winfo_subclass(self):
+        # subclass = type(self).__name__
+        # return subclass
 
-    def config_popdown(self, **kwargs):
-        self.tk.eval(
-            '[ttk::combobox::PopdownWindow {}].f.l configure {}'.format(
-                self, 
-                ' '.join(self._options(kwargs))))
+    # def config_popdown(self, **kwargs):
+        # self.tk.eval(
+            # '[ttk::combobox::PopdownWindow {}].f.l configure {}'.format(
+                # self, 
+                # ' '.join(self._options(kwargs))))
 
-class ClickAnywhereCombo(Comboboxx):
-    ''' 
-        User can ctrl+click in entry box or arrow--not just arrow--
-        to make dropdown fly down. Not needed for readonly combobox 
-        which already does this. Problem with using plain click for
-        this: it prevents dragging in the entry to select text.
-        So ctrl+click is a compromise, so that dragging to highlight 
-        will still work normally, and the arrow works normally.
-    '''
+# class ClickAnywhereCombo(Comboboxx):
+    # ''' 
+        # User can ctrl+click in entry box or arrow--not just arrow--
+        # to make dropdown fly down. Not needed for readonly combobox 
+        # which already does this. Problem with using plain click for
+        # this: it prevents dragging in the entry to select text.
+        # So ctrl+click is a compromise, so that dragging to highlight 
+        # will still work normally, and the arrow works normally.
+    # '''
 
-    def __init__(self, master, *args, **kwargs):
-        Comboboxx.__init__(self, master, *args, **kwargs)
-        self.bind('<Control-Button-1>', self.fly_down_on_click)
-        self.config(font=formats['input_font'])
+    # def __init__(self, master, *args, **kwargs):
+        # Comboboxx.__init__(self, master, *args, **kwargs)
+        # self.bind('<Control-Button-1>', self.fly_down_on_click)
+        # self.config(font=formats['input_font'])
 
-    def fly_down_on_click(self, evt):
-        if int(evt.type) == 4:
-            w = evt.widget
-            w.event_generate('<Down>', when='head')  
+    # def fly_down_on_click(self, evt):
+        # if int(evt.type) == 4:
+            # w = evt.widget
+            # w.event_generate('<Down>', when='head')  
 
-class ClearableReadonlyCombobox(Comboboxx):
-    '''
-        User can clear mistaken selection by pressing Delete, 
-        Escape, or Backspace.
-    '''
+# class ClearableReadonlyCombobox(Comboboxx):
+    # '''
+        # User can clear mistaken selection by pressing Delete, 
+        # Escape, or Backspace.
+    # '''
 
-    def __init__(self, master, *args, **kwargs):
-        Comboboxx.__init__(self, master, *args, **kwargs)
-        self.state(['readonly'])
-        self.bind("<Key-Delete>", self.allow_manual_deletion)
-        self.bind("<Key-Escape>", self.allow_manual_deletion)
-        self.bind("<Key-BackSpace>", self.allow_manual_deletion)
+    # def __init__(self, master, *args, **kwargs):
+        # Comboboxx.__init__(self, master, *args, **kwargs)
+        # self.state(['readonly'])
+        # self.bind("<Key-Delete>", self.allow_manual_deletion)
+        # self.bind("<Key-Escape>", self.allow_manual_deletion)
+        # self.bind("<Key-BackSpace>", self.allow_manual_deletion)
 
-    def allow_manual_deletion(self, evt):
-        if self.get() != "":
-            if evt.keysym in ("Escape", "Delete", "BackSpace"):
-                self.delete_content()
+    # def allow_manual_deletion(self, evt):
+        # if self.get() != "":
+            # if evt.keysym in ("Escape", "Delete", "BackSpace"):
+                # self.delete_content()
 
-    def delete_content(self):
-        self.state(['!readonly', 'selected'])
-        self.set("")
-        self.state(['readonly'])
+    # def delete_content(self):
+        # self.state(['!readonly', 'selected'])
+        # self.set("")
+        # self.state(['readonly'])
 
 
 

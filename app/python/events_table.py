@@ -1126,7 +1126,7 @@ class NewEventDialog(Toplevel):
 
         self.columnconfigure(1, weight=1)
         self.rowconfigure(4, weight=1)
-        self.new_event_canvas = Border(self)
+        self.new_event_canvas = Border(self, self.root)
 
         self.new_event_canvas.title_1.config(text="New Event Dialog")
         self.new_event_canvas.title_2.config(
@@ -1550,15 +1550,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
-# fix rcm changed widget names in colorizer
-# in the Gallery there should be a way to know when the viewport is in focus, and there are 2 widgets not changing color on colorize: the background on left and right of a narrow main pic and the border around the scrollbar slider under the thumbstrip.
-# in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc.
-# in the File menu items add an item "Restore Sample Tree to default values" and have it grayed out if the sample tree is not actually open.
-# fix Border so that title bar changes color when not on top or in focus; title1/title2 wrong color, but ok on click title bar, bec they start with the right color whereas the title bar starts with the NEUTRAL_COLOR, have to make them change at the same time; ALSO the root border seems to be always steelblue whereas the other dialogs try to change color as they shd
-# add to Search dlg: checkbox "Speed Up Search" with tooltip "Search will begin after three characters are typed. Don't select this for number searches." Have it selected by default.
-# did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thot the new class was supposed to replace all these as was done apparently already in dates.py. I thot the new class was made so these three overlapping large functions could be deleted from messages.py
 # edit comments and doc strings
-# get all main tabs back into working order
 # TEST every functionality due to recent restructuring
 
 # BRANCH: pedigree
@@ -1576,8 +1568,13 @@ if __name__ == '__main__':
 # when changing font, window/scrollbar don't resize till reloaded; see notes in fonts_picker; when fixed get rid of the message
 # on change of font size: dropdown font doesn't resize instantly; font size on roles/notes dialogs esp headers doesn't resize instantly
 
-# BRANCH: gallery
-# refactor gallery structure only: statustips don't work in places tab or sources tab since statustips go in a dialog and these tabs, unlike the persons gallery, are not dialogs. Best way to fix this is to get rid of the idea of putting some galleries in tabs with one (the one that works well) in a dialog. They shd all work the same for the sake of my sanity and consistency for user and for coder as well. Also the scrollbars don't work right for the very big images. There shd be nothing in any tab that's ever bigger than the persons tab events table, ever. If all 3 galleries had their own dialogs it would simplify a lot of perennial problems I've had with this, it would make it easier to resize the scrollbars, it would solve the problem of statusbar tips, and it would not be hard to do, best of all it would give me a real places tab (with a main pic only) and a real sources tab (with a main pic only) and both would work the same as the current person tab: you'd change the current place to show its stuff and its pic, same for the current source or citation, and clicking the main pic would open the gallery. Then the tabs could be used for what they're needed for, like searching and linking and stuff.
+# BRANCH: dialogs
+# refactor gallery structure only: statustips don't work in places tab or sources tab since statustips go in a dialog and these tabs, unlike the persons gallery, are not dialogs. Best way to fix this is to get rid of the idea of putting some galleries in tabs with one (the one that works well) in a dialog. They shd all work the same for the sake of my sanity and consistency for user and for coder as well. Also the scrollbars don't work right for the very big images. Also I found out when I deleted all the padding that there's no scridth. There shd be nothing in any tab that's ever bigger than the persons tab events table, ever. If all 3 galleries had their own dialogs it would simplify a lot of perennial problems I've had with this, it would make it easier to resize the scrollbars, it would solve the problem of statusbar tips, and it would not be hard to do, best of all it would give me a real places tab (with a main pic only) and a real sources tab (with a main pic only) and both would work the same as the current person tab: you'd change the current place to show its stuff and its pic, same for the current source or citation, and clicking the main pic would open the gallery. Then the tabs could be used for what they're needed for, like searching and getting details about links and stuff. the padding has to be put back in as per the new slimmer mode
+# in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc. after restructing gallery into 3 dialogs
+# did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thot the new class was supposed to replace all these as was done apparently already in dates.py. I thot the new class was made so these three overlapping large functions could be deleted from messages.py
+# get rid of all calls to title() in dropdown.py and just give the values with caps as they shd be shown, for ex title() is changing GEDCOM to Gedcom in File menu
+# in the File menu items add an item "Restore Sample Tree to Default Values" and have it grayed out if the sample tree is not actually open.
+# add to Search dlg: checkbox "Speed Up Search" with tooltip "Search will begin after three characters are typed. Don't select this for number searches." Have it selected by default.
 
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?

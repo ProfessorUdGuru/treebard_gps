@@ -127,7 +127,6 @@ class DropdownMenu(FrameHilited2):
                 ("rename", lambda evt, root=self.root: rename_tree(evt, root), "h"),
                 ("recent trees", lambda evt: self.show_recent_trees(evt), 
                     ">", self.recent_trees),
-                # ("recent trees", self.show_list, ">", self.recent_trees),
                 ("import tree", self.show_list, ">", IMPORT_TYPES),
                 ("export tree", self.show_list, ">", EXPORT_TYPES),
                 ("close", lambda evt, tbard=self.treebard: close_tree(evt, tbard), ""),
@@ -520,7 +519,7 @@ if __name__ == "__main__":
 
     def make_widgets():
         root.columnconfigure(1, weight=1)
-        canvas = Border(root, size=3, menubar=True)
+        canvas = Border(root, root, size=3, menubar=True)
         canvas.title_1.config(text="Person Search Dialog")
         canvas.title_2.config(text="")
 

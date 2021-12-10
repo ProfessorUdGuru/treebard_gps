@@ -30,8 +30,10 @@ def close(evt):
 
 class Border(Canvas):
 
+    pool = []
+
     def __init__(
-            self, master, menubar=False, 
+            self, master, root, menubar=False, 
             ribbon_menu=False, tree_is_open=1, *args, **kwargs):
         Canvas.__init__(self, master, *args, **kwargs)
 
@@ -43,12 +45,12 @@ class Border(Canvas):
             bar to be responded to with standard Tkinter configuration methods 
             and other Python code. 
 
-            This class can't use Toykinter as a master since Toykinter is the 
+            This class can't use Treebard as a master since Treebard is the 
             whole app and is only instantiated once, so this class has to use 
             its host toplevel as parent. Setting font size should change the 
             size of fonts, title bar, and max/min/quit buttons. The settings 
             are 3, 4, 7, or 11 pixels. The size shown is linked to changes in 
-            font size (in progress--still have to switch to person tab and
+            font size (in progress--user still has to switch to person tab and
             redraw() to see change).
 
             The hard part to remember when using this is that the parts of the
@@ -62,6 +64,7 @@ class Border(Canvas):
         '''
 
         self.master = master # toplevel
+        self.root = root
         self.menubar = menubar
         self.ribbon_menu = ribbon_menu
         self.tree_is_open = tree_is_open
@@ -74,6 +77,31 @@ class Border(Canvas):
         self.formats = make_formats_dict()
 
         self.make_widgets()
+
+        self.BORDER_PARTS = (
+            self.title_bar, self.title_frame, self.logo, self.title_1, 
+            self.title_1b, self.title_2, self.txt_frm, self.buttonbox, 
+            self.border_top, self.border_left, self.border_right, 
+            self.border_bottom)
+
+        Border.pool.append(self)
+        if self.master.winfo_name() != "tk":
+            # print("line", looky(seeline()).lineno, "self.master:", self.master)
+            self.master.bind("<Destroy>", self.clean_pool)
+        self.colorize_border()
+
+    def clean_pool(self, evt):
+        '''
+            Delete destroyed toplevel from list and highlight the title bar
+            of the toplevel that's uppermost in the window stacking order.
+        '''
+        widg = evt.widget
+        if (widg.winfo_class() == "Canvas" and 
+                widg.winfo_subclass() == "Border"):
+            idx = Border.pool.index(widg)
+            del Border.pool[idx]
+
+        Border.pool[0].colorize_border()
 
     def set_title_bar_size(self):
         sizes = { 
@@ -235,8 +263,6 @@ class Border(Canvas):
             widg.bind('<B1-Motion>', self.stop_edge_sizer)
             widg.bind('<ButtonRelease-1>', self.stop_edge_sizer)
 
-        config_generic(self.master)
-
     def recolorize_on_restore(self, evt):
         evt.widget.config(bg=NEUTRAL_COLOR)
 
@@ -382,14 +408,24 @@ class Border(Canvas):
             new_w, new_h, new_pos_x, new_pos_y))
 
     def colorize_border(self):
-        for widg in (
-                self.title_bar, self.title_frame, self.logo, self.title_1, 
-                self.title_1b, self.title_2, self.txt_frm, self.buttonbox, 
-                self.border_top, self.border_left, self.border_right, 
-                self.border_bottom):
+        '''
+            Runs whenever title bar is clicked, called in get_pos().
+        '''
+
+        self.formats = make_formats_dict()
+        for widg in self.BORDER_PARTS:
             widg.config(bg=self.formats['head_bg'])
         for widg in (self.title_1, self.title_2):
             widg.config(fg=self.formats['fg'])
+        for border in Border.pool:
+            if border != self:
+                for widg in border.BORDER_PARTS:
+                    widg.config(bg=NEUTRAL_COLOR)                    
+            else:
+                # Move active toplevel to the top of the list so it will be 
+                #   highlighted by clean_pool() when a toplevel is destroyed.
+                idx = Border.pool.index(border)
+                Border.pool.insert(0, Border.pool.pop(idx))
 
 class TitleBarButton(LabelButtonImage):
     def __init__(self, master, icon='', icon_size='tiny', *args, **kwargs):
@@ -429,7 +465,7 @@ class TitleBarButton(LabelButtonImage):
             bg=NEUTRAL_COLOR,
             image=self.tk_img)
 
-formats = make_formats_dict()
+
 
 class TitleBarButtonSolidBG(TitleBarButton):
     def __init__(self, master, *args, **kwargs):
@@ -439,7 +475,7 @@ class TitleBarButtonSolidBG(TitleBarButton):
             backgrounds so a bright border doesn't show through
             around the edge of the image.
         '''
-
+        formats = make_formats_dict()
         self.config(bg=formats['highlight_bg'])
 
 class Dialogue(Toplevel):
@@ -456,7 +492,7 @@ class Dialogue(Toplevel):
         Toplevel.__init__(self, master, *args, **kwargs)
         self.withdraw()
         self.columnconfigure(1, weight=1)
-        self.canvas = Border(self)
+        self.canvas = Border(self, master)
         self.window = Frame(self.canvas)
         self.canvas.create_window(0, 0, anchor='nw', window=self.window)
 

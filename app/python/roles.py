@@ -71,7 +71,7 @@ class RolesDialog(Toplevel):
 
         self.columnconfigure(1, weight=1)
         self.rowconfigure(4, weight=1)
-        self.canvas = Border(self)
+        self.canvas = Border(self, self.root)
 
         self.canvas.title_1.config(text="Roles Dialog")
         self.canvas.title_2.config(text="Current Person: {}, id #{}".format(

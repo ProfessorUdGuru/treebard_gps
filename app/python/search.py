@@ -120,7 +120,7 @@ class PersonSearch(Toplevel):
         self.geometry('+100+20')
 
         self.columnconfigure(1, weight=1)
-        self.canvas = Border(self)
+        self.canvas = Border(self, self.root)
         self.canvas.title_1.config(text="Person Search Dialog")
         self.canvas.title_2.config(text="")
 

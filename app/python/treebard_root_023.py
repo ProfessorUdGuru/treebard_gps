@@ -100,7 +100,8 @@ class Treebard():
 
     def make_main_canvas(self):
         self.canvas = Border(
-            self.root, 
+            self.root,
+            self.root,
             menubar=True, 
             ribbon_menu=True,
             tree_is_open=0)
@@ -123,6 +124,7 @@ class Treebard():
         cur.close()
         conn.close()
         date_prefs = get_date_formats(tree_is_open=1)
+        self.canvas.colorize_border()
 
     def configure_mousewheel_scrolling(self):
         self.scroll_mouse = MousewheelScrolling(self.root, self.canvas)
@@ -140,8 +142,8 @@ def start():
     root.maxsize(
         width=int(MAX_WINDOW_WIDTH * screen_width), 
         height=int(MAX_WINDOW_HEIGHT * screen_height))
-    config_generic(root)
     treebard = Treebard(root)
+    config_generic(root)
     splash = SplashScreen(root, treebard)
     splash.open_treebard(treebard.make_main_window)  
     root.mainloop()
