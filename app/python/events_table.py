@@ -1550,6 +1550,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: front_page
+# save/dump .db & .tbd and add *.db & *.tbd to .gitignore
 # edit comments and doc strings
 # TEST every functionality due to recent restructuring
 

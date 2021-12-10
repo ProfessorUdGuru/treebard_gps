@@ -3,5 +3,6 @@ www/
 etc_not_in_repo/
 data/sample_tree/sample_tree.tbd
 data/settings/default_new_tree.db
-app/default/default_new_tree.db
-data/settings/nested_places.db
+app/default/default_new_tree_untouched.db
+*.db
+*.tbd
