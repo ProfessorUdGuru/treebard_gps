@@ -1,4 +1,4 @@
-# files
+# files.py
 
 from sys import argv
 from os import path, rename, mkdir, listdir
@@ -42,8 +42,6 @@ print("global_db_path:", global_db_path)
 # split_path: ['D:', 'treebard_gps', 'app', 'python', 'treebard_root_023.py']
 # current_drive: D:/
 # app_name: treebard_root_023.py
-# TBARD_NEUTRAL = "#878787"
-# TBARD_NEUTRAL2 = "#999999"
 
 def get_prior_file():
     conn = sqlite3.connect(global_db_path)
@@ -214,7 +212,6 @@ def make_tree(
     root.focus_set()
     treebard.make_main_window()
     tree_title = current_file.replace("_", " ").rstrip(".tbd")
-    # tree_title = current_file.replace("_", " ").rstrip(".tbd").title()
     tree_title = titlize(tree_title)
     filter_tree_title(tree_title) 
 
@@ -308,7 +305,6 @@ def set_closing(evt=None):
     conn.close()
 
 def close_tree(evt=None, treebard=None):
-# def close_tree(evt, treebard):
     # disable tabs pertaining to indiv. tree (but not places)
     # disable all menu items and icon menu except Open & ?
     treebard.canvas.delete(treebard.main_window)

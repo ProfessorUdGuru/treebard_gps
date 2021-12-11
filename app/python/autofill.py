@@ -1,6 +1,5 @@
 # autofill.py
 
-# this is the new autofill as of 20210722 which I'm translating from JS to Python
 # EntryAutofill is shown for comparison, it's not to be used; 
 #   this module is about EntryAuto which is defined below
 
@@ -106,14 +105,14 @@ class EntryAuto(EntryUnhilited):
         '''
             This callback was added because something in the code for this 
             widget caused the built-in replacement of selected text with 
-            typed text to stop working. So if you
-            tabbed into an autofill entry that already had text in it, the text
-            was all selected as expected but if you typed, the typing was added
-            to the end of the existing text instead of replacing it, which is
-            unexpected. Instead of finding out why this is happening, I added
-            this callback so that tabbing into a filled-out autofill will not
-            select its text. This might be better since the value in the field
-            is not often changed and should not be easy to change by mistake.
+            typed text to stop working. So if you tabbed into an autofill entry
+            that already had text in it, the text was all selected as expected 
+            but if you typed, the typing was added to the end of the existing 
+            text instead of replacing it, which is unexpected. Instead of 
+            finding out why this is happening, I added this callback so that 
+            tabbing into a filled-out autofill will not select its text. This 
+            might be better since the value in the field is not often changed 
+            and should not be easy to change by mistake.
         '''
         self.select_clear()
 

@@ -86,7 +86,6 @@ class Border(Canvas):
 
         Border.pool.append(self)
         if self.master.winfo_name() != "tk":
-            # print("line", looky(seeline()).lineno, "self.master:", self.master)
             self.master.bind("<Destroy>", self.clean_pool)
         self.colorize_border()
 
@@ -157,7 +156,8 @@ class Border(Canvas):
 
         self.statusbar = StatusbarTooltips(self.master)
 
-        self.border_bottom = FrameTitleBar(self.master, height=3, name='bottom')
+        self.border_bottom = FrameTitleBar(
+            self.master, height=3, name='bottom')
 
         self.border_top.config(cursor='sb_v_double_arrow')
         self.border_left.config(cursor='sb_h_double_arrow')
@@ -446,10 +446,14 @@ class TitleBarButton(LabelButtonImage):
         '''
 
         font_icon_file = {
-            'tiny' : (10, '{}images/icons/{}_{}.png'.format(app_path, icon, 12)), 
-            'small' : (12, '{}images/icons/{}_{}.png'.format(app_path, icon, 17)), 
-            'medium' : (14, '{}images/icons/{}_{}.png'.format(app_path, icon, 21)), 
-            'large' : (18, '{}images/icons/{}_{}.png'.format(app_path, icon, 32))}
+            'tiny' : (
+                10, '{}images/icons/{}_{}.png'.format(app_path, icon, 12)), 
+            'small' : (
+                12, '{}images/icons/{}_{}.png'.format(app_path, icon, 17)), 
+            'medium' : (
+                14, '{}images/icons/{}_{}.png'.format(app_path, icon, 21)), 
+            'large' : (
+                18, '{}images/icons/{}_{}.png'.format(app_path, icon, 32))}
 
         for k,v in font_icon_file.items():
             if icon_size == k:
@@ -464,8 +468,6 @@ class TitleBarButton(LabelButtonImage):
             relief='raised',
             bg=NEUTRAL_COLOR,
             image=self.tk_img)
-
-
 
 class TitleBarButtonSolidBG(TitleBarButton):
     def __init__(self, master, *args, **kwargs):

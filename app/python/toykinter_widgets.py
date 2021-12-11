@@ -104,7 +104,6 @@ class StatusbarTooltips(Frame):
         #   because edge grabber for resizing is below statusbar 
         #   so border looks wrong there. Instead put a Separator 
         #   above the statusbar frame.
-        # relief = Frame(self, bd=2, relief='sunken')
         relief = Frame(self, bd=0)
         relief.grid(column=0, row=0, sticky='news')
         relief.grid_columnconfigure(0, weight=1)
@@ -123,12 +122,11 @@ class Sizer(Label):
     def __init__(self, master, icon='sizer_15_dark', *args, **kwargs):
         Label.__init__(self, master, *args, **kwargs)
         ''' 
-            SE corner gripper/resizer. Replaces ttk.Sizegrip.
-            The master has to be the toplevel window being resized.
-            Since it's placed, not gridded, it will overlap so
-            the statusbar tooltips had to be moved to the left
-            with padding. See StatusbarTooltips class in widgets.py
-            for an example of how to place() and bind() this. 
+            SE corner gripper/resizer. Replaces ttk.Sizegrip. The master has to 
+            be the toplevel window being resized. Since it's placed, not    
+            gridded, it will overlap so the statusbar tooltips had to be moved 
+            to the left with padding. This has been built into the toykinter
+            statusbar.
         '''
         self.master = master
         self.click_x = 0
@@ -167,8 +165,6 @@ class Sizer(Label):
         click_y = evt.y_root
 
         self.bind('<B1-Motion>', resize_se)
-
-
 
 class Separator(Framex):
     ''' 

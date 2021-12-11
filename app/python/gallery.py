@@ -1,4 +1,12 @@
-# gallery
+# gallery.py
+
+'''
+    Currently this class is in two tabs and one dialog for three different
+    image galleries. To be changed soon so that all three galleries open the
+    same way, in its own dialog. All padding has been stripped out during a
+    reformatting to solve some positioning problems, and will not be put back
+    in till the refactoring is done.
+'''
 
 import tkinter as tk
 from PIL import Image, ImageTk
@@ -229,10 +237,10 @@ class Gallery(Frame):
         self.picsize_lab.set_height()
 
         # children of self
-        thumb_frame.grid(column=0, row=0, columnspan=2, sticky='w')#, padx=24pady=24, 
+        thumb_frame.grid(column=0, row=0, columnspan=2, sticky='w')
         thumb_sbh.grid(column=0, row=1, sticky="ew")
-        viewer.grid(column=0, row=2)#, padx=24
-        self.buttonbox.grid(column=0, row=3, sticky='ew')#pady=24, padx=24, 
+        viewer.grid(column=0, row=2)
+        self.buttonbox.grid(column=0, row=3, sticky='ew') 
 
         # children of thumb_frame
         self.thumb_canvas.grid(column=0, row=0, sticky="news")
@@ -245,10 +253,10 @@ class Gallery(Frame):
         self.pic_canvas.grid(column=0, row=0, columnspan=2)
 
         # children of panel
-        subject.grid(column=0, row=0, sticky='w')#, pady=(12,0)
-        self.caption_lab.grid(column=0, row=1, sticky='w')#, pady=(12,12)
-        self.picfile_lab.grid(column=0, row=2, sticky='w')#pady=(12,0), 
-        self.picsize_lab.grid(column=0, row=3, sticky='w')#pady=(0,24), 
+        subject.grid(column=0, row=0, sticky='w')
+        self.caption_lab.grid(column=0, row=1, sticky='w')
+        self.picfile_lab.grid(column=0, row=2, sticky='w')
+        self.picsize_lab.grid(column=0, row=3, sticky='w')
 
         # children of self.buttonbox
         self.buttonbox.columnconfigure(2, weight=10)
@@ -256,9 +264,9 @@ class Gallery(Frame):
         self.nextbutt.grid(column=1, row=0, sticky='e', padx=(6,0))
         self.editbutt.grid(column=0, row=1, sticky='e')
         if self.dialog:
-            self.b2.grid(column=1, row=1, sticky='e')#, padx=(6,0)
+            self.b2.grid(column=1, row=1, sticky='e')
         spacer.grid(column=2, row=0, rowspan=3, sticky='news')
-        panel.grid(column=3, row=0, rowspan=3, sticky='w')#pady=(0,24),padx=24,  
+        panel.grid(column=3, row=0, rowspan=3, sticky='w')  
 
         for thumb in self.thumb_labels:
             thumb.bind('<Button-1>', self.show_clicked)

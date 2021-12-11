@@ -1,0 +1,49 @@
+# TERMINAL OUTPUT COPIED BELOW SHOWING HOW TO BACKUP A SQLITE DATABASE
+#	AS A TEXT FILE WHICH CAN BE TRACKED ON git, IMPORTED BACK
+#	INTO A NEW DATABASE, OR EXPORTED TO A DIFFERENT DB PROGRAM
+
+C:\Users\USERNAME>sqlite3 d:/treebard_gps/etc/test_dump.db
+SQLite version 3.34.0 2020-12-01 16:14:00
+Enter ".help" for usage hints.
+sqlite> .tables
+sqlite> .headers on
+sqlite> CREATE TABLE IF NOT EXISTS test_table (test_table_id INTEGER PRIMARY KEY AUTOINCREMENT, test_values TEXT);
+sqlite> INSERT INTO test_table (test_values) VALUES ('red');
+sqlite> INSERT INTO test_table (test_values) VALUES ('green');
+sqlite> INSERT INTO test_table (test_values) VALUES ('yellow');
+sqlite> SELECT * FROM test_table;
+test_table_id|test_values
+1|red
+2|green
+3|yellow
+sqlite> .output
+sqlite> .dump
+PRAGMA foreign_keys=OFF;
+BEGIN TRANSACTION;
+CREATE TABLE test_table (test_table_id INTEGER PRIMARY KEY AUTOINCREMENT, test_values TEXT);
+INSERT INTO test_table VALUES(1,'red');
+INSERT INTO test_table VALUES(2,'green');
+INSERT INTO test_table VALUES(3,'yellow');
+DELETE FROM sqlite_sequence;
+INSERT INTO sqlite_sequence VALUES('test_table',3);
+COMMIT;
+sqlite> .output d:/treebard_gps/etc/test_dump.sql
+sqlite> .dump
+sqlite> .output d:/treebard_gps/etc/test_dump_schema.sql
+sqlite> .schema
+sqlite> .exit
+
+C:\Users\USERNAME>sqlite3 d:/treebard_gps/etc/test_dump_import.db < d:/treebard_gps/etc/test_dump.sql
+
+C:\Users\USERNAME>sqlite3 d:/treebard_gps/etc/test_dump_import.db
+SQLite version 3.34.0 2020-12-01 16:14:00
+Enter ".help" for usage hints.
+sqlite> .tables
+test_table
+sqlite> SELECT * FROM test_table;
+1|red
+2|green
+3|yellow
+sqlite> .exit
+
+C:\Users\USERNAME>

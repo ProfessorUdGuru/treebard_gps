@@ -11,13 +11,13 @@ from dev_tools import looky, seeline
 
 
 
-
-
-
 '''
     When making a new subclass it has to have its own config_* sub-function
     added to config_generic, even if the class it's inheriting from is already
-    a sub-class that already has its own config sub-function.
+    a sub-class that already has its own config sub-function. (NEW METHOD: some
+    of the common formatting patterns have their own configuration functions
+    now, so when a new widgets fits one of these patterns, just add the string
+    name of the widget subclass to one of the lists at top such as bgStd.
 
     Some of the more complex custom widgets have their own method, w.colorize()
     which is called here in `config_generic()`.
@@ -47,25 +47,24 @@ NEUTRAL_COLOR = '#878787'
         widg.winfo_subclass() == 'LabelStay'):
     AttributeError: 'Label' object has no attribute 'winfo_subclass'
 
-    The other worst thing is (if I recall correctly), you have to do 
+    The other worst thing is, I forget why, but you have to do 
     winfo_class() before you can do winfo_subclass(). 
 
     To use this method of configuration by detecting subclasses, you have to
     remember to not use the parent tkinter classes, only the subclasses.
-'''
-'''
-    These hard-coded tuples represent groups of widgets that take common 
+
+    The hard-coded tuples represent groups of widgets that take common 
     formatting changes when the user changes a style preference. 
     The tuples below can have new subclasses added to them manually, if the
     configuration needs of that subclass fit the corresponding subfunction. In
     case of a fit, then adding the name of the new subclass to a tuple is all
-    you have to do. 
-    Otherwise it has to be added to the switch in `config_generic()` and given
-    a subfunction there to configure it. Only options that can be changed by 
-    the user are handled here, usually fg, bg, and font. The intended result is 
-    no styling in the widget construction code since all styles are built into 
-    subclasses. The reason for going to all this trouble is so that all widgets
-    can be instantly restyled by the user on the press of a button.
+    you have to do. Otherwise it has to be added to the switch in 
+    `config_generic()` and given a subfunction there to configure it. Only 
+    options that can be changed by the user are handled here, usually fg, bg, 
+    and font. The intended result is no styling in the widget construction 
+    code since all styles are built into subclasses. The reason for going to 
+    all this trouble is so that all widgets can be instantly restyled by the 
+    user on the press of a button.
 
     Naming conventions for these tuples and the functions that refer to them:
     3 parts of camelCase: camel is bg/fg/font; Case is Std/Lite/Head for bg or 
@@ -88,8 +87,7 @@ bgHead = ('FrameHilited2',)
 
 bgLite = (
     'FrameHilited', 'FrameHilited1', 'FrameHilited3', 'FrameHilited4', 
-    'ToolTip', 'TabBook', 'CanvasHilited', 'ToplevelHilited',
-    'TitleBarButtonSolidBG')
+    'TabBook', 'CanvasHilited', 'ToplevelHilited', 'TitleBarButtonSolidBG')
 
 bgStd_fgStd = ('Sizer', )
 
@@ -140,12 +138,12 @@ def config_generic(parent):
 
         See the section marked special event widgets below:
             Widgets that have highlight/unhighlight events need some
-               special treatment to keep up with event-driven color changes. 
+            special treatment to keep up with event-driven color changes. 
             In the class definition do this:
                 self.formats = make_formats_dict()
             And in the highlight/unhighlight methods do this:
                 bg=self.formats['blah'] ...instead of bg=formats['blah']
-            And give them their own config function here
+            And give them their own config function here in styles.py:
                 def config_border(widg):
                     widg.formats = formats
                     widg.config(bg=formats['bg'])
@@ -564,7 +562,6 @@ def config_generic(parent):
             if widg.winfo_subclass() == 'Scrollbar':
                 # to figure out where all the scrollbars are:
                 # print("line", looky(seeline()).lineno, "widg:", widg)
-                # this is called in `styles.config_generic()`:
                 widg.colorize()
 
             elif widg.winfo_subclass() == 'Border':
@@ -602,7 +599,7 @@ def get_formats():
         user-preference, use the default.
     '''
     all_prefs = get_opening_settings()
-# line 585 all_prefs: (
+# all_prefs: (
     # '#232931', '#393e46', '#2e5447', '#eeeeee', 'courier', 'ms sans serif', 12, 
     # '#232931', '#393e46', '#2e5447', '#eeeeee', 'Courier', 'tahoma', 12)
     prefs_to_use = []

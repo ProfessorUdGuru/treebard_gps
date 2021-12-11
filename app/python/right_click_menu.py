@@ -1,4 +1,4 @@
-# right_click_menu
+# right_click_menu.py
 
 import tkinter as tk
 from styles import config_generic
@@ -12,9 +12,9 @@ from dev_tools import looky, seeline
 def make_rc_menus(rcm_widgets, rc_menu, rcm_msg):
     '''
         To include a widget in the right-click context help, list the widget
-        in rcm_widgets in the instance and store each widget's message 
-        and title in messages_context_help.py. Example of usage from notes.py: near
-        bottom of make_widgets() i.e. after making all widgets, do this...
+        in rcm_widgets in the instance and store each widget's message and 
+        title in messages_context_help.py. Example of usage from notes.py: 
+        near bottom of make_widgets() i.e. after making all widgets, do this...
             `rcm_widgets = (self.subtopic_input.ent, self.note_input.text)`
             `make_rc_menus(
                 rcm_widgets, 
@@ -71,7 +71,7 @@ class RightClickMenu(Menux):
     '''
         This is how you config() the menu items post-constructor, or do it in 
         the instance, see below:
-        self.entryconfigure('Copy', state='disabled')
+            self.entryconfigure('Copy', state='disabled')
     '''
 
     def __init__(self, master, treebard=None, *args, **kwargs):

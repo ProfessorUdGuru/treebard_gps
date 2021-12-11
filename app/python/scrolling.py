@@ -1,4 +1,4 @@
-# mousewheel_scrolling_without_permanent_dialogs
+# scrolling.py
 
 import tkinter as tk
 from widgets import (Canvas, FrameHilited3, Entry, ToplevelHilited, Text,
@@ -231,7 +231,7 @@ class MousewheelScrolling():
 
         self.resizable_canvases = []
         self.nested_canvases = []
-# WHENEVER A WIDGET is added to these lists (except root), bind them to destroy evt so if they are destroyed they are autoremoved from the list. Best if I can autodetect when a list is changed so the new members can autobind to destroy. Do this by making a method that appends things to the list. When the method runs, the things get bound.
+
     def scroller(self, event):
         '''
             The error is when the mousewheel is used over a toplevel 
@@ -461,19 +461,6 @@ class ScrolledText(Framex):
             command=self.text.yview)
         self.text.configure(yscrollcommand=self.ysb.set)
         self.ysb.grid(column=1, row=0, sticky='ns')
-# don't do this here, it's already done in the parent class
-        # self.bind_class('Text', '<Tab>', self.focus_next_window)
-        # self.bind_class('Text', '<Shift-Tab>', self.focus_prev_window)
-
-    # make the Text widget use tab key for traversal like other widgets
-    # I think return('break') prevents the built-in binding to Tab
-    # def focus_next_window(self, event):
-        # event.widget.tk_focusNext().focus()
-        # return('break')
-
-    # def focus_prev_window(self, event):
-        # event.widget.tk_focusPrev().focus()
-        # return('break')
 
 if __name__ == '__main__':
 
@@ -592,7 +579,7 @@ if __name__ == '__main__':
         font=('courier', 48))
     lab.grid(column=0, row=0)
 
-    # mousewheel scrolling part 1 of 3
+    # mousewheel scrolling part 1 of 3
     #   Instantiate mousewheel scrolling once for the whole app
     #   and do it before any command that opens a participating dialog.
     scroll_mouse = MousewheelScrolling(root, canvas)

@@ -672,7 +672,8 @@ class PersonSearch(Toplevel):
         self.row_list[9] = name_tips
 
     def show_nametip(self):
-        ''' Some rows in the search results table have no name
+        ''' 
+            Some rows in the search results table have no name (still?)
             because the displayed findings only show birth names. The
             nametips will point out that there may be no birth name 
             stored for the person. Or the user might type "Daisy" and 

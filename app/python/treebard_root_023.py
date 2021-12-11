@@ -1,7 +1,5 @@
 # treebard_root_023.py
 
-# This version is needed because in _022 and preceding, I'd gotten into the habit of opening a hard-coded tree selection. So I wrote a lot of procedures in an order that didn't take into account that this was not how it was going to be done. I have to start over somewhat on when things happen during the opening process, so the user can open the app without opening a tree, and thus still have access to file menu, help menu, tools menu, etc. User format preferences will not go into effect till he opens a specific tree, since user prefs are stored per tree and there will be only one set of formats (the defaults) stored in a separate global database.
-
 import tkinter as tk
 import sqlite3    
 from PIL import Image, ImageTk
@@ -44,7 +42,7 @@ IMPORTS STRUCTURE:
 # setting to less than 1.0 below prevents maximize from working
 # setting to more than 1.0 prevents scrollbar from appearing since everything fits in the window but the window is big so you have to drag it by the title bar since it won't scroll unless you manually resize it. Conclusion: keep it 1.0.
 MAX_WINDOW_HEIGHT = 1.0 # if 1.0, scrollbar is available immediately
-MAX_WINDOW_WIDTH = 1.0 # if > 1.0, no sb bec window is big enough to show all
+MAX_WINDOW_WIDTH = 1.0 # if > 1.0, no sb because window is big enough to show all
 ICONS = (
     'open', 'cut', 'copy', 'paste', 'print', 'home', 'first', 
     'previous', 'next', 'last', 'search', 'add', 'settings', 
@@ -150,4 +148,59 @@ def start():
 
 if __name__ == '__main__':
     start()
+
+
+# DO LIST
+
+# BRANCH: front_page
+# test
+# after commit, clone it and see if it works acc to readme instrux
+# write blog post "Mass Refactoring Essentially Complete"
+
+# BRANCH: pedigree
+# Add to after death event types in default, default_untouched, and sample db's: autopsy, inquest.
+# Seems the particulars column is the least objectionable compromise, for offspring. For couple events there's no secondary event, you really do lose the functionality of the particulars column, but it's the least gimmicky and easiest-to-read way to give the kin name in events where there's more than one participant. Just don't do it for parents, they are easily found in the top table and are not ambiguous, people have only one set of parents.
+# The spouse should be WITH the relevant children and both families in the case of 2 spouses should be visible at the same time with the 2 spouses also visible at the same time. Put parents in top row, no redundant label for current person, partners/children under parents.
+
+# BRANCH: names_images
+# Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
+# In save_new_name() in names.py, have to indicate whether the image is supposed to be main_image (1) vs (0). 1 is now the default in the insert query (insert_images_elements) to images_elements, which makes the new person's image display correctly for now; if it's made main and there's already a main_image the main has to be changed to 0 programmatically.
+# Don't let a default image be entered (see new person dialog) if a non-default image already exists for that person. If the person already has a default image, it can be changed to a different default image, a real image, or to no image.
+# If user selects his own photo as default, prepend "default_image_" to user's file name.
+# If no main_image has been input to db, Treebard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. Treebard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
+
+# BRANCH: dialogs
+# Refactor gallery so all work the same in a dialog opened by clicking a main image in a tab. Also I found out when I deleted all the padding that there's no scridth. There should be nothing in any tab that's ever bigger than the persons tab events table. Then the tabs could be used for what they're needed for, like searching and getting details about links and stuff, instead of looking at pictures that don't fit in the tab anyway.
+# In main.py make_widgets() should be broken up into smaller funx eg make_family_table() etc. after restructing gallery into 3 dialogs.
+# Did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thought the new class was supposed to replace all these as was done apparently already in dates.py. I thought the new class was made so these three overlapping large functions could be deleted from messages.py as well as the radio input message which hasn't even been tested.
+# Get rid of all calls to title() in dropdown.py and just give the values with caps as they should be shown, for example title() is changing GEDCOM to Gedcom in File menu.
+# In the File menu items add an item "Restore Sample Tree to Original State" and have it grayed out if the sample tree is not actually open.
+# Add to Search dlg: checkbox "Speed Up Search" with tooltip "Search will begin after three characters are typed. Don't select this for number searches." Select it by default.
+# All dialogs: run the custom dialog closing code when clicking X on title bar.
+# Add to do list for new_event dialog: add person search button.
+# In notes dialog, if a non-unique topic is entered, there should be an error message, currently there's a SQLite error which locks the database.
+
+# BRANCH: sources
+# IDEA for copy/pasting citations. This is still tedious and uncertain because you sometimes don't remember what's in a clipboard till you try pasting it. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, like a plus sign, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing individual citations on nearly empty dialogs that you have to sift through looking for the right one, and seeing them all together might be useful for the sake of comparison.
+# Edit official do list and move to directory /etc/, edit ReadMe, re-dump 2 databases to .sql files.
+# Website: change "units of genealogy" to "elements of genealogy", add FAQ to Treebard Topics.
+# Get rid of the quote marks in the rcm messages, just use one long line per message.
+# Post new screenshots and announce next phase (export GEDCOM?).
+
+# BRANCH: after_refactor
+# Export GEDCOM.
+# Make sure there's a way to make new person, new name, new place, new source, citation, etc. for all elements and types.
+# Add functionality to places, sources, names tabs for alias and edit/delete. 
+# Refactor date calculator, give it a menu command to open it. Other tools.
+# Add widgets and storage for all the tabs.
+# Add a menu item to open treebard.com.
+# Menu: add functionality to menu choices.
+# Combobox: when scrolling if the mouse strays off the scrollbar the dropdown undrops, I've seen a way to fix that but what was it?
+# Links tab: start with making a way to link any note to any element.
+# Files: when new empty tree is made, "name unknown" is a person in the db autofill list should not include this, search should not include this.
+
+# DEV DOCS:
+# Files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run.
+
+
  

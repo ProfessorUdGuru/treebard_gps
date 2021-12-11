@@ -16,8 +16,7 @@ def open_message(master, message, title, buttlab, inwidg=None):
 
     def close():
         '''
-            See events_table `err_done` for examples of how to override
-            this if more needs to be done on closing the error message.
+            Override this is more needs to be done on close.
         '''
         msg.destroy()
 
@@ -116,7 +115,6 @@ class InputMessage(Dialogue):
 
         self.grab_from = self.grab_current()
         if self.grab_from:
-            print("line", looky(seeline()).lineno, "self.grab_from:", self.grab_from) 
             self.grab_set()
             
         self.deiconify()
@@ -150,7 +148,6 @@ class InputMessage(Dialogue):
             win_height = self.winfo_reqheight()
             right_pos = int(self.winfo_screenwidth()/2 - win_width/2)
             down_pos = int(self.winfo_screenheight()/2 - win_height/2)
-        print("line", looky(seeline()).lineno, "right_pos, down_pos:", right_pos, down_pos)
         self.geometry("+{}+{}".format(right_pos, down_pos))
 
     def make_scrollbars(self):
@@ -161,7 +158,6 @@ class InputMessage(Dialogue):
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
 
-        print("line", looky(seeline()).lineno, "self.treebard:", self.treebard)
         if self.treebard:
             self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
             self.treebard.scroll_mouse.configure_mousewheel_scrolling()
@@ -265,12 +261,6 @@ class InputMessage(Dialogue):
             chosen = self.radvar.get()
             return chosen
 
-
-
-
-
-
-
 def open_input_message(master, message, title, ok_lab, cancel_lab, user_input):
 
     def ok():
@@ -293,7 +283,8 @@ def open_input_message(master, message, title, ok_lab, cancel_lab, user_input):
     lab.grid(
         column=0, row=0, sticky='news', padx=12, pady=12, 
         columnspan=2, ipadx=6, ipady=3)
-    lab2 = Label(msg.window, text="{} or {}?".format(user_input[0], user_input[1]))
+    lab2 = Label(msg.window, text="{} or {}?".format(
+        user_input[0], user_input[1]))
     lab2.grid(column=0, row=1)
     inPut = Entry(msg.window, textvariable=got)
     inPut.grid(column=1, row=1, padx=(0,12))
@@ -366,11 +357,7 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
 def open_option_message(
         master, message, title, ok_lab, cancel_lab, radvar, radtext):
     '''
-        Like open_input_message but gets input from Radiobuttons. Made this to
-        use in `ask_if_after_death()` and `id_couple_event` in events_table.py 
-        but because of complexity, I ended up copying most of this to the 
-        module instead of trying to import and adapt it. So this function as a 
-        whole is actually untested.
+        untested
     '''
     def ok():
         cancel()

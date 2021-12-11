@@ -1063,7 +1063,7 @@ class EntryDefaultText(Entry):
 
     def replace_default_text(self):
         self.insert(0, self.default_text) 
-        self.config(fg=formats['head_bg'], font=self.formats['show_font'])         
+        self.config(fg=formats['head_bg'], font=self.formats['show_font'])        
 
 class LabelCopiable(Entryx):
     ''' 
@@ -1182,9 +1182,6 @@ class Text(Textx):
             font=formats['input_font'],
             insertbackground=formats['fg'])
 
-        # self.bind_class('Text', '<Tab>', self.focus_next_window)
-        # self.bind_class('Text', '<Shift-Tab>', self.focus_prev_window)
-
         self.bind("<Tab>", self.focus_next_window)
         self.bind("<Shift-Tab>", self.focus_prev_window)
 
@@ -1197,10 +1194,6 @@ class Text(Textx):
     def focus_prev_window(self, evt):
         evt.widget.tk_focusPrev().focus()
         return('break')
-
-    # def focus_next_window(self, evt):
-        # evt.widget.tk_focusNext().focus()
-        # return("break")
 
 class LabelStylable(Textx):
     def __init__(self, master, *args, **kwargs):
@@ -1389,104 +1382,7 @@ class Scale(Scalex):
             font=formats['output_font'],
             troughcolor=formats['highlight_bg'],
             activebackground=formats['head_bg'],
-            highlightthickness=0)
-        
-
-class ToolTip(Toplevelx):
-
-    ''' 
-        I think I stopped working on this for some reason so it's
-        probably not finished.
-        
-        Text tips that show full text when some text doesn't show
-        due to the column being too narrow. Part of my 
-        never-ending quest to eradicate resizable columns from GUI 
-        applications that wouldn't need resizable columns if they
-        were designed for their space to hold the information they
-        are supposed to display.
-
-        To use:
-        instance = ToolTip(parent, overwidthtip=True)
-        instance.hoverees.extend([ent2, ent1, lab3, radio2])
-        instance.bind_widgets()
-    '''
-
-    def __init__(self, master, overwidthtip=False, *args, **kwargs):
-        Toplevelx.__init__(self, master, *args, **kwargs)
-        
-        self.withdraw()
-
-        self.overwidthtip = overwidthtip
-        self.widget = None
-        self.text = ''
-        self.hoverees = []
-
-        self.x = self.y =  0  
-
-        self.wm_overrideredirect(1)
-
-        self.make_widgets()
-
-    def make_widgets(self): 
-
-        self.label = LabelNegative(
-            self, 
-            justify='left',
-            relief='solid', 
-            bd=1)
-        self.label.pack(ipadx=6, ipady=3)
-
-    def bind_widgets(self):
-        for widg in self.hoverees:
-            widg.bind('<Enter>', self.enter)
-            widg.bind('<Leave>', self.leave)
-
-    def do_the_geometry(self):
-
-        maxvert = self.widget.winfo_screenheight()
-
-        x, y, cx, cy = self.widget.bbox('insert')  
-
-        mouse_at = self.widget.winfo_pointerxy()
-
-        tip_shift = 32 
-
-        if mouse_at[1] < maxvert - tip_shift * 2:
-            x = mouse_at[0] + tip_shift
-            y = mouse_at[1] + tip_shift
-        else:
-            x = mouse_at[0] + tip_shift
-            y = mouse_at[1] - tip_shift
-
-        self.wm_geometry('+{}+{}'.format(x, y))
-
-    def show_tip(self):
-        self.do_the_geometry()
-        self.deiconify()
-
-    def enter(self, evt):
-        self.widget = evt.widget
-        self.text = self.widget.get()
-        self.config_tip()
-
-    def leave(self, evt):
-        self.hide_tip()
-
-    def hide_tip(self):
-        self.withdraw()
-        self.label.config(text='')
-
-    def config_tip(self):
-        if self.overwidthtip is True:
-            self.config_overwidthtip()
-            return
-        self.label.config(text=self.text)
-        self.show_tip()
-
-    def config_overwidthtip(self):
-        if len(self.text) > self.widget.cget('width'):
-            self.label.config(text=self.text)
-            self.show_tip()
+            highlightthickness=0) 
 
 class Canvasx(tk.Canvas):
     def __init__(self, master, *args, **kwargs):
@@ -1508,96 +1404,7 @@ class CanvasHilited(Canvasx):
     def __init__(self, master, *args, **kwargs):
         Canvasx.__init__(self, master, *args, **kwargs)
 
-        self.config(bg=formats['highlight_bg'], bd=0, highlightthickness=0)  
-
-# ttk only below this point *********************************************
-
-# class Notebookx(ttk.Notebook):
-    # def __init__(self, master, *args, **kwargs):
-        # ttk.Notebook.__init__(self, master, *args, **kwargs)
-
-    # def winfo_subclass(self):
-        # subclass = type(self).__name__
-        # return subclass
-
-# class Tabs(Notebookx):
-    # def __init__(self, master, tab_names, *args, **kwargs):
-        # Notebookx.__init__(self, master, *args, **kwargs)
-
-        # self.master = master
-        # self.tab_names = tab_names
-
-        # self.store = {}
-
-        # self.enable_traversal()
-
-        # for tup in self.tab_names:
-            # tab_frm = Frame(self, name='{}_tab'.format(tup[0]))
-            # self.add(tab_frm)
-            # self.tab(tab_frm, text=tup[0].title(), underline=tup[1], padding='16')
-            # self.store[tup[0]] = tab_frm
-
-# class Comboboxx(ttk.Combobox):
-    # '''
-        # Provides a way of changing colors in the combobox listbox
-        # dropdown/popdown as well as the ability to detect subclass.
-    # '''
-
-    # def __init__(self, master, *args, **kwargs):
-        # ttk.Combobox.__init__(self, master, *args, **kwargs)
-
-    # def winfo_subclass(self):
-        # subclass = type(self).__name__
-        # return subclass
-
-    # def config_popdown(self, **kwargs):
-        # self.tk.eval(
-            # '[ttk::combobox::PopdownWindow {}].f.l configure {}'.format(
-                # self, 
-                # ' '.join(self._options(kwargs))))
-
-# class ClickAnywhereCombo(Comboboxx):
-    # ''' 
-        # User can ctrl+click in entry box or arrow--not just arrow--
-        # to make dropdown fly down. Not needed for readonly combobox 
-        # which already does this. Problem with using plain click for
-        # this: it prevents dragging in the entry to select text.
-        # So ctrl+click is a compromise, so that dragging to highlight 
-        # will still work normally, and the arrow works normally.
-    # '''
-
-    # def __init__(self, master, *args, **kwargs):
-        # Comboboxx.__init__(self, master, *args, **kwargs)
-        # self.bind('<Control-Button-1>', self.fly_down_on_click)
-        # self.config(font=formats['input_font'])
-
-    # def fly_down_on_click(self, evt):
-        # if int(evt.type) == 4:
-            # w = evt.widget
-            # w.event_generate('<Down>', when='head')  
-
-# class ClearableReadonlyCombobox(Comboboxx):
-    # '''
-        # User can clear mistaken selection by pressing Delete, 
-        # Escape, or Backspace.
-    # '''
-
-    # def __init__(self, master, *args, **kwargs):
-        # Comboboxx.__init__(self, master, *args, **kwargs)
-        # self.state(['readonly'])
-        # self.bind("<Key-Delete>", self.allow_manual_deletion)
-        # self.bind("<Key-Escape>", self.allow_manual_deletion)
-        # self.bind("<Key-BackSpace>", self.allow_manual_deletion)
-
-    # def allow_manual_deletion(self, evt):
-        # if self.get() != "":
-            # if evt.keysym in ("Escape", "Delete", "BackSpace"):
-                # self.delete_content()
-
-    # def delete_content(self):
-        # self.state(['!readonly', 'selected'])
-        # self.set("")
-        # self.state(['readonly'])
+        self.config(bg=formats['highlight_bg'], bd=0, highlightthickness=0)
 
 
 

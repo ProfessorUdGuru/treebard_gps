@@ -22,9 +22,9 @@
             that shows the whole text
         ...the arrow button changes color when the Entry is in focus.
 
-    This combobox bogs down if there is a very large values list, but when there's
-    a very large values list, why not use EntryAuto instead? That way only the 
-    value you're looking for is displayed.
+    This combobox bogs down if there is a very large values list, but when 
+    there's a very large values list, why not use EntryAuto instead? That way 
+    only the value you're looking for is displayed.
 '''
 
 import tkinter as tk
@@ -46,7 +46,6 @@ class Combobox(FrameHilited3):
             root, 
             callback=None,
             height=480, 
-            # height=36, 
             values=[], 
             scrollbar_size=24, 
             *args, **kwargs):
@@ -94,11 +93,14 @@ class Combobox(FrameHilited3):
         #   clicked twice to put it back into the alternating drop/undrop
         #   cycle as expected. Without this binding, the click on the title
         #   bar lowers the dropdown below the root window which is good 
-        #   enough for now. To get around it, use the window_border.py.
+        #   enough for now. To get around it, use the Border class in 
+        #   window_border.py instead of the built-in Windows title bar that
+        #   comes with Tkinter.
 
-        # expose only unique methods of Entry e.g. not self.config (self is a Frame and
-        #    the Entry, Toplevel, Canvas, and window have to be configured together) so
-        #    to size the entry use instance.config_drop_width(72)
+        # expose only unique methods of Entry e.g. not self.config (self is a
+        #   Frame and the Entry, Toplevel, Canvas, and window have to be 
+        #   configured together) so to size the entry use 
+        #   instance.config_drop_width(72)
         self.insert = self.entry.insert
         self.delete = self.entry.delete
         self.get = self.entry.get
@@ -144,8 +146,8 @@ class Combobox(FrameHilited3):
         for widg in (self.entry, self.arrow):
             widg.bind('<Button-1>', self.open_or_close_dropdown, add='+')
     
-        self.arrow.bind('<Button-1>', self.focus_entry_on_arrow_click, add='+')        
-
+        self.arrow.bind('<Button-1>', self.focus_entry_on_arrow_click, add='+')
+       
         for frm in (self, self.content):
             frm.bind('<FocusIn>', self.arrow.highlight)
             frm.bind('<FocusOut>', self.arrow.unhighlight)
@@ -309,7 +311,8 @@ class Combobox(FrameHilited3):
         self.canvas.configure(scrollregion=(0, 0, new_width, self.fit_height))
 
     def open_or_close_dropdown(self, evt=None):
-        if evt is None: # dropdown item clicked--no evt bec. of Button command option
+        if evt is None:
+            # dropdown item clicked--no evt because of Button command option
             if self.callback:
                 self.callback(self.selected)
             self.drop.withdraw()
@@ -507,9 +510,6 @@ class Combobox(FrameHilited3):
                 self.canvas.yview_moveto(1.0)
 
     def colorize(self):
-        # the widgets that don't respond to events are working
-        # the scrollbar, which has its own colorize method, is working
-        # the arrow label has its own highlight methods, it's working
         self.config(bg=self.formats['bg'])
         self.entry.config(bg=self.formats['highlight_bg'])
         self.drop.config(bg=self.formats['highlight_bg'])

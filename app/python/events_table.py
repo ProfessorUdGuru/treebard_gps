@@ -1,6 +1,4 @@
-# events_table
-
-# previous version x9 canned because the new event procedure is a tangled mess, due to many options especially re: kin types which are not that important, they are really only for displaying something as all couple kin types are treated the same by the code ie findings_persons. get rid of the extra unnecessary options and dialogs, simplify and let the user customize more on their own time, it has to be simple to make a new event and the code has to be easy to understand but right now it is very brittle with many interweavingly interdependent procedures, some of which can be deleted and others relegated to a lower priority. 
+# events_table.py
 
 import tkinter as tk
 import sqlite3
@@ -49,9 +47,7 @@ from query_strings import (
     select_findings_persons_parents, select_findings_persons_age,    
     insert_finding_birth, update_findings_persons_age2,
     select_finding_event_type, delete_findings_persons_offspring,
-    select_findings_persons_person_id, update_finding_date,
-    
-)
+    select_findings_persons_person_id, update_finding_date)
 
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -470,7 +466,8 @@ class EventsTable(Frame):
                 cur.execute(select_findings_persons_parents, (finding_id,))
                 parents = cur.fetchone()
                 for person in parents:
-                    cur.execute(delete_findings_persons_offspring, (finding_id,))
+                    cur.execute(
+                        delete_findings_persons_offspring, (finding_id,))
                 conn.commit()       
                 delete_generic_finding()
 
@@ -566,7 +563,8 @@ class EventsTable(Frame):
                     return
 
                 if couple_event_new in (0, 1):
-                    cur.execute(update_event_types, (event_type_id, self.finding))
+                    cur.execute(
+                        update_event_types, (event_type_id, self.finding))
                     conn.commit() 
                 else:
                     print("line", looky(seeline()).lineno, "case not handled:")
@@ -621,7 +619,8 @@ class EventsTable(Frame):
             if self.final == "----------":
                 self.final = "-0000-00-00-------"
 
-            cur.execute(update_finding_date, (self.final, sorter, self.finding))
+            cur.execute(
+                update_finding_date, (self.final, sorter, self.finding))
             conn.commit()
             date_prefs = get_date_formats(tree_is_open=1)
             formatted_date = format_stored_date(
@@ -643,7 +642,8 @@ class EventsTable(Frame):
                 self.finding)
 
         def update_age(offspring_event, row):
-            if event_string == "birth" and self.final not in (0, "0", "0d 0m 0y"):
+            if (event_string == "birth" and 
+                    self.final not in (0, "0", "0d 0m 0y")):
                 return
             if couple is False and offspring_event is False:
                 cur.execute(update_finding_age, (self.final, self.finding))
@@ -1140,7 +1140,8 @@ class NewEventDialog(Toplevel):
         scridth_w = Frame(window, width=scridth)
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
-        self.treebard.scroll_mouse.append_to_list([self.new_event_canvas, window])
+        self.treebard.scroll_mouse.append_to_list(
+            [self.new_event_canvas, window])
         self.treebard.scroll_mouse.configure_mousewheel_scrolling()
 
         window.vsb = Scrollbar(
@@ -1219,7 +1220,8 @@ class NewEventDialog(Toplevel):
 
         self.lab0.grid(column=0, row=0, sticky="w", pady=6)
         lab1.grid(column=0, row=1, sticky="e", pady=(0,1))
-        self.date_input.grid(column=1, row=1, sticky="w", padx=(3,0), pady=(0,1))
+        self.date_input.grid(
+            column=1, row=1, sticky="w", padx=(3,0), pady=(0,1))
         lab2.grid(column=0, row=2, sticky="e", pady=(0,1))
         self.place_input.grid(
             column=1, row=2, sticky="w", padx=(3,0), pady=(0,1))
@@ -1535,7 +1537,8 @@ if __name__ == '__main__':
     strings = make_all_nestings(select_all_place_ids)
     place_autofill_values = EntryAuto.create_lists(strings)
 
-    auto = EntryAuto(root, width=50, autofill=True, values=place_autofill_values)
+    auto = EntryAuto(
+        root, width=50, autofill=True, values=place_autofill_values)
 
     auto.focus_set()   
 
@@ -1547,79 +1550,6 @@ if __name__ == '__main__':
     root.mainloop()
 
 
-# DO LIST
-
-# BRANCH: front_page
-# save/dump .db & .tbd and add *.db & *.tbd to .gitignore
-# edit comments and doc strings
-# TEST every functionality due to recent restructuring
-
-# BRANCH: pedigree
-# INSTEAD OF MAKING kintips for event column only to say child, spouse name not parents bec we have only 2 parents and it's redundant info (on the same page) but since there can be more than one spouse or child, it is important to make kintips for event rows re: child or spouse only DO THIS INSTEAD: since it's still redundant info, with the same info in a table up top (not even started), just highlight the spouse or child in the top table as the mouse hovers over them. Don't make it like gbx. The spouse should be WITH the relevant children and both families in the case of 2 spouses shd be visible at the same time with the 2 spouses also visible at the same time. ALSO if the highlighted row is not visible on the screen, it appears as a tooltip instead so user can always see it.
-
-# BRANCH: names_images
-# change images_entities to images_elements and find all code that needs to be updated
-# redo names tab so it's not about making new person
-# in save_new_name() in names.py, how to indicate whether the image is supposed to be main_image (1) vs (0) which is now the default in the insert query to images_elements; if already a main_image it has to be changed to 0 programmatically
-# don't let a default image be entered (see NEW PERSON DLG) if a non-default image already exists for that person; if the person already has a default image, it can be changed to a different default image, a real image, or to no image; think of other cases to handle
-# If user selects his own photo as default, prepend "default_image_" to user's file name.
-# If no main_image has been input to db, tbard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. tbard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
-
-# BRANCH: fonts
-# when changing font, window/scrollbar don't resize till reloaded; see notes in fonts_picker; when fixed get rid of the message
-# on change of font size: dropdown font doesn't resize instantly; font size on roles/notes dialogs esp headers doesn't resize instantly
-
-# BRANCH: dialogs
-# refactor gallery structure only: statustips don't work in places tab or sources tab since statustips go in a dialog and these tabs, unlike the persons gallery, are not dialogs. Best way to fix this is to get rid of the idea of putting some galleries in tabs with one (the one that works well) in a dialog. They shd all work the same for the sake of my sanity and consistency for user and for coder as well. Also the scrollbars don't work right for the very big images. Also I found out when I deleted all the padding that there's no scridth. There shd be nothing in any tab that's ever bigger than the persons tab events table, ever. If all 3 galleries had their own dialogs it would simplify a lot of perennial problems I've had with this, it would make it easier to resize the scrollbars, it would solve the problem of statusbar tips, and it would not be hard to do, best of all it would give me a real places tab (with a main pic only) and a real sources tab (with a main pic only) and both would work the same as the current person tab: you'd change the current place to show its stuff and its pic, same for the current source or citation, and clicking the main pic would open the gallery. Then the tabs could be used for what they're needed for, like searching and getting details about links and stuff. the padding has to be put back in as per the new slimmer mode
-# in main.py make_widgets() shd be broken up into smaller funx eg make_family_table() etc. after restructing gallery into 3 dialogs
-# did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thot the new class was supposed to replace all these as was done apparently already in dates.py. I thot the new class was made so these three overlapping large functions could be deleted from messages.py
-# get rid of all calls to title() in dropdown.py and just give the values with caps as they shd be shown, for ex title() is changing GEDCOM to Gedcom in File menu
-# in the File menu items add an item "Restore Sample Tree to Default Values" and have it grayed out if the sample tree is not actually open.
-# add to Search dlg: checkbox "Speed Up Search" with tooltip "Search will begin after three characters are typed. Don't select this for number searches." Have it selected by default.
-
-# BRANCH: sources
-# IDEA for copy/pasting citations. This is still tedious and uncertain bec you never know what's in a clipboard, really. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, maybe a C for Copy, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing citations a click apart from each other, and seeing them all together might be useful for the sake of comparison?
-# edit ReadMe
-# figure out how to dump db as a text file so it can be pushed to github, first delete any unused tables
-# add to after death event types in default, default_untouched, and sample db's: autopsy, inquest
-# finish numerology.py: user uses arrow keys to move w, u, y to vowel or consonant row (if text in (u,w,y):don't move; bind to arrow, turn red show instrux
-# post new screenshots
-# edit official do list
-# website: change "units of genealogy" to "elements of genealogy"
-# get rid of all the quote marks in the rcm messages, just use one long line per message
-# write blog post "refactor finished"
-
-# BRANCH: after_refactor
-# add to main do list
-# make sure there's a way to make new person, new name, new place
-# add functionality to place tab & source tab for alias and edit/delete 
-# refactor date calculator
-# menu: add functionality to obvious menu choices incl. add new person, add/edit name, and others 
-# combobox: when scrolling if the mouse strays off the scrollbar the dropdown undrops, I've seen a way to fix that but what was it?
-# add to main do list re: all dialogs: run the same code when clicking X on title bar
-# add to do list for new_event dialog: add person search button 
-# events_table:
-# add tooltips/status bar messages
-# get rid of ttk combobox in new person dialog 
-# incorporate config_generic all dialogs
-# rc_menu--need access to the referenced widgets but they're made inside of functions.
-# add statusbar messages events_table.py see commented widgets right above run_statusbar_tooltips
-
-# put unworlding.com back online, edit all
-
-# BRANCH: links
-# make the ADD LINKS diaog in notes.py do something. Start with person (link current note to other people), then do place (link current note to a places_places_id), then an event. Make sure the note actually shows up at least for the event which has an interface for showing what notes are linked to what events. When that works, add ADD LINKS functionality to the Links Tab for the other stuff in links_links db table.
-
-# ADD TO MAIN DO LIST FOR: 
-# files: when new empty tree is made, "name unknown" is a person in the db autofill list shd not include this, search shd not include this. see jones diatribes re: names
-
-# DEV DOCS:
-# files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run
-# notes: Since note topics are unique throughout the whole tree, the topic text can be used similarly to the primary key, so that's what I usually do. I created a primary key anyway to be consistent, and because if I don't, then SQLite will create one automatically.
-
-# ADD FAQ SECTION TO treebard.com Treebard Topics:
-# Q: The context help topics are helpful but wordy, with too much info about why Treebard does things a certain way, and it boils down to this: you're ranting in an unbusinesslike way.
-# A: True. I'm creating Treebard in my spare time, and I have a lot of time, because I refuse to do anything else. Just kidding, though my wife might not think so. Treebard GPS is not meant to be your average daily-grind, run-of-the-mill, just-another-genieware program for sale to any sucker who'll buy it. It's not even for sale, it's free. The purpose of this preliminary version of Treebard is to show the way to myself and other would-be developers of genieware. So the context help messages are not only there to tell you how to use Treebard, but also to explain why Treebard is different here and there. Never is the interface anywhere near as convoluted as my explanations of it. In fact, my philosophy on Help Topics is that they should not be needed. But they still need to exist. My main goal with the interface is that it should hide the complexity of what has to go on behind the scenes in order for Treebard to raise the bar for genieware of the future. Including Treebard version 1 which has a seed in Treebard version 0 which exists, sort of, but hasn't been coded yet. By the time this project attracts more programmers to help make it more businesslike, it should have a more businesslike facade, I guess. Well if it really has to, anyway. But it will still be free. So why don't we just be ourselves and talk too much and have a good time?
 
 
 

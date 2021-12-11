@@ -1,4 +1,4 @@
-# names
+# names.py
 
 import tkinter as tk
 import sqlite3
@@ -166,7 +166,6 @@ def open_new_person_dialog(master, inwidg, root, treebard, inwidg2=None):
     person_add = PersonAdd(master, inwidg, root, treebard, inwidg2)
     root.wait_window(person_add)
     new_person_id = person_add.show()
-    print("line", looky(seeline()).lineno, "new_person_id:", new_person_id)
     return new_person_id
 
 class PersonAdd(Toplevel):
@@ -434,9 +433,6 @@ class PersonAdd(Toplevel):
             self.name_type_id = name_type_id[0]            
             self.check_for_dupes()
         else:
-            # self.create_new_name_type(
-                # self.name_type_input.entry.get(), cur, conn)
-            # print("this name type doesn't exist. create the type in the types tab, then try again.")
             msg = open_message(
                 self, 
                 names_msg[1], 
@@ -455,8 +451,6 @@ class PersonAdd(Toplevel):
     def cancel_new_person(self):
         self.grab_release()
         self.inwidg.focus_set()
-        # if self.master.winfo_class() == "Toplevel":
-            # self.master.destroy()
         self.destroy()        
 
     def get_entered_values(self, cur, conn):
@@ -474,48 +468,7 @@ class PersonAdd(Toplevel):
         else:
             cur.execute(insert_image_new, (selected_image,))
             conn.commit()
-            self.selected_image = selected_image    
-
-    # def create_new_name_type(self, new_name_type, cur, conn):
-
-        # def ok_new_name_type(cur, conn):
-            # cur.execute(insert_name_type_new, (self.name_type_id, new_name_type))
-            # conn.commit()
-            # msg[0].destroy()
-            # self.lift()
-            # self.name_type_input.entry.focus_set()
-
-        # def cancel_new_name_type():
-            # go = False
-            # msg[0].destroy()
-            # self.lift()
-            # self.name_type_input.entry.focus_set()
-
-        # def show_choice(evt):
-            # button_text = evt.widget.cget["text"]
-            # if button_text == "OK":
-                # go = True
-            # elif button_text == "CANCEL":
-                # go = False
-            # show(go)
-
-        # def show():          
-            # self.wait_window(msg[0])
-            # if go is True:
-                # self.check_for_dupes()
-        
-        # msg = open_yes_no_message(
-            # self, 
-            # names_msg[1], 
-            # "Unknown Name Type", 
-            # "OK", "CANCEL")
-        # msg[0].grab_set()
-        # msg[2].config(command=ok_new_name_type)
-        # msg[3].config(command=cancel_new_name_type)
-        # msg[2].bind("<Button-1>", show_choice)
-
-        # cur.execute(select_max_name_type_id)
-        # self.name_type_id = cur.fetchone()[0] + 1
+            self.selected_image = selected_image 
 
     def save_new_name(self):
         current_file = get_current_file()[0]

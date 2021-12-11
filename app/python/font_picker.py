@@ -103,15 +103,6 @@ class FontPicker(Frame):
         cur.close()
         conn.close()
 
-        # Running redraw() anywhere in this block of code doesn't help, but if 
-        #   run manually via ctrl+s it resizes the scrollbar correctly--why? 
-        #   The sb isn't tall enough EVEN IF MAKING FONT SMALLER but ok on reload. 
-        #   HINT: clicking APPLY button messes up the scrollbar EVEN IF NO CHANGE 
-        #   IS MADE TO FONT SIZE. So that should help find the bug.
-        #   HINT 2: CTRL+S also does nothing unless the Person Tab is active.
-        # self.main.findings_table.redraw()
-        # Try again after fixing all missing stuff in config_generic re: fonts
-        # PS I don't know if above is still a problem, hopefully it's just something I forgot to delete.
         config_generic(self.root)
         resize_scrolled_content(self.root, self.main.master, self.main)
 

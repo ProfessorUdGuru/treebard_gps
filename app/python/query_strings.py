@@ -132,7 +132,7 @@ insert_image_new = '''
 
 insert_images_elements = '''
     INSERT INTO images_elements (image_id, main_image, person_id) 
-    VALUES (?, 0, ?) 
+    VALUES (?, 1, ?) 
 '''
 
 insert_kin_type_new = '''

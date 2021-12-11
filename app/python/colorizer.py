@@ -145,11 +145,6 @@ class Colorizer(Frame):
         self.swatch_canvas.config(scrollregion=self.swatch_canvas.bbox("all")) 
 
     def apply_scheme(self, evt=None):
-        # APPLY button not invoked by RETURN key unless its tab is on top
-        # change index if tab order changes
-        # `self.tabbook.index('current')` is from ttk.Notebook, ignoring it for 
-        #   now, need to add this method to Toykinter TabBook
-        # if self.tabbook.index('current') == 2:
         self.recolorize()
 
     def recolorize(self):

@@ -30,38 +30,39 @@ from dev_tools import looky, seeline
     there's nothing here that doesn't need to be here.
 
     Another policy is to have no pop-up calendars and the like when the user
-    tries to input a date. These encumbrances only slow down input which is more easily typed, and while coders might like them because they're cute or 
-    convenient, users find them annoying if trying to do any significant amount 
-    of data input. In Treebard, a date is input as a typed string, with several
-    choices of delimiter between date elements, and with the elements typed in 
-    almost any order. 
+    tries to input a date. These encumbrances only slow down input which is 
+    more easily typed, and while coders might like calendar pop-ups because
+    they're cute or something, users find them annoying if trying to do any 
+    significant amount of data input. In Treebard, a date is quickly input as a
+    typed string, with several choices of delimiter between date elements, and 
+    with the elements typed in almost any order. 
 
     The policy of not allowing numerical month input makes it easy for Treebard
-    to tell which number is the year and which number is the day, except for years
-    less than 100. In this case a simple dialog coaches the user to input short
-    years with leading zeroes. So the only time a user has to worry about inputting
-    date elements in a fixed order is when typing "and" or "to" between two
-    compound dates. For example, the user can type "1852 ja 3 est and bc 14 f 1901 
-    abt" and Treebard will know that this means "between about 14 Feb 1901 BC 
-    and estimated 3 Jan 1852 AD". This allows the user to just start typing, 
-    and as long as the "and" or "to" is in the right place, the input will be 
-    correctly interpreted.
+    to tell which number is the year and which number is the day, except for 
+    years less than 100. In this case a simple dialog coaches the user to input
+    short years with leading zeroes. So the only time a user has to worry about
+    inputting date elements in a fixed order is when typing "and" or "to" 
+    between two compound dates. For example, the user can type "1852 ja 3 est 
+    and bc 14 f 1901 abt" and Treebard will know that this means "between about 
+    14 Feb 1901 BC and estimated 3 Jan 1852 AD". This allows the user to just
+    start typing, and as long as the "and" or "to" is in the right place, the 
+    input will be correctly interpreted.
 
     Another policy is to allow no bad date input and no ambiguous date input. 
     Treebard is meant to be easily sharable. Allowing numerical month input 
-    would be good for some parts of our program by increasing flexibility of input
-    to infinity and beyond, but would bloat the code and open up the possibility 
-    of easily misinterpreted dates when trees are shared from one country to 
-    another.
+    would be good for some parts of our program by increasing flexibility of 
+    input to infinity and beyond, but would bloat the code and open up the 
+    possibility of easily misinterpreted dates when trees are shared from one
+    country to another. It would also mean more dialogs for clarification as to 
+    which number is the month, day or year.
 
-    Another policy is to ignore that period of time when the Gregorian Calendar was 
-    being adopted in lieu of the ancient Julian Calendar. Some genieware uglifies 
-    these dates according to when western cultures were supposedly making this 
-    transition. Treebard uglifies no date. The transition took place at different 
-    times in different countries, in fact it has only recently taken place in some 
-    countries. The user can mark his dates "old style" or "new style" in whatever 
-    formatting he prefers, but dates like "14 Oct 1752/1753" don't exist in 
-    Treebard.
+    Another policy is to ignore that period of time when the Gregorian Calendar 
+    was being adopted in lieu of the ancient Julian Calendar. Some genieware 
+    uglifies these dates according to when western cultures were supposedly 
+    making this transition. Treebard uglifies no date. The transition took 
+    place at different times in different countries, in fact it has only 
+    recently taken place in some countries. The user can mark his dates 
+    "old style" or "new style" in whatever formatting he prefers, but dates like "14 Oct 1752/1753" don't exist in Treebard.
 
     Globals are used for `root` and `widg` because we are validating a single
     string found in a single Entry in a single app and none of that will ever
@@ -77,25 +78,10 @@ from dev_tools import looky, seeline
 
     I've tried making this a class, but a big class to validate one string? The
     result is a bunch of instance variables that can be changed all over a big
-    class, which can have the same confusing effect as global variables, all to validate one single string. I like
-    classes but in this case, working the code out procedurally seemed like a
-    better approach, after trying it both ways.
-
-    As for the history of this module's development, big trouble was had at first
-    due to trying to have the code care whether the date input was supposed to 
-    be a compound date or not (like "from 1845 to 1872"). Finally it was revealed
-    to me that all date inputs should be treated as compound, and if the second
-    term in the list was empty, then it could just be ignored. Another early 
-    problem was caused by letting the user input months as numbers. Disallowing
-    this simplified the programmer's task a lot. Treebard policy is to
-    disallow numerical month DISPLAY because of cultural differences in the 
-    ordering of numerical date values which would make for ambiguity from one 
-    country to another. This would make sharing trees a big hassle in some cases.
-    Extending this policy to date INPUT seemed only logical when considering how 
-    much less code complications would exist if it were done.
-
-    Treebard GPS has to remain accessible to neophyte coders such as genealogists
-    who want to customize their own applications.
+    class, which can have the same confusing effect as global variables, all to
+    validate one single string. I like classes but in this case, working the 
+    code out procedurally seemed like a better approach, after trying it both 
+    ways.
 '''
 
 
@@ -635,7 +621,6 @@ def assign_prefixes(date_dict, item, f):
     if item in ABT:
         term = "abt"
     elif item in EST:
-        print("line", looky(seeline()).lineno, "item:", item)
         term = "est"
     elif item in CAL:
         term = "cal"
@@ -950,8 +935,6 @@ def convert_month(part, dateform):
             break
     return month
 
-# DATE PREFERENCES TAB
-
 class DatePreferences(Frame):
     def __init__(self, master, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
@@ -962,7 +945,6 @@ class DatePreferences(Frame):
 
         self.make_widgets_top()
         self.make_widgets_bottom()
-        self.instruct()
 
     def revert_to_default(self):
         
@@ -1125,7 +1107,6 @@ class DatePreferences(Frame):
                 height=300,
                 values=DATE_PREF_COMBOS[p])
             self.prefcombos[heading] = combo
-            # combo.config_values(DATE_PREF_COMBOS[p])
             p += 1
 
         self.submit = Button(
@@ -1180,9 +1161,6 @@ class DatePreferences(Frame):
         # children of buttonbox
         self.submit.grid(column=0, row=0, padx=(0,12))
         self.revert.grid(column=1, row=0, padx=(12,0))
-
-    def instruct(self):
-        pass # old rcm code temp moved to messages_context_help.py
 
 if __name__ == "__main__":
 

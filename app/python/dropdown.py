@@ -34,14 +34,13 @@ from dev_tools import looky, seeline
     Tkinter dropdown menu doesn't even work with my "Toykinter" border. Not
     that I wanted to use tkinter.Menu anyway since its colors can't be changed 
     (maybe depending on the Windows theme in use). Tkinter's dropdown menu 
-    doesn't use any of
-    Tkinter's geometry managers (`grid`, `pack` or `place`), since it's assumed that
-    the menu is always going to be right below the Windows title bar. Since the
-    Toykinter title bar is gridded like any other widget, the Tkinter menu bar
-    attaches above the Toykinter title bar and I doubt there's anything that
-    can be done about it, but it doesn't matter, I just had to write a little
-    code, like everyone does in HTML anyway when they need a dropdown menu for
-    a web app.
+    doesn't use any of Tkinter's geometry managers (`grid`, `pack` or `place`),
+    since it's assumed that the menu is always going to be right below the
+    Windows title bar. Since the Toykinter title bar is gridded like any other
+    widget, the Tkinter menu bar attaches above the Toykinter title bar and I 
+    doubt there's anything that can be done about it, but it doesn't matter, I 
+    just had to write a little code, like everyone does in HTML anyway when 
+    they need a dropdown menu for a web app.
 
     At this time I'm keeping it as simple as possible by making the dropdown
     menu respond only to mouse events. To me this seems like the right way
@@ -51,9 +50,9 @@ from dev_tools import looky, seeline
     click, but prior efforts to make a dropdown menu that works with both mouse
     and keyboard got bogged down in conflicting events and focus handling.
 
-    This widget is hard-coded to handle three levels of menu items: 1) The Labels
-    permanently gridded horizontally across the menu bar; 2) the first dropdown 
-    that pops open or closed on click and hover events; 3) the second and last
+    This widget is hard-coded to handle three levels of menu items: 1) The 
+    Labels permanently gridded horizontally across the menu bar; 2) the first
+    dropdown that pops open or closed on click and hover events; 3) the second 
     dropdown which flies out to the right of its parent.
 
     Since there will never be more than one set of `drop0`, `drop1`, and `drop2`

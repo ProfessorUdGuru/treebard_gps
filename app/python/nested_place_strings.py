@@ -239,7 +239,8 @@ class ManyManyRecursiveQuery():
         # Running one recursion builds up the whole nesting,
         #  which was a surprise. I had been running this in
         #  a loop when I accidentally discovered it was done
-        #  after running one recursion.
+        #  after running one recursion. This is a NOT SURE WHY
+        #  THIS WORKS alert.
         self.get_one_stage_of_values(uppers)      
 
     def make_show_strings(self):

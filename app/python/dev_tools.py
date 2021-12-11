@@ -18,10 +18,9 @@ seeline = iii.currentframe
 # to use:
 # print(looky(seeline()).lineno)
 # to get the real line no. do this:
-# x = 66;print("line", looky(seeline()).lineno, "is", x)
-# so made a macro that types 
-#     ;print("line", look(see()).lineno, "is", 
-#     at the insertion cursor; just finish by typing the value and closing parenthesis.
+#     x = 66
+#     print("line", looky(seeline()).lineno, "x:", x)
+# so I made a macro in Notepad++ that I ran after typing the value I want to print
 # the macro is called print_a_line and its keyboard shortcut is CTRL+SHIFT+F5
 
 
@@ -36,14 +35,9 @@ seeline = iii.currentframe
 
 def make_rollback_copy():
     ''' 
-        Call this from any .py file in the working folder
-        to create a rollback for that file in the rollbacks directory
-        with a timestamp appended to the file name. Just
-        import this function, call it, run
-        the file, and delete the function call. Don't use
-        this for any file that will mess something up when run.
-        Can't be used for files that can't import this module.
-        Use backups.py to take a snapshot of the whole working folder.
+        Call this from any .py file in the working folder to create a rollback
+        for that file in the rollbacks directory with a timestamp appended to 
+        the file name. 
     '''
 
     file_to_save = stack()[1][1]

@@ -107,7 +107,6 @@ class PersonMaker():
             addee = str(addee)
             add_qty = 2 - len(addee)
             addee = '0' * add_qty + addee
-            print(addee)
 
         return addee
 
@@ -115,7 +114,6 @@ if __name__ == '__main__':
 
     def go():
         new_person = PersonMaker(birth_year_input.get())
-        print(new_person.full_name, new_person.age_at_death, new_person.gender)
         name_input.delete(0, 'end')
         name_input.insert(
             0,new_person.full_name)
