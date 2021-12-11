@@ -152,11 +152,6 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: front_page
-# test
-# after commit, clone it and see if it works acc to readme instrux
-# write blog post "Mass Refactoring Essentially Complete"
-
 # BRANCH: pedigree
 # Add to after death event types in default, default_untouched, and sample db's: autopsy, inquest.
 # Seems the particulars column is the least objectionable compromise, for offspring. For couple events there's no secondary event, you really do lose the functionality of the particulars column, but it's the least gimmicky and easiest-to-read way to give the kin name in events where there's more than one participant. Just don't do it for parents, they are easily found in the top table and are not ambiguous, people have only one set of parents.

@@ -306,6 +306,7 @@ class RolesDialog(Toplevel):
         role_types.sort()
         self.role_types = role_types
         for widg in (self.edit_role_type, self.role_type_input):
+            print("line", looky(seeline()).lineno, "widg:", widg)
             widg.config_values(self.role_types)
 
     def get_add_state(self):

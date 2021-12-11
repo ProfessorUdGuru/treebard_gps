@@ -159,7 +159,6 @@ class Combobox(FrameHilited3):
         for part in self.current_combo_parts:
             part.bind('<Enter>', self.unbind_combo_parts)
             part.bind('<Leave>', self.rebind_combo_parts)
-
         self.config_values(self.values)
 
         config_generic(self.drop)
@@ -188,7 +187,16 @@ class Combobox(FrameHilited3):
             this, the button width can be changed when the scrollbar
             appears and disappears.
         '''
-        
+        if len(values) == 0: return
+        # RE: above return line; NOT SURE WHY THIS WAS NEEDED alert:
+        #   had to add this line after adding `if self.fit_height <= self.height:`
+        #   at bottom of this method, which had to be added so dropdowns
+        #   could be less than default height. Possibly this has to do with the
+        #   difference between running a Combobox in a dialog vs. in a tab on the
+        #   root window. I say this because this method seems to be running too
+        #   early (before there are any values) and if that happens, the new 
+        #   line below sets height to 0. Seems to be working now that this 
+        #   method is not allowed to run twice.
         # a sample button is made to get its height, then destroyed
         b = ButtonFlatHilited(self.content, text='Sample')
         one_height = b.winfo_reqheight()
@@ -227,6 +235,8 @@ class Combobox(FrameHilited3):
             b.config(command=self.callback)
         if self.fit_height <= self.height:
             self.height = self.fit_height
+        else:
+            print("line", looky(seeline()).lineno, "case not handled")        
 
     def get_tip_widg(self, evt):
         '''
