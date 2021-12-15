@@ -98,6 +98,8 @@ bgLite_fgStd_fontIn_insFg = (
 
 bgStd_fgStd_fontIn_insFg = ('EntryAuto', 'EntryAutofill', 'EntryUnhilited')
 
+bgStd_fgStd_fontIn = ('LabelEntry',)
+
 bgLite_fgStd_fontH3 = ('LabelHeader',)
 
 bgLite_fgStd_fontOut = ()
@@ -470,6 +472,9 @@ def config_generic(parent):
 
         elif widg.winfo_subclass() in bgStd_fgStd_fontIn_insFg:
             config_bgStd_fgStd_fontIn_insFg(widg)
+
+        elif widg.winfo_subclass() in bgStd_fgStd_fontIn:
+            config_bgStd_fgStd_fontIn(widg)
 
         elif widg.winfo_class() == 'Frame':
 

@@ -6,13 +6,14 @@ from PIL import Image, ImageTk
 from files import current_drive, get_current_file
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, FrameHilited1,
-    CanvasHilited, FrameHilited3, Toplevel, LabelBoilerplate)
+    CanvasHilited, FrameHilited3, Toplevel, LabelBoilerplate, LabelEntry,
+    Radiobutton, LabelFrame)
 from window_border import Border
 from custom_tabbed_widget import TabBook
-from autofill import EntryAutoHilited    
+from autofill import EntryAutoHilited, EntryAuto    
 from scrolling import Scrollbar    
 from events_table import EventsTable
-from dates import DatePreferences    
+from dates import DatePreferences, OK_MONTHS, format_stored_date, get_date_formats
 from gallery import Gallery
 from colorizer import Colorizer
 from toykinter_widgets import run_statusbar_tooltips
@@ -24,10 +25,16 @@ from names import (
     open_new_person_dialog, get_any_name_with_id)
 from search import PersonSearch
 from query_strings import (
-    select_images_elements_main_image, select_current_person_id)
+    select_images_elements_main_image, select_current_person_id,
+    select_finding_id_birth, select_findings_persons_ma_id1, 
+    select_findings_persons_pa_id1, select_findings_persons_ma_id2, 
+    select_findings_persons_pa_id2, select_findings_persons_partner1,
+    select_findings_persons_partner2, select_person_id_gender,
+    select_person_id_finding, select_date_finding, select_finding_event_type,
+    select_finding_id_death, select_finding_death_date, 
+)
 import dev_tools as dt
 from dev_tools import looky, seeline
-
 
 
 
@@ -41,6 +48,8 @@ RIGHT_PANEL_TABS = (("images", "I"), ("do list", "O"))
 
 PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"), 
     ("images", "M"))
+
+NUKE_HEADS = ("NAME OF CHILD", "GENDER", "DATE OF BIRTH", "DATE OF DEATH")
 
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
@@ -57,10 +66,15 @@ class Main(Frame):
         self.SCREEN_SIZE.append(self.winfo_screenwidth())
         self.SCREEN_SIZE.append(self.winfo_screenheight())
 
+        self.date_prefs = get_date_formats(tree_is_open=1)
+        self.newkinvar = tk.IntVar()
+
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
         self.make_widgets()
+
         self.get_current_values()
+        self.make_nuke_inputs()
 
     def make_scrollbars(self):
 
@@ -113,23 +127,22 @@ class Main(Frame):
             text="Find or Create a Person", 
             command=self.open_person_search)
 
-        family_table = Frame(persons_tab)
-        family_table.columnconfigure(0, weight=1)
-        family_table.rowconfigure(0, weight=1)
-        family_canvas = Canvas(family_table, width=800, height=400)
-        family_window = Frame(family_canvas)
-        family_canvas.create_window(0, 0, anchor="nw", window=family_window)
-        family_canvas.config(scrollregion=(0, 0, 1000, 700))
-        family_sbv = Scrollbar(
-            family_table, 
-            command=family_canvas.yview)
-        family_canvas.config(yscrollcommand=family_sbv.set)
+        nuke_table = Frame(persons_tab)
+        nuke_table.columnconfigure(0, weight=1)
+        nuke_table.rowconfigure(0, weight=1)
+        self.nuke_canvas = Canvas(nuke_table)
+        self.nuke_window = Frame(self.nuke_canvas)
+        self.nuke_canvas.create_window(0, 0, anchor="nw", window=self.nuke_window)
+        nuke_sbv = Scrollbar(
+            nuke_table, 
+            command=self.nuke_canvas.yview)
+        self.nuke_canvas.config(yscrollcommand=nuke_sbv.set)
 
-        family_sbh = Scrollbar(
-            family_table, 
+        nuke_sbh = Scrollbar(
+            nuke_table, 
             orient='horizontal', 
-            command=family_canvas.xview)
-        family_canvas.config(xscrollcommand=family_sbh.set)
+            command=self.nuke_canvas.xview)
+        self.nuke_canvas.config(xscrollcommand=nuke_sbh.set)
 
         minx = self.tabbook_x/self.SCREEN_SIZE[0]
         miny = self.tabbook_y/self.SCREEN_SIZE[1]
@@ -142,6 +155,7 @@ class Main(Frame):
             command=self.open_person_gallery)
         self.findings_table = EventsTable(
             persons_tab, self.root, self.treebard, self)
+
         EventsTable.instances.append(self.findings_table)
         self.current_person = self.findings_table.current_person
 
@@ -228,15 +242,16 @@ class Main(Frame):
         prefs_tab.grid(column=0, row=0, sticky='news')
 
         # children of persons_tab
-        family_table.grid(column=0, row=0, sticky="news", padx=12, pady=12)
+        nuke_table.grid(column=0, row=0, sticky="news", padx=12, pady=12)
         self.right_panel.grid(column=1, row=0, sticky='w', padx=12, pady=12)
         self.findings_table.grid(
             column=0, row=1, columnspan=2, padx=12, pady=12)
 
-        # children of family_table
-        family_canvas.grid(column=0, row=0, sticky="news")
-        family_sbv.grid(column=1, row=0, sticky="ns")
-        family_sbh.grid(column=0, row=1, sticky="ew")
+        # children of nuke_table
+        persons_tab.columnconfigure(0, weight=1)
+        self.nuke_canvas.grid(column=0, row=0, sticky="news")
+        nuke_sbv.grid(column=1, row=0, sticky="ns")
+        nuke_sbh.grid(column=0, row=1, sticky="ew")
 
         # children of attributes tab
         self.att.grid(column=0, row=0)
@@ -475,10 +490,259 @@ class Main(Frame):
             self.date_options.prefcombos['Between...And...'].entry, 
             self.date_options.submit, self.date_options.revert)
                 
-        make_rc_menus(
-            rcm_widgets, 
-            self.rc_menu, 
-            main_help_msg) 
+        make_rc_menus(rcm_widgets, self.rc_menu, main_help_msg) 
+
+    def make_nuke_frames(self):
+        self.nuke_window.columnconfigure(0, weight=1)  
+        self.parentslab = LabelFrame(
+            self.nuke_window, text="Parents of the Current Person")
+        self.parentslab.grid(column=0, row=0, sticky="w")
+        self.malab = Label(self.parentslab, text="Mother")
+        self.malab.grid(column=0, row=0, sticky="w", padx=(12,0))
+        self.ma_input = EntryAutoHilited(
+            self.parentslab, width=30, autofill=True, 
+            values=self.person_autofill_values)
+        self.ma_input.grid(column=1, row=0, pady=(6,12), padx=(6,0))
+        self.palab = Label(self.parentslab, text="Father")
+        self.palab.grid(column=2, row=0, sticky="w", padx=(18,0))
+        self.pa_input = EntryAutoHilited(
+            self.parentslab, width=30, autofill=True, 
+            values=self.person_autofill_values)
+        self.pa_input.grid(column=3, row=0, pady=(6,12), padx=(6,12))
+
+    def fix_buttons(self):
+        if self.newkinvar.get() == 100:
+            self.childmaker.config(state="disabled")
+            self.pardmaker.config(state="normal")
+        else:
+            self.pardmaker.config(state="disabled")
+            self.childmaker.config(state="normal") 
+
+    def make_new_kin_inputs(self): 
+        new_kin_frame = Frame(self.nuke_window)
+        new_kin_frame.grid(column=0, row=self.last_row, sticky="ew")
+        kinradnew = Radiobutton(
+            new_kin_frame, variable=self.newkinvar, 
+            value=100, anchor="w", command=self.fix_buttons)
+        kinradnew.grid(column=0, row=0)
+        kinradnew.select()
+        new_kin_input = EntryAutoHilited(
+            new_kin_frame, width=48, 
+            autofill=True, values=self.person_autofill_values)
+        new_kin_input.grid(column=1, row=0)
+        self.pardmaker = Button(
+            new_kin_frame, 
+            text="ADD PARTNER", width=12, 
+            command=self.make_new_partner)
+        self.pardmaker.grid(column=2, row=0, padx=(6,0), pady=(12,0))
+        self.childmaker = Button(
+            new_kin_frame, 
+            text="ADD CHILD", width=12, 
+            command=self.make_new_child)
+        self.childmaker.grid(column=3, row=0, padx=(6,0), pady=(12,0))
+        self.fix_buttons()
+        
+    def make_new_partner(self):
+        print("howdy pardner")
+
+    def make_new_child(self):
+        print("hey kid")
+
+    def make_nuke_inputs(self):
+        self.make_nuke_frames()
+        self.make_nuke_dict()
+        self.populate_nuke_tables()
+        self.make_new_kin_inputs()
+        self.update_idletasks()
+        wd = self.nuke_window.winfo_reqwidth()
+        ht = self.right_panel.winfo_reqheight()
+        self.nuke_canvas.config(
+            scrollregion=(0, 0, wd, ht))
+
+    def populate_nuke_tables(self):
+        lst = [self.ma_name, self.pa_name]
+        for name in lst:
+            if name == "name unknown":
+                idx = lst.index(name)
+                lst[idx] = ""
+        self.ma_input.insert(0, lst[0])
+        self.pa_input.insert(0, lst[1])
+        n = 1
+        for brood in self.child_details:
+            name, ma_pa = brood[0]
+            ma_pa = "{} of children:".format(ma_pa)
+            pardframe = Frame(self.nuke_window)
+            pardframe.grid(column=0, row=n, sticky="ew")
+            pardrad = Radiobutton(
+                pardframe, variable=self.newkinvar, 
+                value=n, anchor="w", command=self.fix_buttons)
+            pardrad.grid(column=0, row=n)
+            pardlab = Label(pardframe, text=ma_pa, anchor="w")
+            pardlab.grid(column=1, row=n)
+            pardent = EntryAutoHilited(
+                pardframe, width=48, autofill=True, 
+                values=self.person_autofill_values)
+            pardent.insert(0, name)
+            pardent.grid(column=2, row=n)
+            brood_frame = Frame(self.nuke_window)
+            brood_frame.grid(column=0, row=n+1) 
+            r = 0
+            for dkt in brood[1]:
+                c = 0
+                for i in range(6):
+                    if c == 0:
+                        spacer = Frame(brood_frame, width=48)
+                        spacer.grid(column=c, row=r)
+                    elif c == 1:
+                        text = dkt["name"]
+                        ent = EntryAuto(
+                            brood_frame, width=36, autofill=True, 
+                            values=self.person_autofill_values)
+                        ent.insert(0, text)
+                        ent.grid(column=c, row=r)
+                    elif c == 2:
+                        text = dkt["gender"]
+                        ent = EntryAuto(brood_frame, width=9)
+                        ent.insert(0, text)
+                        ent.grid(column=c, row=r)
+                    elif c == 3:
+                        text = dkt["birth"]
+                        ent = EntryAuto(brood_frame)
+                        ent.insert(0, text)
+                        ent.grid(column=c, row=r)
+                    elif c == 4:
+                        lab = LabelEntry(brood_frame, text="to")
+                        lab.grid(column=c, row=r, padx=(0,12))
+                    elif c == 5:
+                        text = dkt["death"]
+                        ent = EntryAuto(brood_frame)
+                        ent.insert(0, text)
+                        ent.grid(column=c, row=r)            
+                    c += 1
+                r += 1
+            n += 2
+        self.last_row = n
+
+
+
+    
+
+# line 650 self.child_details: [[['Harmony Maryland Hobgood (stage name)', 'Mother'], [{'gender': 'male', 'birth': '-1920---------', 'sorter': [1920, 0, 0], 'death': '-0000-00-00-------', 'name': 'Ross Aldo Marquis (stage name)'}]], [['Selina Savoy', 'Mother'], [{'gender': 'unknown', 'birth': '-1915-au-1-------', 'sorter': [1915, 8, 1], 'death': '-0000-00-00-------', 'name': 'Albertha Siu Sobel'}, {'gender': 'male', 'birth': '-1921-ap-14-------', 'sorter': [1921, 4, 14], 'death': '-0000-00-00-------', 'name': 'Clarence Bracken'}, {'gender': 'female', 'birth': '-1922-ja-18-------', 'sorter': [1922, 1, 18], 'death': '-0000-00-00-------', 'name': 'Moira Harding'}, {'gender': 'male', 'birth': '-1927-au-6-------', 'sorter': [1927, 8, 6], 'death': '-0000-00-00-------', 'name': 'Noe Whitton'}, {'gender': 'male', 'birth': '-1929-s-30-------', 'sorter': [1929, 9, 30], 'death': '-0000-00-00-------', 'name': "Joe-John O'Keefe"}]]]
+
+     
+
+    def make_nuke_dict(self):
+        mother = ""
+        father = ""
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_finding_id_birth, (self.current_person,))
+        birth_id = cur.fetchone()
+        if birth_id:
+            birth_id = birth_id[0] 
+            cur.execute(select_findings_persons_ma_id1, (birth_id,))
+            mother = cur.fetchone()
+            if not mother:
+                cur.execute(select_findings_persons_ma_id2, (birth_id,))
+                mother = cur.fetchone()
+                if mother: 
+                    mother = mother[0]
+            else:
+                mother = mother[0]
+            cur.execute(select_findings_persons_pa_id1, (birth_id,))
+            father = cur.fetchone()
+            if not father:
+                cur.execute(select_findings_persons_pa_id2, (birth_id,))
+                father = cur.fetchone()
+                if father:
+                    father = father[0]
+            else:
+                father = father[0]
+        cur.execute(select_findings_persons_partner1, (self.current_person,))
+        birth_details = cur.fetchall()
+        if len(birth_details) == 0:
+            cur.execute(select_findings_persons_partner2, (self.current_person,))
+            birth_details = cur.fetchall() 
+        self.child_details = []        
+        for tup in birth_details:
+            other_parent = tup[0]
+            if other_parent not in self.child_details:
+                self.child_details.append(other_parent)
+        self.child_details = [[[i],[]] for i in self.child_details]
+        for tup in birth_details:
+            other_parent = tup[0]
+            for lst in self.child_details:
+                if other_parent == lst[0][0]:
+                    if len(lst[0]) == 1:
+                        other_parent_type = "Mother"
+                        if tup[2] == 2:
+                            other_parent_type = "Father"
+                        lst[0].append(other_parent_type)
+                    lst[1].append({})
+        for brood in self.child_details:
+            other_parent = brood[0][0]
+            self.make_brood(other_parent, birth_details, brood, cur)
+            partner_name = get_any_name_with_id(other_parent)
+            brood[0][0] = partner_name
+        self.ma_name = get_any_name_with_id(mother)
+        self.pa_name = get_any_name_with_id(father) 
+        for brood in self.child_details:
+            brood[1] = sorted(brood[1], key=lambda i: i["sorter"])
+
+        cur.close()
+        conn.close()
+
+    def make_brood(self, other_parent, birth_details, brood, cur):
+        d = 0
+        for tup in birth_details:
+            if other_parent != tup[0]:
+                continue
+            else:
+                birth_event = tup[1]
+                death_date = "-0000-00-00-------"      
+                cur.execute(select_person_id_finding, (birth_event,))
+                born_id = cur.fetchone()[0]
+                cur.execute(select_person_id_gender, (born_id,))
+                gender = cur.fetchone()[0]
+                cur.execute(select_finding_event_type, (birth_event,))
+                event_type = cur.fetchone()[0]
+                cur.execute(select_date_finding, (birth_event,))
+                if event_type == 1:
+                    birth_date = cur.fetchone()[0]
+                elif event_type == 4:
+                    death_date = cur.fetchone()[0]
+                if birth_date != "-0000-00-00-------":
+                    sorter = birth_date.split("-")[1:4] 
+                    h = 0
+                    for stg in sorter:
+                        if len(stg) == 0:
+                            sorter[h] = '0'
+                        h += 1
+                    num = sorter[1]
+                    if sorter[1] != '0':
+                        num = OK_MONTHS.index(sorter[1]) + 1
+                    else:
+                        num = 0
+                    sorter = [int(sorter[0]), num, int(sorter[2])]
+                name = get_any_name_with_id(born_id)
+                cur.execute(select_finding_id_death, (born_id,))
+                death_finding = cur.fetchone()
+                if death_finding:
+                    cur.execute(select_finding_death_date, (death_finding[0],))
+                    death_date = cur.fetchone()[0]
+                birth_date = format_stored_date(
+                    birth_date, date_prefs=self.date_prefs)
+                death_date = format_stored_date(
+                    death_date, date_prefs=self.date_prefs)                
+
+                brood[1][d]["gender"] = gender
+                brood[1][d]["birth"] = birth_date
+                brood[1][d]["sorter"] = sorter
+                brood[1][d]["death"] = death_date
+                brood[1][d]["name"] = name
+          
+            d += 1
 
     def get_current_values(self):
         all_names = make_all_names_list_for_person_select()

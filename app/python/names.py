@@ -95,6 +95,12 @@ def get_any_name_with_id(iD):
                     break
         cur.close()
         conn.close()
+
+        length = len(use_name)
+        if length == 2:
+            use_name = "{} ({})".format(
+                use_name[0], use_name[1])
+
         return use_name
     else:
         return birth_name    

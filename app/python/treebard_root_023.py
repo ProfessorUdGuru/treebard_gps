@@ -152,10 +152,25 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: pedigree
+# BRANCH: kin
+
+# create nuke widgets in such a way that they come after the first three or four main things on the table and before the events table in tab traversal
+# new kin person Input will be parsed to use existing person if # and create new person if not. if bottom radio selected (is by default), disable add child button, otherwise disable add partner button, make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner. It is also possible to add someone with a name that already exists in the table, just not an id
+# make it possible to change name, gender or date here & save in db; make it possible to unlink a person from the family by deleting their name from the table
+# set column width based on widest content in column
+# Sort all children of all families of current person and put the oldest children in the top table. Do not rely on marriage date since there might not be one.
 # Add to after death event types in default, default_untouched, and sample db's: autopsy, inquest.
-# Seems the particulars column is the least objectionable compromise, for offspring. For couple events there's no secondary event, you really do lose the functionality of the particulars column, but it's the least gimmicky and easiest-to-read way to give the kin name in events where there's more than one participant. Just don't do it for parents, they are easily found in the top table and are not ambiguous, people have only one set of parents.
-# The spouse should be WITH the relevant children and both families in the case of 2 spouses should be visible at the same time with the 2 spouses also visible at the same time. Put parents in top row, no redundant label for current person, partners/children under parents.
+# see `if length == 2` in get_any_name_with_id() in names.py: this was just added and before that a similar process was done repeatedly in various places such as current_person display, wherever a name might need to be shown. Everything still works but this procedure should be deleted from where it's no longer needed since it's been added to get_any_name_with_id()
+# getting this error sometimes when changing current person eg input `#1`:
+# Exception in Tkinter callback
+# Traceback (most recent call last):
+  # File "C:\Users\Lutherman\AppData\Local\Programs\Python\Python39\lib\tkinter\__init__.py", line 1884, in __call__
+    # return self.func(*args)
+  # File "D:\treebard_gps\app\python\autofill.py", line 73, in get_typed
+    # do_it()
+  # File "D:\treebard_gps\app\python\autofill.py", line 66, in do_it
+    # self.show_hits(hits, self.pos)
+# AttributeError: 'EntryAutoHilited' object has no attribute 'pos'
 
 # BRANCH: names_images
 # Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
@@ -183,10 +198,11 @@ if __name__ == '__main__':
 # Post new screenshots and announce next phase (export GEDCOM?).
 
 # BRANCH: after_refactor
+# install virtual machine and linux
 # Export GEDCOM.
 # Make sure there's a way to make new person, new name, new place, new source, citation, etc. for all elements and types.
 # Add functionality to places, sources, names tabs for alias and edit/delete. 
-# Refactor date calculator, give it a menu command to open it. Other tools.
+# Refactor date calculator, give it a menu command to open it. Other tools eg: old census tool like my spreadsheet with templates of all the pre-1850 US census and a way to make your own templates for other census such as state census where household members are listed roughly by age/gender but without names.
 # Add widgets and storage for all the tabs.
 # Add a menu item to open treebard.com.
 # Menu: add functionality to menu choices.
@@ -196,6 +212,17 @@ if __name__ == '__main__':
 
 # DEV DOCS:
 # Files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run.
+
+# USER DOCS:
+'''
+    We can use gender only to define whether a parent of a child is a 
+    mother or a father since we are referring to biological roles.
+    Treebard doesn't care about sexual preferences or whether a mother
+    and father of children are married or not. Unlike other programs,
+    Treebard doesn't automatically use words like 'spouse' when two
+    people have children together. The user has a choice of kin_types
+    and we refer to members of a couple according to the user's wishes.
+'''
 
 
  

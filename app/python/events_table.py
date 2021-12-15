@@ -6,7 +6,8 @@ from files import get_current_file
 from window_border import Border, Dialogue 
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
-    LabelH3, Button, Entry, EntryHilited1, LabelHeader, LabelHilited)
+    LabelH3, Button, Entry, EntryHilited1, LabelHeader, LabelHilited,
+    LabelNegative)
 from autofill import EntryAuto, EntryAutoHilited
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
 from nested_place_strings import make_all_nestings
@@ -16,7 +17,7 @@ from messages_context_help import new_event_dlg_help_msg
 from styles import make_formats_dict, config_generic
 from names import (
     get_name_with_id, make_all_names_list_for_person_select,
-    open_new_person_dialog)
+    open_new_person_dialog, get_any_name_with_id)
 from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places
@@ -45,7 +46,7 @@ from query_strings import (
     select_findings_for_person, insert_finding_places_new,
     select_event_type_after_death, select_event_type_after_death_bool,
     select_findings_persons_parents, select_findings_persons_age,    
-    insert_finding_birth, update_findings_persons_age2,
+    insert_finding_birth, update_findings_persons_age2, select_person,
     select_finding_event_type, delete_findings_persons_offspring,
     select_findings_persons_person_id, update_finding_date)
 
@@ -388,11 +389,16 @@ class EventsTable(Frame):
         self.headers = []
         self.widths = [0, 0, 0, 0, 0]
 
+        self.widget = None
+        self.kintip = None
+        self.kintip_text = None
+
         self.screen_height = self.winfo_screenheight()
         self.column_padding = 2
         self.new_row = 0
         event_types = get_all_event_types()
         self.event_autofill_values = EntryAuto.create_lists(event_types)
+        self.couple_event_types = get_couple_event_types()
         self.after_death_events = get_after_death_event_types()
         if self.after_death_events is None:
             return
@@ -836,8 +842,7 @@ class EventsTable(Frame):
 
     def show_table_cells(self): 
 
-        couple_event_types = get_couple_event_types()
-
+        current_file = get_current_file()[0]
         row_order = self.sort_by_date()
        
         copy = []
@@ -874,7 +879,29 @@ class EventsTable(Frame):
                 if c < 5:
                     if len(text) > self.widths[c]:
                         self.widths[c] = len(text)
-                    widg.insert(0, text)                    
+                    widg.insert(0, text) 
+                if c == 0:
+                    dkt = self.findings_data[finding_id]
+                    evtype = dkt["event"]
+                    if evtype == "offspring":
+                        name = dkt.get("child_name")
+                        if not name:
+                            name = get_any_name_with_id(dkt["child_id"])
+                        widg.bind(
+                            "<Enter>", lambda evt, 
+                            kin="child", name=name: self.handle_enter(kin, name))
+                        widg.bind("<Leave>", self.on_leave)
+                        self.widget = widg
+                    elif evtype in self.couple_event_types:
+                        name = dkt.get("partner_name")
+                        if not name:
+                            name = get_any_name_with_id(dkt["partner_id"])
+                        widg.bind(
+                            "<Enter>", lambda evt, 
+                            kin=dkt["partner_kin_type"], 
+                            name=name: self.handle_enter(kin, name))
+                        widg.bind("<Leave>", self.on_leave)
+                        self.widget = widg
                 c += 1
             r += 1
         z = 0
@@ -896,6 +923,62 @@ class EventsTable(Frame):
         self.add_event_button.grid(
             column=1, row=0, sticky='w')
 
+    def show_kintip(self, kin_type, name):
+        ''' 
+            Based on show_kintip() in search.py.
+        '''
+
+        maxvert = self.winfo_screenheight()
+
+        if self.kintip or not self.kintip_text:
+            return
+        x, y, cx, cy = self.widget.bbox('insert')        
+
+        self.kintip = d_tip = tk.Toplevel(self.widget)
+
+        label = LabelNegative(
+            d_tip, 
+            text=self.kintip_text, 
+            justify='left',
+            relief='solid', 
+            bd=1,
+            bg=formats['highlight_bg'])
+        label.pack(ipadx=6, ipady=3)
+
+        mouse_at = self.winfo_pointerxy()
+
+        tip_shift = 48 
+
+        if mouse_at[1] < maxvert - tip_shift * 2:
+            x = mouse_at[0] + tip_shift
+            y = mouse_at[1] + tip_shift
+        else:
+            x = mouse_at[0] + tip_shift
+            y = mouse_at[1] - tip_shift
+
+        d_tip.wm_overrideredirect(1)
+        d_tip.wm_geometry('+{}+{}'.format(x, y))
+
+    def off(self):
+        d_tip = self.kintip
+        self.kintip = None
+        if d_tip:
+            d_tip.destroy()
+
+    def handle_enter(self, kin_type, name):
+        if len(name) == 2:
+            name = list(name)
+            name[1] = "({})".format(name[1])
+            name = " ".join(name)
+
+        self.kintip_text = "{}: {}".format(kin_type, name)
+
+        if self.kintip_text:
+            self.show_kintip(kin_type, name)
+
+    def on_leave(self, evt):
+        self.off()
+
     def redraw(self, evt=None, current_person=None):
         if evt:
             self.current_person = current_person
@@ -912,6 +995,7 @@ class EventsTable(Frame):
         self.new_row = 0 
         self.widths = [0, 0, 0, 0, 0]
         self.set_cell_content()
+        self.main_window.make_nuke_inputs()
         self.resize_scrollbar(self.root, self.main_canvas)
 
     def resize_scrollbar(self, root, canvas):
@@ -929,6 +1013,8 @@ class EventsTable(Frame):
                 widg.grid_forget()
         self.event_input.grid_forget()
         self.add_event_button.grid_forget()
+        for child in self.main_window.nuke_window.winfo_children():
+            child.destroy()
 
     def make_header(self):
         y = 0

@@ -393,7 +393,8 @@ select_current_person = '''
 
 select_current_person_id = '''
     SELECT person_id 
-    FROM current WHERE current_id = 1'''
+    FROM current 
+    WHERE current_id = 1'''
 
 select_current_person_image = '''
     SELECT images 
@@ -428,6 +429,12 @@ select_date_format = '''
     SELECT date_formats, abt, est, cal, bef_aft, bc_ad, os_ns, span, range
     FROM date_format
     WHERE date_format_id = 1
+'''
+
+select_date_finding = '''
+    SELECT date
+    FROM finding
+    WHERE finding_id = ?
 '''
 
 select_default_formats = '''
@@ -467,6 +474,12 @@ select_event_type_couple_bool = '''
     WHERE event_types = ?
 '''
 
+select_finding_death_date = '''
+    SELECT date
+    FROM finding
+    WHERE finding_id = ?
+'''
+
 select_finding_event_type = '''
     SELECT event_type_id
     FROM finding
@@ -477,6 +490,13 @@ select_finding_id_birth = '''
     SELECT finding_id 
     FROM finding
     WHERE event_type_id = 1
+        AND person_id = ?
+'''
+
+select_finding_id_death = '''
+    SELECT finding_id 
+    FROM finding
+    WHERE event_type_id = 4
         AND person_id = ?
 '''
 
@@ -644,6 +664,20 @@ select_findings_persons_parents = '''
     WHERE finding_id = ?
 '''
 
+select_findings_persons_partner1 = '''
+    SELECT person_id1, finding_id, kin_type_id1
+    FROM findings_persons 
+    WHERE person_id2 = ?
+        AND kin_type_id2 in (1,2)
+'''
+
+select_findings_persons_partner2 = '''
+    SELECT person_id2, finding_id, kin_type_id2
+    FROM findings_persons
+    WHERE person_id1 = ?
+        AND kin_type_id1 in (1,2)
+'''
+
 select_findings_roles_generic = '''
     SELECT 
         finding.finding_id,
@@ -716,7 +750,7 @@ select_kin_types_finding = '''
     SELECT kin_types
     FROM kin_type
     JOIN findings_persons
-        ON kin_type.kin_type_id = findings_persons.kin_type_id
+        ON kin_type.kin_type_id = findings_persons.kin_type_id1
     WHERE finding_id = ?
 '''
 
@@ -872,6 +906,12 @@ select_opening_settings_on_load = '''
     WHERE default_format_id = 1
 '''
 
+select_person = '''
+    SELECT person_id 
+    FROM finding
+    WHERE finding_id = ?
+'''
+
 select_person_birth_date = '''
     SELECT 
         finding_id,
@@ -919,6 +959,24 @@ select_person_id_birth = '''
     FROM finding
     WHERE finding_id = ?
         AND event_type_id = 1
+'''
+
+select_person_id_gender = '''
+    SELECT gender 
+    FROM person
+    WHERE person_id = ?
+'''
+
+select_person_id_finding = '''
+    SELECT person_id 
+    FROM finding
+    WHERE finding_id = ?
+'''
+
+select_finding_date = '''
+    SELECT date
+    FROM finding
+    WHERE finding_id = ?
 '''
 
 select_person_id_kin_types_birth = '''

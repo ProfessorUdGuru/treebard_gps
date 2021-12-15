@@ -98,12 +98,9 @@ class PersonSearch(Toplevel):
 
         self.widget = None
         self.nametip = None
-        self.x = self.y = 0
-
         self.nametip_text = None
-        self.name_list = []
-
         self.pointed_to = None
+
         self.person_id = None
 
         self.ma_id = None
@@ -673,12 +670,14 @@ class PersonSearch(Toplevel):
 
     def show_nametip(self):
         ''' 
-            Some rows in the search results table have no name (still?)
-            because the displayed findings only show birth names. The
-            nametips will point out that there may be no birth name 
+            The nametips will point out that there may be no birth name 
             stored for the person. Or the user might type "Daisy" and 
             get "Alice". The nametip will show that Alice's nickname is 
-            Daisy. 
+            Daisy.
+
+            See kintips in events_table.py for a similar hover tip that looks
+            the same and has slightly simpler code. A class could be made by
+            comparing them and parameterizing the differences.
         '''     
         maxvert = self.winfo_screenheight()
 

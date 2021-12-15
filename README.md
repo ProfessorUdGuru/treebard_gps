@@ -1,6 +1,6 @@
 # Treebard GPS
 
-A showcase for genealogy software functionalities written in Python 3.8, Tkinter and SQLite.
+A showcase for genealogy software functionalities written in Python 3.9, Tkinter and SQLite.
 
 ## How to Use this Repo
 

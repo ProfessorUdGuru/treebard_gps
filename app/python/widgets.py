@@ -271,6 +271,19 @@ class LabelHilited3(Labelx):
             font=formats['input_font']
 )
 
+class LabelEntry(Labelx):
+    ''' 
+        Like Label but with input font. 
+    '''
+    def __init__(self, master, *args, **kwargs):
+        Labelx.__init__(self, master, *args, **kwargs)
+
+        self.config(
+            bg=formats['bg'], 
+            fg=formats['fg'],
+            font=formats['input_font']
+)
+
 class LabelTip(LabelHilited):
     ''' 
         Like Label with a different background. For tooltips. 
