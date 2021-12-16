@@ -154,11 +154,13 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# create nuke widgets in such a way that they come after the first three or four main things on the table and before the events table in tab traversal
-# new kin person Input will be parsed to use existing person if # and create new person if not. if bottom radio selected (is by default), disable add child button, otherwise disable add partner button, make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner. It is also possible to add someone with a name that already exists in the table, just not an id
-# make it possible to change name, gender or date here & save in db; make it possible to unlink a person from the family by deleting their name from the table
-# set column width based on widest content in column
+# set column width based on widest content in column, individually per brood see James12
+# error line 669 # brood_frame doesn't exist if no children...............
+# something keeps setting current person in db to null
 # Sort all children of all families of current person and put the oldest children in the top table. Do not rely on marriage date since there might not be one.
+# new kin person Input will be parsed to use existing person if # and create new person if not. make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner. It is also possible to add someone with a name that already exists in the table, just not an id
+# make it possible to change name, gender or date here & save in db; make it possible to unlink a person from the family by deleting their name from the table
+# give james a 3rd brood to see if the vert sb appears, wait till it can be done in the gui
 # Add to after death event types in default, default_untouched, and sample db's: autopsy, inquest.
 # see `if length == 2` in get_any_name_with_id() in names.py: this was just added and before that a similar process was done repeatedly in various places such as current_person display, wherever a name might need to be shown. Everything still works but this procedure should be deleted from where it's no longer needed since it's been added to get_any_name_with_id()
 # getting this error sometimes when changing current person eg input `#1`:
@@ -171,6 +173,7 @@ if __name__ == '__main__':
   # File "D:\treebard_gps\app\python\autofill.py", line 66, in do_it
     # self.show_hits(hits, self.pos)
 # AttributeError: 'EntryAutoHilited' object has no attribute 'pos'
+# statustips rcm
 
 # BRANCH: names_images
 # Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
@@ -209,6 +212,9 @@ if __name__ == '__main__':
 # Combobox: when scrolling if the mouse strays off the scrollbar the dropdown undrops, I've seen a way to fix that but what was it?
 # Links tab: start with making a way to link any note to any element.
 # Files: when new empty tree is made, "name unknown" is a person in the db autofill list should not include this, search should not include this.
+
+# ADD TO MAIN DO LIST:
+# nuke area on Person Tab: remove scrollbars & canvas & window if the hideable ones never appear, it seems they might not be necessary.
 
 # DEV DOCS:
 # Files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run.

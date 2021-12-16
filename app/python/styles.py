@@ -21,6 +21,8 @@ from dev_tools import looky, seeline
 
     Some of the more complex custom widgets have their own method, w.colorize()
     which is called here in `config_generic()`.
+
+    LabelFrame has no font option so use its labelwidget option.
 '''
 
 NEUTRAL_COLOR = '#878787'
@@ -91,7 +93,7 @@ bgLite = (
 
 bgStd_fgStd = ('Sizer', )
 
-bgStd_fgStd_fontOut = ('Label', 'LabelFrame')
+bgStd_fgStd_fontOut = ('Label',)
 
 bgLite_fgStd_fontIn_insFg = (
     'Entry', 'Text', 'EntryAutoHilited', 'EntryHilited1')

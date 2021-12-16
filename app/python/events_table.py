@@ -392,6 +392,7 @@ class EventsTable(Frame):
         self.widget = None
         self.kintip = None
         self.kintip_text = None
+        self.kin_widths = [0, 0, 0, 0, 0, 0]
 
         self.screen_height = self.winfo_screenheight()
         self.column_padding = 2
@@ -402,16 +403,20 @@ class EventsTable(Frame):
         self.after_death_events = get_after_death_event_types()
         if self.after_death_events is None:
             return
-        self.events_only_even_without_dates = ["birth", "death"] + self.after_death_events
+        self.events_only_even_without_dates = [
+            "birth", "death"] + self.after_death_events
 
-        self.root.bind(
-            "<Control-S>", 
-            lambda evt, curr_per=self.current_person: self.redraw(
-                evt, current_person=curr_per))
-        self.root.bind(
-            "<Control-s>", 
-            lambda evt, curr_per=self.current_person: self.redraw(
-                evt, current_person=curr_per))
+        self.root.bind("<Control-S>", self.redraw)
+        self.root.bind("<Control-s>", self.redraw)
+
+        # self.root.bind(
+            # "<Control-S>", 
+            # lambda evt, curr_per=self.current_person: self.redraw(
+                # evt, curr_per))
+        # self.root.bind(
+            # "<Control-s>", 
+            # lambda evt, curr_per=self.current_person: self.redraw(
+                # evt, curr_per))
 
         self.place_strings = make_all_nestings(select_all_place_ids)
 
@@ -494,7 +499,8 @@ class EventsTable(Frame):
                     delete_generic_finding()
             elif couple_event_old == 1:
                 delete_couple_finding()
-            self.redraw(current_person=current_person)
+            self.redraw()
+            # self.redraw(current_person=current_person)
             cur.close()
             conn.close()
 
@@ -980,13 +986,13 @@ class EventsTable(Frame):
         self.off()
 
     def redraw(self, evt=None, current_person=None):
-        if evt:
-            self.current_person = current_person
-
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
+        
+        if evt:
+            self.current_person = current_person
         cur.execute(update_current_person, (self.current_person,))
         conn.commit()
         cur.close()
@@ -994,8 +1000,13 @@ class EventsTable(Frame):
         self.forget_cells()
         self.new_row = 0 
         self.widths = [0, 0, 0, 0, 0]
+        self.kin_widths = [0, 0, 0, 0, 0, 0]
         self.set_cell_content()
-        self.main_window.make_nuke_inputs()
+        if evt:
+            self.main_window.make_nuke_inputs(
+                current_person=self.current_person)
+        else:
+            self.main_window.make_nuke_inputs()
         self.resize_scrollbar(self.root, self.main_canvas)
 
     def resize_scrollbar(self, root, canvas):
@@ -1492,7 +1503,8 @@ class NewEventDialog(Toplevel):
         conn.close()
         self.close_new_event_dialog()
         for instance in EventsTable.instances:
-            instance.redraw(current_person=self.current_person)
+            instance.redraw()
+            # instance.redraw(current_person=self.current_person)
 
     def couple_ok(self, cur, conn):                
         if len(self.other_person) != 0:

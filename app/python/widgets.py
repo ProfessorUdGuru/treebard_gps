@@ -5,8 +5,7 @@ from tkinter import ttk
 import sqlite3
 from tkinter import messagebox
 from styles import make_formats_dict, NEUTRAL_COLOR
-from utes import create_tooltip
-from query_strings import select_current_person_id    
+from utes import create_tooltip  
 import dev_tools as dt
 from dev_tools import looky, seeline
 

@@ -4,6 +4,7 @@ import tkinter as tk
 import sqlite3
 from PIL import Image, ImageTk
 from files import current_drive, get_current_file
+from styles import make_formats_dict
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, FrameHilited1,
     CanvasHilited, FrameHilited3, Toplevel, LabelBoilerplate, LabelEntry,
@@ -127,23 +128,6 @@ class Main(Frame):
             text="Find or Create a Person", 
             command=self.open_person_search)
 
-        nuke_table = Frame(persons_tab)
-        nuke_table.columnconfigure(0, weight=1)
-        nuke_table.rowconfigure(0, weight=1)
-        self.nuke_canvas = Canvas(nuke_table)
-        self.nuke_window = Frame(self.nuke_canvas)
-        self.nuke_canvas.create_window(0, 0, anchor="nw", window=self.nuke_window)
-        nuke_sbv = Scrollbar(
-            nuke_table, 
-            command=self.nuke_canvas.yview)
-        self.nuke_canvas.config(yscrollcommand=nuke_sbv.set)
-
-        nuke_sbh = Scrollbar(
-            nuke_table, 
-            orient='horizontal', 
-            command=self.nuke_canvas.xview)
-        self.nuke_canvas.config(xscrollcommand=nuke_sbh.set)
-
         minx = self.tabbook_x/self.SCREEN_SIZE[0]
         miny = self.tabbook_y/self.SCREEN_SIZE[1]
 
@@ -153,6 +137,21 @@ class Main(Frame):
         self.top_pic_button = ButtonBigPic(
             self.right_panel.store['images'],
             command=self.open_person_gallery)
+
+        nuke_table = Frame(persons_tab)
+        # nuke_table.columnconfigure(0, weight=1)
+        # nuke_table.rowconfigure(0, weight=1)
+        self.nuke_canvas = Canvas(nuke_table)
+        self.nuke_window = Frame(self.nuke_canvas)
+        self.nuke_canvas.create_window(0, 0, anchor="nw", window=self.nuke_window)
+        nuke_sbv = Scrollbar(
+            nuke_table, command=self.nuke_canvas.yview, hideable=True)
+        self.nuke_canvas.config(yscrollcommand=nuke_sbv.set)
+        nuke_sbh = Scrollbar(
+            nuke_table, orient='horizontal', 
+            command=self.nuke_canvas.xview, hideable=True)
+        self.nuke_canvas.config(xscrollcommand=nuke_sbh.set)
+
         self.findings_table = EventsTable(
             persons_tab, self.root, self.treebard, self)
 
@@ -243,12 +242,12 @@ class Main(Frame):
 
         # children of persons_tab
         nuke_table.grid(column=0, row=0, sticky="news", padx=12, pady=12)
-        self.right_panel.grid(column=1, row=0, sticky='w', padx=12, pady=12)
+        self.right_panel.grid(column=1, row=0, sticky='e', padx=12, pady=12)
         self.findings_table.grid(
             column=0, row=1, columnspan=2, padx=12, pady=12)
 
         # children of nuke_table
-        persons_tab.columnconfigure(0, weight=1)
+        persons_tab.columnconfigure(1, weight=1)
         self.nuke_canvas.grid(column=0, row=0, sticky="news")
         nuke_sbv.grid(column=1, row=0, sticky="ns")
         nuke_sbh.grid(column=0, row=1, sticky="ew")
@@ -493,39 +492,52 @@ class Main(Frame):
         make_rc_menus(rcm_widgets, self.rc_menu, main_help_msg) 
 
     def make_nuke_frames(self):
-        self.nuke_window.columnconfigure(0, weight=1)  
-        self.parentslab = LabelFrame(
-            self.nuke_window, text="Parents of the Current Person")
-        self.parentslab.grid(column=0, row=0, sticky="w")
-        self.malab = Label(self.parentslab, text="Mother")
-        self.malab.grid(column=0, row=0, sticky="w", padx=(12,0))
-        self.ma_input = EntryAutoHilited(
-            self.parentslab, width=30, autofill=True, 
+        self.pardlabs = []
+        parentslab = LabelFrame(self.nuke_window) 
+        labelwidget = LabelH3(parentslab, text="Parents of the Current Person")
+        self.pardlabs.append(labelwidget)
+        parentslab.config(labelwidget=labelwidget)
+        parentslab.grid(column=0, row=0, sticky="w")
+        malab = Label(parentslab, text="Mother")
+        malab.grid(column=0, row=0, sticky="w", padx=(12,0), pady=(6,12))
+        self.ma_input = EntryAuto(
+            parentslab, width=30, autofill=True, 
             values=self.person_autofill_values)
         self.ma_input.grid(column=1, row=0, pady=(6,12), padx=(6,0))
-        self.palab = Label(self.parentslab, text="Father")
-        self.palab.grid(column=2, row=0, sticky="w", padx=(18,0))
-        self.pa_input = EntryAutoHilited(
-            self.parentslab, width=30, autofill=True, 
+        palab = Label(parentslab, text="Father")
+        palab.grid(column=2, row=0, sticky="w", padx=(18,0), pady=(6,12))
+        self.pa_input = EntryAuto(
+            parentslab, width=30, autofill=True, 
             values=self.person_autofill_values)
         self.pa_input.grid(column=3, row=0, pady=(6,12), padx=(6,12))
 
     def fix_buttons(self):
+        
         if self.newkinvar.get() == 100:
             self.childmaker.config(state="disabled")
             self.pardmaker.config(state="normal")
+            if len(self.pardrads) == 0:
+                self.kinradnew.config(state="normal")
+        elif self.newkinvar.get() == 999:
+            self.pardmaker.config(state="normal")
+            self.childmaker.config(state="normal")
+            if len(self.pardrads) == 0:
+                self.kinradnew.config(state="disabled")
         else:
             self.pardmaker.config(state="disabled")
-            self.childmaker.config(state="normal") 
+            self.childmaker.config(state="normal")
+            if len(self.pardrads) == 0:
+                self.kinradnew.config(state="normal") 
 
-    def make_new_kin_inputs(self): 
+    def make_new_kin_inputs(self):
         new_kin_frame = Frame(self.nuke_window)
         new_kin_frame.grid(column=0, row=self.last_row, sticky="ew")
-        kinradnew = Radiobutton(
-            new_kin_frame, variable=self.newkinvar, 
-            value=100, anchor="w", command=self.fix_buttons)
-        kinradnew.grid(column=0, row=0)
-        kinradnew.select()
+        self.kinradnew = Radiobutton(
+            new_kin_frame, variable=self.newkinvar,
+            value=100, anchor="w", 
+            command=self.fix_buttons
+)
+        self.kinradnew.grid(column=0, row=0)
         new_kin_input = EntryAutoHilited(
             new_kin_frame, width=48, 
             autofill=True, values=self.person_autofill_values)
@@ -540,7 +552,6 @@ class Main(Frame):
             text="ADD CHILD", width=12, 
             command=self.make_new_child)
         self.childmaker.grid(column=3, row=0, padx=(6,0), pady=(12,0))
-        self.fix_buttons()
         
     def make_new_partner(self):
         print("howdy pardner")
@@ -548,18 +559,28 @@ class Main(Frame):
     def make_new_child(self):
         print("hey kid")
 
-    def make_nuke_inputs(self):
+    def make_nuke_inputs(self, current_person=None):
+        if current_person:
+            self.current_person = current_person
         self.make_nuke_frames()
         self.make_nuke_dict()
         self.populate_nuke_tables()
         self.make_new_kin_inputs()
         self.update_idletasks()
-        wd = self.nuke_window.winfo_reqwidth()
+        wd = self.nuke_window.winfo_reqwidth()+12
         ht = self.right_panel.winfo_reqheight()
-        self.nuke_canvas.config(
-            scrollregion=(0, 0, wd, ht))
+        
+        self.nuke_canvas.config(width=wd, height=ht)        
+        self.nuke_canvas.config(scrollregion=(0, 0, wd, ht))
+        if len(self.child_details) != 0:
+            self.newkinvar.set(100)
+        else:
+            # set to non-existent value so no Radiobutton will be selected
+            self.newkinvar.set(999)
+        self.fix_buttons()
 
     def populate_nuke_tables(self):
+        formats = make_formats_dict()
         lst = [self.ma_name, self.pa_name]
         for name in lst:
             if name == "name unknown":
@@ -567,19 +588,22 @@ class Main(Frame):
                 lst[idx] = ""
         self.ma_input.insert(0, lst[0])
         self.pa_input.insert(0, lst[1])
+        self.pardrads = []
         n = 1
         for brood in self.child_details:
             name, ma_pa = brood[0]
-            ma_pa = "{} of children:".format(ma_pa)
+            ma_pa = "Children's {}:".format(ma_pa)
             pardframe = Frame(self.nuke_window)
             pardframe.grid(column=0, row=n, sticky="ew")
             pardrad = Radiobutton(
                 pardframe, variable=self.newkinvar, 
                 value=n, anchor="w", command=self.fix_buttons)
+            self.pardrads.append(pardrad)
             pardrad.grid(column=0, row=n)
-            pardlab = Label(pardframe, text=ma_pa, anchor="w")
+            pardlab = LabelH3(pardframe, text=ma_pa, anchor="w")
+            self.pardlabs.append(pardlab)
             pardlab.grid(column=1, row=n)
-            pardent = EntryAutoHilited(
+            pardent = EntryAuto(
                 pardframe, width=48, autofill=True, 
                 values=self.person_autofill_values)
             pardent.insert(0, name)
@@ -596,40 +620,59 @@ class Main(Frame):
                     elif c == 1:
                         text = dkt["name"]
                         ent = EntryAuto(
-                            brood_frame, width=36, autofill=True, 
+                            brood_frame, width=0, autofill=True, 
                             values=self.person_autofill_values)
+                        if len(text) > self.findings_table.kin_widths[c]:
+                            self.findings_table.kin_widths[c] = len(text)
                         ent.insert(0, text)
-                        ent.grid(column=c, row=r)
+                        ent.grid(column=c, row=r, sticky="w")
                     elif c == 2:
                         text = dkt["gender"]
-                        ent = EntryAuto(brood_frame, width=9)
+                        ent = EntryAuto(brood_frame, width=0)
+                        if len(text) > self.findings_table.kin_widths[c]:
+                            self.findings_table.kin_widths[c] = len(text)
                         ent.insert(0, text)
-                        ent.grid(column=c, row=r)
+                        ent.grid(column=c, row=r, sticky="w")
                     elif c == 3:
                         text = dkt["birth"]
-                        ent = EntryAuto(brood_frame)
+                        ent = EntryAuto(brood_frame, width=0)
+                        if len(text) > self.findings_table.kin_widths[c]:
+                            self.findings_table.kin_widths[c] = len(text)
                         ent.insert(0, text)
-                        ent.grid(column=c, row=r)
+                        ent.grid(column=c, row=r, sticky="w")
                     elif c == 4:
-                        lab = LabelEntry(brood_frame, text="to")
-                        lab.grid(column=c, row=r, padx=(0,12))
+                        text = "to"
+                        if len(text) > self.findings_table.kin_widths[c]:
+                            self.findings_table.kin_widths[c] = len(text)
+                        lab = LabelEntry(brood_frame, text=text, anchor="w")
+                        lab.grid(column=c, row=r, sticky="w")
                     elif c == 5:
                         text = dkt["death"]
-                        ent = EntryAuto(brood_frame)
+                        ent = EntryAuto(brood_frame, width=0)
+                        if len(text) > self.findings_table.kin_widths[c]:
+                            self.findings_table.kin_widths[c] = len(text)
                         ent.insert(0, text)
-                        ent.grid(column=c, row=r)            
+                        ent.grid(column=c, row=r, sticky="w") 
                     c += 1
                 r += 1
             n += 2
         self.last_row = n
 
-
-
-    
-
-# line 650 self.child_details: [[['Harmony Maryland Hobgood (stage name)', 'Mother'], [{'gender': 'male', 'birth': '-1920---------', 'sorter': [1920, 0, 0], 'death': '-0000-00-00-------', 'name': 'Ross Aldo Marquis (stage name)'}]], [['Selina Savoy', 'Mother'], [{'gender': 'unknown', 'birth': '-1915-au-1-------', 'sorter': [1915, 8, 1], 'death': '-0000-00-00-------', 'name': 'Albertha Siu Sobel'}, {'gender': 'male', 'birth': '-1921-ap-14-------', 'sorter': [1921, 4, 14], 'death': '-0000-00-00-------', 'name': 'Clarence Bracken'}, {'gender': 'female', 'birth': '-1922-ja-18-------', 'sorter': [1922, 1, 18], 'death': '-0000-00-00-------', 'name': 'Moira Harding'}, {'gender': 'male', 'birth': '-1927-au-6-------', 'sorter': [1927, 8, 6], 'death': '-0000-00-00-------', 'name': 'Noe Whitton'}, {'gender': 'male', 'birth': '-1929-s-30-------', 'sorter': [1929, 9, 30], 'death': '-0000-00-00-------', 'name': "Joe-John O'Keefe"}]]]
-
-     
+        top_row = brood_frame.grid_slaves(row=0)
+        top_row.reverse()
+        top_row_values = []
+        for widg in top_row[1:]:
+            if widg.winfo_class() == 'Entry':
+                top_row_values.append(widg.get())
+            else:
+                top_row_values.append(widg.cget("text"))
+        z = 1
+        for widg in top_row[1:]:
+            widg.config(width=self.findings_table.kin_widths[z] + 2)
+            z += 1
+        # don't know why config_generic isn't enough here
+        for widg in self.pardlabs:
+            widg.config(font=formats["heading3"])
 
     def make_nuke_dict(self):
         mother = ""
@@ -793,9 +836,10 @@ class Main(Frame):
                 text="Current Person (ID): {} ({})".format(
                     self.current_person_name, self.current_person))
         self.findings_table.current_person = self.current_person
-        self.findings_table.redraw(current_person=self.current_person)
+        self.findings_table.kin_widths = [0, 0, 0, 0, 0]
+        self.findings_table.redraw()
         self.att.current_person = self.current_person
-        self.att.redraw(current_person=self.current_person)
+        self.att.redraw()
         self.person_entry.delete(0, 'end')
         current_file, current_dir = get_current_file()
         self.show_top_pic(current_file, current_dir, self.current_person)
