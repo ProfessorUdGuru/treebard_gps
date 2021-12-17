@@ -825,8 +825,8 @@ class ButtonBigPic(Buttonx):
         self.config(
             bd=0, 
             relief="flat",
-            bg=self.formats['highlight_bg'],  
-            fg=self.formats['bg'],
+            bg=self.formats['bg'],  
+            fg=self.formats['highlight_bg'],
             cursor='hand2')
         self.bind('<FocusIn>', self.highlight)
         self.bind('<FocusOut>', self.unhighlight)

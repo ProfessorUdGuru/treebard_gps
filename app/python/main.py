@@ -1,5 +1,19 @@
 # main.py
 
+'''
+    Dev Terminology:
+    "brood": the children of a specific biological mother and father, without
+        regard for whether or not the two people are married to each other. 
+    "nuke": nuclear family, from the perspective of the current person only, so
+        this includes his two biological parents, a person with whom he/she has
+        bred, and the brood of that coupling. Don't use words like "spouse", 
+        which assume that a brood's parents are married to each other. Treebard
+        has kin types and there may come a time (reports?) where it will be
+        appropriate to use kin types which the user specifies, such as
+        "spouse", "fiancee", etc.
+    
+'''
+
 import tkinter as tk
 import sqlite3
 from PIL import Image, ImageTk
@@ -69,13 +83,17 @@ class Main(Frame):
 
         self.date_prefs = get_date_formats(tree_is_open=1)
         self.newkinvar = tk.IntVar()
+        self.current_person_ma = []
+        self.current_person_pa = []
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
+        all_names = make_all_names_list_for_person_select()
+        self.person_autofill_values = EntryAutoHilited.create_lists(all_names)
         self.make_widgets()
-
         self.get_current_values()
-        self.make_nuke_inputs()
+
+        self.make_nuke_inputs()        
 
     def make_scrollbars(self):
 
@@ -139,8 +157,6 @@ class Main(Frame):
             command=self.open_person_gallery)
 
         nuke_table = Frame(persons_tab)
-        # nuke_table.columnconfigure(0, weight=1)
-        # nuke_table.rowconfigure(0, weight=1)
         self.nuke_canvas = Canvas(nuke_table)
         self.nuke_window = Frame(self.nuke_canvas)
         self.nuke_canvas.create_window(0, 0, anchor="nw", window=self.nuke_window)
@@ -277,6 +293,13 @@ class Main(Frame):
         self.right_panel.store['images'].columnconfigure(0, weight=1)
         self.right_panel.store['images'].rowconfigure(0, weight=1)
         self.top_pic_button.grid(column=0, row=0, sticky='news', padx=3, pady=3)
+
+        # Force everything to format on load the same as on calling redraw().
+        #   This is a confusion workaround hack. (Couldn't find the 
+        #   formatting glitch in a reasonable amount of time--uncomment this 
+        #   and look at the child row columns in multi-brood current person 
+        #   on load--or run this and don't worry about it).
+        # self.findings_table.redraw()
 
         visited = (
             (self.person_entry,
@@ -502,14 +525,18 @@ class Main(Frame):
         malab.grid(column=0, row=0, sticky="w", padx=(12,0), pady=(6,12))
         self.ma_input = EntryAuto(
             parentslab, width=30, autofill=True, 
-            values=self.person_autofill_values)
+            values=self.person_autofill_values, name="ma")
+        self.current_person_ma.append(self.ma_input)
         self.ma_input.grid(column=1, row=0, pady=(6,12), padx=(6,0))
         palab = Label(parentslab, text="Father")
         palab.grid(column=2, row=0, sticky="w", padx=(18,0), pady=(6,12))
         self.pa_input = EntryAuto(
             parentslab, width=30, autofill=True, 
-            values=self.person_autofill_values)
+            values=self.person_autofill_values, name="pa")
+        self.current_person_pa.append(self.pa_input)
         self.pa_input.grid(column=3, row=0, pady=(6,12), padx=(6,12))
+        self.nuke_inputs.append(self.ma_input)
+        self.nuke_inputs.append(self.pa_input)
 
     def fix_buttons(self):
         
@@ -535,12 +562,12 @@ class Main(Frame):
         self.kinradnew = Radiobutton(
             new_kin_frame, variable=self.newkinvar,
             value=100, anchor="w", 
-            command=self.fix_buttons
-)
+            command=self.fix_buttons)
         self.kinradnew.grid(column=0, row=0)
         new_kin_input = EntryAutoHilited(
             new_kin_frame, width=48, 
-            autofill=True, values=self.person_autofill_values)
+            autofill=True, 
+            values=self.person_autofill_values)
         new_kin_input.grid(column=1, row=0)
         self.pardmaker = Button(
             new_kin_frame, 
@@ -559,19 +586,61 @@ class Main(Frame):
     def make_new_child(self):
         print("hey kid")
 
+    def bind_inputs(self):
+        for widg in self.nuke_inputs:
+            widg.bind("<FocusIn>", self.get_original, add="+")
+            widg.bind("<FocusOut>", self.get_final, add="+")
+
+    def get_original(self, evt):
+        self.original = evt.widget.get()
+
+    def get_final(self, evt):
+        widg = evt.widget
+        self.final = widg.get()
+        if self.final == self.original: return
+        col = widg.grid_info()["column"]
+        widg_name = widg.winfo_name()
+        if widg_name in ("ma", "pa"):
+            if col == 1:
+                print("line", looky(seeline()).lineno, "self.final:", self.final)
+            elif col == 3:
+                print("line", looky(seeline()).lineno, "self.final:", self.final)
+        elif widg_name.startswith("pard"):
+            if col == 2:
+                print("line", looky(seeline()).lineno, "self.final:", self.final)
+            else:
+                print(
+                    "line", 
+                    looky(seeline()).lineno, "case not handled for col", col)
+        else:
+            if col == 1:
+                print("line", looky(seeline()).lineno, "self.final:", self.final)
+            elif col == 2:
+                print("line", looky(seeline()).lineno, "self.final:", self.final)
+            elif col == 3:
+                print("line", looky(seeline()).lineno, "self.final:", self.final)
+            elif col == 5:
+                print("line", looky(seeline()).lineno, "self.final:", self.final)
+            else:
+                print("line", looky(seeline()).lineno, "case not handled:")        
+
     def make_nuke_inputs(self, current_person=None):
+        self.nuke_inputs = []
         if current_person:
             self.current_person = current_person
         self.make_nuke_frames()
         self.make_nuke_dict()
         self.populate_nuke_tables()
+        self.bind_inputs()
         self.make_new_kin_inputs()
         self.update_idletasks()
-        wd = self.nuke_window.winfo_reqwidth()+12
+        wd = self.nuke_window.winfo_reqwidth() + 12
         ht = self.right_panel.winfo_reqheight()
-        
-        self.nuke_canvas.config(width=wd, height=ht)        
-        self.nuke_canvas.config(scrollregion=(0, 0, wd, ht))
+        # The +72 is a hack only needed when a broodless current person
+        #   precedes a brooded one. Don't know what causes the new brooded
+        #   person to get prior reqheight but this fixed it for now.
+        self.nuke_canvas.config(width=wd, height=ht+72)        
+        self.nuke_canvas.config(scrollregion=(0, 0, wd, ht+72))
         if len(self.child_details) != 0:
             self.newkinvar.set(100)
         else:
@@ -591,8 +660,9 @@ class Main(Frame):
         self.pardrads = []
         n = 1
         for brood in self.child_details:
-            name, ma_pa = brood[0]
+            name, ma_pa, pard_id = brood[0] # other_parent id is index 2
             ma_pa = "Children's {}:".format(ma_pa)
+            pard = "pard_{}_{}".format(pard_id, n)
             pardframe = Frame(self.nuke_window)
             pardframe.grid(column=0, row=n, sticky="ew")
             pardrad = Radiobutton(
@@ -605,9 +675,11 @@ class Main(Frame):
             pardlab.grid(column=1, row=n)
             pardent = EntryAuto(
                 pardframe, width=48, autofill=True, 
-                values=self.person_autofill_values)
+                values=self.person_autofill_values, name=pard)
             pardent.insert(0, name)
             pardent.grid(column=2, row=n)
+            brood[0].append(pardent)
+            self.nuke_inputs.append(pardent)
             brood_frame = Frame(self.nuke_window)
             brood_frame.grid(column=0, row=n+1) 
             r = 0
@@ -626,6 +698,8 @@ class Main(Frame):
                             self.findings_table.kin_widths[c] = len(text)
                         ent.insert(0, text)
                         ent.grid(column=c, row=r, sticky="w")
+                        self.nuke_inputs.append(ent)
+                        dkt["name_widg"] = ent
                     elif c == 2:
                         text = dkt["gender"]
                         ent = EntryAuto(brood_frame, width=0)
@@ -633,6 +707,8 @@ class Main(Frame):
                             self.findings_table.kin_widths[c] = len(text)
                         ent.insert(0, text)
                         ent.grid(column=c, row=r, sticky="w")
+                        self.nuke_inputs.append(ent)
+                        dkt["gender_widg"] = ent
                     elif c == 3:
                         text = dkt["birth"]
                         ent = EntryAuto(brood_frame, width=0)
@@ -640,6 +716,8 @@ class Main(Frame):
                             self.findings_table.kin_widths[c] = len(text)
                         ent.insert(0, text)
                         ent.grid(column=c, row=r, sticky="w")
+                        self.nuke_inputs.append(ent)
+                        dkt["birth_widg"] = ent
                     elif c == 4:
                         text = "to"
                         if len(text) > self.findings_table.kin_widths[c]:
@@ -652,24 +730,26 @@ class Main(Frame):
                         if len(text) > self.findings_table.kin_widths[c]:
                             self.findings_table.kin_widths[c] = len(text)
                         ent.insert(0, text)
-                        ent.grid(column=c, row=r, sticky="w") 
+                        ent.grid(column=c, row=r, sticky="w")
+                        self.nuke_inputs.append(ent)
+                        dkt["death_widg"] = ent 
                     c += 1
                 r += 1
+            top_row = brood_frame.grid_slaves(row=0)
+            top_row.reverse()
+            top_row_values = []
+            for widg in top_row[1:]:
+                if widg.winfo_class() == 'Entry':
+                    top_row_values.append(widg.get())
+                else:
+                    top_row_values.append(widg.cget("text"))
+            z = 1
+            for widg in top_row[1:]:
+                widg.config(width=self.findings_table.kin_widths[z] + 2)
+                z += 1
             n += 2
         self.last_row = n
 
-        top_row = brood_frame.grid_slaves(row=0)
-        top_row.reverse()
-        top_row_values = []
-        for widg in top_row[1:]:
-            if widg.winfo_class() == 'Entry':
-                top_row_values.append(widg.get())
-            else:
-                top_row_values.append(widg.cget("text"))
-        z = 1
-        for widg in top_row[1:]:
-            widg.config(width=self.findings_table.kin_widths[z] + 2)
-            z += 1
         # don't know why config_generic isn't enough here
         for widg in self.pardlabs:
             widg.config(font=formats["heading3"])
@@ -728,11 +808,14 @@ class Main(Frame):
             self.make_brood(other_parent, birth_details, brood, cur)
             partner_name = get_any_name_with_id(other_parent)
             brood[0][0] = partner_name
+            brood[0].append(other_parent)
         self.ma_name = get_any_name_with_id(mother)
+        self.current_person_ma.extend([self.ma_name, mother])
         self.pa_name = get_any_name_with_id(father) 
+        self.current_person_pa.extend([self.pa_name, father])
         for brood in self.child_details:
             brood[1] = sorted(brood[1], key=lambda i: i["sorter"])
-
+        self.child_details = sorted(self.child_details, key=lambda j: j[1][0]["sorter"])
         cur.close()
         conn.close()
 
@@ -784,11 +867,11 @@ class Main(Frame):
                 brood[1][d]["sorter"] = sorter
                 brood[1][d]["death"] = death_date
                 brood[1][d]["name"] = name
+                brood[1][d]["id"] = born_id
           
             d += 1
 
     def get_current_values(self):
-        all_names = make_all_names_list_for_person_select()
         self.current_person_name = get_any_name_with_id(self.current_person)
         if type(self.current_person_name) is tuple:
             use_name = list(self.current_person_name)
@@ -796,8 +879,6 @@ class Main(Frame):
         self.current_person_label.config(
             text="Current Person (ID): {} ({})".format(
                 self.current_person_name, self.current_person))
-        self.person_autofill_values = EntryAutoHilited.create_lists(
-            all_names)
         self.person_entry.values = self.person_autofill_values
         self.person_entry.focus_force()
 

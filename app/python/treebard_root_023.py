@@ -154,14 +154,13 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# set column width based on widest content in column, individually per brood see James12
-# error line 669 # brood_frame doesn't exist if no children...............
-# something keeps setting current person in db to null
-# Sort all children of all families of current person and put the oldest children in the top table. Do not rely on marriage date since there might not be one.
+# opening default color on alternate openings when using File > Close > Exit menu commands
+# when clicking into an autofill and tabbing on from there, it highlights as expected, but when tabbing into an autofill from the picture, none of them highlight so you can't tell what's in focus. More importantly than highlighting, the insert cursor isn't visible either unless you click into the entry. UPDATE: ACTUALLY THE PROBLEM ISN'T AS STATED ABOVE. The problem is that you tab through the widgets once and they register everything but don't show that they're focused. Then you tab through them all again and they work right. Both times they get their events so it's not a matter of a double set of widgets with one on top of the other, because the widget count is 28 which is one set and if they were gripped atop each other, only the top widgets would get events. The problem is solved by commenting `self.findings_table.redraw()` line 300 main.py which brings back the problem described in the comment there. Using CTRL+S to redraw manually does not cause the problem described there so will do that for now.
 # new kin person Input will be parsed to use existing person if # and create new person if not. make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner. It is also possible to add someone with a name that already exists in the table, just not an id
 # make it possible to change name, gender or date here & save in db; make it possible to unlink a person from the family by deleting their name from the table
 # give james a 3rd brood to see if the vert sb appears, wait till it can be done in the gui
 # Add to after death event types in default, default_untouched, and sample db's: autopsy, inquest.
+# something keeps setting current person in db to null, maybe when starting to open app but cancel w/out going past opening dialog
 # see `if length == 2` in get_any_name_with_id() in names.py: this was just added and before that a similar process was done repeatedly in various places such as current_person display, wherever a name might need to be shown. Everything still works but this procedure should be deleted from where it's no longer needed since it's been added to get_any_name_with_id()
 # getting this error sometimes when changing current person eg input `#1`:
 # Exception in Tkinter callback
@@ -173,6 +172,7 @@ if __name__ == '__main__':
   # File "D:\treebard_gps\app\python\autofill.py", line 66, in do_it
     # self.show_hits(hits, self.pos)
 # AttributeError: 'EntryAutoHilited' object has no attribute 'pos'
+# put padding around attributes table
 # statustips rcm
 
 # BRANCH: names_images

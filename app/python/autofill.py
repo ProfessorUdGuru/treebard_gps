@@ -37,6 +37,13 @@ class EntryAuto(EntryUnhilited):
         self.master = master
         self.autofill = autofill
         self.values = values
+
+        self.config(
+            bg=formats['bg'], 
+            fg=formats['fg'], 
+            font=formats['input_font'], 
+            insertbackground=formats['fg'])
+
         if autofill is True:
             self.bind("<KeyPress>", self.detect_pressed)
             self.bind("<KeyRelease>", self.get_typed)

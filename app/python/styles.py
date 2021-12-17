@@ -423,7 +423,7 @@ def config_generic(parent):
 
     def config_button_bigpic(widg):
         widg.formats = formats
-        widg.config(bg=formats['highlight_bg'], fg=formats['bg'])
+        widg.config(bg=formats['bg'], fg=formats['highlight_bg'])
 
     def config_border(widg):
         widg.formats = formats
