@@ -624,6 +624,34 @@ select_findings_persons_age = '''
         AND finding_id = ?
 '''
 
+select_findings_persons_id_kin_type1 = '''
+    SELECT findings_persons_id
+    FROM findings_persons
+    WHERE finding_id = ?
+'''
+
+select_findings_persons_id_kin_type2 = '''
+    SELECT findings_persons_id
+    FROM findings_persons
+    WHERE finding_id = ?
+'''
+
+# select_findings_persons_id_kin_type1 = '''
+    # SELECT findings_persons_id
+    # FROM findings_persons
+    # WHERE finding_id = ?
+        # AND person_id1 = ? 
+        # AND kin_type_id1 = ?
+# '''
+
+# select_findings_persons_id_kin_type2 = '''
+    # SELECT findings_persons_id
+    # FROM findings_persons
+    # WHERE finding_id = ?
+        # AND person_id2 = ? 
+        # AND kin_type_id2 = ?
+# '''
+
 select_findings_persons_ma_id1 = '''
     SELECT person_id1
     FROM findings_persons
@@ -1196,6 +1224,13 @@ update_finding_places = '''
     WHERE finding_id = ?
 '''.format(','.join(['?'] * 9))
 
+update_finding_places_new_event = '''
+    UPDATE finding_places
+    SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8) =
+        ({})
+    WHERE finding_id = ?
+'''.format(','.join(['?'] * 9))
+
 update_finding_places_null = '''
     UPDATE finding_places
     SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
@@ -1228,6 +1263,30 @@ update_findings_persons_2 = '''
     WHERE finding_id = ?
 '''
 
+update_findings_persons_by_id1 = '''
+    UPDATE findings_persons
+    SET (person_id1, age1) = (?, "")
+    WHERE findings_persons_id = ?
+'''
+
+update_findings_persons_by_id2 = '''
+    UPDATE findings_persons
+    SET (person_id2, age2) = (?, "")
+    WHERE findings_persons_id = ?
+'''
+
+update_findings_persons_by_id1_unlink = '''
+    UPDATE findings_persons
+    SET (person_id1, age1) = (?, '')
+    WHERE findings_persons_id = ?
+'''
+
+update_findings_persons_by_id2_unlink = '''
+    UPDATE findings_persons
+    SET (person_id2, age2) = (?, '')
+    WHERE findings_persons_id = ?
+'''
+
 update_findings_persons_1_2 = '''
     UPDATE findings_persons
     SET (person_id1, person_id2) = (?, ?)
@@ -1247,13 +1306,6 @@ update_findings_persons_age2 = '''
     WHERE finding_id = ?
         AND person_id2 = ?
 '''
-
-update_finding_places_new_event = '''
-    UPDATE finding_places
-    SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8) =
-        ({})
-    WHERE finding_id = ?
-'''.format(','.join(['?'] * 9))
 
 update_findings_roles_person = '''
     UPDATE findings_roles 

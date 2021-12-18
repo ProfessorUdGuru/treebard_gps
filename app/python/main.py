@@ -47,6 +47,9 @@ from query_strings import (
     select_findings_persons_partner2, select_person_id_gender,
     select_person_id_finding, select_date_finding, select_finding_event_type,
     select_finding_id_death, select_finding_death_date, 
+    select_findings_persons_id_kin_type1, select_findings_persons_id_kin_type2,
+    update_findings_persons_by_id1, update_findings_persons_by_id2,
+    update_findings_persons_by_id1_unlink, update_findings_persons_by_id2_unlink,
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -83,8 +86,7 @@ class Main(Frame):
 
         self.date_prefs = get_date_formats(tree_is_open=1)
         self.newkinvar = tk.IntVar()
-        self.current_person_ma = []
-        self.current_person_pa = []
+        self.current_person_parents = [{},{}]
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
@@ -526,14 +528,12 @@ class Main(Frame):
         self.ma_input = EntryAuto(
             parentslab, width=30, autofill=True, 
             values=self.person_autofill_values, name="ma")
-        self.current_person_ma.append(self.ma_input)
         self.ma_input.grid(column=1, row=0, pady=(6,12), padx=(6,0))
         palab = Label(parentslab, text="Father")
         palab.grid(column=2, row=0, sticky="w", padx=(18,0), pady=(6,12))
         self.pa_input = EntryAuto(
             parentslab, width=30, autofill=True, 
             values=self.person_autofill_values, name="pa")
-        self.current_person_pa.append(self.pa_input)
         self.pa_input.grid(column=3, row=0, pady=(6,12), padx=(6,12))
         self.nuke_inputs.append(self.ma_input)
         self.nuke_inputs.append(self.pa_input)
@@ -572,18 +572,18 @@ class Main(Frame):
         self.pardmaker = Button(
             new_kin_frame, 
             text="ADD PARTNER", width=12, 
-            command=self.make_new_partner)
+            command=self.edit_partner)
         self.pardmaker.grid(column=2, row=0, padx=(6,0), pady=(12,0))
         self.childmaker = Button(
             new_kin_frame, 
             text="ADD CHILD", width=12, 
-            command=self.make_new_child)
+            command=self.edit_child)
         self.childmaker.grid(column=3, row=0, padx=(6,0), pady=(12,0))
         
-    def make_new_partner(self):
+    def edit_partner(self):
         print("howdy pardner")
 
-    def make_new_child(self):
+    def edit_child(self):
         print("hey kid")
 
     def bind_inputs(self):
@@ -594,24 +594,87 @@ class Main(Frame):
     def get_original(self, evt):
         self.original = evt.widget.get()
 
+    def edit_parent(self, final, widg):
+        unlink = False
+        if "#" in final:
+            split = final.split("#")
+            new_ma_name, new_ma_id = split
+        elif len(final) == 0:
+            new_ma_id = None
+            new_ma_name = ""
+            unlink = True
+        else:
+            new_ma_id = open_new_person_dialog(
+                self, widg, self.root, self.treebard)
+            new_ma_name = final            
+        return new_ma_id, new_ma_name, unlink
+
+    def update_mother(self, final, conn, cur, widg):
+        new_ma_id, new_ma_name, unlink = self.edit_parent(final, widg)
+        birth_id = self.current_person_parents[0][1]
+        old_ma_id = self.current_person_parents[1]["id"]
+        birth_fpid = self.current_person_parents[0][0]
+        if self.birth_record[3] == 1:
+            which = 1
+        elif self.birth_record[5] == 1:
+            which = 2  
+        if unlink is False:
+            if which == 1:
+                query = update_findings_persons_by_id1
+            elif which == 2:
+                query = update_findings_persons_by_id2 
+        elif unlink is True:
+            if which == 1:
+                query = update_findings_persons_by_id1_unlink
+            elif which == 2:
+                query = update_findings_persons_by_id2_unlink
+        cur.execute(query, (new_ma_id, birth_fpid))
+        conn.commit()
+
+    def update_father(self, final, conn, cur, widg):
+        new_pa_id, new_pa_name, unlink = self.edit_parent(final, widg)
+        birth_id = self.current_person_parents[0][1]
+        old_pa_id = self.current_person_parents[2]["id"]
+        birth_fpid = self.current_person_parents[0][0]
+        if self.birth_record[3] == 2:
+            which = 1
+        elif self.birth_record[5] == 2:
+            which = 2  
+        if unlink is False:
+            if which == 1:
+                query = update_findings_persons_by_id1
+            elif which == 2:
+                query = update_findings_persons_by_id2 
+        elif unlink is True:
+            if which == 1:
+                query = update_findings_persons_by_id1_unlink
+            elif which == 2:
+                query = update_findings_persons_by_id2_unlink
+        cur.execute(query, (new_pa_id, birth_fpid))
+        conn.commit()
+
     def get_final(self, evt):
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
         widg = evt.widget
         self.final = widg.get()
         if self.final == self.original: return
         col = widg.grid_info()["column"]
         widg_name = widg.winfo_name()
-        if widg_name in ("ma", "pa"):
-            if col == 1:
-                print("line", looky(seeline()).lineno, "self.final:", self.final)
-            elif col == 3:
-                print("line", looky(seeline()).lineno, "self.final:", self.final)
+        if widg_name == "ma":
+            self.update_mother(self.final, conn, cur, widg)
+        elif widg_name == "pa":
+            self.update_father(self.final, conn, cur, widg)
         elif widg_name.startswith("pard"):
             if col == 2:
                 print("line", looky(seeline()).lineno, "self.final:", self.final)
             else:
                 print(
                     "line", 
-                    looky(seeline()).lineno, "case not handled for col", col)
+                    looky(seeline()).lineno, 
+                    "case not handled for col", col)
         else:
             if col == 1:
                 print("line", looky(seeline()).lineno, "self.final:", self.final)
@@ -622,14 +685,17 @@ class Main(Frame):
             elif col == 5:
                 print("line", looky(seeline()).lineno, "self.final:", self.final)
             else:
-                print("line", looky(seeline()).lineno, "case not handled:")        
+                print("line", looky(seeline()).lineno, "case not handled:")    
+
+        cur.close()
+        conn.close()
 
     def make_nuke_inputs(self, current_person=None):
         self.nuke_inputs = []
         if current_person:
             self.current_person = current_person
         self.make_nuke_frames()
-        self.make_nuke_dict()
+        self.make_nuke_dicts()
         self.populate_nuke_tables()
         self.bind_inputs()
         self.make_new_kin_inputs()
@@ -650,7 +716,9 @@ class Main(Frame):
 
     def populate_nuke_tables(self):
         formats = make_formats_dict()
-        lst = [self.ma_name, self.pa_name]
+        lst = [
+            self.current_person_parents[1]["name"], 
+            self.current_person_parents[2]["name"]]
         for name in lst:
             if name == "name unknown":
                 idx = lst.index(name)
@@ -754,34 +822,43 @@ class Main(Frame):
         for widg in self.pardlabs:
             widg.config(font=formats["heading3"])
 
-    def make_nuke_dict(self):
-        mother = ""
-        father = ""
+    def make_parents_dict(self):
+        birth_fpid, birth_id = self.birth_record[0:2]
+        parent1 = self.birth_record[2:4]
+        parent2 = self.birth_record[4:]
+        if parent1[1] == 1:
+            ma_id = parent1[0]
+            pa_id = parent2[0]
+        elif parent1[1] == 2:
+            ma_id = parent2[0]
+            pa_id = parent1[0]
+        self.current_person_parents.insert(0, (self.birth_record[0:2]))
+        ma_name = get_any_name_with_id(ma_id)
+        pa_name = get_any_name_with_id(pa_id)
+
+        self.current_person_parents[1]["id"] = ma_id
+        self.current_person_parents[2]["id"] = pa_id
+        self.current_person_parents[1]["name"] = ma_name
+        self.current_person_parents[2]["name"] = pa_name
+        self.current_person_parents[1]["widget"] = self.ma_input
+        self.current_person_parents[2]["widget"] = self.pa_input
+
+    def make_nuke_dicts(self):
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_finding_id_birth, (self.current_person,))
         birth_id = cur.fetchone()
+        print("line", looky(seeline()).lineno, "birth_id:", birth_id)
         if birth_id:
-            birth_id = birth_id[0] 
-            cur.execute(select_findings_persons_ma_id1, (birth_id,))
-            mother = cur.fetchone()
-            if not mother:
-                cur.execute(select_findings_persons_ma_id2, (birth_id,))
-                mother = cur.fetchone()
-                if mother: 
-                    mother = mother[0]
-            else:
-                mother = mother[0]
-            cur.execute(select_findings_persons_pa_id1, (birth_id,))
-            father = cur.fetchone()
-            if not father:
-                cur.execute(select_findings_persons_pa_id2, (birth_id,))
-                father = cur.fetchone()
-                if father:
-                    father = father[0]
-            else:
-                father = father[0]
+            birth_id = birth_id[0]
+            cur.execute(
+                '''
+                    SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 FROM findings_persons WHERE finding_id = ?
+                ''',
+                (birth_id,))
+            self.birth_record = cur.fetchall()[0]
+            self.make_parents_dict()  
         cur.execute(select_findings_persons_partner1, (self.current_person,))
         birth_details = cur.fetchall()
         if len(birth_details) == 0:
@@ -809,10 +886,6 @@ class Main(Frame):
             partner_name = get_any_name_with_id(other_parent)
             brood[0][0] = partner_name
             brood[0].append(other_parent)
-        self.ma_name = get_any_name_with_id(mother)
-        self.current_person_ma.extend([self.ma_name, mother])
-        self.pa_name = get_any_name_with_id(father) 
-        self.current_person_pa.extend([self.pa_name, father])
         for brood in self.child_details:
             brood[1] = sorted(brood[1], key=lambda i: i["sorter"])
         self.child_details = sorted(self.child_details, key=lambda j: j[1][0]["sorter"])
@@ -868,6 +941,7 @@ class Main(Frame):
                 brood[1][d]["death"] = death_date
                 brood[1][d]["name"] = name
                 brood[1][d]["id"] = born_id
+                # brood[1][d]["birth_id"] = birth_id
           
             d += 1
 

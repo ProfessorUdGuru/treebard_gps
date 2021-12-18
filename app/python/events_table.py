@@ -1002,6 +1002,8 @@ class EventsTable(Frame):
         self.widths = [0, 0, 0, 0, 0]
         self.kin_widths = [0, 0, 0, 0, 0, 0]
         self.set_cell_content()
+
+
         if evt:
             self.main_window.make_nuke_inputs(
                 current_person=self.current_person)
@@ -1026,6 +1028,7 @@ class EventsTable(Frame):
         self.add_event_button.grid_forget()
         for child in self.main_window.nuke_window.winfo_children():
             child.destroy()
+        self.main_window.current_person_parents = [{},{}]
 
     def make_header(self):
         y = 0
