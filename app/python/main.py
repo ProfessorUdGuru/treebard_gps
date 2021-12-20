@@ -653,6 +653,33 @@ class Main(Frame):
         cur.execute(query, (new_pa_id, birth_fpid))
         conn.commit()
 
+    def update_partner(self, final, conn, cur, widg):
+    
+        def update_partners_child(child_id, birth_id):
+            print("line", looky(seeline()).lineno, "ma_pa:", ma_pa)
+            print("line", looky(seeline()).lineno, "child_id:", child_id)
+            print("line", looky(seeline()).lineno, "birth_id:", birth_id)
+            # cur.execute(
+                # '''
+                    # UPDATE findings_persons
+                    # SET person_id1 = ?
+                    # WHERE finding_id = ?
+                # ''',
+                # (,))
+
+        s = 0
+        for brood in self.brood_dicts:
+            partner_info = brood[0]
+            if widg == partner_info[3]:
+                ma_pa = partner_info[1]
+                print("line", looky(seeline()).lineno, "partner_info:", partner_info)
+                for child in brood[1]:
+                    child_id = child["id"]
+                    birth_id = child["birth_id"]
+                    update_partners_child(child_id, birth_id)
+                break
+            s += 1        
+
     def get_final(self, evt):
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
@@ -669,7 +696,7 @@ class Main(Frame):
             self.update_father(self.final, conn, cur, widg)
         elif widg_name.startswith("pard"):
             if col == 2:
-                print("line", looky(seeline()).lineno, "self.final:", self.final)
+                self.update_partner(self.final, conn, cur, widg)                
             else:
                 print(
                     "line", 
@@ -707,7 +734,7 @@ class Main(Frame):
         #   person to get prior reqheight but this fixed it for now.
         self.nuke_canvas.config(width=wd, height=ht+72)        
         self.nuke_canvas.config(scrollregion=(0, 0, wd, ht+72))
-        if len(self.child_details) != 0:
+        if len(self.brood_dicts) != 0:
             self.newkinvar.set(100)
         else:
             # set to non-existent value so no Radiobutton will be selected
@@ -727,8 +754,10 @@ class Main(Frame):
         self.pa_input.insert(0, lst[1])
         self.pardrads = []
         n = 1
-        for brood in self.child_details:
-            name, ma_pa, pard_id = brood[0] # other_parent id is index 2
+
+        for brood in self.brood_dicts:
+            for k,v in brood.items():
+                name, ma_pa, pard_id = (v[0]["partner_name"], v[0]["parent_type"], k)
             ma_pa = "Children's {}:".format(ma_pa)
             pard = "pard_{}_{}".format(pard_id, n)
             pardframe = Frame(self.nuke_window)
@@ -746,12 +775,12 @@ class Main(Frame):
                 values=self.person_autofill_values, name=pard)
             pardent.insert(0, name)
             pardent.grid(column=2, row=n)
-            brood[0].append(pardent)
+            v[0]["widget"] = pardent
             self.nuke_inputs.append(pardent)
             brood_frame = Frame(self.nuke_window)
             brood_frame.grid(column=0, row=n+1) 
             r = 0
-            for dkt in brood[1]:
+            for dkt in v[1]:
                 c = 0
                 for i in range(6):
                     if c == 0:
@@ -849,7 +878,6 @@ class Main(Frame):
         cur = conn.cursor()
         cur.execute(select_finding_id_birth, (self.current_person,))
         birth_id = cur.fetchone()
-        print("line", looky(seeline()).lineno, "birth_id:", birth_id)
         if birth_id:
             birth_id = birth_id[0]
             cur.execute(
@@ -859,91 +887,159 @@ class Main(Frame):
                 (birth_id,))
             self.birth_record = cur.fetchall()[0]
             self.make_parents_dict()  
-        cur.execute(select_findings_persons_partner1, (self.current_person,))
-        birth_details = cur.fetchall()
-        if len(birth_details) == 0:
-            cur.execute(select_findings_persons_partner2, (self.current_person,))
-            birth_details = cur.fetchall() 
-        self.child_details = []        
-        for tup in birth_details:
-            other_parent = tup[0]
-            if other_parent not in self.child_details:
-                self.child_details.append(other_parent)
-        self.child_details = [[[i],[]] for i in self.child_details]
-        for tup in birth_details:
-            other_parent = tup[0]
-            for lst in self.child_details:
-                if other_parent == lst[0][0]:
-                    if len(lst[0]) == 1:
-                        other_parent_type = "Mother"
-                        if tup[2] == 2:
-                            other_parent_type = "Father"
-                        lst[0].append(other_parent_type)
-                    lst[1].append({})
-        for brood in self.child_details:
-            other_parent = brood[0][0]
-            self.make_brood(other_parent, birth_details, brood, cur)
-            partner_name = get_any_name_with_id(other_parent)
-            brood[0][0] = partner_name
-            brood[0].append(other_parent)
-        for brood in self.child_details:
-            brood[1] = sorted(brood[1], key=lambda i: i["sorter"])
-        self.child_details = sorted(self.child_details, key=lambda j: j[1][0]["sorter"])
+
+        cur.execute(
+            '''
+                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 FROM findings_persons WHERE person_id1 = ? AND kin_type_id1 IN (1,2)
+            ''',
+            (self.current_person,))
+        result1 = cur.fetchall()
+        cur.execute(
+            '''
+                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1,  person_id2, kin_type_id2 FROM findings_persons WHERE person_id2 = ? AND kin_type_id2 IN (1,2)
+            ''',
+            (self.current_person,))
+        result2 = cur.fetchall()
+        births = []
+        self.brood_dicts = []
+        births = [tup for q in (result1, result2) for tup in q]
+
+        broods = []
+        for tup in births:
+            if tup[2] != self.current_person:
+                if tup[2] not in broods:
+                    broods.append(tup[2])
+            elif tup[4] != self.current_person:
+                if tup[4] not in broods:
+                    broods.append(tup[4])
+
+        for pard_id in broods:
+            brood = {pard_id: [{}, []]}
+            self.brood_dicts.append(brood)
+
+        m = 0
+        for pardner in broods:
+            for tup in births:
+                order = "{}-{}".format(str(tup[3]), str(tup[5]))                
+                if tup[4] == pardner:
+                    parent_type = tup[5]
+                    pard_id = tup[4]
+                    self.make_pard_dict(pard_id, parent_type, m)
+                    if pard_id == pardner:
+                        self.brood_dicts[m][pardner][1].append(
+                            {"birth_fpid": tup[0], 
+                                "birth_id": tup[1], "order": order})
+                elif tup[2] == pardner:
+                    parent_type = tup[3]
+                    pard_id = tup[2]
+                    self.make_pard_dict(pard_id, parent_type, m) 
+                    if pard_id == pardner:
+                        self.brood_dicts[m][pardner][1].append(
+                            {"birth_fpid": tup[0], 
+                                "birth_id": tup[1], "order": order})
+            m += 1
+
+        for pard_id in broods:
+            for brood in self.brood_dicts:
+                for k,v in brood.items():
+                    if k == pard_id:
+                        for dkt in v[1]:
+                            self.finish_brood_dict(dkt, cur) 
+
+        for brood in self.brood_dicts:
+            brood_values = list(brood.values())
+            brood_values[0][1] = sorted(brood_values[0][1], key=lambda i: i["sorter"])
+
+        compare = []
+        for brood in self.brood_dicts:
+            for k,v in brood.items():
+                compare.append((k, v[1][0]["sorter"]))
+            compare = sorted(compare, key=lambda j: j[1])
+
+        copy = []
+        for tup in compare:
+            key = tup[0]
+            for brood in self.brood_dicts:
+                if brood.get(key) is None:
+                    continue
+                else:
+                    copy.append(brood) 
+        self.brood_dicts = copy
+
         cur.close()
         conn.close()
 
-    def make_brood(self, other_parent, birth_details, brood, cur):
-        d = 0
-        for tup in birth_details:
-            if other_parent != tup[0]:
-                continue
-            else:
-                birth_event = tup[1]
-                death_date = "-0000-00-00-------"      
-                cur.execute(select_person_id_finding, (birth_event,))
-                born_id = cur.fetchone()[0]
-                cur.execute(select_person_id_gender, (born_id,))
-                gender = cur.fetchone()[0]
-                cur.execute(select_finding_event_type, (birth_event,))
-                event_type = cur.fetchone()[0]
-                cur.execute(select_date_finding, (birth_event,))
-                if event_type == 1:
-                    birth_date = cur.fetchone()[0]
-                elif event_type == 4:
-                    death_date = cur.fetchone()[0]
-                if birth_date != "-0000-00-00-------":
-                    sorter = birth_date.split("-")[1:4] 
-                    h = 0
-                    for stg in sorter:
-                        if len(stg) == 0:
-                            sorter[h] = '0'
-                        h += 1
-                    num = sorter[1]
-                    if sorter[1] != '0':
-                        num = OK_MONTHS.index(sorter[1]) + 1
-                    else:
-                        num = 0
-                    sorter = [int(sorter[0]), num, int(sorter[2])]
-                name = get_any_name_with_id(born_id)
-                cur.execute(select_finding_id_death, (born_id,))
-                death_finding = cur.fetchone()
-                if death_finding:
-                    cur.execute(select_finding_death_date, (death_finding[0],))
-                    death_date = cur.fetchone()[0]
-                birth_date = format_stored_date(
-                    birth_date, date_prefs=self.date_prefs)
-                death_date = format_stored_date(
-                    death_date, date_prefs=self.date_prefs)                
+    def make_pard_dict(self, pard_id, parent_type, m):
+        if parent_type == 1:
+            parent_type = "Mother"
+        elif parent_type == 2:
+            parent_type = "Father"
+        partner_name = get_any_name_with_id(pard_id)
+        self.brood_dicts[m][pard_id][0]["parent_type"] = parent_type
+        self.brood_dicts[m][pard_id][0]["partner_name"] = partner_name   
 
-                brood[1][d]["gender"] = gender
-                brood[1][d]["birth"] = birth_date
-                brood[1][d]["sorter"] = sorter
-                brood[1][d]["death"] = death_date
-                brood[1][d]["name"] = name
-                brood[1][d]["id"] = born_id
-                # brood[1][d]["birth_id"] = birth_id
-          
-            d += 1
+    def finish_brood_dict(self, dkt, cur):   
+        cur.execute(
+            '''
+                SELECT person_id, date
+                FROM finding
+                WHERE finding_id = ?
+                    AND event_type_id = 1
+            ''',
+            (dkt["birth_id"],))
+        born_id, birth_date = cur.fetchone()
+
+        cur.execute(
+            '''
+                SELECT date
+                FROM finding
+                WHERE person_id = ?
+                    AND event_type_id = 4
+            ''',
+            (born_id,))
+        death_date = cur.fetchone()
+        if death_date:
+            death_date = death_date[0]
+        else:
+            death_date = "-0000-00-00-------"
+
+        cur.execute(
+            '''
+                SELECT gender
+                FROM person
+                WHERE person_id = ?
+            ''',
+            (born_id,))
+        gender = cur.fetchone()[0]
+
+        sorter = [0,0,0]
+        if birth_date != "-0000-00-00-------":
+            sorter = birth_date.split("-")[1:4] 
+            h = 0
+            for stg in sorter:
+                if len(stg) == 0:
+                    sorter[h] = '0'
+                h += 1
+            num = sorter[1]
+            if sorter[1] != '0':
+                num = OK_MONTHS.index(sorter[1]) + 1
+            else:
+                num = 0
+            sorter = [int(sorter[0]), num, int(sorter[2])]
+
+        name = get_any_name_with_id(born_id)
+
+        birth_date = format_stored_date(
+            birth_date, date_prefs=self.date_prefs)
+        death_date = format_stored_date(
+            death_date, date_prefs=self.date_prefs)                
+
+        dkt["gender"] = gender
+        dkt["birth"] = birth_date
+        dkt["sorter"] = sorter
+        dkt["death"] = death_date
+        dkt["name"] = name
+        dkt["id"] = born_id 
 
     def get_current_values(self):
         self.current_person_name = get_any_name_with_id(self.current_person)

@@ -14,7 +14,7 @@ To get your copy of the repo to function, import treebard_gps/etc/default_new_tr
 
 One more import has to be done. Import treebard_gps/etc/treebard.sql to treebard_gps/data/settings/treebard.db.
 
-# Limitations
+## Limitations
 
 I have not tested any of this code on Linux or MacOS. This is not yet version 0 or 1. The GPS version will never have backward compatibility, everything is subject to change drastically without notice. 
 
