@@ -154,6 +154,8 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
+# when edit partner if new person dialog opens and is canceled, the db shd not be changed. currently it sets person id to None and leaves age as is, but no change shd be made, and the widg shd have the original name re-inserted. Have to differentiate this from the user deleting contents of entry in which case the unlink shd take place, person_id and age shd be None & "". See `unlink` in the edit_parent() function that I used as a model but deleted unlink but it's needed for above.
+# in edit_parent() change ma to something generic, also new_ma_name isn't being used
 # move queries to module and delete import strings for unused queries
 # rename queries not named acc to standard eg select_person_id_finding
 # add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f)

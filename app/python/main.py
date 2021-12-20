@@ -655,30 +655,60 @@ class Main(Frame):
 
     def update_partner(self, final, conn, cur, widg):
     
-        def update_partners_child(child_id, birth_id):
-            print("line", looky(seeline()).lineno, "ma_pa:", ma_pa)
-            print("line", looky(seeline()).lineno, "child_id:", child_id)
-            print("line", looky(seeline()).lineno, "birth_id:", birth_id)
-            # cur.execute(
-                # '''
-                    # UPDATE findings_persons
-                    # SET person_id1 = ?
-                    # WHERE finding_id = ?
-                # ''',
-                # (,))
+        def update_partners_child(birth_fpid, order, parent_type, new_partner_id):
+
+            query1 = '''
+                UPDATE findings_persons
+                SET person_id1 = ?
+                WHERE findings_persons_id = ?
+             '''
+
+            query2 = '''
+                UPDATE findings_persons
+                SET person_id2 = ?
+                WHERE findings_persons_id = ?
+             '''
+            
+            if parent_type == "Mother":
+                if order == "1-2":                    
+                    cur.execute(query1, (new_partner_id, birth_fpid))
+                elif order == "2-1":                    
+                    cur.execute(query2, (new_partner_id, birth_fpid))  
+            elif parent_type == "Father":
+                if order == "1-2":                    
+                    cur.execute(query2, (new_partner_id, birth_fpid))
+                elif order == "2-1":                    
+                    cur.execute(query1, (new_partner_id, birth_fpid))
+            conn.commit()
+
+        def get_new_partner_id(final, widg):
+
+            if "#" in final:
+                new_partner_id = final.split("#")[1]    
+            elif len(final) == 0:
+                new_partner_id = None
+            else:
+                new_partner_id = open_new_person_dialog(
+                    self, widg, self.root, self.treebard)
+            return new_partner_id     
+
+        new_partner_id = get_new_partner_id(final, widg)
 
         s = 0
         for brood in self.brood_dicts:
-            partner_info = brood[0]
-            if widg == partner_info[3]:
-                ma_pa = partner_info[1]
-                print("line", looky(seeline()).lineno, "partner_info:", partner_info)
-                for child in brood[1]:
-                    child_id = child["id"]
-                    birth_id = child["birth_id"]
-                    update_partners_child(child_id, birth_id)
+            for k,v in brood.items():
+                if widg != v[0]["widget"]:
+                    continue
+                for child in v[1]:
+                    update_partners_child(
+                        child["birth_fpid"], 
+                        child["order"], 
+                        v[0]["parent_type"], 
+                        new_partner_id)
                 break
-            s += 1        
+            s += 1 
+
+# line 672 brood: {5599: [{'parent_type': 'Mother', 'partner_name': 'Selina Savoy', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame.pard_5599_1>}, [{'birth_fpid': 95, 'birth_id': 670, 'order': '1-2', 'gender': 'unknown', 'birth': 'Aug 1, 1915', 'sorter': [1915, 8, 1], 'death': '', 'name': 'Albertha Siu Sobel', 'id': 5711, 'name_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto>, 'gender_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto2>, 'birth_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto3>, 'death_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto4>}, {'birth_fpid': 97, 'birth_id': 672, 'order': '2-1', 'gender': 'male', 'birth': 'Apr 14, 1921', 'sorter': [1921, 4, 14], 'death': 'June 29, 1961', 'name': 'Clarence Bracken', 'id': 5677, 'name_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto5>, 'gender_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto6>, 'birth_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto7>, 'death_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto8>}, {'birth_fpid': 94, 'birth_id': 669, 'order': '2-1', 'gender': 'female', 'birth': 'Jan 18, 1922', 'sorter': [1922, 1, 18], 'death': '', 'name': 'Moira Harding', 'id': 5740, 'name_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto9>, 'gender_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto10>, 'birth_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto11>, 'death_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto12>}, {'birth_fpid': 98, 'birth_id': 673, 'order': '2-1', 'gender': 'male', 'birth': 'Aug 6, 1927', 'sorter': [1927, 8, 6], 'death': '', 'name': 'Noe Whitton', 'id': 5685, 'name_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto13>, 'gender_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto14>, 'birth_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto15>, 'death_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto16>}, {'birth_fpid': 96, 'birth_id': 671, 'order': '2-1', 'gender': 'male', 'birth': 'Sep 30, 1929', 'sorter': [1929, 9, 30], 'death': '', 'name': "Joe-John O'Keefe", 'id': 5732, 'name_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto17>, 'gender_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto18>, 'birth_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto19>, 'death_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!frame.!canvas.!frame.!frame2.!entryauto20>}]]}       
 
     def get_final(self, evt):
         current_file = get_current_file()[0]
