@@ -154,18 +154,24 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# when edit partner if new person dialog opens and is canceled, the db shd not be changed. currently it sets person id to None and leaves age as is, but no change shd be made, and the widg shd have the original name re-inserted. Have to differentiate this from the user deleting contents of entry in which case the unlink shd take place, person_id and age shd be None & "". See `unlink` in the edit_parent() function that I used as a model but deleted unlink but it's needed for above.
-# in edit_parent() change ma to something generic, also new_ma_name isn't being used
+# FIRST STEP IS TO REMOVE THE NUKES AREA CODE TO ITS OWN MODULE
+# Then put all spouses in nukes dict
+
+# add all marital events to partner dict
+# Add partners to table who have no children with current_person (based on marital events); if partner has children ignore the marriage except to use the date (or even divorce date) in ordering broods in the nuke table; instead of labeling "mother of children" use kin_type eg "spouse"
+# update partner: when edited/deleted, the marital events all have to reflect the change
+# give james a 3rd brood to see if the vert sb appears
+# update_child
+# ADD PARTNER/ADD CHILD buttons & entry
 # move queries to module and delete import strings for unused queries
 # rename queries not named acc to standard eg select_person_id_finding
 # add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f)
 # if the nuke_table is small, there's too much space above & below the top_pic. What if top_pic had rowspan=2? 
 # something keeps setting current person in db to null, maybe when starting to open app but cancel w/out going past opening dialog THIS IS CAUSED BY CLICKING CTRL+S
 # opening default color on alternate openings when using File > Close > Exit menu commands
-# when clicking into an autofill and tabbing on from there, it highlights as expected, but when tabbing into an autofill from the picture, none of them highlight so you can't tell what's in focus. More importantly than highlighting, the insert cursor isn't visible either unless you click into the entry. UPDATE: ACTUALLY THE PROBLEM ISN'T AS STATED ABOVE. The problem is that you tab through the widgets once and they register everything but don't show that they're focused. Then you tab through them all again and they work right. Both times they get their events so it's not a matter of a double set of widgets with one on top of the other, because the widget count is 28 which is one set and if they were gripped atop each other, only the top widgets would get events. The problem is solved by commenting `self.findings_table.redraw()` line 300 main.py which brings back the problem described in the comment there. Using CTRL+S to redraw manually does not cause the problem described there so will do that for now.
+# when clicking into an autofill and tabbing on from there, it highlights as expected, but when tabbing into an autofill from the picture, none of them highlight so you can't tell what's in focus. More importantly than highlighting, the insert cursor isn't visible either unless you click into the entry. UPDATE: ACTUALLY THE PROBLEM ISN'T AS STATED ABOVE. The problem is that you tab through the widgets once and they register everything but don't show that they're focused. Then you tab through them all again and they work right. Both times they get their events so it's not a matter of a double set of widgets with one on top of the other, because the widget count is 28 which is one set and if they were gridded atop each other, only the top widgets would get events. The problem is solved by commenting `self.findings_table.redraw()` line 300 main.py which brings back the problem described in the comment there. Using CTRL+S to redraw manually does not cause the problem described there so will do that for now.
 # new kin person Input will be parsed to use existing person if # and create new person if not. make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner. It is also possible to add someone with a name that already exists in the table, just not an id
 # make it possible to change name, gender or date here & save in db; make it possible to unlink a person from the family by deleting their name from the table
-# give james a 3rd brood to see if the vert sb appears, wait till it can be done in the gui
 # Add to after death event types in default, default_untouched, and sample db's: autopsy, inquest.
 # see `if length == 2` in get_any_name_with_id() in names.py: this was just added and before that a similar process was done repeatedly in various places such as current_person display, wherever a name might need to be shown. Everything still works but this procedure should be deleted from where it's no longer needed since it's been added to get_any_name_with_id()
 # getting this error sometimes when changing current person eg input `#1`:
@@ -181,6 +187,7 @@ if __name__ == '__main__':
 # find all the usages of queries that have to be run twice to deal with columns that can be used either of 2 ways such as parent_id1/parent_id2 and rewrite the code so that the whole record is gotten once with select * (or as much as will be needed) and parse the record with python, assign values according to obvious correspondences
 # dump the sample db so repo will get the right stuff
 # put padding around attributes table
+# delete unused imports main.py
 # statustips rcm
 
 # BRANCH: names_images

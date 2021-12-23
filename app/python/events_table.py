@@ -1005,10 +1005,10 @@ class EventsTable(Frame):
 
 
         if evt:
-            self.main_window.make_nuke_inputs(
+            self.main_window.nuke_table.make_nuke_inputs(
                 current_person=self.current_person)
         else:
-            self.main_window.make_nuke_inputs()
+            self.main_window.nuke_table.make_nuke_inputs()
         self.resize_scrollbar(self.root, self.main_canvas)
 
     def resize_scrollbar(self, root, canvas):
@@ -1026,9 +1026,9 @@ class EventsTable(Frame):
                 widg.grid_forget()
         self.event_input.grid_forget()
         self.add_event_button.grid_forget()
-        for child in self.main_window.nuke_window.winfo_children():
+        for child in self.main_window.nuke_table.nuke_window.winfo_children():
             child.destroy()
-        self.main_window.current_person_parents = [{},{}]
+        self.main_window.nuke_table.current_person_parents = [{},{}]
 
     def make_header(self):
         y = 0

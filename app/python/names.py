@@ -231,9 +231,9 @@ class PersonAdd(Toplevel):
 
         buttonbox = Frame(self.window)
         self.b1 = Button(
-            buttonbox, text="OK", width=6, command=self.prepare_to_add_person)
+            buttonbox, text="OK", width=8, command=self.prepare_to_add_person)
         b2 = Button(
-            buttonbox, text="CANCEL", width=6, command=self.cancel_new_person)
+            buttonbox, text="CANCEL", width=8, command=self.cancel_new_person)
 
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
