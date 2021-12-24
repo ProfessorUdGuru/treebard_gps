@@ -1,4 +1,7 @@
 # families.py
+
+# starting over on self.progeny_dicts structure to use a proper nested dict instead of values like [{}] change to {{}} and combining progenies, births & event_pards since there are too many lists being altered and accessed in too many places
+
 import tkinter as tk
 import sqlite3
 from widgets import (
@@ -19,6 +22,22 @@ from dev_tools import looky, seeline
 
 
 
+def get_all_marital_event_types():
+    current_file = get_current_file()[0]
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+
+    cur.execute(
+    '''
+        SELECT event_type_id 
+        FROM event_type
+        WHERE marital = 1
+    ''')
+
+    marital_event_types = [i[0] for i in cur.fetchall()]
+
+    return marital_event_types
+
 class NuclearFamiliesTable(Frame):
     def __init__(
             self, master, current_person, findings_table, right_panel, 
@@ -33,12 +52,12 @@ class NuclearFamiliesTable(Frame):
 
         self.current_person_parents = [{},{}]
         self.newkinvar = tk.IntVar()
+        self.marital_events_current_person = self.get_marital_event_types()
 
         self.make_widgets()
 
     def make_widgets(self):
 
-        # nuke_table = Frame(persons_tab)
         self.nuke_canvas = Canvas(self)
         self.nuke_window = Frame(self.nuke_canvas)
         self.nuke_canvas.create_window(0, 0, anchor="nw", window=self.nuke_window)
@@ -119,6 +138,32 @@ class NuclearFamiliesTable(Frame):
             text="ADD CHILD", width=12, 
             command=self.edit_child)
         self.childmaker.grid(column=3, row=0, padx=(6,0), pady=(12,0))
+
+    def get_marital_event_types(self):
+
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+
+        marital_event_types = get_all_marital_event_types()
+
+        qlen = len(marital_event_types)
+        marital_event_types.insert(0, self.current_person)
+        marital_event_types.insert(0, self.current_person)
+        
+        sql = '''
+                SELECT findings_persons_id, person_id1, kin_type_id1, person_id2, kin_type_id2, findings_persons.finding_id
+                FROM findings_persons
+                JOIN finding
+                    ON finding.finding_id = findings_persons.finding_id
+                WHERE (person_id1 = ? OR person_id2 = ?) 
+                    AND event_type_id in ({})
+            '''.format(",".join(["?"] * qlen))
+        cur.execute(sql, marital_event_types)
+        marital_events_current_person = [list(i) for i in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return marital_events_current_person
         
     def edit_partner(self):
         print("howdy pardner")
@@ -239,8 +284,8 @@ class NuclearFamiliesTable(Frame):
         elif new_partner_id == 0:
             new_partner_id = None
         s = 0
-        for brood in self.brood_dicts:
-            for k,v in brood.items():
+        for progeny in self.progeny_dicts:
+            for k,v in progeny.items():
                 if widg != v[0]["widget"]:
                     continue
                 for child in v[1]:
@@ -301,12 +346,12 @@ class NuclearFamiliesTable(Frame):
         self.update_idletasks()
         wd = self.nuke_window.winfo_reqwidth() + 12
         ht = self.right_panel.winfo_reqheight()
-        # The +72 is a hack only needed when a broodless current person
-        #   precedes a brooded one. Don't know what causes the new brooded
+        # The +72 is a hack only needed when a progenyless current person
+        #   precedes a progenyed one. Don't know what causes the new progenyed
         #   person to get prior reqheight but this fixed it for now.
         self.nuke_canvas.config(width=wd, height=ht+72)        
         self.nuke_canvas.config(scrollregion=(0, 0, wd, ht+72))
-        if len(self.brood_dicts) != 0:
+        if len(self.progeny_dicts) != 0:
             self.newkinvar.set(100)
         else:
             # set to non-existent value so no Radiobutton will be selected
@@ -325,10 +370,10 @@ class NuclearFamiliesTable(Frame):
         self.ma_input.insert(0, lst[0])
         self.pa_input.insert(0, lst[1])
         self.pardrads = []
-        n = 1
 
-        for brood in self.brood_dicts:
-            for k,v in brood.items():
+        n = 1
+        for progeny in self.progeny_dicts:
+            for k,v in progeny.items():
                 name, ma_pa, pard_id = (v[0]["partner_name"], v[0]["parent_type"], k)
             ma_pa = "Children's {}:".format(ma_pa)
             pard = "pard_{}_{}".format(pard_id, n)
@@ -349,19 +394,19 @@ class NuclearFamiliesTable(Frame):
             pardent.grid(column=2, row=n)
             v[0]["widget"] = pardent
             self.nuke_inputs.append(pardent)
-            brood_frame = Frame(self.nuke_window)
-            brood_frame.grid(column=0, row=n+1) 
+            progeny_frame = Frame(self.nuke_window)
+            progeny_frame.grid(column=0, row=n+1) 
             r = 0
             for dkt in v[1]:
                 c = 0
                 for i in range(6):
                     if c == 0:
-                        spacer = Frame(brood_frame, width=48)
+                        spacer = Frame(progeny_frame, width=48)
                         spacer.grid(column=c, row=r)
                     elif c == 1:
                         text = dkt["name"]
                         ent = EntryAuto(
-                            brood_frame, width=0, autofill=True, 
+                            progeny_frame, width=0, autofill=True, 
                             values=self.person_autofill_values)
                         if len(text) > self.findings_table.kin_widths[c]:
                             self.findings_table.kin_widths[c] = len(text)
@@ -371,7 +416,7 @@ class NuclearFamiliesTable(Frame):
                         dkt["name_widg"] = ent
                     elif c == 2:
                         text = dkt["gender"]
-                        ent = EntryAuto(brood_frame, width=0)
+                        ent = EntryAuto(progeny_frame, width=0)
                         if len(text) > self.findings_table.kin_widths[c]:
                             self.findings_table.kin_widths[c] = len(text)
                         ent.insert(0, text)
@@ -380,7 +425,7 @@ class NuclearFamiliesTable(Frame):
                         dkt["gender_widg"] = ent
                     elif c == 3:
                         text = dkt["birth"]
-                        ent = EntryAuto(brood_frame, width=0)
+                        ent = EntryAuto(progeny_frame, width=0)
                         if len(text) > self.findings_table.kin_widths[c]:
                             self.findings_table.kin_widths[c] = len(text)
                         ent.insert(0, text)
@@ -391,11 +436,11 @@ class NuclearFamiliesTable(Frame):
                         text = "to"
                         if len(text) > self.findings_table.kin_widths[c]:
                             self.findings_table.kin_widths[c] = len(text)
-                        lab = LabelEntry(brood_frame, text=text, anchor="w")
+                        lab = LabelEntry(progeny_frame, text=text, anchor="w")
                         lab.grid(column=c, row=r, sticky="w")
                     elif c == 5:
                         text = dkt["death"]
-                        ent = EntryAuto(brood_frame, width=0)
+                        ent = EntryAuto(progeny_frame, width=0)
                         if len(text) > self.findings_table.kin_widths[c]:
                             self.findings_table.kin_widths[c] = len(text)
                         ent.insert(0, text)
@@ -404,7 +449,7 @@ class NuclearFamiliesTable(Frame):
                         dkt["death_widg"] = ent 
                     c += 1
                 r += 1
-            top_row = brood_frame.grid_slaves(row=0)
+            top_row = progeny_frame.grid_slaves(row=0)
             top_row.reverse()
             top_row_values = []
             for widg in top_row[1:]:
@@ -473,158 +518,142 @@ class NuclearFamiliesTable(Frame):
             (self.current_person,))
         result2 = cur.fetchall()
         births = []
-        self.brood_dicts = []
+        self.progeny_dicts = {}
         births = [tup for q in (result1, result2) for tup in q]
 
-        broods = []
+        marital_event_types = get_all_marital_event_types()
+        qlen = len(marital_event_types)
+        sql = '''
+                SELECT person_id1, person_id2
+                FROM findings_persons
+                JOIN finding
+                    ON finding.finding_id = findings_persons.finding_id
+                WHERE event_type_id in ({})                    
+            '''.format(",".join("?" * qlen))
+        cur.execute(sql, marital_event_types)
+        partners1 = cur.fetchall()
+
+        progenies = {}
+        all_partners = []        
+        partners = []
+        partners = [tup for tup in partners1 if self.current_person in tup]
+        event_pards = []
+        offspring_pards = []
+        for tup in partners:
+            for num in tup:
+                if num != self.current_person:
+                    event_pards.append(num)
+                    all_partners.append(num)
+        event_pards = list(set(event_pards))
+
         for tup in births:
             if tup[2] != self.current_person:
-                if tup[2] not in broods:
-                    broods.append(tup[2])
+                pard_id = tup[2]                
             elif tup[4] != self.current_person:
-                if tup[4] not in broods:
-                    broods.append(tup[4])
+                pard_id = tup[4]
+            offspring_pards.append(pard_id)
+            all_partners.append(pard_id)
+            all_partners = list(set(all_partners))
 
-        for pard_id in broods:
-            brood = {pard_id: [{}, []]}
-            self.brood_dicts.append(brood)
+        for pard_id in all_partners:
+            if pard_id in offspring_pards and pard_id in event_pards:
+                nested = {'offspring': True, 'events': True}
+            elif pard_id in offspring_pards and pard_id not in event_pards:
+                nested = {'offspring': True, 'events': False}
+            elif pard_id not in offspring_pards and pard_id in event_pards:
+                nested = {'offspring': False, 'events': True}
+            progenies[pard_id] = nested
+# line 568 progenies: {5635: {'offspring': True, 'events': False}, 6: {'offspring': False, 'events': True}, 5599: {'offspring': True, 'events': True}}        
 
-        m = 0
-        for pardner in broods:
-            for tup in births:
-                order = "{}-{}".format(str(tup[3]), str(tup[5]))                
-                if tup[4] == pardner:
-                    parent_type = tup[5]
-                    pard_id = tup[4]
-                    self.make_pard_dict(pard_id, parent_type, m)
-                    if pard_id == pardner:
-                        self.brood_dicts[m][pardner][1].append(
-                            {"birth_fpid": tup[0], 
-                                "birth_id": tup[1], "order": order})
-                elif tup[2] == pardner:
-                    parent_type = tup[3]
-                    pard_id = tup[2]
-                    self.make_pard_dict(pard_id, parent_type, m) 
-                    if pard_id == pardner:
-                        self.brood_dicts[m][pardner][1].append(
-                            {"birth_fpid": tup[0], 
-                                "birth_id": tup[1], "order": order})
-            m += 1
+        print("line", looky(seeline()).lineno, "progenies:", progenies)
+        for pard_id in progenies:
+            progeny = {
+                "sorter": (), "partner_id": None, "partner_name": "", 
+                "parent_type": "", "partner_kin_type": "", 
+                "findings_persons_id": None, "children": [], 
+                "marital_events": {"findings_persons_id": None, 
+                "finding": None}
+                # "date": "-0000-00-00-------", "finding": None}
+}
+            self.progeny_dicts[pard_id] = progeny
 
-        for pard_id in broods:
-            for brood in self.brood_dicts:
-                for k,v in brood.items():
-                    if k == pard_id:
-                        for dkt in v[1]:
-                            self.finish_brood_dict(dkt, cur) 
+        print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
+        
 
-        for brood in self.brood_dicts:
-            brood_values = list(brood.values())
-            brood_values[0][1] = sorted(brood_values[0][1], key=lambda i: i["sorter"])
+        self.collect_couple_events(cur)
 
-        compare = []
-        for brood in self.brood_dicts:
-            for k,v in brood.items():
-                compare.append((k, v[1][0]["sorter"]))
-            compare = sorted(compare, key=lambda j: j[1])
 
-        copy = []
-        for tup in compare:
-            key = tup[0]
-            for brood in self.brood_dicts:
-                if brood.get(key) is None:
-                    continue
-                else:
-                    copy.append(brood) 
-        self.brood_dicts = copy
+        for k,v in progenies.items():
+            pardner = k
+            if v["offspring"] is True:
+                for tup in births:
+# line 578 tup: (98, 673, 12, 2, 5599, 1)
+# line 578 tup: (95, 670, 5599, 1, 12, 2)
+                    order = "{}-{}".format(str(tup[3]), str(tup[5]))                
+                    if tup[4] == pardner:
+                        parent_type = tup[5]
+                        pard_id = tup[4]
+                        self.make_pard_dict(pard_id, parent_type)
+                        if pard_id == pardner:
+                            self.progeny_dicts[pardner]["children"].append(
+                                {"findings_persons_id": tup[0], 
+                                    "birth_id": tup[1], "order": order})
+                    elif tup[2] == pardner:
+                        parent_type = tup[3]
+                        pard_id = tup[2]
+                        self.make_pard_dict(pard_id, parent_type) 
+                        if pard_id == pardner:
+                            self.progeny_dicts[pardner]["children"].append(
+                                {"findings_persons_id": tup[0], 
+                                    "birth_id": tup[1], "order": order})      
 
-        # instead of trying to sort this above, maybe better to insert this into the sorted list of dicts when it's done NO THE RIGHT WAY IS TO add spouses to the dict as keys as a first step so they're treated like everything else, since it will be necessary to detect marital events for brooded/non-brooded partners equally
+                print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
+            if v["events"] is True:
+                print("line", looky(seeline()).lineno, "pardner:", pardner)
+                # make_pard_dict() here
+        for pard_id in progenies:
+            for k,v in self.progeny_dicts.items():
+                if k == pard_id:
+                    for dkt in v["children"]:
+                        self.finish_progeny_dict(dkt, cur)
 
-        spouses = self.collect_couple_events(cur)
+        print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
+
+# line 620 self.progeny_dicts: {5635: {'sorter': (), 'partner_id': None, 'partner_name': 'Harmony Maryland Hobgood (stage name)', 'parent_type': 'Mother', 'partner_kin_type': '', 'findings_persons_id': None, 'children': [{'findings_persons_id': 93, 'birth_id': 668, 'order': '2-1', 'gender': 'male', 'birth': '1920', 'sorter': [1920, 0, 0], 'death': '', 'name': 'Ross Aldo Marquis (stage name)', 'id': 5783}], 'marital_events': {'findings_persons_id': None, 'finding': None}}, 6: {'sorter': (), 'partner_id': None, 'partner_name': '', 'parent_type': '', 'partner_kin_type': 'wife', 'findings_persons_id': None, 'children': [], 'marital_events': {'findings_persons_id': None, 'finding': 649, 'persons_findings_id': 73}}, 5599: {'sorter': (), 'partner_id': None, 'partner_name': 'Selina Savoy', 'parent_type': 'Mother', 'partner_kin_type': 'wife', 'findings_persons_id': None, 'children': [{'findings_persons_id': 94, 'birth_id': 669, 'order': '2-1', 'gender': 'female', 'birth': 'Jan 18, 1922', 'sorter': [1922, 1, 18], 'death': '', 'name': 'Moira Harding', 'id': 5740}, {'findings_persons_id': 96, 'birth_id': 671, 'order': '2-1', 'gender': 'male', 'birth': 'Sep 30, 1929', 'sorter': [1929, 9, 30], 'death': '', 'name': "Joe-John O'Keefe", 'id': 5732}, {'findings_persons_id': 97, 'birth_id': 672, 'order': '2-1', 'gender': 'male', 'birth': 'Apr 14, 1921', 'sorter': [1921, 4, 14], 'death': 'June 29, 1961', 'name': 'Clarence Bracken', 'id': 5677}, {'findings_persons_id': 98, 'birth_id': 673, 'order': '2-1', 'gender': 'male', 'birth': 'Aug 6, 1927', 'sorter': [1927, 8, 6], 'death': '', 'name': 'Noe Whitton', 'id': 5685}, {'findings_persons_id': 95, 'birth_id': 670, 'order': '1-2', 'gender': 'unknown', 'birth': 'Aug 1, 1915', 'sorter': [1915, 8, 1], 'death': '', 'name': 'Albertha Siu Sobel', 'id': 5711}], 'marital_events': {'findings_persons_id': None, 'finding': 632, 'persons_findings_id': 69}}}
+
+        # SORTING AREA DO NOT DELETE
+        # for progeny in self.progeny_dicts:
+            # progeny_values = list(progeny.values())
+            # progeny_values[0][1] = sorted(progeny_values[0][1], key=lambda i: i["sorter"])
+        # compare = []
+        # for progeny in self.progeny_dicts:
+            # for k,v in progeny.items():
+                # compare.append((k, v[1][0]["sorter"]))
+            # compare = sorted(compare, key=lambda j: j[1])
+        # copy = []
+        # for tup in compare:
+            # key = tup[0]
+            # for progeny in self.progeny_dicts:
+                # if progeny.get(key) is None:
+                    # continue
+                # else:
+                    # copy.append(progeny) 
+        # self.progeny_dicts = copy
 
         cur.close()
         conn.close()
 
-    def collect_couple_events(self, cur):
-        '''
-            Two means of determining partnership are used. 1) a couple has 
-            children together, or 2) a couple are linked by a common couple
-            event such as marriage or divorce regardless of whether they
-            have children together.
+    def make_pard_dict(self, pard_id, parent_type):
+        if parent_type == 1:
+            parent_type = "Mother"
+        elif parent_type == 2:
+            parent_type = "Father"
+        partner_name = get_any_name_with_id(pard_id)
+        self.progeny_dicts[pard_id]["parent_type"] = parent_type
+        self.progeny_dicts[pard_id]["partner_name"] = partner_name   
 
-            Problem is, if user unlinks a partner from current person's
-            marriage event, should Treebard auto-unlink the partner from the
-            divorce event too? Since partnerships are detected only on the
-            basis of existing marital events if there are no children, the
-            answer is yes. Not unlinking the marital events from a deleted
-            partner. or not editing a changed name on marital events if the
-            partner's name is changed... would be a disaster. And the deleted
-            partner would show up on the nukes table if the links were left
-            intact. The only way around this would be to find another way
-            to detect childless couples that doesn't involve detecting
-            marital events. (What about kin types such as spouse, wife, etc.)
-
-            Couple events are determined by a boolean in the events_type 
-            database table. But not all couple events are evidence for 
-            a partnership that you'd want on the nukes (nuclear family) table.
-            But all couple events are treated the same in other ways, for 
-            example, if two people get engaged, the user only has to create 
-            the event for one of them, and Treebard auto-creates the event
-            for the other person; all couple events should work this way.
-
-            So a second boolean is used to distinguish non-binding couple
-            events such as "first kiss" or "engagement" or "marriage banns".
-            For inclusion in the nukes table, partnership will be marked
-            by the boolean column called "marital". This category includes
-            anything that should mark a partnership even if there are no children,
-            such as marriage, wedding, divorce, cohabitation, separation, etc.
-
-            (The event or dated attribute "marital status" isn't even a couple
-            event, since it makes no reference to who the partner is and would
-            be asked of one person at a time. Even if both partners in a couple 
-            answered this question at the same time, the user would have to 
-            enter each answer separately for the two people.)
-
-            Kin types are used to state for example that a partner is a spouse,
-            wife, husband, etc. They aren't used to detect anything, because
-            they are too loose, the user just decides what to call a partner,
-            such as "boyfriend", "mistress", etc. The event should have all the
-            power, not kin type, when it comes to determining partnership if 
-            there are no children to determine it. The user should be the one
-            to decide whether to include a mistress on the nukes table, by
-            inputting a cohabitation event, for example, for a man with a 
-            second family hidden away somewhere. Unlike some genieware, Treebard
-            differentiates between "spouse" and "mother of children", so it's
-            not necessary to create a bogus spouse in order to identify the
-            parents in a nuclear family.
-        ''' 
-        cur.execute(
-            '''
-                SELECT event_type_id 
-                FROM event_type
-                WHERE marital = 1
-            ''')
-
-        marital_event_types = [i[0] for i in cur.fetchall()]
-        qlen = len(marital_event_types)
-        marital_event_types.insert(0, self.current_person)
-        marital_event_types.insert(0, self.current_person)
-        
-        sql = '''
-                SELECT findings_persons_id, person_id1, kin_type_id1, person_id2, kin_type_id2, date
-                FROM findings_persons
-                JOIN finding
-                    ON finding.finding_id = findings_persons.finding_id
-                WHERE (person_id1 = ? OR person_id2 = ?) 
-                    AND event_type_id in ({})
-            '''.format(",".join(["?"] * qlen))
-        cur.execute(sql, marital_event_types)
-        copy = [list(i) for i in cur.fetchall()]
-
-        spouses = copy
-        print("line", looky(seeline()).lineno, "spouses:", spouses)
-# line 1086 copy: [[69, 632, 12, 8, 5599, 7, 'abt-1910-au-15-ad------'], [72, 646, 6, 7, 12, 8, '-1905---------'], [73, 649, 6, 7, 12, 8, '-1905---------']]
-
+    def collect_couple_events(self, cur): 
+        spouses = self.marital_events_current_person
         o = 0
         for lst in spouses:
             if lst[1] == self.current_person:
@@ -633,77 +662,30 @@ class NuclearFamiliesTable(Frame):
                 del lst[3:5]
             o += 1
         print("line", looky(seeline()).lineno, "spouses:", spouses)
+
+# line 665 spouses: [[69, 5599, 7, 632], [72, 6, 7, 646], [73, 6, 7, 649]]
         for lst in spouses:
             self.save_marital_events(lst, cur)
 
-        # remove partners who have children
-        g = 0
-        for brood in self.brood_dicts:
-            x = list(brood.keys())
-            key = x[0]
-            for lst in spouses:
-                if key in lst:
-                    del copy[g]
-            g += 1
-        # remove duplicates due to multiple marital events w/ same partner
-        #    what's left is a list of unique partners to add (childless)
-        childless_partners = []
-        for lst in copy:
-            if lst[1] not in childless_partners:
-                childless_partners.append(lst[1])        
-        print("line", looky(seeline()).lineno, "childless_partners:", childless_partners)
-# line 1082 copy: [[69, 632, 12, 8, 5599, 7, 'abt-1910-au-15-ad------'], [72, 646, 6, 7, 12, 8, '-1905---------'], [73, 649, 6, 7, 12, 8, '-1905---------']]
-# line 1113 childless_partners: [6]
-# line 1117 copy: [[72, 646, 6, 7, '-1905---------'], [73, 649, 6, 7, '-1905---------']] 
-# add to parents dict: marital_pfid, marital_finding_id,, marital_event_type, marital_finding_date, partner_kin_type SO THAT when a partner is edited/deleted, the change can be propagated to all marital events for that couple
-
-                       
-        # print("line", looky(seeline()).lineno, "self.brood_dicts:", self.brood_dicts)                        
-        return spouses
- 
-
-
-# line 991 self.brood_dicts: [{5635: [{'parent_type': 'Mother', 'partner_name': 'Harmony Maryland Hobgood (stage name)'}, [{'birth_fpid': 93, 'birth_id': 668, 'order': '2-1', 'gender': 'male', 'birth': '1920', 'sorter': [1920, 0, 0], 'death': '', 'name': 'Ross Aldo Marquis (stage name)', 'id': 5783}]]}, {5599: [{'parent_type': 'Mother', 'partner_name': 'Selina Savoy'}, [{'birth_fpid': 95, 'birth_id': 670, 'order': '1-2', 'gender': 'unknown', 'birth': 'Aug 1, 1915', 'sorter': [1915, 8, 1], 'death': '', 'name': 'Albertha Siu Sobel', 'id': 5711}, {'birth_fpid': 97, 'birth_id': 672, 'order': '2-1', 'gender': 'male', 'birth': 'Apr 14, 1921', 'sorter': [1921, 4, 14], 'death': 'June 29, 1961', 'name': 'Clarence Bracken', 'id': 5677}, {'birth_fpid': 94, 'birth_id': 669, 'order': '2-1', 'gender': 'female', 'birth': 'Jan 18, 1922', 'sorter': [1922, 1, 18], 'death': '', 'name': 'Moira Harding', 'id': 5740}, {'birth_fpid': 98, 'birth_id': 673, 'order': '2-1', 'gender': 'male', 'birth': 'Aug 6, 1927', 'sorter': [1927, 8, 6], 'death': '', 'name': 'Noe Whitton', 'id': 5685}, {'birth_fpid': 96, 'birth_id': 671, 'order': '2-1', 'gender': 'male', 'birth': 'Sep 30, 1929', 'sorter': [1929, 9, 30], 'death': '', 'name': "Joe-John O'Keefe", 'id': 5732}]]}]
-
     def save_marital_events(self, lst, cur):
-        print("line", looky(seeline()).lineno, "lst:", lst)
-# line 1129 lst: [69, 5599, 7, 'abt-1910-au-15-ad------']
-# line 1129 lst: [72, 6, 7, '-1905---------']
-# line 1129 lst: [73, 6, 7, '-1905---------']
         partner_id = lst[1]
-        print("line", looky(seeline()).lineno, "partner_id:", partner_id)
-        # FIRST ADD MISSING (CHILDLESS) PARTNERS TO MAIN DICT HERE
-        for brood in self.brood_dicts:
-            for k,v in brood.items():
-                print("line", looky(seeline()).lineno, "k:", k)
-                if partner_id == k:
+        for k,v in self.progeny_dicts.items():
+            if partner_id == k:
+                cur.execute(
+                    '''
+                        SELECT kin_types
+                        FROM kin_type
+                        WHERE kin_type_id = ?
+                    ''',
+                    (lst[2],))
+                kin_type = cur.fetchone()[0]
+                v["partner_kin_type"] = kin_type
 
-                    cur.execute(
-                        '''
-                            SELECT kin_types
-                            FROM kin_type
-                            WHERE kin_type_id = ?
-                        ''',
-                        (lst[2],))
-                    kin_type = cur.fetchone()[0]
+    # THIS HAS TO BE DONE IN A LOOP AND SAVED IN A LIST OF DICTS MAYBE USING THE FPID AS THE SUBKEY? RIGHT NOW IT'S JUST SAVING THE LAST ONE
+                v["marital_events"]["persons_findings_id"] = lst[0]
+                v["marital_events"]["finding"] = lst[3]
 
-
-                    v[0]["partner_kin_type"] = kin_type
-                    print("line", looky(seeline()).lineno, "kin_type:", kin_type)
-
-        print("line", looky(seeline()).lineno, "self.brood_dicts:", self.brood_dicts          )
-        # NEXT ADD MARITAL EVENT DICTS WITH marital_event_pfid & marital_event_date
-
-    def make_pard_dict(self, pard_id, parent_type, m):
-        if parent_type == 1:
-            parent_type = "Mother"
-        elif parent_type == 2:
-            parent_type = "Father"
-        partner_name = get_any_name_with_id(pard_id)
-        self.brood_dicts[m][pard_id][0]["parent_type"] = parent_type
-        self.brood_dicts[m][pard_id][0]["partner_name"] = partner_name   
-
-    def finish_brood_dict(self, dkt, cur):   
+    def finish_progeny_dict(self, dkt, cur):   
         cur.execute(
             '''
                 SELECT person_id, date
@@ -765,3 +747,56 @@ class NuclearFamiliesTable(Frame):
         dkt["death"] = death_date
         dkt["name"] = name
         dkt["id"] = born_id 
+
+'''
+    Two means of determining partnership are used. 1) a couple has 
+    children together, or 2) a couple are linked by a common couple
+    event such as marriage or divorce regardless of whether they
+    have children together.
+
+    Problem is, if user unlinks a partner from current person's
+    marriage event, should Treebard auto-unlink the partner from the
+    divorce event too? Since partnerships are detected only on the
+    basis of existing marital events if there are no children, the
+    answer is yes. Not unlinking the marital events from a deleted
+    partner. or not editing a changed name on marital events if the
+    partner's name is changed... would be a disaster. And the deleted
+    partner would show up on the nukes table if the links were left
+    intact. The only way around this would be to find another way
+    to detect childless couples that doesn't involve detecting
+    marital events. (What about kin types such as spouse, wife, etc.)
+
+    Couple events are determined by a boolean in the events_type 
+    database table. But not all couple events are evidence for 
+    a partnership that you'd want on the nukes (nuclear family) table.
+    But all couple events are treated the same in other ways, for 
+    example, if two people get engaged, the user only has to create 
+    the event for one of them, and Treebard auto-creates the event
+    for the other person; all couple events should work this way.
+
+    So a second boolean is used to distinguish non-binding couple
+    events such as "first kiss" or "engagement" or "marriage banns".
+    For inclusion in the nukes table, partnership will be marked
+    by the boolean column called "marital". This category includes
+    anything that should mark a partnership even if there are no children,
+    such as marriage, wedding, divorce, cohabitation, separation, etc.
+
+    (The event or dated attribute "marital status" isn't even a couple
+    event, since it makes no reference to who the partner is and would
+    be asked of one person at a time. Even if both partners in a couple 
+    answered this question at the same time, the user would have to 
+    enter each answer separately for the two people.)
+
+    Kin types are used to state for example that a partner is a spouse,
+    wife, husband, etc. They aren't used to detect anything, because
+    they are too loose, the user just decides what to call a partner,
+    such as "boyfriend", "mistress", etc. The event should have all the
+    power, not kin type, when it comes to determining partnership if 
+    there are no children to determine it. The user should be the one
+    to decide whether to include a mistress on the nukes table, by
+    inputting a cohabitation event, for example, for a man with a 
+    second family hidden away somewhere. Unlike some genieware, Treebard
+    differentiates between "spouse" and "mother of children", so it's
+    not necessary to create a bogus spouse in order to identify the
+    parents in a nuclear family.
+''' 

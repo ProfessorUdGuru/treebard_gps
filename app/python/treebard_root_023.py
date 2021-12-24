@@ -188,6 +188,7 @@ if __name__ == '__main__':
 # dump the sample db so repo will get the right stuff
 # put padding around attributes table
 # delete unused imports main.py
+# make a custom tab traversal list so order is current person area, gallery, new event area, nukes table, events table
 # statustips rcm
 
 # BRANCH: names_images
