@@ -154,11 +154,6 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# FIRST STEP IS TO REMOVE THE NUKES AREA CODE TO ITS OWN MODULE
-# Then put all spouses in nukes dict
-
-# add all marital events to partner dict
-# Add partners to table who have no children with current_person (based on marital events); if partner has children ignore the marriage except to use the date (or even divorce date) in ordering broods in the nuke table; instead of labeling "mother of children" use kin_type eg "spouse"
 # update partner: when edited/deleted, the marital events all have to reflect the change
 # give james a 3rd brood to see if the vert sb appears
 # update_child

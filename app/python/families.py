@@ -152,7 +152,9 @@ class NuclearFamiliesTable(Frame):
         marital_event_types.insert(0, self.current_person)
         
         sql = '''
-                SELECT findings_persons_id, person_id1, kin_type_id1, person_id2, kin_type_id2, findings_persons.finding_id
+                SELECT findings_persons_id, person_id1, kin_type_id1,
+                    person_id2, kin_type_id2, findings_persons.finding_id, 
+                    date
                 FROM findings_persons
                 JOIN finding
                     ON finding.finding_id = findings_persons.finding_id
@@ -371,11 +373,11 @@ class NuclearFamiliesTable(Frame):
         self.pa_input.insert(0, lst[1])
         self.pardrads = []
 
-        n = 1
-        for progeny in self.progeny_dicts:
-            for k,v in progeny.items():
-                name, ma_pa, pard_id = (v[0]["partner_name"], v[0]["parent_type"], k)
-            ma_pa = "Children's {}:".format(ma_pa)
+        for i, (k,v) in enumerate(self.progeny_dicts.items(), start=1):
+            n = (i * 2) - 1
+            name = v["partner_name"]
+            pard_kin_type = "{}:".format(v["partner_kin_type"].title())
+            pard_id = k
             pard = "pard_{}_{}".format(pard_id, n)
             pardframe = Frame(self.nuke_window)
             pardframe.grid(column=0, row=n, sticky="ew")
@@ -384,7 +386,12 @@ class NuclearFamiliesTable(Frame):
                 value=n, anchor="w", command=self.fix_buttons)
             self.pardrads.append(pardrad)
             pardrad.grid(column=0, row=n)
-            pardlab = LabelH3(pardframe, text=ma_pa, anchor="w")
+            if len(v["children"]) != 0:
+                ma_pa = "Children's {}:".format(v["parent_type"])
+                pardlab = LabelH3(pardframe, text=ma_pa, anchor="w")
+            else:
+                pardlab = LabelH3(
+                    pardframe, text=pard_kin_type, anchor="w")
             self.pardlabs.append(pardlab)
             pardlab.grid(column=1, row=n)
             pardent = EntryAuto(
@@ -392,12 +399,14 @@ class NuclearFamiliesTable(Frame):
                 values=self.person_autofill_values, name=pard)
             pardent.insert(0, name)
             pardent.grid(column=2, row=n)
-            v[0]["widget"] = pardent
+
+            v["widget"] = pardent
             self.nuke_inputs.append(pardent)
             progeny_frame = Frame(self.nuke_window)
             progeny_frame.grid(column=0, row=n+1) 
+
             r = 0
-            for dkt in v[1]:
+            for dkt in v["children"]:
                 c = 0
                 for i in range(6):
                     if c == 0:
@@ -461,8 +470,8 @@ class NuclearFamiliesTable(Frame):
             for widg in top_row[1:]:
                 widg.config(width=self.findings_table.kin_widths[z] + 2)
                 z += 1
-            n += 2
-        self.last_row = n
+
+        self.last_row = n + 2
 
         # don't know why config_generic isn't enough here
         for widg in self.pardlabs:
@@ -563,32 +572,20 @@ class NuclearFamiliesTable(Frame):
             elif pard_id not in offspring_pards and pard_id in event_pards:
                 nested = {'offspring': False, 'events': True}
             progenies[pard_id] = nested
-# line 568 progenies: {5635: {'offspring': True, 'events': False}, 6: {'offspring': False, 'events': True}, 5599: {'offspring': True, 'events': True}}        
-
-        print("line", looky(seeline()).lineno, "progenies:", progenies)
         for pard_id in progenies:
             progeny = {
-                "sorter": (), "partner_id": None, "partner_name": "", 
-                "parent_type": "", "partner_kin_type": "", 
-                "findings_persons_id": None, "children": [], 
-                "marital_events": {"findings_persons_id": None, 
-                "finding": None}
-                # "date": "-0000-00-00-------", "finding": None}
+                "sorter": [], "partner_name": "", "parent_type": "",
+                "partner_kin_type": "", "widget": None, "children": [],
+                "marital_events": []
 }
             self.progeny_dicts[pard_id] = progeny
 
-        print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
-        
-
         self.collect_couple_events(cur)
-
 
         for k,v in progenies.items():
             pardner = k
             if v["offspring"] is True:
                 for tup in births:
-# line 578 tup: (98, 673, 12, 2, 5599, 1)
-# line 578 tup: (95, 670, 5599, 1, 12, 2)
                     order = "{}-{}".format(str(tup[3]), str(tup[5]))                
                     if tup[4] == pardner:
                         parent_type = tup[5]
@@ -607,38 +604,27 @@ class NuclearFamiliesTable(Frame):
                                 {"findings_persons_id": tup[0], 
                                     "birth_id": tup[1], "order": order})      
 
-                print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
-            if v["events"] is True:
-                print("line", looky(seeline()).lineno, "pardner:", pardner)
-                # make_pard_dict() here
+            if v["events"] is True and v["offspring"] is False:
+                self.make_pard_dict(pardner, "")
         for pard_id in progenies:
             for k,v in self.progeny_dicts.items():
                 if k == pard_id:
                     for dkt in v["children"]:
                         self.finish_progeny_dict(dkt, cur)
+        
+        main_sorter = [0, 0, 0]
+        for k,v in self.progeny_dicts.items():
+            kids = v["children"]
+            kids = sorted(kids, key=lambda i: i["sorter"])
+            v["children"] = kids
+            if len(v["children"]) != 0:
+                main_sorter = v["children"][0]["sorter"]
+            if len(v.get("sorter")) == 0:
+                v["sorter"] = main_sorter
 
-        print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
-
-# line 620 self.progeny_dicts: {5635: {'sorter': (), 'partner_id': None, 'partner_name': 'Harmony Maryland Hobgood (stage name)', 'parent_type': 'Mother', 'partner_kin_type': '', 'findings_persons_id': None, 'children': [{'findings_persons_id': 93, 'birth_id': 668, 'order': '2-1', 'gender': 'male', 'birth': '1920', 'sorter': [1920, 0, 0], 'death': '', 'name': 'Ross Aldo Marquis (stage name)', 'id': 5783}], 'marital_events': {'findings_persons_id': None, 'finding': None}}, 6: {'sorter': (), 'partner_id': None, 'partner_name': '', 'parent_type': '', 'partner_kin_type': 'wife', 'findings_persons_id': None, 'children': [], 'marital_events': {'findings_persons_id': None, 'finding': 649, 'persons_findings_id': 73}}, 5599: {'sorter': (), 'partner_id': None, 'partner_name': 'Selina Savoy', 'parent_type': 'Mother', 'partner_kin_type': 'wife', 'findings_persons_id': None, 'children': [{'findings_persons_id': 94, 'birth_id': 669, 'order': '2-1', 'gender': 'female', 'birth': 'Jan 18, 1922', 'sorter': [1922, 1, 18], 'death': '', 'name': 'Moira Harding', 'id': 5740}, {'findings_persons_id': 96, 'birth_id': 671, 'order': '2-1', 'gender': 'male', 'birth': 'Sep 30, 1929', 'sorter': [1929, 9, 30], 'death': '', 'name': "Joe-John O'Keefe", 'id': 5732}, {'findings_persons_id': 97, 'birth_id': 672, 'order': '2-1', 'gender': 'male', 'birth': 'Apr 14, 1921', 'sorter': [1921, 4, 14], 'death': 'June 29, 1961', 'name': 'Clarence Bracken', 'id': 5677}, {'findings_persons_id': 98, 'birth_id': 673, 'order': '2-1', 'gender': 'male', 'birth': 'Aug 6, 1927', 'sorter': [1927, 8, 6], 'death': '', 'name': 'Noe Whitton', 'id': 5685}, {'findings_persons_id': 95, 'birth_id': 670, 'order': '1-2', 'gender': 'unknown', 'birth': 'Aug 1, 1915', 'sorter': [1915, 8, 1], 'death': '', 'name': 'Albertha Siu Sobel', 'id': 5711}], 'marital_events': {'findings_persons_id': None, 'finding': 632, 'persons_findings_id': 69}}}
-
-        # SORTING AREA DO NOT DELETE
-        # for progeny in self.progeny_dicts:
-            # progeny_values = list(progeny.values())
-            # progeny_values[0][1] = sorted(progeny_values[0][1], key=lambda i: i["sorter"])
-        # compare = []
-        # for progeny in self.progeny_dicts:
-            # for k,v in progeny.items():
-                # compare.append((k, v[1][0]["sorter"]))
-            # compare = sorted(compare, key=lambda j: j[1])
-        # copy = []
-        # for tup in compare:
-            # key = tup[0]
-            # for progeny in self.progeny_dicts:
-                # if progeny.get(key) is None:
-                    # continue
-                # else:
-                    # copy.append(progeny) 
-        # self.progeny_dicts = copy
+        self.progeny_dicts = dict(
+            sorted(
+                self.progeny_dicts.items(), key=lambda i: i[1]["sorter"]))
 
         cur.close()
         conn.close()
@@ -661,9 +647,8 @@ class NuclearFamiliesTable(Frame):
             elif lst[3] == self.current_person:
                 del lst[3:5]
             o += 1
-        print("line", looky(seeline()).lineno, "spouses:", spouses)
 
-# line 665 spouses: [[69, 5599, 7, 632], [72, 6, 7, 646], [73, 6, 7, 649]]
+        self.sorters = []
         for lst in spouses:
             self.save_marital_events(lst, cur)
 
@@ -679,11 +664,15 @@ class NuclearFamiliesTable(Frame):
                     ''',
                     (lst[2],))
                 kin_type = cur.fetchone()[0]
+                
+                sorter = self.make_sorter(lst[4])
+                self.sorters.append(sorter)
+                self.sorters = sorted(self.sorters)
+                sorter = self.sorters[0]  
+                v["sorter"] = sorter
                 v["partner_kin_type"] = kin_type
-
-    # THIS HAS TO BE DONE IN A LOOP AND SAVED IN A LIST OF DICTS MAYBE USING THE FPID AS THE SUBKEY? RIGHT NOW IT'S JUST SAVING THE LAST ONE
-                v["marital_events"]["persons_findings_id"] = lst[0]
-                v["marital_events"]["finding"] = lst[3]
+                v["marital_events"].append(
+                    {"findings_persons_id": lst[0], "finding": lst[3]})
 
     def finish_progeny_dict(self, dkt, cur):   
         cur.execute(
@@ -719,21 +708,7 @@ class NuclearFamiliesTable(Frame):
             (born_id,))
         gender = cur.fetchone()[0]
 
-        sorter = [0,0,0]
-        if birth_date != "-0000-00-00-------":
-            sorter = birth_date.split("-")[1:4] 
-            h = 0
-            for stg in sorter:
-                if len(stg) == 0:
-                    sorter[h] = '0'
-                h += 1
-            num = sorter[1]
-            if sorter[1] != '0':
-                num = OK_MONTHS.index(sorter[1]) + 1
-            else:
-                num = 0
-            sorter = [int(sorter[0]), num, int(sorter[2])]
-
+        sorter = self.make_sorter(birth_date)
         name = get_any_name_with_id(born_id)
 
         birth_date = format_stored_date(
@@ -747,6 +722,23 @@ class NuclearFamiliesTable(Frame):
         dkt["death"] = death_date
         dkt["name"] = name
         dkt["id"] = born_id 
+
+    def make_sorter(self, date):    
+        sorter = [0,0,0]
+        if date != "-0000-00-00-------":
+            sorter = date.split("-")[1:4] 
+            h = 0
+            for stg in sorter:
+                if len(stg) == 0:
+                    sorter[h] = '0'
+                h += 1
+            num = sorter[1]
+            if sorter[1] != '0':
+                num = OK_MONTHS.index(sorter[1]) + 1
+            else:
+                num = 0
+            sorter = [int(sorter[0]), num, int(sorter[2])]
+        return sorter
 
 '''
     Two means of determining partnership are used. 1) a couple has 
