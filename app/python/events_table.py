@@ -406,17 +406,16 @@ class EventsTable(Frame):
         self.events_only_even_without_dates = [
             "birth", "death"] + self.after_death_events
 
-        self.root.bind("<Control-S>", self.redraw)
-        self.root.bind("<Control-s>", self.redraw)
-
-        # self.root.bind(
-            # "<Control-S>", 
-            # lambda evt, curr_per=self.current_person: self.redraw(
-                # evt, curr_per))
-        # self.root.bind(
-            # "<Control-s>", 
-            # lambda evt, curr_per=self.current_person: self.redraw(
-                # evt, curr_per))
+        # without the parameter passed by lambda, running this
+        #   function creates a null current person
+        self.root.bind(
+            "<Control-S>", 
+            lambda evt, curr_per=self.current_person: self.redraw(
+                evt, curr_per))
+        self.root.bind(
+            "<Control-s>", 
+            lambda evt, curr_per=self.current_person: self.redraw(
+                evt, curr_per))
 
         self.place_strings = make_all_nestings(select_all_place_ids)
 
@@ -500,7 +499,7 @@ class EventsTable(Frame):
             elif couple_event_old == 1:
                 delete_couple_finding()
             self.redraw()
-            # self.redraw(current_person=current_person)
+            # self.redraw(current_person=self.current_person)
             cur.close()
             conn.close()
 
@@ -1002,12 +1001,11 @@ class EventsTable(Frame):
         self.widths = [0, 0, 0, 0, 0]
         self.kin_widths = [0, 0, 0, 0, 0, 0]
         self.set_cell_content()
-
-
-        if evt:
+        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
+        if evt: # user pressed CTRL+S for example
             self.main_window.nuke_table.make_nuke_inputs(
                 current_person=self.current_person)
-        else:
+        else: # user pressed OK to change current person for example
             self.main_window.nuke_table.make_nuke_inputs()
         self.resize_scrollbar(self.root, self.main_canvas)
 
@@ -1028,7 +1026,10 @@ class EventsTable(Frame):
         self.add_event_button.grid_forget()
         for child in self.main_window.nuke_table.nuke_window.winfo_children():
             child.destroy()
-        self.main_window.nuke_table.current_person_parents = [{},{}]
+        self.main_window.nuke_table.current_person_parents = [
+            [None, None], 
+            {"id": None, "name": None, "widget": None}, 
+            {"id": None, "name": None, "widget": None}]
 
     def make_header(self):
         y = 0
