@@ -422,19 +422,21 @@ class LabelDots(LabelButtonText):
             master,
             dialog_class,
             treebard,
+            formats,
             *args, **kwargs):
         LabelButtonText.__init__(self, master, *args, **kwargs)
 
         self.master = master
         self.dialog_class = dialog_class
         self.treebard = treebard
+        self.formats = formats
         self.current_person = None
         
         self.root = master.master
 
         self.finding_id = None
         self.header = []
-        self.config(width=5, font=formats['heading3'])
+        self.config(width=5, font=self.formats['heading3'])
         self.bind('<Button-1>', self.open_dialog)
         self.bind('<Return>', self.open_dialog)
         self.bind('<space>', self.open_dialog)
@@ -446,6 +448,7 @@ class LabelDots(LabelButtonText):
             self.header, 
             self.current_person,
             self.treebard,
+            self.formats,
             pressed=evt.widget)
 
 class LabelBoilerplate(Labelx):
@@ -961,71 +964,71 @@ class EntryHilited2(Entryx):
             font=formats['output_font'], 
             insertbackground=formats['fg'])
 
-class EntryAutofill(EntryUnhilited):
-    ''' 
-        SUPERCEDED BY EntryAutofill
-        Simple case-insensitive autofill entry with no dropdown 
-        list, lets you type as fast as you want. Values option 
-        is not a real tkinter option, so you can't use
-        instance.config(values=new_values). Change values list 
-        like this: instance.values = [5, 15, 19, 42]. Autofills 
-        nothing till you type up to the first unique character. 
-        Example: If the list has "Bill" and "Bilbo", nothing 
-        will autofill till you type the second b or the l. You can 
-        backspace and keep typing a different word with no extra 
-        key strokes or controls and it still fills correctly. 
-        Width is set to fit the longest item in the values list.
-        instance.config(textvariable=instance.var) is required 
-        in the instance to turn on the autofill functionality.
-    '''
+# class EntryAutofill(EntryUnhilited):
+    # ''' 
+        # SUPERCEDED BY EntryAutofill
+        # Simple case-insensitive autofill entry with no dropdown 
+        # list, lets you type as fast as you want. Values option 
+        # is not a real tkinter option, so you can't use
+        # instance.config(values=new_values). Change values list 
+        # like this: instance.values = [5, 15, 19, 42]. Autofills 
+        # nothing till you type up to the first unique character. 
+        # Example: If the list has "Bill" and "Bilbo", nothing 
+        # will autofill till you type the second b or the l. You can 
+        # backspace and keep typing a different word with no extra 
+        # key strokes or controls and it still fills correctly. 
+        # Width is set to fit the longest item in the values list.
+        # instance.config(textvariable=instance.var) is required 
+        # in the instance to turn on the autofill functionality.
+    # '''
 
-    def __init__(self, master, *args, **kwargs):
-        EntryUnhilited.__init__(self, master, *args, **kwargs)
+    # def __init__(self, master, *args, **kwargs):
+        # EntryUnhilited.__init__(self, master, *args, **kwargs)
 
-        self.config(width=1)
+        # self.config(width=1)
 
-        self.values = ['red', 'rust', 'black', 'blue', 'Bill', 'Bilbo', 'billboard']
-        self.autofill = False
+        # self.values = ['red', 'rust', 'black', 'blue', 'Bill', 'Bilbo', 'billboard']
+        # self.autofill = False
 
-        self.var = tk.StringVar()
-        self.bind('<KeyRelease>', self.get_typed)
-        self.bind('<Key>', self.detect_pressed)
+        # self.var = tk.StringVar()
+        # self.bind('<KeyRelease>', self.get_typed)
+        # self.bind('<Key>', self.detect_pressed)
 
-    def match_string(self):
-        hits = []
-        got = self.var.get()
-        for item in self.values:
-            if item.lower().startswith(got.lower()):
-                hits.append(item)
-        return hits    
+    # def match_string(self):
+        # hits = []
+        # got = self.var.get()
+        # for item in self.values:
+            # if item.lower().startswith(got.lower()):
+                # hits.append(item)
+        # return hits    
 
-    def get_typed(self, event):
-        if self.autofill is False:
-            return
-        if len(event.keysym) == 1:
-            hits = self.match_string()
-            self.show_hit(hits)
+    # def get_typed(self, event):
+        # if self.autofill is False:
+            # return
+        # if len(event.keysym) == 1:
+            # hits = self.match_string()
+            # self.show_hit(hits)
 
-    def detect_pressed(self, event):
-        if self.autofill is False:
-            return
-        key = event.keysym
-        pos = self.index('insert')
-        self.delete(pos, 'end') 
+    # def detect_pressed(self, event):
+        # if self.autofill is False:
+            # return
+        # key = event.keysym
+        # pos = self.index('insert')
+        # self.delete(pos, 'end') 
 
-    def show_hit(self, lst):
-        if len(lst) == 1:
-            self.var.set(lst[0])
+    # def show_hit(self, lst):
+        # if len(lst) == 1:
+            # self.var.set(lst[0])
 
-class EntryAutofillHilited(EntryAutofill):
-    ''' 
-        Same as EntryAutofill but has a highlighted background
-        like a typical Entry.
-    '''
-    def __init__(self, master, *args, **kwargs): 
-        EntryAutofill.__init__(self, master, *args, **kwargs)
+# class EntryAutofillHilited(EntryAutofill):
+    # ''' 
+        # Same as EntryAutofill but has a highlighted background
+        # like a typical Entry.
+    # '''
+    # def __init__(self, master, *args, **kwargs): 
+        # EntryAutofill.__init__(self, master, *args, **kwargs)
 
-        self.config(bg=formats['highlight_bg'])
+        # self.config(bg=formats['highlight_bg'])
 
 class EntryDefaultText(Entry):
     def __init__(self, master, default_text, *args, **kwargs):

@@ -16,7 +16,7 @@ formats = make_formats_dict()
 # ************** statusbar tooltips sizegrip **************
 
 class LabelStatusbar(Labelx):
-    def __init__(self, master, *args, **kwargs):
+    def __init__(self, master, formats, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
         self.config(
             bg=formats['bg'], 
@@ -92,7 +92,7 @@ class StatusbarTooltips(Frame):
 
     '''
 
-    def __init__(self, master, resizer=True, *args, **kwargs):
+    def __init__(self, master, formats, resizer=True, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master # root or toplevel
@@ -109,9 +109,9 @@ class StatusbarTooltips(Frame):
         relief.grid_columnconfigure(0, weight=1)
 
         self.status_label = LabelStatusbar(
-            relief, cursor='arrow', anchor='w')
+            relief, formats, cursor='arrow', anchor='w')
         self.tooltip_label = LabelStatusbar(
-            relief, bd=2, relief='sunken', anchor='e')
+            relief, formats, bd=2, relief='sunken', anchor='e')
 
         if resizer is True:
             self.sizer.place(relx=1.0, x=-3, rely=1.0, anchor='se')
@@ -136,7 +136,7 @@ class Sizer(Label):
         self.tk_img = ImageTk.PhotoImage(img, master=self.master)
 
         self.config(
-            bg=formats['bg'], 
+            # bg=formats['bg'], 
             bd=0, 
             cursor='size_nw_se',
             image=self.tk_img)
@@ -165,28 +165,44 @@ class Sizer(Label):
         click_y = evt.y_root
 
         self.bind('<B1-Motion>', resize_se)
-
+# from styles import make_formats_dict
+# formats = make_formats_dict()
 class Separator(Framex):
     ''' 
         Horizontal separator like ttk.Separator but 
-        can be sized and utilize the user pref colors.
+        can be sized and utilize the user-selected colors.
     '''
 
     def __init__(
-        self, master, height=3, 
-        color1=formats['head_bg'], 
-        color2=formats['highlight_bg'], 
-        color3=formats['bg'], *args, **kwargs):
+        self, master, formats, height=3, 
+        # color1=formats['head_bg'], 
+        # color2=formats['highlight_bg'], 
+        # color3=formats['bg'], 
+        *args, **kwargs):
+        # self, master, height=3, 
+        # color1=formats['head_bg'], 
+        # color2=formats['highlight_bg'], 
+        # color3=formats['bg'], *args, **kwargs):
         Framex.__init__(self, master, *args, **kwargs)
+
+        self.formats = formats
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=0)
         self.grid_rowconfigure(2, weight=0)
 
+        self.color1=self.formats['head_bg'], 
+        self.color2=self.formats['highlight_bg'], 
+        self.color3=self.formats['bg'],
+
+        # self.color1 = color1
+        # self.color2 = color2
+        # self.color3 = color3
         self.height = int(height/5)
-        self.color1 = color1
-        self.color2 = color2
-        self.color3 = color3
+
+        self.make_widgets()
+
+    def make_widgets(self):
 
         if self.height > 0:
             self.line1 = FrameStay(
@@ -221,11 +237,14 @@ class Separator(Framex):
                 self, bg=self.color3, height=self.height)
             self.line3.grid(column=0, row=2, sticky='ew')
 
+
+        self.colorize()
+
     def colorize(self):
-        formats = make_formats_dict()
-        self.color1=formats['head_bg'], 
-        self.color2=formats['highlight_bg'], 
-        self.color3=formats['bg']
+        # formats = make_formats_dict()
+        self.color1=self.formats['head_bg'], 
+        self.color2=self.formats['highlight_bg'], 
+        self.color3=self.formats['bg']
         if self.height > 0:
             self.line1.config(bg=self.color1)
             self.line2.config(bg=self.color2)

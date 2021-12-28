@@ -4,8 +4,8 @@
 #   this module is about EntryAuto which is defined below
 
 import tkinter as tk
-from widgets import EntryUnhilited, EntryAutofill
-from styles import make_formats_dict
+from widgets import EntryUnhilited
+# from styles import make_formats_dict
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -13,7 +13,7 @@ from dev_tools import looky, seeline
 
 
 
-formats = make_formats_dict()
+# formats = make_formats_dict()
 
 class EntryAuto(EntryUnhilited):
     '''
@@ -35,14 +35,15 @@ class EntryAuto(EntryUnhilited):
     def __init__(self, master, autofill=False, values=None, *args, **kwargs):
         EntryUnhilited.__init__(self, master, *args, **kwargs)
         self.master = master
+        # self.formats = formats
         self.autofill = autofill
         self.values = values
 
-        self.config(
-            bg=formats['bg'], 
-            fg=formats['fg'], 
-            font=formats['input_font'], 
-            insertbackground=formats['fg'])
+        # self.config(
+            # bg=self.formats['bg'], 
+            # fg=self.formats['fg'], 
+            # font=self.formats['input_font'], 
+            # insertbackground=self.formats['fg'])
 
         if autofill is True:
             self.bind("<KeyPress>", self.detect_pressed)
@@ -124,12 +125,14 @@ class EntryAuto(EntryUnhilited):
         self.select_clear()
 
 class EntryAutoHilited(EntryAuto):
-    def __init__(self, master, *args, **kwargs):
+    def __init__(self, master, formats, *args, **kwargs):
         EntryAuto.__init__(self, master, *args, **kwargs)
 
         self.config(bg=formats["highlight_bg"])
 
 if __name__ == "__main__":
+
+    from widgets import Entry
 
     all_items = [
         "Flagstaff, Coconino County, Arizona",
@@ -175,9 +178,7 @@ if __name__ == "__main__":
     autofill.grid()
     autofill.focus_set()
 
-    # this old autofill is for comparison only, not to be used
-    #   actually it seems to be kinda broken
-    traverse = EntryAutofill(root, bg="tan")
+    traverse = Entry(root, bg="tan")
     traverse.grid()
     traverse.autofill = True
     traverse.values = all_items

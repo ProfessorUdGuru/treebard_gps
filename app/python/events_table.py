@@ -14,7 +14,8 @@ from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator, run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import new_event_dlg_help_msg
-from styles import make_formats_dict, config_generic
+from styles import config_generic
+# from styles import make_formats_dict, config_generic
 from names import (
     get_name_with_id, make_all_names_list_for_person_select,
     open_new_person_dialog, get_any_name_with_id)
@@ -60,7 +61,7 @@ from dev_tools import looky, seeline
 
 
 date_prefs = get_date_formats()
-formats = make_formats_dict()
+# formats = make_formats_dict()
 
 HEADS = (
     'event', 'date', 'place', 'particulars', 'age', 
@@ -374,12 +375,14 @@ class EventsTable(Frame):
     instances = []
 
     def __init__(
-            self, master, root, treebard, main, attrib=False, *args, **kwargs):
+            self, master, root, treebard, main, formats, 
+            attrib=False, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
         self.root = root
         self.treebard = treebard
         self.main_window = main
+        self.formats = formats
         self.attrib = attrib
 
         self.main_canvas = main.master
@@ -405,7 +408,6 @@ class EventsTable(Frame):
             return
         self.events_only_even_without_dates = [
             "birth", "death"] + self.after_death_events
-
         # without the parameter passed by lambda, running this
         #   function creates a null current person
         self.root.bind(
@@ -650,7 +652,8 @@ class EventsTable(Frame):
                 self.inwidg,
                 self.initial,
                 self.final,
-                self.finding)
+                self.finding,
+                self.formats)
 
         def update_age(offspring_event, row):
             if (event_string == "birth" and 
@@ -736,21 +739,24 @@ class EventsTable(Frame):
                     cell.bind('<FocusOut>', self.get_final, add="+")
                 elif j == 5:
                     cell = LabelDots(
-                        self, RolesDialog, self.treebard, finding_row=None)
+                        self, RolesDialog, self.treebard, self.formats, 
+                        finding_row=None)
                 elif j == 6:
                     cell = LabelDots(
-                        self, NotesDialog, self.treebard, finding_row=None)
+                        self, NotesDialog, self.treebard, self.formats, 
+                        finding_row=None)
                 elif j == 7:
                     cell = LabelButtonText(
                         self,
                         width=8,
                         anchor='w',
-                        font=formats['heading3'])
+                        font=self.formats['heading3'])
                 row.append(cell)
             self.table_cells.append(row)
         self.new_event_frame = Frame(self)
         self.event_input = EntryAutoHilited(
-            self.new_event_frame, 
+            self.new_event_frame,
+            self.formats,
             width=32, 
             autofill=True, 
             values=self.event_autofill_values)
@@ -947,7 +953,7 @@ class EventsTable(Frame):
             justify='left',
             relief='solid', 
             bd=1,
-            bg=formats['highlight_bg'])
+            bg=self.formats['highlight_bg'])
         label.pack(ipadx=6, ipady=3)
 
         mouse_at = self.winfo_pointerxy()
@@ -989,9 +995,6 @@ class EventsTable(Frame):
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        
-        if evt:
-            self.current_person = current_person
         cur.execute(update_current_person, (self.current_person,))
         conn.commit()
         cur.close()
@@ -1001,7 +1004,6 @@ class EventsTable(Frame):
         self.widths = [0, 0, 0, 0, 0]
         self.kin_widths = [0, 0, 0, 0, 0, 0]
         self.set_cell_content()
-        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         if evt: # user pressed CTRL+S for example
             self.main_window.nuke_table.make_nuke_inputs(
                 current_person=self.current_person)
@@ -1039,7 +1041,7 @@ class EventsTable(Frame):
             self.headers.append(head)
             y += 1
 
-        sep = Separator(self, height=3)
+        sep = Separator(self, self.formats, height=3)
         sep.grid(column=0, row=1, columnspan=9, sticky='ew')
 
     def fix_tab_traversal(self):
@@ -1312,7 +1314,7 @@ class NewEventDialog(Toplevel):
         self.date_input = EntryHilited1(self.generic_data_inputs)
         lab2 = Label(self.generic_data_inputs, text="Place")
         self.place_input = EntryAutoHilited(
-            self.generic_data_inputs, 
+            self.generic_data_inputs, self.formats, 
             width=48, autofill=True, values=self.place_autofill_values)
         self.place_input.bind("<FocusOut>", self.validate_place)
         lab3 = Label(self.generic_data_inputs, text="Particulars")
@@ -1404,7 +1406,7 @@ class NewEventDialog(Toplevel):
         self.new_evt_msg.config(text="Information about the new event "
             "relating to the current person and other primary participants "
             "in the event.")
-        sep1 = Separator(self.frm, width=3)
+        sep1 = Separator(self.frm, self.formats, width=3)
         sep1.grid(column=0, row=1, columnspan=2, sticky="ew", pady=(12,0))
 
         name1 = Label(self.couple_data_inputs, text=self.current_name)
@@ -1415,7 +1417,7 @@ class NewEventDialog(Toplevel):
 
         name2 = Label(self.couple_data_inputs, text="Partner")
         self.other_person_input = EntryAutoHilited(
-            self.couple_data_inputs, width=48, autofill=True, 
+            self.couple_data_inputs, self.formats, width=48, autofill=True, 
             values=self.all_names)
         self.other_person_input.bind(
             "<FocusOut>", 
@@ -1596,7 +1598,7 @@ class NewEventDialog(Toplevel):
             return
         elif len(person_and_id) == 1:
             new_partner = open_new_person_dialog(
-                self, input_widget, self.root, self.treebard)
+                self, input_widget, self.root, self.treebard, self.formats)
         elif self.current_person == int(person_and_id[1]):
             msg = open_message(
                 self, 

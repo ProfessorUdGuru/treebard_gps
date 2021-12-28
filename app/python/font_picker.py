@@ -6,7 +6,8 @@ import sqlite3
 from files import get_current_file
 from query_strings import update_format_font, select_format_font_scheme
 from widgets import Label, Frame, Scale, Button
-from styles import make_formats_dict, config_generic
+from styles import config_generic
+# from styles import make_formats_dict, config_generic
 from messages import open_message, fonts_msg
 from scrolling import resize_scrolled_content    
 from custom_combobox_widget import Combobox
@@ -17,7 +18,7 @@ from dev_tools import looky, seeline
 
 
 
-formats = make_formats_dict()
+# formats = make_formats_dict()
 
 class FontPicker(Frame):
     def __init__(self, master, root, main, *args, **kwargs):

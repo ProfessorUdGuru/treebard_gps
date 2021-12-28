@@ -515,10 +515,13 @@ if __name__ == "__main__":
 
     from window_border import Border
     from widgets import Button, Label
+    from styles import make_formats_dict
+
+    formats = make_formats_dict()
 
     def make_widgets():
         root.columnconfigure(1, weight=1)
-        canvas = Border(root, root, size=3, menubar=True)
+        canvas = Border(root, root, formats, size=3, menubar=True)
         canvas.title_1.config(text="Person Search Dialog")
         canvas.title_2.config(text="")
 

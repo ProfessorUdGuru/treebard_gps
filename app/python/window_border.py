@@ -7,7 +7,8 @@ from widgets import (
     LabelButtonImage, Frame, FrameTitleBar, LabelTitleBar, Toplevel, Canvas, 
     FrameHilited3) 
 from toykinter_widgets import StatusbarTooltips
-from styles import make_formats_dict, NEUTRAL_COLOR, config_generic
+from styles import NEUTRAL_COLOR, config_generic
+# from styles import make_formats_dict, NEUTRAL_COLOR, config_generic
 from utes import center_dialog
 from query_strings import (
     select_format_font_size, select_default_format_font_size)
@@ -20,6 +21,7 @@ from dev_tools import looky, seeline
 
 
 def close(evt):
+    print("line", looky(seeline()).lineno, "window_border.py close() running:")
     dlg = evt.widget.winfo_toplevel()
     if dlg.winfo_name() == 'tk':
         set_closing()
@@ -33,8 +35,9 @@ class Border(Canvas):
     pool = []
 
     def __init__(
-            self, master, root, menubar=False, 
-            ribbon_menu=False, tree_is_open=1, *args, **kwargs):
+            self, master, root, formats, menubar=False, 
+            ribbon_menu=False, *args, **kwargs):
+            # ribbon_menu=False, tree_is_open=1, *args, **kwargs):
         Canvas.__init__(self, master, *args, **kwargs)
 
         '''
@@ -65,16 +68,17 @@ class Border(Canvas):
 
         self.master = master # toplevel
         self.root = root
+        self.formats = formats
         self.menubar = menubar
         self.ribbon_menu = ribbon_menu
-        self.tree_is_open = tree_is_open
+        # self.tree_is_open = tree_is_open
 
         self.set_title_bar_size()
 
         self.changing_values = None
         self.maxxed = False
 
-        self.formats = make_formats_dict()
+        # self.formats = make_formats_dict()
 
         self.make_widgets()
 
@@ -110,15 +114,17 @@ class Border(Canvas):
             7 : ['medium', 31, 0.25], 
             11 : ['large', 45, 1.0]}
 
-        if self.tree_is_open == 0:
-            query = select_default_format_font_size
-            current_file = global_db_path
-        elif self.tree_is_open == 1:
-            query = select_format_font_size
-            current_file = get_current_file()[0]
+        # if self.tree_is_open == 0:
+            # query = select_default_format_font_size
+            # current_file = global_db_path
+        # elif self.tree_is_open == 1:
+            # query = select_format_font_size
+            # current_file = get_current_file()[0]
 
+        current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
-        cur = conn.execute(query)
+        cur = conn.execute(select_format_font_size)
+        # cur = conn.execute(query)
         font_size = cur.fetchone()
         cur.close()
         conn.close()
@@ -154,7 +160,7 @@ class Border(Canvas):
         self.border_left = FrameTitleBar(self.master, width=3, name='left')
         self.border_right = FrameTitleBar(self.master, width=3, name='right')
 
-        self.statusbar = StatusbarTooltips(self.master)
+        self.statusbar = StatusbarTooltips(self.master, self.formats)
 
         self.border_bottom = FrameTitleBar(
             self.master, height=3, name='bottom')
@@ -192,7 +198,8 @@ class Border(Canvas):
 
         # children of self.title_frame
         self.logo = TitleBarButtonSolidBG(
-            self.title_frame, 
+            self.title_frame,
+            self.formats,
             icon='logo',
             icon_size=self.icon_size)
 
@@ -412,7 +419,7 @@ class Border(Canvas):
             Runs whenever title bar is clicked, called in get_pos().
         '''
 
-        self.formats = make_formats_dict()
+        # self.formats = make_formats_dict()
         for widg in self.BORDER_PARTS:
             widg.config(bg=self.formats['head_bg'])
         for widg in (self.title_1, self.title_2):
@@ -470,14 +477,14 @@ class TitleBarButton(LabelButtonImage):
             image=self.tk_img)
 
 class TitleBarButtonSolidBG(TitleBarButton):
-    def __init__(self, master, *args, **kwargs):
+    def __init__(self, master, formats, *args, **kwargs):
         TitleBarButton.__init__(self, master, *args, **kwargs)
         '''
             For buttons with a solid image and darker color
             backgrounds so a bright border doesn't show through
             around the edge of the image.
         '''
-        formats = make_formats_dict()
+        # formats = make_formats_dict()
         self.config(bg=formats['highlight_bg'])
 
 class Dialogue(Toplevel):

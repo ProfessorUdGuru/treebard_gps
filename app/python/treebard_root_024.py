@@ -1,6 +1,7 @@
-# treebard_root_023.py
+# treebard_root_024.py
 
-# make_formats_dict() runs 36 times before the tree opens and 91 more times when the tree opens. Why can't I just define it once on opening the app and once more on opening the tree? Could I have a treebard.formats var that's good everywhere instead of a self.formats in every class? Change to treebard_root_024.py this might wreak some havoc.
+# Change to treebard_root_024: because make_formats_dict() runs 36 times before the tree opens and 91 more times when the tree opens. Why can't I just define it once on opening the app and once more on opening the tree? Could I have a treebard.formats var that's good everywhere instead of a self.formats in every class?
+# _023 is good, it works, but changing all the global executions of make_formats_dict to many more executions of it inside private namespaces has broken the app's willingness to change colors to the user-selected colors on opening a tree, and I don't think I'll be able to figure out why till I stop running make_formats_dict 127 times every time the app opens.
 
 import tkinter as tk
 import sqlite3    
@@ -54,6 +55,8 @@ class Treebard():
 
     def __init__(self, root):
         self.root = root
+
+        self.formats = make_formats_dict(tree_is_open=False)
         self.make_main_canvas()
         self.make_menus()
         self.menus_show = True
@@ -102,9 +105,11 @@ class Treebard():
         self.canvas = Border(
             self.root,
             self.root,
+            self.formats,
             menubar=True, 
             ribbon_menu=True,
-            tree_is_open=0)
+            # tree_is_open=0
+)
         self.canvas.title_1.config(text="Treebard GPS")
 
     def make_main_window(self):
@@ -168,6 +173,7 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
+# start by seeing what happens if I get rid of the local runs of make_formats_dict in one module only, while running it instead in root to make a treebard.formats variable. This seems to work so how about using treebard.formats for opening dialog and splash screen and main.formats for everything else? I doesn't seem necessary to get tree_is_open from db, shouldn't I know what it is when needed? Another simplification would be to go ahead and let the app open in whatever color scheme was last used in a tree, instead of trying to open it with default colors, then change everything when the tree opens, if necessary. See get_opening_settings() in styles.py and slim it down, remove the option, and delete the column from treebard.db.
 # make_formats_dict() runs 36 times before the tree opens and 91 more times when the tree opens. Why can't I just define it once on opening the app and once more on opening the tree? Could I have a treebard.formats var that's good everywhere instead of a self.formats in every class? Change to treebard_root_024.py this might wreak some havoc.
 # currently, closing the app with the X on the window border causes the app to open next time with ?default colors, while closing with the x on the terminal window causes the app to open next time with the user-selected colors. What should happen is that the opening screen should open in default colors, then on opening a tree, the tree shd open in user-select colors for that tree. What is being saved in db when closing with app X vs terminal X? When fixed, test with File>Close>Exit and File > Exit. I THINK THIS USED TO WORK but since get_opening_settings() is run by make_formats_dict(), it must've broke when I changed make_formats_dict() to not run globally anywhere? Currently the value is right on open if the app was closed right (not by clicking the terminal X), ie the default colors are shown. When the tree opens, it's registered (line 584 in styles.py) that a tree is open but maybe too late bec the default colors are used in spite of make_formats_dict() ?knowing that the tree is now open(ing).
 # closing opening dialog with X or CANCEL gets error re mousewheel scrolling, maybe just try/except/pass since I already solved this problem everywhere else but here the universal solution won't work, see docstring in root make_main_window().

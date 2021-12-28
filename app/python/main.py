@@ -77,6 +77,8 @@ class Main(Frame):
         self.root = root
         self.treebard = treebard
 
+        self.formats = make_formats_dict()
+
         self.current_person = None
         self.current_person_name = ""
         self.tabbook_x = 300
@@ -122,7 +124,7 @@ class Main(Frame):
         scridth_w = Frame(self, width=scridth)
         current_person_area = Frame(self)
         self.main_tabs = TabBook(
-            self, root=self.root, tabs=MAIN_TABS, 
+            self, self.formats, root=self.root, tabs=MAIN_TABS, 
             selected='person', case='upper', miny=0.66, takefocus=0)
         persons_tab = Frame(self.main_tabs.store["person"])
         attributes_tab = Frame(self.main_tabs.store["attributes"])
@@ -135,7 +137,7 @@ class Main(Frame):
         change_current_person = LabelH3(
             current_person_area, text="Change current person to:")
         self.person_entry = EntryAutoHilited(
-            current_person_area, 
+            current_person_area, self.formats, 
             width=36,
             autofill=True)
         person_change = Button(
@@ -149,27 +151,32 @@ class Main(Frame):
         miny = self.tabbook_y/self.SCREEN_SIZE[1]
 
         self.right_panel = TabBook(
-            persons_tab, root=self.root, tabs=RIGHT_PANEL_TABS, side="se", 
-            selected='images', case='upper', miny=0.25, minx=0.20, takefocus=0)
+            persons_tab, self.formats, root=self.root, tabs=RIGHT_PANEL_TABS, 
+            side="se", selected='images', case='upper', miny=0.25, minx=0.20,
+            takefocus=0)
         self.top_pic_button = ButtonBigPic(
             self.right_panel.store['images'],
             command=self.open_person_gallery)
 
         self.findings_table = EventsTable(
-            persons_tab, self.root, self.treebard, self)
+            persons_tab, self.root, self.treebard, self, self.formats)
 
         EventsTable.instances.append(self.findings_table)
         self.current_person = self.findings_table.current_person
 
         self.att = EventsTable(
-            attributes_tab, self.root, self.treebard, self, attrib=True)
+            attributes_tab, self.root, self.treebard, 
+            self, self.formats, attrib=True)
         EventsTable.instances.append(self.att)
 
         self.nuke_table = NuclearFamiliesTable(
-            persons_tab, 
+            persons_tab,
+            self.root, 
+            self.treebard,
             self.current_person, 
             self.findings_table, 
             self.right_panel,
+            self.formats, ###########
             person_autofill_values=self.person_autofill_values)
 
         current_file, current_dir = get_current_file()
@@ -181,6 +188,7 @@ class Main(Frame):
             places_tab, 
             self.main_tabs, 
             self.main_tabs.store['graphics'],
+            self.formats,
             self.root, 
             self.treebard,
             self.SCREEN_SIZE,
@@ -190,14 +198,15 @@ class Main(Frame):
             sources_tab, 
             self.main_tabs, 
             self.main_tabs.store['graphics'],
+            self.formats,
             self.root, 
             self.treebard,
             self.SCREEN_SIZE,
             current_source_name="1900 US Census")
 
         options_tabs = TabBook(
-            prefs_tab, root=self.root, tabs=PREFS_TABS, side="se", 
-            selected='general', case='upper', miny=0.5, minx=0.66)
+            prefs_tab, self.formats, root=self.root, tabs=PREFS_TABS, 
+            side="se", selected='general', case='upper', miny=0.5, minx=0.66)
 
         general = Frame(options_tabs.store['general'])
         general.columnconfigure(0, weight=1)
@@ -224,12 +233,14 @@ class Main(Frame):
             options_tabs.store['colors'],
             self.root,
             self.rc_menu,
+            self.formats,
             tabbook=self.right_panel)
         colorizer.grid(column=0, row=0)
 
         self.fontpicker = FontPicker(options_tabs.store['fonts'], self.root, self)
         self.fontpicker.grid(column=0, row=0)
-        self.date_options = DatePreferences(options_tabs.store['dates'])
+        self.date_options = DatePreferences(
+            options_tabs.store['dates'], self.formats)
         self.date_options.grid(column=0, row=0)
 
         # children of self.master i.e. root
@@ -285,13 +296,6 @@ class Main(Frame):
         self.right_panel.store['images'].columnconfigure(0, weight=1)
         self.right_panel.store['images'].rowconfigure(0, weight=1)
         self.top_pic_button.grid(column=0, row=0, sticky='news', padx=3, pady=3)
-
-        # Force everything to format on load the same as on calling redraw().
-        #   This is a confusion workaround hack. (Couldn't find the 
-        #   formatting glitch in a reasonable amount of time--uncomment this 
-        #   and look at the child row columns in multi-brood current person 
-        #   on load--or run this and don't worry about it).
-        # self.findings_table.redraw()
 
         visited = (
             (self.person_entry,
@@ -526,6 +530,7 @@ class Main(Frame):
             self.findings_table,
             self.att,
             self.show_top_pic,
+            self.formats,
             names_tab=self.main_tabs.store["names"],
             pic=None)    
 
@@ -533,7 +538,7 @@ class Main(Frame):
         if "#" not in self.person_entry.get():
             old_current_person = self.current_person
             self.current_person = open_new_person_dialog(
-                self, self.person_entry, self.root, self.treebard)
+                self, self.person_entry, self.root, self.treebard, self.formats)
             if self.current_person is None:
                 self.current_person = old_current_person
         else:
@@ -561,14 +566,14 @@ class Main(Frame):
         self.show_top_pic(current_file, current_dir, self.current_person)
 
     def open_person_gallery(self):
-
         person_gallery_dlg = Toplevel(self.root)
-        gallery_canvas = Border(person_gallery_dlg, self.root)
-
+        gallery_canvas = Border(person_gallery_dlg, self.root, self.formats)
+           
         person_gallery = Gallery(
             gallery_canvas, 
             self.main_tabs, 
             self.main_tabs.store['graphics'],
+            self.formats,
             self.root, 
             self.treebard,
             self.SCREEN_SIZE,

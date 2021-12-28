@@ -12,7 +12,8 @@ from autofill import EntryAutoHilited
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import notes_dlg_help_msg, links_dlg_help_msg
-from styles import config_generic, make_formats_dict
+from styles import config_generic
+# from styles import config_generic, make_formats_dict
 from names import get_name_with_id, make_all_names_list_for_person_select
 from places import make_all_nestings    
 from messages import (
@@ -39,7 +40,7 @@ class NotesDialog(Toplevel):
 
     def __init__(
             self, master, finding, header, current_person, treebard, 
-            pressed=None, *args, **kwargs):
+            formats, pressed=None, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.root = master
@@ -47,6 +48,7 @@ class NotesDialog(Toplevel):
         self.header = header
         self.current_person = current_person
         self.treebard = treebard
+        self.formats = formats
         self.pressed = pressed
 
         self.current_file = get_current_file()[0]
@@ -59,7 +61,7 @@ class NotesDialog(Toplevel):
         self.privacy = tk.IntVar()
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
-        self.formats = make_formats_dict()
+        # self.formats = make_formats_dict()
 
         self.autoscroll_on_arrow = False
 
@@ -93,7 +95,7 @@ class NotesDialog(Toplevel):
 
     def make_widgets(self):
 
-        self.canvas = Border(self, self.root)
+        self.canvas = Border(self, self.root, self.formats)
 
         self.canvas.title_1.config(text="Notes Dialog")
         self.canvas.title_2.config(text="Current Person: {}, id #{}".format(
@@ -332,7 +334,7 @@ class NotesDialog(Toplevel):
 
         self.order_dlg = Toplevel(self)
         self.order_dlg.columnconfigure(1, weight=1)
-        self.order_dlg_canvas = Border(self.order_dlg, self.root)
+        self.order_dlg_canvas = Border(self.order_dlg, self.root, self.formats)
         self.order_dlg_window = Frame(self.order_dlg_canvas)
         self.order_dlg_canvas.create_window(
             0, 0, anchor='nw', window=self.order_dlg_window)

@@ -12,7 +12,8 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import sqlite3
 from files import get_current_file, current_drive, app_path
-from styles import make_formats_dict, config_generic
+from styles import config_generic
+# from styles import make_formats_dict, config_generic
 from scrolling import Scrollbar, resize_scrolled_content
 from widgets import (
     Frame, Canvas, Button, Label, Radiobutton, FrameHilited4, 
@@ -34,13 +35,13 @@ from dev_tools import looky, seeline
 
 
 
-formats = make_formats_dict()
+# formats = make_formats_dict()
 
 class Gallery(Frame):
 
     def __init__(
             self, master, tabbook, 
-            graphics_tab, 
+            graphics_tab, formats, 
             root, treebard, SCREEN_SIZE, dialog=None,
             current_person_name=None, current_place_name=None, 
             current_source_name=None, *args, **kwargs):
@@ -49,6 +50,7 @@ class Gallery(Frame):
         self.master = master # canvas
         self.tabbook = tabbook
         self.graphics_tab = graphics_tab
+        self.formats = formats
         self.root = root
         self.treebard = treebard
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = SCREEN_SIZE
@@ -130,7 +132,7 @@ class Gallery(Frame):
 
         thumb_frame = Frame(self)        
 
-        self.thumb_canvas = Canvas(thumb_frame, bg=formats['bg'])
+        self.thumb_canvas = Canvas(thumb_frame, bg=self.formats['bg'])
 
         thumb_sbh = Scrollbar(
             thumb_frame, 
@@ -323,10 +325,10 @@ class Gallery(Frame):
         evt.widget.focus_set()
 
     def hilite(evt):
-        evt.widget.config(bg=formats['highlight_bg'])
+        evt.widget.config(bg=self.formats['highlight_bg'])
 
     def unhilite(evt):
-        evt.widget.config(bg=formats['bg'])
+        evt.widget.config(bg=self.formats['bg'])
 
     def show_clicked(self, evt):
         select_pic = self.current_pictures.index(self.thumb_dict[evt.widget])

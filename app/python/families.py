@@ -5,7 +5,7 @@ import sqlite3
 from widgets import (
     Frame, LabelH3, Label, Button, Canvas, LabelEntry, Radiobutton, LabelFrame)
 from files import get_current_file
-from styles import make_formats_dict
+# from styles import make_formats_dict
 from autofill import EntryAutoHilited, EntryAuto    
 from scrolling import Scrollbar
 from names import get_any_name_with_id, open_new_person_dialog
@@ -39,15 +39,18 @@ def get_all_marital_event_types():
 
 class NuclearFamiliesTable(Frame):
     def __init__(
-            self, master, current_person, findings_table, right_panel, 
-            person_autofill_values=[], *args, **kwargs):
+            self, master, root, treebard, current_person, findings_table, 
+            right_panel, formats, person_autofill_values=[], *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
+        self.root = root
+        self.treebard = treebard
         self.current_person = current_person
         self.person_autofill_values = person_autofill_values
         self.date_prefs = get_date_formats(tree_is_open=1)
         self.findings_table = findings_table
         self.right_panel = right_panel
+        self.formats = formats
 
         self.current_person_parents = [
             [None, None], 
@@ -74,7 +77,7 @@ class NuclearFamiliesTable(Frame):
         # children of self
         self.nuke_canvas.grid(column=0, row=0, sticky="news")
         nuke_sbv.grid(column=1, row=0, sticky="ns")
-        nuke_sbh.grid(column=0, row=1, sticky="ew")	
+        nuke_sbh.grid(column=0, row=1, sticky="ew")
 
     def make_nuke_frames(self):
         self.pardlabs = []
@@ -125,7 +128,7 @@ class NuclearFamiliesTable(Frame):
             command=self.fix_buttons)
         self.kinradnew.grid(column=0, row=0)
         new_kin_input = EntryAutoHilited(
-            new_kin_frame, width=48, 
+            new_kin_frame, self.formats, width=48, 
             autofill=True, 
             values=self.person_autofill_values)
         new_kin_input.grid(column=1, row=0)
@@ -190,7 +193,7 @@ class NuclearFamiliesTable(Frame):
             unlink = True
         else:
             new_parent_id = open_new_person_dialog(
-                self, widg, self.root, self.treebard)
+                self, widg, self.root, self.treebard, self.formats)
         return new_parent_id, unlink 
 
     def update_mother(self, final, conn, cur, widg):
@@ -273,11 +276,12 @@ class NuclearFamiliesTable(Frame):
                 pass
             else:
                 new_partner_id = open_new_person_dialog(
-                    self, widg, self.root, self.treebard)
+                    self, widg, self.root, self.treebard, self.formats)
             return new_partner_id     
 
         orig = self.original
         new_partner_id = get_new_partner_id(final, widg)
+        print("line", looky(seeline()).lineno, "new_partner_id:", new_partner_id)
         # if dialog canceled change nothing in db
         if new_partner_id is None:
             widg.delete(0, 'end')
@@ -285,19 +289,16 @@ class NuclearFamiliesTable(Frame):
             return
         elif new_partner_id == 0:
             new_partner_id = None
-        s = 0
-        for progeny in self.progeny_dicts:
-            for k,v in progeny.items():
-                if widg != v[0]["widget"]:
-                    continue
-                for child in v[1]:
-                    update_partners_child(
-                        child["birth_fpid"], 
-                        child["order"], 
-                        v[0]["parent_type"], 
-                        new_partner_id)
-                break
-            s += 1        
+        
+        for k,v in self.progeny_dicts.items():
+            if widg != v["widget"]:
+                continue
+            for child in v["children"]:
+                update_partners_child(
+                    child["findings_persons_id"], 
+                    child["order"], 
+                    v["parent_type"], 
+                    new_partner_id)
 
     def get_final(self, evt):
         current_file = get_current_file()[0]
@@ -361,7 +362,7 @@ class NuclearFamiliesTable(Frame):
         self.fix_buttons()
 
     def populate_nuke_tables(self):   
-        formats = make_formats_dict()
+        # formats = make_formats_dict()
         lst = [
             self.current_person_parents[1]["name"], 
             self.current_person_parents[2]["name"]]
@@ -479,21 +480,32 @@ class NuclearFamiliesTable(Frame):
 
         # don't know why config_generic isn't enough here
         for widg in self.pardlabs:
-            widg.config(font=formats["heading3"])
+            widg.config(font=self.formats["heading3"])
+            # widg.config(font=self.treebard.formats["heading3"])
 
     def make_parents_dict(self):
-        birth_fpid, birth_id = self.birth_record[0:2]
-        parent1 = self.birth_record[2:4]
-        parent2 = self.birth_record[4:]
-        if parent1[1] == 1:
-            ma_id = parent1[0]
-            pa_id = parent2[0]
-        elif parent1[1] == 2:
-            ma_id = parent2[0]
-            pa_id = parent1[0]
-        self.current_person_parents[0] = self.birth_record[0:2]
-        ma_name = get_any_name_with_id(ma_id)
-        pa_name = get_any_name_with_id(pa_id)
+        # birth_fpid, birth_id = self.birth_record[0:2]
+        # if self.birth_record is None:
+        ma_id = None
+        pa_id = None
+        ma_name = ""
+        pa_name = ""
+        parent1 = None
+        parent2 = None
+        if self.birth_record:
+            parent1 = self.birth_record[2:4]
+            parent2 = self.birth_record[4:]
+            if parent1[1] == 1:
+                ma_id = parent1[0]
+                pa_id = parent2[0]
+            elif parent1[1] == 2:
+                ma_id = parent2[0]
+                pa_id = parent1[0]
+            self.current_person_parents[0] = self.birth_record[0:2]
+        if ma_id:
+            ma_name = get_any_name_with_id(ma_id)
+        if pa_id:
+            pa_name = get_any_name_with_id(pa_id)
 
         self.current_person_parents[1]["id"] = ma_id
         self.current_person_parents[2]["id"] = pa_id
@@ -515,7 +527,11 @@ class NuclearFamiliesTable(Frame):
                     SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 FROM findings_persons WHERE finding_id = ?
                 ''',
                 (birth_id,))
-            self.birth_record = cur.fetchall()[0]
+            birth_record = cur.fetchall()
+            if len(birth_record) != 0:
+                self.birth_record = birth_record[0]
+            else:
+                self.birth_record = None
             self.make_parents_dict()  
 
         cur.execute(
@@ -651,7 +667,6 @@ class NuclearFamiliesTable(Frame):
             self.save_marital_events(lst, cur)
 
         self.sorters = sorted(self.sorters, key=lambda i: i[1])
-        print("line", looky(seeline()).lineno, "self.sorters:", self.sorters)
         for k,v in self.progeny_dicts.items():
             for sorter in self.sorters:
                 if sorter[0] == k:

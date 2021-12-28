@@ -13,7 +13,7 @@ from PIL import Image, ImageTk
 from files import (
     open_tree, make_tree, import_gedcom, open_sample, app_path, global_db_path,
     get_current_file, set_closing, change_tree_title, filter_tree_title)
-from styles import make_formats_dict, config_generic
+from styles import config_generic
 from messages import open_message, opening_msg, open_input_message2
 from utes import center_dialog, titlize
 from query_strings import (
@@ -28,7 +28,7 @@ from dev_tools import looky, seeline
 
 
 
-formats = make_formats_dict()
+# formats = make_formats_dict()
 
 class SplashScreen(Toplevel):
     def __init__(self, master, treebard, *args, **kwargs):
@@ -49,7 +49,7 @@ class SplashScreen(Toplevel):
             self, 
             height=height*0.33, 
             width=width*0.33,
-            bg=formats['bg'])
+            bg=self.treebard.formats['bg'])
         splash_canvas.create_image(width*0.33/2, height*0.33/2, image=tk_img)
         splash_canvas.pack()
 
@@ -77,10 +77,10 @@ class SplashScreen(Toplevel):
         self.opening_dialog = Toplevel(self.master)
         self.opening_dialog.rc_menu = RightClickMenu(self.master)
         self.opening_dialog.grab_set()
-        self.canvas = Border(self.opening_dialog, self.master, tree_is_open=0)
+        self.canvas = Border(self.opening_dialog, self.master, self.treebard.formats)
+        # self.canvas = Border(self.opening_dialog, self.master, tree_is_open=0)
         self.canvas.title_1.config(text='Open, Create, or Copy a Tree')
         self.canvas.title_2.config(text="")
-        self.canvas.quitt.bind("<Button-1>", self.close_dialog)
 
         self.window = Frame(self.canvas)
         self.canvas.create_window(0, 0, anchor="nw", window=self.window)

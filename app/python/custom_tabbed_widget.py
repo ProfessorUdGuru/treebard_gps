@@ -19,10 +19,11 @@ from dev_tools import looky, seeline
 '''
 
 class LabelTab(Labelx):
-    def __init__(self, master, *args, **kwargs):
+    def __init__(self, master, formats, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
     
-        self.formats = make_formats_dict()
+        # self.formats = make_formats_dict()
+        self.formats = formats
         self.config(font=self.formats['tab_font'])
 
         self.chosen = False        
@@ -35,7 +36,7 @@ class LabelTab(Labelx):
 class TabBook(Framex):
 
     def __init__(
-            self, master, root=None, side='nw', bd=0, tabwidth=12, 
+            self, master, formats, root=None, side='nw', bd=0, tabwidth=12, 
             selected='', tabs=[],  minx=0.90, miny=0.85, case='title', 
             takefocus=1, *args, **kwargs):
         Framex.__init__(self, master, *args, **kwargs)
@@ -56,6 +57,7 @@ class TabBook(Framex):
         '''
 
         self.master = master
+        self.formats = formats
         self.side = side
         self.bd = bd
         self.tabwidth = tabwidth
@@ -65,7 +67,7 @@ class TabBook(Framex):
         self.case = case
         self.takefocus = takefocus
 
-        self.formats = make_formats_dict()
+        # self.formats = make_formats_dict()
         
         self.tabdict = {}
         for tab in tabs:
@@ -100,6 +102,7 @@ class TabBook(Framex):
         for tab in self.tabdict:
             lab = LabelTab(
                 self.tab_frame,
+                self.formats,
                 width=int(self.tabwidth),
                 takefocus=self.takefocus)  
             if c == 0:
@@ -190,7 +193,7 @@ class TabBook(Framex):
     def make_active(self, evt=None):
         ''' Open the selected tab & reconfigure it to look open. '''
 
-        self.formats = make_formats_dict()
+        # self.formats = make_formats_dict()
 
         # position attributes are needed in the instance
         self.posx = self.winfo_rootx()
@@ -281,6 +284,7 @@ if __name__ == '__main__':
 
     tab_book = TabBook(
         root,
+        formats,
         root=root,
         tabwidth=12,
         selected='place', 

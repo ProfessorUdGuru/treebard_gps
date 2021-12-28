@@ -168,20 +168,22 @@ def get_all_persons():
         persons.append(name)
     return persons
 
-def open_new_person_dialog(master, inwidg, root, treebard, inwidg2=None):
-    person_add = PersonAdd(master, inwidg, root, treebard, inwidg2)
+def open_new_person_dialog(master, inwidg, root, treebard, formats, inwidg2=None):
+    person_add = PersonAdd(master, inwidg, root, treebard, inwidg2, formats)
     root.wait_window(person_add)
     new_person_id = person_add.show()
     return new_person_id
 
 class PersonAdd(Toplevel):
     def __init__(
-            self, master, inwidg, root, treebard, inwidg2, *args, **kwargs):
+            self, master, inwidg, root, treebard, inwidg2, 
+            formats, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
         self.master = master
         self.inwidg = inwidg
         self.root = root
         self.inwidg2 = inwidg2
+        self.formats = formats
 
         self.xfr = self.inwidg.get()
         self.role_person_edited = False
@@ -200,7 +202,7 @@ class PersonAdd(Toplevel):
         self.geometry('+100+20')
 
         self.columnconfigure(1, weight=1)
-        self.canvas = Border(self, self.root)
+        self.canvas = Border(self, self.root, self.formats)
         self.canvas.title_1.config(text="Add Person Dialog")
         self.canvas.title_2.config(text="")
 

@@ -86,6 +86,7 @@ class NewPlaceDialog():
             initial,
             place_input,
             treebard,
+            formats,
             do_on_ok=None,
             selection=None):
 
@@ -98,6 +99,7 @@ class NewPlaceDialog():
         self.initial = initial
         self.place_input = place_input
         self.treebard = treebard
+        self.formats = formats
         self.do_on_ok = do_on_ok
 
         self.got_row = 0
@@ -140,7 +142,7 @@ class NewPlaceDialog():
             width=int(size[0] * 0.85), height=int(size[1] * 0.95))
         self.new_places_dialog.columnconfigure(1, weight=1)
         self.new_places_dialog.rowconfigure(4, weight=1)
-        self.canvas = Border(self.new_places_dialog, self.master)          
+        self.canvas = Border(self.new_places_dialog, self.master, self.formats)          
         self.canvas.title_1.config(text=self.title)
         self.canvas.title_2.config(text="input: {}".format(self.place_input))
 
@@ -360,7 +362,7 @@ class NewPlaceDialog():
 
             row += 2
 
-        sep = Separator(self.frm, 3)
+        sep = Separator(self.frm, self.formats, width=3)
         sep.grid(column=0, row=self.rowdx+2, sticky='ew', 
             columnspan=3, pady=(3,0))
         self.rowdx += 3
@@ -399,7 +401,8 @@ class EditRow(Frame):
 class ValidatePlace():
 
     def __init__(
-            self, root, treebard, inwidg, initial, place_input, finding):
+            self, root, treebard, inwidg, initial, 
+            place_input, finding, formats):
 
         self.root = root
         self.treebard = treebard
@@ -407,6 +410,7 @@ class ValidatePlace():
         self.initial = initial
         self.place_input = place_input
         self.finding = finding
+        self.formats = formats
 
         self.place_list = []
         self.place_dicts = []
@@ -473,6 +477,7 @@ class ValidatePlace():
                 self.initial,
                 self.place_input,
                 self.treebard,
+                self.formats,
                 do_on_ok=self.collect_place_ids)
         else:
             for dkt in self.place_dicts:
@@ -590,6 +595,8 @@ class ValidatePlace():
         conn.close()
 
 if __name__ == "__main__":
+    
+    from styles import make_formats_dict
 
     trials = {
         'a' : "114 Main Street, Paris, Precinct 5, Lamar County, Texas, USA",
@@ -635,6 +642,7 @@ if __name__ == "__main__":
 
     finding = 1
     initial = ''
+    formats = make_formats_dict()
 
     def get_final(evt):
         widg = evt.widget
@@ -644,7 +652,7 @@ if __name__ == "__main__":
         final = widg.get()
         for child in frame.winfo_children():
             child.destroy()
-        final = ValidatePlace(root, treebard, initial, final, finding)
+        final = ValidatePlace(root, treebard, initial, final, finding, formats)
         j = 0
         for dkt in final.place_dicts:
             lab = Label(

@@ -576,18 +576,24 @@ def config_generic(parent):
 
     config_bgStd(parent)
 
-def get_opening_settings():
+def get_opening_settings(tree_is_open):
+
     conn = sqlite3.connect(global_db_path)
     cur = conn.cursor()
-    cur.execute(select_closing_state_tree_is_open)
-    tree_is_open = cur.fetchone()[0]
-    if tree_is_open == 0:
+    # cur.execute(select_closing_state_tree_is_open)
+    # tree_is_open = cur.fetchone()[0]
+    # # print("line", looky(seeline()).lineno, "tree_is_open:", tree_is_open)
+    # if tree_is_open == 0:
+    if tree_is_open is False:
+        print("line", looky(seeline()).lineno, "tree_is_open:", tree_is_open)
         cur.execute(select_opening_settings_on_load)
         default_formats = cur.fetchone()
         cur.close()
         conn.close()            
         return default_formats
-    elif tree_is_open == 1:
+    elif tree_is_open is True:
+        print("line", looky(seeline()).lineno, "tree_is_open:", tree_is_open)
+    # elif tree_is_open == 1:
         cur.close()
         conn.close()
             
@@ -600,12 +606,13 @@ def get_opening_settings():
         conn.close()
         return user_formats
 
-def get_formats():
+def get_formats(tree_is_open):
     '''
         Get user and default preferences. For any item, if there's no 
         user-preference, use the default.
     '''
-    all_prefs = get_opening_settings()
+    all_prefs = get_opening_settings(tree_is_open)
+    # print("line", looky(seeline()).lineno, "all_prefs[0]:", all_prefs[0])
 # all_prefs: (
     # '#232931', '#393e46', '#2e5447', '#eeeeee', 'courier', 'ms sans serif', 12, 
     # '#232931', '#393e46', '#2e5447', '#eeeeee', 'Courier', 'tahoma', 12)
@@ -619,12 +626,12 @@ def get_formats():
         x += 1
     return prefs_to_use
   
-def make_formats_dict():
+def make_formats_dict(tree_is_open=True):
     ''' 
         To add a style, add a string to the end of keys list
         and a line below values.append...
     '''
-    prefs_to_use = get_formats()
+    prefs_to_use = get_formats(tree_is_open)
 
     keys = [
         # background, foreground

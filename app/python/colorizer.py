@@ -7,7 +7,7 @@ from widgets import (
     Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay, Entry)
 from scrolling import Scrollbar
 from styles import (
-    get_color_schemes, get_color_schemes_plus, make_formats_dict, 
+    get_color_schemes, get_color_schemes_plus, 
     get_all_descends, config_generic)
 from files import get_current_file
 from messages_context_help import color_preferences_swatches_help_msg
@@ -23,14 +23,16 @@ from dev_tools import looky, seeline
 current_file = get_current_file()[0]
 
 class Colorizer(Frame):
-    def __init__(self, master, root, rc_menu, tabbook=None, *args, **kwargs):
+    def __init__(self, master, root, rc_menu, formats, 
+            tabbook=None, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
         self.root = root
         self.rc_menu = rc_menu
+        self.formats = formats
         self.tabbook = tabbook
 
-        self.formats = make_formats_dict()
+        # self.formats = make_formats_dict()
 
         self.old_col = 0
         self.master.columnconfigure(0, weight=1)

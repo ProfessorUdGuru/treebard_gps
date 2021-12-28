@@ -6,7 +6,7 @@ from files import get_current_file, global_db_path
 from widgets import Frame, LabelH3, Label, FrameHilited, LabelH2, Button
 from custom_combobox_widget import Combobox 
 from autofill import EntryAuto, EntryAutoHilited
-from styles import make_formats_dict
+# from styles import make_formats_dict
 from messages import open_message, dates_msg, InputMessage
 from query_strings import (
     select_date_format, select_default_date_format, delete_date_format_all,
@@ -85,7 +85,7 @@ from dev_tools import looky, seeline
 '''
 
 
-formats = make_formats_dict()
+# formats = make_formats_dict()
 
 def get_date_formats(tree_is_open=0):
     '''
@@ -936,10 +936,11 @@ def convert_month(part, dateform):
     return month
 
 class DatePreferences(Frame):
-    def __init__(self, master, *args, **kwargs):
+    def __init__(self, master, formats, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master
+        self.formats = formats
 
         self.prefcombos = {}
 
@@ -1070,7 +1071,7 @@ class DatePreferences(Frame):
         for lab in DATE_ENTRIES:
             lbl = Label(self.test_frm, text=DATE_ENTRIES[g])
             lbl.grid(column=0, row= g+1, padx=24, sticky='e')
-            dent = EntryAutoHilited(self.test_frm)
+            dent = EntryAutoHilited(self.test_frm, self.formats)
             dent.grid(column=1, row=g+1, sticky='ew')
             dent.config(width=64)
             dent.bind("<FocusOut>", self.show_test_date_formatted)
@@ -1168,6 +1169,9 @@ if __name__ == "__main__":
 
     from autofill import EntryAuto
     from widgets import Entry
+    # from styles import make_formats_dict
+
+    # formats = make_formats_dict()
 
     root = tk.Tk()
 

@@ -11,7 +11,8 @@ from custom_combobox_widget import Combobox
 from autofill import EntryAuto, EntryAutoHilited
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import roles_dlg_help_msg, role_edit_help_msg
-from styles import make_formats_dict, config_generic
+from styles import config_generic
+# from styles import make_formats_dict, config_generic
 from names import (
     get_any_name_with_id, make_all_names_list_for_person_select, PersonAdd,
     get_all_persons)
@@ -30,12 +31,12 @@ from dev_tools import looky, seeline
 
 
 
-formats = make_formats_dict()
+# formats = make_formats_dict()
 
 class RolesDialog(Toplevel):
     def __init__(
             self, master, finding_id, header, current_person, treebard,
-            pressed=None, *args, **kwargs):
+            formats, pressed=None, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.root = master
@@ -43,6 +44,7 @@ class RolesDialog(Toplevel):
         self.header = header
         self.current_person = current_person
         self.treebard = treebard
+        self.formats = formats
         self.pressed = pressed
 
         self.role_types = []
@@ -71,7 +73,7 @@ class RolesDialog(Toplevel):
 
         self.columnconfigure(1, weight=1)
         self.rowconfigure(4, weight=1)
-        self.canvas = Border(self, self.root)
+        self.canvas = Border(self, self.root, self.formats)
 
         self.canvas.title_1.config(text="Roles Dialog")
         self.canvas.title_2.config(text="Current Person: {}, id #{}".format(
@@ -174,7 +176,7 @@ class RolesDialog(Toplevel):
             new_roles_area, self.root, values=self.role_types)
 
         self.person_input = EntryAutoHilited(
-            new_roles_area, width=32, 
+            new_roles_area, self.formats, width=32, 
             autofill=True, values=self.all_names)
         
         self.add_butt = Button(
@@ -349,7 +351,8 @@ class RolesDialog(Toplevel):
         self.edit_role_type = Combobox(
             self.edit_row, self.root, values=self.role_types)
 
-        self.edit_role_person = EntryAutoHilited(self.edit_row, width=32, 
+        self.edit_role_person = EntryAutoHilited(
+            self.edit_row, self.formats, width=32, 
             autofill=True, values=self.all_names) 
 
         self.ok_butt = Button( 

@@ -282,9 +282,7 @@ class MousewheelScrolling():
             self.nested_canvases.append(appendee)
         appendee.bind('<Destroy>', self.remove_from_list)
 
-    def configure_mousewheel_scrolling(
-            self,
-            in_root=False):
+    def configure_mousewheel_scrolling(self, in_root=False):
 
         if in_root is True:
             self.root.bind_all('<MouseWheel>', self.scroller)

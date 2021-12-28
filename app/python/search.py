@@ -5,7 +5,7 @@ import sqlite3
 from files import app_path, get_current_file
 from window_border import Border
 from scrolling import MousewheelScrolling, Scrollbar, resize_scrolled_content
-from styles import config_generic, make_formats_dict
+from styles import config_generic
 from widgets import (
     Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3,
     LabelNegative)
@@ -29,7 +29,7 @@ from dev_tools import looky, seeline
 
 
 current_file, current_dir = get_current_file()
-formats = make_formats_dict()
+# formats = make_formats_dict()
 COL_HEADS = ('ID', 'Name', 'Birth', 'Death', 'Mother', 'Father')
 
 NONPRINT_KEYS = (
@@ -70,7 +70,7 @@ def get_matches(search_input):
 class PersonSearch(Toplevel):
     def __init__(
             self, master, root, treebard, entry, findings_table, attributes_table, 
-            show_top_pic, names_tab, pic, *args, **kwargs):
+            show_top_pic, names_tab, pic, formats, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.master = master # Main
@@ -82,6 +82,7 @@ class PersonSearch(Toplevel):
         self.show_top_pic = show_top_pic
         self.names_tab = names_tab
         self.pic = pic
+        self.formats = formats
 
         self.result_rows = []
         self.hilit_row = None
@@ -117,7 +118,7 @@ class PersonSearch(Toplevel):
         self.geometry('+100+20')
 
         self.columnconfigure(1, weight=1)
-        self.canvas = Border(self, self.root)
+        self.canvas = Border(self, self.root, self.formats)
         self.canvas.title_1.config(text="Person Search Dialog")
         self.canvas.title_2.config(text="")
 
@@ -197,7 +198,7 @@ class PersonSearch(Toplevel):
                 inwidg=self.entry,
                 root=self.root,
                 inwidg2=self.search_input: open_new_person_dialog(
-                    master, inwidg, root, self.treebard, inwidg2))
+                    master, inwidg, root, self.treebard, self.formats, inwidg2))
 
         self.person_adder.grid(column=2, row=1, padx=12, pady=12)
 
@@ -302,7 +303,7 @@ class PersonSearch(Toplevel):
                     break
 
                 lab = LabelSearch(
-                    self.search_table, cursor='hand2')
+                    self.search_table, self.formats, cursor='hand2')
                 lab.grid(column=col, row=row, sticky='ew', ipadx=12)
                 lab.config(text=text)
 
@@ -390,7 +391,7 @@ class PersonSearch(Toplevel):
             if child.grid_info()['row'] in (0, 1):
                 pass
             elif child.grid_info()['row'] == self.hilit_row:
-                child.config(bg=formats['highlight_bg'])
+                child.config(bg=self.formats['highlight_bg'])
 
     def unhighlight_on_unfocus(self, evt):
         self.unhilit_row = evt.widget.grid_info()['row']
@@ -398,7 +399,7 @@ class PersonSearch(Toplevel):
             if child.grid_info()['row'] in (0, 1):
                 pass            
             elif child.grid_info()['row'] == self.unhilit_row:
-                child.config(bg=formats['bg']) 
+                child.config(bg=self.formats['bg']) 
 
     def track_column_state(self, evt):
         ''' 
@@ -693,7 +694,7 @@ class PersonSearch(Toplevel):
             justify='left',
             relief='solid', 
             bd=1,
-            bg=formats['highlight_bg'])
+            bg=self.formats['highlight_bg'])
         label.pack(ipadx=6, ipady=3)
 
         mouse_at = self.winfo_pointerxy()
@@ -758,9 +759,10 @@ class LabelSearch(Label):
     '''
 
     def __init__(self, master, *args, **kwargs):
-        Label.__init__(self, master, *args, **kwargs)
+        Label.__init__(self, master, formats, *args, **kwargs)
 
-        self.formats = make_formats_dict()
+        # self.formats = make_formats_dict()
+        self.formats = formats
         self.config(anchor='w')
 
 
