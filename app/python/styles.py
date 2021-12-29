@@ -2,8 +2,7 @@ from os import path
 import sqlite3
 from files import get_current_file, global_db_path
 from query_strings import(
-    select_opening_settings, select_all_color_schemes, 
-    select_all_color_schemes_plus, select_closing_state_tree_is_open,
+    select_opening_settings, select_closing_state_tree_is_open,
     select_opening_settings_on_load
 )
 import dev_tools as dt
@@ -83,7 +82,7 @@ bgStay_fgStay = ('FrameStay', 'LabelStay')
 bgStd = (
     'Frame', 'Toykinter', 'Main', 'Colorizer', 'Toplevel', 'FontPicker',
     'StatusbarTooltips', 'EventsTable', 'Gallery', 'FrameHilited6',
-    'Dialogue', 'Border', 'Canvas')
+    'Dialogue', 'Border', 'Canvas', 'DatePreferences')
 
 bgHead = ('FrameHilited2',)
 
@@ -91,7 +90,7 @@ bgLite = (
     'FrameHilited', 'FrameHilited1', 'FrameHilited3', 'FrameHilited4', 
     'TabBook', 'CanvasHilited', 'ToplevelHilited', 'TitleBarButtonSolidBG')
 
-bgStd_fgStd = ('Sizer', )
+bgStd_fgStd = ('Sizer', 'LabelFrame')
 
 bgStd_fgStd_fontOut = ('Label',)
 
@@ -106,7 +105,7 @@ bgLite_fgStd_fontH3 = ('LabelHeader',)
 
 bgLite_fgStd_fontOut = ()
 
-bgLite_fgStd_fontIn = ('LabelHilited3',)
+bgLite_fgStd_fontIn = ()
 
 bgHead_fgStd_fontOut = ('LabelHilited2',)
     
@@ -388,6 +387,16 @@ def config_generic(parent):
             fg=formats['fg'],
             font=formats['output_font']) 
 
+    def config_labelhilited3(lab):
+        '''
+            When used for dropdown menu labels, it has to respond to events.
+        '''
+        lab.formats = formats 
+        lab.config(
+            bg=formats['highlight_bg'],
+            fg=formats['fg'],
+            font=formats['input_font'])
+
     def config_labelbuttontext(lab):
         lab.formats = formats
         lab.config(
@@ -514,6 +523,8 @@ def config_generic(parent):
                 config_labelitalic(widg)
             elif widg.winfo_subclass() == 'LabelHilited':
                 config_labelhilited(widg)
+            elif widg.winfo_subclass() == 'LabelHilited3':
+                config_labelhilited3(widg)
             elif widg.winfo_subclass() == 'LabelTip':
                 config_labeltip(widg)
             elif widg.winfo_subclass() == 'LabelTip2':
@@ -580,10 +591,6 @@ def get_opening_settings(tree_is_open):
 
     conn = sqlite3.connect(global_db_path)
     cur = conn.cursor()
-    # cur.execute(select_closing_state_tree_is_open)
-    # tree_is_open = cur.fetchone()[0]
-    # # print("line", looky(seeline()).lineno, "tree_is_open:", tree_is_open)
-    # if tree_is_open == 0:
     if tree_is_open is False:
         print("line", looky(seeline()).lineno, "tree_is_open:", tree_is_open)
         cur.execute(select_opening_settings_on_load)
@@ -592,8 +599,6 @@ def get_opening_settings(tree_is_open):
         conn.close()            
         return default_formats
     elif tree_is_open is True:
-        print("line", looky(seeline()).lineno, "tree_is_open:", tree_is_open)
-    # elif tree_is_open == 1:
         cur.close()
         conn.close()
             
@@ -675,24 +680,6 @@ def make_formats_dict(tree_is_open=True):
     formats = dict(zip(keys, values))
     return formats
 
-def get_color_schemes():
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    cur=conn.cursor()
-    cur.execute(select_all_color_schemes)
-    schemes = cur.fetchall()
-    cur.close()
-    conn.close()
-    return schemes
 
-def get_color_schemes_plus():
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    cur=conn.cursor()
-    cur.execute(select_all_color_schemes_plus)
-    schemes = cur.fetchall()
-    cur.close()
-    conn.close()
-    return schemes
 
 

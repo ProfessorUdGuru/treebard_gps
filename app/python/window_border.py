@@ -7,8 +7,7 @@ from widgets import (
     LabelButtonImage, Frame, FrameTitleBar, LabelTitleBar, Toplevel, Canvas, 
     FrameHilited3) 
 from toykinter_widgets import StatusbarTooltips
-from styles import NEUTRAL_COLOR, config_generic
-# from styles import make_formats_dict, NEUTRAL_COLOR, config_generic
+from styles import make_formats_dict, NEUTRAL_COLOR, config_generic
 from utes import center_dialog
 from query_strings import (
     select_format_font_size, select_default_format_font_size)
@@ -18,10 +17,7 @@ from dev_tools import looky, seeline
 
 
 
-
-
 def close(evt):
-    print("line", looky(seeline()).lineno, "window_border.py close() running:")
     dlg = evt.widget.winfo_toplevel()
     if dlg.winfo_name() == 'tk':
         set_closing()
@@ -37,7 +33,6 @@ class Border(Canvas):
     def __init__(
             self, master, root, formats, menubar=False, 
             ribbon_menu=False, *args, **kwargs):
-            # ribbon_menu=False, tree_is_open=1, *args, **kwargs):
         Canvas.__init__(self, master, *args, **kwargs)
 
         '''
@@ -419,7 +414,7 @@ class Border(Canvas):
             Runs whenever title bar is clicked, called in get_pos().
         '''
 
-        # self.formats = make_formats_dict()
+        self.formats = make_formats_dict()
         for widg in self.BORDER_PARTS:
             widg.config(bg=self.formats['head_bg'])
         for widg in (self.title_1, self.title_2):
@@ -499,9 +494,11 @@ class Dialogue(Toplevel):
 
     def __init__(self, master, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
+
+        formats = make_formats_dict()
         self.withdraw()
         self.columnconfigure(1, weight=1)
-        self.canvas = Border(self, master)
+        self.canvas = Border(self, master, formats)
         self.window = Frame(self.canvas)
         self.canvas.create_window(0, 0, anchor='nw', window=self.window)
 

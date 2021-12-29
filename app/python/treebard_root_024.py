@@ -1,8 +1,5 @@
 # treebard_root_024.py
 
-# Change to treebard_root_024: because make_formats_dict() runs 36 times before the tree opens and 91 more times when the tree opens. Why can't I just define it once on opening the app and once more on opening the tree? Could I have a treebard.formats var that's good everywhere instead of a self.formats in every class?
-# _023 is good, it works, but changing all the global executions of make_formats_dict to many more executions of it inside private namespaces has broken the app's willingness to change colors to the user-selected colors on opening a tree, and I don't think I'll be able to figure out why till I stop running make_formats_dict 127 times every time the app opens.
-
 import tkinter as tk
 import sqlite3    
 from PIL import Image, ImageTk
@@ -133,7 +130,7 @@ class Treebard():
         cur.close()
         conn.close()
         date_prefs = get_date_formats(tree_is_open=1)
-        self.canvas.colorize_border()
+        self.formats = make_formats_dict()
 
     def configure_mousewheel_scrolling(self):
         self.scroll_mouse = MousewheelScrolling(self.root, self.canvas)
@@ -141,7 +138,6 @@ class Treebard():
         self.scroll_mouse.configure_mousewheel_scrolling(in_root=True)
 
 def start():
-
     root = tk.Tk()
     root.geometry('+75+10')
     root.iconbitmap(default='{}favicon.ico'.format(app_path))
@@ -152,7 +148,6 @@ def start():
         width=int(MAX_WINDOW_WIDTH * screen_width), 
         height=int(MAX_WINDOW_HEIGHT * screen_height))
     treebard = Treebard(root)
-    config_generic(root)
     splash = SplashScreen(root, treebard)
     splash.open_treebard(treebard.make_main_window)
     # Manually closing the opening dialog throws an error re: scroll_mouse. This     
@@ -163,6 +158,7 @@ def start():
         treebard.scroll_mouse.configure_mousewheel_scrolling(in_root=True) 
     except AttributeError:
         pass
+    config_generic(root)
     root.mainloop()
 
 if __name__ == '__main__':
@@ -173,10 +169,8 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# start by seeing what happens if I get rid of the local runs of make_formats_dict in one module only, while running it instead in root to make a treebard.formats variable. This seems to work so how about using treebard.formats for opening dialog and splash screen and main.formats for everything else? I doesn't seem necessary to get tree_is_open from db, shouldn't I know what it is when needed? Another simplification would be to go ahead and let the app open in whatever color scheme was last used in a tree, instead of trying to open it with default colors, then change everything when the tree opens, if necessary. See get_opening_settings() in styles.py and slim it down, remove the option, and delete the column from treebard.db.
-# make_formats_dict() runs 36 times before the tree opens and 91 more times when the tree opens. Why can't I just define it once on opening the app and once more on opening the tree? Could I have a treebard.formats var that's good everywhere instead of a self.formats in every class? Change to treebard_root_024.py this might wreak some havoc.
-# currently, closing the app with the X on the window border causes the app to open next time with ?default colors, while closing with the x on the terminal window causes the app to open next time with the user-selected colors. What should happen is that the opening screen should open in default colors, then on opening a tree, the tree shd open in user-select colors for that tree. What is being saved in db when closing with app X vs terminal X? When fixed, test with File>Close>Exit and File > Exit. I THINK THIS USED TO WORK but since get_opening_settings() is run by make_formats_dict(), it must've broke when I changed make_formats_dict() to not run globally anywhere? Currently the value is right on open if the app was closed right (not by clicking the terminal X), ie the default colors are shown. When the tree opens, it's registered (line 584 in styles.py) that a tree is open but maybe too late bec the default colors are used in spite of make_formats_dict() ?knowing that the tree is now open(ing).
-# closing opening dialog with X or CANCEL gets error re mousewheel scrolling, maybe just try/except/pass since I already solved this problem everywhere else but here the universal solution won't work, see docstring in root make_main_window().
+# made some changes to colorizer which opened up a broken functionality (TRY what's in entries w/out making a sample) but something else broke so recording here that this version is 202112291629 and the unchanged version is 20211228... but I'm gonna refactor this module because it is so very very old and fixing it is always a big pain.
+# get rid of tree_is_open and the relevant column in treebard.db, see get_opening_settings() in styles.py
 # retest edit/delete mother/father
 # update partner: when edited/deleted, the marital events all have to reflect the change
 # update_child on edit/delete, make sure offspring events reflect the change
@@ -189,6 +183,7 @@ if __name__ == '__main__':
 # make it possible to change name, gender or date here & save in db; make it possible to unlink a person from the family by deleting their name from the table
 # Add to after death event types in default, default_untouched, and sample db's: autopsy, inquest.
 # see `if length == 2` in get_any_name_with_id() in names.py: this was just added and before that a similar process was done repeatedly in various places such as current_person display, wherever a name might need to be shown. Everything still works but this procedure should be deleted from where it's no longer needed since it's been added to get_any_name_with_id()
+# Did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thought the new class was supposed to replace all these as was done apparently already in dates.py. I thought the new class was made so these three overlapping large functions could be deleted from messages.py as well as the radio input message which hasn't even been tested.
 # getting this error sometimes when changing current person eg input `#1`:
 # Exception in Tkinter callback
 # Traceback (most recent call last):
@@ -216,7 +211,6 @@ if __name__ == '__main__':
 # BRANCH: dialogs
 # Refactor gallery so all work the same in a dialog opened by clicking a main image in a tab. Also I found out when I deleted all the padding that there's no scridth. There should be nothing in any tab that's ever bigger than the persons tab events table. Then the tabs could be used for what they're needed for, like searching and getting details about links and stuff, instead of looking at pictures that don't fit in the tab anyway.
 # In main.py make_widgets() should be broken up into smaller funx eg make_family_table() etc. after restructing gallery into 3 dialogs.
-# Did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thought the new class was supposed to replace all these as was done apparently already in dates.py. I thought the new class was made so these three overlapping large functions could be deleted from messages.py as well as the radio input message which hasn't even been tested.
 # Get rid of all calls to title() in dropdown.py and just give the values with caps as they should be shown, for example title() is changing GEDCOM to Gedcom in File menu.
 # In the File menu items add an item "Restore Sample Tree to Original State" and have it grayed out if the sample tree is not actually open.
 # Add to Search dlg: checkbox "Speed Up Search" with tooltip "Search will begin after three characters are typed. Don't select this for number searches." Select it by default.

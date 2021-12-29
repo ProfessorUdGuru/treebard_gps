@@ -174,7 +174,7 @@ class Separator(Framex):
     '''
 
     def __init__(
-        self, master, formats, height=3, 
+        self, master, height=3, 
         # color1=formats['head_bg'], 
         # color2=formats['highlight_bg'], 
         # color3=formats['bg'], 
@@ -185,8 +185,8 @@ class Separator(Framex):
         # color3=formats['bg'], *args, **kwargs):
         Framex.__init__(self, master, *args, **kwargs)
 
-        self.formats = formats
-
+        # self.formats = formats
+        self.formats = make_formats_dict()
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=0)
         self.grid_rowconfigure(2, weight=0)
@@ -241,7 +241,7 @@ class Separator(Framex):
         self.colorize()
 
     def colorize(self):
-        # formats = make_formats_dict()
+        self.formats = make_formats_dict()
         self.color1=self.formats['head_bg'], 
         self.color2=self.formats['highlight_bg'], 
         self.color3=self.formats['bg']

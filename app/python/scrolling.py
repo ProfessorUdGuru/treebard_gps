@@ -5,6 +5,7 @@ from widgets import (Canvas, FrameHilited3, Entry, ToplevelHilited, Text,
     LabelHilited, ButtonFlatHilited, LabelTip2, CanvasHilited, Framex, Frame)
 from styles import make_formats_dict, config_generic
 import dev_tools as dt
+from dev_tools import looky, seeline
 
 
 
@@ -182,7 +183,7 @@ import dev_tools as dt
 
 '''
 
-formats = make_formats_dict()
+# formats = make_formats_dict()
 
 def resize_scrolled_content(toplevel, canvas, window): 
     '''
@@ -306,7 +307,8 @@ class Scrollbar(Canvas):
     '''
 
     def __init__(
-        self, master, width=16, orient='vertical', hideable=False, **kwargs):
+        self, master, width=16, orient='vertical', 
+            hideable=False, **kwargs):
 
         self.command = kwargs.pop('command', None)
         Canvas.__init__(self, master, **kwargs)
@@ -325,8 +327,10 @@ class Scrollbar(Canvas):
         self.first_y = 0
         self.first_x = 0
 
+        formats = make_formats_dict()
         self.slidercolor = formats['bg']
         self.troughcolor = formats['head_bg']
+        self.bordercolor = formats['highlight_bg']
 
         if orient == 'vertical':
             self.config(width=width)
@@ -339,7 +343,7 @@ class Scrollbar(Canvas):
             0, 0, 1, 1, 
             fill=self.slidercolor, 
             width=1,    # this is border width
-            outline=formats['highlight_bg'], 
+            outline=self.bordercolor, 
             tags=('slider',))
         self.bind('<ButtonPress-1>', self.move_on_click)
 
@@ -436,12 +440,14 @@ class Scrollbar(Canvas):
                 mouse_pos = event.x - self.x_move_on_click
             self.command('moveto', mouse_pos/self.winfo_width()) 
 
-    def colorize(self):
+    def colorize(self):         
         formats = make_formats_dict()
         self.slidercolor = formats['bg']
         self.troughcolor = formats['head_bg']
+        self.bordercolor = formats['highlight_bg']
         self.config(bg=self.troughcolor)
-        self.itemconfig(self.thumb, fill=self.slidercolor)
+        self.itemconfig(
+            self.thumb, fill=self.slidercolor, outline=self.bordercolor)
 
 class ScrolledText(Framex):
     def __init__(self, master, *args, **kwargs):

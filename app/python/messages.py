@@ -11,7 +11,6 @@ from dev_tools import looky, seeline
 
 
 
-
 def open_message(master, message, title, buttlab, inwidg=None):
 
     def close():
@@ -65,9 +64,9 @@ def open_yes_no_message(master, message, title, ok_lab, cancel_lab):
 
 class InputMessage(Dialogue):
     def __init__(
-            self, master, return_focus_to=None, root=None, title="", ok_txt="", 
-            cancel_txt="", head1="", head2="", wraplength=450, radtext=[], 
-            radfocal=0, entry=False, radio=False, scrolled=False, 
+            self, master, return_focus_to=None, root=None, title="", 
+            ok_txt="", cancel_txt="", head1="", head2="", wraplength=450, 
+            radtext=[], radfocal=0, entry=False, radio=False, scrolled=False, 
             grab=False, treebard=None, ok_button=True, *args, **kwargs):
         Dialogue.__init__(self, master, *args, **kwargs)
 
@@ -354,55 +353,55 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
     return gotten
 
 
-def open_option_message(
-        master, message, title, ok_lab, cancel_lab, radvar, radtext):
-    '''
-        untested
-    '''
-    def ok():
-        cancel()
+# def open_option_message(
+        # master, message, title, ok_lab, cancel_lab, radvar, radtext, formats):
+    # '''
+        # untested
+    # '''
+    # def ok():
+        # cancel()
 
-    def cancel():
-        msg.destroy()
+    # def cancel():
+        # msg.destroy()
 
-    def show():
-        gotten = got.get()
-        return gotten
+    # def show():
+        # gotten = got.get()
+        # return gotten
 
-    got = StringVar()
+    # got = StringVar()
 
-    msg = Dialogue(master)
-    msg.canvas.title_1.config(text=title)
-    msg.canvas.title_2.config(text="")
-    lab = LabelHeader(
-        msg.window, text=message, justify='left', wraplength=450)
-    lab.grid(
-        column=0, row=0, sticky='news', padx=12, pady=12, 
-        columnspan=2, ipadx=6, ipady=3)    
-    for i in range(2):
-        rad = Radiobutton(
-            msg.window,  
-            text=radtext[i],
-            value=i,
-            variable=radvar,
-            anchor='w')
-        rad.grid(column=0, row=i+1, sticky='ew')
-        if i == 0:
-            rad.focus_set()
-    buttonbox = Frame(msg.window)
-    buttonbox.grid(
-        column=0, row=3, sticky='e', padx=(0,12), pady=12, columnspan=2)
-    ok_butt = Button(buttonbox, text=ok_lab, command=ok, width=6)
-    ok_butt.grid(column=0, row=0, sticky='e')
-    cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
-    cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
-    msg.grab_set()
+    # msg = Dialogue(master, formats)
+    # msg.canvas.title_1.config(text=title)
+    # msg.canvas.title_2.config(text="")
+    # lab = LabelHeader(
+        # msg.window, text=message, justify='left', wraplength=450)
+    # lab.grid(
+        # column=0, row=0, sticky='news', padx=12, pady=12, 
+        # columnspan=2, ipadx=6, ipady=3)    
+    # for i in range(2):
+        # rad = Radiobutton(
+            # msg.window,  
+            # text=radtext[i],
+            # value=i,
+            # variable=radvar,
+            # anchor='w')
+        # rad.grid(column=0, row=i+1, sticky='ew')
+        # if i == 0:
+            # rad.focus_set()
+    # buttonbox = Frame(msg.window)
+    # buttonbox.grid(
+        # column=0, row=3, sticky='e', padx=(0,12), pady=12, columnspan=2)
+    # ok_butt = Button(buttonbox, text=ok_lab, command=ok, width=6)
+    # ok_butt.grid(column=0, row=0, sticky='e')
+    # cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
+    # cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
+    # msg.grab_set()
 
-    config_generic(msg)
-    msg.resize_window()
-    master.wait_window(msg)
-    got = show()
-    return msg, got
+    # config_generic(msg)
+    # msg.resize_window()
+    # master.wait_window(msg)
+    # got = show()
+    # return msg, got
 
 places_err = (
     "A place cannot contain itself.\n\nSelect a "

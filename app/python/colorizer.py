@@ -6,19 +6,38 @@ import sqlite3
 from widgets import (
     Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay, Entry)
 from scrolling import Scrollbar
-from styles import (
-    get_color_schemes, get_color_schemes_plus, 
-    get_all_descends, config_generic)
+from styles import get_all_descends, config_generic
 from files import get_current_file
 from messages_context_help import color_preferences_swatches_help_msg
 from query_strings import (
     update_format_color_scheme, delete_color_scheme, select_color_scheme_current, 
-    update_color_scheme_null, insert_color_scheme)
+    update_color_scheme_null, insert_color_scheme, select_all_color_schemes_plus,
+    select_all_color_schemes)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
 
 
+
+def get_color_schemes():
+    current_file = get_current_file()[0]
+    conn = sqlite3.connect(current_file)
+    cur=conn.cursor()
+    cur.execute(select_all_color_schemes)
+    schemes = cur.fetchall()
+    cur.close()
+    conn.close()
+    return schemes
+
+def get_color_schemes_plus():
+    current_file = get_current_file()[0]
+    conn = sqlite3.connect(current_file)
+    cur=conn.cursor()
+    cur.execute(select_all_color_schemes_plus)
+    schemes = cur.fetchall()
+    cur.close()
+    conn.close()
+    return schemes
 
 current_file = get_current_file()[0]
 
@@ -31,8 +50,6 @@ class Colorizer(Frame):
         self.rc_menu = rc_menu
         self.formats = formats
         self.tabbook = tabbook
-
-        # self.formats = make_formats_dict()
 
         self.old_col = 0
         self.master.columnconfigure(0, weight=1)
@@ -147,6 +164,7 @@ class Colorizer(Frame):
         self.swatch_canvas.config(scrollregion=self.swatch_canvas.bbox("all")) 
 
     def apply_scheme(self, evt=None):
+        print("line", looky(seeline()).lineno, "evt:", evt)
         self.recolorize()
 
     def recolorize(self):
@@ -235,8 +253,8 @@ class Colorizer(Frame):
 
         return color_scheme
 
-    def preview_scheme(self, scheme):
-        
+    def preview_scheme(self, scheme): 
+        print("line", looky(seeline()).lineno, "scheme:", scheme)
         trial_widgets = []
         all_widgets_in_tab1 = get_all_descends(
             self.master, trial_widgets)
@@ -265,54 +283,52 @@ class Colorizer(Frame):
                 widg.config(bg=scheme[1]),
             elif widg in self.swatch_window.winfo_children():
                 widg.config(bg='lightgray')
-            elif widg.winfo_class() in ('Frame', 'Toplevel', 'Canvas'):
+            elif widg.winfo_class() in ('Frame', 'Toplevel'):
                 widg.config(bg=scheme[0])
+            elif widg.winfo_class() == 'Canvas':
+                if widg.winfo_subclass() != 'Scrollbar':
+                    widg.config(bg=scheme[0])
+                else:
+                    widg.config(bg=scheme[2])
+            self.hscroll.itemconfig(
+                self.hscroll.thumb, fill=scheme[0], outline=scheme[1])
 
     def config_local(self, evt=None):
 
+        def try_new_scheme(inputs):
+            if inputs not in all_schemes:
+                self.preview_scheme(inputs)
+            else:
+                self.clear_entries()
+            inputs = []
+
         all_schemes = get_color_schemes()
 
-        self.clear_entries()
-
-        # if double-click
-        if evt:
-     
+        # on clicking swatch
+        if evt:     
             if evt.type == '4':
                 evt.widget.master.focus_set()
             color_scheme = self.detect_colors(evt.widget)
             self.preview_scheme(color_scheme)
 
-        # if TRY button
+        # on pressing TRY button
         else:
+            inputs = []
             for widg in self.new_scheme.winfo_children():
-
-                # if entries not all filled out
-                if (widg.winfo_class() == 'Entry' and
-                    len(widg.get()) == 0): # prob. shd be break or continue
-                        pass
-
+                if widg.winfo_class() == 'Entry':
+                    inputs.append(widg.get())
                 # if new scheme to try
-                if (widg.winfo_class() == 'Entry' and
-                    len(widg.get()) > 0):
-                        inputs = []
-                        inputs = tuple(inputs)
-
-                        # if typed scheme is new
-                        if inputs not in all_schemes:
-                            self.preview_scheme(inputs)
-
-                        # if scheme already exists
-                        else:
-                            self.clear_entries()
-
+                if len(inputs) == 4:
+                    inputs = tuple(inputs)
+                    try_new_scheme(inputs)
                 # if no sample hilited
-                elif self.swatch_window.focus_get().winfo_class() != 'Frame':
-                    return
+                elif self.focus_get().winfo_name().startswith("cs_") is False:
+                    pass
                 elif (widg.winfo_class() == 'Entry' and
                     len(widg.get()) == 0):
-                            color_scheme = self.detect_colors(
-                                self.master.focus_get())
-                            self.preview_scheme(color_scheme)
+                        color_scheme = self.detect_colors(
+                            self.master.focus_get())
+                        self.preview_scheme(color_scheme)
 
     def change_border_color(self, evt):
         evt.widget.config(bg='white', bd=2)        

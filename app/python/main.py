@@ -55,7 +55,7 @@ from query_strings import (
 import dev_tools as dt
 from dev_tools import looky, seeline
 
-dt.make_rollback_copy()
+
 
 MAIN_TABS = (
     ("person", "P"), ("attributes", "B"), ("places", "L"), ("sources", "S"), 
@@ -78,7 +78,6 @@ class Main(Frame):
         self.treebard = treebard
 
         self.formats = make_formats_dict()
-
         self.current_person = None
         self.current_person_name = ""
         self.tabbook_x = 300
@@ -124,7 +123,7 @@ class Main(Frame):
         scridth_w = Frame(self, width=scridth)
         current_person_area = Frame(self)
         self.main_tabs = TabBook(
-            self, self.formats, root=self.root, tabs=MAIN_TABS, 
+            self, root=self.root, tabs=MAIN_TABS, 
             selected='person', case='upper', miny=0.66, takefocus=0)
         persons_tab = Frame(self.main_tabs.store["person"])
         attributes_tab = Frame(self.main_tabs.store["attributes"])
@@ -151,7 +150,7 @@ class Main(Frame):
         miny = self.tabbook_y/self.SCREEN_SIZE[1]
 
         self.right_panel = TabBook(
-            persons_tab, self.formats, root=self.root, tabs=RIGHT_PANEL_TABS, 
+            persons_tab, root=self.root, tabs=RIGHT_PANEL_TABS, 
             side="se", selected='images', case='upper', miny=0.25, minx=0.20,
             takefocus=0)
         self.top_pic_button = ButtonBigPic(
@@ -176,7 +175,7 @@ class Main(Frame):
             self.current_person, 
             self.findings_table, 
             self.right_panel,
-            self.formats, ###########
+            self.formats,
             person_autofill_values=self.person_autofill_values)
 
         current_file, current_dir = get_current_file()
@@ -205,7 +204,7 @@ class Main(Frame):
             current_source_name="1900 US Census")
 
         options_tabs = TabBook(
-            prefs_tab, self.formats, root=self.root, tabs=PREFS_TABS, 
+            prefs_tab, root=self.root, tabs=PREFS_TABS, 
             side="se", selected='general', case='upper', miny=0.5, minx=0.66)
 
         general = Frame(options_tabs.store['general'])

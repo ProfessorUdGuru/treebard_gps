@@ -362,7 +362,7 @@ class NewPlaceDialog():
 
             row += 2
 
-        sep = Separator(self.frm, self.formats, width=3)
+        sep = Separator(self.frm, width=3)
         sep.grid(column=0, row=self.rowdx+2, sticky='ew', 
             columnspan=3, pady=(3,0))
         self.rowdx += 3

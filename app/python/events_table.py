@@ -1041,7 +1041,7 @@ class EventsTable(Frame):
             self.headers.append(head)
             y += 1
 
-        sep = Separator(self, self.formats, height=3)
+        sep = Separator(self, height=3)
         sep.grid(column=0, row=1, columnspan=9, sticky='ew')
 
     def fix_tab_traversal(self):
@@ -1406,7 +1406,7 @@ class NewEventDialog(Toplevel):
         self.new_evt_msg.config(text="Information about the new event "
             "relating to the current person and other primary participants "
             "in the event.")
-        sep1 = Separator(self.frm, self.formats, width=3)
+        sep1 = Separator(self.frm, width=3)
         sep1.grid(column=0, row=1, columnspan=2, sticky="ew", pady=(12,0))
 
         name1 = Label(self.couple_data_inputs, text=self.current_name)

@@ -26,17 +26,11 @@ from dev_tools import looky, seeline
 
 
 
-
-
-# formats = make_formats_dict()
-
 class SplashScreen(Toplevel):
     def __init__(self, master, treebard, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
-
         self.master = master
-        self.treebard = treebard        
-
+        self.treebard = treebard
         self.master.iconify()
         self.master.overrideredirect(1)
         self.overrideredirect(1)
@@ -78,7 +72,6 @@ class SplashScreen(Toplevel):
         self.opening_dialog.rc_menu = RightClickMenu(self.master)
         self.opening_dialog.grab_set()
         self.canvas = Border(self.opening_dialog, self.master, self.treebard.formats)
-        # self.canvas = Border(self.opening_dialog, self.master, tree_is_open=0)
         self.canvas.title_1.config(text='Open, Create, or Copy a Tree')
         self.canvas.title_2.config(text="")
 
@@ -187,7 +180,7 @@ class SplashScreen(Toplevel):
         tree_title = current_file[1].replace("_", " ")
         tree_title = titlize(tree_title)
         filter_tree_title(tree_title)
-        change_tree_title(self.treebard)  
+        change_tree_title(self.treebard)
 
     def store_last_openpic(self):
         conn = sqlite3.connect(global_db_path)

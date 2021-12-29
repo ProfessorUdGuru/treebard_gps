@@ -264,11 +264,12 @@ class LabelHilited3(Labelx):
     def __init__(self, master, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
 
+        self.formats = make_formats_dict()
+
         self.config(
-            bg=formats['highlight_bg'], 
-            fg=formats['fg'],
-            font=formats['input_font']
-)
+            bg=self.formats['highlight_bg'], 
+            fg=self.formats['fg'],
+            font=self.formats['input_font'])
 
 class LabelEntry(Labelx):
     ''' 

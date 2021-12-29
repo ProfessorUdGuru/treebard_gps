@@ -17,10 +17,6 @@ from dev_tools import looky, seeline
 
 
 
-
-
-
-
 '''
     Replaces Tkinter Menu. Unlike Tkinter's dropdown menu, this widget
         --is used and configured like other Tkinter widgets.
@@ -303,10 +299,12 @@ class DropdownMenu(FrameHilited2):
         lab.bind("<Button-1>", v_row[1], add="+")
 
     def highlight(self, evt):
-        evt.widget.config(bg=formats["bg"])
+        lab = evt.widget
+        lab.config(bg=lab.formats["bg"])
 
     def unhighlight(self, evt):
-        evt.widget.config(bg=formats["highlight_bg"])
+        lab = evt.widget
+        lab.config(bg=lab.formats["highlight_bg"])
 
     def detect_drop2(self, evt):    
 
