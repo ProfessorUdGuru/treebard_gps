@@ -169,7 +169,9 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# made some changes to colorizer which opened up a broken functionality (TRY what's in entries w/out making a sample) but something else broke so recording here that this version is 202112291629 and the unchanged version is 20211228... but I'm gonna refactor this module because it is so very very old and fixing it is always a big pain.
+# no TRY button; focused swatch AUTOTRIES; use up/down/left/right button to traverse swatches, not? tab; click into swatch area or arrow into swatch area from adjacent widgets, otherwise tab traversal bypasses swatches; entries TRY as soon as all 4 have valid colors; APPLY/COPY applies/copies whatever is in preview area; on create new swatch it is scrolled to; use dict and remake dict whenever swatch is created or deleted;
+# made some changes to colorizer which opened up a broken functionality (TRY what's in entries w/out making a sample) but something else broke so recording here that this version is 202112291629 and the unchanged version is 20211228... but I'm gonna refactor this module because it is so very very old and fixing it is always a big pain. Uncomment statustips/rcm in main and get it working. Add many more swatches to test scrolling and make sure it scrolls with mouse.
+# center content in prefs tabs
 # get rid of tree_is_open and the relevant column in treebard.db, see get_opening_settings() in styles.py
 # retest edit/delete mother/father
 # update partner: when edited/deleted, the marital events all have to reflect the change

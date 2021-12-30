@@ -174,13 +174,14 @@ insert_role_type = '''
 '''
 
 select_all_color_schemes = '''
-    SELECT bg, highlight_bg, head_bg, fg 
+    SELECT color_scheme_id, bg, highlight_bg, head_bg, fg, built_in, hidden
     FROM color_scheme
 '''
 
-select_all_color_schemes_plus = '''
-    SELECT bg, highlight_bg, head_bg, fg, built_in, color_scheme_id 
+select_all_color_schemes_unhidden = '''
+    SELECT color_scheme_id, bg, highlight_bg, head_bg, fg, built_in, hidden
     FROM color_scheme
+    WHERE hidden = 0
 '''
 
 select_all_event_types = '''

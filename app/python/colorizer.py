@@ -2,6 +2,7 @@
 
 import tkinter as tk
 from tkinter import colorchooser
+from math import ceil
 import sqlite3
 from widgets import (
     Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay, Entry)
@@ -11,33 +12,12 @@ from files import get_current_file
 from messages_context_help import color_preferences_swatches_help_msg
 from query_strings import (
     update_format_color_scheme, delete_color_scheme, select_color_scheme_current, 
-    update_color_scheme_null, insert_color_scheme, select_all_color_schemes_plus,
-    select_all_color_schemes)
+    update_color_scheme_null, insert_color_scheme, select_all_color_schemes_unhidden)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
 
 
-
-def get_color_schemes():
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    cur=conn.cursor()
-    cur.execute(select_all_color_schemes)
-    schemes = cur.fetchall()
-    cur.close()
-    conn.close()
-    return schemes
-
-def get_color_schemes_plus():
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    cur=conn.cursor()
-    cur.execute(select_all_color_schemes_plus)
-    schemes = cur.fetchall()
-    cur.close()
-    conn.close()
-    return schemes
 
 current_file = get_current_file()[0]
 
@@ -51,418 +31,189 @@ class Colorizer(Frame):
         self.formats = formats
         self.tabbook = tabbook
 
-        self.old_col = 0
-        self.master.columnconfigure(0, weight=1)
-        self.master.rowconfigure(0, weight=1)
+        self.pad = 2
 
-        self.root.bind('<Return>', self.apply_scheme)
+        self.make_schemes_dict()
+        self.make_widgets()
+        self.make_swatches()
+        self.make_inputs()
 
-        self.r_col = {}
-
-        opening_colors = (
-            self.formats['bg'], 
-            self.formats['highlight_bg'], 
-            self.formats['head_bg'], 
-            self.formats['fg'])
-        self.make_widgets1()
-        self.make_widgets2(opening_colors)
-
-    def make_widgets1(self):
-
-        stripview = Frame(self.master)
-
-        self.master.update_idletasks()
-        self.swatch_canvas = Canvas(
-            stripview, 
-            bd=1, highlightthickness=1, 
-            highlightbackground=self.formats['highlight_bg'], 
-            bg=self.formats['bg'],
-            width=840,
-            height=118) 
-        self.hscroll = Scrollbar(
-            stripview, orient='horizontal', command=self.swatch_canvas.xview)
-        self.swatch_canvas.configure(xscrollcommand=self.hscroll.set)        
+    def make_widgets(self):
+        header = LabelH3(self, text="Arrow keys enter & navigate swatches.", anchor="w")
+        swatch_frame = Frame(self)
+        self.swatch_canvas = Canvas(swatch_frame, height=500)
+        sbv = Scrollbar(
+            swatch_frame, 
+            command=self.swatch_canvas.yview,
+            hideable=True)
+        self.swatch_canvas.config(yscrollcommand=sbv.set)
 
         self.swatch_window = Frame(self.swatch_canvas)
-
-        buttons = Frame(stripview)
-
-        self.try_button = Button(
-            buttons, text='TRY', width=7, command=self.config_local)
-        self.copy_button = Button(
-            buttons, text='COPY', width=7, command=self.copy_scheme)
-        self.apply_button = Button(
-            buttons, text='APPLY', width=7, command=self.apply_scheme)
-        
-        self.new_scheme = Frame(self.master)
-
-        # children of self.master
-        stripview.grid(column=0, row=0)#, padx=12, pady=12
-        self.new_scheme.grid(column=0, row=2, pady=12)
-
-        # children of stripview
-        self.swatch_canvas.grid(column=0, row=0, sticky='news')
-        self.hscroll.grid(column=0, row=1, sticky="ew")
-        buttons.grid(column=0, row=2, sticky='e', pady=(12,0))
-
-        # children of buttons
-        self.try_button.grid(column=0, row=0, sticky='e')
-        self.copy_button.grid(column=1, row=0, padx=6)
-        self.apply_button.grid(column=2, row=0, sticky='w')
-
-        self.make_swatches()
-
         self.swatch_canvas.create_window(
-            0, 0, anchor='nw', window=self.swatch_window)
-        self.resize_color_samples_scrollbar()
+            0, 0, anchor="nw", window=self.swatch_window)
 
-    def make_widgets2(self, colors):
+        self.inputs_frame = Frame(self)
 
-        def clear_select(evt):
-            evt.widget.selection_clear()
+        # children of self
+        self.columnconfigure(0, weight=1)
+        header.grid(column=0, row=0, padx=(12,0), pady=12, sticky="ew")
+        swatch_frame.grid(column=0, row=1, padx=12)
+        self.inputs_frame.grid(column=0, row=2, padx=12, pady=12, sticky="ew")
 
-        all_schemes = get_color_schemes()
+        # children of swatch_frame
+        swatch_frame.columnconfigure(0, weight=1)
+        swatch_frame.rowconfigure(0, weight=1)
+        self.swatch_canvas.grid(column=0, row=0, sticky="news")
+        sbv.grid(column=1, row=0, sticky="ns")
 
-        l_col = [
-            'background 1', 'background 2', 'background 3', 'font color']
-
-        self.entries_combos = []
-        self.domain_tips = []
-
-        addlab = LabelH3(self.new_scheme, text='New Color Scheme')
-
-        h1 = Label(self.new_scheme, anchor='w', text='DOMAIN')
-        h2 = Label(self.new_scheme, anchor='w', text='COLOR')
-
-        j = 2
-        for name in l_col:
-            lab = Label(self.new_scheme, anchor='w', text=name)
-            lab.grid(column=0, row=j, sticky='ew')
-            ent = Entry(self.new_scheme, width=12)
-            self.r_col[name] = ent
-            ent.grid(column=1, row=j, padx=(3,0))
-            self.entries_combos.append(ent)
-            ent.bind('<FocusOut>', clear_select)
-            ent.bind('<Double-Button-1>', self.open_color_chooser)
-            self.domain_tips.append(lab)
-            j += 1
-
-        self.new_button = Button(
-            self.new_scheme,
-            text='CREATE SWATCH', 
-            command=self.make_new_sample)
-
-        # children of self.new_scheme
-        self.new_scheme.columnconfigure(0, weight=1)
-        addlab.grid(column=0, row=0, sticky='ew', columnspan=2)
-        h1.grid(column=0, row=1, sticky='we')
-        h2.grid(column=1, row=1, sticky='we')
-        self.new_button.grid(column=0, row=6, columnspan=2, pady=(12,0))
-
-    def resize_color_samples_scrollbar(self):
-        self.swatch_window.update_idletasks()                   
-        self.swatch_canvas.config(scrollregion=self.swatch_canvas.bbox("all")) 
-
-    def apply_scheme(self, evt=None):
-        print("line", looky(seeline()).lineno, "evt:", evt)
-        self.recolorize()
-
-    def recolorize(self):
-        color_scheme = []
-        for child in self.swatch_window.winfo_children():
-            if self.master.focus_get() == child:
-                frm = child
-
-        foc = self.root.focus_get()
-
-        if foc.master != self.swatch_window:
-            return
-
-        for child in frm.winfo_children():
-            color_scheme.append(child['bg'])
-            child = child
-        color_scheme.append(child['fg'])
-
-        color_scheme = tuple(color_scheme)
-
+    def make_schemes_dict(self):
         conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        cur.execute(update_format_color_scheme, color_scheme)
-        conn.commit()
+        cur.execute(select_all_color_schemes_unhidden)
+        self.all_color_schemes = cur.fetchall()
         cur.close()
         conn.close()
 
-        mbg = color_scheme[0]
-        hbg = color_scheme[1]
-        thbg = color_scheme[2]
-        fg = color_scheme[3]
-
-        config_generic(self.root)
-        self.root.config(bg=mbg)
+        self.color_scheme_dicts = []
+        keys = ("id", "bg", "highlight", "head", "fg", "built_in", "hidden")
+        for tup in self.all_color_schemes:
+            values = tup
+            dkt = dict(zip(keys, values))
+            self.color_scheme_dicts.append(dkt)
+        self.color_scheme_dicts = sorted(
+            self.color_scheme_dicts, key=lambda i: i["id"])
 
     def make_swatches(self):
-
-        all_schemes_plus = get_color_schemes_plus()
-        
-        y = 0
-        for scheme in all_schemes_plus:
+        last = len(self.color_scheme_dicts) - 1
+        stop = False
+        w = 0
+        c = 1
+        r = 0
+        for dkt in self.color_scheme_dicts:
             frm = FrameStay(
-                self.swatch_window,
-                name = '{}{}'.format('cs_', str(scheme[5])),
-                bg='lightgray', 
-                takefocus=1, 
-                bd=1)
-            frm.grid(column=y, row=0)
-            frm.bind('<FocusIn>', self.change_border_color)
-            frm.bind('<FocusOut>', self.unchange_border_color)
-            frm.bind('<Key-Delete>', self.delete_sample)
+                self.swatch_window, bg=self.formats["highlight_bg"], takefocus=1)
+            frm.grid(column=c-1, row=r, padx=self.pad, pady=self.pad)
+            frm.bind("<FocusIn>", self.highlight)
+            frm.bind("<FocusOut>", self.unhighlight)
+            bg = dkt["bg"]
+            highlight = dkt["highlight"]
+            head = dkt["head"]
+            fg = dkt["fg"]
+            lab0 = LabelStay(frm, text=bg, bg=bg, fg=fg, width=10)
+            lab1 = LabelStay(
+                frm, text=highlight, bg=highlight, fg=fg, width=10)
+            lab2 = LabelStay(frm, text=head, bg=head, fg=fg, width=10)
+            lab3 = LabelStay(frm, text=fg, bg=fg, fg=bg, width=10)
+            lab0.grid(column=0, row=0)
+            lab1.grid(column=0, row=1)
+            lab2.grid(column=0, row=2)
+            lab3.grid(column=0, row=3)
+            if stop is False:
+                stop = True
+                sample_lab = lab0
+                self.swatch1 = frm
+                self.update_idletasks()
+                unit_width = sample_lab.winfo_reqwidth() + (self.pad * 2)
+                unit_height = self.swatch1.winfo_reqheight() + (self.pad * 2)
+                swatches_width = self.master.master.winfo_reqwidth()
+                swatches_across = int(swatches_width / unit_width)
+            if w == last:
+                self.swatch_last = frm
 
-            z = 0
-            for color in scheme[0:3]:
-                lab = LabelStay(
-                    frm, 
-                    width=12, 
-                    bg=color, 
-                    text=color, fg=scheme[3])
-                lab.grid(column=y, row=z, ipadx=6, ipady=6)
-                lab.bind('<Button-1>', self.config_local)
-                self.rc_menu.loop_made[lab] = color_preferences_swatches_help_msg
-                z += 1
-            y += 1
-
-        self.resize_color_samples_scrollbar()
-
-        self.clear_entries()
-
-    def clear_entries(self):
-        for widg in self.new_scheme.winfo_children():
-            if widg.winfo_class() == 'Entry':
-                widg.delete(0, 'end')
-
-    def detect_colors(self, frm):
-
-        color_scheme = []
-        if frm.winfo_class() == 'Label':
-            frm = frm.master
-
-        for child in frm.winfo_children():
-            color_scheme.append(child['bg'])
-            child = child
-        color_scheme.append(child['fg'])
-
-        return color_scheme
-
-    def preview_scheme(self, scheme): 
-        print("line", looky(seeline()).lineno, "scheme:", scheme)
-        trial_widgets = []
-        all_widgets_in_tab1 = get_all_descends(
-            self.master, trial_widgets)
-        all_widgets_in_tab1.append(self.master)
-
-        for widg in (all_widgets_in_tab1):
-            if (widg.winfo_class() == 'Label' and 
-                widg.winfo_subclass() == 'LabelStay'):
-                    pass
-            elif (widg in self.new_scheme.winfo_children() and 
-                widg.grid_info()['row'] == 0):
-                    widg.config(
-                        bg=scheme[2],
-                        fg=scheme[3])
-            elif (widg.winfo_class() == 'Label' and 
-                    widg.winfo_subclass() in ('Label', 'LabelH3')):
-                        widg.config(
-                            bg=scheme[0],
-                            fg=scheme[3])
-            elif widg.winfo_class() == 'Button':
-                widg.config(
-                        bg=scheme[1], 
-                        fg=scheme[3],
-                        activebackground=scheme[2])
-            elif widg.winfo_class() == 'Entry':
-                widg.config(bg=scheme[1]),
-            elif widg in self.swatch_window.winfo_children():
-                widg.config(bg='lightgray')
-            elif widg.winfo_class() in ('Frame', 'Toplevel'):
-                widg.config(bg=scheme[0])
-            elif widg.winfo_class() == 'Canvas':
-                if widg.winfo_subclass() != 'Scrollbar':
-                    widg.config(bg=scheme[0])
-                else:
-                    widg.config(bg=scheme[2])
-            self.hscroll.itemconfig(
-                self.hscroll.thumb, fill=scheme[0], outline=scheme[1])
-
-    def config_local(self, evt=None):
-
-        def try_new_scheme(inputs):
-            if inputs not in all_schemes:
-                self.preview_scheme(inputs)
+            if c % swatches_across == 0:
+                c = c - swatches_across + 1
             else:
-                self.clear_entries()
-            inputs = []
+                c += 1
+            if (w + 1) % swatches_across == 0:
+                r += 1
+            w += 1
 
-        all_schemes = get_color_schemes()
+        canvas_width = unit_width * swatches_across
+        scroll_height = int(ceil(
+            (len(self.all_color_schemes) / swatches_across))) * unit_height
+        self.swatch_canvas.config(
+            width=canvas_width,
+            height=unit_height * 3, 
+            scrollregion=(0, 0, canvas_width, scroll_height))
 
-        # on clicking swatch
-        if evt:     
-            if evt.type == '4':
-                evt.widget.master.focus_set()
-            color_scheme = self.detect_colors(evt.widget)
-            self.preview_scheme(color_scheme)
+    def highlight(self, evt):
+        self.current_swatch = evt.widget
+        evt.widget.config(bg=self.formats["fg"], bd=self.pad)
+        evt.widget.grid_configure(padx=0, pady=0)
+        self.traverse()
 
-        # on pressing TRY button
-        else:
-            inputs = []
-            for widg in self.new_scheme.winfo_children():
-                if widg.winfo_class() == 'Entry':
-                    inputs.append(widg.get())
-                # if new scheme to try
-                if len(inputs) == 4:
-                    inputs = tuple(inputs)
-                    try_new_scheme(inputs)
-                # if no sample hilited
-                elif self.focus_get().winfo_name().startswith("cs_") is False:
-                    pass
-                elif (widg.winfo_class() == 'Entry' and
-                    len(widg.get()) == 0):
-                        color_scheme = self.detect_colors(
-                            self.master.focus_get())
-                        self.preview_scheme(color_scheme)
+    def traverse(self):
+        self.current_scheme = []
+        for child in self.current_swatch.winfo_children():
+            self.current_scheme.append(child.cget("text"))
+        print("line", looky(seeline()).lineno, "self.current_scheme:", self.current_scheme)
+        print("line", looky(seeline()).lineno, "self.current_swatch.tk_focusNext():", self.current_swatch.tk_focusNext())       
 
-    def change_border_color(self, evt):
-        evt.widget.config(bg='white', bd=2)        
+    def unhighlight(self, evt):
+        evt.widget.config(bg=self.formats["highlight_bg"], bd=0)
+        evt.widget.grid_configure(padx=self.pad, pady=self.pad)
 
-    def unchange_border_color(self, evt):
-        evt.widget.config(bg='lightgray', bd=1)
+    def make_inputs(self):
 
-    def drop_scheme_from_db(self, frame, scheme):
-        id = frame.split('_')[1]
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
-        cur.execute(delete_color_scheme, (id,))
-        conn.commit()    
-        cur.execute(select_color_scheme_current)
-        current_scheme = cur.fetchone()
-
-        if scheme == current_scheme:
-            cur.execute(update_color_scheme_null)
-            conn.commit()
-
-        cur.close()
-        conn.close()    
-
-    def delete_sample(self, evt):
+        instructions = '''
+            Copy the current swatch to use it as a model for a new color scheme,
+            or type hex colors directly into the inputs, or double-click an
+            input to open a color picker. Hex color format is #xxxxxx.
         '''
-            Don't allow built-in color schemes to be deleted. 
-        '''
-        dflt = self.swatch_window.winfo_children()[0]
-        drop_me = self.swatch_window.focus_get()
-        all_schemes_plus = get_color_schemes_plus()
-        color_scheme = tuple(self.detect_colors(drop_me))
-        all_schemes = []
-        for scheme_plus in all_schemes_plus:
-            all_schemes.append(scheme_plus[0:4])
-        if color_scheme in all_schemes:
-            idx = all_schemes.index(color_scheme)
-            if all_schemes_plus[idx][4] == 0:
-                drop_name = drop_me.winfo_name()
-                self.drop_scheme_from_db(drop_name, color_scheme)
-                drop_me.destroy()
-                self.resize_color_samples_scrollbar()
-                dflt.focus_set()
-                fix = []
-                for child in self.master.focus_get().winfo_children():
-                    fix.append(child['bg']) 
-                child = child
-                fix.append(child['fg'])
-                entries = []
-                for child in self.new_scheme.winfo_children():
-                    if child.winfo_class() == 'Entry':
-                        entries.append(child)
-                self.apply_button.invoke()
+        instrux = Label(
+            self.inputs_frame,
+            text=instructions, 
+            wraplength=600,
+            anchor="se",
+            justify="right")
 
-    def get_new_scheme(self):
-        all_schemes = get_color_schemes()
-        inputs = []
-        for widg in self.new_scheme.winfo_children():
-            if widg.winfo_class() == 'Entry':
-                inputs.append(widg.get())
-        inputs = tuple(inputs)
-        for scheme in all_schemes:
-            if inputs == scheme:
-                return
+        new_swatch_frame = FrameStay(
+            self.inputs_frame, bg=self.formats["highlight_bg"])
+        copy_button = Button(
+            self.inputs_frame, text="COPY", command=self.fill_entries, width=6)
+        bg1 = Entry(new_swatch_frame, width=9)
+        bg2 = Entry(new_swatch_frame, width=9)
+        bg3 = Entry(new_swatch_frame, width=9)
+        fg1 = Entry(new_swatch_frame, width=9)
+        spacer = Frame(self.inputs_frame)
+        apply_button = Button(
+            self.inputs_frame, text="APPLY", command=self.apply, width=6)
 
-        self.put_new_scheme_in_db(inputs)
+        # children of self.inputs_frame
+        self.inputs_frame.columnconfigure(3, weight=1)
+        # self.inputs_frame.rowconfigure(0, weight=1)
+        instrux.grid(column=0, row=0, sticky="n")
+        new_swatch_frame.grid(column=1, row=0, padx=(12,0), sticky="s")
+        copy_button.grid(column=2, row=0, padx=(12,0), sticky="sw")
+        spacer.grid(column=3, row=0, sticky="ew")
+        apply_button.grid(column=4, row=0, sticky="se")
 
-    def put_new_scheme_in_db(self, new_scheme):
-        all_schemes = get_color_schemes()
-        if new_scheme not in all_schemes:
+        # children of new_swatch_frame
+        bg1.grid(column=0, row=0, padx=self.pad, pady=(self.pad, 0))
+        bg2.grid(column=0, row=1, padx=self.pad)
+        bg3.grid(column=0, row=2, padx=self.pad)
+        fg1.grid(column=0, row=3, padx=self.pad, pady=(0, self.pad))
 
-            conn = sqlite3.connect(current_file)
-            conn.execute('PRAGMA foreign_keys = 1')
-            cur = conn.cursor()
-            cur.execute(insert_color_scheme, (new_scheme))
-            conn.commit()
-            cur.close()
-            conn.close()
+        for widg in (bg1, bg2, bg3, fg1, copy_button, apply_button):
+            for event in ("<KeyPress-Up>", "<KeyPress-Left>"):
+                widg.bind(event, self.arrow_in_last)
+            for event in ("<KeyPress-Down>", "<KeyPress-Right>"):
+                widg.bind(event, self.arrow_in_first)
 
-    def make_new_sample(self):
+    def arrow_in_first(self, evt):
+        self.swatch1.focus_set()
+        self.swatch_canvas.yview_moveto(0.0)
 
-        back = self.r_col['background 1'].get()
-        high = self.r_col['background 2'].get()
-        table = self.r_col['background 3'].get()
-        fonts = self.r_col['font color'].get()    
+    def arrow_in_last(self, evt):
+        self.swatch_last.focus_set()
+        self.swatch_canvas.yview_moveto(1.0)
 
-        try_these = [
-            (back, self.r_col['background 1']), 
-            (high, self.r_col['background 2']), 
-            (table, self.r_col['background 3']), 
-            (fonts, self.r_col['font color'])]
+    def fill_entries(self):
+        pass
 
-        for tup in try_these:
-            if len(tup[0]) == 0:
-                return
-        
-        test_color = Frame(self.root)
+    def apply(self):
+        pass
 
-        for tup in try_these:
-            try:
-                test_color.config(bg=tup[0])
-            except tk.TclError:
-                tup[1].delete(0, tk.END)
-                messagebox.showerror(
-                    'Color Not Recognized.',
-                    'A color was entered that is unknown to the system.')
-                return
-
-        self.get_new_scheme()
-        for child in self.swatch_window.winfo_children():
-            child.destroy()
-        self.make_swatches()
-
-    def copy_scheme(self):
-
-        colors = []
-        if self.root.focus_get().master == self.swatch_window:
-            for child in self.root.focus_get().winfo_children():
-                colors.append(child['bg'])
-                child=child
-            colors.append(child['fg'])
-
-        color_entries = []
-        for child in self.new_scheme.winfo_children():
-            if child.grid_info()['row'] == 0:
-                pass
-            elif child.grid_info()['column'] == 1:
-                color_entries.append(child)
-
-        place_colors = dict(zip(color_entries, colors))
-
-        for k,v in place_colors.items():
-            k.delete(0, 'end')
-            k.insert(0, v)
 
     def open_color_chooser(self, evt):
         chosen_color = colorchooser.askcolor(parent=self.root)[1]
