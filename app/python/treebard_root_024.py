@@ -169,6 +169,7 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
+# arrowing up and down triggers yview_moveto() as expected except when going up from the top row or going down from the bottom row; after that a proportionality factor has to be used to move part of the way or else a maximum number of color_schemes has to be used like 6 rows or something? so that I don't have to think any harder about it.
 # no TRY button; focused swatch AUTOTRIES; use up/down/left/right button to traverse swatches, not? tab; click into swatch area or arrow into swatch area from adjacent widgets, otherwise tab traversal bypasses swatches; entries TRY as soon as all 4 have valid colors; APPLY/COPY applies/copies whatever is in preview area; on create new swatch it is scrolled to; use dict and remake dict whenever swatch is created or deleted;
 # made some changes to colorizer which opened up a broken functionality (TRY what's in entries w/out making a sample) but something else broke so recording here that this version is 202112291629 and the unchanged version is 20211228... but I'm gonna refactor this module because it is so very very old and fixing it is always a big pain. Uncomment statustips/rcm in main and get it working. Add many more swatches to test scrolling and make sure it scrolls with mouse.
 # center content in prefs tabs
@@ -211,6 +212,7 @@ if __name__ == '__main__':
 # If no main_image has been input to db, Treebard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. Treebard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
 
 # BRANCH: dialogs
+# in each tab of each tabbook, use Map event to focus one of the widgets on that tab when that tab is switched to, see colorizer arrow_in_first() as an example
 # Refactor gallery so all work the same in a dialog opened by clicking a main image in a tab. Also I found out when I deleted all the padding that there's no scridth. There should be nothing in any tab that's ever bigger than the persons tab events table. Then the tabs could be used for what they're needed for, like searching and getting details about links and stuff, instead of looking at pictures that don't fit in the tab anyway.
 # In main.py make_widgets() should be broken up into smaller funx eg make_family_table() etc. after restructing gallery into 3 dialogs.
 # Get rid of all calls to title() in dropdown.py and just give the values with caps as they should be shown, for example title() is changing GEDCOM to Gedcom in File menu.
