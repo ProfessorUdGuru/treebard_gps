@@ -494,12 +494,12 @@ class Combobox(FrameHilited3):
         widg = evt.widget
         sym = evt.keysym
         self.widg_height = int(self.fit_height / self.lenval)
-        self.trigger_down = self.height - self.widg_height * 3
-        self.trigger_up = self.height - self.widg_height * 2
+        # self.trigger_down = self.height - self.widg_height * 3
+        # self.trigger_up = self.height - self.widg_height * 2
         self.update_idletasks()
         next_item = widg.tk_focusNext()
         prev_item = widg.tk_focusPrev()
-        rel_ht = widg.winfo_y()
+        # rel_ht = widg.winfo_y()
 
         if sym == 'Down':
             if next_item in self.buttons:

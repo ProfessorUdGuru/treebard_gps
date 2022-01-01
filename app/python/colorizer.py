@@ -47,7 +47,7 @@ class Colorizer(Frame):
     def make_widgets(self):
         header = LabelH3(self, text="Arrow keys enter & navigate swatches.", anchor="w")
         swatch_frame = Frame(self)
-        self.swatch_canvas = Canvas(swatch_frame, height=500)
+        self.swatch_canvas = Canvas(swatch_frame)
         sbv = Scrollbar(
             swatch_frame, 
             command=self.swatch_canvas.yview,
@@ -90,7 +90,8 @@ class Colorizer(Frame):
             self.color_scheme_dicts, key=lambda i: i["id"])
 
     def make_swatches(self):
-        last = len(self.color_scheme_dicts) - 1
+        qty = len(self.color_scheme_dicts)
+        last = qty - 1
         stop = False
         w = 0
         c = 1
@@ -117,17 +118,10 @@ class Colorizer(Frame):
             lab3.grid(column=0, row=3)
             if stop is False:
                 stop = True
-                sample_lab = lab0
-                self.swatch_first = frm
-                self.update_idletasks()
-                unit_width = sample_lab.winfo_reqwidth() + (self.pad * 2)
-                self.unit_height = self.swatch_first.winfo_reqheight() + (self.pad * 2)
-                swatches_width = self.master.master.winfo_reqwidth()
-                self.swatches_across = int(swatches_width / unit_width)
+                self.size_up(lab0, frm, qty)
 
             if w == last:
                 self.swatch_last = frm
-
             if c % self.swatches_across == 0:
                 c = c - self.swatches_across + 1
             else:
@@ -136,13 +130,23 @@ class Colorizer(Frame):
                 r += 1
             w += 1
 
-        canvas_width = unit_width * self.swatches_across
+        canvas_width = self.swatch_width * self.swatches_across
         scroll_height = int(ceil(
-            (len(self.all_color_schemes) / self.swatches_across))) * self.unit_height
+            (len(self.all_color_schemes) / self.swatches_across))) * self.swatch_height
         self.swatch_canvas.config(
             width=canvas_width,
-            height=self.unit_height * 3, 
+            height=self.swatch_height * 3, 
             scrollregion=(0, 0, canvas_width, scroll_height))
+
+    def size_up(self, sample_lab, sample_swatch, qty):
+        self.swatch_first = sample_swatch
+        self.update_idletasks()
+        self.swatch_width = sample_lab.winfo_reqwidth() + (self.pad * 2)
+        self.swatch_height = self.swatch_first.winfo_reqheight() + (self.pad * 2)
+        row_width = self.master.master.winfo_reqwidth()
+        self.swatches_across = int(row_width / self.swatch_width)
+        on_last_row = qty % self.swatches_across
+        self.empties = self.swatches_across - on_last_row
 
     def highlight(self, evt):
         widg = evt.widget
@@ -156,40 +160,84 @@ class Colorizer(Frame):
         evt.widget.grid_configure(padx=self.pad, pady=self.pad)
 
     def traverse(self, evt):
-
         def autoscroll(sym, widg):
+            '''
+                The window position can't be used, because the window is 
+                scrolling. Have to use the canvas position. The canvas is
+                the port into the scrollregion. The window and scrollregion
+                should be the same size, and the canvas smaller, like a 
+                peep-hole.
+
+                Re: `yview_moveto` using only two settings (0.0 or 1.0) for
+                auto-scrolled all the way up or all the way down. The user
+                can scroll manually to any increment, but when traversing
+                the schemes with the arrow keys, the scrolling is automatic
+                so the user doesn't have to grab the mouse. This feature is
+                so far either up or down.
+
+                To accomodate a lot more color schemes than the 60-plus that
+                I've already tested with the auto-scrolling feature, it
+                would be necessary to use positions between the 0.0 and 1.0
+                currently being used. This limits user to two pages of swatches,
+                three rows each. Unless the size of the canvas is increased 
+                to four rows of swatches per page. 
+
+                See the scrollbar in the custom_combobox_widget.py for an 
+                example of proportional autoscrolling being done
+                with the Toykinter scrollbar, but who needs that many color
+                schemes anyway? Especially since any and all of the built-in
+                color schemes could be hidden, then the user could make his
+                own dozens of schemes. And actually, there's no real limit to
+                how many schemes there can be, if the user doesn't mind
+                manually scrolling when there are more than six rows of
+                swatches. Seems like this is already overkill, who needs
+                more than 84 color schemes (6 rows of 14 each)? 
+            '''
             self.update_idletasks()
-            column = widg.grid_info()["column"]
-            row = widg.grid_info()["row"]
-            canvas_top = self.swatch_canvas.winfo_rooty()
-            canvas_height = self.swatch_canvas.winfo_reqheight()
-            canvas_bottom = canvas_top + canvas_height
+            # column = widg.grid_info()["column"]
+            # row = widg.grid_info()["row"]
             swatch_top = widg.winfo_rooty()
-            swatch_bottom = swatch_top + self.unit_height
-            next_swatch_bottom = swatch_bottom + self.unit_height
-            next_swatch_top = swatch_top - self.unit_height
-            maxrow_current = self.maxrow
-            # get the right number of rows for current column
-            if column > self.maxcol_lastrow:
-                maxrow_current = self.maxrow_lite              
-            # scroll down to make lower rows visible
-            #   or scroll up to make upper rows visible
-            #   works for this number of rows so ADD MORE ROWS AND RETEST
-            if row == 0 and sym == "Up" and maxrow_current > self.maxrow_lite:
-                self.swatch_canvas.yview_moveto(1.0)
-            elif row == self.maxrow and sym == "Down":
-                self.swatch_canvas.yview_moveto(0.0)
-            elif sym == "Down" and maxrow_current == self.maxrow:
-                if next_swatch_bottom > canvas_bottom:
+            swatch_bottom = swatch_top + self.swatch_height
+            up1_swatch_top = swatch_top - self.swatch_height
+            down1_swatch_bottom = swatch_bottom + self.swatch_height
+            if up1_swatch_top >= canvas_top and down1_swatch_bottom <= canvas_bottom:
+                return
+            down_ratio = swatch_top + widget_ratio / window_height
+            up_ratio = swatch_top - widget_ratio / window_height
+            if sym == "Down":
+                if down1_swatch_bottom > canvas_bottom:
                     self.swatch_canvas.yview_moveto(1.0)
             elif sym == "Up":
-                if next_swatch_top < canvas_top:
-                    self.swatch_canvas.yview_moveto(0.0)  
-            # ADD 2 OPTIONS: if press right when column = last column of last visible row or if press left when column = column 0 of top visible row
-            # SINCE ALL FOUR ARROWS ARE NOW INCLUDED, eliminate this subfunx and incorporate the moveto calls into the switch below
+                if up1_swatch_top < canvas_top:
+                    self.swatch_canvas.yview_moveto(0.0)
+
+            # # get the right number of rows for current column
+            # if column > self.maxcol_lastrow:
+                # maxrow_current = self.maxrow_lite              
+            # # scroll down to make lower rows visible
+            # #   or scroll up to make upper rows visible
+            # #   works for this number of rows so ADD MORE ROWS AND RETEST
+            # if row == 0 and sym == "Up" and maxrow_current > self.maxrow_lite:
+                # self.swatch_canvas.yview_moveto(1.0)
+            # elif row == self.maxrow and sym == "Down":
+                # self.swatch_canvas.yview_moveto(0.0)
+            # elif sym == "Down" and maxrow_current == self.maxrow:
+                # if next_swatch_bottom > canvas_bottom:
+                    # self.swatch_canvas.yview_moveto(1.0)
+            # elif sym == "Up":
+                # if next_swatch_top < canvas_top:
+                    # self.swatch_canvas.yview_moveto(0.0)  
 
         sym = evt.keysym
         widg = evt.widget
+
+
+        canvas_top = self.swatch_canvas.winfo_rooty()
+        canvas_height = self.swatch_canvas.winfo_reqheight()
+        window_height = self.swatch_window.winfo_reqheight()
+        canvas_bottom = canvas_top + canvas_height
+        widget_ratio = self.swatch_height / window_height
+
         if sym not in ("Up", "Down", "Right", "Left"):
             return
         elif sym == "Up":

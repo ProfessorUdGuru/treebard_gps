@@ -169,8 +169,12 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# arrowing up and down triggers yview_moveto() as expected except when going up from the top row or going down from the bottom row; after that a proportionality factor has to be used to move part of the way or else a maximum number of color_schemes has to be used like 6 rows or something? so that I don't have to think any harder about it.
+# get up/down arrowing to trigger round-robin autoscrolling on up arrow from top row or down arrow from bottom row (OR BETTER YET, JUST return the function if user tries this)
+# ADD 2 OPTIONS: if press right when column = last column of last visible row or if press left when column = column 0 of top visible row
+# preview colors
+# apply to whole app
 # no TRY button; focused swatch AUTOTRIES; use up/down/left/right button to traverse swatches, not? tab; click into swatch area or arrow into swatch area from adjacent widgets, otherwise tab traversal bypasses swatches; entries TRY as soon as all 4 have valid colors; APPLY/COPY applies/copies whatever is in preview area; on create new swatch it is scrolled to; use dict and remake dict whenever swatch is created or deleted;
+# copy color_scheme table to default .db X2
 # made some changes to colorizer which opened up a broken functionality (TRY what's in entries w/out making a sample) but something else broke so recording here that this version is 202112291629 and the unchanged version is 20211228... but I'm gonna refactor this module because it is so very very old and fixing it is always a big pain. Uncomment statustips/rcm in main and get it working. Add many more swatches to test scrolling and make sure it scrolls with mouse.
 # center content in prefs tabs
 # get rid of tree_is_open and the relevant column in treebard.db, see get_opening_settings() in styles.py
