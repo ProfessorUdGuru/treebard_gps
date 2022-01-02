@@ -304,6 +304,10 @@ class Scrollbar(Canvas):
         but not a Tkinter option so vscroll.config(command=self.yview) won't 
         work. This scrollbar works well and can be made any size or color. It's
         lacking the little arrows at the ends of the trough.
+
+        The `get()` method for this class isn't finished but has been started in
+        colorizer.py. It should be moved here instead of making it as an
+        instance attribute.
     '''
 
     def __init__(
@@ -367,19 +371,19 @@ class Scrollbar(Canvas):
             else:
                 self.grid()
 
-        height = self.winfo_height()
+        self.height = self.winfo_height()
         width = self.winfo_width()
 
         if self.orient == 'vertical':
             x0 = 0
-            y0 = max(int(height * lo), 0)
+            y0 = max(int(self.height * lo), 0)
             x1 = width - 1
-            y1 = min(int(height * hi), height)
+            y1 = min(int(self.height * hi), self.height)
         elif self.orient == 'horizontal':
             x0 = max(int(width * lo), 0)
             y0 = 0
             x1 = min(int(width * hi), width)
-            y1 = height -1
+            y1 = self.height -1
 
         self.coords('slider', x0, y0, x1, y1)
         self.x0 = x0

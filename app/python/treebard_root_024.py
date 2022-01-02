@@ -169,13 +169,11 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# get up/down arrowing to trigger round-robin autoscrolling on up arrow from top row or down arrow from bottom row (OR BETTER YET, JUST return the function if user tries this)
-# ADD 2 OPTIONS: if press right when column = last column of last visible row or if press left when column = column 0 of top visible row
-# preview colors
+# entries TRY as soon as all 4 have valid colors; APPLY/COPY applies/copies whatever is in preview area; on create new swatch it is scrolled to; requery schemes list whenever swatch is created or deleted;
 # apply to whole app
-# no TRY button; focused swatch AUTOTRIES; use up/down/left/right button to traverse swatches, not? tab; click into swatch area or arrow into swatch area from adjacent widgets, otherwise tab traversal bypasses swatches; entries TRY as soon as all 4 have valid colors; APPLY/COPY applies/copies whatever is in preview area; on create new swatch it is scrolled to; use dict and remake dict whenever swatch is created or deleted;
 # copy color_scheme table to default .db X2
 # made some changes to colorizer which opened up a broken functionality (TRY what's in entries w/out making a sample) but something else broke so recording here that this version is 202112291629 and the unchanged version is 20211228... but I'm gonna refactor this module because it is so very very old and fixing it is always a big pain. Uncomment statustips/rcm in main and get it working. Add many more swatches to test scrolling and make sure it scrolls with mouse.
+# if self.current_swatch["id"] is not being used, get rid of it
 # center content in prefs tabs
 # get rid of tree_is_open and the relevant column in treebard.db, see get_opening_settings() in styles.py
 # retest edit/delete mother/father
@@ -251,8 +249,41 @@ if __name__ == '__main__':
 
 # DEV DOCS:
 # Files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run.
+# Colorizer: 
+'''
+    Re: `yview_moveto` using only two settings (0.0 or 1.0) for
+    "auto-scrolled all the way up" or all the way down. The user
+    can scroll manually to any increment, but when traversing
+    the schemes with the arrow keys, the scrolling is automatic
+    so the user doesn't have to grab the mouse. This feature is
+    currently limited to either all up or all down.
 
-# USER DOCS:
+    To accomodate a lot more color schemes than the 60-plus that
+    I've already tested with the auto-scrolling feature, it
+    would be necessary to use positions between the 0.0 and 1.0
+    currently being used. As it is now, the user is limited to 
+    two pages of swatches, three rows each. Unless the size of the
+    canvas is increased to four rows of swatches per page; then it 
+    would be two pages of swatches, four rows each. 
+
+    See the scrollbar in the custom_combobox_widget.py for an 
+    example of proportional autoscrolling being done
+    with the Toykinter scrollbar, but who needs that many color
+    schemes anyway? Especially since any and all of the built-in
+    color schemes could be hidden, then the user could make his
+    own dozens of schemes. And actually, there's no real limit to
+    how many schemes there can be, if the user doesn't mind
+    manually scrolling when there are more than six rows of
+    swatches. Seems like this is already overkill, who needs
+    more than 84 color schemes (6 rows of 14 each)? 
+
+    Anyway, the `get()` method for the scrollbar should work for
+    doing something with intermediate scrollbar positions. The method
+    has been started in the Colorizer class but should be moved to the
+    Scrollbar class in scrolling.py.
+'''
+
+# USER DOCS: policies:
 '''
     We can use gender only to define whether a parent of a child is a 
     mother or a father since we are referring to biological roles.
@@ -262,6 +293,9 @@ if __name__ == '__main__':
     people have children together. The user has a choice of kin_types
     and we refer to members of a couple according to the user's wishes.
 '''
+
+
+
 
 
  

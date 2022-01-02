@@ -31,34 +31,45 @@ class Colorizer(Frame):
         self.tabbook = tabbook
 
         self.current_swatch = {
-            "widget": None, "id": 0, "column": 0, "row": 0, "up": None, 
-            "down": None, "left": None, "right": None, "scheme": {"bg": "",
-            "highlight_bg": "", "head_bg": "", "fg": ""}}
+            "widget": None, "id": 0, "column": 0, "row": 0, "Up": None, 
+            "Down": None, "Left": None, "Right": None, "last": False, 
+            "scheme": {"bg": "", "highlight_bg": "", "head_bg": "", "fg": ""}}
+        self.visible_rows = 3
+        self.top_visible_row = 0
+        self.DIREX = ("Up", "Right", "Down", "Left")
 
         self.bind("<Map>", self.arrow_in_first)
 
         self.pad = 2
 
+        # self.preview_area = []
+
         self.make_schemes_dict()
         self.make_widgets()
         self.make_swatches()
         self.make_inputs()
+        self.update_idletasks()
+        self.canvas_height = self.swatch_canvas.winfo_reqheight()
 
     def make_widgets(self):
+        
         header = LabelH3(self, text="Arrow keys enter & navigate swatches.", anchor="w")
         swatch_frame = Frame(self)
         self.swatch_canvas = Canvas(swatch_frame)
-        sbv = Scrollbar(
+        self.sbv = Scrollbar(
             swatch_frame, 
             command=self.swatch_canvas.yview,
             hideable=True)
-        self.swatch_canvas.config(yscrollcommand=sbv.set)
+        self.swatch_canvas.config(yscrollcommand=self.sbv.set)
 
         self.swatch_window = Frame(self.swatch_canvas)
         self.swatch_canvas.create_window(
             0, 0, anchor="nw", window=self.swatch_window)
 
         self.inputs_frame = Frame(self)
+        # only key, button, motion, enter, leave, or virtual events 
+        #   can be bound here:
+        self.sbv.tag_bind("slider", "<ButtonRelease-1>", self.get)
 
         # children of self
         self.columnconfigure(0, weight=1)
@@ -70,7 +81,11 @@ class Colorizer(Frame):
         swatch_frame.columnconfigure(0, weight=1)
         swatch_frame.rowconfigure(0, weight=1)
         self.swatch_canvas.grid(column=0, row=0, sticky="news")
-        sbv.grid(column=1, row=0, sticky="ns")
+        self.sbv.grid(column=1, row=0, sticky="ns")
+
+        self.preview_area = [
+            self, header, swatch_frame, self.swatch_window, 
+            self.inputs_frame, self.sbv]
 
     def make_schemes_dict(self):
         conn = sqlite3.connect(current_file)
@@ -116,6 +131,8 @@ class Colorizer(Frame):
             lab1.grid(column=0, row=1)
             lab2.grid(column=0, row=2)
             lab3.grid(column=0, row=3)
+            for lab in (lab0, lab1, lab2, lab3):
+                lab.bind("<Button-1>", self.select)
             if stop is False:
                 stop = True
                 self.size_up(lab0, frm, qty)
@@ -135,8 +152,11 @@ class Colorizer(Frame):
             (len(self.all_color_schemes) / self.swatches_across))) * self.swatch_height
         self.swatch_canvas.config(
             width=canvas_width,
-            height=self.swatch_height * 3, 
+            height=self.swatch_height * self.visible_rows, 
             scrollregion=(0, 0, canvas_width, scroll_height))
+
+    def select(self, evt):
+        evt.widget.master.focus_set()
 
     def size_up(self, sample_lab, sample_swatch, qty):
         self.swatch_first = sample_swatch
@@ -145,8 +165,25 @@ class Colorizer(Frame):
         self.swatch_height = self.swatch_first.winfo_reqheight() + (self.pad * 2)
         row_width = self.master.master.winfo_reqwidth()
         self.swatches_across = int(row_width / self.swatch_width)
-        on_last_row = qty % self.swatches_across
-        self.empties = self.swatches_across - on_last_row
+        self.last_row = self.swatches_across - (qty % self.swatches_across) - 1
+        self.last_column = self.swatches_across - 1
+
+    def preview(self):
+        bg = self.current_swatch["scheme"]["bg"]
+        highlight_bg = self.current_swatch["scheme"]["highlight_bg"]
+        head_bg = self.current_swatch["scheme"]["head_bg"]
+        fg = self.current_swatch["scheme"]["fg"]
+        for widg in self.preview_area:
+            cls = widg.winfo_class()
+            if cls in ("Frame", "Label"):
+                widg.config(bg=bg)
+            elif cls in ("Button", "Entry", "Canvas"):
+                widg.config(bg=highlight_bg)
+                if cls == "Button":
+                    widg.config(activebackground=head_bg)
+            if cls not in ("Frame", "Canvas"):
+                widg.config(fg=fg)
+        self.sbv.itemconfig(self.sbv.thumb, fill=bg, outline=head_bg)
 
     def highlight(self, evt):
         widg = evt.widget
@@ -154,6 +191,7 @@ class Colorizer(Frame):
         widg.grid_configure(padx=0, pady=0)
         self.make_swatch_dict(widg)
         children = widg.winfo_children()
+        self.preview()
 
     def unhighlight(self, evt):
         evt.widget.config(bg=self.formats["highlight_bg"], bd=0)
@@ -165,134 +203,119 @@ class Colorizer(Frame):
                 The window position can't be used, because the window is 
                 scrolling. Have to use the canvas position. The canvas is
                 the port into the scrollregion. The window and scrollregion
-                should be the same size, and the canvas smaller, like a 
+                can/should be the same size, and the canvas smaller, like a 
                 peep-hole.
 
-                Re: `yview_moveto` using only two settings (0.0 or 1.0) for
-                auto-scrolled all the way up or all the way down. The user
-                can scroll manually to any increment, but when traversing
-                the schemes with the arrow keys, the scrolling is automatic
-                so the user doesn't have to grab the mouse. This feature is
-                so far either up or down.
-
-                To accomodate a lot more color schemes than the 60-plus that
-                I've already tested with the auto-scrolling feature, it
-                would be necessary to use positions between the 0.0 and 1.0
-                currently being used. This limits user to two pages of swatches,
-                three rows each. Unless the size of the canvas is increased 
-                to four rows of swatches per page. 
-
-                See the scrollbar in the custom_combobox_widget.py for an 
-                example of proportional autoscrolling being done
-                with the Toykinter scrollbar, but who needs that many color
-                schemes anyway? Especially since any and all of the built-in
-                color schemes could be hidden, then the user could make his
-                own dozens of schemes. And actually, there's no real limit to
-                how many schemes there can be, if the user doesn't mind
-                manually scrolling when there are more than six rows of
-                swatches. Seems like this is already overkill, who needs
-                more than 84 color schemes (6 rows of 14 each)? 
+                In spite of the fact that self.top_visible_row is only 
+                referenced in this function, it has to be an instance variable 
+                so the last value will persist till the next time the 
+                function is called. 
             '''
+            def scroll_up():
+                self.swatch_canvas.yview_moveto(0.0)
+                self.top_visible_row = 0
+                last_visible_row = self.visible_rows - 1 
+
+            def scroll_down():
+                self.swatch_canvas.yview_moveto(1.0)
+                self.top_visible_row = self.last_row - self.visible_rows + 1
+                last_visible_row = self.last_row 
+
             self.update_idletasks()
-            # column = widg.grid_info()["column"]
-            # row = widg.grid_info()["row"]
+            column = widg.grid_info()["column"]
+            row = widg.grid_info()["row"]
             swatch_top = widg.winfo_rooty()
             swatch_bottom = swatch_top + self.swatch_height
             up1_swatch_top = swatch_top - self.swatch_height
             down1_swatch_bottom = swatch_bottom + self.swatch_height
-            if up1_swatch_top >= canvas_top and down1_swatch_bottom <= canvas_bottom:
-                return
             down_ratio = swatch_top + widget_ratio / window_height
             up_ratio = swatch_top - widget_ratio / window_height
-            if sym == "Down":
-                if down1_swatch_bottom > canvas_bottom:
-                    self.swatch_canvas.yview_moveto(1.0)
+            last_visible_row = self.visible_rows - 1
+           
+            if sym == "Right":
+                if widg == self.swatch_last:
+                    scroll_up()
+                elif column == self.last_column:
+                    if (row == last_visible_row and 
+                            last_visible_row != self.last_row):
+                        scroll_down()          
+            elif sym == "Left":
+                if widg == self.swatch_first:
+                    scroll_down()
+                elif column == 0:
+                    if (row == self.top_visible_row and 
+                            self.top_visible_row != 0):
+                        scroll_up() 
+            elif sym == "Down":
+                if self.current_swatch["last"] is True:
+                    scroll_up()
+                elif down1_swatch_bottom > canvas_bottom:
+                    scroll_down()
             elif sym == "Up":
-                if up1_swatch_top < canvas_top:
-                    self.swatch_canvas.yview_moveto(0.0)
-
-            # # get the right number of rows for current column
-            # if column > self.maxcol_lastrow:
-                # maxrow_current = self.maxrow_lite              
-            # # scroll down to make lower rows visible
-            # #   or scroll up to make upper rows visible
-            # #   works for this number of rows so ADD MORE ROWS AND RETEST
-            # if row == 0 and sym == "Up" and maxrow_current > self.maxrow_lite:
-                # self.swatch_canvas.yview_moveto(1.0)
-            # elif row == self.maxrow and sym == "Down":
-                # self.swatch_canvas.yview_moveto(0.0)
-            # elif sym == "Down" and maxrow_current == self.maxrow:
-                # if next_swatch_bottom > canvas_bottom:
-                    # self.swatch_canvas.yview_moveto(1.0)
-            # elif sym == "Up":
-                # if next_swatch_top < canvas_top:
-                    # self.swatch_canvas.yview_moveto(0.0)  
+                if row == 0:
+                    scroll_down()
+                elif up1_swatch_top < canvas_top:
+                    scroll_up()
 
         sym = evt.keysym
         widg = evt.widget
-
-
-        canvas_top = self.swatch_canvas.winfo_rooty()
-        canvas_height = self.swatch_canvas.winfo_reqheight()
-        window_height = self.swatch_window.winfo_reqheight()
-        canvas_bottom = canvas_top + canvas_height
-        widget_ratio = self.swatch_height / window_height
-
         if sym not in ("Up", "Down", "Right", "Left"):
             return
-        elif sym == "Up":
-            self.current_swatch["up"].focus_set()
-            autoscroll(sym, widg)
-        elif sym == "Right":
-            self.current_swatch["right"].focus_set()
-            if widg == self.swatch_last:
-                self.swatch_canvas.yview_moveto(0.0)
-        elif sym == "Down":
-            self.current_swatch["down"].focus_set()
-            autoscroll(sym, widg)
-        elif sym == "Left":
-            self.current_swatch["left"].focus_set()
-            if widg == self.swatch_first:
-                self.swatch_canvas.yview_moveto(1.0)
-        
+
+        canvas_top = self.swatch_canvas.winfo_rooty()
+        window_height = self.swatch_window.winfo_reqheight()
+        canvas_bottom = canvas_top + self.canvas_height
+        widget_ratio = self.swatch_height / window_height
+
+        for direx in self.DIREX:
+            if sym == direx:
+                self.current_swatch[direx].focus_set()
+        autoscroll(sym, widg)        
 
     def get_adjacent_widgets(self, widg, column, row):
-        maxcol = self.swatches_across - 1
+        '''
+            When a swatch comes into focus, create a dict of its relevant data.
+        '''
+
         catalog = widg.master.winfo_children()
 
         right = widg.tk_focusNext()            
         left = widg.tk_focusPrev()
-        self.maxrow = self.swatch_last.grid_info()["row"]
-        self.maxrow_lite = self.maxrow - 1
-        self.maxcol_lastrow = self.swatch_last.grid_info()["column"]
+        self.last_row = self.swatch_last.grid_info()["row"]
+        maxrow_lite = self.last_row - 1
+        maxcol_lastrow = self.swatch_last.grid_info()["column"]
                 
         rightcol = column + 1
         leftcol = column - 1
         uprow = row - 1
         downrow = row + 1
+        last = False       
 
-        if row == self.maxrow:
+        if row == self.last_row:
             downrow = 0
-        elif row == self.maxrow_lite:
-            if column > self.maxcol_lastrow:
+            last = True
+        elif row == maxrow_lite:
+            if column > maxcol_lastrow:
                 downrow = 0
+                last = True
         elif row == 0:
-            if column <= self.maxcol_lastrow:
-                uprow = self.maxrow
+            if column <= maxcol_lastrow:
+                uprow = self.last_row
             else:
-                uprow = self.maxrow_lite
+                uprow = maxrow_lite
 
-        if column == maxcol:
+        if column == self.last_column:
             rightcol = 0
         elif column == 0:
-            leftcol = maxcol
+            leftcol = self.last_column
 
         for child in catalog:
             if child == widg: continue
             grid = child.grid_info()
             newcol = grid["column"]
             newrow = grid["row"]
-            if newcol == rightcol and newrow == row + 1 and column == maxcol:
+            if (newcol == rightcol and newrow == row + 1 and 
+                    column == self.last_column):
                 right = child
             elif newcol == leftcol and newrow == row - 1 and column == 0:
                 left = child
@@ -306,21 +329,22 @@ class Colorizer(Frame):
         elif widg is self.swatch_last:
             right = self.swatch_first
 
-        return up, right, down, left
+        return up, right, down, left, last
 
     def make_swatch_dict(self, widg):
         grid = widg.grid_info()
         column = grid["column"]
         row = grid["row"]
-        up, right, down, left = self.get_adjacent_widgets(widg, column, row)
+        up, right, down, left, last = self.get_adjacent_widgets(widg, column, row)
 
         self.current_swatch["widget"] = widg
         self.current_swatch["column"] = column
         self.current_swatch["row"] = row
-        self.current_swatch["up"] = up
-        self.current_swatch["right"] = right
-        self.current_swatch["down"] = down
-        self.current_swatch["left"] = left
+        self.current_swatch["Up"] = up
+        self.current_swatch["Right"] = right
+        self.current_swatch["Down"] = down
+        self.current_swatch["Left"] = left
+        self.current_swatch["last"] = last
         d = 0
         for child in self.current_swatch["widget"].winfo_children():
             if d == 0:
@@ -379,6 +403,10 @@ class Colorizer(Frame):
             for event in ("<KeyPress-Down>", "<KeyPress-Right>"):
                 widg.bind(event, self.arrow_in_first)
 
+        self.preview_area.extend(
+            [instrux, copy_button, bg1, bg2, bg3, fg1, spacer, 
+                new_swatch_frame, apply_button])
+
     def arrow_in_first(self, evt):
         self.swatch_first.focus_set()
         self.swatch_canvas.yview_moveto(0.0)
@@ -393,12 +421,24 @@ class Colorizer(Frame):
     def apply(self):
         pass
 
-
     def open_color_chooser(self, evt):
         chosen_color = colorchooser.askcolor(parent=self.root)[1]
         if chosen_color:
             evt.widget.delete(0, 'end')
             evt.widget.insert(0, chosen_color)
+
+    def get(self, evt):
+        '''
+            Haven't tried doing anything with this yet. Move it to Scrollbar
+            class in scrolling.py instead of making it an instance attribute.
+        '''
+        trough_height = self.canvas_height
+        thumb_top = self.sbv.coords('slider')[1]
+        thumb_bottom = self.sbv.coords('slider')[3]
+        thumb_height = thumb_bottom - thumb_top
+        trough_traverse_height = trough_height - thumb_height
+        ratio = thumb_top / trough_traverse_height
+        print("line", looky(seeline()).lineno, "ratio:", ratio)
 
 
 
