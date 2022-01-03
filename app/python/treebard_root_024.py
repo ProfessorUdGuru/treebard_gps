@@ -169,10 +169,15 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# entries TRY as soon as all 4 have valid colors; APPLY/COPY applies/copies whatever is in preview area; on create new swatch it is scrolled to; requery schemes list whenever swatch is created or deleted;
-# apply to whole app
+# put the explain labels in col 1 of the new swatch frame so the entries & labels are easy to line up vertically
+# add double-click to open color picker
+# add ADD COLOR SCHEME button and instead of showing error msg if it already exists, just highlight it and don't say anything; if not exists add to db, scroll to end and highlight new scheme; preview new scheme; delete entry contents; requery all_schemes list
+# DELETE current scheme using delete key, delete from db, requery all_schemes list; if built-in, hide it; if not built-in, delete it (don't bother the user with messages)
+# get Tab traversal to trigger autoscroll when going from a visible to a non-visible row.
+# APPLY and test all
 # copy color_scheme table to default .db X2
-# made some changes to colorizer which opened up a broken functionality (TRY what's in entries w/out making a sample) but something else broke so recording here that this version is 202112291629 and the unchanged version is 20211228... but I'm gonna refactor this module because it is so very very old and fixing it is always a big pain. Uncomment statustips/rcm in main and get it working. Add many more swatches to test scrolling and make sure it scrolls with mouse.
+# Uncomment statustips/rcm in main and get it working. 
+# make sure it scrolls with mousewheel.
 # if self.current_swatch["id"] is not being used, get rid of it
 # center content in prefs tabs
 # get rid of tree_is_open and the relevant column in treebard.db, see get_opening_settings() in styles.py

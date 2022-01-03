@@ -3,9 +3,11 @@
 import tkinter as tk
 from tkinter import colorchooser
 from math import ceil
+from re import search
 import sqlite3
 from widgets import (
-    Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay, Entry)
+    Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay, Entry,
+    FrameHilited2,)
 from scrolling import Scrollbar
 from styles import get_all_descends, config_generic
 from files import get_current_file
@@ -87,6 +89,77 @@ class Colorizer(Frame):
             self, header, swatch_frame, self.swatch_window, 
             self.inputs_frame, self.sbv]
 
+    def make_inputs(self):
+
+        instructions = "COPY a highlighted swatch to use it as a model for a new color scheme, or TYPE hex colors directly into the inputs, or DOUBLE-CLICK an input to open a color picker. Hex color format is #xxxxxx or #xxx; replace each x with a number or letter a-f."
+
+        explanations = (
+            "main background color", 
+            "main highlight color", 
+            "highlights such as border around scrollbar, background of "
+                "pressed button", 
+            "fonts and other foreground colors")
+
+        instrux = Label(
+            self.inputs_frame,
+            text=instructions, 
+            wraplength=450,
+            anchor="se",
+            justify="left")
+
+        copy_button = Button(
+            self.inputs_frame, text="COPY", command=self.fill_entries, width=6)
+        new_swatch_frame = FrameHilited2(
+            self.inputs_frame, bg=self.formats["highlight_bg"])
+        self.bg1 = Entry(new_swatch_frame, width=9)
+        self.bg2 = Entry(new_swatch_frame, width=9)
+        self.bg3 = Entry(new_swatch_frame, width=9)
+        self.fg1 = Entry(new_swatch_frame, width=9)
+        # explain = FrameHilited2(self.inputs_frame, bd=1)
+        # explain.columnconfigure(0, weight=1)
+        new_swatch_frame.columnconfigure(1, weight=1)
+        t = 0
+        for stg in explanations:
+            lab = LabelStay(new_swatch_frame, text=stg, anchor="w")
+            # lab = LabelStay(explain, text=stg, anchor="w")
+            lab.grid(column=2, row=t, sticky="ew", ipadx=6, padx=(0,1))
+            # lab.grid(column=0, row=t, sticky="ew")
+            self.preview_area.append(lab)
+            t += 1
+        apply_button = Button(
+            self.inputs_frame, text="APPLY", command=self.apply, width=6)
+
+        # children of self.inputs_frame
+        self.inputs_frame.columnconfigure(3, weight=1)
+        instrux.grid(column=0, row=0, sticky="n")
+        new_swatch_frame.grid(column=1, row=0, rowspan=2, padx=(12,0), sticky="ns")
+        copy_button.grid(column=0, row=1, sticky="w")
+        # explain.grid(column=3, row=0, rowspan=2, sticky="sew", padx=(12,0))
+        apply_button.grid(column=3, row=1, sticky="se", padx=(12,0))
+
+        # children of new_swatch_frame
+        for num in range(4):
+            print("line", looky(seeline()).lineno, "num:", num)
+            new_swatch_frame.rowconfigure(num, weight=1)
+        self.bg1.grid(column=0, row=0, padx=self.pad, pady=(self.pad, 0), sticky="ns")
+        self.bg2.grid(column=0, row=1, padx=self.pad, sticky="ns")
+        self.bg3.grid(column=0, row=2, padx=self.pad, sticky="ns")
+        self.fg1.grid(column=0, row=3, padx=self.pad, pady=(0, self.pad), sticky="ns")
+
+        for widg in (self.bg1, self.bg2, self.bg3, self.fg1, copy_button, apply_button):
+            for event in ("<KeyPress-Up>", "<KeyPress-Left>"):
+                widg.bind(event, self.arrow_in_last)
+            for event in ("<KeyPress-Down>", "<KeyPress-Right>"):
+                widg.bind(event, self.arrow_in_first)
+
+        self.preview_area.extend(
+            [instrux, copy_button, self.bg1, self.bg2, self.bg3, self.fg1,  
+                new_swatch_frame, apply_button])
+
+        self.INPUTS = (self.bg1, self.bg2, self.bg3, self.fg1)
+        for widg in self.INPUTS:
+            widg.bind("<KeyRelease>", self.validate_hex_colors)
+
     def make_schemes_dict(self):
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -113,6 +186,7 @@ class Colorizer(Frame):
         r = 0
         for dkt in self.color_scheme_dicts:
             frm = FrameStay(
+                # self.swatch_window, bg="red", takefocus=1)
                 self.swatch_window, bg=self.formats["highlight_bg"], takefocus=1)
             frm.grid(column=c-1, row=r, padx=self.pad, pady=self.pad)
             frm.bind("<FocusIn>", self.highlight)
@@ -168,26 +242,50 @@ class Colorizer(Frame):
         self.last_row = self.swatches_across - (qty % self.swatches_across) - 1
         self.last_column = self.swatches_across - 1
 
-    def preview(self):
-        bg = self.current_swatch["scheme"]["bg"]
-        highlight_bg = self.current_swatch["scheme"]["highlight_bg"]
-        head_bg = self.current_swatch["scheme"]["head_bg"]
-        fg = self.current_swatch["scheme"]["fg"]
+    def preview(self, typed_colors=None):
+        if typed_colors:
+            bg, highlight_bg, head_bg, fg = typed_colors       
+        else:
+            bg = self.current_swatch["scheme"]["bg"]
+            highlight_bg = self.current_swatch["scheme"]["highlight_bg"]
+            head_bg = self.current_swatch["scheme"]["head_bg"]
+            fg = self.current_swatch["scheme"]["fg"]
         for widg in self.preview_area:
             cls = widg.winfo_class()
-            if cls in ("Frame", "Label"):
-                widg.config(bg=bg)
+            if cls == "Label":
+                if widg.winfo_subclass() == "LabelStay":
+                    row = widg.grid_info()["row"]
+                    if row == 0:
+                        widg.config(bg=bg, fg=fg)
+                    elif row == 1:
+                        widg.config(bg=highlight_bg, fg=fg)
+                    elif row == 2:
+                        widg.config(bg=head_bg, fg=fg)
+                    elif row == 3:
+                        widg.config(bg=fg, fg=bg)
+                    text = widg.cget("text")
+                    widg.config(text=text)
+                else:
+                    widg.config(bg=bg)
+            elif cls == "Frame":
+                if widg.winfo_subclass() != "FrameHilited2":
+                    widg.config(bg=bg)
+                else:
+                    widg.config(bg=head_bg)
             elif cls in ("Button", "Entry", "Canvas"):
                 widg.config(bg=highlight_bg)
                 if cls == "Button":
                     widg.config(activebackground=head_bg)
-            if cls not in ("Frame", "Canvas"):
+            if cls not in ("Frame", "Canvas", "Label"):
                 widg.config(fg=fg)
+            elif cls == "Label" and widg.winfo_subclass() != "LabelStay":
+                widg.config(fg=fg)
+
         self.sbv.itemconfig(self.sbv.thumb, fill=bg, outline=head_bg)
 
     def highlight(self, evt):
         widg = evt.widget
-        widg.config(bg=self.formats["fg"], bd=self.pad)
+        widg.config(bg="orange", bd=self.pad)
         widg.grid_configure(padx=0, pady=0)
         self.make_swatch_dict(widg)
         children = widg.winfo_children()
@@ -210,6 +308,16 @@ class Colorizer(Frame):
                 referenced in this function, it has to be an instance variable 
                 so the last value will persist till the next time the 
                 function is called. 
+
+                Arrow traversal currently works better than Tab traversal. 
+                Tab can enter and leave the swatch area, which is useful, but
+                when using Tab traversal, the autoscroll doesn't work yet when
+                going from the end of the last visible row to the next 
+                (non-visible) row. I just haven't looked into it yet.
+
+                Any of the arrow keys enter the swatch area, from any other 
+                focused widget on the page, but don't leave it. To get out of
+                the swatch area, use Tab or the mouse.
             '''
             def scroll_up():
                 self.swatch_canvas.yview_moveto(0.0)
@@ -357,56 +465,6 @@ class Colorizer(Frame):
                 self.current_swatch["scheme"]["fg"] = child.cget("text")
             d += 1
 
-    def make_inputs(self):
-
-        instructions = '''
-            Copy the current swatch to use it as a model for a new color scheme,
-            or type hex colors directly into the inputs, or double-click an
-            input to open a color picker. Hex color format is #xxxxxx.
-        '''
-        instrux = Label(
-            self.inputs_frame,
-            text=instructions, 
-            wraplength=600,
-            anchor="se",
-            justify="right")
-
-        new_swatch_frame = Frame(
-            self.inputs_frame, bg=self.formats["highlight_bg"])
-        copy_button = Button(
-            self.inputs_frame, text="COPY", command=self.fill_entries, width=6)
-        bg1 = Entry(new_swatch_frame, width=9)
-        bg2 = Entry(new_swatch_frame, width=9)
-        bg3 = Entry(new_swatch_frame, width=9)
-        fg1 = Entry(new_swatch_frame, width=9)
-        spacer = Frame(self.inputs_frame)
-        apply_button = Button(
-            self.inputs_frame, text="APPLY", command=self.apply, width=6)
-
-        # children of self.inputs_frame
-        self.inputs_frame.columnconfigure(3, weight=1)
-        instrux.grid(column=0, row=0, sticky="n")
-        new_swatch_frame.grid(column=1, row=0, padx=(12,0), sticky="s")
-        copy_button.grid(column=2, row=0, padx=(12,0), sticky="sw")
-        spacer.grid(column=3, row=0, sticky="ew")
-        apply_button.grid(column=4, row=0, sticky="se")
-
-        # children of new_swatch_frame
-        bg1.grid(column=0, row=0, padx=self.pad, pady=(self.pad, 0))
-        bg2.grid(column=0, row=1, padx=self.pad)
-        bg3.grid(column=0, row=2, padx=self.pad)
-        fg1.grid(column=0, row=3, padx=self.pad, pady=(0, self.pad))
-
-        for widg in (bg1, bg2, bg3, fg1, copy_button, apply_button):
-            for event in ("<KeyPress-Up>", "<KeyPress-Left>"):
-                widg.bind(event, self.arrow_in_last)
-            for event in ("<KeyPress-Down>", "<KeyPress-Right>"):
-                widg.bind(event, self.arrow_in_first)
-
-        self.preview_area.extend(
-            [instrux, copy_button, bg1, bg2, bg3, fg1, spacer, 
-                new_swatch_frame, apply_button])
-
     def arrow_in_first(self, evt):
         self.swatch_first.focus_set()
         self.swatch_canvas.yview_moveto(0.0)
@@ -416,10 +474,40 @@ class Colorizer(Frame):
         self.swatch_canvas.yview_moveto(1.0)
 
     def fill_entries(self):
-        pass
+        colors = (
+            self.current_swatch["scheme"]["bg"], 
+            self.current_swatch["scheme"]["highlight_bg"], 
+            self.current_swatch["scheme"]["head_bg"], 
+            self.current_swatch["scheme"]["fg"])
+        a = 0
+        for widg in self.INPUTS:
+            widg.delete(0, 'end')
+            widg.insert(0, colors[a])
+            a += 1        
 
     def apply(self):
         pass
+
+    def validate_hex_colors(self, evt):
+        sym = evt.keysym
+        if sym != "numbersign" and len(sym) != 1:
+            return
+        hexx = False
+        typed_colors = []
+        for widg in self.INPUTS:
+            typed_colors.append(widg.get().strip())
+        valid_colors = 0
+        for stg in typed_colors:            
+            hexx = search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', stg)
+            if hexx is False:
+                return
+            else:
+                valid_colors += 1
+            if valid_colors == 4 and len(stg) in (4, 7):
+                try:
+                    self.preview(typed_colors=typed_colors)
+                except tk.TclError:
+                    pass
 
     def open_color_chooser(self, evt):
         chosen_color = colorchooser.askcolor(parent=self.root)[1]
