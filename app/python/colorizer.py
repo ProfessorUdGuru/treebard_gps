@@ -44,7 +44,7 @@ class Colorizer(Frame):
 
         self.pad = 2
 
-        # self.preview_area = []
+        # self.preview_ok = False
 
         self.make_schemes_dict()
         self.make_widgets()
@@ -121,11 +121,11 @@ class Colorizer(Frame):
         t = 0
         for stg in explanations:
             lab = LabelStay(new_swatch_frame, text=stg, anchor="w")
-            # lab = LabelStay(explain, text=stg, anchor="w")
             lab.grid(column=2, row=t, sticky="ew", ipadx=6, padx=(0,1))
-            # lab.grid(column=0, row=t, sticky="ew")
             self.preview_area.append(lab)
             t += 1
+        add_button = Button(
+            self.inputs_frame, text="ADD COLOR SCHEME", command=self.add_button)
         apply_button = Button(
             self.inputs_frame, text="APPLY", command=self.apply, width=6)
 
@@ -134,19 +134,25 @@ class Colorizer(Frame):
         instrux.grid(column=0, row=0, sticky="n")
         new_swatch_frame.grid(column=1, row=0, rowspan=2, padx=(12,0), sticky="ns")
         copy_button.grid(column=0, row=1, sticky="w")
-        # explain.grid(column=3, row=0, rowspan=2, sticky="sew", padx=(12,0))
+        add_button.grid(column=3, row=0, sticky="se", padx=(12,0), pady=(0,6))
         apply_button.grid(column=3, row=1, sticky="se", padx=(12,0))
 
         # children of new_swatch_frame
         for num in range(4):
-            print("line", looky(seeline()).lineno, "num:", num)
             new_swatch_frame.rowconfigure(num, weight=1)
         self.bg1.grid(column=0, row=0, padx=self.pad, pady=(self.pad, 0), sticky="ns")
         self.bg2.grid(column=0, row=1, padx=self.pad, sticky="ns")
         self.bg3.grid(column=0, row=2, padx=self.pad, sticky="ns")
         self.fg1.grid(column=0, row=3, padx=self.pad, pady=(0, self.pad), sticky="ns")
 
-        for widg in (self.bg1, self.bg2, self.bg3, self.fg1, copy_button, apply_button):
+        arrow_in_launches = (
+            self.bg1, self.bg2, self.bg3, self.fg1, copy_button, add_button, apply_button)
+        for widg in arrow_in_launches:
+            for event in ("<KeyPress-Up>",):
+                widg.bind(event, self.arrow_in_last)
+            for event in ("<KeyPress-Down>",):
+                widg.bind(event, self.arrow_in_first)
+        for widg in arrow_in_launches[4:]:
             for event in ("<KeyPress-Up>", "<KeyPress-Left>"):
                 widg.bind(event, self.arrow_in_last)
             for event in ("<KeyPress-Down>", "<KeyPress-Right>"):
@@ -154,11 +160,13 @@ class Colorizer(Frame):
 
         self.preview_area.extend(
             [instrux, copy_button, self.bg1, self.bg2, self.bg3, self.fg1,  
-                new_swatch_frame, apply_button])
+                new_swatch_frame, apply_button, add_button])
 
         self.INPUTS = (self.bg1, self.bg2, self.bg3, self.fg1)
         for widg in self.INPUTS:
             widg.bind("<KeyRelease>", self.validate_hex_colors)
+            widg.bind("<Double-Button-1>", self.open_color_chooser)
+            widg.bind("<space>", self.open_color_chooser)
 
     def make_schemes_dict(self):
         conn = sqlite3.connect(current_file)
@@ -186,7 +194,6 @@ class Colorizer(Frame):
         r = 0
         for dkt in self.color_scheme_dicts:
             frm = FrameStay(
-                # self.swatch_window, bg="red", takefocus=1)
                 self.swatch_window, bg=self.formats["highlight_bg"], takefocus=1)
             frm.grid(column=c-1, row=r, padx=self.pad, pady=self.pad)
             frm.bind("<FocusIn>", self.highlight)
@@ -276,12 +283,16 @@ class Colorizer(Frame):
                 widg.config(bg=highlight_bg)
                 if cls == "Button":
                     widg.config(activebackground=head_bg)
+                elif cls == "Entry":
+                    widg.config(insertbackground=fg)
             if cls not in ("Frame", "Canvas", "Label"):
                 widg.config(fg=fg)
             elif cls == "Label" and widg.winfo_subclass() != "LabelStay":
                 widg.config(fg=fg)
 
         self.sbv.itemconfig(self.sbv.thumb, fill=bg, outline=head_bg)
+
+        # self.preview_ok = True
 
     def highlight(self, evt):
         widg = evt.widget
@@ -488,32 +499,45 @@ class Colorizer(Frame):
     def apply(self):
         pass
 
-    def validate_hex_colors(self, evt):
-        sym = evt.keysym
-        if sym != "numbersign" and len(sym) != 1:
-            return
-        hexx = False
+    def validate_hex_colors(self, evt=None, chooser=False):
+        if evt:
+            sym = evt.keysym
+            if sym not in ("numbersign", "BackSpace", "Delete"):
+                if len(sym) != 1:
+                    return
+        spelt = False
+        hexx = None
         typed_colors = []
         for widg in self.INPUTS:
             typed_colors.append(widg.get().strip())
-        valid_colors = 0
-        for stg in typed_colors:            
+        if evt or chooser is True: # KeyRelease or color chooser dialog
+            valid_colors = 0
+        else: # COPY button is pressed
+            valid_colors = 3
+        for stg in typed_colors:
             hexx = search(r'^#(?:[0-9a-fA-F]{3}){1,2}$', stg)
-            if hexx is False:
+            if hexx is None and stg not in COLOR_STRINGS:
                 return
-            else:
+            elif hexx is not None:
                 valid_colors += 1
-            if valid_colors == 4 and len(stg) in (4, 7):
+            elif stg.lower() in COLOR_STRINGS:                
+                spelt = True
+                valid_colors += 1
+            if valid_colors == 4 and (len(stg) in (4, 7) or spelt is True):
                 try:
                     self.preview(typed_colors=typed_colors)
                 except tk.TclError:
-                    pass
+                    pass # the error is real but it's being handled
 
     def open_color_chooser(self, evt):
         chosen_color = colorchooser.askcolor(parent=self.root)[1]
         if chosen_color:
             evt.widget.delete(0, 'end')
             evt.widget.insert(0, chosen_color)
+            self.validate_hex_colors(chooser=True)
+
+    def add_button(self):
+        print("line", looky(seeline()).lineno, "add_button:")
 
     def get(self, evt):
         '''
@@ -527,6 +551,12 @@ class Colorizer(Frame):
         trough_traverse_height = trough_height - thumb_height
         ratio = thumb_top / trough_traverse_height
         print("line", looky(seeline()).lineno, "ratio:", ratio)
+
+
+COLOR_STRINGS = [
+    'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgrey', 'darkgreen', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'grey', 'green', 'greenyellow', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgrey', 'lightgreen', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow']
+
+
 
 
 
