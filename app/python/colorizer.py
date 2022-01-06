@@ -11,10 +11,12 @@ from widgets import (
 from scrolling import Scrollbar
 from styles import get_all_descends, config_generic
 from files import get_current_file
+from messages import colorizer_msg, open_message
 from messages_context_help import color_preferences_swatches_help_msg
 from query_strings import (
     update_format_color_scheme, delete_color_scheme, select_color_scheme_current, 
-    update_color_scheme_null, insert_color_scheme, select_all_color_schemes_unhidden)
+    update_color_scheme_null, insert_color_scheme, select_all_color_schemes_unhidden,
+    select_all_color_schemes_hidden, update_color_scheme_hide)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -44,8 +46,6 @@ class Colorizer(Frame):
 
         self.pad = 2
 
-        # self.preview_ok = False
-
         self.make_schemes_dict()
         self.make_widgets()
         self.make_swatches()
@@ -55,7 +55,7 @@ class Colorizer(Frame):
 
     def make_widgets(self):
         
-        header = LabelH3(self, text="Arrow keys enter & navigate swatches.", anchor="w")
+        self.header = LabelH3(self, text="Arrow keys enter & navigate swatches.", anchor="w")
         swatch_frame = Frame(self)
         self.swatch_canvas = Canvas(swatch_frame)
         self.sbv = Scrollbar(
@@ -75,7 +75,7 @@ class Colorizer(Frame):
 
         # children of self
         self.columnconfigure(0, weight=1)
-        header.grid(column=0, row=0, padx=(12,0), pady=12, sticky="ew")
+        self.header.grid(column=0, row=0, padx=(12,0), pady=12, sticky="ew")
         swatch_frame.grid(column=0, row=1, padx=12)
         self.inputs_frame.grid(column=0, row=2, padx=12, pady=12, sticky="ew")
 
@@ -86,7 +86,7 @@ class Colorizer(Frame):
         self.sbv.grid(column=1, row=0, sticky="ns")
 
         self.preview_area = [
-            self, header, swatch_frame, self.swatch_window, 
+            self, self.header, swatch_frame, self.swatch_window, 
             self.inputs_frame, self.sbv]
 
     def make_inputs(self):
@@ -107,7 +107,7 @@ class Colorizer(Frame):
             anchor="se",
             justify="left")
 
-        copy_button = Button(
+        self.copy_button = Button(
             self.inputs_frame, text="COPY", command=self.fill_entries, width=6)
         new_swatch_frame = FrameHilited2(
             self.inputs_frame, bg=self.formats["highlight_bg"])
@@ -115,8 +115,6 @@ class Colorizer(Frame):
         self.bg2 = Entry(new_swatch_frame, width=9)
         self.bg3 = Entry(new_swatch_frame, width=9)
         self.fg1 = Entry(new_swatch_frame, width=9)
-        # explain = FrameHilited2(self.inputs_frame, bd=1)
-        # explain.columnconfigure(0, weight=1)
         new_swatch_frame.columnconfigure(1, weight=1)
         t = 0
         for stg in explanations:
@@ -124,18 +122,18 @@ class Colorizer(Frame):
             lab.grid(column=2, row=t, sticky="ew", ipadx=6, padx=(0,1))
             self.preview_area.append(lab)
             t += 1
-        add_button = Button(
-            self.inputs_frame, text="ADD COLOR SCHEME", command=self.add_button)
-        apply_button = Button(
+        self.add_button = Button(
+            self.inputs_frame, text="ADD COLOR SCHEME", command=self.add_color_scheme)
+        self.apply_button = Button(
             self.inputs_frame, text="APPLY", command=self.apply, width=6)
 
         # children of self.inputs_frame
         self.inputs_frame.columnconfigure(3, weight=1)
         instrux.grid(column=0, row=0, sticky="n")
         new_swatch_frame.grid(column=1, row=0, rowspan=2, padx=(12,0), sticky="ns")
-        copy_button.grid(column=0, row=1, sticky="w")
-        add_button.grid(column=3, row=0, sticky="se", padx=(12,0), pady=(0,6))
-        apply_button.grid(column=3, row=1, sticky="se", padx=(12,0))
+        self.copy_button.grid(column=0, row=1, sticky="w")
+        self.add_button.grid(column=3, row=0, sticky="se", padx=(12,0), pady=(0,6))
+        self.apply_button.grid(column=3, row=1, sticky="se", padx=(12,0))
 
         # children of new_swatch_frame
         for num in range(4):
@@ -146,7 +144,7 @@ class Colorizer(Frame):
         self.fg1.grid(column=0, row=3, padx=self.pad, pady=(0, self.pad), sticky="ns")
 
         arrow_in_launches = (
-            self.bg1, self.bg2, self.bg3, self.fg1, copy_button, add_button, apply_button)
+            self.bg1, self.bg2, self.bg3, self.fg1, self.copy_button, self.add_button, self.apply_button)
         for widg in arrow_in_launches:
             for event in ("<KeyPress-Up>",):
                 widg.bind(event, self.arrow_in_last)
@@ -159,8 +157,8 @@ class Colorizer(Frame):
                 widg.bind(event, self.arrow_in_first)
 
         self.preview_area.extend(
-            [instrux, copy_button, self.bg1, self.bg2, self.bg3, self.fg1,  
-                new_swatch_frame, apply_button, add_button])
+            [instrux, self.copy_button, self.bg1, self.bg2, self.bg3, self.fg1,  
+                new_swatch_frame, self.apply_button, self.add_button])
 
         self.INPUTS = (self.bg1, self.bg2, self.bg3, self.fg1)
         for widg in self.INPUTS:
@@ -172,13 +170,13 @@ class Colorizer(Frame):
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_all_color_schemes_unhidden)
-        self.all_color_schemes = cur.fetchall()
+        self.unhidden_color_schemes = cur.fetchall()
         cur.close()
         conn.close()
 
         self.color_scheme_dicts = []
         keys = ("id", "bg", "highlight", "head", "fg", "built_in", "hidden")
-        for tup in self.all_color_schemes:
+        for tup in self.unhidden_color_schemes:
             values = tup
             dkt = dict(zip(keys, values))
             self.color_scheme_dicts.append(dkt)
@@ -230,7 +228,7 @@ class Colorizer(Frame):
 
         canvas_width = self.swatch_width * self.swatches_across
         scroll_height = int(ceil(
-            (len(self.all_color_schemes) / self.swatches_across))) * self.swatch_height
+            (len(self.unhidden_color_schemes) / self.swatches_across))) * self.swatch_height
         self.swatch_canvas.config(
             width=canvas_width,
             height=self.swatch_height * self.visible_rows, 
@@ -291,14 +289,13 @@ class Colorizer(Frame):
                 widg.config(fg=fg)
 
         self.sbv.itemconfig(self.sbv.thumb, fill=bg, outline=head_bg)
-
-        # self.preview_ok = True
+        self.previewed = (bg, highlight_bg, head_bg, fg)
 
     def highlight(self, evt):
         widg = evt.widget
         widg.config(bg="orange", bd=self.pad)
         widg.grid_configure(padx=0, pady=0)
-        self.make_swatch_dict(widg)
+        self.make_current_swatch_dict(widg)
         children = widg.winfo_children()
         self.preview()
 
@@ -324,21 +321,13 @@ class Colorizer(Frame):
                 Tab can enter and leave the swatch area, which is useful, but
                 when using Tab traversal, the autoscroll doesn't work yet when
                 going from the end of the last visible row to the next 
-                (non-visible) row. I just haven't looked into it yet.
+                (non-visible) row. It's on the do list.
 
-                Any of the arrow keys enter the swatch area, from any other 
-                focused widget on the page, but don't leave it. To get out of
-                the swatch area, use Tab or the mouse.
+                Any of the arrow keys enter the swatch area, from other focused 
+                widgets on the page except the new color Entries. Arrows don't 
+                traverse out of the swatch area, just round and round. To get 
+                out of the swatch area, use Tab or the mouse.
             '''
-            def scroll_up():
-                self.swatch_canvas.yview_moveto(0.0)
-                self.top_visible_row = 0
-                last_visible_row = self.visible_rows - 1 
-
-            def scroll_down():
-                self.swatch_canvas.yview_moveto(1.0)
-                self.top_visible_row = self.last_row - self.visible_rows + 1
-                last_visible_row = self.last_row 
 
             self.update_idletasks()
             column = widg.grid_info()["column"]
@@ -349,37 +338,41 @@ class Colorizer(Frame):
             down1_swatch_bottom = swatch_bottom + self.swatch_height
             down_ratio = swatch_top + widget_ratio / window_height
             up_ratio = swatch_top - widget_ratio / window_height
-            last_visible_row = self.visible_rows - 1
+            self.last_visible_row = self.visible_rows - 1
            
             if sym == "Right":
                 if widg == self.swatch_last:
-                    scroll_up()
+                    self.scroll_up()
                 elif column == self.last_column:
-                    if (row == last_visible_row and 
-                            last_visible_row != self.last_row):
-                        scroll_down()          
+                    if (row == self.last_visible_row and 
+                            self.last_visible_row != self.last_row):
+                        self.scroll_down()          
             elif sym == "Left":
                 if widg == self.swatch_first:
-                    scroll_down()
+                    self.scroll_down()
                 elif column == 0:
                     if (row == self.top_visible_row and 
                             self.top_visible_row != 0):
-                        scroll_up() 
+                        self.scroll_up() 
             elif sym == "Down":
                 if self.current_swatch["last"] is True:
-                    scroll_up()
+                    self.scroll_up()
                 elif down1_swatch_bottom > canvas_bottom:
-                    scroll_down()
+                    self.scroll_down()
             elif sym == "Up":
                 if row == 0:
-                    scroll_down()
+                    self.scroll_down()
                 elif up1_swatch_top < canvas_top:
-                    scroll_up()
+                    self.scroll_up()
 
         sym = evt.keysym
         widg = evt.widget
         if sym not in ("Up", "Down", "Right", "Left"):
-            return
+            if sym == "Delete":
+                self.axe_color_scheme(widg)
+                return
+            else:
+                return
 
         canvas_top = self.swatch_canvas.winfo_rooty()
         window_height = self.swatch_window.winfo_reqheight()
@@ -389,7 +382,17 @@ class Colorizer(Frame):
         for direx in self.DIREX:
             if sym == direx:
                 self.current_swatch[direx].focus_set()
-        autoscroll(sym, widg)        
+        autoscroll(sym, widg) 
+
+    def scroll_up(self):
+        self.swatch_canvas.yview_moveto(0.0)
+        self.top_visible_row = 0
+        self.last_visible_row = self.visible_rows - 1 
+
+    def scroll_down(self):
+        self.swatch_canvas.yview_moveto(1.0)
+        self.top_visible_row = self.last_row - self.visible_rows + 1
+        self.last_visible_row = self.last_row        
 
     def get_adjacent_widgets(self, widg, column, row):
         '''
@@ -450,7 +453,7 @@ class Colorizer(Frame):
 
         return up, right, down, left, last
 
-    def make_swatch_dict(self, widg):
+    def make_current_swatch_dict(self, widg):
         grid = widg.grid_info()
         column = grid["column"]
         row = grid["row"]
@@ -536,8 +539,91 @@ class Colorizer(Frame):
             evt.widget.insert(0, chosen_color)
             self.validate_hex_colors(chooser=True)
 
-    def add_button(self):
-        print("line", looky(seeline()).lineno, "add_button:")
+    def add_color_scheme(self):
+
+        in_unhidden = False
+        in_hidden = False
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_all_color_schemes_hidden)
+        hidden_color_schemes = cur.fetchall()
+        for scheme in self.unhidden_color_schemes:
+            if self.previewed[0:] == scheme[1:5]:
+                in_unhidden = True
+                break
+        for scheme in hidden_color_schemes:
+            if self.previewed[0:] == scheme[1:5]:
+                in_hidden = True
+                break
+        if in_unhidden:
+            open_message(self.root, colorizer_msg[0], "Non-Unique Color Scheme", "OK")
+            cur.close()
+            conn.close()
+            return
+        elif in_hidden:
+            open_message(self.root, colorizer_msg[1], "Hidden Color Scheme", "OK")
+            cur.close()
+            conn.close()
+            return
+        else:
+            cur.execute(insert_color_scheme, self.previewed)
+            conn.commit()
+
+        self.redraw_swatches(autodown=True)
+
+        cur.close()
+        conn.close()
+
+    def redraw_swatches(self, autodown=False):
+        self.clear_inputs()
+        for child in self.swatch_window.winfo_children():
+            child.destroy()
+        self.make_schemes_dict()
+        self.make_swatches()
+        self.update_idletasks()
+        self.canvas_height = self.swatch_canvas.winfo_reqheight()
+        if autodown is True:
+            self.scroll_down()
+            self.swatch_last.focus_set()
+        else:
+            self.scroll_up()
+            self.swatch_first.focus_set()
+
+    def axe_color_scheme(self, widg):
+
+        def delete_scheme():
+            cur.execute(delete_color_scheme, (id_del,))
+            conn.commit()
+
+        def hide_scheme():
+            cur.execute(update_color_scheme_hide, (id_del,))
+            conn.commit()
+
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        delete_this_scheme = []
+        for child in widg.winfo_children():
+            delete_this_scheme.append(child.cget("text"))
+        bg_del, highlight_del, head_del, fg_del = delete_this_scheme
+        for dkt in self.color_scheme_dicts:
+            if (bg_del == dkt["bg"] and highlight_del == dkt["highlight"] and 
+                    head_del == dkt["head"] and fg_del == dkt["fg"]):
+                id_del = dkt["id"]
+                built_in = dkt["built_in"]
+                break
+        if built_in == 0:
+            delete_scheme()
+        elif built_in == 1:
+            hide_scheme()
+
+        self.redraw_swatches()
+
+        cur.close()
+        conn.close()        
+
+    def clear_inputs(self):
+        for widg in (self.bg1, self.bg2, self.bg3, self.fg1):
+            widg.delete(0, 'end')
 
     def get(self, evt):
         '''
@@ -550,8 +636,6 @@ class Colorizer(Frame):
         thumb_height = thumb_bottom - thumb_top
         trough_traverse_height = trough_height - thumb_height
         ratio = thumb_top / trough_traverse_height
-        print("line", looky(seeline()).lineno, "ratio:", ratio)
-
 
 COLOR_STRINGS = [
     'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgrey', 'darkgreen', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'grey', 'green', 'greenyellow', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgrey', 'lightgreen', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow']

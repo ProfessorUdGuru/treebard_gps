@@ -178,6 +178,12 @@ select_all_color_schemes = '''
     FROM color_scheme
 '''
 
+select_all_color_schemes_hidden = '''
+    SELECT color_scheme_id, bg, highlight_bg, head_bg, fg, built_in, hidden
+    FROM color_scheme
+    WHERE hidden = 1
+'''
+
 select_all_color_schemes_unhidden = '''
     SELECT color_scheme_id, bg, highlight_bg, head_bg, fg, built_in, hidden
     FROM color_scheme
@@ -1125,6 +1131,12 @@ update_closing_state_tree_is_open = '''
     UPDATE closing_state
     SET tree_is_open = 1
     WHERE closing_state_id = 1
+'''
+
+update_color_scheme_hide = '''
+    UPDATE color_scheme
+    SET hidden = 1
+    WHERE color_scheme_id = ?
 '''
 
 update_color_scheme_null = '''

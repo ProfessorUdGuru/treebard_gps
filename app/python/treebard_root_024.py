@@ -151,13 +151,14 @@ def start():
     splash = SplashScreen(root, treebard)
     splash.open_treebard(treebard.make_main_window)
     # Manually closing the opening dialog throws an error re: scroll_mouse. This     
-    #   error was solved everywhere else by placing these 2 lines of code last.
+    #   error was solved everywhere else by placing these lines of code last.
     try:
         treebard.scroll_mouse.append_to_list(
             treebard.main.nuke_table.nuke_canvas, resizable=False)
-        treebard.scroll_mouse.configure_mousewheel_scrolling(in_root=True) 
+        treebard.scroll_mouse.configure_mousewheel_scrolling(in_root=True)
     except AttributeError:
         pass
+ 
     config_generic(root)
     root.mainloop()
 
@@ -169,13 +170,10 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# ADD COLOR SCHEME button: instead of showing error msg if scheme already exists, just highlight it and don't say anything; if not exists add to db and GUI, scroll to end and highlight new scheme; preview new scheme; delete entry contents; requery all_schemes list
-# DELETE current scheme using delete key, delete from db, requery all_schemes list; if built-in, hide it; if not built-in, delete it (don't bother the user with messages)
-# get Tab traversal to trigger autoscroll when going from a visible to a non-visible row. Already works for arrow traversal.
+# The new color entries shd use input font not output font. The explainers font shd change size when everything else does.
+# There shd be spacer rows (frames w/columnspan=2) above and below the new color inputs and explainers and only the spacers shd expand in case of big font. 
+# edit rcm & statustips
 # APPLY and test all
-# make sure it scrolls with mousewheel.
-# Uncomment statustips/rcm in main and get it working. 
-# if self.current_swatch["id"] is not being used, get rid of it
 # copy color_scheme table to default .db X2
 # center content in prefs tabs
 # get rid of tree_is_open and the relevant column in treebard.db, see get_opening_settings() in styles.py
@@ -249,6 +247,8 @@ if __name__ == '__main__':
 
 # ADD TO MAIN DO LIST:
 # nuke area on Person Tab: remove scrollbars & canvas & window if the hideable ones never appear, it seems they might not be necessary.
+# colorizer: get Tab traversal to trigger autoscroll when going from a visible to a non-visible row. Already works for arrow traversal.
+# colorizer: swatch_canvas: adding to mousewheel scrolling doesn't work
 
 # DEV DOCS:
 # Files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run.

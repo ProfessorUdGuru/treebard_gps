@@ -514,15 +514,24 @@ fonts_msg = (
     "Press ALT+P then CTRL+S to resize the scrollbar after changing fonts.",
 )
 
-opening_msg = ("The requested file has been moved, deleted or renamed outside "
-        "of Treebard's controls. To use the file, restore it to its original folder "
-        "and name. Any file changes should be made from within Treebard using "
-        "Treebard's tools.",
+opening_msg = (
+    "The requested file has been moved, deleted or renamed outside "
+        "of Treebard's controls. To use the file, restore it to its original "
+        "folder and name. Any file changes should be made from within Treebard "
+        "using Treebard's tools.",
     "Treebard will use your title as the tree's display title. "
         "Treebard will save 'Smith Family Tree' as a database file at `{current "
         "drive}/treebard_gps/data/smith_family_tree/smith_family_tree.tbd`",
     "This feature is not complete. Please visit https://treebard.proboards.com if "
-        "you would like to assist or advise regarding this feature.",
+        "you would like to assist or advise regarding development of this feature.",
+)
+
+colorizer_msg = (
+    "The color scheme already exists. Change at least one color to make a new "
+        "color scheme.",
+    "The color scheme already exists, but is hidden. To unhide it, go to the "
+        "Types Tab. To use it as a model for a new color scheme, change at least "
+        "one color.",
 )
 
 
