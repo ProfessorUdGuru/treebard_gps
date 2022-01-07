@@ -170,12 +170,8 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# The new color entries shd use input font not output font. The explainers font shd change size when everything else does.
-# There shd be spacer rows (frames w/columnspan=2) above and below the new color inputs and explainers and only the spacers shd expand in case of big font. 
-# edit rcm & statustips
-# APPLY and test all
-# copy color_scheme table to default .db X2
-# center content in prefs tabs
+# area to right of main tabbook is hilite color, shd be bg
+# copy color_scheme table to default .db; DELETE built_in = 0 from default only; copy to untouched
 # get rid of tree_is_open and the relevant column in treebard.db, see get_opening_settings() in styles.py
 # retest edit/delete mother/father
 # update partner: when edited/deleted, the marital events all have to reflect the change
@@ -224,6 +220,7 @@ if __name__ == '__main__':
 # All dialogs: run the custom dialog closing code when clicking X on title bar.
 # Add to do list for new_event dialog: add person search button.
 # In notes dialog, if a non-unique topic is entered, there should be an error message, currently there's a SQLite error which locks the database.
+# center content in prefs tabs
 
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain because you sometimes don't remember what's in a clipboard till you try pasting it. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, like a plus sign, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing individual citations on nearly empty dialogs that you have to sift through looking for the right one, and seeing them all together might be useful for the sake of comparison.

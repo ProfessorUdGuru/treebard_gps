@@ -337,10 +337,25 @@ select_closing_state_recent_files = '''
     WHERE closing_state_id = 1
 '''
 
+select_closing_state_prior_tree = '''
+    SELECT prior_tree 
+    FROM closing_state 
+    WHERE closing_state_id = 1
+'''
+
 select_color_scheme_current = '''
     SELECT bg, highlight_bg, head_bg, fg 
     FROM format 
     WHERE format_id = 1
+'''
+
+select_color_scheme_current_id = '''
+    SELECT color_scheme_id
+    FROM color_scheme
+    WHERE bg = ?
+        AND highlight_bg = ?
+        AND head_bg = ?
+        AND fg = ?
 '''
 
 select_count_finding_id_sources = '''
@@ -410,12 +425,6 @@ select_current_person_image = '''
             ON image.image_id = images_elements.image_id 
     WHERE main_image = 1 
         AND images_elements.person_id = ?
-'''
-
-select_closing_state_prior_tree = '''
-    SELECT prior_tree 
-    FROM closing_state 
-    WHERE closing_state_id = 1
 '''
 
 select_default_date_format = '''

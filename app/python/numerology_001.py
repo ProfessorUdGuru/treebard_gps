@@ -33,7 +33,8 @@ consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', '
 
 
 
-name = "Elon Reeve Musk"
+name = "Bessie Louise Rathbun"
+
 name = name.split()
 lowered = []
 for nick in name:
@@ -174,7 +175,8 @@ root.mainloop()
 # David Alan Richter b. Salina KS nov 5 1955
 
 # 281
-# stevenpauljobs
+# stevenpauljobs born February 24, 1955 San Francisco, California, created Apple Computer in mid-1976
+# william burgess powell (amnesia victim "Benjaman Kyle") born August 29, 1948, in Lafayette, Indiana; disappeared in 1976.
 
 # 821
 # Francis Augustus Hamer (tracked down & killed Bonnie & Clyde) d. 7/10/1955
@@ -358,6 +360,7 @@ root.mainloop()
 # 538
 # George Lafayette Heaton Junior
 # Edward Estlin Cummings, (poet e e cummings)
+# Dorthea Lauren Allegra Lapkus, comedian, born September 6, 1985, Evanston, Illinois
 
 # 358
 # Phoebe Ann Laub (Phoebe Snow) July 17, 1950 -  April 26, 2011 b. New York City

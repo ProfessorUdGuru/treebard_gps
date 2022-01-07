@@ -14,9 +14,9 @@ from files import get_current_file
 from messages import colorizer_msg, open_message
 from messages_context_help import color_preferences_swatches_help_msg
 from query_strings import (
-    update_format_color_scheme, delete_color_scheme, select_color_scheme_current, 
-    update_color_scheme_null, insert_color_scheme, select_all_color_schemes_unhidden,
-    select_all_color_schemes_hidden, update_color_scheme_hide)
+    update_format_color_scheme, delete_color_scheme, insert_color_scheme,
+    select_all_color_schemes_unhidden, select_all_color_schemes_hidden, 
+    update_color_scheme_hide, select_color_scheme_current_id)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -25,6 +25,13 @@ from dev_tools import looky, seeline
 current_file = get_current_file()[0]
 
 class Colorizer(Frame):
+    '''
+        The main organization of this class revolves around 
+            `self.color_scheme_dicts`
+        which is a list of dictionaries, one for each color scheme, and 
+            `self.current_swatch`
+        which is a nested dict representing one color scheme.
+    '''
     def __init__(self, master, root, rc_menu, formats, 
             tabbook=None, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
@@ -43,19 +50,32 @@ class Colorizer(Frame):
         self.DIREX = ("Up", "Right", "Down", "Left")
 
         self.bind("<Map>", self.arrow_in_first)
+        self.root.bind('<Return>', self.apply)
 
         self.pad = 2
+
+        self.current_color_scheme = [
+            self.formats["bg"], self.formats["highlight_bg"], 
+            self.formats["head_bg"], self.formats["fg"]]
+
+        self.get_current_scheme_id()
 
         self.make_schemes_dict()
         self.make_widgets()
         self.make_swatches()
+        idx = self.get_applied_swatch_index(self.currently_applied_color_scheme)
+        self.applied_swatch = self.swatch_window.winfo_children()[idx]        
         self.make_inputs()
         self.update_idletasks()
         self.canvas_height = self.swatch_canvas.winfo_reqheight()
 
     def make_widgets(self):
         
-        self.header = LabelH3(self, text="Arrow keys enter & navigate swatches.", anchor="w")
+        self.header = LabelH3(
+            self, text="Arrow keys enter & navigate swatches.", anchor="w")
+        self.current_display = Label(
+            self, text="Currently applied color scheme is id# {}".format(
+                self.currently_applied_color_scheme))
         swatch_frame = Frame(self)
         self.swatch_canvas = Canvas(swatch_frame)
         self.sbv = Scrollbar(
@@ -69,6 +89,8 @@ class Colorizer(Frame):
             0, 0, anchor="nw", window=self.swatch_window)
 
         self.inputs_frame = Frame(self)
+
+        self.current_display.bind("<Button-1>", self.highlight_current_scheme)
         # only key, button, motion, enter, leave, or virtual events 
         #   can be bound here:
         self.sbv.tag_bind("slider", "<ButtonRelease-1>", self.get)
@@ -76,8 +98,10 @@ class Colorizer(Frame):
         # children of self
         self.columnconfigure(0, weight=1)
         self.header.grid(column=0, row=0, padx=(12,0), pady=12, sticky="ew")
-        swatch_frame.grid(column=0, row=1, padx=12)
-        self.inputs_frame.grid(column=0, row=2, padx=12, pady=12, sticky="ew")
+        self.current_display.grid(column=1, row=0, sticky="e", padx=(0,12))
+        swatch_frame.grid(column=0, row=1, columnspan=2, padx=12)
+        self.inputs_frame.grid(
+            column=0, row=2, columnspan=2, padx=12, pady=12, sticky="ew")
 
         # children of swatch_frame
         swatch_frame.columnconfigure(0, weight=1)
@@ -87,7 +111,7 @@ class Colorizer(Frame):
 
         self.preview_area = [
             self, self.header, swatch_frame, self.swatch_window, 
-            self.inputs_frame, self.sbv]
+            self.inputs_frame, self.sbv, self.current_display]
 
     def make_inputs(self):
 
@@ -107,44 +131,56 @@ class Colorizer(Frame):
             anchor="se",
             justify="left")
 
-        self.copy_button = Button(
-            self.inputs_frame, text="COPY", command=self.fill_entries, width=6)
         new_swatch_frame = FrameHilited2(
             self.inputs_frame, bg=self.formats["highlight_bg"])
+        spacer1 = Frame(new_swatch_frame)
         self.bg1 = Entry(new_swatch_frame, width=9)
         self.bg2 = Entry(new_swatch_frame, width=9)
         self.bg3 = Entry(new_swatch_frame, width=9)
         self.fg1 = Entry(new_swatch_frame, width=9)
+        spacer2 = Frame(new_swatch_frame)
         new_swatch_frame.columnconfigure(1, weight=1)
-        t = 0
+        t = 1
         for stg in explanations:
             lab = LabelStay(new_swatch_frame, text=stg, anchor="w")
-            lab.grid(column=2, row=t, sticky="ew", ipadx=6, padx=(0,1))
+            lab.grid(column=1, row=t, sticky="ew", ipadx=6, padx=(0,1))
             self.preview_area.append(lab)
             t += 1
+        self.copy_button = Button(
+            self.inputs_frame, text="COPY COLOR SCHEME", 
+            command=self.fill_entries, width=18)
         self.add_button = Button(
-            self.inputs_frame, text="ADD COLOR SCHEME", command=self.add_color_scheme)
+            self.inputs_frame, text="ADD COLOR SCHEME", 
+            command=self.add_color_scheme, width=18)
         self.apply_button = Button(
             self.inputs_frame, text="APPLY", command=self.apply, width=6)
 
         # children of self.inputs_frame
-        self.inputs_frame.columnconfigure(3, weight=1)
-        instrux.grid(column=0, row=0, sticky="n")
-        new_swatch_frame.grid(column=1, row=0, rowspan=2, padx=(12,0), sticky="ns")
-        self.copy_button.grid(column=0, row=1, sticky="w")
-        self.add_button.grid(column=3, row=0, sticky="se", padx=(12,0), pady=(0,6))
-        self.apply_button.grid(column=3, row=1, sticky="se", padx=(12,0))
+        self.inputs_frame.columnconfigure(1, weight=1)
+        self.inputs_frame.rowconfigure(2, weight=1)
+        instrux.grid(column=0, row=0, sticky="n", rowspan=3)
+        new_swatch_frame.grid(column=1, row=0, rowspan=3, padx=(12,0), sticky="ns")
+        self.copy_button.grid(column=2, row=0, sticky="ne", padx=(12,0), pady=(4,0))
+        self.add_button.grid(column=2, row=1, sticky="ne", padx=(12,0), pady=(6,0))
+        self.apply_button.grid(column=2, row=2, sticky="se", padx=(12,0))
 
         # children of new_swatch_frame
-        for num in range(4):
-            new_swatch_frame.rowconfigure(num, weight=1)
-        self.bg1.grid(column=0, row=0, padx=self.pad, pady=(self.pad, 0), sticky="ns")
-        self.bg2.grid(column=0, row=1, padx=self.pad, sticky="ns")
-        self.bg3.grid(column=0, row=2, padx=self.pad, sticky="ns")
-        self.fg1.grid(column=0, row=3, padx=self.pad, pady=(0, self.pad), sticky="ns")
+        # for num in range(4):
+            # new_swatch_frame.rowconfigure(num, weight=1)
+        new_swatch_frame.rowconfigure(0, weight=2)
+        new_swatch_frame.rowconfigure(5, weight=3)
+        spacer1.grid(column=0, row=0, columnspan=2, sticky="news")
+        self.bg1.grid(
+            column=0, row=1, padx=self.pad, pady=(self.pad, 0), sticky="ns")
+        self.bg2.grid(column=0, row=2, padx=self.pad, sticky="ns")
+        self.bg3.grid(column=0, row=3, padx=self.pad, sticky="ns")
+        self.fg1.grid(
+            column=0, row=4, padx=self.pad, pady=(0, self.pad), sticky="ns")
+        spacer2.grid(column=0, row=5, columnspan=2, sticky="news")
 
         arrow_in_launches = (
-            self.bg1, self.bg2, self.bg3, self.fg1, self.copy_button, self.add_button, self.apply_button)
+            self.bg1, self.bg2, self.bg3, self.fg1, self.copy_button, 
+            self.add_button, self.apply_button)
         for widg in arrow_in_launches:
             for event in ("<KeyPress-Up>",):
                 widg.bind(event, self.arrow_in_last)
@@ -158,13 +194,22 @@ class Colorizer(Frame):
 
         self.preview_area.extend(
             [instrux, self.copy_button, self.bg1, self.bg2, self.bg3, self.fg1,  
-                new_swatch_frame, self.apply_button, self.add_button])
+                new_swatch_frame, self.apply_button, self.add_button, spacer1,
+                spacer2])
 
         self.INPUTS = (self.bg1, self.bg2, self.bg3, self.fg1)
         for widg in self.INPUTS:
             widg.bind("<KeyRelease>", self.validate_hex_colors)
             widg.bind("<Double-Button-1>", self.open_color_chooser)
             widg.bind("<space>", self.open_color_chooser)
+
+    def get_current_scheme_id(self):
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_color_scheme_current_id, tuple(self.current_color_scheme))
+        self.currently_applied_color_scheme = cur.fetchone()[0]
+        cur.close()
+        conn.close()
 
     def make_schemes_dict(self):
         conn = sqlite3.connect(current_file)
@@ -259,7 +304,7 @@ class Colorizer(Frame):
             cls = widg.winfo_class()
             if cls == "Label":
                 if widg.winfo_subclass() == "LabelStay":
-                    row = widg.grid_info()["row"]
+                    row = widg.grid_info()["row"] - 1
                     if row == 0:
                         widg.config(bg=bg, fg=fg)
                     elif row == 1:
@@ -296,12 +341,31 @@ class Colorizer(Frame):
         widg.config(bg="orange", bd=self.pad)
         widg.grid_configure(padx=0, pady=0)
         self.make_current_swatch_dict(widg)
-        children = widg.winfo_children()
         self.preview()
 
     def unhighlight(self, evt):
-        evt.widget.config(bg=self.formats["highlight_bg"], bd=0)
-        evt.widget.grid_configure(padx=self.pad, pady=self.pad)
+        widg = evt.widget
+        widg.config(bg=self.formats["highlight_bg"], bd=0)
+        widg.grid_configure(padx=self.pad, pady=self.pad)
+
+    def highlight_current_scheme(self, evt):
+        # old_swatch = self.applied_swatch
+        # old_swatch.config(bg=self.formats["highlight_bg"], bd=0)
+        # old_swatch.grid_configure(padx=self.pad, pady=self.pad)
+        iD = int(evt.widget.cget("text").split("id# ")[1])
+        idx = self.get_applied_swatch_index(iD)
+        self.applied_swatch = self.swatch_window.winfo_children()[idx]
+        self.applied_swatch.config(bg="chartreuse", bd=self.pad)
+        self.applied_swatch.grid_configure(padx=0, pady=0)
+
+    def get_applied_swatch_index(self, iD):
+        q = 0
+        for dkt in self.color_scheme_dicts:
+            if dkt["id"] == iD:
+                idx = q
+                break
+            q += 1
+        return idx
 
     def traverse(self, evt):
         def autoscroll(sym, widg):
@@ -499,8 +563,33 @@ class Colorizer(Frame):
             widg.insert(0, colors[a])
             a += 1        
 
-    def apply(self):
-        pass
+    def apply(self, evt=None):
+        self.current_color_scheme = (
+            self.current_swatch["scheme"]["bg"], 
+            self.current_swatch["scheme"]["highlight_bg"], 
+            self.current_swatch["scheme"]["head_bg"], 
+            self.current_swatch["scheme"]["fg"])
+
+        idx = self.get_applied_swatch_index(self.currently_applied_color_scheme)
+        self.applied_swatch = self.swatch_window.winfo_children()[idx] 
+        # self.applied_swatch = self.current_swatch["widget"]
+        self.applied_swatch.config(bg=self.formats["highlight_bg"], bd=0)
+        self.applied_swatch.grid_configure(padx=self.pad, pady=self.pad)
+
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(update_format_color_scheme, self.current_color_scheme)
+        conn.commit()
+        cur.close()
+        conn.close()
+        self.get_current_scheme_id()
+        self.current_display.config(
+            text="Currently applied color scheme is id# {}".format(
+                self.currently_applied_color_scheme))
+
+        config_generic(self.root)
+        self.root.config(bg=self.current_color_scheme[0])
 
     def validate_hex_colors(self, evt=None, chooser=False):
         if evt:
@@ -638,7 +727,34 @@ class Colorizer(Frame):
         ratio = thumb_top / trough_traverse_height
 
 COLOR_STRINGS = [
-    'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 'darkgoldenrod', 'darkgray', 'darkgrey', 'darkgreen', 'darkkhaki', 'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategray', 'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 'gray', 'grey', 'green', 'greenyellow', 'honeydew', 'hotpink', 'indianred', 'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 'lightgoldenrodyellow', 'lightgray', 'lightgrey', 'lightgreen', 'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 'lightslategray', 'lightslategrey', 'lightsteelblue', 'lightyellow', 'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 'powderblue', 'purple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow', 'springgreen', 'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 'wheat', 'white', 'whitesmoke', 'yellow']
+    'aliceblue', 'antiquewhite', 'aqua', 'aquamarine', 'azure', 'beige', 
+    'bisque', 'black', 'blanchedalmond', 'blue', 'blueviolet', 'brown', 
+    'burlywood', 'cadetblue', 'chartreuse', 'chocolate', 'coral', 
+    'cornflowerblue', 'cornsilk', 'crimson', 'cyan', 'darkblue', 'darkcyan', 
+    'darkgoldenrod', 'darkgray', 'darkgrey', 'darkgreen', 'darkkhaki', 
+    'darkmagenta', 'darkolivegreen', 'darkorange', 'darkorchid', 'darkred', 
+    'darksalmon', 'darkseagreen', 'darkslateblue', 'darkslategray',
+    'darkslategrey', 'darkturquoise', 'darkviolet', 'deeppink', 'deepskyblue', 
+    'dimgray', 'dimgrey', 'dodgerblue', 'firebrick', 'floralwhite', 
+    'forestgreen', 'fuchsia', 'gainsboro', 'ghostwhite', 'gold', 'goldenrod', 
+    'gray', 'grey', 'green', 'greenyellow', 'honeydew', 'hotpink', 'indianred', 
+    'indigo', 'ivory', 'khaki', 'lavender', 'lavenderblush', 'lawngreen', 
+    'lemonchiffon', 'lightblue', 'lightcoral', 'lightcyan', 
+    'lightgoldenrodyellow', 'lightgray', 'lightgrey', 'lightgreen', 
+    'lightpink', 'lightsalmon', 'lightseagreen', 'lightskyblue', 
+    'lightslategray', 'lightslategrey', 'lightsteelblue', 'lightyellow', 
+    'lime', 'limegreen', 'linen', 'magenta', 'maroon', 'mediumaquamarine', 
+    'mediumblue', 'mediumorchid', 'mediumpurple', 'mediumseagreen', 
+    'mediumslateblue', 'mediumspringgreen', 'mediumturquoise', 
+    'mediumvioletred', 'midnightblue', 'mintcream', 'mistyrose', 'moccasin', 
+    'navajowhite', 'navy', 'oldlace', 'olive', 'olivedrab', 'orange', 
+    'orangered', 'orchid', 'palegoldenrod', 'palegreen', 'paleturquoise', 
+    'palevioletred', 'papayawhip', 'peachpuff', 'peru', 'pink', 'plum', 
+    'powderblue', 'purple', 'red', 'rosybrown', 'royalblue', 'saddlebrown', 
+    'salmon', 'sandybrown', 'seagreen', 'seashell', 'sienna', 'silver', 
+    'skyblue', 'slateblue', 'slategray', 'slategrey', 'snow', 'springgreen', 
+    'steelblue', 'tan', 'teal', 'thistle', 'tomato', 'turquoise', 'violet', 
+    'wheat', 'white', 'whitesmoke', 'yellow']
 
 
 

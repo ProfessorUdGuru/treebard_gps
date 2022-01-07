@@ -20,9 +20,8 @@ from PIL import Image, ImageTk
 from files import current_drive, get_current_file
 from styles import make_formats_dict
 from widgets import (
-    Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, FrameHilited1,
-    CanvasHilited, FrameHilited3, Toplevel, LabelBoilerplate, LabelEntry,
-    Radiobutton, LabelFrame)
+    Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
+    LabelBoilerplate, LabelEntry, Radiobutton, LabelFrame)
 from window_border import Border
 from custom_tabbed_widget import TabBook
 from autofill import EntryAutoHilited, EntryAuto    
@@ -219,7 +218,7 @@ class Main(Frame):
                 "developers and users of genealogy database software to expect a "
                 "better user experience. GPS stands for "    
                 "'Genieware Pattern Simulation' because GPS is here to show "
-                "the way. Created 2014 - 2022 by Scott Robertson. Email: "
+                "the way. Created 2015 - 2022 by Scott Robertson. Email: "
                 "stumpednomore-at-gmail.com. "
                 "forum/blog: http://treebard.proboards.com. website: "
                 "http://treebard.com. repo: https://github.com/ProfessorUdGuru/treebard_gps. ",
@@ -337,6 +336,9 @@ class Main(Frame):
                 "Apply Button",
                 "Apply selections to all output text. Input font family is "
 					"chosen by Treebard."),
+            (colorizer.current_display,
+                "",
+                "Click ID to highlight currently applied swatch."),
             (colorizer.swatch_window,
                 "Color Scheme Samples",
                 "Click color scheme to try."),
@@ -349,7 +351,7 @@ class Main(Frame):
                 "Apply selected color scheme to everything."),
             (colorizer.add_button,
                 "New Color Scheme Button",
-                "Store new color scheme using colors filled into the "
+                "Save new color scheme using colors filled into the "
                     "four inputs."),
             (colorizer.bg1,
                 "Background Color 1 Input",
@@ -468,7 +470,8 @@ class Main(Frame):
             self.att.event_input,self.fontpicker.output_sample, 
             self.fontpicker.font_size, self.fontpicker.cbo.entry, 
             self.fontpicker.apply_button,            
-            colorizer.header, colorizer.copy_button, colorizer.apply_button,
+            colorizer.header, colorizer.current_display, 
+            colorizer.copy_button, colorizer.apply_button,
             colorizer.add_button, colorizer.bg1, colorizer.fg1,
             self.findings_table.headers[0], self.findings_table.headers[1], 
             self.findings_table.headers[2], self.findings_table.headers[3], 
