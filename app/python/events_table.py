@@ -61,7 +61,6 @@ from dev_tools import looky, seeline
 
 
 date_prefs = get_date_formats()
-# formats = make_formats_dict()
 
 HEADS = (
     'event', 'date', 'place', 'particulars', 'age', 
@@ -423,6 +422,9 @@ class EventsTable(Frame):
 
         self.make_header()
         self.make_table_cells()
+        self.set_cell_content()
+        self.show_table_cells()
+        # self.resize_scrollbar(self.root, self.main_canvas)
 
     def get_initial(self, evt):
         self.initial = evt.widget.get()
@@ -764,7 +766,7 @@ class EventsTable(Frame):
             self.new_event_frame, 
             text="NEW EVENT OR ATTRIBUTE", 
             command=self.make_new_event)
-        self.set_cell_content()
+        # self.set_cell_content()
 
     def set_cell_content(self):
 
@@ -812,7 +814,7 @@ class EventsTable(Frame):
                 self.findings_data[finding_id]["place"], 
                 self.findings_data[finding_id]["particulars"]]
 
-        self.show_table_cells()
+        # self.show_table_cells()
 
     def sort_by_date(self):
         after_death = []
@@ -933,6 +935,7 @@ class EventsTable(Frame):
         self.event_input.grid(column=0, row=0, padx=(0,12), sticky='w')
         self.add_event_button.grid(
             column=1, row=0, sticky='w')
+        # self.resize_scrollbar(self.root, self.main_canvas)
 
     def show_kintip(self, kin_type, name):
         ''' 
@@ -1004,6 +1007,7 @@ class EventsTable(Frame):
         self.widths = [0, 0, 0, 0, 0]
         self.kin_widths = [0, 0, 0, 0, 0, 0]
         self.set_cell_content()
+        self.show_table_cells()
         if evt: # user pressed CTRL+S for example
             self.main_window.nuke_table.make_nuke_inputs(
                 current_person=self.current_person)

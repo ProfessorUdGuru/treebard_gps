@@ -70,7 +70,7 @@ def get_matches(search_input):
 class PersonSearch(Toplevel):
     def __init__(
             self, master, root, treebard, entry, findings_table, attributes_table, 
-            show_top_pic, names_tab, pic, formats, *args, **kwargs):
+            show_top_pic, pic, formats, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.master = master # Main
@@ -80,7 +80,6 @@ class PersonSearch(Toplevel):
         self.findings_table = findings_table
         self.attributes_table = attributes_table
         self.show_top_pic = show_top_pic
-        self.names_tab = names_tab
         self.pic = pic
         self.formats = formats
 

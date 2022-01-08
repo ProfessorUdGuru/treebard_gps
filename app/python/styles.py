@@ -82,13 +82,13 @@ bgStay_fgStay = ('FrameStay', 'LabelStay')
 bgStd = (
     'Frame', 'Toykinter', 'Main', 'Colorizer', 'Toplevel', 'FontPicker',
     'StatusbarTooltips', 'EventsTable', 'Gallery', 'FrameHilited6',
-    'Dialogue', 'Border', 'Canvas', 'DatePreferences')
+    'Dialogue', 'Border', 'Canvas', 'DatePreferences', 'TabBook')
 
 bgHead = ('FrameHilited2',)
 
 bgLite = (
     'FrameHilited', 'FrameHilited1', 'FrameHilited3', 'FrameHilited4', 
-    'TabBook', 'CanvasHilited', 'ToplevelHilited', 'TitleBarButtonSolidBG')
+    'CanvasHilited', 'ToplevelHilited', 'TitleBarButtonSolidBG')
 
 bgStd_fgStd = ('Sizer', 'LabelFrame')
 

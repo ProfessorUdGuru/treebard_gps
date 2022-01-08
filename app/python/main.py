@@ -142,7 +142,7 @@ class Main(Frame):
             current_person_area, text="OK", command=self.change_person)
         person_search = Button(
             current_person_area, 
-            text="Find or Create a Person", 
+            text="ADD/FIND", 
             command=self.open_person_search)
 
         minx = self.tabbook_x/self.SCREEN_SIZE[0]
@@ -158,7 +158,6 @@ class Main(Frame):
 
         self.findings_table = EventsTable(
             persons_tab, self.root, self.treebard, self, self.formats)
-
         EventsTable.instances.append(self.findings_table)
         self.current_person = self.findings_table.current_person
 
@@ -516,7 +515,6 @@ class Main(Frame):
             self.att,
             self.show_top_pic,
             self.formats,
-            names_tab=self.main_tabs.store["names"],
             pic=None)    
 
     def change_person(self):
@@ -543,12 +541,12 @@ class Main(Frame):
                     self.current_person_name, self.current_person))
         self.findings_table.current_person = self.current_person
         self.findings_table.kin_widths = [0, 0, 0, 0, 0]
-        self.findings_table.redraw()
         self.att.current_person = self.current_person
-        self.att.redraw()
         self.person_entry.delete(0, 'end')
         current_file, current_dir = get_current_file()
         self.show_top_pic(current_file, current_dir, self.current_person)
+        self.findings_table.redraw()
+        self.att.redraw()
 
     def open_person_gallery(self):
         person_gallery_dlg = Toplevel(self.root)

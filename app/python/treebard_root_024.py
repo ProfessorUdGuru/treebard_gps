@@ -170,8 +170,9 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# area to right of main tabbook is hilite color, shd be bg
-# copy color_scheme table to default .db; DELETE built_in = 0 from default only; copy to untouched
+#  first get rid of all refs to the format table ie: (update_format_color_scheme has to be changed to current see lines 17 & 583 colorizer.py); (select_default_format_font_size in window_border.py lines 13, 116, 121 has to be changed to the table in treebard.db); (update_format_font has to be changed to current see font_picker.py lines 7 & 102; select_format_font_size has to be changed to treebard.db see font_picker.py lines 7 & 33;) (select_opening_settings has to be changed to treebard.db see styles.py lines 5 & 608); restructure format colors by deleting the four cols in format table re:user pref colors with one fk re: color_scheme_id IN table `current`; then the whole format table can be deleted since defaults come from treebard.db now; redo the code in colorizer to get current scheme id directly instead of finding the 4 matching colors
+# dump current table from sample_tree to default.db, drop table format, copy to untouched
+# backup treebard.db
 # get rid of tree_is_open and the relevant column in treebard.db, see get_opening_settings() in styles.py
 # retest edit/delete mother/father
 # update partner: when edited/deleted, the marital events all have to reflect the change

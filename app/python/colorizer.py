@@ -206,6 +206,7 @@ class Colorizer(Frame):
     def get_current_scheme_id(self):
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
+        print("line", looky(seeline()).lineno, "self.current_color_scheme:", self.current_color_scheme)
         cur.execute(select_color_scheme_current_id, tuple(self.current_color_scheme))
         self.currently_applied_color_scheme = cur.fetchone()[0]
         cur.close()
@@ -572,7 +573,6 @@ class Colorizer(Frame):
 
         idx = self.get_applied_swatch_index(self.currently_applied_color_scheme)
         self.applied_swatch = self.swatch_window.winfo_children()[idx] 
-        # self.applied_swatch = self.current_swatch["widget"]
         self.applied_swatch.config(bg=self.formats["highlight_bg"], bd=0)
         self.applied_swatch.grid_configure(padx=self.pad, pady=self.pad)
 

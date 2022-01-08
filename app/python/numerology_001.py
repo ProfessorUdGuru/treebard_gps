@@ -33,7 +33,7 @@ consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', '
 
 
 
-name = "Bessie Louise Rathbun"
+name = "John Harvey Kellogg"
 
 name = name.split()
 lowered = []
@@ -382,6 +382,7 @@ root.mainloop()
 
 # 516
 # Jerry Jeff Walker (born Ronald Clyde Crosby; March 16, 1942 – October 23, 2020
+# John Harvey Kellogg (health scam industrialist)
 
 # 167
 # Mervyn Laurence Peake (9 July 1911 – 17 November 1968)

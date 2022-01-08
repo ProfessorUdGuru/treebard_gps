@@ -343,11 +343,11 @@ select_closing_state_prior_tree = '''
     WHERE closing_state_id = 1
 '''
 
-select_color_scheme_current = '''
-    SELECT bg, highlight_bg, head_bg, fg 
-    FROM format 
-    WHERE format_id = 1
-'''
+# select_color_scheme_current = '''
+    # SELECT bg, highlight_bg, head_bg, fg 
+    # FROM format 
+    # WHERE format_id = 1
+# '''
 
 select_color_scheme_current_id = '''
     SELECT color_scheme_id
@@ -1148,12 +1148,12 @@ update_color_scheme_hide = '''
     WHERE color_scheme_id = ?
 '''
 
-update_color_scheme_null = '''
-    UPDATE format 
-    SET (bg, highlight_bg, head_bg, fg) = 
-        (null, null, null, null) 
-                WHERE format_id = 1
-'''
+# update_color_scheme_null = '''
+    # UPDATE format 
+    # SET (bg, highlight_bg, head_bg, fg) = 
+        # (null, null, null, null) 
+                # WHERE format_id = 1
+# '''
 
 update_current_person = '''
     UPDATE current

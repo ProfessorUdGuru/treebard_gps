@@ -479,7 +479,6 @@ class TitleBarButtonSolidBG(TitleBarButton):
             backgrounds so a bright border doesn't show through
             around the edge of the image.
         '''
-        # formats = make_formats_dict()
         self.config(bg=formats['highlight_bg'])
 
 class Dialogue(Toplevel):
