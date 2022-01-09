@@ -5,7 +5,6 @@ import sqlite3
 from widgets import (
     Frame, LabelH3, Label, Button, Canvas, LabelEntry, Radiobutton, LabelFrame)
 from files import get_current_file
-# from styles import make_formats_dict
 from autofill import EntryAutoHilited, EntryAuto    
 from scrolling import Scrollbar
 from names import get_any_name_with_id, open_new_person_dialog
@@ -187,11 +186,14 @@ class NuclearFamiliesTable(Frame):
     def edit_parent(self, final, widg):
         unlink = False
         if "#" in final:
+            print("line", looky(seeline()).lineno, "# in final:")
             new_parent_id = final.split("#")[1]
         elif len(final) == 0:
+            print("line", looky(seeline()).lineno, "len(final) == 0:")
             new_parent_id = None
             unlink = True
         else:
+            print("line", looky(seeline()).lineno, "making new person:")
             new_parent_id = open_new_person_dialog(
                 self, widg, self.root, self.treebard, self.formats)
         return new_parent_id, unlink 
@@ -199,8 +201,11 @@ class NuclearFamiliesTable(Frame):
     def update_mother(self, final, conn, cur, widg):
         new_parent_id, unlink = self.edit_parent(final, widg)
         birth_id = self.current_person_parents[0][1]
-        old_ma_id = self.current_person_parents[1]["id"]
+        # old_ma_id = self.current_person_parents[1]["id"]
         birth_fpid = self.current_person_parents[0][0]
+
+        self.make_parents_dict(ma_id=new_parent_id)
+
         if self.birth_record[3] == 1:
             which = 1
         elif self.birth_record[5] == 1:
@@ -221,8 +226,11 @@ class NuclearFamiliesTable(Frame):
     def update_father(self, final, conn, cur, widg):
         new_parent_id, unlink = self.edit_parent(final, widg)
         birth_id = self.current_person_parents[0][1]
-        old_pa_id = self.current_person_parents[2]["id"]
+        # old_pa_id = self.current_person_parents[2]["id"]
         birth_fpid = self.current_person_parents[0][0]
+
+        self.make_parents_dict(pa_id=new_parent_id)
+
         if self.birth_record[3] == 2:
             which = 1
         elif self.birth_record[5] == 2:
@@ -338,6 +346,9 @@ class NuclearFamiliesTable(Frame):
         conn.close()
 
     def make_nuke_inputs(self, current_person=None):
+        '''
+            This is run in main.py and events table redraw().
+        '''
         self.nuke_inputs = []
         if current_person:
             self.current_person = current_person
@@ -481,13 +492,46 @@ class NuclearFamiliesTable(Frame):
         # don't know why config_generic isn't enough here
         for widg in self.pardlabs:
             widg.config(font=self.formats["heading3"])
-            # widg.config(font=self.treebard.formats["heading3"])
 
-    def make_parents_dict(self):
-        # birth_fpid, birth_id = self.birth_record[0:2]
-        # if self.birth_record is None:
-        ma_id = None
-        pa_id = None
+    def make_parents_dict(self, ma_id=None, pa_id=None):
+        '''
+            Treebard assumes that if someone exists, then they were born 
+            exactly once, had one mother and one father, and we can base 
+            application design decisions on these assumptions. I am finding it 
+            unsymmetrical and odd to have some persons in the tree not have a 
+            birth event while others do. I'm going to try auto-creating a birth 
+            event for every person as the user creates the person. It will make
+            updates to the parents section at the top of the nukes table easy
+            and symmetrical since there will be no special case to deal with--
+            the person who exists but hasn't been born yet. The birth event
+            will not slip into the attributes table because it has already been
+            forbidden to appear anywhere but the events table. It will also 
+            save the user time; they won't have to create a birth event for 
+            anyone.
+        '''
+
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+
+        cur.execute(select_finding_id_birth, (self.current_person,))
+        birth_id = cur.fetchone()
+        if birth_id:
+            birth_id = birth_id[0]
+            cur.execute(
+                '''
+                    SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 FROM findings_persons WHERE finding_id = ?
+                ''',
+                (birth_id,))
+            birth_record = cur.fetchall()
+            print("line", looky(seeline()).lineno, "birth_record:", birth_record)
+            if len(birth_record) != 0:
+                self.birth_record = birth_record[0]
+            else:
+                self.birth_record = None
+        else:
+            print("line", looky(seeline()).lineno, "no birth id:")
+
         ma_name = ""
         pa_name = ""
         parent1 = None
@@ -502,6 +546,24 @@ class NuclearFamiliesTable(Frame):
                 ma_id = parent2[0]
                 pa_id = parent1[0]
             self.current_person_parents[0] = self.birth_record[0:2]
+        else:
+            cur.execute(
+                '''
+                    INSERT INTO findings_persons
+                    VALUES (null, ?, ?, '', 1, ?, '', 2)
+                ''',
+                (birth_id, ma_id, pa_id))
+            conn.commit()
+
+            cur.execute(
+                '''
+                SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'findings_persons'
+                ''')
+            fpid = cur.fetchone()[0]
+            self.birth_record = (fpid, birth_id, ma_id, 1, pa_id, 2)               
+
+            self.current_person_parents[0] = self.birth_record[0:2]
+
         if ma_id:
             ma_name = get_any_name_with_id(ma_id)
         if pa_id:
@@ -514,25 +576,15 @@ class NuclearFamiliesTable(Frame):
         self.current_person_parents[1]["widget"] = self.ma_input
         self.current_person_parents[2]["widget"] = self.pa_input
 
+        cur.close()
+        conn.close()
+
     def make_nuke_dicts(self):
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        cur.execute(select_finding_id_birth, (self.current_person,))
-        birth_id = cur.fetchone()
-        if birth_id:
-            birth_id = birth_id[0]
-            cur.execute(
-                '''
-                    SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 FROM findings_persons WHERE finding_id = ?
-                ''',
-                (birth_id,))
-            birth_record = cur.fetchall()
-            if len(birth_record) != 0:
-                self.birth_record = birth_record[0]
-            else:
-                self.birth_record = None
-            self.make_parents_dict()  
+
+        self.make_parents_dict()
 
         cur.execute(
             '''
@@ -776,7 +828,7 @@ class NuclearFamiliesTable(Frame):
     to detect childless couples that doesn't involve detecting
     marital events. (What about kin types such as spouse, wife, etc.)
 
-    Couple events are determined by a boolean in the events_type 
+    Couple events are determined by a boolean in the event_type 
     database table. But not all couple events are evidence for 
     a partnership that you'd want on the nukes (nuclear family) table.
     But all couple events are treated the same in other ways, for 
@@ -807,6 +859,6 @@ class NuclearFamiliesTable(Frame):
     inputting a cohabitation event, for example, for a man with a 
     second family hidden away somewhere. Unlike some genieware, Treebard
     differentiates between "spouse" and "mother of children", so it's
-    not necessary to create a bogus spouse in order to identify the
+    not necessary to create a hypothetical spouse in order to identify the
     parents in a nuclear family.
 ''' 

@@ -170,8 +170,10 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: kin
-# dump current table from sample_tree to default.db, delete all built_in = 0 schemes from default.db, copy default to untouched
-# backup all DBs incl treebard.db
+
+# BEFORE MAKING ANY NEW PEOPLE--add person procedure needs to insert a row for the birth event and a row in the finding_places table for a blank place--I think this should happen in names.py save_new_name()
+# instead of `self.birth_record = (None, birth_id, None, 1, None, 2)` insert a row
+# Can edit/delete/change mother/father if person already has one, incl. make new person. But if person has no mother/father, adding one doesn't work. Add new person works but the relationship add doesn't work.
 # retest edit/delete mother/father
 # update partner: when edited/deleted, the marital events all have to reflect the change
 # update_child on edit/delete, make sure offspring events reflect the change
