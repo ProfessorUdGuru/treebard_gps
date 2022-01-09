@@ -343,19 +343,31 @@ select_closing_state_prior_tree = '''
     WHERE closing_state_id = 1
 '''
 
+select_color_scheme_by_id = '''
+    SELECT bg, highlight_bg, head_bg, fg
+    FROM color_scheme
+    WHERE color_scheme_id = ?
+'''
+
 # select_color_scheme_current = '''
     # SELECT bg, highlight_bg, head_bg, fg 
     # FROM format 
     # WHERE format_id = 1
 # '''
 
+# select_color_scheme_current_id = '''
+    # SELECT color_scheme_id
+    # FROM color_scheme
+    # WHERE bg = ?
+        # AND highlight_bg = ?
+        # AND head_bg = ?
+        # AND fg = ?
+# '''
+
 select_color_scheme_current_id = '''
     SELECT color_scheme_id
-    FROM color_scheme
-    WHERE bg = ?
-        AND highlight_bg = ?
-        AND head_bg = ?
-        AND fg = ?
+    FROM current
+    WHERE current_id = 1
 '''
 
 select_count_finding_id_sources = '''
@@ -1347,10 +1359,22 @@ update_findings_roles_role_type = '''
     WHERE findings_roles_id = ?
 '''
 
-update_format_color_scheme = '''
-    UPDATE format 
-    SET (bg, highlight_bg, head_bg, fg) = (?,?,?,?) 
-    WHERE format_id = 1
+# update_format_color_scheme = '''
+    # UPDATE format 
+    # SET (bg, highlight_bg, head_bg, fg) = (?,?,?,?) 
+    # WHERE format_id = 1
+# '''
+
+update_current_color_scheme = '''
+    UPDATE current  
+    SET color_scheme_id = ?
+    WHERE current_id = 1
+'''
+
+update_current_color_scheme_default = '''
+    UPDATE current  
+    SET color_scheme_id = 1
+    WHERE current_id = 1
 '''
 
 update_format_font = '''

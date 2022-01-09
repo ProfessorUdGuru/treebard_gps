@@ -53,7 +53,8 @@ class Treebard():
     def __init__(self, root):
         self.root = root
 
-        self.formats = make_formats_dict(tree_is_open=False)
+        self.formats = make_formats_dict()
+        # self.formats = make_formats_dict(tree_is_open=False)
         self.make_main_canvas()
         self.make_menus()
         self.menus_show = True
@@ -169,11 +170,8 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: kin
-
-#  first get rid of all refs to the format table ie: (update_format_color_scheme has to be changed to current see lines 17 & 583 colorizer.py); (select_default_format_font_size in window_border.py lines 13, 116, 121 has to be changed to the table in treebard.db); (update_format_font has to be changed to current see font_picker.py lines 7 & 102; select_format_font_size has to be changed to treebard.db see font_picker.py lines 7 & 33;) (select_opening_settings has to be changed to treebard.db see styles.py lines 5 & 608); restructure format colors by deleting the four cols in format table re:user pref colors with one fk re: color_scheme_id IN table `current`; then the whole format table can be deleted since defaults come from treebard.db now; redo the code in colorizer to get current scheme id directly instead of finding the 4 matching colors
-# dump current table from sample_tree to default.db, drop table format, copy to untouched
-# backup treebard.db
-# get rid of tree_is_open and the relevant column in treebard.db, see get_opening_settings() in styles.py
+# dump current table from sample_tree to default.db, delete all built_in = 0 schemes from default.db, copy default to untouched
+# backup all DBs incl treebard.db
 # retest edit/delete mother/father
 # update partner: when edited/deleted, the marital events all have to reflect the change
 # update_child on edit/delete, make sure offspring events reflect the change
@@ -203,6 +201,21 @@ if __name__ == '__main__':
 # delete unused imports main.py
 # make a custom tab traversal list so order is current person area, gallery, new event area, nukes table, events table
 # statustips rcm
+
+# BRANCH: types
+
+# This started when I found I'd failed to stop using the formats table for default_formats, led to the realization that the formats table needs to go away, led to a grand new structure using the fact that I now have a global db again so might as well use it. Below it says to store an fk for color scheme but to do that right, color scheme table needs to be moved to treebard.db. So will keep using formats for fonts and current color scheme only till I get to this branch, since I have no other place to put them.
+# get rid of get_current_formats() in styles.py
+# get rid of tree_is_open column in treebard.db, see get_opening_settings() in styles.py which now has a get_opening_settings_default() which is not being used instead of the boolean which was not being used anymore. It should be used to open the bare app w/out a tree but apparently this is already being done somehow, not shure why it's working, whether I planned it that way or it just happened by accident. Look in opening.py and trace the code flow to see what's going on. Right now it's opening in the sample_tree current color scheme but not sure why.
+# What about putting color_schemes in treebard.db where it belongs? As well as all the other types? And places? How about making all these changes into a new branch to be started when kin is finished?
+# first get rid of all refs to the format table ie: 
+#   (update_format_color_scheme has to be changed to current see lines 17 & 583 colorizer.py); 
+#   (select_default_format_font_size in window_border.py lines 13, 112 has to be changed to the table in treebard.db); 
+#   (update_format_font has to be changed to current see font_picker.py lines 7 & 102) 
+#   (select_opening_settings has to be changed to treebard.db see styles.py lines 5 & 608);
+# Failed to consider that font is also stored in format currently so a current_font_id needs to be stored in current as an fk but there is no table for font_schemes as there is for color schemes, nor should there be. A font scheme is a size and a family. Defaults for both exist in treebard.db already, re: output font. Defaults for input font aren't user changable. So a place is needed for 2 font columns and we don't want a bunch of saved schemes. The solution is to put the 2 columns in current. This leads to another question: what's the difference between current and closing_state? They both have one record. They're both used to open things the same way they were closed. Answer: they're both needed. Closing state is global stuff that applies no matter what tree is open or closed. Current needs a row for each tree. Make a new table in treebard.db called trees and one called current. Each tree will get a pk in trees. Then in closing state, there will be a prior_tree_id fk instead of a text field for prior_tree. Delete the column tree_is_open. In current there will be a record for each tree. So things can open the same way they were closed, without first opening the tree to read its prefs. So when a tree is created or destroyed, its name is added to or deleted from the trees table. Make a new table in treebard.db called current with this schema: current_id PK, tree_id refs tree.tree_id, cols for font size & family, fk col for color_scheme_id
+# types tab: have a combobox to change content from one type to another. Start with color schemes. Have a button to delete all hidden schemes (if not built-in).
+# drop table format from default.db, etc., copy to untouched.db, make a treebard_untouched.db to keep in app/default also
 
 # BRANCH: names_images
 # Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.

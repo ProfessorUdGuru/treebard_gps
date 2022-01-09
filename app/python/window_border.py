@@ -10,7 +10,9 @@ from toykinter_widgets import StatusbarTooltips
 from styles import make_formats_dict, NEUTRAL_COLOR, config_generic
 from utes import center_dialog
 from query_strings import (
-    select_format_font_size, select_default_format_font_size)
+    select_format_font_size, 
+    # select_default_format_font_size
+)
 from PIL import Image, ImageTk
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -103,7 +105,6 @@ class Border(Canvas):
 
     def set_title_bar_size(self):
         sizes = { 
-
             3 : ['tiny', 20, 0.25], 
             4 : ['small', 25, 0.75], 
             7 : ['medium', 31, 0.25], 

@@ -2,8 +2,9 @@ from os import path
 import sqlite3
 from files import get_current_file, global_db_path
 from query_strings import(
-    select_opening_settings, select_closing_state_tree_is_open,
-    select_opening_settings_on_load
+    select_opening_settings, select_closing_state_tree_is_open, 
+    select_format_font_scheme, select_color_scheme_by_id,
+    select_opening_settings_on_load, select_color_scheme_current_id
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -587,56 +588,39 @@ def config_generic(parent):
 
     config_bgStd(parent)
 
-def get_opening_settings(tree_is_open):
+def get_opening_settings():
+           
+    current_file = get_current_file()[0]
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    cur.execute(select_color_scheme_current_id)
+    color_scheme_id = cur.fetchone()
+    if color_scheme_id is None:
+        cur.execute(select_opening_settings)
+        user_formats = cur.fetchone()
+    else:
+        user_formats = get_current_formats(color_scheme_id[0])
+    cur.close()
+    conn.close()
+    return user_formats
+
+def get_opening_settings_default():
 
     conn = sqlite3.connect(global_db_path)
     cur = conn.cursor()
-    if tree_is_open is False:
-        print("line", looky(seeline()).lineno, "tree_is_open:", tree_is_open)
-        cur.execute(select_opening_settings_on_load)
-        default_formats = cur.fetchone()
-        cur.close()
-        conn.close()            
-        return default_formats
-    elif tree_is_open is True:
-        cur.close()
-        conn.close()
-            
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-        cur.execute(select_opening_settings)
-        user_formats = cur.fetchone()
-        cur.close()
-        conn.close()
-        return user_formats
-
-def get_formats(tree_is_open):
-    '''
-        Get user and default preferences. For any item, if there's no 
-        user-preference, use the default.
-    '''
-    all_prefs = get_opening_settings(tree_is_open)
-    # print("line", looky(seeline()).lineno, "all_prefs[0]:", all_prefs[0])
-# all_prefs: (
-    # '#232931', '#393e46', '#2e5447', '#eeeeee', 'courier', 'ms sans serif', 12, 
-    # '#232931', '#393e46', '#2e5447', '#eeeeee', 'Courier', 'tahoma', 12)
-    prefs_to_use = []
-    x = 0
-    for setting in all_prefs[0:7]:
-        if setting is None or setting == '':
-            prefs_to_use.append(all_prefs[x + 7])
-        else:
-            prefs_to_use.append(all_prefs[x])
-        x += 1
-    return prefs_to_use
+    cur.execute(select_opening_settings_on_load)
+    default_formats = cur.fetchone()
+    cur.close()
+    conn.close()            
+    return default_formats
   
-def make_formats_dict(tree_is_open=True):
+def make_formats_dict():
     ''' 
         To add a style, add a string to the end of keys list
         and a line below values.append...
     '''
-    prefs_to_use = get_formats(tree_is_open)
+    prefs_to_use = list(get_opening_settings())
+    prefs_to_use.insert(5, 'dejavu sans mono')
 
     keys = [
         # background, foreground
@@ -679,6 +663,20 @@ def make_formats_dict(tree_is_open=True):
 
     formats = dict(zip(keys, values))
     return formats
+
+# get rid of this when working on types branch
+def get_current_formats(color_scheme_id):   
+    current_file = get_current_file()[0]
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    cur.execute(select_color_scheme_by_id, (color_scheme_id,))
+    color_scheme = list(cur.fetchone())
+    cur.execute(select_format_font_scheme)
+    font_scheme = list(cur.fetchone()[0:2])
+    user_formats = color_scheme + font_scheme
+    cur.close()
+    conn.close()
+    return user_formats
 
 
 

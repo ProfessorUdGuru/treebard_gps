@@ -14,9 +14,10 @@ from files import get_current_file
 from messages import colorizer_msg, open_message
 from messages_context_help import color_preferences_swatches_help_msg
 from query_strings import (
-    update_format_color_scheme, delete_color_scheme, insert_color_scheme,
+    update_current_color_scheme, delete_color_scheme, insert_color_scheme,
     select_all_color_schemes_unhidden, select_all_color_schemes_hidden, 
-    update_color_scheme_hide, select_color_scheme_current_id)
+    update_color_scheme_hide, select_color_scheme_current_id,
+    update_current_color_scheme_default)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -134,10 +135,10 @@ class Colorizer(Frame):
         new_swatch_frame = FrameHilited2(
             self.inputs_frame, bg=self.formats["highlight_bg"])
         spacer1 = Frame(new_swatch_frame)
-        self.bg1 = Entry(new_swatch_frame, width=9)
-        self.bg2 = Entry(new_swatch_frame, width=9)
-        self.bg3 = Entry(new_swatch_frame, width=9)
-        self.fg1 = Entry(new_swatch_frame, width=9)
+        self.bg1 = Entry(new_swatch_frame, width=9, cursor="hand2")
+        self.bg2 = Entry(new_swatch_frame, width=9, cursor="hand2")
+        self.bg3 = Entry(new_swatch_frame, width=9, cursor="hand2")
+        self.fg1 = Entry(new_swatch_frame, width=9, cursor="hand2")
         spacer2 = Frame(new_swatch_frame)
         new_swatch_frame.columnconfigure(1, weight=1)
         t = 1
@@ -206,8 +207,7 @@ class Colorizer(Frame):
     def get_current_scheme_id(self):
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        print("line", looky(seeline()).lineno, "self.current_color_scheme:", self.current_color_scheme)
-        cur.execute(select_color_scheme_current_id, tuple(self.current_color_scheme))
+        cur.execute(select_color_scheme_current_id)
         self.currently_applied_color_scheme = cur.fetchone()[0]
         cur.close()
         conn.close()
@@ -341,7 +341,14 @@ class Colorizer(Frame):
         widg = evt.widget
         widg.config(bg="orange", bd=self.pad)
         widg.grid_configure(padx=0, pady=0)
-        self.make_current_swatch_dict(widg)
+        idx = 0
+        for child in self.swatch_window.winfo_children():
+            if child == widg:
+                iD = idx
+                break
+            idx += 1
+        idx = self.color_scheme_dicts[iD]["id"]
+        self.make_current_swatch_dict(widg, idx)
         self.preview()
 
     def unhighlight(self, evt):
@@ -350,9 +357,6 @@ class Colorizer(Frame):
         widg.grid_configure(padx=self.pad, pady=self.pad)
 
     def highlight_current_scheme(self, evt):
-        # old_swatch = self.applied_swatch
-        # old_swatch.config(bg=self.formats["highlight_bg"], bd=0)
-        # old_swatch.grid_configure(padx=self.pad, pady=self.pad)
         iD = int(evt.widget.cget("text").split("id# ")[1])
         idx = self.get_applied_swatch_index(iD)
         self.applied_swatch = self.swatch_window.winfo_children()[idx]
@@ -518,12 +522,13 @@ class Colorizer(Frame):
 
         return up, right, down, left, last
 
-    def make_current_swatch_dict(self, widg):
+    def make_current_swatch_dict(self, widg, iD):
         grid = widg.grid_info()
         column = grid["column"]
         row = grid["row"]
         up, right, down, left, last = self.get_adjacent_widgets(widg, column, row)
 
+        self.current_swatch["id"] = iD
         self.current_swatch["widget"] = widg
         self.current_swatch["column"] = column
         self.current_swatch["row"] = row
@@ -565,31 +570,33 @@ class Colorizer(Frame):
             a += 1        
 
     def apply(self, evt=None):
-        self.current_color_scheme = (
+        color_scheme = (
             self.current_swatch["scheme"]["bg"], 
             self.current_swatch["scheme"]["highlight_bg"], 
             self.current_swatch["scheme"]["head_bg"], 
             self.current_swatch["scheme"]["fg"])
-
         idx = self.get_applied_swatch_index(self.currently_applied_color_scheme)
         self.applied_swatch = self.swatch_window.winfo_children()[idx] 
         self.applied_swatch.config(bg=self.formats["highlight_bg"], bd=0)
         self.applied_swatch.grid_configure(padx=self.pad, pady=self.pad)
 
+        # get id for above selected color_scheme and change self.currently_applied_color_scheme to that id
+        self.currently_applied_color_scheme = self.current_swatch["id"]
+
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        cur.execute(update_format_color_scheme, self.current_color_scheme)
+
+        cur.execute(update_current_color_scheme, (self.currently_applied_color_scheme,))
         conn.commit()
         cur.close()
         conn.close()
-        self.get_current_scheme_id()
         self.current_display.config(
             text="Currently applied color scheme is id# {}".format(
                 self.currently_applied_color_scheme))
 
         config_generic(self.root)
-        self.root.config(bg=self.current_color_scheme[0])
+        self.root.config(bg=color_scheme[0])
 
     def validate_hex_colors(self, evt=None, chooser=False):
         if evt:
@@ -682,7 +689,7 @@ class Colorizer(Frame):
 
         def delete_scheme():
             cur.execute(delete_color_scheme, (id_del,))
-            conn.commit()
+            conn.commit()            
 
         def hide_scheme():
             cur.execute(update_color_scheme_hide, (id_del,))
@@ -690,20 +697,22 @@ class Colorizer(Frame):
 
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        delete_this_scheme = []
-        for child in widg.winfo_children():
-            delete_this_scheme.append(child.cget("text"))
-        bg_del, highlight_del, head_del, fg_del = delete_this_scheme
+        a = 0
         for dkt in self.color_scheme_dicts:
-            if (bg_del == dkt["bg"] and highlight_del == dkt["highlight"] and 
-                    head_del == dkt["head"] and fg_del == dkt["fg"]):
+            if dkt["id"] == self.current_swatch["id"]:
                 id_del = dkt["id"]
                 built_in = dkt["built_in"]
                 break
+            a += 1
         if built_in == 0:
             delete_scheme()
         elif built_in == 1:
             hide_scheme()
+        if id_del == self.currently_applied_color_scheme:
+            cur.execute(update_current_color_scheme_default)
+            conn.commit()
+            self.currently_applied_color_scheme = 1
+            config_generic(self.root)
 
         self.redraw_swatches()
 
