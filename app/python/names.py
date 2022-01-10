@@ -21,7 +21,8 @@ from query_strings import (
     insert_images_elements, select_name_type_id, insert_name, 
     select_all_images, select_all_name_types, insert_person_new,
     select_person_gender, select_max_name_type_id, insert_name_type_new,
-    insert_image_new, select_name_with_id_any, select_birth_names_ids)
+    insert_image_new, select_name_with_id_any, select_birth_names_ids,
+    insert_finding_birth_new_person, insert_finding_places_new)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -235,7 +236,7 @@ class PersonAdd(Toplevel):
         self.b1 = Button(
             buttonbox, text="OK", width=8, command=self.prepare_to_add_person)
         b2 = Button(
-            buttonbox, text="CANCEL", width=8, command=self.cancel_new_person)
+            buttonbox, text="CANCEL", width=8, command=self.close_new_person)
 
         scridth_n.grid(column=0, row=0, sticky='ew')
         scridth_w.grid(column=0, row=1, sticky='ns')
@@ -454,9 +455,9 @@ class PersonAdd(Toplevel):
 
     def ok_new_person(self):
         self.save_new_name()
-        self.cancel_new_person() 
+        self.close_new_person() 
 
-    def cancel_new_person(self):
+    def close_new_person(self):
         self.grab_release()
         self.inwidg.focus_set()
         self.destroy()        
@@ -493,14 +494,17 @@ class PersonAdd(Toplevel):
         cur.execute(insert_images_elements, (self.img_id, self.new_person_id))
         conn.commit()
 
+        cur.execute(insert_finding_birth_new_person, (self.new_person_id,))
+        conn.commit()
+        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
+        birth_id = cur.fetchone()[0]
+        cur.execute(insert_finding_places_new, (birth_id,))
+        conn.commit()
+
         new_name_string = "{}  #{}".format(self.full_name, self.new_person_id)
         
         self.inwidg.delete(0, 'end')
         self.inwidg.insert(0, new_name_string)
-        people = make_values_list_for_person_select()        
-        all_birth_names = EntryAuto.create_lists(people)
-        self.inwidg.values = all_birth_names
-        
         cur.close()
         conn.close()
 
@@ -515,9 +519,10 @@ class PersonAdd(Toplevel):
         self.gender_input.delete(0, 'end')
 
     def show(self):
-        people = make_values_list_for_person_select()        
+        people = make_all_names_list_for_person_select()        
         all_birth_names = EntryAuto.create_lists(people)
-        self.inwidg.values = all_birth_names
+        
+        # self.inwidg.values = all_birth_names
         return self.new_person_id
 
     def make_temp_person_id(self):

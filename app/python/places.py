@@ -589,7 +589,7 @@ class ValidatePlace():
         conn.commit()   
         place_strings.insert(0, self.place_input)
 
-        place_autofill_values = EntryAuto.create_lists(place_strings)
+        # place_autofill_values = EntryAuto.create_lists(place_strings)
             
         cur.close()
         conn.close()

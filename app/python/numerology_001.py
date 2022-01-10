@@ -31,9 +31,10 @@ char_dict = {
 vowels = ('a', 'e', 'i', 'o', 'u')
 consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z')
 
+ 
 
 
-name = "John Harvey Kellogg"
+name = "Richard Milhous Nixon"
 
 name = name.split()
 lowered = []
@@ -175,7 +176,7 @@ root.mainloop()
 # David Alan Richter b. Salina KS nov 5 1955
 
 # 281
-# stevenpauljobs born February 24, 1955 San Francisco, California, created Apple Computer in mid-1976
+# stevenpauljobs born February 24, 1955 San Francisco, California, created Apple Computer in mid-1976 (birth name abdul lateef jandali)
 # william burgess powell (amnesia victim "Benjaman Kyle") born August 29, 1948, in Lafayette, Indiana; disappeared in 1976.
 
 # 821
@@ -338,11 +339,12 @@ root.mainloop()
 
 # 729
 # Theodore Robert Bundy (Ted Bundy serial killer)
+# Richard Milhous Nixon, Born: January 9, 1913, Yorba Linda, California 
 # Thomas Earl Petty, singer
 
 # 742
 # Eldon Russell Carter Junior
-# Matthew David McConaughey, actor born November 4, 1969 (age 51)Uvalde, Texas
+# Matthew David McConaughey, actor born November 4, 1969, Uvalde, Texas
 
 # 472
 # Alicia Christian Foster  "Jodie Foster" Born: 19 November 1962, Los Angeles

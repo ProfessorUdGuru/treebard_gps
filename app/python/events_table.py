@@ -15,7 +15,6 @@ from toykinter_widgets import Separator, run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import new_event_dlg_help_msg
 from styles import config_generic
-# from styles import make_formats_dict, config_generic
 from names import (
     get_name_with_id, make_all_names_list_for_person_select,
     open_new_person_dialog, get_any_name_with_id)
@@ -424,7 +423,6 @@ class EventsTable(Frame):
         self.make_table_cells()
         self.set_cell_content()
         self.show_table_cells()
-        # self.resize_scrollbar(self.root, self.main_canvas)
 
     def get_initial(self, evt):
         self.initial = evt.widget.get()
@@ -766,7 +764,6 @@ class EventsTable(Frame):
             self.new_event_frame, 
             text="NEW EVENT OR ATTRIBUTE", 
             command=self.make_new_event)
-        # self.set_cell_content()
 
     def set_cell_content(self):
 

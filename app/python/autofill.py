@@ -22,6 +22,8 @@ class EntryAuto(EntryUnhilited):
         (e.g. from a database query), the class is self-contained.        
     '''
 
+    all_person_autofills = []
+
     def create_lists(all_items):
         recent_items = []
         all_items_unique = []
@@ -35,15 +37,8 @@ class EntryAuto(EntryUnhilited):
     def __init__(self, master, autofill=False, values=None, *args, **kwargs):
         EntryUnhilited.__init__(self, master, *args, **kwargs)
         self.master = master
-        # self.formats = formats
         self.autofill = autofill
         self.values = values
-
-        # self.config(
-            # bg=self.formats['bg'], 
-            # fg=self.formats['fg'], 
-            # font=self.formats['input_font'], 
-            # insertbackground=self.formats['fg'])
 
         if autofill is True:
             self.bind("<KeyPress>", self.detect_pressed)

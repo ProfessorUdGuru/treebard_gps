@@ -10,7 +10,6 @@ from tkinter import ttk
 import sqlite3
 from files import get_current_file
 from widgets import Entry, Button
-from autofill import EntryAuto
 from query_strings import (
    select_place_id2, select_count_place_id, select_place, select_all_place_ids)
 from styles import config_generic    
@@ -321,6 +320,8 @@ def make_new_nesting(query, idnum):
     return ManyManyRecursiveQuery.final_strings
 
 if __name__ == '__main__':
+
+    from autofill import EntryAuto
 
     def get_current_place():
         mm = ManyManyRecursiveQuery(id_in, combo)

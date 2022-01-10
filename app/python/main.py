@@ -24,7 +24,7 @@ from widgets import (
     LabelBoilerplate, LabelEntry, Radiobutton, LabelFrame)
 from window_border import Border
 from custom_tabbed_widget import TabBook
-from autofill import EntryAutoHilited, EntryAuto    
+from autofill import EntryAutoHilited, EntryAuto
 from scrolling import Scrollbar    
 from families import NuclearFamiliesTable
 from events_table import EventsTable
@@ -138,6 +138,7 @@ class Main(Frame):
             current_person_area, self.formats, 
             width=36,
             autofill=True)
+        EntryAuto.all_person_autofills.append(self.person_entry)
         person_change = Button(
             current_person_area, text="OK", command=self.change_person)
         person_search = Button(

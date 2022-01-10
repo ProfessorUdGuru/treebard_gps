@@ -102,7 +102,6 @@ class TabBook(Framex):
         for tab in self.tabdict:
             lab = LabelTab(
                 self.tab_frame,
-                # self.formats,
                 width=int(self.tabwidth),
                 takefocus=self.takefocus)  
             if c == 0:

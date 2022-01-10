@@ -54,7 +54,6 @@ class Treebard():
         self.root = root
 
         self.formats = make_formats_dict()
-        # self.formats = make_formats_dict(tree_is_open=False)
         self.make_main_canvas()
         self.make_menus()
         self.menus_show = True
@@ -106,7 +105,6 @@ class Treebard():
             self.formats,
             menubar=True, 
             ribbon_menu=True,
-            # tree_is_open=0
 )
         self.canvas.title_1.config(text="Treebard GPS")
 
@@ -171,10 +169,6 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# BEFORE MAKING ANY NEW PEOPLE--add person procedure needs to insert a row for the birth event and a row in the finding_places table for a blank place--I think this should happen in names.py save_new_name()
-# instead of `self.birth_record = (None, birth_id, None, 1, None, 2)` insert a row
-# Can edit/delete/change mother/father if person already has one, incl. make new person. But if person has no mother/father, adding one doesn't work. Add new person works but the relationship add doesn't work.
-# retest edit/delete mother/father
 # update partner: when edited/deleted, the marital events all have to reflect the change
 # update_child on edit/delete, make sure offspring events reflect the change
 # ADD PARTNER/ADD CHILD buttons & entry
@@ -187,7 +181,7 @@ if __name__ == '__main__':
 # Add to after death event types in default, default_untouched, and sample db's: autopsy, inquest.
 # see `if length == 2` in get_any_name_with_id() in names.py: this was just added and before that a similar process was done repeatedly in various places such as current_person display, wherever a name might need to be shown. Everything still works but this procedure should be deleted from where it's no longer needed since it's been added to get_any_name_with_id()
 # Did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thought the new class was supposed to replace all these as was done apparently already in dates.py. I thought the new class was made so these three overlapping large functions could be deleted from messages.py as well as the radio input message which hasn't even been tested.
-# getting this error sometimes when changing current person eg input `#1`:
+# getting this error sometimes when changing current person w/ id, as soon as # is typed:
 # Exception in Tkinter callback
 # Traceback (most recent call last):
   # File "C:\Users\Lutherman\AppData\Local\Programs\Python\Python39\lib\tkinter\__init__.py", line 1884, in __call__

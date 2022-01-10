@@ -7,7 +7,8 @@ from widgets import (
 from files import get_current_file
 from autofill import EntryAutoHilited, EntryAuto    
 from scrolling import Scrollbar
-from names import get_any_name_with_id, open_new_person_dialog
+from names import (open_new_person_dialog, make_all_names_list_for_person_select,
+    get_any_name_with_id, )
 from dates import format_stored_date, get_date_formats, OK_MONTHS
 from events_table import get_current_person    
 from query_strings import (
@@ -42,6 +43,8 @@ class NuclearFamiliesTable(Frame):
             right_panel, formats, person_autofill_values=[], *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
+        self.master = master
+        print("line", looky(seeline()).lineno, "self.master:", self.master)
         self.root = root
         self.treebard = treebard
         self.current_person = current_person
@@ -99,6 +102,7 @@ class NuclearFamiliesTable(Frame):
         self.pa_input.grid(column=3, row=0, pady=(6,12), padx=(6,12))
         self.nuke_inputs.append(self.ma_input)
         self.nuke_inputs.append(self.pa_input)
+        EntryAuto.all_person_autofills.extend([self.ma_input, self.pa_input])
 
     def fix_buttons(self):
         
@@ -141,6 +145,7 @@ class NuclearFamiliesTable(Frame):
             text="ADD CHILD", width=12, 
             command=self.edit_child)
         self.childmaker.grid(column=3, row=0, padx=(6,0), pady=(12,0))
+        EntryAuto.all_person_autofills.append(new_kin_input)
 
     def get_marital_event_types(self):
 
@@ -196,12 +201,17 @@ class NuclearFamiliesTable(Frame):
             print("line", looky(seeline()).lineno, "making new person:")
             new_parent_id = open_new_person_dialog(
                 self, widg, self.root, self.treebard, self.formats)
+            people = make_all_names_list_for_person_select()
+            all_birth_names = EntryAuto.create_lists(people)
+            # self.treebard.main.person_entry.values = all_birth_names
+            for ent in EntryAuto.all_person_autofills:
+                ent.values = all_birth_names
+
         return new_parent_id, unlink 
 
     def update_mother(self, final, conn, cur, widg):
         new_parent_id, unlink = self.edit_parent(final, widg)
         birth_id = self.current_person_parents[0][1]
-        # old_ma_id = self.current_person_parents[1]["id"]
         birth_fpid = self.current_person_parents[0][0]
 
         self.make_parents_dict(ma_id=new_parent_id)
@@ -226,7 +236,6 @@ class NuclearFamiliesTable(Frame):
     def update_father(self, final, conn, cur, widg):
         new_parent_id, unlink = self.edit_parent(final, widg)
         birth_id = self.current_person_parents[0][1]
-        # old_pa_id = self.current_person_parents[2]["id"]
         birth_fpid = self.current_person_parents[0][0]
 
         self.make_parents_dict(pa_id=new_parent_id)
@@ -418,6 +427,7 @@ class NuclearFamiliesTable(Frame):
                 values=self.person_autofill_values, name=pard)
             pardent.insert(0, name)
             pardent.grid(column=2, row=n)
+            EntryAuto.all_person_autofills.append(pardent)
 
             v["widget"] = pardent
             self.nuke_inputs.append(pardent)
@@ -443,6 +453,7 @@ class NuclearFamiliesTable(Frame):
                         ent.grid(column=c, row=r, sticky="w")
                         self.nuke_inputs.append(ent)
                         dkt["name_widg"] = ent
+                        EntryAuto.all_person_autofills.append(ent)
                     elif c == 2:
                         text = dkt["gender"]
                         ent = EntryAuto(progeny_frame, width=0)
@@ -524,7 +535,6 @@ class NuclearFamiliesTable(Frame):
                 ''',
                 (birth_id,))
             birth_record = cur.fetchall()
-            print("line", looky(seeline()).lineno, "birth_record:", birth_record)
             if len(birth_record) != 0:
                 self.birth_record = birth_record[0]
             else:
@@ -574,7 +584,7 @@ class NuclearFamiliesTable(Frame):
         self.current_person_parents[1]["name"] = ma_name
         self.current_person_parents[2]["name"] = pa_name
         self.current_person_parents[1]["widget"] = self.ma_input
-        self.current_person_parents[2]["widget"] = self.pa_input
+        self.current_person_parents[2]["widget"] = self.pa_input       
 
         cur.close()
         conn.close()

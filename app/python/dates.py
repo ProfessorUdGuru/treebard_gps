@@ -5,7 +5,7 @@ import sqlite3
 from files import get_current_file, global_db_path
 from widgets import Frame, LabelH3, Label, FrameHilited, LabelH2, Button
 from custom_combobox_widget import Combobox 
-from autofill import EntryAuto, EntryAutoHilited
+from autofill import EntryAutoHilited
 # from styles import make_formats_dict
 from messages import open_message, dates_msg, InputMessage
 from query_strings import (

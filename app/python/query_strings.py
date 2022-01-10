@@ -91,6 +91,11 @@ insert_finding_new = '''
     VALUES (?, ?, ?, ?)
 '''
 
+insert_finding_birth_new_person = '''
+    INSERT INTO finding 
+    VALUES (null, '0000-00-00-------', '', '0', ?, 1, '0,0,0')
+'''
+
 insert_finding_new_couple = '''
     INSERT INTO finding (finding_id, event_type_id)
     VALUES (?, ?)
