@@ -203,7 +203,6 @@ class NuclearFamiliesTable(Frame):
                 self, widg, self.root, self.treebard, self.formats)
             people = make_all_names_list_for_person_select()
             all_birth_names = EntryAuto.create_lists(people)
-            # self.treebard.main.person_entry.values = all_birth_names
             for ent in EntryAuto.all_person_autofills:
                 ent.values = all_birth_names
 
@@ -342,6 +341,7 @@ class NuclearFamiliesTable(Frame):
         else:
             if col == 1:
                 print("line", looky(seeline()).lineno, "self.final:", self.final)
+                print("line", looky(seeline()).lineno, "widg_name:", widg_name)
             elif col == 2:
                 print("line", looky(seeline()).lineno, "self.final:", self.final)
             elif col == 3:
@@ -353,6 +353,8 @@ class NuclearFamiliesTable(Frame):
 
         cur.close()
         conn.close()
+
+        self.treebard.main.findings_table.redraw()
 
     def make_nuke_inputs(self, current_person=None):
         '''

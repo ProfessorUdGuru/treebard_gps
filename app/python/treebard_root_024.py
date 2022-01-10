@@ -169,8 +169,9 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# update partner: when edited/deleted, the marital events all have to reflect the change
+# update partner: when edited/deleted/created, the marital events all have to reflect the change
 # update_child on edit/delete, make sure offspring events reflect the change
+# make it possible to change gender, birth/death dates for children right there in the table
 # ADD PARTNER/ADD CHILD buttons & entry
 # move queries to module and delete import strings for unused queries
 # rename queries not named acc to standard eg select_person_id_finding
@@ -197,6 +198,7 @@ if __name__ == '__main__':
 # delete unused imports main.py
 # make a custom tab traversal list so order is current person area, gallery, new event area, nukes table, events table
 # statustips rcm
+# RCM: Current Person Tab: Nuclear Family Table: This table shows the current person's parents, spouses and other marital partners, and biological children. The partners are all shown at the same time, along with any children that they had with the current person, so there's a scrollbar in case there are a lot of spouses and/or children. To change an existing partner who is a parent of some of the current person's children, just change what's in the table by typing a different name. The name you're looking for will fill in, along with the person's ID number, if the person is already in the tree. If not, a dialog will open so you can add the person to the tree and to the family. In either case, the previous parent/partner will now have his/her own row in the family table, if any marital events such as wedding, marriage, divorce, etc. were shared by the current person and his/her partner, to indicate that they were partners. The terminology used to input the partner, such as "spouse", "wife", "partner", etc. will be used instead of "mother/father of children". The various partners will be sorted in the family table by approximate date, using dates of marital events and dates of children's births to arrange the table chronologically as closely as possible.\n\nTo delete a partner, just delete them. If they have children with the current person, the children's names will remain, and the input for the missing parent will be blank. The deleted parent will not be deleted from the tree, but will be unlinked from the children. If the person has one or more marital events with the current person, he/she will have his own row in the family table.
 
 # BRANCH: types
 
