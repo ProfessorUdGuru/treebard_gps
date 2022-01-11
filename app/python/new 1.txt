@@ -1,0 +1,87 @@
+line 320 self.progeny_dicts: {6:
+
+{'sorter': [1905, 0, 0], 'partner_name': 'Ronnie Webb', 'parent_type': '', 'partner_kin_type': 'wife', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame.pard_6_1>, 'children': [], 'marital_events': [{'findings_persons_id': 72, 'finding': 646}, {'findings_persons_id': 73, 'finding': 649}]}, 
+
+5599: {
+	'sorter': [1910, 8, 15], 
+	'partner_name': 'Selina Savoy', 
+	'parent_type': 'Mother', 
+	'partner_kin_type': 'wife', 
+	'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame3.pard_5599_3>, 
+
+	'children': [
+		{
+			'findings_persons_id': 95, 
+			'birth_id': 670, 
+			'order': '1-2', 
+			'gender': 'unknown', 
+			'birth': 'Aug 1, 1915', 
+			'sorter': [1915, 8, 1], 
+			'death': '', 
+			'name': 'Albertha Siu Sobel', 
+			'id': 5711, 
+			'name_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto>, 
+			'gender_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto2>, 
+			'birth_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto3>, 
+			'death_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto4>}, 
+
+{'findings_persons_id': 97, 'birth_id': 672, 'order': '2-1', 'gender': 'male', 'birth': 'Apr 14, 1921', 'sorter': [1921, 4, 14], 'death': 'June 29, 1961', 'name': 'Clarence Bracken', 'id': 5677, 'name_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto5>, 'gender_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto6>, 'birth_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto7>, 'death_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto8>}, 
+
+{'findings_persons_id': 94, 'birth_id': 669, 'order': '2-1', 'gender': 'female', 'birth': 'Jan 18, 1922', 'sorter': [1922, 1, 18], 'death': '', 'name': 'Moira Harding', 'id': 5740, 'name_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto9>, 'gender_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto10>, 'birth_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto11>, 'death_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto12>}, 
+
+{'findings_persons_id': 98, 'birth_id': 673, 'order': '2-1', 'gender': 'male', 'birth': 'Aug 6, 1927', 'sorter': [1927, 8, 6], 'death': '', 'name': 'Noe Whitton', 'id': 5685, 'name_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto13>, 'gender_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto14>, 'birth_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto15>, 'death_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto16>}, 
+
+{'findings_persons_id': 96, 'birth_id': 671, 'order': '2-1', 'gender': 'male', 'birth': 'Sep 30, 1929', 'sorter': [1929, 9, 30], 'death': '', 'name': "Joe-John O'Keefe", 'id': 5732, 'name_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto17>, 'gender_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto18>, 'birth_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto19>, 'death_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame4.!entryauto20>}], 
+
+'marital_events': [{'findings_persons_id': 69, 'finding': 632}]},
+
+
+
+5635: {'sorter': [1920, 0, 0], 'partner_name': 'Harmony Maryland Hobgood (stage name)', 'parent_type': 'Mother', 'partner_kin_type': '', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame5.pard_5635_5>, 'children': [{'findings_persons_id': 93, 'birth_id': 668, 'order': '2-1', 'gender': 'male', 'birth': '1920', 'sorter': [1920, 0, 0], 'death': '', 'name': 'Ross Aldo Marquis (stage name)', 'id': 5783, 'name_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame6.!entryauto>, 'gender_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame6.!entryauto2>, 'birth_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame6.!entryauto3>, 'death_widg': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame6.!entryauto4>}], 'marital_events': []}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -93,7 +93,7 @@ insert_finding_new = '''
 
 insert_finding_birth_new_person = '''
     INSERT INTO finding 
-    VALUES (null, '0000-00-00-------', '', '0', ?, 1, '0,0,0')
+    VALUES (null, '-0000-00-00-------', '', '0', ?, 1, '0,0,0')
 '''
 
 insert_finding_new_couple = '''
@@ -507,8 +507,14 @@ select_event_type_couple_bool = '''
     WHERE event_types = ?
 '''
 
-select_finding_death_date = '''
+select_finding_date = '''
     SELECT date
+    FROM finding
+    WHERE finding_id = ?
+'''
+
+select_finding_date_and_sorter = '''
+    SELECT date, date_sorter
     FROM finding
     WHERE finding_id = ?
 '''
@@ -1034,12 +1040,6 @@ select_person_id_finding = '''
     WHERE finding_id = ?
 '''
 
-select_finding_date = '''
-    SELECT date
-    FROM finding
-    WHERE finding_id = ?
-'''
-
 select_person_id_kin_types_birth = '''
     SELECT person_id1, a.kin_types, person_id2, b.kin_types
     FROM findings_persons
@@ -1302,6 +1302,12 @@ update_findings_persons_2 = '''
     WHERE finding_id = ?
 '''
 
+update_findings_persons_1_2 = '''
+    UPDATE findings_persons
+    SET (person_id1, person_id2) = (?, ?)
+    WHERE finding_id = ?
+'''
+
 update_findings_persons_by_id1 = '''
     UPDATE findings_persons
     SET (person_id1, age1) = (?, "")
@@ -1326,12 +1332,6 @@ update_findings_persons_by_id2_unlink = '''
     WHERE findings_persons_id = ?
 '''
 
-update_findings_persons_1_2 = '''
-    UPDATE findings_persons
-    SET (person_id1, person_id2) = (?, ?)
-    WHERE finding_id = ?
-'''
-
 update_findings_persons_age1 = '''
     UPDATE findings_persons
     SET age1 = ?
@@ -1344,6 +1344,12 @@ update_findings_persons_age2 = '''
     SET age2 = ?
     WHERE finding_id = ?
         AND person_id2 = ?
+'''
+
+update_findings_persons_finding = '''
+    UPDATE findings_persons
+    SET finding_id = ?
+    WHERE findings_persons_id = ?
 '''
 
 update_findings_roles_person = '''
@@ -1363,12 +1369,6 @@ update_findings_roles_role_type = '''
     SET role_type_id = ? 
     WHERE findings_roles_id = ?
 '''
-
-# update_format_color_scheme = '''
-    # UPDATE format 
-    # SET (bg, highlight_bg, head_bg, fg) = (?,?,?,?) 
-    # WHERE format_id = 1
-# '''
 
 update_current_color_scheme = '''
     UPDATE current  

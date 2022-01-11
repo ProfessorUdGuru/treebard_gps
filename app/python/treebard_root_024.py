@@ -169,16 +169,18 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# update partner: when edited/deleted/created, the marital events all have to reflect the change
-# update_child on edit/delete, make sure offspring events reflect the change
+# update_child on delete, works but should it be possible to unlink child from only the current person or from only the partner? Shouldn't there be a dialog to this effect? Look at models. I think it shd unlink from partner only, and autocreate a new partner (unknown name) and keep the child listed in the nukes table as a child of the current person.
+# make sure child new person add works on CANCEL of add person dlg
 # make it possible to change gender, birth/death dates for children right there in the table
 # ADD PARTNER/ADD CHILD buttons & entry
+# ADD/FIND button doesn't work
 # move queries to module and delete import strings for unused queries
 # rename queries not named acc to standard eg select_person_id_finding
 # add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f)
 # if the nuke_table is small, there's too much space above & below the top_pic. What if top_pic had rowspan=2?
 # new kin person Input will be parsed to use existing person if # and create new person if not. make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner. It is also possible to add someone with a name that already exists in the table, just not an id
 # make it possible to change name, gender or date here & save in db; make it possible to unlink a person from the family by deleting their name from the table
+# the left margin of the child table should not vary depending on row widths. Compare James with Fannie, Fannie looks terrible bec her child has a short name and no dates. Fix Fannie to start at a left margin and James should then start at the same left margin.
 # Add to after death event types in default, default_untouched, and sample db's: autopsy, inquest.
 # see `if length == 2` in get_any_name_with_id() in names.py: this was just added and before that a similar process was done repeatedly in various places such as current_person display, wherever a name might need to be shown. Everything still works but this procedure should be deleted from where it's no longer needed since it's been added to get_any_name_with_id()
 # Did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thought the new class was supposed to replace all these as was done apparently already in dates.py. I thought the new class was made so these three overlapping large functions could be deleted from messages.py as well as the radio input message which hasn't even been tested.
@@ -192,6 +194,7 @@ if __name__ == '__main__':
   # File "D:\treebard_gps\app\python\autofill.py", line 66, in do_it
     # self.show_hits(hits, self.pos)
 # AttributeError: 'EntryAutoHilited' object has no attribute 'pos'
+# colorizer: if click copy then immed click apply, error (pass? return?) Happens bec no scheme, so deal with if no scheme hilit, apply shd do nothing
 # find all the usages of queries that have to be run twice to deal with columns that can be used either of 2 ways such as parent_id1/parent_id2 and rewrite the code so that the whole record is gotten once with select * (or as much as will be needed) and parse the record with python, assign values according to obvious correspondences
 # dump the sample db so repo will get the right stuff
 # put padding around attributes table

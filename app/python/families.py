@@ -12,9 +12,12 @@ from names import (open_new_person_dialog, make_all_names_list_for_person_select
 from dates import format_stored_date, get_date_formats, OK_MONTHS
 from events_table import get_current_person    
 from query_strings import (
-    select_finding_id_birth, 
+    select_finding_id_birth, delete_findings_persons,
     update_findings_persons_by_id1, update_findings_persons_by_id2,
     update_findings_persons_by_id1_unlink, update_findings_persons_by_id2_unlink,
+    select_person_id_gender, select_finding_date, select_finding_id_birth,
+    select_finding_id_death, select_finding_date_and_sorter,
+    update_findings_persons_finding,
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -138,12 +141,12 @@ class NuclearFamiliesTable(Frame):
         self.pardmaker = Button(
             new_kin_frame, 
             text="ADD PARTNER", width=12, 
-            command=self.edit_partner)
+            command=self.add_partner)
         self.pardmaker.grid(column=2, row=0, padx=(6,0), pady=(12,0))
         self.childmaker = Button(
             new_kin_frame, 
             text="ADD CHILD", width=12, 
-            command=self.edit_child)
+            command=self.add_child)
         self.childmaker.grid(column=3, row=0, padx=(6,0), pady=(12,0))
         EntryAuto.all_person_autofills.append(new_kin_input)
 
@@ -174,10 +177,10 @@ class NuclearFamiliesTable(Frame):
         conn.close()
         return marital_events_current_person
         
-    def edit_partner(self):
+    def add_partner(self):
         print("howdy pardner")
 
-    def edit_child(self):
+    def add_child(self):
         print("hey kid")
 
     def bind_inputs(self):
@@ -316,6 +319,81 @@ class NuclearFamiliesTable(Frame):
                     v["parent_type"], 
                     new_partner_id)
 
+    def update_child_name(self, widg, conn, cur):
+
+        def update_child(widg, parent_id, child, cur, conn):
+            orig_child_id = child["id"]
+            child_id = None 
+            birth_id = None
+            gender = "unknown"
+            fpid = child["findings_persons_id"]
+            orig_child = child["id"] # need this & widg in case user presses CANCEL etc.
+            death_date = "-0000-00-00-------"
+            birth_date = "-0000-00-00-------"
+            sorter = (0,0,0)
+            if "  #" in self.final:
+                child_id = self.final.split("  #")[1]
+                cur.execute(select_finding_id_birth, (child_id,))
+                birth_id = cur.fetchone()[0]
+                cur.execute(select_person_id_gender, (child_id,))
+                gender = cur.fetchone()[0]
+                cur.execute(select_finding_id_death, (child_id,))
+                death_id = cur.fetchone()
+                cur.execute(select_finding_date_and_sorter, (birth_id,))
+                birth_date, sorter = cur.fetchone()
+                sorter = self.make_sorter(birth_date)
+                if death_id:
+                    death_id = death_id[0]
+                    cur.execute(select_finding_date, (death_id,))
+                    death_date = cur.fetchone()[0] 
+            elif len(self.final) == 0:
+                # user unlinks child from both parents 
+                #   by deleting existing name in entry; what about unlinking
+                #   child only from current person? Try it this way first
+                #   since the nukes tables does allow changes to partners
+                #   and children of the current person.
+                cur.execute(select_finding_id_birth, (orig_child_id,))
+                birth_id = cur.fetchone()[0]
+                cur.execute(delete_findings_persons, (birth_id,))
+                conn.commit()
+                # HAVE TO BLANK OUT GENDER, BIRTH, DEATH TOO
+            else:
+                child_id = open_new_person_dialog(
+                    self, widg, self.root, self.treebard, self.formats)
+                print("line", looky(seeline()).lineno, "child_id:", child_id)
+                cur.execute(select_finding_id_birth, (child_id,))
+                birth_id = cur.fetchone()[0] # CANCEL THROWS ERROR HERE
+                cur.execute(select_person_id_gender, (child_id,))
+                gender = cur.fetchone()[0]
+
+            child["id"] = child_id
+            child["name"] = self.final
+            child["gender"] = gender
+            child["birth"] = birth_date
+            child["sorter"] = sorter
+            child["death"] = death_date  
+
+            if birth_id:
+                cur.execute(update_findings_persons_finding, (birth_id, fpid))
+                conn.commit()
+
+        for k,v in self.progeny_dicts.items():
+            for child in v["children"]:
+                if widg != child["name_widg"]:
+                    continue
+                else:
+                    parent_id = k
+                    update_child(widg, parent_id, child, cur, conn)
+
+    def update_child_gender(self):
+        print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
+
+    def update_child_birth(self):
+        print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
+
+    def update_child_death(self):
+        print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
+
     def get_final(self, evt):
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
@@ -340,14 +418,16 @@ class NuclearFamiliesTable(Frame):
                     "case not handled for col", col)
         else:
             if col == 1:
-                print("line", looky(seeline()).lineno, "self.final:", self.final)
-                print("line", looky(seeline()).lineno, "widg_name:", widg_name)
+                self.update_child_name(widg, conn, cur)
             elif col == 2:
                 print("line", looky(seeline()).lineno, "self.final:", self.final)
+                self.update_child_gender()
             elif col == 3:
                 print("line", looky(seeline()).lineno, "self.final:", self.final)
+                self.update_child_birth()
             elif col == 5:
                 print("line", looky(seeline()).lineno, "self.final:", self.final)
+                self.update_child_death()
             else:
                 print("line", looky(seeline()).lineno, "case not handled:")    
 

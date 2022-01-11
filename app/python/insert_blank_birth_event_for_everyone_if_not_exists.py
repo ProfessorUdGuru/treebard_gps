@@ -20,7 +20,7 @@ import sqlite3
 
 # cur.executemany('''
     # INSERT INTO finding  
-    # VALUES (null, '0000-00-00-------', '', '0', ?, 1, '0,0,0')''', 
+    # VALUES (null, '-0000-00-00-------', '', '0', ?, 1, '0,0,0')''', 
     # all_missing)
 # conn.commit()
 

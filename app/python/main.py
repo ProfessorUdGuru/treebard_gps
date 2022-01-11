@@ -46,7 +46,7 @@ from query_strings import (
     select_findings_persons_pa_id2, select_findings_persons_partner1,
     select_findings_persons_partner2, select_person_id_gender,
     select_person_id_finding, select_date_finding, select_finding_event_type,
-    select_finding_id_death, select_finding_death_date, 
+    select_finding_id_death, 
     select_findings_persons_id_kin_type1, select_findings_persons_id_kin_type2,
     update_findings_persons_by_id1, update_findings_persons_by_id2,
     update_findings_persons_by_id1_unlink, update_findings_persons_by_id2_unlink,

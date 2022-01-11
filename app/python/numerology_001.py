@@ -34,7 +34,7 @@ consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', '
  
 
 
-name = "Richard Milhous Nixon"
+name = "Kaspar Hauser"
 
 name = name.split()
 lowered = []
@@ -216,6 +216,7 @@ root.mainloop()
 # charles hardin holly (singer Buddy Holly)  
 # Nicholas Kim Coppola, (actor Nicholas Cage, born January 7, 1964, Long Beach, California)
 # Elon Reeve Musk June 28, 1971 Pretoria, South Africa
+# Kaspar Hauser (mystery boy)
 
 # 112
 # Aldous Leonard Huxley
@@ -225,6 +226,9 @@ root.mainloop()
 # Clive Staples Lewis
 # C.S. Lewis, (born November 29, 1898, Belfast, Ireland [now in Northern Ireland]—died November 22, 1963, Oxford, Oxfordshire, England)
 # Harry Edward Nilsson the third (June 15, 1941 Brooklyn NY – January 15, 1994)
+
+# 671
+# Herman Webster Mudgett aka "H H Holmes" America's first serial killer born 1861 gilmanton new hampshire
 
 # 674
 # Fred McFeely Rogers (March 20, 1928 – February 27, 2003) (Mister Rogers Neighborhood)
