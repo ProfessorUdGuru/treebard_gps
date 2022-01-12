@@ -111,10 +111,6 @@ class InputMessage(Dialogue):
             self.resize_window()
 
         if self.grab is True: self.grab_set()
-
-        self.grab_from = self.grab_current()
-        if self.grab_from:
-            self.grab_set()
             
         self.deiconify()
         self.master.wait_window(self)
@@ -187,10 +183,10 @@ class InputMessage(Dialogue):
         self.inputs = Frame(self.window)
         self.buttons = Frame(self.window)
 
-        self.header.grid(column=1, row=1, sticky="news")
+        self.header.grid(column=1, row=1, sticky="news", pady=(12,0))
         self.inputs.grid(column=1, row=2, sticky="news")
         self.buttons.grid(
-            column=1, row=3, sticky="e", padx=12, columnspan=2)
+            column=1, row=3, sticky="e", padx=12, pady=(0,12), columnspan=2)
 
     def make_widgets(self):
         self.head = LabelHeader(
@@ -234,15 +230,13 @@ class InputMessage(Dialogue):
             self.b2.focus_set()
         
     def run_post_op(self):
-
+        print("line", looky(seeline()).lineno, "running in messages.py:")
         if self.grab is True: 
             self.grab_release()
 
-        if self.grab_from:
-            self.grab_from.grab_set()
-
         if self.return_focus_to:
             self.return_focus_to.focus_set()
+
         if self.root:
             self.root.lift()
 
@@ -351,57 +345,6 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
     master.wait_window(msg)
     gotten = show()
     return gotten
-
-
-# def open_option_message(
-        # master, message, title, ok_lab, cancel_lab, radvar, radtext, formats):
-    # '''
-        # untested
-    # '''
-    # def ok():
-        # cancel()
-
-    # def cancel():
-        # msg.destroy()
-
-    # def show():
-        # gotten = got.get()
-        # return gotten
-
-    # got = StringVar()
-
-    # msg = Dialogue(master, formats)
-    # msg.canvas.title_1.config(text=title)
-    # msg.canvas.title_2.config(text="")
-    # lab = LabelHeader(
-        # msg.window, text=message, justify='left', wraplength=450)
-    # lab.grid(
-        # column=0, row=0, sticky='news', padx=12, pady=12, 
-        # columnspan=2, ipadx=6, ipady=3)    
-    # for i in range(2):
-        # rad = Radiobutton(
-            # msg.window,  
-            # text=radtext[i],
-            # value=i,
-            # variable=radvar,
-            # anchor='w')
-        # rad.grid(column=0, row=i+1, sticky='ew')
-        # if i == 0:
-            # rad.focus_set()
-    # buttonbox = Frame(msg.window)
-    # buttonbox.grid(
-        # column=0, row=3, sticky='e', padx=(0,12), pady=12, columnspan=2)
-    # ok_butt = Button(buttonbox, text=ok_lab, command=ok, width=6)
-    # ok_butt.grid(column=0, row=0, sticky='e')
-    # cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
-    # cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
-    # msg.grab_set()
-
-    # config_generic(msg)
-    # msg.resize_window()
-    # master.wait_window(msg)
-    # got = show()
-    # return msg, got
 
 places_err = (
     "A place cannot contain itself.\n\nSelect a "

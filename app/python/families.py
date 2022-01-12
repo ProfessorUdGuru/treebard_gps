@@ -9,18 +9,19 @@ from autofill import EntryAutoHilited, EntryAuto
 from scrolling import Scrollbar
 from names import (open_new_person_dialog, make_all_names_list_for_person_select,
     get_any_name_with_id, )
+from messages import InputMessage
 from dates import format_stored_date, get_date_formats, OK_MONTHS
 from events_table import get_current_person    
 from query_strings import (
     select_finding_id_birth, delete_findings_persons,
     update_findings_persons_by_id1, update_findings_persons_by_id2,
-    update_findings_persons_by_id1_unlink, update_findings_persons_by_id2_unlink,
     select_person_id_gender, select_finding_date, select_finding_id_birth,
     select_finding_id_death, select_finding_date_and_sorter,
     update_findings_persons_finding,
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
+
 
 
 
@@ -106,6 +107,9 @@ class NuclearFamiliesTable(Frame):
         self.nuke_inputs.append(self.ma_input)
         self.nuke_inputs.append(self.pa_input)
         EntryAuto.all_person_autofills.extend([self.ma_input, self.pa_input])
+        for ent in (self.ma_input, self.pa_input):
+            ent.bind("<KeyRelease-Delete>", self.open_input_message)
+            ent.bind("<KeyRelease-BackSpace>", self.open_input_message)
 
     def fix_buttons(self):
         
@@ -133,11 +137,11 @@ class NuclearFamiliesTable(Frame):
             value=100, anchor="w", 
             command=self.fix_buttons)
         self.kinradnew.grid(column=0, row=0)
-        new_kin_input = EntryAutoHilited(
+        self.new_kin_input = EntryAutoHilited(
             new_kin_frame, self.formats, width=48, 
             autofill=True, 
             values=self.person_autofill_values)
-        new_kin_input.grid(column=1, row=0)
+        self.new_kin_input.grid(column=1, row=0)
         self.pardmaker = Button(
             new_kin_frame, 
             text="ADD PARTNER", width=12, 
@@ -148,7 +152,7 @@ class NuclearFamiliesTable(Frame):
             text="ADD CHILD", width=12, 
             command=self.add_child)
         self.childmaker.grid(column=3, row=0, padx=(6,0), pady=(12,0))
-        EntryAuto.all_person_autofills.append(new_kin_input)
+        EntryAuto.all_person_autofills.append(self.new_kin_input)
 
     def get_marital_event_types(self):
 
@@ -251,13 +255,15 @@ class NuclearFamiliesTable(Frame):
                 query = update_findings_persons_by_id1
             elif which == 2:
                 query = update_findings_persons_by_id2 
+            cur.execute(query, (new_parent_id, birth_fpid))
+            conn.commit()
         elif unlink is True:
             if which == 1:
-                query = update_findings_persons_by_id1_unlink
+                self.query = update_findings_persons_by_id1
             elif which == 2:
-                query = update_findings_persons_by_id2_unlink
-        cur.execute(query, (new_parent_id, birth_fpid))
-        conn.commit()
+                self.query = update_findings_persons_by_id2
+        # cur.execute(query, (new_parent_id, birth_fpid))
+        # conn.commit()
 
     def update_partner(self, final, conn, cur, widg):
     
@@ -433,7 +439,6 @@ class NuclearFamiliesTable(Frame):
 
         cur.close()
         conn.close()
-
         self.treebard.main.findings_table.redraw()
 
     def make_nuke_inputs(self, current_person=None):
@@ -510,6 +515,8 @@ class NuclearFamiliesTable(Frame):
             pardent.insert(0, name)
             pardent.grid(column=2, row=n)
             EntryAuto.all_person_autofills.append(pardent)
+            pardent.bind("<KeyRelease-Delete>", self.open_input_message)
+            pardent.bind("<KeyRelease-BackSpace>", self.open_input_message)
 
             v["widget"] = pardent
             self.nuke_inputs.append(pardent)
@@ -536,6 +543,8 @@ class NuclearFamiliesTable(Frame):
                         self.nuke_inputs.append(ent)
                         dkt["name_widg"] = ent
                         EntryAuto.all_person_autofills.append(ent)
+                        ent.bind("<KeyRelease-Delete>", self.open_input_message)
+                        ent.bind("<KeyRelease-BackSpace>", self.open_input_message)
                     elif c == 2:
                         text = dkt["gender"]
                         ent = EntryAuto(progeny_frame, width=0)
@@ -596,9 +605,9 @@ class NuclearFamiliesTable(Frame):
             event for every person as the user creates the person. It will make
             updates to the parents section at the top of the nukes table easy
             and symmetrical since there will be no special case to deal with--
-            the person who exists but hasn't been born yet. The birth event
+            the person who exists but hasn't been born yet. (The birth event
             will not slip into the attributes table because it has already been
-            forbidden to appear anywhere but the events table. It will also 
+            forbidden to appear anywhere but the events table.) This will also 
             save the user time; they won't have to create a birth event for 
             anyone.
         '''
@@ -666,8 +675,7 @@ class NuclearFamiliesTable(Frame):
         self.current_person_parents[1]["name"] = ma_name
         self.current_person_parents[2]["name"] = pa_name
         self.current_person_parents[1]["widget"] = self.ma_input
-        self.current_person_parents[2]["widget"] = self.pa_input       
-
+        self.current_person_parents[2]["widget"] = self.pa_input  
         cur.close()
         conn.close()
 
@@ -901,6 +909,90 @@ class NuclearFamiliesTable(Frame):
                 num = 0
             sorter = [int(sorter[0]), num, int(sorter[2])]
         return sorter
+
+    def open_input_message(self, evt):
+        '''
+            A dialog opens on press of Delete or BackSpace in one of the person 
+            inputs. It looks like getting focus to return to the place where it
+            started is not going to be easy, probably because the original
+            widget is destroyed and replaced. I tried getting the original's
+            row & column but it didn't work--when the dialog closes, focus keeps
+            returning to the same place, root I guess, anyway the first Tab press
+            just goes back to the first widget on the page.
+        '''
+        widg = evt.widget        
+        if len(self.original) == 0 or len(widg.get()) != 0: return
+        widg_name = widg.winfo_name()
+        if widg_name in ("ma", "pa"):
+            reltype = "parent"
+            radtext = (
+                "Unlink the deleted parent from the current person.", 
+                "Completely remove all traces of the deleted parent from the "
+                "entire tree. (Delete the person.)")
+        elif widg_name.startswith("pard"):
+            reltype = "partner"
+            radtext = (
+                "SEE DO LIST--Unlink the deleted partner from the current person. All marital events will be removed from the deleted partner but retained by the current person with no known partner. If they have children together, the offspring event will be unlinked from the partner but retained by the current person, and the child in question will have an unknown co-parent. If they have children AND marital events together, removing the parent as co-parent will not delete the marital events.", 
+                "Unlink the deleted partner from the current person. All marital events will be removed from both partners and permanently removed from the tree.", 
+                "Completely remove all traces of the deleted partner from the "
+                "entire tree. (Delete the person.)")
+        else:
+            reltype = "child"
+            radtext = (
+                "Unlink the deleted child from the partner of the current person only. The offspring event will be retained by the current person with no known co-parent.", 
+                "Unlink the deleted child from the current person only. The offspring event will be retained by the current person's partner with no known co-parent.",
+                "Unlink the deleted child from both the current person and his/her partner. The child's parents are unknown.", 
+                "Completely remove all traces of the deleted child from the "
+                "entire tree. (Delete the person.)")
+        unlinker = InputMessage(
+            self.root, root=self.root, title="Delete or Unlink?", ok_txt="OK", 
+            radtext=radtext, radio=True, cancel_txt="CANCEL", grab=True, 
+            head1="Clarify whether to unlink or delete the person:", 
+            wraplength=650)
+        self.show = unlinker.show()
+        self.delete_or_unlink(reltype)
+
+    def delete_or_unlink(self, reltype):
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        conn.execute("PRAGMA foreign_keys = 1")
+        cur = conn.cursor()
+        birth_fpid = self.current_person_parents[0][0]
+        if reltype == "parent":
+            if self.show == 0:
+                cur.execute(self.query, (None, birth_fpid))
+                conn.commit()
+            elif self.show == 1:
+                pass
+
+        elif reltype == "partner":
+            if self.show == 0:
+                pass
+
+            elif self.show == 1:
+                pass
+
+            elif shelf.show == 2:
+                pass
+
+        elif reltype == "child":
+            if self.show == 0:
+                pass
+
+            elif self.show == 1:
+                pass
+
+            elif shelf.show == 2:
+                pass
+
+        cur.close()
+        conn.close()
+        self.treebard.main.findings_table.redraw()
+
+# line 681 self.current_person_parents: [(11, 128), {'id': 5564, 'name': 'Phoebe Tellhouse', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.ma>}, {'id': None, 'name': '', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.pa>}]
+
+
+
 
 '''
     Two means of determining partnership are used. 1) a couple has 
