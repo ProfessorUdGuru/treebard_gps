@@ -20,7 +20,7 @@ from dev_tools import looky, seeline
 
 
 
-'''
+"""
 IMPORTS STRUCTURE:
 
                window_border 
@@ -34,7 +34,7 @@ IMPORTS STRUCTURE:
                treebard_root_020                  
                                                         
                     
-'''
+"""
 
 
 
@@ -169,7 +169,7 @@ if __name__ == '__main__':
 
 # BRANCH: kin
 
-# DO unlink/delete OVER for partner--AS A CHART OF CHECKBUTTONS--MAKE A NEW KIND OF InputMessage for 'check=True'--NEED TO ITEMIZE THE EVENTS (INCLUDE OFFSPRING EVENTS) AND 'check all that apply' among: 1) apply to partner/currper/both; 2) keep event/drop event; 3) keep child/drop child; 4) keep partner in tree/delete partner from tree ;;;;;
+# ON DELETE PARENT: radio 1: currently neither button does anything.
 # for parents, partners and children: do the delete person altogether routine, shd be one method like def delete_person_altogether(self, person_id)...
 # The only right way to do this is to go back all  the way to parents and never delete without a dialog of radios: class Unlinker(parent=False, partner=False, child=False) and then eg if child is True, use the radios for that case. The function open_unlinker will be bound to delete and backspace keys.
 # The notion of delete twice is not expected and will scare people away because it will make them think about what they're doing. So the right way is to leave the partner as is but add a new procedure for deleting a partner when there are no children, just marital event(s). Deleting a partner that's linked to curr per only by marital events will open the UnlinkerDialog which has radios so user can specify unlink from what. It will have a different set of radios depending on whether user deleted a partner or a child.
@@ -178,6 +178,7 @@ if __name__ == '__main__':
 # make sure child new person add works on CANCEL of add person dlg
 # make it possible to change gender, birth/death dates for children right there in the table
 # ADD PARTNER/ADD CHILD buttons & entry
+# pressing enter in person autofill on person tab after name fills in throws an error re: colors
 # ADD/FIND button doesn't work
 # move queries to module and delete import strings for unused queries
 # rename queries not named acc to standard eg select_person_id_finding
@@ -207,6 +208,10 @@ if __name__ == '__main__':
 # make a custom tab traversal list so order is current person area, gallery, new event area, nukes table, events table
 # statustips rcm also for unlinker
 # RCM: Current Person Tab: Nuclear Family Table: This table shows the current person's parents, spouses and other marital partners, and biological children. The partners are all shown at the same time, along with any children that they had with the current person, so there's a scrollbar in case there are a lot of spouses and/or children. To change an existing partner who is a parent of some of the current person's children, just change what's in the table by typing a different name. The name you're looking for will fill in, along with the person's ID number, if the person is already in the tree. If not, a dialog will open so you can add the person to the tree and to the family. In either case, the previous parent/partner will now have his/her own row in the family table, if any marital events such as wedding, marriage, divorce, etc. were shared by the current person and his/her partner, to indicate that they were partners. The terminology used to input the partner, such as "spouse", "wife", "partner", etc. will be used instead of "mother/father of children". The various partners will be sorted in the family table by approximate date, using dates of marital events and dates of children's births to arrange the table chronologically as closely as possible.\n\nTo delete a partner, just delete them. If they have children with the current person, the children's names will remain, and the input for the missing parent will be blank. The deleted parent will not be deleted from the tree, but will be unlinked from the children. If the person has one or more marital events with the current person, he/she will have his own row in the family table.
+
+# BRANCH: dates
+
+# clarify_year might not working in dates.py, there is a chain of error messages, sometimes it has to be OK'd twice, and make sure it doesn't run on CANCEL and original value is returned to the input (InputMessage works now in notes.py and families.py for a model). Currently cancel seems to be deleting the date which moves the event to the attributes table. The second time it sort of works but deletes the number that's not a year. It also doesn't display AD on years less than 4 digits long.
 
 # BRANCH: types
 

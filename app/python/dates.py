@@ -404,7 +404,7 @@ def find_number_errors(compounds):
                         msg[2].config(
                             command=lambda widg=widg, dlg=msg[0]: err_done0(
                                 widg, dlg))
-                        return
+                        return None
                     else:
                         over_two_digits += 1
                 nums += 1
@@ -418,7 +418,7 @@ def find_number_errors(compounds):
             msg[0].grab_set()
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
-            return
+            return None
         elif lenlist > 5:
             msg = open_message(
                 root, 
@@ -428,7 +428,7 @@ def find_number_errors(compounds):
             msg[0].grab_set()
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
-            return
+            return None
 
         if lenlist == 1 and lst[0].isalpha() is True:
             msg = open_message(
@@ -439,23 +439,27 @@ def find_number_errors(compounds):
             msg[0].grab_set()
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
-            return
+            return None
 
     return compounds
 
 def clarify_year(numbers, lst):
-    '''
-        For years < 100 if user types without preceding zeroes.
-    '''
-
+    """For years < 100 if user types the year without preceding zeroes."""
+    print("line", looky(seeline()).lineno, "running:")
+    ok_was_pressed = False
     copy = lst
-    head2 = "{} or {}?".format(numbers[0], numbers[1])
+    # does this even run for 3 digit years? If so, then delineate below and run this too "0{} etc
+    head2 = "00{} or 00{}?".format(numbers[0], numbers[1])
 
     msg = InputMessage(
         root, root=root, title="Clarify Year", ok_txt="OK", 
         cancel_txt="CANCEL", head1=dates_msg[11], head2=head2, 
         grab=True, entry=True, wraplength=300)
     year = msg.show().strip()
+    ok_was_pressed = msg.ok_was_pressed
+    print("line", looky(seeline()).lineno, "ok_was_pressed:", ok_was_pressed)
+    if not ok_was_pressed:
+        return None
 
     if len(year) != 4:
         msg = open_message(
@@ -467,7 +471,7 @@ def clarify_year(numbers, lst):
         root.wait_window(msg[0])
         widg.delete(0, 'end')
         widg.focus_set()
-        return
+        return None
 
     a = 0
     for num in numbers:
@@ -529,10 +533,12 @@ def make_date_dict(final):
         for item in lst:
             if item.isdigit():
                 nums.append(item)
+                print("line", looky(seeline()).lineno, "item:", item)
+                print("line", looky(seeline()).lineno, "under_two:", under_two)
                 if len(item) < 3:
                     if under_two > 0:
                         if clarify_year(nums, lst) is None:
-                            return
+                            return None
                         else:
                             year, day, lst = clarify_year(nums, lst)
                         date_dict[b]["year"] = year
@@ -551,11 +557,12 @@ def make_date_dict(final):
                     msg[2].config(
                         command=lambda widg=widg, dlg=msg[0]: err_done0(
                             widg, dlg))
-                    return
+                    return None
         return lst
 
     def find_day(lst, b):
-        if lst is None: return
+        if lst is None: 
+            return None
         i = 0
         for item in lst:
             if item.isdigit():
@@ -585,7 +592,8 @@ def make_date_dict(final):
     order = ["ad", "ad"]        
     e = 0
     for lst in comps:
-        if lst is None: return
+        if lst is None: 
+            return None
         for item in lst:
             if item.upper() in BC:
                 order[e] = "bc"
@@ -612,7 +620,7 @@ def make_date_dict(final):
             msg[0].grab_set()
             msg[2].config(
                 command=lambda widg=widg, dlg=msg[0]: err_done0(widg, dlg))
-            return
+            return None
 
     return date_dict, order, compound_date_link
 

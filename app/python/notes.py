@@ -618,19 +618,21 @@ class NotesDialog(Toplevel):
         old_txt = widg.cget("text")
 
         msg = InputMessage(
-            self, root=self.root, return_focus_to=widg, title="Rename Note", ok_txt="OK", 
-            cancel_txt="CANCEL", head1="Rename {} to:".format(old_txt), head2="(any unique title)", entry=True, grab=True)
+            self, root=self.root, return_focus_to=widg, title="Rename Note", 
+            ok_txt="OK", cancel_txt="CANCEL", entry=True, grab=True, 
+            head1="Rename {} to:".format(old_txt), head2="(any unique title)")
 
-        new_txt = msg.show()
+        if msg.ok_was_pressed:
+            new_txt = msg.show()
 
-        conn = sqlite3.connect(self.current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
-        cur.execute(update_note_topic, (new_txt, old_txt))
-        conn.commit()
-        cur.close()
-        conn.close()
-        self.make_table_of_contents()
+            conn = sqlite3.connect(self.current_file)
+            conn.execute('PRAGMA foreign_keys = 1')
+            cur = conn.cursor()
+            cur.execute(update_note_topic, (new_txt, old_txt))
+            conn.commit()
+            cur.close()
+            conn.close()
+            self.make_table_of_contents()
 
     def delete_selected_note(self, evt):
 

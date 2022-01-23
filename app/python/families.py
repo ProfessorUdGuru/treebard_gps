@@ -63,6 +63,8 @@ class NuclearFamiliesTable(Frame):
             {"id": None, "name": None, "widget": None}, 
             {"id": None, "name": None, "widget": None}]
 
+        self.delete_or_unlink_ok = False
+
         self.newkinvar = tk.IntVar()
 
         self.make_widgets()
@@ -108,8 +110,8 @@ class NuclearFamiliesTable(Frame):
         self.nuke_inputs.append(self.pa_input)
         EntryAuto.all_person_autofills.extend([self.ma_input, self.pa_input])
         for ent in (self.ma_input, self.pa_input):
-            ent.bind("<KeyRelease-Delete>", self.open_input_message)
-            ent.bind("<KeyRelease-BackSpace>", self.open_input_message)
+            ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
+            ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
 
     def fix_buttons(self):
         
@@ -515,8 +517,8 @@ class NuclearFamiliesTable(Frame):
             pardent.insert(0, name)
             pardent.grid(column=2, row=n)
             EntryAuto.all_person_autofills.append(pardent)
-            pardent.bind("<KeyRelease-Delete>", self.open_input_message)
-            pardent.bind("<KeyRelease-BackSpace>", self.open_input_message)
+            pardent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
+            pardent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
 
             v["widget"] = pardent
             self.nuke_inputs.append(pardent)
@@ -543,8 +545,8 @@ class NuclearFamiliesTable(Frame):
                         self.nuke_inputs.append(ent)
                         dkt["name_widg"] = ent
                         EntryAuto.all_person_autofills.append(ent)
-                        ent.bind("<KeyRelease-Delete>", self.open_input_message)
-                        ent.bind("<KeyRelease-BackSpace>", self.open_input_message)
+                        ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
+                        ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
                     elif c == 2:
                         text = dkt["gender"]
                         ent = EntryAuto(progeny_frame, width=0)
@@ -910,47 +912,49 @@ class NuclearFamiliesTable(Frame):
             sorter = [int(sorter[0]), num, int(sorter[2])]
         return sorter
 
-    def open_input_message(self, evt):
+    def open_delete_or_unlink_dialog(self, evt):
         '''
-            A dialog opens on press of Delete or BackSpace in one of the person 
-            inputs. It looks like getting focus to return to the place where it
+            Open a dialog on press of Delete or BackSpace in one of the person 
+            inputs. 
+
+            It looks like getting focus to return to the place where it
             started is not going to be easy, probably because the original
             widget is destroyed and replaced. I tried getting the original's
             row & column but it didn't work--when the dialog closes, focus keeps
             returning to the same place, root I guess, anyway the first Tab press
-            just goes back to the first widget on the page.
+            just goes back to the first widget on the page. Fix later.
         '''
+
         widg = evt.widget        
-        if len(self.original) == 0 or len(widg.get()) != 0: return
+        if len(self.original) == 0 or len(widg.get()) != 0: 
+            return
         widg_name = widg.winfo_name()
         if widg_name in ("ma", "pa"):
             reltype = "parent"
             radtext = (
                 "Unlink the deleted parent from the current person.", 
-                "Completely remove all traces of the deleted parent from the "
-                "entire tree. (Delete the person.)")
+                "Remove all traces of the deleted parent from the tree.")
         elif widg_name.startswith("pard"):
             reltype = "partner"
             radtext = (
-                "SEE DO LIST--Unlink the deleted partner from the current person. All marital events will be removed from the deleted partner but retained by the current person with no known partner. If they have children together, the offspring event will be unlinked from the partner but retained by the current person, and the child in question will have an unknown co-parent. If they have children AND marital events together, removing the parent as co-parent will not delete the marital events.", 
-                "Unlink the deleted partner from the current person. All marital events will be removed from both partners and permanently removed from the tree.", 
-                "Completely remove all traces of the deleted partner from the "
-                "entire tree. (Delete the person.)")
+                "Unlink the deleted partner from the current person. Related marital events will be removed\nfrom the deleted partner but retained by the current person with no known partner.", 
+                "Unlink the deleted partner from the current person. Related marital events will be lost.", 
+                "Remove all traces of the deleted partner from the tree.")
         else:
             reltype = "child"
             radtext = (
-                "Unlink the deleted child from the partner of the current person only. The offspring event will be retained by the current person with no known co-parent.", 
-                "Unlink the deleted child from the current person only. The offspring event will be retained by the current person's partner with no known co-parent.",
+                "Unlink the deleted child from the partner of the current person only. The offspring event will be\nretained by the current person with no known co-parent.", 
+                "Unlink the deleted child from the current person only. The offspring event will be retained by\nthe current person's partner with no known co-parent.",
                 "Unlink the deleted child from both the current person and his/her partner. The child's parents are unknown.", 
-                "Completely remove all traces of the deleted child from the "
-                "entire tree. (Delete the person.)")
+                "Remove all traces of the deleted child from the tree.")
         unlinker = InputMessage(
             self.root, root=self.root, title="Delete or Unlink?", ok_txt="OK", 
             radtext=radtext, radio=True, cancel_txt="CANCEL", grab=True, 
             head1="Clarify whether to unlink or delete the person:", 
             wraplength=650)
-        self.show = unlinker.show()
-        self.delete_or_unlink(reltype)
+        if unlinker.ok_was_pressed is True: 
+            self.show = unlinker.show()
+            self.delete_or_unlink(reltype)
 
     def delete_or_unlink(self, reltype):
         current_file = get_current_file()[0]
@@ -972,7 +976,7 @@ class NuclearFamiliesTable(Frame):
             elif self.show == 1:
                 pass
 
-            elif shelf.show == 2:
+            elif self.show == 2:
                 pass
 
         elif reltype == "child":
@@ -990,9 +994,6 @@ class NuclearFamiliesTable(Frame):
         self.treebard.main.findings_table.redraw()
 
 # line 681 self.current_person_parents: [(11, 128), {'id': 5564, 'name': 'Phoebe Tellhouse', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.ma>}, {'id': None, 'name': '', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.pa>}]
-
-
-
 
 '''
     Two means of determining partnership are used. 1) a couple has 

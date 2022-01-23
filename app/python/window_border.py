@@ -9,10 +9,7 @@ from widgets import (
 from toykinter_widgets import StatusbarTooltips
 from styles import make_formats_dict, NEUTRAL_COLOR, config_generic
 from utes import center_dialog
-from query_strings import (
-    select_format_font_size, 
-    # select_default_format_font_size
-)
+from query_strings import select_format_font_size
 from PIL import Image, ImageTk
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -68,14 +65,11 @@ class Border(Canvas):
         self.formats = formats
         self.menubar = menubar
         self.ribbon_menu = ribbon_menu
-        # self.tree_is_open = tree_is_open
 
         self.set_title_bar_size()
 
         self.changing_values = None
         self.maxxed = False
-
-        # self.formats = make_formats_dict()
 
         self.make_widgets()
 
@@ -110,17 +104,9 @@ class Border(Canvas):
             7 : ['medium', 31, 0.25], 
             11 : ['large', 45, 1.0]}
 
-        # if self.tree_is_open == 0:
-            # query = select_default_format_font_size
-            # current_file = global_db_path
-        # elif self.tree_is_open == 1:
-            # query = select_format_font_size
-            # current_file = get_current_file()[0]
-
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.execute(select_format_font_size)
-        # cur = conn.execute(query)
         font_size = cur.fetchone()
         cur.close()
         conn.close()

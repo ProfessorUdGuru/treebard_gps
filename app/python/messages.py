@@ -99,7 +99,9 @@ class InputMessage(Dialogue):
         self.make_widgets()
         self.make_inputs()
 
-        self.bind("<Return>", self.ok)
+        self.ok_was_pressed = False
+
+        self.bind("<Return>", self.input_message_ok)
         self.bind("<Escape>", self.cancel)
 
         if scrolled is True:
@@ -110,7 +112,8 @@ class InputMessage(Dialogue):
         else:
             self.resize_window()
 
-        if self.grab is True: self.grab_set()
+        if self.grab is True: 
+            self.grab_set()
             
         self.deiconify()
         self.master.wait_window(self)
@@ -200,7 +203,7 @@ class InputMessage(Dialogue):
         maxx = max(len(self.ok_txt), len(self.cancel_txt))
         if self.ok_button is True:
             self.b1 = Button(
-                self.buttons, text=self.ok_txt, command=self.ok, width=maxx)
+                self.buttons, text=self.ok_txt, command=self.input_message_ok, width=maxx)
             self.b1.grid(column=0, row=0, sticky='e', ipadx=3)
         self.b2 = Button(
             self.buttons, text=self.cancel_txt, command=self.cancel, width=maxx)
@@ -230,7 +233,6 @@ class InputMessage(Dialogue):
             self.b2.focus_set()
         
     def run_post_op(self):
-        print("line", looky(seeline()).lineno, "running in messages.py:")
         if self.grab is True: 
             self.grab_release()
 
@@ -240,7 +242,8 @@ class InputMessage(Dialogue):
         if self.root:
             self.root.lift()
 
-    def ok(self, evt=None):
+    def input_message_ok(self, evt=None):
+        self.ok_was_pressed = True
         self.cancel()
 
     def cancel(self, evt=None):
