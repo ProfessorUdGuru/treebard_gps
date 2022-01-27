@@ -34,7 +34,7 @@ consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', '
  
 
 
-name = "Kaspar Hauser"
+name = "david robert magin the third"
 
 name = name.split()
 lowered = []
@@ -130,6 +130,7 @@ root.mainloop()
 
 # 922
 # Edward Ernest Reinhold Junior (actor Judge Reinhold) May 21, 1957 Wilmington, Delaware
+# David Robert Magin the Third (pat's brother)
 
 # 191
 # reece joseph jones 191
@@ -192,6 +193,7 @@ root.mainloop()
 # Geethali Norah Jones Shankar; March 30, 1979 USA
 # robert eugene murray
 # Taran Gostavo Braga Maquiran
+# David Robert Magin Junior (pat's father)
 
 # 314
 # jovilla ortega maquiran

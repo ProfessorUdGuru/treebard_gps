@@ -92,7 +92,7 @@ class Main(Frame):
         self.make_widgets()
         self.get_current_values()
 
-        self.nuke_table.make_nuke_inputs()
+        self.nuke_table.make_nuke_inputs(on_load=True)
 
     def make_scrollbars(self):
 
@@ -162,11 +162,6 @@ class Main(Frame):
         EventsTable.instances.append(self.findings_table)
         self.current_person = self.findings_table.current_person
 
-        self.att = EventsTable(
-            attributes_tab, self.root, self.treebard, 
-            self, self.formats, attrib=True)
-        EventsTable.instances.append(self.att)
-
         self.nuke_table = NuclearFamiliesTable(
             persons_tab,
             self.root, 
@@ -176,6 +171,16 @@ class Main(Frame):
             self.right_panel,
             self.formats,
             person_autofill_values=self.person_autofill_values)
+
+        # Create a tab traversal since the nuke_table can't be made first
+        #   but should be traversed first.
+        for table in (self.nuke_table, self.findings_table):
+            table.lift()
+
+        self.att = EventsTable(
+            attributes_tab, self.root, self.treebard, 
+            self, self.formats, attrib=True)
+        EventsTable.instances.append(self.att)
 
         current_file, current_dir = get_current_file()
         # this does not run on redraw, just on load

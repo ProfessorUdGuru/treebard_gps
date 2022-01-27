@@ -22,10 +22,16 @@ from query_strings import (
     select_all_images, select_all_name_types, insert_person_new,
     select_person_gender, select_max_name_type_id, insert_name_type_new,
     insert_image_new, select_name_with_id_any, select_birth_names_ids,
-    insert_finding_birth_new_person, insert_finding_places_new)
+    insert_finding_birth_new_person, insert_finding_places_new,
+    select_current_person_id, delete_name_person, delete_findings_roles_person,
+    select_name_person, delete_links_links_person, delete_links_links_name,
+    update_findings_persons_1_null, update_findings_persons_2_null,
+    delete_finding_person, delete_claims_roles_person, delete_person,
+    update_claims_persons_1_null, update_claims_persons_2_null,
+    delete_images_elements_person, delete_claim_person,    
+    )
 import dev_tools as dt
 from dev_tools import looky, seeline
-
 
 
 
@@ -41,7 +47,8 @@ NAME_TYPES_HIERARCHY = (
     'reference name', 'adoptive name', 'also known as', 'married name', 
     'legally changed name', 'pseudonym', 'pen name', 'stage name', 'nickname', 
     'call name', 'official name', 'anglicized name', 'religious order name', 
-    'other name type', 'given name')
+    'alternate spelling', 'mis-spelling', 'ID number', 'handle', 
+    'other name type', 'given name', 'wrong name')
 
 def get_current_person():
     current_person_id = 1
@@ -81,6 +88,32 @@ def get_name_with_id(iD):
         return ''
 
 def get_any_name_with_id(iD):
+    """ Get any available name that Treebard considers a viable name type
+        even if there is no birth name available. To be viable, the name type
+        has to be in the hierarchy.
+
+        Returns 'name unknown' if no name or if the only available name type
+        is not considered viable, such as `wrong_name`.
+
+        Since this viability hierarchy was applied, some names will not display
+        at all, so the hierarchy should actually include all name types so one
+        will display if it's all that's available.
+
+        Currently dealing with this problem with a hard-coded tuple 
+        NAME_TYPES_HIERARCHY which has to have each name type added to it. So if
+        the user creates a new name type, it will not be viable (the name won't display
+        if the person has no name type in the hierarchy.)
+
+        The solution is to let the user prioritize any added name types, 
+        by interfiling them in the tuple which will have to be a list. Birth 
+        name will be priority 1. All other names will be priority 2 or 3 or maybe
+        2 thru 5. This will be saved in the database for each type in a new column
+        called `hierarchy`. Then the hard-coded list could be dispensed with.
+
+        For now I'm just going to add non-viable name types to the end of the tuple
+        so that no one goes without a display name.
+    """
+
     current_file = get_current_file()[0]
     birth_name = get_name_with_id(iD)
     if len(birth_name) == 0:
@@ -174,6 +207,72 @@ def open_new_person_dialog(master, inwidg, root, treebard, formats, inwidg2=None
     root.wait_window(person_add)
     new_person_id = person_add.show()
     return new_person_id
+
+def delete_person_from_tree(person_id):
+    """Remove all references to a person.""" 
+
+    def delete_current_person_dialog():
+        print("line", looky(seeline()).lineno, "open dialog to get new curr per user input:")
+   
+    current_file = get_current_file()[0]
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    # current
+    cur.execute(select_current_person_id)
+    current_person = cur.fetchone()[0]
+    if current_person == person_id:
+        delete_current_person_dialog()
+    # links_links.name_id
+    cur.execute(select_name_person, (person_id,))
+    names = [i[0] for i in cur.fetchall()]
+    for name_id in names:    
+        cur.execute(delete_links_links_name, (name_id,))
+        conn.commit()
+    # links_links.person_id
+    cur.execute(delete_links_links_person, (person_id,))
+    conn.commit()
+    # name
+    cur.execute(delete_name_person, (person_id,))
+    conn.commit()
+    # findings_roles
+    cur.execute(delete_findings_roles_person, (person_id,))
+    conn.commit()
+    # findings_persons.person_id1
+    cur.execute(update_findings_persons_1_null, (person_id,))
+    conn.commit()
+    # findings_persons.person_id2
+    cur.execute(update_findings_persons_2_null, (person_id,))
+    conn.commit()
+    # finding
+    cur.execute(delete_finding_person, (person_id,))
+    conn.commit()
+    # claims_roles 
+    cur.execute(delete_claims_roles_person, (person_id,))
+    conn.commit()
+    # # # # # DO NOT DELETE; the db table doesn't exist yet
+    # # # # claims_persons.person_id1
+    # # # cur.execute(update_claims_persons_1_null, (person_id,))
+    # # # conn.commit()
+    # # # # claims_persons.person_id2
+    # # # cur.execute(update_claims_persons_2_null, (person_id,))
+    # # # conn.commit()
+    # claim
+    cur.execute(delete_claim_person, (person_id,))
+    conn.commit()
+    # images_elements
+    cur.execute(delete_images_elements_person, (person_id,))
+    conn.commit()
+    # person (primary key)
+    cur.execute(delete_person, (person_id,))
+    conn.commit()
+
+    people = make_all_names_list_for_person_select()
+    all_birth_names = EntryAuto.create_lists(people)
+    for ent in EntryAuto.all_person_autofills:
+        ent.values = all_birth_names
+
+    cur.close()
+    conn.close()
 
 class PersonAdd(Toplevel):
     def __init__(
@@ -521,8 +620,7 @@ class PersonAdd(Toplevel):
     def show(self):
         people = make_all_names_list_for_person_select()        
         all_birth_names = EntryAuto.create_lists(people)
-        
-        # self.inwidg.values = all_birth_names
+
         return self.new_person_id
 
     def make_temp_person_id(self):
@@ -622,6 +720,8 @@ if __name__ == "__main__":
     addbutt.grid()
 
     root.mainloop()
+
+
 
 
 

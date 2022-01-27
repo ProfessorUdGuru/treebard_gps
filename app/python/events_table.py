@@ -14,7 +14,7 @@ from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator, run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import new_event_dlg_help_msg
-from styles import config_generic
+from styles import config_generic, make_formats_dict
 from names import (
     get_name_with_id, make_all_names_list_for_person_select,
     open_new_person_dialog, get_any_name_with_id)
@@ -991,6 +991,7 @@ class EventsTable(Frame):
         self.off()
 
     def redraw(self, evt=None, current_person=None):
+        self.formats = make_formats_dict()
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -1008,7 +1009,7 @@ class EventsTable(Frame):
         if evt: # user pressed CTRL+S for example
             self.main_window.nuke_table.make_nuke_inputs(
                 current_person=self.current_person)
-        else: # user pressed OK to change current person for example
+        else: # user pressed OK to change current person for example   
             self.main_window.nuke_table.make_nuke_inputs()
         self.resize_scrollbar(self.root, self.main_canvas)
 
@@ -1027,8 +1028,15 @@ class EventsTable(Frame):
                 widg.grid_forget()
         self.event_input.grid_forget()
         self.add_event_button.grid_forget()
-        for child in self.main_window.nuke_table.nuke_window.winfo_children():
-            child.destroy()
+
+        for ent in self.main_window.nuke_table.nuke_inputs:
+            ent.delete(0, "end")
+        self.main_window.nuke_table.ma_input.delete(0, "end")
+        self.main_window.nuke_table.pa_input.delete(0, "end")
+        self.main_window.nuke_table.new_kin_frame.grid_forget()
+        for frame in self.main_window.nuke_table.nuke_containers:  
+            frame.destroy()
+
         self.main_window.nuke_table.current_person_parents = [
             [None, None], 
             {"id": None, "name": None, "widget": None}, 

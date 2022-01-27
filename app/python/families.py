@@ -1,5 +1,7 @@
 # families.py
 
+# I'm not liking how this nukes area is supposed to work. It's bad. It shd be simple, no dialogs, no options, and the interface shd not be offering to do megawork for the user bec the user has to read confusing options, make a choice, have all this stuff done, then realize he chose the wrong option and a bunch of autostuff he didn't do himself now has to be undone. If a parent is blank, it can fill with anything. If not, it's disabled and to change it you make the parent the current person. Changing anyone who is not the current person on the current person tab is a bag of worms because of all the linked events and children. Also shd consider the double click as a simple way to change curr per. This needs to be done over. Also changing a spouse just changes the name of the existing spouse, all events and children stay the same. To change the event to a diff person you shd have to go to the event itself and make the change. To change the child's parent to a different person you shd have to go to the child's page and make the change. Things have to be done one thing at a time or the interface is unmanageable, the code is extremely complex, and the user is confused, always facing complexity and making complicated decisions. START OVER on the update procedures, keep the table, and also consider if having all the person inputs be autofill is really the right way to do it. STICK TO THE CURRENT ELEMENT SYSTEM: to change an event, you have to make it the current event (in the event tab). To change a person, you go to the person tab for that person. To change a relationship... etc. Saving the current garble as familiesx.py in superceded, time to begin again. Delete still works but just unlinks, anything else is up to the user to do one thing at a time. For ex if you delete a partner, they are unlinked from mar evts & kids. If you delete a parent, the curr per is unlinked from both parents (in model) but this is where the user might be given a choice to unlink from one and not the other. SINCE PARENTS ARE FINISHED CONSIDER KEEPING THIS CODE INTACT.
+
 import tkinter as tk
 import sqlite3
 from widgets import (
@@ -8,7 +10,7 @@ from files import get_current_file
 from autofill import EntryAutoHilited, EntryAuto    
 from scrolling import Scrollbar
 from names import (open_new_person_dialog, make_all_names_list_for_person_select,
-    get_any_name_with_id, )
+    get_any_name_with_id, delete_person_from_tree)
 from messages import InputMessage
 from dates import format_stored_date, get_date_formats, OK_MONTHS
 from events_table import get_current_person    
@@ -48,7 +50,6 @@ class NuclearFamiliesTable(Frame):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master
-        print("line", looky(seeline()).lineno, "self.master:", self.master)
         self.root = root
         self.treebard = treebard
         self.current_person = current_person
@@ -87,33 +88,39 @@ class NuclearFamiliesTable(Frame):
         nuke_sbv.grid(column=1, row=0, sticky="ns")
         nuke_sbh.grid(column=0, row=1, sticky="ew")
 
-    def make_nuke_frames(self):
+    def make_nuke_widgets_perm(self):
+        
         self.pardlabs = []
         parentslab = LabelFrame(self.nuke_window) 
         labelwidget = LabelH3(parentslab, text="Parents of the Current Person")
         self.pardlabs.append(labelwidget)
         parentslab.config(labelwidget=labelwidget)
-        parentslab.grid(column=0, row=0, sticky="w")
         malab = Label(parentslab, text="Mother")
-        malab.grid(column=0, row=0, sticky="w", padx=(12,0), pady=(6,12))
         self.ma_input = EntryAuto(
             parentslab, width=30, autofill=True, 
             values=self.person_autofill_values, name="ma")
         self.ma_input.grid(column=1, row=0, pady=(6,12), padx=(6,0))
         palab = Label(parentslab, text="Father")
-        palab.grid(column=2, row=0, sticky="w", padx=(18,0), pady=(6,12))
         self.pa_input = EntryAuto(
             parentslab, width=30, autofill=True, 
             values=self.person_autofill_values, name="pa")
+
+        # children of self.nuke_window
+        parentslab.grid(column=0, row=0, sticky="w")
+
+        # children of parentslab
+        malab.grid(column=0, row=0, sticky="w", padx=(12,0), pady=(6,12))
+        palab.grid(column=2, row=0, sticky="w", padx=(18,0), pady=(6,12))
         self.pa_input.grid(column=3, row=0, pady=(6,12), padx=(6,12))
-        self.nuke_inputs.append(self.ma_input)
-        self.nuke_inputs.append(self.pa_input)
+
         EntryAuto.all_person_autofills.extend([self.ma_input, self.pa_input])
         for ent in (self.ma_input, self.pa_input):
             ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
             ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
+            ent.bind("<FocusIn>", self.get_original, add="+")
+            ent.bind("<FocusOut>", self.get_final, add="+")
 
-    def fix_buttons(self):
+    def fix_button_state(self):
         
         if self.newkinvar.get() == 100:
             self.childmaker.config(state="disabled")
@@ -132,28 +139,32 @@ class NuclearFamiliesTable(Frame):
                 self.kinradnew.config(state="normal") 
 
     def make_new_kin_inputs(self):
-        new_kin_frame = Frame(self.nuke_window)
-        new_kin_frame.grid(column=0, row=self.last_row, sticky="ew")
+        """ Get self.new_kin_frame into the correct row by ungridding it in self.findings_tbale.forget_cells() and regridding it in self.make_nuke_inputs()
+        """
+        self.new_kin_frame = Frame(self.nuke_window)
         self.kinradnew = Radiobutton(
-            new_kin_frame, variable=self.newkinvar,
+            self.new_kin_frame, variable=self.newkinvar,
             value=100, anchor="w", 
-            command=self.fix_buttons)
-        self.kinradnew.grid(column=0, row=0)
+            command=self.fix_button_state)
         self.new_kin_input = EntryAutoHilited(
-            new_kin_frame, self.formats, width=48, 
+            self.new_kin_frame, self.formats, width=48, 
             autofill=True, 
             values=self.person_autofill_values)
-        self.new_kin_input.grid(column=1, row=0)
         self.pardmaker = Button(
-            new_kin_frame, 
+            self.new_kin_frame, 
             text="ADD PARTNER", width=12, 
             command=self.add_partner)
-        self.pardmaker.grid(column=2, row=0, padx=(6,0), pady=(12,0))
         self.childmaker = Button(
-            new_kin_frame, 
+            self.new_kin_frame, 
             text="ADD CHILD", width=12, 
             command=self.add_child)
-        self.childmaker.grid(column=3, row=0, padx=(6,0), pady=(12,0))
+
+        # children of self.new_kin_frame
+        self.kinradnew.grid(column=0, row=0)
+        self.new_kin_input.grid(column=1, row=0)
+        self.pardmaker.grid(column=2, row=0, padx=(6,0), pady=(12,0))
+        self.childmaker.grid(column=3, row=0, padx=(6,0), pady=(12,0))        
+
         EntryAuto.all_person_autofills.append(self.new_kin_input)
 
     def get_marital_event_types(self):
@@ -189,68 +200,36 @@ class NuclearFamiliesTable(Frame):
     def add_child(self):
         print("hey kid")
 
-    def bind_inputs(self):
-        for widg in self.nuke_inputs:
-            widg.bind("<FocusIn>", self.get_original, add="+")
-            widg.bind("<FocusOut>", self.get_final, add="+")
-
     def get_original(self, evt):
         self.original = evt.widget.get()
 
     def edit_parent(self, final, widg):
         unlink = False
         if "#" in final:
-            print("line", looky(seeline()).lineno, "# in final:")
             new_parent_id = final.split("#")[1]
         elif len(final) == 0:
-            print("line", looky(seeline()).lineno, "len(final) == 0:")
             new_parent_id = None
             unlink = True
         else:
-            print("line", looky(seeline()).lineno, "making new person:")
             new_parent_id = open_new_person_dialog(
                 self, widg, self.root, self.treebard, self.formats)
             people = make_all_names_list_for_person_select()
             all_birth_names = EntryAuto.create_lists(people)
             for ent in EntryAuto.all_person_autofills:
                 ent.values = all_birth_names
-
         return new_parent_id, unlink 
 
-    def update_mother(self, final, conn, cur, widg):
+    def update_parent(self, final, conn, cur, widg, kin_type=None):
         new_parent_id, unlink = self.edit_parent(final, widg)
         birth_id = self.current_person_parents[0][1]
         birth_fpid = self.current_person_parents[0][0]
-
-        self.make_parents_dict(ma_id=new_parent_id)
-
-        if self.birth_record[3] == 1:
+        if kin_type == 1:
+            self.make_parents_dict(ma_id=new_parent_id) #
+        elif kin_type == 2:
+            self.make_parents_dict(pa_id=new_parent_id) #
+        if self.birth_record[3] == kin_type: #
             which = 1
-        elif self.birth_record[5] == 1:
-            which = 2  
-        if unlink is False:
-            if which == 1:
-                query = update_findings_persons_by_id1
-            elif which == 2:
-                query = update_findings_persons_by_id2 
-        elif unlink is True:
-            if which == 1:
-                query = update_findings_persons_by_id1_unlink
-            elif which == 2:
-                query = update_findings_persons_by_id2_unlink
-        cur.execute(query, (new_parent_id, birth_fpid))
-        conn.commit()
-
-    def update_father(self, final, conn, cur, widg):
-        new_parent_id, unlink = self.edit_parent(final, widg)
-        birth_id = self.current_person_parents[0][1]
-        birth_fpid = self.current_person_parents[0][0]
-
-        self.make_parents_dict(pa_id=new_parent_id)
-
-        if self.birth_record[3] == 2:
-            which = 1
-        elif self.birth_record[5] == 2:
+        elif self.birth_record[5] == kin_type: #
             which = 2  
         if unlink is False:
             if which == 1:
@@ -258,14 +237,12 @@ class NuclearFamiliesTable(Frame):
             elif which == 2:
                 query = update_findings_persons_by_id2 
             cur.execute(query, (new_parent_id, birth_fpid))
-            conn.commit()
+            conn.commit()        
         elif unlink is True:
             if which == 1:
                 self.query = update_findings_persons_by_id1
             elif which == 2:
                 self.query = update_findings_persons_by_id2
-        # cur.execute(query, (new_parent_id, birth_fpid))
-        # conn.commit()
 
     def update_partner(self, final, conn, cur, widg):
     
@@ -281,6 +258,7 @@ class NuclearFamiliesTable(Frame):
                 SET (person_id1, age1) = (?, "")
                 WHERE findings_persons_id = ?
              '''
+            print("line", looky(seeline()).lineno, "running:")
             
             if parent_type == "Mother":
                 if order == "1-2":                    
@@ -307,6 +285,7 @@ class NuclearFamiliesTable(Frame):
             return new_partner_id     
 
         orig = self.original
+        print("line", looky(seeline()).lineno, "widg:", widg)
         new_partner_id = get_new_partner_id(final, widg)
         print("line", looky(seeline()).lineno, "new_partner_id:", new_partner_id)
         # if dialog canceled change nothing in db
@@ -316,6 +295,17 @@ class NuclearFamiliesTable(Frame):
             return
         elif new_partner_id == 0:
             new_partner_id = None
+        else:
+            # print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
+            for k,v in self.progeny_dicts.items():
+                if widg != v["widget"]:
+                    continue
+                elif widg == v["widget"]:
+                    if k != new_partner_id:
+                        print("line", looky(seeline()).lineno, "v:", v)
+# line 302 v: {'sorter': [1884, 4, 1], 'partner_name': 'Lena Delois Rolf', 'parent_type': '', 'partner_kin_type': 'Partner', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame.pard_5777_1>, 'children': [], 'marital_events': [{'findings_persons_id': 90, 'finding': 660}]}
+                else: 
+                    print("line", looky(seeline()).lineno, "case not handled:")
         
         for k,v in self.progeny_dicts.items():
             if widg != v["widget"]:
@@ -368,7 +358,6 @@ class NuclearFamiliesTable(Frame):
             else:
                 child_id = open_new_person_dialog(
                     self, widg, self.root, self.treebard, self.formats)
-                print("line", looky(seeline()).lineno, "child_id:", child_id)
                 cur.execute(select_finding_id_birth, (child_id,))
                 birth_id = cur.fetchone()[0] # CANCEL THROWS ERROR HERE
                 cur.execute(select_person_id_gender, (child_id,))
@@ -403,21 +392,25 @@ class NuclearFamiliesTable(Frame):
         print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
 
     def get_final(self, evt):
+
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         widg = evt.widget
         self.final = widg.get()
-        if self.final == self.original: return
+        if self.final == self.original:
+            return
         col = widg.grid_info()["column"]
         widg_name = widg.winfo_name()
         if widg_name == "ma":
-            self.update_mother(self.final, conn, cur, widg)
+            self.update_parent(self.final, conn, cur, widg, kin_type=1)
         elif widg_name == "pa":
-            self.update_father(self.final, conn, cur, widg)
+            print("line", looky(seeline()).lineno, "running:")
+            self.update_parent(self.final, conn, cur, widg, kin_type=2)
         elif widg_name.startswith("pard"):
             if col == 2:
+                print("line", looky(seeline()).lineno, "widg:", widg)
                 self.update_partner(self.final, conn, cur, widg)                
             else:
                 print(
@@ -443,20 +436,29 @@ class NuclearFamiliesTable(Frame):
         conn.close()
         self.treebard.main.findings_table.redraw()
 
-    def make_nuke_inputs(self, current_person=None):
+    def make_nuke_inputs(self, current_person=None, on_load=False):
         '''
-            This is run in main.py and events table redraw().
+            Run in main.py on_load=True and in events_table.py redraw() 
+            on_load=False.
         '''
         self.nuke_inputs = []
         if current_person:
             self.current_person = current_person
         else:
             self.current_person = get_current_person()
-        self.make_nuke_frames()
+        if on_load:
+            self.make_nuke_widgets_perm()
         self.make_nuke_dicts()
         self.populate_nuke_tables()
-        self.bind_inputs()
-        self.make_new_kin_inputs()
+        for widg in self.nuke_inputs:
+            widg.bind("<FocusIn>", self.get_original, add="+")
+            widg.bind("<FocusOut>", self.get_final, add="+")
+        if on_load:
+            self.make_new_kin_inputs()
+        self.new_kin_frame.grid(column=0, row=self.last_row, sticky="ew")
+        for row in range(self.nuke_window.grid_size()[1]):
+            self.nuke_window.rowconfigure(row, weight=1)
+            
         self.update_idletasks()
         wd = self.nuke_window.winfo_reqwidth()
         ht = self.right_panel.winfo_reqheight()
@@ -468,10 +470,9 @@ class NuclearFamiliesTable(Frame):
         else:
             # set to non-existent value so no Radiobutton will be selected
             self.newkinvar.set(999)
-        self.fix_buttons()
+        self.fix_button_state()
 
-    def populate_nuke_tables(self):   
-        # formats = make_formats_dict()
+    def populate_nuke_tables(self):
         lst = [
             self.current_person_parents[1]["name"], 
             self.current_person_parents[2]["name"]]
@@ -479,6 +480,7 @@ class NuclearFamiliesTable(Frame):
             if name == "name unknown":
                 idx = lst.index(name)
                 lst[idx] = ""
+
         a = 0
         for name in lst:
             if name and a == 0:
@@ -489,6 +491,7 @@ class NuclearFamiliesTable(Frame):
 
         top_child_rows = []
         self.pardrads = []
+        self.nuke_containers = []
         n = 0
         for i, (k,v) in enumerate(self.progeny_dicts.items(), start=1):
             n = (i * 2) - 1
@@ -498,9 +501,10 @@ class NuclearFamiliesTable(Frame):
             pard = "pard_{}_{}".format(pard_id, n)
             pardframe = Frame(self.nuke_window)
             pardframe.grid(column=0, row=n, sticky="ew")
+            self.nuke_containers.append(pardframe)
             pardrad = Radiobutton(
                 pardframe, variable=self.newkinvar, 
-                value=n, anchor="w", command=self.fix_buttons)
+                value=n, anchor="w", command=self.fix_button_state)
             self.pardrads.append(pardrad)
             pardrad.grid(column=0, row=n)
             if len(v["children"]) != 0:
@@ -524,6 +528,7 @@ class NuclearFamiliesTable(Frame):
             self.nuke_inputs.append(pardent)
             progeny_frame = Frame(self.nuke_window)
             progeny_frame.grid(column=0, row=n+1)
+            self.nuke_containers.append(progeny_frame)
             top_child_rows.append(progeny_frame)
 
             r = 0
@@ -592,10 +597,6 @@ class NuclearFamiliesTable(Frame):
             for widg in top_row[1:]:
                 widg.config(width=self.findings_table.kin_widths[z] + 2)
                 z += 1
-
-        # don't know why config_generic isn't enough here
-        for widg in self.pardlabs:
-            widg.config(font=self.formats["heading3"])
 
     def make_parents_dict(self, ma_id=None, pa_id=None):
         '''
@@ -929,19 +930,25 @@ class NuclearFamiliesTable(Frame):
         if len(self.original) == 0 or len(widg.get()) != 0: 
             return
         widg_name = widg.winfo_name()
+        parent_type = ""
         if widg_name in ("ma", "pa"):
-            reltype = "parent"
+            col = widg.grid_info()["column"]
+            relative_type = "parent"
+            if col == 1:
+                parent_type = "ma"
+            elif col == 3:
+                parent_type = "pa"
             radtext = (
                 "Unlink the deleted parent from the current person.", 
                 "Remove all traces of the deleted parent from the tree.")
         elif widg_name.startswith("pard"):
-            reltype = "partner"
+            relative_type = "partner"
             radtext = (
                 "Unlink the deleted partner from the current person. Related marital events will be removed\nfrom the deleted partner but retained by the current person with no known partner.", 
                 "Unlink the deleted partner from the current person. Related marital events will be lost.", 
                 "Remove all traces of the deleted partner from the tree.")
         else:
-            reltype = "child"
+            relative_type = "child"
             radtext = (
                 "Unlink the deleted child from the partner of the current person only. The offspring event will be\nretained by the current person with no known co-parent.", 
                 "Unlink the deleted child from the current person only. The offspring event will be retained by\nthe current person's partner with no known co-parent.",
@@ -952,24 +959,28 @@ class NuclearFamiliesTable(Frame):
             radtext=radtext, radio=True, cancel_txt="CANCEL", grab=True, 
             head1="Clarify whether to unlink or delete the person:", 
             wraplength=650)
-        if unlinker.ok_was_pressed is True: 
+        if unlinker.ok_was_pressed: 
             self.show = unlinker.show()
-            self.delete_or_unlink(reltype)
+            self.delete_or_unlink(relative_type, parent_type)
 
-    def delete_or_unlink(self, reltype):
+    def delete_or_unlink(self, relative_type, parent_type):
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute("PRAGMA foreign_keys = 1")
         cur = conn.cursor()
         birth_fpid = self.current_person_parents[0][0]
-        if reltype == "parent":
+        if relative_type == "parent":
             if self.show == 0:
                 cur.execute(self.query, (None, birth_fpid))
                 conn.commit()
             elif self.show == 1:
-                pass
+                if parent_type == "ma":
+                    parent_id = self.current_person_parents[1]["id"]
+                elif parent_type == "pa":
+                    parent_id = self.current_person_parents[2]["id"]
+                delete_person_from_tree(parent_id)
 
-        elif reltype == "partner":
+        elif relative_type == "partner":
             if self.show == 0:
                 pass
 
@@ -979,7 +990,7 @@ class NuclearFamiliesTable(Frame):
             elif self.show == 2:
                 pass
 
-        elif reltype == "child":
+        elif relative_type == "child":
             if self.show == 0:
                 pass
 
@@ -993,7 +1004,6 @@ class NuclearFamiliesTable(Frame):
         conn.close()
         self.treebard.main.findings_table.redraw()
 
-# line 681 self.current_person_parents: [(11, 128), {'id': 5564, 'name': 'Phoebe Tellhouse', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.ma>}, {'id': None, 'name': '', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.pa>}]
 
 '''
     Two means of determining partnership are used. 1) a couple has 
@@ -1001,6 +1011,18 @@ class NuclearFamiliesTable(Frame):
     event such as marriage or divorce regardless of whether they
     have children together.
 
+    Trying to provide the user with options for unlinking (from one
+    or both persons involved, etc.) proved to be an ever-expanding bag of
+    worms. Seems better to do a simple unlink and let the user do
+    the work instead of giving the user unlink options and then 
+    giving him options that are long and hard to understand, including
+    the option to delete a person altogether, and
+    then write hundreds of lines of code to make it possible for the
+    program to do what the user should be carefully doing himself one
+    piece at a time so he'll know how the change was made and when. The rest of this diatribe was written in an attempt to figure out what to do, and the answer turned out to be,
+    "as little as possible"...
+
+    (old:)
     Problem is, if user unlinks a partner from current person's
     marriage event, should Treebard auto-unlink the partner from the
     divorce event too? Since partnerships are detected only on the

@@ -17,6 +17,16 @@ delete_claims_findings = '''
     WHERE finding_id = ?
 '''
 
+delete_claim_person = '''
+    DELETE FROM claim
+    WHERE person_id = ?
+'''
+
+delete_claims_roles_person = '''
+    DELETE FROM claims_roles
+    WHERE person_id = ?
+'''
+
 delete_color_scheme = '''
     DELETE FROM color_scheme 
     WHERE color_scheme_id = ?
@@ -27,6 +37,11 @@ delete_date_format_all = '''DELETE FROM date_format'''
 delete_finding = '''
     DELETE FROM finding
     WHERE finding_id = ?    
+'''
+
+delete_finding_person = '''
+    DELETE FROM finding
+    WHERE person_id = ?
 '''
 
 delete_finding_places = '''
@@ -62,6 +77,36 @@ delete_findings_roles_finding = '''
 delete_findings_role = '''
     DELETE FROM findings_roles 
     WHERE findings_roles_id = ?
+'''
+
+delete_findings_roles_person = '''
+    DELETE FROM findings_roles
+    WHERE person_id = ?
+'''
+
+delete_images_elements_person = '''
+    DELETE FROM images_elements
+    WHERE person_id = ?
+'''
+
+delete_links_links_name = '''
+    DELETE FROM links_links
+    WHERE name_id = ?
+'''
+
+delete_links_links_person = '''
+    DELETE FROM links_links
+    WHERE person_id = ?
+'''
+
+delete_name_person = '''
+    DELETE FROM name
+    WHERE person_id = ?
+'''
+
+delete_person = '''
+    DELETE FROM person
+    WHERE person_id = ?
 '''
 
 insert_color_scheme = '''
@@ -855,6 +900,12 @@ select_name_details = '''
     WHERE person_id = ?
 '''
 
+select_name_person = '''
+    SELECT name_id
+    FROM name
+    WHERE person_id = ?
+'''
+
 select_name_sort_order = '''
     SELECT
         sort_order
@@ -1129,6 +1180,18 @@ select_app_setting_openpic_dir = '''
     WHERE app_setting_id = 1
 '''
 
+update_claims_persons_1_null = '''
+    UPDATE claims_persons
+    SET person_id1 = null
+    WHERE person_id1 = ?
+'''
+
+update_claims_persons_2_null = '''
+    UPDATE claims_persons
+    SET person_id2 = null
+    WHERE person_id2 = ?
+'''
+
 update_closing_state_openpic = '''
     UPDATE closing_state
     SET openpic = ?
@@ -1296,10 +1359,22 @@ update_findings_persons_1 = '''
     WHERE finding_id = ?
 '''
 
+update_findings_persons_1_null = '''
+    UPDATE findings_persons
+    SET person_id1 = null
+    WHERE person_id1 = ?
+'''
+
 update_findings_persons_2 = '''
     UPDATE findings_persons
     SET person_id2 = ?
     WHERE finding_id = ?
+'''
+
+update_findings_persons_2_null = '''
+    UPDATE findings_persons
+    SET person_id2 = null
+    WHERE person_id2 = ?
 '''
 
 update_findings_persons_1_2 = '''
