@@ -34,7 +34,9 @@ consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', '
  
 
 
-name = "david robert magin the third"
+
+
+name = "Robert Scott Lazar"
 
 name = name.split()
 lowered = []
@@ -379,6 +381,7 @@ root.mainloop()
 
 # 224
 # James Thomas Patrick Kiernan
+# John Joseph Nicholson, actor Jack Nicholson, Born: April 22, 1937, Neptune City, New Jersey
 
 # 494
 # Karen Sue Robertson
@@ -387,6 +390,7 @@ root.mainloop()
 # 156
 # Jimmy John Shea
 # John Ronald Reuel Tolkien
+# Robert Scott Lazer (UFO back-engineer Bob Lazer), born January 26, 1959 in Coral Gables, Florida
 
 # 516
 # Jerry Jeff Walker (born Ronald Clyde Crosby; March 16, 1942 – October 23, 2020

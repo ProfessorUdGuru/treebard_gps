@@ -1,4 +1,6 @@
-# treebard_root_024.py
+# treebard_root_025.py
+
+# Up till now I didn't realize I had no way to differentiate, in findings_persons, one couple from another, if one of the partners was unknown. Say for example James has two records of an offspring event with null partners in each. We don't know if the two children are siblings but Treebard will assume they are since the 2 partners are both null. The reason I changed from having a person_id column in findings_persons, and a separate record for each of the partners in a couple, was that I needed a single row for both persons. But it has been a real pain to write the logic, since I have to check both partners and parse order 1_2 or 2_1 etc. Now I find it isn't even capable of doing what needs to be done, so have to change the structure again. Instead of a person_id1 and person_id2 column in findings_persons, there has to be a single FK for a person_person table wherein each couple will have a single row and single ID. This will solve all my problems except now I have to rewrite all the code that tried to deal with findings_persons, so have saved a copy of the existing files up to now and will rewrite all that code now after creating the new table and fixing findings_persons table.
 
 import tkinter as tk
 import sqlite3    

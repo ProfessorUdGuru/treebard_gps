@@ -119,6 +119,7 @@ class NuclearFamiliesTable(Frame):
             ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
             ent.bind("<FocusIn>", self.get_original, add="+")
             ent.bind("<FocusOut>", self.get_final, add="+")
+            ent.bind("<Double-Button-1>", self.change_current_person)
 
     def fix_button_state(self):
         
@@ -203,46 +204,122 @@ class NuclearFamiliesTable(Frame):
     def get_original(self, evt):
         self.original = evt.widget.get()
 
-    def edit_parent(self, final, widg):
-        unlink = False
-        if "#" in final:
-            new_parent_id = final.split("#")[1]
-        elif len(final) == 0:
-            new_parent_id = None
-            unlink = True
+    # def edit_parent(self, final, widg):
+        # unlink = False
+        # if "#" in final:
+            # new_parent_id = final.split("#")[1]
+        # elif len(final) == 0:
+            # new_parent_id = None
+            # unlink = True
+        # else:
+            # new_parent_id = open_new_person_dialog(
+                # self, widg, self.root, self.treebard, self.formats)
+            # people = make_all_names_list_for_person_select()
+            # all_birth_names = EntryAuto.create_lists(people)
+            # for ent in EntryAuto.all_person_autofills:
+                # ent.values = all_birth_names
+        # return new_parent_id, unlink 
+
+# IT'S NOT CURRENT PERSON SO IT CAN'T BE CHANGED, HAVE TO MAKE CURRENT FIRST.
+# Don't disable it; this will make it look like a label whereas it needs to accept highlighting and insertion cursor so user knows it can do something. Just make it re-insert the original name no matter what user tries to do. If empty, it will accept any input including new person. It will autofill normally and PersonAdd dlg will open. But if a person is in the input, 3 things can happen: 1) it will autofill the person who is already in the field, adding the #id as per normal, if the right key strokes for that person are tried. 2) if any other keys are tried, it will refill in with self.original. 3) If delete or backspace is pressed, it will unlink and the dlg will list everything that was unlinked AND save a deletion log so the user can reference which events were altered.
+
+    def change_current_person(self, evt):
+        
+        print("line", looky(seeline()).lineno, "evt.widget:", evt.widget)
+        print("line", looky(seeline()).lineno, "evt.widget.grid_info()['column']:", evt.widget.grid_info()['column'])
+        widg = evt.widget
+        if len(widg.get()) == 0:
+            return
+        if widg.winfo_name() in ("ma", "pa"):
+            col = widg.grid_info()["column"]
+            if col == 1:
+                print("line", looky(seeline()).lineno, "update_parent(ma):")
+            elif col == 3:
+                print("line", looky(seeline()).lineno, "update_parent(pa):")
+        elif widg.winfo_name().startswith("pard"):
+            print("line", looky(seeline()).lineno, "update_partner:")
         else:
-            new_parent_id = open_new_person_dialog(
-                self, widg, self.root, self.treebard, self.formats)
-            people = make_all_names_list_for_person_select()
-            all_birth_names = EntryAuto.create_lists(people)
-            for ent in EntryAuto.all_person_autofills:
-                ent.values = all_birth_names
-        return new_parent_id, unlink 
+            # print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
+            for k,v in self.progeny_dicts.items():
+                if v["widget"] == widg:
+                    print("line", looky(seeline()).lineno, "v['children']:", v['children'])
+                    break
+            # print("line", looky(seeline()).lineno, "self.progeny_dicts[iD]['children']:", self.progeny_dicts[iD]['children'])
+            col = widg.grid_info()["column"]
+            if col == 1:
+                print("line", looky(seeline()).lineno, "update_child_name:")
+            elif col == 2:
+                print("line", looky(seeline()).lineno, "update_child_gender:")
+            elif col == 3:
+                print("line", looky(seeline()).lineno, "update_child_birth:")
+            elif col == 4:
+                print("line", looky(seeline()).lineno, "update_child_death:")
 
     def update_parent(self, final, conn, cur, widg, kin_type=None):
-        new_parent_id, unlink = self.edit_parent(final, widg)
-        birth_id = self.current_person_parents[0][1]
-        birth_fpid = self.current_person_parents[0][0]
-        if kin_type == 1:
-            self.make_parents_dict(ma_id=new_parent_id) #
-        elif kin_type == 2:
-            self.make_parents_dict(pa_id=new_parent_id) #
-        if self.birth_record[3] == kin_type: #
-            which = 1
-        elif self.birth_record[5] == kin_type: #
-            which = 2  
-        if unlink is False:
-            if which == 1:
-                query = update_findings_persons_by_id1
-            elif which == 2:
-                query = update_findings_persons_by_id2 
-            cur.execute(query, (new_parent_id, birth_fpid))
-            conn.commit()        
-        elif unlink is True:
-            if which == 1:
-                self.query = update_findings_persons_by_id1
-            elif which == 2:
-                self.query = update_findings_persons_by_id2
+        """ If the field is not blank, emulate a disabled field for any input that tries to
+            change the contents to a different person (to change a parent, partner, or child,
+            make that person the current person first.)
+        """
+
+        for dkt in self.current_person_parents[1:]:
+            if widg == dkt["widget"]:
+                iD = dkt["id"]
+                name = dkt["name"]
+                break
+        bare_name = None
+        if "(" in name:
+            bare_name = name.split(" (")[-2]
+            name_id = "{}  #{}".format(bare_name, iD)
+        else:
+            name_id = "{}  #{}".format(name, iD)
+        ok_content = (name, name_id, bare_name, "") 
+        
+        if self.final not in ok_content:
+            widg.delete(0, "end")
+            widg.insert(0, self.original)
+            return
+        elif len(self.final) == 0:
+            print("line", looky(seeline()).lineno, "unlink is true:")
+        
+
+
+# line 251 ok_content: ('Rolanda Alcaraz', 'Rolanda Alcaraz  #5773', None, '')
+# line 251 ok_content: ('Clair Preston Boudreau (wrong name)', 'Clair Preston Boudreau  #5719', 'Clair Preston Boudreau', '')
+
+
+
+
+
+
+
+# line 227 self.original: Clair Preston Boudreau (wrong name)
+# line 228 self.final: Clair Preston Boudreau  #5719
+# line 229 self.current_person_parents: [(99, 873), {'id': 5773, 'name': 'Rolanda Alcaraz', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.ma>}, {'id': 5719, 'name': 'Clair Preston Boudreau (wrong name)', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.pa>}]
+
+
+        # new_parent_id, unlink = self.edit_parent(final, widg)
+        # birth_id = self.current_person_parents[0][1]
+        # birth_fpid = self.current_person_parents[0][0]
+        # if kin_type == 1:
+            # self.make_parents_dict(ma_id=new_parent_id) #
+        # elif kin_type == 2:
+            # self.make_parents_dict(pa_id=new_parent_id) #
+        # if self.birth_record[3] == kin_type: #
+            # which = 1
+        # elif self.birth_record[5] == kin_type: #
+            # which = 2  
+        # if unlink is False:
+            # if which == 1:
+                # query = update_findings_persons_by_id1
+            # elif which == 2:
+                # query = update_findings_persons_by_id2 
+            # cur.execute(query, (new_parent_id, birth_fpid))
+            # conn.commit()        
+        # elif unlink is True:
+            # if which == 1:
+                # self.query = update_findings_persons_by_id1
+            # elif which == 2:
+                # self.query = update_findings_persons_by_id2
 
     def update_partner(self, final, conn, cur, widg):
     
@@ -523,6 +600,7 @@ class NuclearFamiliesTable(Frame):
             EntryAuto.all_person_autofills.append(pardent)
             pardent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
             pardent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
+            pardent.bind("<Double-Button-1>", self.change_current_person)
 
             v["widget"] = pardent
             self.nuke_inputs.append(pardent)
@@ -552,6 +630,7 @@ class NuclearFamiliesTable(Frame):
                         EntryAuto.all_person_autofills.append(ent)
                         ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
                         ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
+                        ent.bind("<Double-Button-1>", self.change_current_person)
                     elif c == 2:
                         text = dkt["gender"]
                         ent = EntryAuto(progeny_frame, width=0)
@@ -704,7 +783,7 @@ class NuclearFamiliesTable(Frame):
         births = []
         self.progeny_dicts = {}
         births = [tup for q in (result1, result2) for tup in q]
-
+        print("line", looky(seeline()).lineno, "births:", births)
         marital_event_types = get_all_marital_event_types()
         qlen = len(marital_event_types)
         sql = '''
@@ -731,9 +810,11 @@ class NuclearFamiliesTable(Frame):
         event_pards = list(set(event_pards))
         for tup in births:
             if tup[2] != self.current_person:
-                pard_id = tup[2]                
+                pard_id = tup[2]
+                print("line", looky(seeline()).lineno, "pard_id:", pard_id)                
             elif tup[4] != self.current_person:
                 pard_id = tup[4]
+                print("line", looky(seeline()).lineno, "pard_id:", pard_id)
             offspring_pards.append(pard_id)
             all_partners.append(pard_id)
             all_partners = list(set(all_partners))
@@ -1014,12 +1095,12 @@ class NuclearFamiliesTable(Frame):
     Trying to provide the user with options for unlinking (from one
     or both persons involved, etc.) proved to be an ever-expanding bag of
     worms. Seems better to do a simple unlink and let the user do
-    the work instead of giving the user unlink options and then 
-    giving him options that are long and hard to understand, including
+    the work instead of giving the user unlink options that are wordy and 
+    hard to understand, including
     the option to delete a person altogether, and
-    then write hundreds of lines of code to make it possible for the
+    then write hundreds of lines of tangled, unmaintainable code to make it possible for the
     program to do what the user should be carefully doing himself one
-    piece at a time so he'll know how the change was made and when. The rest of this diatribe was written in an attempt to figure out what to do, and the answer turned out to be,
+    piece at a time so he'll know how the change was made and when. The rest of this was written in an attempt to figure out what to do, and the answer turned out to be,
     "as little as possible"...
 
     (old:)

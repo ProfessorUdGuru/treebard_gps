@@ -48,7 +48,7 @@ NAME_TYPES_HIERARCHY = (
     'legally changed name', 'pseudonym', 'pen name', 'stage name', 'nickname', 
     'call name', 'official name', 'anglicized name', 'religious order name', 
     'alternate spelling', 'mis-spelling', 'ID number', 'handle', 
-    'other name type', 'given name', 'wrong name')
+    'other name type', 'given name', 'unknown name', 'wrong name')
 
 def get_current_person():
     current_person_id = 1
