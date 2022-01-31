@@ -41,7 +41,7 @@ from query_strings import (
     update_findings_persons_age1, select_max_finding_id, insert_place_new,
     select_event_type_couple_bool, insert_kin_type_new, update_event_types,    
     insert_places_places_new, insert_finding_places_new_event,
-    insert_event_type_new, select_max_event_type_id, delete_finding,delete_claims_findings, delete_finding_places, delete_findings_persons,
+    insert_event_type_new, select_max_event_type_id, delete_finding,delete_claims_findings, delete_finding_places, delete_findings_persons, insert_persons_persons,
     delete_findings_roles_finding, delete_findings_notes_finding,         
     select_findings_for_person, insert_finding_places_new,
     select_event_type_after_death, select_event_type_after_death_bool,
@@ -173,20 +173,41 @@ def get_couple_findings(
         cur, current_person, rowtotype, findings_data, 
         non_empty_roles, non_empty_notes):
 
+    # couple_kin_type_ids = get_couple_kin_types()
+    # curr_per_kin_types = tuple([current_person] + couple_kin_type_ids)
+    # sql =   '''
+                # SELECT finding_id 
+                # FROM findings_persons 
+                # WHERE person_id1 = ?
+                    # AND kin_type_id1 in ({})
+            # '''.format(
+                # ','.join('?' * (len(curr_per_kin_types) - 1)))
+
     couple_kin_type_ids = get_couple_kin_types()
     curr_per_kin_types = tuple([current_person] + couple_kin_type_ids)
     sql =   '''
                 SELECT finding_id 
                 FROM findings_persons 
+                JOIN persons_persons
+                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
                 WHERE person_id1 = ?
                     AND kin_type_id1 in ({})
             '''.format(
                 ','.join('?' * (len(curr_per_kin_types) - 1)))
     cur.execute(sql, curr_per_kin_types)
     couple_findings1 = [i[0] for i in cur.fetchall()]
+    # sql =   '''
+                # SELECT finding_id 
+                # FROM findings_persons 
+                # WHERE person_id2 = ?
+                    # AND kin_type_id2 in ({})
+            # '''.format(
+                # ','.join('?' * (len(curr_per_kin_types) - 1)))
     sql =   '''
                 SELECT finding_id 
                 FROM findings_persons 
+                JOIN persons_persons
+                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
                 WHERE person_id2 = ?
                     AND kin_type_id2 in ({})
             '''.format(
@@ -199,6 +220,7 @@ def get_couple_findings(
         dkt = dict(rowtotype)
         cur.execute(select_findings_details_couple, finding_id)
         gotgot = cur.fetchone()
+        print("line", looky(seeline()).lineno, "gotgot:", gotgot)
         if gotgot:
             if gotgot[0] == current_person:
                 dkt["age"] = gotgot[1]
@@ -668,11 +690,12 @@ class EventsTable(Frame):
                 if right_person[0] == self.current_person:
                     cur.execute(
                         update_findings_persons_age1, 
-                        (self.final, self.finding, self.current_person))
+                        (self.final, self.finding, right_person[2]))
                 elif right_person[1] == self.current_person:
                     cur.execute(
                         update_findings_persons_age2, 
-                        (self.final, self.finding, self.current_person))
+                        (self.final, self.finding, right_person[2])) 
+                        # (self.final, self.finding, self.current_person))
                 conn.commit()
 
         current_file = get_current_file()[0]
@@ -892,6 +915,7 @@ class EventsTable(Frame):
                     widg.insert(0, text) 
                 if c == 0:
                     dkt = self.findings_data[finding_id]
+                    print("line", looky(seeline()).lineno, "dkt:", dkt)
                     evtype = dkt["event"]
                     if evtype == "offspring":
                         name = dkt.get("child_name")
@@ -1528,12 +1552,17 @@ class NewEventDialog(Toplevel):
         else:
             other_person_id = None
 
-        cur.execute(
-            insert_findings_persons_new_couple,
-            (self.new_finding, self.current_person, self.age_1, 
-                other_person_id, self.age_2))
-        conn.commit()
+        # cur.execute(
+            # insert_findings_persons_new_couple,
+            # (self.new_finding, self.current_person, self.age_1, 
+                # other_person_id, self.age_2))
+        # conn.commit()
 
+        cur.execute(insert_findings_persons_new_couple, (
+            self.new_finding, self.age_1, self.age_2))
+        conn.commit()
+        cur.execute(insert_persons_persons, (self.current_person, other_person_id))
+        conn.commit()
         self.create_birth_event(other_person_id, cur, conn)
 
     def create_birth_event(self, child_id, cur, conn):

@@ -1,6 +1,6 @@
 # treebard_root_025.py
 
-# Up till now I didn't realize I had no way to differentiate, in findings_persons, one couple from another, if one of the partners was unknown. Say for example James has two records of an offspring event with null partners in each. We don't know if the two children are siblings but Treebard will assume they are since the 2 partners are both null. The reason I changed from having a person_id column in findings_persons, and a separate record for each of the partners in a couple, was that I needed a single row for both persons. But it has been a real pain to write the logic, since I have to check both partners and parse order 1_2 or 2_1 etc. Now I find it isn't even capable of doing what needs to be done, so have to change the structure again. Instead of a person_id1 and person_id2 column in findings_persons, there has to be a single FK for a person_person table wherein each couple will have a single row and single ID. This will solve all my problems except now I have to rewrite all the code that tried to deal with findings_persons, so have saved a copy of the existing files up to now and will rewrite all that code now after creating the new table and fixing findings_persons table.
+# Up till now I didn't realize I had no way to differentiate, in findings_persons, one couple from another, if one of the partners was unknown. Say for example James has two records of an offspring event with null partners in each. We don't know if the two children are siblings but Treebard will assume they are since the 2 partners are both null. This won't work. There has to be a particular ID for a particular couple, at least if the couple has offspring. The reason I changed from having a person_id column in findings_persons with a separate record for each of the partners in a couple, was that I needed a single row for both persons. But it has been a real pain to write the logic, since I have to check both partners, person_id1 and person_id2, and parse order 1_2 or 2_1 etc. Now I find this complification isn't even capable of doing what needs to be done, so have to change the structure again. Instead of a person_id1 and person_id2 column in findings_persons, there has to be a single FK for a person_person table wherein each couple will have a single row and single ID. This will solve all my problems except now I have to rewrite all the code that tried to deal with findings_persons, so have saved a copy of the existing files up to now and will rewrite all that code now after creating the new table and fixing findings_persons table. Also I was hoping to start using M and F with couples since we're talking about biological couples, to avoid the person1 and person2 designations which require extra code. It would be easier to order by MF or FM but this is wrong. If the gender of neither partner was known, then it stops data from being input, if gender is used to do any logic. Yeah but, for example, I've already got hard-coded inputs for Mother and Father so I'm already using gender, just haven't admitted it's necessary. And how many couples are there in which neither parent's gender is known? I think the only way to proceed is to assume that one partner's gender will always be known or guessable, otherwise a lot of work will be done to accomodate a very rare edge case. So the problem remains of what to do with the age and kin_type_id fields in findings_persons. They can't go in persons_persons. Gender is already in the person table since it's a one-to-one relationship with the person. Just have to change the queries to obtain gender from person table? There can now only be one FK for person in the findings_persons table, and it's really an FK for the couple since each row in persons_persons references the person table twice. Although it seems undesirable, I don't see any way around leaving the 2 age columns and 2 kin_type columns in findings_persons, since it is a findings table and that is what's needed. But it has to be renamed with _m & _f instead of _1 & _2.
 
 import tkinter as tk
 import sqlite3    
@@ -152,7 +152,7 @@ def start():
     splash = SplashScreen(root, treebard)
     splash.open_treebard(treebard.make_main_window)
     # Manually closing the opening dialog throws an error re: scroll_mouse. This     
-    #   error was solved everywhere else by placing these lines of code last.
+    #   error was prevented everywhere else by placing these lines of code last.
     try:
         treebard.scroll_mouse.append_to_list(
             treebard.main.nuke_table.nuke_canvas, resizable=False)
@@ -169,8 +169,11 @@ if __name__ == '__main__':
 
 # DO LIST
 
+# IMPORTANT: THESE BRANCHES HAVE TO BE A LOT SMALLER. FIND A WAY TO BREAK THEM UP INTO MANY SMALL COMMITS INSTEAD OF BIG, EVER-EXPANDING COMMITS. FOR EXAMPLE, COMMIT THE CURRENT BRANCH AS SOON AS THE NEW DB CHANGED IS WORKING. STOP WORRYING ABOUT WHETHER EVERYTHING WORKS YET. GET OUT OF THE MONTHS-LONG HEADACHE MODE AND START HAVING SOME FUN AND SEEING SOME PROGRESS.
+
 # BRANCH: kin
- 
+
+# after new db design is tested, copy sample_tree.tbd schema of person_person and findings_persons to default_new_tree and _untouched.db
 # NEXT STEP IS TO WRITE CODE FOR THE ADD PARTNER/ADD CHILD BUTTONS.
 # double click to change curr per
 # if gender is "other" don't display it in child table

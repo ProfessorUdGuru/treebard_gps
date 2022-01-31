@@ -16,7 +16,6 @@ from dates import format_stored_date, get_date_formats, OK_MONTHS
 from events_table import get_current_person    
 from query_strings import (
     select_finding_id_birth, delete_findings_persons,
-    update_findings_persons_by_id1, update_findings_persons_by_id2,
     select_person_id_gender, select_finding_date, select_finding_id_birth,
     select_finding_id_death, select_finding_date_and_sorter,
     update_findings_persons_finding,
@@ -140,7 +139,8 @@ class NuclearFamiliesTable(Frame):
                 self.kinradnew.config(state="normal") 
 
     def make_new_kin_inputs(self):
-        """ Get self.new_kin_frame into the correct row by ungridding it in self.findings_tbale.forget_cells() and regridding it in self.make_nuke_inputs()
+        """ Get self.new_kin_frame into the correct row by ungridding it in 
+            self.findings_table.forget_cells() and regridding it in self.make_nuke_inputs()
         """
         self.new_kin_frame = Frame(self.nuke_window)
         self.kinradnew = Radiobutton(
@@ -178,17 +178,20 @@ class NuclearFamiliesTable(Frame):
         qlen = len(marital_event_types)
         marital_event_types.insert(0, self.current_person)
         marital_event_types.insert(0, self.current_person)
-        
+
         sql = '''
                 SELECT findings_persons_id, person_id1, kin_type_id1,
                     person_id2, kin_type_id2, findings_persons.finding_id, 
                     date
                 FROM findings_persons
+                JOIN persons_persons
+                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
                 JOIN finding
                     ON finding.finding_id = findings_persons.finding_id
                 WHERE (person_id1 = ? OR person_id2 = ?) 
                     AND event_type_id in ({})
             '''.format(",".join(["?"] * qlen))
+
         cur.execute(sql, marital_event_types)
         marital_events_current_person = [list(i) for i in cur.fetchall()]
         cur.close()
@@ -203,22 +206,6 @@ class NuclearFamiliesTable(Frame):
 
     def get_original(self, evt):
         self.original = evt.widget.get()
-
-    # def edit_parent(self, final, widg):
-        # unlink = False
-        # if "#" in final:
-            # new_parent_id = final.split("#")[1]
-        # elif len(final) == 0:
-            # new_parent_id = None
-            # unlink = True
-        # else:
-            # new_parent_id = open_new_person_dialog(
-                # self, widg, self.root, self.treebard, self.formats)
-            # people = make_all_names_list_for_person_select()
-            # all_birth_names = EntryAuto.create_lists(people)
-            # for ent in EntryAuto.all_person_autofills:
-                # ent.values = all_birth_names
-        # return new_parent_id, unlink 
 
 # IT'S NOT CURRENT PERSON SO IT CAN'T BE CHANGED, HAVE TO MAKE CURRENT FIRST.
 # Don't disable it; this will make it look like a label whereas it needs to accept highlighting and insertion cursor so user knows it can do something. Just make it re-insert the original name no matter what user tries to do. If empty, it will accept any input including new person. It will autofill normally and PersonAdd dlg will open. But if a person is in the input, 3 things can happen: 1) it will autofill the person who is already in the field, adding the #id as per normal, if the right key strokes for that person are tried. 2) if any other keys are tried, it will refill in with self.original. 3) If delete or backspace is pressed, it will unlink and the dlg will list everything that was unlinked AND save a deletion log so the user can reference which events were altered.
@@ -324,30 +311,57 @@ class NuclearFamiliesTable(Frame):
     def update_partner(self, final, conn, cur, widg):
     
         def update_partners_child(birth_fpid, order, parent_type, new_partner_id):
-            query1 = '''
-                UPDATE findings_persons
-                SET (person_id2, age2) = (?, "")
+            select_findings_persons_ppid = '''
+                SELECT persons_persons_id
+                FROM findings_persons
                 WHERE findings_persons_id = ?
-             '''
-
-            query2 = '''
+            '''
+            update_findings_persons_age2_blank = '''
                 UPDATE findings_persons
-                SET (person_id1, age1) = (?, "")
+                SET age2 = ""
                 WHERE findings_persons_id = ?
-             '''
-            print("line", looky(seeline()).lineno, "running:")
+            '''
+            update_persons_persons_2 = '''
+                UPDATE persons_persons
+                SET person_id2 = ?
+                WHERE persons_persons_id = ?
+            '''
+            update_findings_persons_age1_blank = '''
+                UPDATE findings_persons
+                SET age1 = ""
+                WHERE findings_persons_id = ?
+            '''
+            update_persons_persons_1 = '''
+                UPDATE persons_persons
+                SET person_id1 = ?
+                WHERE persons_persons_id = ?
+            '''
+            cur.execute(select_findings_persons_ppid, (birth_fpid))
+            ppid = cur.fetchone()[0]
             
             if parent_type == "Mother":
-                if order == "1-2":                    
-                    cur.execute(query2, (new_partner_id, birth_fpid))
-                elif order == "2-1":                    
-                    cur.execute(query1, (new_partner_id, birth_fpid))  
+                if order == "1-2":   
+                    cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
+                    conn.commit()
+                    cur.execute(update_persons_persons_2, (new_partner_id, ppid))
+                    conn.commit()
+                elif order == "2-1":      
+                    cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
+                    conn.commit()
+                    cur.execute(update_persons_persons_2, (new_partner_id, ppid))
+                    conn.commit()
+                    
             elif parent_type == "Father":
-                if order == "1-2":                    
-                    cur.execute(query1, (new_partner_id, birth_fpid))
-                elif order == "2-1":                    
-                    cur.execute(query2, (new_partner_id, birth_fpid))
-            conn.commit()
+                if order == "1-2":      
+                    cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
+                    conn.commit()
+                    cur.execute(update_persons_persons_2, (new_partner_id, ppid))
+                    conn.commit()
+                elif order == "2-1":   
+                    cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
+                    conn.commit()
+                    cur.execute(update_persons_persons_2, (new_partner_id, ppid))
+                    conn.commit()
 
         def get_new_partner_id(final, widg):
             new_partner_id = 0
@@ -362,9 +376,7 @@ class NuclearFamiliesTable(Frame):
             return new_partner_id     
 
         orig = self.original
-        print("line", looky(seeline()).lineno, "widg:", widg)
         new_partner_id = get_new_partner_id(final, widg)
-        print("line", looky(seeline()).lineno, "new_partner_id:", new_partner_id)
         # if dialog canceled change nothing in db
         if new_partner_id is None:
             widg.delete(0, 'end')
@@ -373,7 +385,6 @@ class NuclearFamiliesTable(Frame):
         elif new_partner_id == 0:
             new_partner_id = None
         else:
-            # print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
             for k,v in self.progeny_dicts.items():
                 if widg != v["widget"]:
                     continue
@@ -498,13 +509,10 @@ class NuclearFamiliesTable(Frame):
             if col == 1:
                 self.update_child_name(widg, conn, cur)
             elif col == 2:
-                print("line", looky(seeline()).lineno, "self.final:", self.final)
                 self.update_child_gender()
             elif col == 3:
-                print("line", looky(seeline()).lineno, "self.final:", self.final)
                 self.update_child_birth()
             elif col == 5:
-                print("line", looky(seeline()).lineno, "self.final:", self.final)
                 self.update_child_death()
             else:
                 print("line", looky(seeline()).lineno, "case not handled:")    
@@ -704,7 +712,10 @@ class NuclearFamiliesTable(Frame):
             birth_id = birth_id[0]
             cur.execute(
                 '''
-                    SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 FROM findings_persons WHERE finding_id = ?
+                    SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 FROM findings_persons 
+                    JOIN persons_persons
+                        ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                    WHERE finding_id = ?
                 ''',
                 (birth_id,))
             birth_record = cur.fetchall()
@@ -770,13 +781,21 @@ class NuclearFamiliesTable(Frame):
 
         cur.execute(
             '''
-                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 FROM findings_persons WHERE person_id1 = ? AND kin_type_id1 IN (1,2)
+                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 
+                FROM findings_persons 
+                JOIN persons_persons
+                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                WHERE person_id1 = ? AND kin_type_id1 IN (1, 2)
             ''',
             (self.current_person,))
         result1 = cur.fetchall()
         cur.execute(
             '''
-                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1,  person_id2, kin_type_id2 FROM findings_persons WHERE person_id2 = ? AND kin_type_id2 IN (1,2)
+                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 
+                FROM findings_persons 
+                JOIN persons_persons
+                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                WHERE person_id2 = ? AND kin_type_id2 IN (1, 2)
             ''',
             (self.current_person,))
         result2 = cur.fetchall()
@@ -789,6 +808,8 @@ class NuclearFamiliesTable(Frame):
         sql = '''
                 SELECT person_id1, person_id2
                 FROM findings_persons
+                JOIN persons_persons
+                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
                 JOIN finding
                     ON finding.finding_id = findings_persons.finding_id
                 WHERE event_type_id in ({})                    

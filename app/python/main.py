@@ -41,15 +41,10 @@ from names import (
 from search import PersonSearch
 from query_strings import (
     select_images_elements_main_image, select_current_person_id,
-    select_finding_id_birth, select_findings_persons_ma_id1, 
-    select_findings_persons_pa_id1, select_findings_persons_ma_id2, 
-    select_findings_persons_pa_id2, select_findings_persons_partner1,
-    select_findings_persons_partner2, select_person_id_gender,
+    select_finding_id_birth, select_person_id_gender,
     select_person_id_finding, select_date_finding, select_finding_event_type,
     select_finding_id_death, 
-    select_findings_persons_id_kin_type1, select_findings_persons_id_kin_type2,
-    update_findings_persons_by_id1, update_findings_persons_by_id2,
-    update_findings_persons_by_id1_unlink, update_findings_persons_by_id2_unlink,
+    select_findings_persons_id_kin_type1, select_findings_persons_id_kin_type2, 
 )
 import dev_tools as dt
 from dev_tools import looky, seeline

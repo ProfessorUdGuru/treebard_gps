@@ -17,9 +17,9 @@ from messages_context_help import search_person_help_msg
 from query_strings import (
     select_person_distinct_like, select_name_details,
     select_finding_sorter, select_name_sort_order, select_person_death_date,
-    select_person_birth_date, select_findings_persons_ma_id1, 
-    select_findings_persons_ma_id2, select_findings_persons_pa_id1,
-    select_findings_persons_pa_id2
+    select_person_birth_date, select_persons_persons_ma_id1, 
+    select_persons_persons_ma_id2, select_persons_persons_pa_id1,
+    select_persons_persons_pa_id2
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -593,12 +593,12 @@ class PersonSearch(Toplevel):
     def get_ma(self):
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        cur.execute(select_findings_persons_ma_id1, (self.offspring_event,))
+        cur.execute(select_persons_persons_ma_id1, (self.offspring_event,))
         mom = cur.fetchone()
         if mom:
             self.ma_id = mom[0]
         else:
-            cur.execute(select_findings_persons_ma_id2, (self.offspring_event,))
+            cur.execute(select_persons_persons_ma_id2, (self.offspring_event,))
             mom = cur.fetchone()
             if mom:
                 self.ma_id = mom[0]
@@ -619,12 +619,12 @@ class PersonSearch(Toplevel):
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
 
-        cur.execute(select_findings_persons_pa_id1, (self.offspring_event,))
+        cur.execute(select_persons_persons_pa_id1, (self.offspring_event,))
         pop = cur.fetchone()
         if pop:
             self.pa_id = pop[0]
         else:
-            cur.execute(select_findings_persons_pa_id2, (self.offspring_event,))
+            cur.execute(select_persons_persons_pa_id2, (self.offspring_event,))
             pop = cur.fetchone()
             if pop:
                 self.pa_id = pop[0]

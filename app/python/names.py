@@ -25,7 +25,7 @@ from query_strings import (
     insert_finding_birth_new_person, insert_finding_places_new,
     select_current_person_id, delete_name_person, delete_findings_roles_person,
     select_name_person, delete_links_links_person, delete_links_links_name,
-    update_findings_persons_1_null, update_findings_persons_2_null,
+    update_persons_persons_1_null, update_persons_persons_2_null,
     delete_finding_person, delete_claims_roles_person, delete_person,
     update_claims_persons_1_null, update_claims_persons_2_null,
     delete_images_elements_person, delete_claim_person,    
@@ -238,10 +238,10 @@ def delete_person_from_tree(person_id):
     cur.execute(delete_findings_roles_person, (person_id,))
     conn.commit()
     # findings_persons.person_id1
-    cur.execute(update_findings_persons_1_null, (person_id,))
+    cur.execute(update_persons_persons_1_null, (person_id,))
     conn.commit()
     # findings_persons.person_id2
-    cur.execute(update_findings_persons_2_null, (person_id,))
+    cur.execute(update_persons_persons_2_null, (person_id,))
     conn.commit()
     # finding
     cur.execute(delete_finding_person, (person_id,))
