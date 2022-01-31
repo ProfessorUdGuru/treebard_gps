@@ -1,6 +1,5 @@
 # families.py
 
-# I'm not liking how this nukes area is supposed to work. It's bad. It shd be simple, no dialogs, no options, and the interface shd not be offering to do megawork for the user bec the user has to read confusing options, make a choice, have all this stuff done, then realize he chose the wrong option and a bunch of autostuff he didn't do himself now has to be undone. If a parent is blank, it can fill with anything. If not, it's disabled and to change it you make the parent the current person. Changing anyone who is not the current person on the current person tab is a bag of worms because of all the linked events and children. Also shd consider the double click as a simple way to change curr per. This needs to be done over. Also changing a spouse just changes the name of the existing spouse, all events and children stay the same. To change the event to a diff person you shd have to go to the event itself and make the change. To change the child's parent to a different person you shd have to go to the child's page and make the change. Things have to be done one thing at a time or the interface is unmanageable, the code is extremely complex, and the user is confused, always facing complexity and making complicated decisions. START OVER on the update procedures, keep the table, and also consider if having all the person inputs be autofill is really the right way to do it. STICK TO THE CURRENT ELEMENT SYSTEM: to change an event, you have to make it the current event (in the event tab). To change a person, you go to the person tab for that person. To change a relationship... etc. Saving the current garble as familiesx.py in superceded, time to begin again. Delete still works but just unlinks, anything else is up to the user to do one thing at a time. For ex if you delete a partner, they are unlinked from mar evts & kids. If you delete a parent, the curr per is unlinked from both parents (in model) but this is where the user might be given a choice to unlink from one and not the other. SINCE PARENTS ARE FINISHED CONSIDER KEEPING THIS CODE INTACT.
 
 import tkinter as tk
 import sqlite3
@@ -211,9 +210,6 @@ class NuclearFamiliesTable(Frame):
 # Don't disable it; this will make it look like a label whereas it needs to accept highlighting and insertion cursor so user knows it can do something. Just make it re-insert the original name no matter what user tries to do. If empty, it will accept any input including new person. It will autofill normally and PersonAdd dlg will open. But if a person is in the input, 3 things can happen: 1) it will autofill the person who is already in the field, adding the #id as per normal, if the right key strokes for that person are tried. 2) if any other keys are tried, it will refill in with self.original. 3) If delete or backspace is pressed, it will unlink and the dlg will list everything that was unlinked AND save a deletion log so the user can reference which events were altered.
 
     def change_current_person(self, evt):
-        
-        print("line", looky(seeline()).lineno, "evt.widget:", evt.widget)
-        print("line", looky(seeline()).lineno, "evt.widget.grid_info()['column']:", evt.widget.grid_info()['column'])
         widg = evt.widget
         if len(widg.get()) == 0:
             return
@@ -226,12 +222,10 @@ class NuclearFamiliesTable(Frame):
         elif widg.winfo_name().startswith("pard"):
             print("line", looky(seeline()).lineno, "update_partner:")
         else:
-            # print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
             for k,v in self.progeny_dicts.items():
                 if v["widget"] == widg:
                     print("line", looky(seeline()).lineno, "v['children']:", v['children'])
                     break
-            # print("line", looky(seeline()).lineno, "self.progeny_dicts[iD]['children']:", self.progeny_dicts[iD]['children'])
             col = widg.grid_info()["column"]
             if col == 1:
                 print("line", looky(seeline()).lineno, "update_child_name:")
@@ -336,7 +330,7 @@ class NuclearFamiliesTable(Frame):
                 SET person_id1 = ?
                 WHERE persons_persons_id = ?
             '''
-            cur.execute(select_findings_persons_ppid, (birth_fpid))
+            cur.execute(select_findings_persons_ppid, (birth_fpid,))
             ppid = cur.fetchone()[0]
             
             if parent_type == "Mother":
@@ -494,11 +488,9 @@ class NuclearFamiliesTable(Frame):
         if widg_name == "ma":
             self.update_parent(self.final, conn, cur, widg, kin_type=1)
         elif widg_name == "pa":
-            print("line", looky(seeline()).lineno, "running:")
             self.update_parent(self.final, conn, cur, widg, kin_type=2)
         elif widg_name.startswith("pard"):
             if col == 2:
-                print("line", looky(seeline()).lineno, "widg:", widg)
                 self.update_partner(self.final, conn, cur, widg)                
             else:
                 print(
@@ -802,7 +794,6 @@ class NuclearFamiliesTable(Frame):
         births = []
         self.progeny_dicts = {}
         births = [tup for q in (result1, result2) for tup in q]
-        print("line", looky(seeline()).lineno, "births:", births)
         marital_event_types = get_all_marital_event_types()
         qlen = len(marital_event_types)
         sql = '''
@@ -831,11 +822,9 @@ class NuclearFamiliesTable(Frame):
         event_pards = list(set(event_pards))
         for tup in births:
             if tup[2] != self.current_person:
-                pard_id = tup[2]
-                print("line", looky(seeline()).lineno, "pard_id:", pard_id)                
+                pard_id = tup[2]              
             elif tup[4] != self.current_person:
                 pard_id = tup[4]
-                print("line", looky(seeline()).lineno, "pard_id:", pard_id)
             offspring_pards.append(pard_id)
             all_partners.append(pard_id)
             all_partners = list(set(all_partners))

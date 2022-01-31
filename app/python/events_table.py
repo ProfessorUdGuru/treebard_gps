@@ -220,7 +220,6 @@ def get_couple_findings(
         dkt = dict(rowtotype)
         cur.execute(select_findings_details_couple, finding_id)
         gotgot = cur.fetchone()
-        print("line", looky(seeline()).lineno, "gotgot:", gotgot)
         if gotgot:
             if gotgot[0] == current_person:
                 dkt["age"] = gotgot[1]
@@ -915,7 +914,6 @@ class EventsTable(Frame):
                     widg.insert(0, text) 
                 if c == 0:
                     dkt = self.findings_data[finding_id]
-                    print("line", looky(seeline()).lineno, "dkt:", dkt)
                     evtype = dkt["event"]
                     if evtype == "offspring":
                         name = dkt.get("child_name")
