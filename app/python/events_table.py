@@ -41,14 +41,16 @@ from query_strings import (
     update_findings_persons_age1, select_max_finding_id, insert_place_new,
     select_event_type_couple_bool, insert_kin_type_new, update_event_types,    
     insert_places_places_new, insert_finding_places_new_event,
-    insert_event_type_new, select_max_event_type_id, delete_finding,delete_claims_findings, delete_finding_places, delete_findings_persons, insert_persons_persons,
+    insert_event_type_new, select_max_event_type_id, delete_finding,delete_claims_findings, 
+    delete_finding_places, delete_findings_persons, insert_persons_persons,
     delete_findings_roles_finding, delete_findings_notes_finding,         
     select_findings_for_person, insert_finding_places_new,
     select_event_type_after_death, select_event_type_after_death_bool,
     select_findings_persons_parents, select_findings_persons_age,    
     insert_finding_birth, update_findings_persons_age2, select_person,
     select_finding_event_type, delete_findings_persons_offspring,
-    select_findings_persons_person_id, update_finding_date)
+    select_findings_persons_person_id, update_finding_date, 
+    select_findings_persons_alt_parents)
 
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -173,16 +175,6 @@ def get_couple_findings(
         cur, current_person, rowtotype, findings_data, 
         non_empty_roles, non_empty_notes):
 
-    # couple_kin_type_ids = get_couple_kin_types()
-    # curr_per_kin_types = tuple([current_person] + couple_kin_type_ids)
-    # sql =   '''
-                # SELECT finding_id 
-                # FROM findings_persons 
-                # WHERE person_id1 = ?
-                    # AND kin_type_id1 in ({})
-            # '''.format(
-                # ','.join('?' * (len(curr_per_kin_types) - 1)))
-
     couple_kin_type_ids = get_couple_kin_types()
     curr_per_kin_types = tuple([current_person] + couple_kin_type_ids)
     sql =   '''
@@ -196,13 +188,6 @@ def get_couple_findings(
                 ','.join('?' * (len(curr_per_kin_types) - 1)))
     cur.execute(sql, curr_per_kin_types)
     couple_findings1 = [i[0] for i in cur.fetchall()]
-    # sql =   '''
-                # SELECT finding_id 
-                # FROM findings_persons 
-                # WHERE person_id2 = ?
-                    # AND kin_type_id2 in ({})
-            # '''.format(
-                # ','.join('?' * (len(curr_per_kin_types) - 1)))
     sql =   '''
                 SELECT finding_id 
                 FROM findings_persons 
@@ -352,7 +337,12 @@ def get_note_findings(
         findings_data[finding_id]["notes"] = current_notes
 
 def get_findings():
-    
+    """ Runs once for events table and once for attributes table. Seems like
+        some of this code should only be running once such as birth/parentage
+        stuff since all birth events (even undated) appear only in the events
+        table and alt parents appear on the nukes table which is only in the
+        person tab, not the attributes tab.
+    """
     findings_data = {}
     current_person = get_current_person()
     current_file = get_current_file()[0]
@@ -364,7 +354,7 @@ def get_findings():
 
     cur.execute(select_all_findings_current_person, (current_person,))
     generic_finding_ids = cur.fetchall()
-
+    print("line", looky(seeline()).lineno, "generic_finding_ids:", generic_finding_ids)
     cur.execute(select_all_findings_roles_ids_distinct)
     non_empty_roles = [i[0] for i in cur.fetchall()]
 
@@ -380,6 +370,8 @@ def get_findings():
             get_birth_findings(
                 dkt, cur, current_person, findings_data,
                 non_empty_roles, non_empty_notes)
+        elif dkt["event"] in ("fosterage", "guardianship", "adoption"):
+            autocreate_alt_parents(dkt, finding_id, cur)
 
     get_couple_findings(
         cur, current_person, rowtotype, findings_data, 
@@ -389,20 +381,34 @@ def get_findings():
     conn.close()  
     return findings_data, non_empty_roles, non_empty_notes
 
+def autocreate_alt_parents(dkt, finding_id, cur):
+    print("line", looky(seeline()).lineno, "dkt['event']:", dkt['event'])
+    print("line", looky(seeline()).lineno, "finding_id:", finding_id)
+    event_type = dkt["event"]
+    guardians = []
+    adoptors = []
+    fosterers = []
+    cur.execute(select_findings_persons_alt_parents, finding_id)
+    alt_parents = cur.fetchone()
+    print("line", looky(seeline()).lineno, "alt_parents:", alt_parents)
+
+    
+
+    
+
 class EventsTable(Frame):
 
-    instances = []
+    # instances = []
 
     def __init__(
-            self, master, root, treebard, main, formats, 
-            attrib=False, *args, **kwargs):
+            self, master, root, treebard, main, formats, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
         self.root = root
         self.treebard = treebard
         self.main_window = main
         self.formats = formats
-        self.attrib = attrib
+        # self.attrib = attrib
 
         self.main_canvas = main.master
 
@@ -442,6 +448,7 @@ class EventsTable(Frame):
 
         self.make_header()
         self.make_table_cells()
+        print("line", looky(seeline()).lineno, "running in init:")
         self.set_cell_content()
         self.show_table_cells()
 
@@ -522,7 +529,6 @@ class EventsTable(Frame):
             elif couple_event_old == 1:
                 delete_couple_finding()
             self.redraw()
-            # self.redraw(current_person=self.current_person)
             cur.close()
             conn.close()
 
@@ -661,8 +667,10 @@ class EventsTable(Frame):
                 self.final, date_prefs=date_prefs)
             widg.delete(0, 'end')
             widg.insert(0, formatted_date)
-            for instance in EventsTable.instances:
-                instance.redraw()
+            # for instance in EventsTable.instances:
+                # instance.redraw()
+            # EventsTable.instance.redraw() # shd this just be self.redraw?
+            self.redraw()
 
         def update_place():
             cur.execute(select_nesting_fk_finding, (self.finding,))
@@ -792,15 +800,18 @@ class EventsTable(Frame):
         self.findings_data, current_roles, current_notes = get_findings()
         copy = dict(self.findings_data)
         self.attributes = {}
-        for k,v in copy.items():        
-            if v["event"] in self.events_only_even_without_dates:
-                pass
-            elif len(v["date"]) == 0:
-                self.attributes[k] = v
-                del self.findings_data[k]
+        # for k,v in copy.items():        
+            # if v["event"] in self.events_only_even_without_dates:
+                # pass
+            # elif len(v["date"]) == 0:
+                # self.attributes[k] = v
+                # del self.findings_data[k]
+        print("line", looky(seeline()).lineno, "self.findings_data:", self.findings_data)
+        print("line", looky(seeline()).lineno, "self.attributes:", self.attributes)
 
-        if self.attrib is True:
-            self.findings_data = self.attributes
+        # if self.attrib is True:
+            # self.findings_data = self.attributes
+# to use the existing algorithm, this is the right place to add findings_data & attributes together so don't even bother to separate them till it's time to sort, then put undated findings below after_death findings
 
         finding_ids = list(self.findings_data.keys())
         table_size = len(self.findings_data)
@@ -833,15 +844,13 @@ class EventsTable(Frame):
                 self.findings_data[finding_id]["place"], 
                 self.findings_data[finding_id]["particulars"]]
 
-        # self.show_table_cells()
-
     def sort_by_date(self):
         after_death = []
         for finding_id in self.findings_data:
             event_type = self.findings_data[finding_id]['event']
             sorter = self.findings_data[finding_id]['sorter']
             if event_type in self.after_death_events:
-                after_death.append([finding_id, event_type, sorter])
+                after_death.append([finding_id, event_type, sorter])             
 
         after_death = sorted(after_death, key=lambda i: i[2])
         m = 0
@@ -849,9 +858,11 @@ class EventsTable(Frame):
             lst[2] = [20000 + m, 0, 0]
             m += 1
 
+        undated = []
         row_order = []
         for finding_id in self.findings_data:
             event_type = self.findings_data[finding_id]['event']
+            date = self.findings_data[finding_id]['date']
             if event_type == "birth":
                 sorter = [-10000, 0, 0]
                 row_order.append([finding_id, event_type, sorter])
@@ -860,12 +871,20 @@ class EventsTable(Frame):
                 row_order.append([finding_id, event_type, sorter])
             elif event_type in (self.after_death_events):
                 pass
+            elif len(date) == 0:
+                undated.append([finding_id, event_type, sorter])
             else:
                 sorter = self.findings_data[finding_id]['sorter']
                 row_order.append([finding_id, event_type, sorter])
 
+        undated = sorted(undated, key=lambda i: i[1])
+        n = 0
+        for lst in undated:
+            lst[2] = [30000 + n, 0, 0]
+            n += 1
+
         row_order = sorted(row_order, key = lambda i: i[2])
-        all_sorted = row_order + after_death
+        all_sorted = row_order + after_death + undated
  
         new_order = []
         for lst in all_sorted:
@@ -954,7 +973,6 @@ class EventsTable(Frame):
         self.event_input.grid(column=0, row=0, padx=(0,12), sticky='w')
         self.add_event_button.grid(
             column=1, row=0, sticky='w')
-        # self.resize_scrollbar(self.root, self.main_canvas)
 
     def show_kintip(self, kin_type, name):
         ''' 
@@ -1026,6 +1044,7 @@ class EventsTable(Frame):
         self.new_row = 0 
         self.widths = [0, 0, 0, 0, 0]
         self.kin_widths = [0, 0, 0, 0, 0, 0]
+        print("line", looky(seeline()).lineno, "running in redraw:")
         self.set_cell_content()
         self.show_table_cells()
         if evt: # user pressed CTRL+S for example
@@ -1539,9 +1558,9 @@ class NewEventDialog(Toplevel):
         cur.close()
         conn.close()
         self.close_new_event_dialog()
-        for instance in EventsTable.instances:
-            instance.redraw()
-            # instance.redraw(current_person=self.current_person)
+        # for instance in EventsTable.instances:
+            # instance.redraw()
+        self.events_table.redraw()
 
     def couple_ok(self, cur, conn):                
         if len(self.other_person) != 0:

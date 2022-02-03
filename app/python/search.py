@@ -69,7 +69,7 @@ def get_matches(search_input):
 
 class PersonSearch(Toplevel):
     def __init__(
-            self, master, root, treebard, entry, findings_table, attributes_table, 
+            self, master, root, treebard, entry, findings_table, 
             show_top_pic, pic, formats, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
@@ -78,7 +78,7 @@ class PersonSearch(Toplevel):
         self.treebard = treebard
         self.entry = entry
         self.findings_table = findings_table
-        self.attributes_table = attributes_table
+        # self.attributes_table = attributes_table
         self.show_top_pic = show_top_pic
         self.pic = pic
         self.formats = formats
@@ -366,7 +366,7 @@ class PersonSearch(Toplevel):
             use_name = list(self.new_current_person)
             self.new_current_person = "({}) {}".format(use_name[1], use_name[0])
         self.findings_table.redraw(evt, current_person=self.new_current_id)
-        self.attributes_table.redraw(evt, current_person=self.new_current_id)
+        # self.attributes_table.redraw(evt, current_person=self.new_current_id)
         self.show_top_pic(current_file, current_dir, self.new_current_id)
 
         self.master.current_person_label.config(

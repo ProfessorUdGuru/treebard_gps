@@ -198,8 +198,8 @@ class InputMessage(Dialogue):
         self.head.grid(
             column=0, row=0, sticky='news', padx=12,  
             columnspan=2, ipadx=6, ipady=3)
-        head2 = Label(self.header, text=self.head2)
-        head2.grid(column=0, row=1, padx=12)        
+        self.info = Label(self.header, text=self.head2)
+        self.info.grid(column=0, row=1, padx=12)        
         maxx = max(len(self.ok_txt), len(self.cancel_txt))
         if self.ok_button is True:
             self.b1 = Button(
@@ -208,6 +208,9 @@ class InputMessage(Dialogue):
         self.b2 = Button(
             self.buttons, text=self.cancel_txt, command=self.cancel, width=maxx)
         self.b2.grid(column=1, row=0, padx=(6,0), sticky='e', ipadx=3)
+
+    # def config_text(self, text):
+        # self.info.config(text=text)
 
     def make_inputs(self):
 

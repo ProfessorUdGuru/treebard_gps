@@ -724,13 +724,22 @@ select_findings_details_generic = '''
     WHERE  finding_id = ?
 '''
 
+# select_findings_details_offspring = '''
+    # SELECT date, date_sorter, particulars, finding_places_id
+    # FROM finding
+    # JOIN finding_places
+        # ON finding_places.finding_id = finding.finding_id
+    # WHERE person_id = ?
+        # AND event_type_id = 1
+# '''
+
 select_findings_details_offspring = '''
     SELECT date, date_sorter, particulars, finding_places_id
     FROM finding
     JOIN finding_places
         ON finding_places.finding_id = finding.finding_id
     WHERE person_id = ?
-        AND event_type_id = 1
+        AND event_type_id in (1, 48, 83, 95)
 '''
 
 select_findings_for_person = '''
@@ -752,6 +761,14 @@ select_findings_persons_age = '''
     FROM findings_persons
     WHERE person_id = ?
         AND finding_id = ?
+'''
+
+select_findings_persons_alt_parents = '''
+    SELECT person_id1, age1, kin_type_id1, person_id2, age2, kin_type_id2
+    FROM findings_persons
+    JOIN persons_persons
+        ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+    WHERE finding_id = ?
 '''
 
 select_findings_persons_id_kin_type1 = '''

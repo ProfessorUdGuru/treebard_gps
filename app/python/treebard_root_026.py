@@ -1,6 +1,6 @@
-# treebard_root_025.py
+# treebard_root_026.py
 
-# Up till now I didn't realize I had no way to differentiate, in findings_persons, one couple from another, if one of the partners was unknown. Say for example James has two records of an offspring event with null partners in each. We don't know if the two children are siblings but Treebard will assume they are since the 2 partners are both null. This won't work. There has to be a particular ID for a particular couple, at least if the couple has offspring. The reason I changed from having a person_id column in findings_persons with a separate record for each of the partners in a couple, was that I needed a single row for both persons. But it has been a real pain to write the logic, since I have to check both partners, person_id1 and person_id2, and parse order 1_2 or 2_1 etc. Now I find this complification isn't even capable of doing what needs to be done, so have to change the structure again. Instead of a person_id1 and person_id2 column in findings_persons, there has to be a single FK for a person_person table wherein each couple will have a single row and single ID. This will solve all my problems except now I have to rewrite all the code that tried to deal with findings_persons, so have saved a copy of the existing files up to now and will rewrite all that code now after creating the new table and fixing findings_persons table. Also I was hoping to start using M and F with couples since we're talking about biological couples, to avoid the person1 and person2 designations which require extra code. It would be easier to order by MF or FM but this is wrong. If the gender of neither partner was known, then it stops data from being input, if gender is used to do any logic. Yeah but, for example, I've already got hard-coded inputs for Mother and Father so I'm already using gender, just haven't admitted it's necessary. And how many couples are there in which neither parent's gender is known? I think the only way to proceed is to assume that one partner's gender will always be known or guessable, otherwise a lot of work will be done to accomodate a very rare edge case. So the problem remains of what to do with the age and kin_type_id fields in findings_persons. They can't go in persons_persons. Gender is already in the person table since it's a one-to-one relationship with the person. Just have to change the queries to obtain gender from person table? There can now only be one FK for person in the findings_persons table, and it's really an FK for the couple since each row in persons_persons references the person table twice. Although it seems undesirable, I don't see any way around leaving the 2 age columns and 2 kin_type columns in findings_persons, since it is a findings table and that is what's needed. But it has to be renamed with _m & _f instead of _1 & _2.
+# This is to announce the end of the attributes table because it's too fuzzy to distinguish between them. The single table will be divided into two areas with attributes sorted abc on bottom and events sorted by date on top. Adding date moves an attribute. One table, one set of columns, one instance of EventsTable.
 
 import tkinter as tk
 import sqlite3    
@@ -169,18 +169,42 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# IMPORTANT: THESE BRANCHES HAVE TO BE A LOT SMALLER. FIND A WAY TO BREAK THEM UP INTO MANY SMALL COMMITS INSTEAD OF BIG, EVER-EXPANDING COMMITS. FOR EXAMPLE, COMMIT THE CURRENT BRANCH AS SOON AS THE NEW DB CHANGED IS WORKING. STOP WORRYING ABOUT WHETHER EVERYTHING WORKS YET. GET OUT OF THE MONTHS-LONG HEADACHE MODE AND START HAVING SOME FUN AND SEEING SOME PROGRESS.
+# BRANCH: kin_parents
 
-# BRANCH: kin
+# Add adoptive & foster parents to nukes table. To do this, just make the parents' area like the partners' area, in a loop. Instead of just 1 & 2 kin types, also query adoptive parents, legal guardians, and foster parents: 
+        # 111, 'adoptive mother'
+        # 112, 'adoptive father'
+        # 122, 'foster father'
+        # 121, 'foster mother'
+        # 131, 'legal guardian'
+    # Instead of just birth event:
+        # event_type_id|event_types
+        # 1|birth
+        # 48|guardianship
+        # 83|adoption
+        # 95|fosterage
+    # STEP 1 is to auto-create parents events in the same way offspring event is created; search every instance of the word offspring and fill in the blanks with auto-events adopted a child, granted guardianship, fostered a child
+    # STEP 2 IS TO GIVE JAMES W both adoptive and FOSTER PARENTS AND GIVE JEREMIAH LEGAL GUARDIANS using the GUI, and when that works 
+    # STEP 3: figure out how to display in a loop like partners incl. 2 legal guardians as a couple like mother & father ie if they're married to each other, put them on the same parent line
+# add parents of all kinds to kintips and add children of all kinds so parents will also be displayed by kintips
+# make sure adoptive, foster parents and legal guardians are included in the role_type db table.
 
-# after new db design is tested, copy sample_tree.tbd schema of person_person and findings_persons to default_new_tree and _untouched.db THEN COMMIT THE BRANCH and check out a new branch eg kin-2
+# BRANCH: kin_partner
+# unlink partner on delete
 
-# I'm not liking how this nukes area is supposed to work. It's bad. It shd be simple, no dialogs, no options, and the interface shd not be offering to do megawork for the user bec the user has to read confusing options, make a choice, have all this stuff done, then realize he chose the wrong option and a bunch of autostuff he didn't do himself now has to be undone. If a parent is blank, it can fill with anything. If not, it's disabled and to change it you make the parent the current person. Changing anyone who is not the current person on the current person tab is a bag of worms because of all the linked events and children. Also shd consider the double click as a simple way to change curr per. This needs to be done over. Also changing a spouse just changes the name of the existing spouse, all events and children stay the same. To change the event to a diff person you shd have to go to the event itself and make the change. To change the child's parent to a different person you shd have to go to the child's page and make the change. Things have to be done one thing at a time or the interface is unmanageable, the code is extremely complex, and the user is confused, always facing complexity and making complicated decisions. START OVER on the update procedures, keep the table, and also consider if having all the person inputs be autofill is really the right way to do it. STICK TO THE CURRENT ELEMENT SYSTEM: to change an event, you have to make it the current event (in the event tab). To change a person, you go to the person tab for that person. To change a relationship... etc. Saving the current garble as familiesx.py in superceded, time to begin again. Delete still works but just unlinks, anything else is up to the user to do one thing at a time. For ex if you delete a partner, they are unlinked from mar evts & kids. If you delete a parent, the curr per is unlinked from both parents (in model).
-# NEXT STEP IS TO WRITE CODE FOR THE ADD PARTNER/ADD CHILD BUTTONS.
-# double click to change curr per
+# BRANCH: kin_child
+# unlink child on delete
 # if gender is "other" don't display it in child table
 # make it possible to change gender, birth/death dates for children right there in the table
-# ADD PARTNER/ADD CHILD buttons & entry
+
+# BRANCH: kin_add_buttons
+# add parent button & radio; mother & father entries already exist even if blank but the radio allows input of alt parents
+# add partner/add child buttons & entry
+
+# BRANCH: kin_change_curr_per
+# double click any name in table to change curr per
+
+# BRANCH: kin_cleanup
 # pressing enter in person autofill on person tab after name fills in throws an error re: colors
 # ADD/FIND button doesn't work
 # move queries to module and delete import strings for unused queries

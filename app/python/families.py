@@ -240,6 +240,64 @@ class NuclearFamiliesTable(Frame):
         """ If the field is not blank, emulate a disabled field for any input that tries to
             change the contents to a different person (to change a parent, partner, or child,
             make that person the current person first.)
+
+            The database for person_id 1's biological parents looks like this:
+            select * from findings_persons where finding_id = 1;
+            findings_persons_id|finding_id|age1|kin_type_id1|age2|kin_type_id2|persons_persons_id
+            3|1|33|2|42|1|3
+            select * from finding where finding_id = 1;
+            finding_id|date|particulars|age|person_id|event_type_id|date_sorter
+            1|-1884-ap-7-------||0|1|1|1884,4,7
+            select * from persons_persons where persons_persons_id = 3;
+            persons_persons_id|person_id1|person_id2
+            3|2|3
+
+            Treebard auto-creates an offspring event for each biological parent 
+            based on the finding_id where event_type_id is 1 (birth event). Such
+            auto-created events use the same finding_id as the child's birth event.
+
+            Unlike birth, adoption and fosterage refer to either parents (the fosterers) or 
+            child (the one fostered), so a distinguishing word pair corresponding
+            to birth/offspring (for child/parents) isn't necessary in English but would be desirable. It could be
+            correct to say that these are events with up to three participants:
+            a child and two parents. The event could be displayed as fosterage, adoption,
+            or guardianship for all the parties involved. But this would be
+            ambiguous because you'd have to guess based on age which is the child.
+            So the right way is to use more contrived but less ambiguous terms in
+            both the GUI and the code so everyone's role in the event can be 
+            instantly understood.
+
+            To keep the code symmetrical, the events adoption, guardianship, and 
+            fosterage will be treated like birth, as the event experienced by
+            the child. The more contrived terms will be used for the parents:
+            adopted a child, granted guardianship, fostered a child.
+
+            Since it's possible for a person to be adopted or fostered by more
+            than one guardian or couple of guardians, the functionality of the
+            kintips will have to be expanded to show guardians when the user
+            points at an adoption, fosterage, or guardianship. The kintips will
+            name the child when the user points as the contrived events listed
+            above. The kintips are in addition to the inclusion of the pertinent
+            names in the immediate family table.
+
+            In the case of a guardianship, there's no semantic distinction between the 
+            male and female partner if the guardianship is granted to a couple, as there is with
+            terminology like adoptive mother or foster father.
+            Possibly the code can detect if two guardians of the same child are
+            partners, and if so, they would be displayed together as parents.
+            Otherwise, they'd be displayed on separate lines.
+
+            The user will have the option of displaying adoptive parents, foster
+            parents, and guardians with the roles feature. For example the user
+            might choose to show adoptive parents who raised a child for many
+            years as parents in the immediate family table, but show temporary
+            foster parents in the roles dialog. The user has to be free to do it
+            either way in any case, because an unofficial foster parent or a 
+            legal guardian could raise a child from birth to majority, or for
+            some substantial portion of his childhood, in which case the guardians
+            should be displayed as parents. It has to be up to the user, but to
+            show a pair of persons as parents, the parent system will have to be
+            used, rather than the role system.
         """
 
         for dkt in self.current_person_parents[1:]:
@@ -261,6 +319,9 @@ class NuclearFamiliesTable(Frame):
             return
         elif len(self.final) == 0:
             print("line", looky(seeline()).lineno, "unlink is true:")
+            print("line", looky(seeline()).lineno, "iD:", iD)
+            # if unlink from partner, also unlink from all kids of these 2 parents but kids stay linked to current person
+            print("line", looky(seeline()).lineno, "self.progeny_dicts[iD]:", self.progeny_dicts[iD])
         
 
 
@@ -732,23 +793,17 @@ class NuclearFamiliesTable(Frame):
                 ma_id = parent2[0]
                 pa_id = parent1[0]
             self.current_person_parents[0] = self.birth_record[0:2]
-        else:
-            cur.execute(
-                '''
-                    INSERT INTO findings_persons
-                    VALUES (null, ?, ?, '', 1, ?, '', 2)
-                ''',
-                (birth_id, ma_id, pa_id))
-            conn.commit()
+        else:            
+            print("736 if this is still needed there will have to be inserts to persons_persons and to findings_persons, at least, but not sure what this was for")
+            # cur.execute(
+                # '''
+                    # INSERT INTO findings_persons
+                    # VALUES (null, ?, ?, '', 1, ?, '', 2)
+                # ''',
+                # (birth_id, ma_id, pa_id))
+            # conn.commit()
 
-            cur.execute(
-                '''
-                SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'findings_persons'
-                ''')
-            fpid = cur.fetchone()[0]
-            self.birth_record = (fpid, birth_id, ma_id, 1, pa_id, 2)               
-
-            self.current_person_parents[0] = self.birth_record[0:2]
+            # self.current_person_parents[0] = self.birth_record[0:2]
 
         if ma_id:
             ma_name = get_any_name_with_id(ma_id)
@@ -1022,6 +1077,11 @@ class NuclearFamiliesTable(Frame):
             return
         widg_name = widg.winfo_name()
         parent_type = ""
+        message = "Clicking OK will unlink this person from the current person "
+        "and relevant events (listed below). If your real goal is to delete "
+        "the person from the tree, change the person's name, etc., first "
+        "double-click the person to make them the current person."
+        self.changing_values = {}
         if widg_name in ("ma", "pa"):
             col = widg.grid_info()["column"]
             relative_type = "parent"
@@ -1029,47 +1089,38 @@ class NuclearFamiliesTable(Frame):
                 parent_type = "ma"
             elif col == 3:
                 parent_type = "pa"
-            radtext = (
-                "Unlink the deleted parent from the current person.", 
-                "Remove all traces of the deleted parent from the tree.")
         elif widg_name.startswith("pard"):
             relative_type = "partner"
-            radtext = (
-                "Unlink the deleted partner from the current person. Related marital events will be removed\nfrom the deleted partner but retained by the current person with no known partner.", 
-                "Unlink the deleted partner from the current person. Related marital events will be lost.", 
-                "Remove all traces of the deleted partner from the tree.")
         else:
             relative_type = "child"
-            radtext = (
-                "Unlink the deleted child from the partner of the current person only. The offspring event will be\nretained by the current person with no known co-parent.", 
-                "Unlink the deleted child from the current person only. The offspring event will be retained by\nthe current person's partner with no known co-parent.",
-                "Unlink the deleted child from both the current person and his/her partner. The child's parents are unknown.", 
-                "Remove all traces of the deleted child from the tree.")
-        unlinker = InputMessage(
-            self.root, root=self.root, title="Delete or Unlink?", ok_txt="OK", 
-            radtext=radtext, radio=True, cancel_txt="CANCEL", grab=True, 
-            head1="Clarify whether to unlink or delete the person:", 
-            wraplength=650)
-        if unlinker.ok_was_pressed: 
-            self.show = unlinker.show()
-            self.delete_or_unlink(relative_type, parent_type)
+        self.unlinker = InputMessage(
+            self.root, root=self.root, title="Confirm Unlink", ok_txt="OK", 
+            cancel_txt="CANCEL", grab=True, head1=message, wraplength=650,
+            head2=self.changing_values.items())
+        if self.unlinker.ok_was_pressed: 
+            self.show = self.unlinker.show()
+            self.ok_unlink(relative_type, parent_type)
 
-    def delete_or_unlink(self, relative_type, parent_type):
+    def ok_unlink(self, relative_type, parent_type):
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute("PRAGMA foreign_keys = 1")
         cur = conn.cursor()
         birth_fpid = self.current_person_parents[0][0]
         if relative_type == "parent":
-            if self.show == 0:
-                cur.execute(self.query, (None, birth_fpid))
-                conn.commit()
-            elif self.show == 1:
-                if parent_type == "ma":
-                    parent_id = self.current_person_parents[1]["id"]
-                elif parent_type == "pa":
-                    parent_id = self.current_person_parents[2]["id"]
-                delete_person_from_tree(parent_id)
+            print("line", looky(seeline()).lineno, "self.show:", self.show)
+            print("line", looky(seeline()).lineno, "parent_type:", parent_type)
+            print("line", looky(seeline()).lineno, "birth_fpid:", birth_fpid)
+            print("line", looky(seeline()).lineno, "self.changing_values:", self.changing_values)
+            # if self.show == 0:
+                # cur.execute(self.query, (None, birth_fpid))
+                # conn.commit()
+            # elif self.show == 1:
+                # if parent_type == "ma":
+                    # parent_id = self.current_person_parents[1]["id"]
+                # elif parent_type == "pa":
+                    # parent_id = self.current_person_parents[2]["id"]
+                # delete_person_from_tree(parent_id)
 
         elif relative_type == "partner":
             if self.show == 0:

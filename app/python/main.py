@@ -52,7 +52,7 @@ from dev_tools import looky, seeline
 
 
 MAIN_TABS = (
-    ("person", "P"), ("attributes", "B"), ("places", "L"), ("sources", "S"), 
+    ("person", "P"), ("places", "L"), ("sources", "S"), 
     ("names", "N"), ("reports", "R"), ("charts", "A"), ("projects", "J"), 
     ("graphics", "G"), ("links", "K"), ("search", "H"), ("types", "T"), 
     ("preferences", "E"))
@@ -120,7 +120,7 @@ class Main(Frame):
             self, root=self.root, tabs=MAIN_TABS, 
             selected='person', case='upper', miny=0.66, takefocus=0)
         persons_tab = Frame(self.main_tabs.store["person"])
-        attributes_tab = Frame(self.main_tabs.store["attributes"])
+        # attributes_tab = Frame(self.main_tabs.store["attributes"])
         places_tab = Frame(self.main_tabs.store["places"], name="placetab")
         sources_tab = Frame(self.main_tabs.store["sources"], name="sourcetab")
         self.names_tab = Frame(self.main_tabs.store["names"])
@@ -154,7 +154,7 @@ class Main(Frame):
 
         self.findings_table = EventsTable(
             persons_tab, self.root, self.treebard, self, self.formats)
-        EventsTable.instances.append(self.findings_table)
+        # EventsTable.instances.append(self.findings_table)
         self.current_person = self.findings_table.current_person
 
         self.nuke_table = NuclearFamiliesTable(
@@ -172,10 +172,10 @@ class Main(Frame):
         for table in (self.nuke_table, self.findings_table):
             table.lift()
 
-        self.att = EventsTable(
-            attributes_tab, self.root, self.treebard, 
-            self, self.formats, attrib=True)
-        EventsTable.instances.append(self.att)
+        # self.att = EventsTable(
+            # attributes_tab, self.root, self.treebard, 
+            # self, self.formats, attrib=True)
+        # EventsTable.instances.append(self.att)
 
         current_file, current_dir = get_current_file()
         # this does not run on redraw, just on load
@@ -254,7 +254,7 @@ class Main(Frame):
 
         # children of main tabs
         persons_tab.grid(column=0, row=0, sticky='news')
-        attributes_tab.grid(column=0, row=0, sticky='news')
+        # attributes_tab.grid(column=0, row=0, sticky='news')
         places_tab.grid(column=0, row=0, sticky='news')
         sources_tab.grid(column=0, row=0, sticky='news')
         self.names_tab.grid(column=0, row=0, sticky='news')
@@ -269,8 +269,8 @@ class Main(Frame):
         # children of self.nuke_table gridded in families.py
         persons_tab.columnconfigure(1, weight=1)
 
-        # children of attributes tab
-        self.att.grid(column=0, row=0)
+        # # children of attributes tab
+        # self.att.grid(column=0, row=0)
 
         # children of places tab
         place_gallery.grid(column=0, row=0)
@@ -317,12 +317,12 @@ class Main(Frame):
             (self.findings_table.add_event_button,
                 "New Event or Attribute Input Button",
                 "Press to submit new event or attribute indicated to the left."),
-            (self.att.event_input,
-                "New Event or Attribute Input",
-                "Input for new events or attributes including new event types."),
-            (self.att.add_event_button,
-                "New Event or Attribute Input Button",
-                "Press to submit new event or attribute indicated to the left."),
+            # (self.att.event_input,
+                # "New Event or Attribute Input",
+                # "Input for new events or attributes including new event types."),
+            # (self.att.add_event_button,
+                # "New Event or Attribute Input Button",
+                # "Press to submit new event or attribute indicated to the left."),
             (self.fontpicker.output_sample,
                 "",
                 "Sample of selected font."),
@@ -393,34 +393,34 @@ class Main(Frame):
                 "",
                 "View and edit sources, citations and assertions linked to "
                     "this event."), 
-            (self.att.headers[0],
-                "",
-                "Press delete key to delete this attribute."),
-            (self.att.headers[1],
-                "",
-                "Entering a date here will move this attribute to the Events "
-                    "Table."),
-            (self.att.headers[2],
-                "",
-                "Existing places will auto-fill when you start typing, "
-                    "starting with places used most recently."),
-            (self.att.headers[3],
-                "",
-                "Leave date column blank to move event to Attributes Tab; "
-                    "attribute dates could go here."),
-            (self.att.headers[4],
-                "",
-                "Age at time of attribute, if applicable."),
-            (self.att.headers[5],
-                "",
-                "Create, add and edit roles adjunct to this attribute."),
-            (self.att.headers[6],
-                "",
-                "Create, add and edit notes regarding this attribute."),
-            (self.att.headers[7],
-                "",
-                "View and edit sources, citations and assertions linked to "
-                    "this attribute."),
+            # (self.att.headers[0],
+                # "",
+                # "Press delete key to delete this attribute."),
+            # (self.att.headers[1],
+                # "",
+                # "Entering a date here will move this attribute to the Events "
+                    # "Table."),
+            # (self.att.headers[2],
+                # "",
+                # "Existing places will auto-fill when you start typing, "
+                    # "starting with places used most recently."),
+            # (self.att.headers[3],
+                # "",
+                # "Leave date column blank to move event to Attributes Tab; "
+                    # "attribute dates could go here."),
+            # (self.att.headers[4],
+                # "",
+                # "Age at time of attribute, if applicable."),
+            # (self.att.headers[5],
+                # "",
+                # "Create, add and edit roles adjunct to this attribute."),
+            # (self.att.headers[6],
+                # "",
+                # "Create, add and edit notes regarding this attribute."),
+            # (self.att.headers[7],
+                # "",
+                # "View and edit sources, citations and assertions linked to "
+                    # "this attribute."),
             (self.date_options.test_frm, 
                 "", 
                 "Use top area to test input; bottom area for display settings."),
@@ -467,7 +467,7 @@ class Main(Frame):
         rcm_widgets = (
             self.person_entry, person_change, person_search, 
             self.top_pic_button, self.findings_table.event_input, 
-            self.att.event_input,self.fontpicker.output_sample, 
+            # self.att.event_input,self.fontpicker.output_sample, 
             self.fontpicker.font_size, self.fontpicker.cbo.entry, 
             self.fontpicker.apply_button,            
             colorizer.header, colorizer.current_display, 
@@ -513,7 +513,7 @@ class Main(Frame):
             self.treebard,
             self.person_entry, 
             self.findings_table,
-            self.att,
+            # self.att,
             self.show_top_pic,
             self.formats,
             pic=None)    
@@ -542,12 +542,12 @@ class Main(Frame):
                     self.current_person_name, self.current_person))
         self.findings_table.current_person = self.current_person
         self.findings_table.kin_widths = [0, 0, 0, 0, 0]
-        self.att.current_person = self.current_person
+        # self.att.current_person = self.current_person
         self.person_entry.delete(0, 'end')
         current_file, current_dir = get_current_file()
         self.show_top_pic(current_file, current_dir, self.current_person)
         self.findings_table.redraw()
-        self.att.redraw()
+        # self.att.redraw()
 
     def open_person_gallery(self):
         person_gallery_dlg = Toplevel(self.root)
