@@ -183,8 +183,8 @@ if __name__ == '__main__':
         # 48|guardianship
         # 83|adoption
         # 95|fosterage
-    # STEP 1 is to auto-create parents events in the same way offspring event is created; search every instance of the word offspring and fill in the blanks with auto-events adopted a child, granted guardianship, fostered a child
-    # STEP 2 IS TO GIVE JAMES W both adoptive and FOSTER PARENTS AND GIVE JEREMIAH LEGAL GUARDIANS using the GUI, and when that works 
+    # STEP 1 is to auto-create alt-parents events in the same way offspring event is created; see autocreate_alt_parents in events_table.py and fill in the blanks with auto-events adopted a child, granted guardianship, fostered a child
+    # STEP 2 IS TO GIVE JAMES W both adoptive and FOSTER PARENTS using the GUI, and when that works 
     # STEP 3: figure out how to display in a loop like partners incl. 2 legal guardians as a couple like mother & father ie if they're married to each other, put them on the same parent line
 # add parents of all kinds to kintips and add children of all kinds so parents will also be displayed by kintips
 # make sure adoptive, foster parents and legal guardians are included in the role_type db table.

@@ -337,12 +337,6 @@ def get_note_findings(
         findings_data[finding_id]["notes"] = current_notes
 
 def get_findings():
-    """ Runs once for events table and once for attributes table. Seems like
-        some of this code should only be running once such as birth/parentage
-        stuff since all birth events (even undated) appear only in the events
-        table and alt parents appear on the nukes table which is only in the
-        person tab, not the attributes tab.
-    """
     findings_data = {}
     current_person = get_current_person()
     current_file = get_current_file()[0]
@@ -354,7 +348,6 @@ def get_findings():
 
     cur.execute(select_all_findings_current_person, (current_person,))
     generic_finding_ids = cur.fetchall()
-    print("line", looky(seeline()).lineno, "generic_finding_ids:", generic_finding_ids)
     cur.execute(select_all_findings_roles_ids_distinct)
     non_empty_roles = [i[0] for i in cur.fetchall()]
 
@@ -370,8 +363,8 @@ def get_findings():
             get_birth_findings(
                 dkt, cur, current_person, findings_data,
                 non_empty_roles, non_empty_notes)
-        elif dkt["event"] in ("fosterage", "guardianship", "adoption"):
-            autocreate_alt_parents(dkt, finding_id, cur)
+        # elif dkt["event"] in ("fosterage", "guardianship", "adoption"):
+            # autocreate_alt_parents(dkt, finding_id, cur)
 
     get_couple_findings(
         cur, current_person, rowtotype, findings_data, 
@@ -381,24 +374,22 @@ def get_findings():
     conn.close()  
     return findings_data, non_empty_roles, non_empty_notes
 
-def autocreate_alt_parents(dkt, finding_id, cur):
-    print("line", looky(seeline()).lineno, "dkt['event']:", dkt['event'])
-    print("line", looky(seeline()).lineno, "finding_id:", finding_id)
-    event_type = dkt["event"]
-    guardians = []
-    adoptors = []
-    fosterers = []
-    cur.execute(select_findings_persons_alt_parents, finding_id)
-    alt_parents = cur.fetchone()
-    print("line", looky(seeline()).lineno, "alt_parents:", alt_parents)
+# def autocreate_alt_parents(dkt, finding_id, cur):
+    # print("line", looky(seeline()).lineno, "dkt['event']:", dkt['event'])
+    # print("line", looky(seeline()).lineno, "finding_id:", finding_id)
+    # event_type = dkt["event"]
+    # guardians = []
+    # adoptors = []
+    # fosterers = []
+    # cur.execute(select_findings_persons_alt_parents, finding_id)
+    # alt_parents = cur.fetchone()
+    # print("line", looky(seeline()).lineno, "alt_parents:", alt_parents)
 
     
 
     
 
 class EventsTable(Frame):
-
-    # instances = []
 
     def __init__(
             self, master, root, treebard, main, formats, *args, **kwargs):
@@ -408,7 +399,6 @@ class EventsTable(Frame):
         self.treebard = treebard
         self.main_window = main
         self.formats = formats
-        # self.attrib = attrib
 
         self.main_canvas = main.master
 
@@ -667,9 +657,6 @@ class EventsTable(Frame):
                 self.final, date_prefs=date_prefs)
             widg.delete(0, 'end')
             widg.insert(0, formatted_date)
-            # for instance in EventsTable.instances:
-                # instance.redraw()
-            # EventsTable.instance.redraw() # shd this just be self.redraw?
             self.redraw()
 
         def update_place():
@@ -702,7 +689,6 @@ class EventsTable(Frame):
                     cur.execute(
                         update_findings_persons_age2, 
                         (self.final, self.finding, right_person[2])) 
-                        # (self.final, self.finding, self.current_person))
                 conn.commit()
 
         current_file = get_current_file()[0]
@@ -800,19 +786,6 @@ class EventsTable(Frame):
         self.findings_data, current_roles, current_notes = get_findings()
         copy = dict(self.findings_data)
         self.attributes = {}
-        # for k,v in copy.items():        
-            # if v["event"] in self.events_only_even_without_dates:
-                # pass
-            # elif len(v["date"]) == 0:
-                # self.attributes[k] = v
-                # del self.findings_data[k]
-        print("line", looky(seeline()).lineno, "self.findings_data:", self.findings_data)
-        print("line", looky(seeline()).lineno, "self.attributes:", self.attributes)
-
-        # if self.attrib is True:
-            # self.findings_data = self.attributes
-# to use the existing algorithm, this is the right place to add findings_data & attributes together so don't even bother to separate them till it's time to sort, then put undated findings below after_death findings
-
         finding_ids = list(self.findings_data.keys())
         table_size = len(self.findings_data)
         self.cell_pool = []
@@ -1075,8 +1048,11 @@ class EventsTable(Frame):
         self.main_window.nuke_table.ma_input.delete(0, "end")
         self.main_window.nuke_table.pa_input.delete(0, "end")
         self.main_window.nuke_table.new_kin_frame.grid_forget()
-        for frame in self.main_window.nuke_table.nuke_containers:  
-            frame.destroy()
+        self.main_window.nuke_table.current_person_alt_parents = []
+        for widg in self.main_window.nuke_table.nuke_containers: 
+            widg.destroy() 
+
+        self.main_window.nuke_table.nuke_containers = []
 
         self.main_window.nuke_table.current_person_parents = [
             [None, None], 
@@ -1558,8 +1534,6 @@ class NewEventDialog(Toplevel):
         cur.close()
         conn.close()
         self.close_new_event_dialog()
-        # for instance in EventsTable.instances:
-            # instance.redraw()
         self.events_table.redraw()
 
     def couple_ok(self, cur, conn):                
@@ -1568,12 +1542,6 @@ class NewEventDialog(Toplevel):
             other_person_id = other_person_all[1]
         else:
             other_person_id = None
-
-        # cur.execute(
-            # insert_findings_persons_new_couple,
-            # (self.new_finding, self.current_person, self.age_1, 
-                # other_person_id, self.age_2))
-        # conn.commit()
 
         cur.execute(insert_findings_persons_new_couple, (
             self.new_finding, self.age_1, self.age_2))

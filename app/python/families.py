@@ -62,6 +62,14 @@ class NuclearFamiliesTable(Frame):
             {"id": None, "name": None, "widget": None}, 
             {"id": None, "name": None, "widget": None}]
 
+        self.parent_couple = [
+            [None, None], 
+            {"id": None, "name": None, "widget": None, "label": None}, 
+            {"id": None, "name": None, "widget": None, "label": None}]
+
+        self.nuke_containers = []
+        self.current_person_alt_parents = []
+
         self.delete_or_unlink_ok = False
 
         self.newkinvar = tk.IntVar()
@@ -89,27 +97,31 @@ class NuclearFamiliesTable(Frame):
     def make_nuke_widgets_perm(self):
         
         self.pardlabs = []
-        parentslab = LabelFrame(self.nuke_window) 
-        labelwidget = LabelH3(parentslab, text="Parents of the Current Person")
+        self.parentslab = LabelFrame(self.nuke_window) 
+        labelwidget = LabelH3(self.parentslab, text="Parents of the Current Person")
         self.pardlabs.append(labelwidget)
-        parentslab.config(labelwidget=labelwidget)
-        malab = Label(parentslab, text="Mother")
+        self.parentslab.config(labelwidget=labelwidget)
+        malab = Label(self.parentslab, text="Mother", anchor="e")
         self.ma_input = EntryAuto(
-            parentslab, width=30, autofill=True, 
+            self.parentslab, width=30, autofill=True,
             values=self.person_autofill_values, name="ma")
-        self.ma_input.grid(column=1, row=0, pady=(6,12), padx=(6,0))
-        palab = Label(parentslab, text="Father")
+        palab = Label(self.parentslab, text="Father", anchor="e")
         self.pa_input = EntryAuto(
-            parentslab, width=30, autofill=True, 
+            self.parentslab, width=30, autofill=True, 
             values=self.person_autofill_values, name="pa")
 
         # children of self.nuke_window
-        parentslab.grid(column=0, row=0, sticky="w")
+        self.parentslab.grid(column=0, row=0, sticky="w")
 
-        # children of parentslab
-        malab.grid(column=0, row=0, sticky="w", padx=(12,0), pady=(6,12))
-        palab.grid(column=2, row=0, sticky="w", padx=(18,0), pady=(6,12))
-        self.pa_input.grid(column=3, row=0, pady=(6,12), padx=(6,12))
+        # children of self.parentslab
+        malab.grid(column=0, row=0, sticky="ew", padx=(12,12), pady=(6,12))
+        self.ma_input.grid(column=1, row=0, pady=(6,12), padx=(0,0))
+        palab.grid(column=2, row=0, sticky="ew", padx=(12,12), pady=(6,12))
+        self.pa_input.grid(column=3, row=0, pady=(6,12), padx=(0,0))
+        # malab.grid(column=0, row=0, sticky="w", padx=(12,0), pady=(6,12))
+        # self.ma_input.grid(column=1, row=0, pady=(6,12), padx=(6,0))
+        # palab.grid(column=2, row=0, sticky="w", padx=(18,0), pady=(6,12))
+        # self.pa_input.grid(column=3, row=0, pady=(6,12), padx=(6,12))
 
         EntryAuto.all_person_autofills.extend([self.ma_input, self.pa_input])
         for ent in (self.ma_input, self.pa_input):
@@ -256,7 +268,7 @@ class NuclearFamiliesTable(Frame):
             based on the finding_id where event_type_id is 1 (birth event). Such
             auto-created events use the same finding_id as the child's birth event.
 
-            Unlike birth, adoption and fosterage refer to either parents (the fosterers) or 
+            Unlike birth, the terms "adoption" and "fosterage" refer to either parents (the fosterers) or 
             child (the one fostered), so a distinguishing word pair corresponding
             to birth/offspring (for child/parents) isn't necessary in English but would be desirable. It could be
             correct to say that these are events with up to three participants:
@@ -270,10 +282,10 @@ class NuclearFamiliesTable(Frame):
             To keep the code symmetrical, the events adoption, guardianship, and 
             fosterage will be treated like birth, as the event experienced by
             the child. The more contrived terms will be used for the parents:
-            adopted a child, granted guardianship, fostered a child.
+            "adopted a child, granted guardianship, fostered a child".
 
             Since it's possible for a person to be adopted or fostered by more
-            than one guardian or couple of guardians, the functionality of the
+            than one guardian or couple, the functionality of the
             kintips will have to be expanded to show guardians when the user
             points at an adoption, fosterage, or guardianship. The kintips will
             name the child when the user points as the contrived events listed
@@ -322,6 +334,7 @@ class NuclearFamiliesTable(Frame):
             print("line", looky(seeline()).lineno, "iD:", iD)
             # if unlink from partner, also unlink from all kids of these 2 parents but kids stay linked to current person
             print("line", looky(seeline()).lineno, "self.progeny_dicts[iD]:", self.progeny_dicts[iD])
+            print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         
 
 
@@ -629,7 +642,6 @@ class NuclearFamiliesTable(Frame):
 
         top_child_rows = []
         self.pardrads = []
-        self.nuke_containers = []
         n = 0
         for i, (k,v) in enumerate(self.progeny_dicts.items(), start=1):
             n = (i * 2) - 1
@@ -748,9 +760,7 @@ class NuclearFamiliesTable(Frame):
             event for every person as the user creates the person. It will make
             updates to the parents section at the top of the nukes table easy
             and symmetrical since there will be no special case to deal with--
-            the person who exists but hasn't been born yet. (The birth event
-            will not slip into the attributes table because it has already been
-            forbidden to appear anywhere but the events table.) This will also 
+            the person who exists but hasn't been born yet. This will also 
             save the user time; they won't have to create a birth event for 
             anyone.
         '''
@@ -760,24 +770,26 @@ class NuclearFamiliesTable(Frame):
         cur = conn.cursor()
 
         cur.execute(select_finding_id_birth, (self.current_person,))
-        birth_id = cur.fetchone()
-        if birth_id:
-            birth_id = birth_id[0]
-            cur.execute(
-                '''
-                    SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 FROM findings_persons 
-                    JOIN persons_persons
-                        ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                    WHERE finding_id = ?
-                ''',
-                (birth_id,))
-            birth_record = cur.fetchall()
-            if len(birth_record) != 0:
-                self.birth_record = birth_record[0]
-            else:
-                self.birth_record = None
+        birth_id = cur.fetchone()[0]
+        # if birth_id:
+        # birth_id = birth_id[0]
+        cur.execute(
+            '''
+                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
+                    person_id2, kin_type_id2 
+                FROM findings_persons 
+                JOIN persons_persons
+                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                WHERE finding_id = ?
+            ''',
+            (birth_id,))
+        birth_record = cur.fetchall()
+        if len(birth_record) != 0:
+            self.birth_record = birth_record[0]
         else:
-            print("line", looky(seeline()).lineno, "no birth id:")
+            self.birth_record = None
+        # else:
+            # print("line", looky(seeline()).lineno, "no birth id:")
 
         ma_name = ""
         pa_name = ""
@@ -794,7 +806,7 @@ class NuclearFamiliesTable(Frame):
                 pa_id = parent1[0]
             self.current_person_parents[0] = self.birth_record[0:2]
         else:            
-            print("736 if this is still needed there will have to be inserts to persons_persons and to findings_persons, at least, but not sure what this was for")
+            print("798 if this is still needed there will have to be inserts to persons_persons and to findings_persons, at least, but not sure what this was for")
             # cur.execute(
                 # '''
                     # INSERT INTO findings_persons
@@ -815,9 +827,166 @@ class NuclearFamiliesTable(Frame):
         self.current_person_parents[1]["name"] = ma_name
         self.current_person_parents[2]["name"] = pa_name
         self.current_person_parents[1]["widget"] = self.ma_input
-        self.current_person_parents[2]["widget"] = self.pa_input  
+        self.current_person_parents[2]["widget"] = self.pa_input 
+
+        self.get_alt_parents(cur)
+        self.grid_alt_parents()
+
         cur.close()
         conn.close()
+
+    def get_alt_parents(self, cur):
+        """ Get adoptive parents, foster parents & guardians. If there's a
+            female parent, display her to the left of the male parent.
+            This can easily be changed if too many people complain as I'm
+            not doing it for political reasons, just for fun to see if
+            anyone complains about women going first. """
+        cur.execute(
+        '''
+            SELECT finding_id 
+            FROM finding 
+            WHERE person_id = ? 
+                AND event_type_id in (48, 83, 95)
+        ''',
+        (self.current_person,))
+        alt_parent_events = cur.fetchall()
+        if alt_parent_events is None:
+            return
+        
+        alt_parent_details = []
+        
+        for event in alt_parent_events:
+            # self.parent_couple = [
+                # [None, None], 
+                # {"id": None, "name": None, "widget": None, "label": None}, 
+                # {"id": None, "name": None, "widget": None, "label": None}]
+            cur.execute(
+            '''
+                SELECT persons_persons_id, kin_type_id1, kin_type_id2, findings_persons_id
+                FROM findings_persons
+                WHERE finding_id = ?
+            ''',
+            event)
+            couple_details = list(cur.fetchone())
+            self.parent_couple[0] = (couple_details.pop(), event[0])
+            alt_parent_details.append(couple_details)
+            self.current_person_alt_parents.append(self.parent_couple)
+
+        for lst in alt_parent_details:
+            cur.execute(
+            '''
+                SELECT person_id1, person_id2
+                FROM persons_persons
+                WHERE persons_persons_id = ?
+            ''',
+            (lst[0],))
+            couple_ids = cur.fetchone()
+            lst.insert(2, couple_ids[1])
+            lst.insert(1, couple_ids[0])
+
+        u = 0
+        for lst in alt_parent_details:
+            cur.execute(
+            '''
+                SELECT gender
+                FROM person
+                WHERE person_id = ?
+            ''',
+            (lst[1],))
+            if cur.fetchone()[0] == "female":
+                continue
+            else:
+                copy = []
+                for i in (0, 3, 4, 1, 2):
+                    copy.append(lst[i])
+                alt_parent_details[u] = copy
+            u += 1
+
+        w = 0
+        for lst in alt_parent_details:
+            name1 = None
+            name2 = None
+            id1 = lst[1]
+            id2 = lst[3]
+            if id1:
+                name1 = get_any_name_with_id(id1)
+                self.current_person_alt_parents[w][1]["id"] = id1
+            if id2:
+                name2 = get_any_name_with_id(id2)
+                self.current_person_alt_parents[w][2]["id"] = id2
+            if name1:
+                self.current_person_alt_parents[w][1]["name"] = name1
+                lst[1] = name1
+                cur.execute(
+                '''
+                    SELECT kin_types 
+                    FROM kin_type
+                    WHERE kin_type_id = ?
+                ''',
+                (lst[2],))
+                result = cur.fetchone()[0]
+                lst[2] = result
+            if name2:
+                self.current_person_alt_parents[w][2]["name"] = name2
+                lst[3] = name2
+                cur.execute(
+                '''
+                    SELECT kin_types 
+                    FROM kin_type
+                    WHERE kin_type_id = ?
+                ''',
+                (lst[4],))
+                result = cur.fetchone()[0]
+                lst[4] = result
+            w += 1
+       
+        j = 0
+        for lst in alt_parent_details:
+
+            malab = Label(self.parentslab, text=lst[2].title(), anchor="e")
+            widg_l = EntryAuto(
+                self.parentslab, width=30, autofill=True, 
+                values=self.person_autofill_values)
+            widg_l.insert(0, lst[1])
+            self.current_person_alt_parents[j][1]["widget"] = widg_l
+            self.current_person_alt_parents[j][1]["label"] = malab
+
+            palab = Label(self.parentslab, text=lst[4].title(), anchor="e")
+            widg_r = EntryAuto(
+                self.parentslab, width=30, autofill=True, 
+                values=self.person_autofill_values) 
+            widg_r.insert(0, lst[3]) 
+            self.current_person_alt_parents[j][2]["widget"] = widg_r
+            self.current_person_alt_parents[j][2]["label"] = palab
+
+            EntryAuto.all_person_autofills.extend([widg_l, widg_r])
+            for ent in (widg_l, widg_r):
+                ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
+                ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
+                ent.bind("<FocusIn>", self.get_original, add="+")
+                ent.bind("<FocusOut>", self.get_final, add="+")
+                ent.bind("<Double-Button-1>", self.change_current_person) 
+                self.nuke_containers.append(ent)
+
+            self.nuke_containers.extend([malab, palab])
+
+           
+            j += 1
+
+    def grid_alt_parents(self):
+        """ Grid widgets as children of self.parentslab. """
+        print("line", looky(seeline()).lineno, "self.current_person_alt_parents:", self.current_person_alt_parents)
+        x = 1
+        for lst in self.current_person_alt_parents:
+            print("line", looky(seeline()).lineno, "lst:", lst)
+            z = 0
+            for person in lst[1:]:
+                label = person["label"]
+                widget = person["widget"]
+                label.grid(column=z, row=x, sticky="ew", padx=12, pady=(6,12))
+                widget.grid(column=z+1, row=x, pady=(6,12))
+                z += 2 
+            x += 1
 
     def make_nuke_dicts(self):
         current_file = get_current_file()[0]
