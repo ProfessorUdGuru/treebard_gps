@@ -176,6 +176,11 @@ insert_findings_persons_new_couple = '''
     VALUES (?, ?, 128, ?, 129)
 '''
 
+insert_findings_persons_new_parent = '''
+    INSERT INTO findings_persons (finding_id, age1, kin_type_id1, age2, kin_type_id2, persons_persons_id)
+    VALUES (?, '', ?, '', null, ?)
+'''
+
 insert_findings_roles = '''
     INSERT INTO findings_roles 
     VALUES (null, ?, ?, ?)
@@ -214,10 +219,15 @@ insert_note = '''
 insert_person_new = '''
     INSERT INTO person VALUES (?, ?)
 '''
-# new
+
 insert_persons_persons = '''
     INSERT INTO persons_persons (person_id1, person_id2)
     VALUES (?, ?)
+'''
+
+insert_persons_persons_one_person = '''
+    INSERT INTO persons_persons (person_id1)
+    VALUES (?)
 '''
 
 insert_place_new = '''
@@ -771,6 +781,12 @@ select_findings_persons_alt_parents = '''
     WHERE finding_id = ?
 '''
 
+select_findings_persons_birth = '''
+    SELECT findings_persons_id, persons_persons_id
+    FROM findings_persons
+    WHERE finding_id = ?
+'''
+
 select_findings_persons_id_kin_type1 = '''
     SELECT findings_persons_id
     FROM findings_persons
@@ -1124,7 +1140,7 @@ select_person_birth_date = '''
     JOIN event_type
         ON finding.event_type_id = event_type.event_type_id 
     WHERE finding.person_id = ?
-    AND finding.event_type_id == 1 
+        AND finding.event_type_id = 1 
 '''
 
 select_person_death_date = '''
@@ -1135,7 +1151,7 @@ select_person_death_date = '''
     JOIN event_type
         ON finding.event_type_id = event_type.event_type_id 
     WHERE finding.person_id = ?
-    AND finding.event_type_id == 4 
+    AND finding.event_type_id = 4 
 '''
 
 select_person_distinct_like = '''
@@ -1199,6 +1215,12 @@ select_person_id_kin_types_birth = '''
     JOIN kin_type as b
         ON b.kin_type_id = findings_persons.kin_type_id2
     WHERE finding_id = ?
+'''
+
+select_persons_persons = '''
+    SELECT person_id1, person_id2
+    FROM persons_persons
+    WHERE persons_persons_id = ?
 '''
 
 select_persons_persons_ma_id1 = '''
@@ -1660,6 +1682,18 @@ update_persons_persons_2_null = '''
     UPDATE persons_persons
     SET person_id2 = null
     WHERE person_id2 = ?
+'''
+
+update_persons_persons_1 = '''
+    UPDATE persons_persons
+    SET person_id1 = ?
+    WHERE persons_persons_id = ?
+'''
+
+update_persons_persons_2 = '''
+    UPDATE persons_persons
+    SET person_id2 = ?
+    WHERE persons_persons_id = ?
 '''
 
 update_place_hint = '''

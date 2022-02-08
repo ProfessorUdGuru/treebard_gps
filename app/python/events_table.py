@@ -438,7 +438,6 @@ class EventsTable(Frame):
 
         self.make_header()
         self.make_table_cells()
-        print("line", looky(seeline()).lineno, "running in init:")
         self.set_cell_content()
         self.show_table_cells()
 
@@ -1017,7 +1016,6 @@ class EventsTable(Frame):
         self.new_row = 0 
         self.widths = [0, 0, 0, 0, 0]
         self.kin_widths = [0, 0, 0, 0, 0, 0]
-        print("line", looky(seeline()).lineno, "running in redraw:")
         self.set_cell_content()
         self.show_table_cells()
         if evt: # user pressed CTRL+S for example
@@ -1158,6 +1156,7 @@ class EventsTable(Frame):
             self.root, 
             self.treebard,
             self,
+            self.formats,
             new_event,
             self.current_person,
             self.place_strings,
@@ -1167,7 +1166,7 @@ class EventsTable(Frame):
 
 class NewEventDialog(Toplevel):
     def __init__(
-            self, master, treebard, events_table, new_event, 
+            self, master, treebard, events_table, formats, new_event,
             current_person, place_strings, place_autofill_values, 
             redraw, finding=None, ma_pa=False, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
@@ -1177,6 +1176,7 @@ class NewEventDialog(Toplevel):
         self.root = master
         self.treebard = treebard
         self.events_table = events_table
+        self.formats = formats
         self.new_event = new_event
         self.current_person = current_person
         self.place_strings = place_strings
@@ -1255,7 +1255,7 @@ class NewEventDialog(Toplevel):
 
         self.columnconfigure(1, weight=1)
         self.rowconfigure(4, weight=1)
-        self.new_event_canvas = Border(self, self.root)
+        self.new_event_canvas = Border(self, self.root, self.formats)
 
         self.new_event_canvas.title_1.config(text="New Event Dialog")
         self.new_event_canvas.title_2.config(
@@ -1616,6 +1616,7 @@ class NewEventDialog(Toplevel):
             input_widget.delete(0, 'end')
             self.grab_set()
             msg[0].destroy()
+
         person_and_id = input_widget.get().split("#")
         if len(person_and_id[0]) == 0: 
             return
@@ -1642,7 +1643,8 @@ class NewEventDialog(Toplevel):
             inwidg,
             '',
             self.place_string,
-            self.new_finding)
+            self.new_finding,
+            self.formats)
         self.place_dicts = place_validator.input_new_event()
         self.place_autofill_values.insert(0, inwidg.get())
         if place_validator.new_place_dialog is not None:

@@ -171,23 +171,27 @@ if __name__ == '__main__':
 
 # BRANCH: kin_parents
 
+# new parent's name isn't in the autofill list till reload, shd become available on redraw(); other than that it now seems possible to create a new parent and have the offspring event loaded into the db; this procedure can be modeled for the alt-parents events
+# Can't figure out how I make db input for a new birth evt PROBABLY WASN'T EVEN DOING IT yet except manually, look at `if this is still needed` which prints if you try giving a mother to someone SO DO THIS: you make an offspring evt by making a parent which adds a row to findings_persons, a row to persons_persons, and a p_p FK to the pertinent row (birth evt) in the finding table********************* 
 # Add adoptive & foster parents to nukes table. To do this, just make the parents' area like the partners' area, in a loop. Instead of just 1 & 2 kin types, also query adoptive parents, legal guardians, and foster parents: 
-        # 111, 'adoptive mother'
-        # 112, 'adoptive father'
-        # 122, 'foster father'
-        # 121, 'foster mother'
-        # 131, 'legal guardian'
+    # 111, 'adoptive mother'
+    # 112, 'adoptive father'
+    # 122, 'foster father'
+    # 121, 'foster mother'
+    # 131, 'legal guardian'
     # Instead of just birth event:
         # event_type_id|event_types
         # 1|birth
         # 48|guardianship
         # 83|adoption
         # 95|fosterage
-    # STEP 1 is to auto-create alt-parents events in the same way offspring event is created; see autocreate_alt_parents in events_table.py and fill in the blanks with auto-events adopted a child, granted guardianship, fostered a child
-    # STEP 2 IS TO GIVE JAMES W both adoptive and FOSTER PARENTS using the GUI, and when that works 
-    # STEP 3: figure out how to display in a loop like partners incl. 2 legal guardians as a couple like mother & father ie if they're married to each other, put them on the same parent line
-# add parents of all kinds to kintips and add children of all kinds so parents will also be displayed by kintips
-# make sure adoptive, foster parents and legal guardians are included in the role_type db table.
+# actual goals: 1) create db records in f_p, p_p, f_p: to create an offspring event you just create a parent; to create a fosterage/adoption/guardianship event you just create the event and inputs for the parents will appear in nukes table; 2) add code for creating the parent info in evt table dict during load so kintips will work for parents & alt parents; apparently parents are already in dict but not being used? 3) unlink on delete/backspace
+# auto-create alt-parents events in the same way offspring event is created; see autocreate_alt_parents in events_table.py and fill in the blanks with auto-events adopted a child, granted guardianship, fostered a child; auto-do when making a new alt-parent event: select finding_id from finding and use it to make a row in persons_persons and add the ppid and finding_id to a new row in findings_persons 
+# test by giving Rick a guardian, foster & adoptive parents using the GUI, if that works give him 2 of each
+# 
+# add parents of all kinds to kintips and add children of all kinds so parents will also be displayed by kintips; is this done by dkt["father_name"] for example, ie the names have to be in the findings_data dict even though maybe not used bec stopped doing kintips for parents but have to start again, maybe model that and add lists of adoptive parents, guardians, & foster parents to the events table dict only for kin tips
+# make it impossible to delete or create a birth event--it's only done by Treebard--also can't change age at birth = 0; error message states that to create a birth event, you just create a person; to create an offspring event you just create a parent; to create a fosterage/adoption/guardianship event you just create the event and inputs for the parents will appear in nukes table
+# copy the schema for findings_persons to default_new_tree and _untouched (NOT NULL constraint was removed from kin_type_id2)
 
 # BRANCH: kin_partner
 # unlink partner on delete
@@ -205,6 +209,7 @@ if __name__ == '__main__':
 # double click any name in table to change curr per
 
 # BRANCH: kin_cleanup
+# window border of new event dialog shows no name if the person has no birth name, need to use get_any_name_with_id()?
 # pressing enter in person autofill on person tab after name fills in throws an error re: colors
 # ADD/FIND button doesn't work
 # move queries to module and delete import strings for unused queries

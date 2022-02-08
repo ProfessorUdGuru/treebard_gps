@@ -14,10 +14,12 @@ from messages import InputMessage
 from dates import format_stored_date, get_date_formats, OK_MONTHS
 from events_table import get_current_person    
 from query_strings import (
-    select_finding_id_birth, delete_findings_persons,
+    select_finding_id_birth, delete_findings_persons, select_persons_persons,
     select_person_id_gender, select_finding_date, select_finding_id_birth,
     select_finding_id_death, select_finding_date_and_sorter,
-    update_findings_persons_finding,
+    update_findings_persons_finding, insert_persons_persons_one_person,
+    insert_findings_persons_new_parent, select_findings_persons_birth,
+    update_persons_persons_1, update_persons_persons_2
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -44,7 +46,8 @@ def get_all_marital_event_types():
 class NuclearFamiliesTable(Frame):
     def __init__(
             self, master, root, treebard, current_person, findings_table, 
-            right_panel, formats, person_autofill_values=[], *args, **kwargs):
+            right_panel, formats, person_autofill_values=[], 
+            *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master
@@ -62,10 +65,10 @@ class NuclearFamiliesTable(Frame):
             {"id": None, "name": None, "widget": None}, 
             {"id": None, "name": None, "widget": None}]
 
-        self.parent_couple = [
-            [None, None], 
-            {"id": None, "name": None, "widget": None, "label": None}, 
-            {"id": None, "name": None, "widget": None, "label": None}]
+        # self.parent_couple = [
+            # [None, None], 
+            # {"id": None, "name": None, "widget": None, "label": None}, 
+            # {"id": None, "name": None, "widget": None, "label": None}]
 
         self.nuke_containers = []
         self.current_person_alt_parents = []
@@ -118,10 +121,6 @@ class NuclearFamiliesTable(Frame):
         self.ma_input.grid(column=1, row=0, pady=(6,12), padx=(0,0))
         palab.grid(column=2, row=0, sticky="ew", padx=(12,12), pady=(6,12))
         self.pa_input.grid(column=3, row=0, pady=(6,12), padx=(0,0))
-        # malab.grid(column=0, row=0, sticky="w", padx=(12,0), pady=(6,12))
-        # self.ma_input.grid(column=1, row=0, pady=(6,12), padx=(6,0))
-        # palab.grid(column=2, row=0, sticky="w", padx=(18,0), pady=(6,12))
-        # self.pa_input.grid(column=3, row=0, pady=(6,12), padx=(6,12))
 
         EntryAuto.all_person_autofills.extend([self.ma_input, self.pa_input])
         for ent in (self.ma_input, self.pa_input):
@@ -311,7 +310,7 @@ class NuclearFamiliesTable(Frame):
             show a pair of persons as parents, the parent system will have to be
             used, rather than the role system.
         """
-
+        print("line", looky(seeline()).lineno, "self.original:", self.original)
         for dkt in self.current_person_parents[1:]:
             if widg == dkt["widget"]:
                 iD = dkt["id"]
@@ -324,8 +323,10 @@ class NuclearFamiliesTable(Frame):
         else:
             name_id = "{}  #{}".format(name, iD)
         ok_content = (name, name_id, bare_name, "") 
-        
-        if self.final not in ok_content:
+        print("line", looky(seeline()).lineno, "ok_content:", ok_content)
+        print("line", looky(seeline()).lineno, "self.current_person_parents:", self.current_person_parents)
+        if len(self.original) != 0 and self.final not in ok_content:
+            print("line", looky(seeline()).lineno, "running:")
             widg.delete(0, "end")
             widg.insert(0, self.original)
             return
@@ -335,6 +336,39 @@ class NuclearFamiliesTable(Frame):
             # if unlink from partner, also unlink from all kids of these 2 parents but kids stay linked to current person
             print("line", looky(seeline()).lineno, "self.progeny_dicts[iD]:", self.progeny_dicts[iD])
             print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
+        elif len(self.original) == 0:
+            print("line", looky(seeline()).lineno, "self.final:", self.final)
+            new_parent_id = open_new_person_dialog(
+                self, widg, self.root, self.treebard, self.formats)
+            print("line", looky(seeline()).lineno, "new_parent_id:", new_parent_id)
+
+# line 341 self.current_person_parents: [[None, None], {'id': None, 'name': '', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.ma>}, {'id': None, 'name': '', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.pa>}]
+            if widg.winfo_name() == "ma":
+                parent_type = 1
+            elif widg.winfo_name() == "pa":
+                parent_type = 2
+            birth_id = self.current_person_parents[0][1]
+            cur.execute(select_findings_persons_birth, (birth_id,))
+            fpid = cur.fetchone()
+            if fpid:
+                # We know one parent is blank and one is not, so find out what to update.
+                fpid, ppid = fpid
+                cur.execute(select_persons_persons, (ppid,))
+                persons_persons = cur.fetchone()
+                print("line", looky(seeline()).lineno, "persons_persons:", persons_persons)
+                if persons_persons[0] is None:
+                    cur.execute(update_persons_persons_1, (new_parent_id, ppid))
+                elif persons_persons[1] is None:
+                    cur.execute(update_persons_persons_2, (new_parent_id, ppid))
+                conn.commit()
+            else:
+                # if there's no row yet for persons_persons, make one
+                cur.execute(insert_persons_persons_one_person, (new_parent_id,))
+                conn.commit()
+                cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
+                ppid = cur.fetchone()[0]
+                cur.execute(insert_findings_persons_new_parent, (birth_id, parent_type, ppid))
+                conn.commit()
         
 
 
@@ -359,9 +393,9 @@ class NuclearFamiliesTable(Frame):
             # self.make_parents_dict(ma_id=new_parent_id) #
         # elif kin_type == 2:
             # self.make_parents_dict(pa_id=new_parent_id) #
-        # if self.birth_record[3] == kin_type: #
+        # if self.parent_record[3] == kin_type: #
             # which = 1
-        # elif self.birth_record[5] == kin_type: #
+        # elif self.parent_record[5] == kin_type: #
             # which = 2  
         # if unlink is False:
             # if which == 1:
@@ -762,7 +796,11 @@ class NuclearFamiliesTable(Frame):
             and symmetrical since there will be no special case to deal with--
             the person who exists but hasn't been born yet. This will also 
             save the user time; they won't have to create a birth event for 
-            anyone.
+            anyone. Then when the user inputs an alternate parent event 
+            (guardianship, fosterage, adoption), the same process will create
+            inputs for the alternate parents. All symmetrical procedures except
+            that the person's birth is assumed so exactly two inputs are always
+            created for biological parents.
         '''
 
         current_file = get_current_file()[0]
@@ -771,8 +809,6 @@ class NuclearFamiliesTable(Frame):
 
         cur.execute(select_finding_id_birth, (self.current_person,))
         birth_id = cur.fetchone()[0]
-        # if birth_id:
-        # birth_id = birth_id[0]
         cur.execute(
             '''
                 SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
@@ -783,30 +819,32 @@ class NuclearFamiliesTable(Frame):
                 WHERE finding_id = ?
             ''',
             (birth_id,))
-        birth_record = cur.fetchall()
-        if len(birth_record) != 0:
-            self.birth_record = birth_record[0]
+        parent_record = cur.fetchall()
+        if len(parent_record) != 0:
+            self.parent_record = parent_record[0]
         else:
-            self.birth_record = None
-        # else:
-            # print("line", looky(seeline()).lineno, "no birth id:")
+            self.parent_record = None
+            # print("line", looky(seeline()).lineno, "self.final:", self.final)
+            print("line", looky(seeline()).lineno, "running:")
 
         ma_name = ""
         pa_name = ""
         parent1 = None
         parent2 = None
-        if self.birth_record:
-            parent1 = self.birth_record[2:4]
-            parent2 = self.birth_record[4:]
+        if self.parent_record:
+            parent1 = self.parent_record[2:4]
+            parent2 = self.parent_record[4:]
             if parent1[1] == 1:
                 ma_id = parent1[0]
                 pa_id = parent2[0]
             elif parent1[1] == 2:
                 ma_id = parent2[0]
                 pa_id = parent1[0]
-            self.current_person_parents[0] = self.birth_record[0:2]
-        else:            
-            print("798 if this is still needed there will have to be inserts to persons_persons and to findings_persons, at least, but not sure what this was for")
+            self.current_person_parents[0] = self.parent_record[0:2]
+        else:
+            # This only runs when there are no parents recorded.
+            print("812 if this is still needed there will have to be inserts to persons_persons and to findings_persons, at least")
+            self.current_person_parents[0][1] = birth_id
             # cur.execute(
                 # '''
                     # INSERT INTO findings_persons
@@ -815,7 +853,7 @@ class NuclearFamiliesTable(Frame):
                 # (birth_id, ma_id, pa_id))
             # conn.commit()
 
-            # self.current_person_parents[0] = self.birth_record[0:2]
+            # self.current_person_parents[0] = self.parent_record[0:2]
 
         if ma_id:
             ma_name = get_any_name_with_id(ma_id)
@@ -843,7 +881,7 @@ class NuclearFamiliesTable(Frame):
             anyone complains about women going first. """
         cur.execute(
         '''
-            SELECT finding_id 
+            SELECT finding_id, date_sorter 
             FROM finding 
             WHERE person_id = ? 
                 AND event_type_id in (48, 83, 95)
@@ -854,23 +892,31 @@ class NuclearFamiliesTable(Frame):
             return
         
         alt_parent_details = []
+
+        r = 0
+        for event in alt_parent_events:
+            event = list(event)
+            event[1] = [int(i) for i in event[1].split(",")]
+            alt_parent_events[r] = event
+            r += 1
+        alt_parent_events = sorted(alt_parent_events, key=lambda i: i[1])
         
         for event in alt_parent_events:
-            # self.parent_couple = [
-                # [None, None], 
-                # {"id": None, "name": None, "widget": None, "label": None}, 
-                # {"id": None, "name": None, "widget": None, "label": None}]
+            parent_couple = [
+                [None, None], 
+                {"id": None, "name": None, "widget": None, "label": None}, 
+                {"id": None, "name": None, "widget": None, "label": None}]
             cur.execute(
             '''
                 SELECT persons_persons_id, kin_type_id1, kin_type_id2, findings_persons_id
                 FROM findings_persons
                 WHERE finding_id = ?
             ''',
-            event)
+            (event[0],))
             couple_details = list(cur.fetchone())
-            self.parent_couple[0] = (couple_details.pop(), event[0])
+            parent_couple[0] = [couple_details.pop(), event[0]]
             alt_parent_details.append(couple_details)
-            self.current_person_alt_parents.append(self.parent_couple)
+            self.current_person_alt_parents.append(parent_couple)
 
         for lst in alt_parent_details:
             cur.execute(
@@ -968,17 +1014,13 @@ class NuclearFamiliesTable(Frame):
                 ent.bind("<Double-Button-1>", self.change_current_person) 
                 self.nuke_containers.append(ent)
 
-            self.nuke_containers.extend([malab, palab])
-
-           
+            self.nuke_containers.extend([malab, palab])           
             j += 1
 
     def grid_alt_parents(self):
         """ Grid widgets as children of self.parentslab. """
-        print("line", looky(seeline()).lineno, "self.current_person_alt_parents:", self.current_person_alt_parents)
         x = 1
         for lst in self.current_person_alt_parents:
-            print("line", looky(seeline()).lineno, "lst:", lst)
             z = 0
             for person in lst[1:]:
                 label = person["label"]

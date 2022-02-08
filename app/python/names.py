@@ -601,7 +601,7 @@ class PersonAdd(Toplevel):
         conn.commit()
 
         new_name_string = "{}  #{}".format(self.full_name, self.new_person_id)
-        
+        print("line", looky(seeline()).lineno, "running in names.py:")
         self.inwidg.delete(0, 'end')
         self.inwidg.insert(0, new_name_string)
         cur.close()

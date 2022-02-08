@@ -35,9 +35,7 @@ consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', '
 
 
 
-
-
-name = "Russell Edward Brand"
+name = "John David McAfee"
 
 name = name.split()
 lowered = []
@@ -283,6 +281,8 @@ root.mainloop()
 
 # 933
 # Jeffrey Bryne Griffy
+# John David McAfee, founder of McAfee antivirus software, born 18 September 1945, Cinderford, Gloucestershire, England
+
 
 # 393
 # Rowan Sebastian Atkinson, Born 6 January 1955, Consett, County Durham, England
@@ -350,6 +350,8 @@ root.mainloop()
 # Theodore Robert Bundy (Ted Bundy serial killer)
 # Richard Milhous Nixon, Born: January 9, 1913, Yorba Linda, California 
 # Thomas Earl Petty, singer
+# Demi Gene Guynes, actress Demi Moore, born November 11, 1962 (quadruple Scorpio)
+# Roswell, New Mexico, U.S.
 
 # 742
 # Eldon Russell Carter Junior
@@ -387,6 +389,7 @@ root.mainloop()
 # 494
 # Karen Sue Robertson
 # Debra Kay Robertson
+# Caryn Elaine Johnson, (actress whoopi goldberg) Born November 13, 1955, New York City (quadruple scorpio)
 
 # 652
 # Russell Edward Brand, comedian/activist # Born June 1975, Grays, Essex, England
