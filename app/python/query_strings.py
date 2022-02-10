@@ -146,18 +146,6 @@ insert_finding_new_couple = '''
     VALUES (?, ?)
 '''
 
-insert_finding_places_new = '''
-    INSERT INTO finding_places (
-        finding_id, nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
-    VALUES (?, 1, null, null, null, null, null, null, null, null)
-'''
-
-insert_finding_places_new_event = '''
-    INSERT INTO finding_places
-       (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8, finding_id)
-    VALUES ({})
-'''.format(','.join(['?'] * 10))
-
 insert_findings_notes_new = '''
     INSERT INTO findings_notes 
     VALUES (null, ?, ?, 0)
@@ -180,6 +168,28 @@ insert_findings_persons_new_parent = '''
     INSERT INTO findings_persons (finding_id, age1, kin_type_id1, age2, kin_type_id2, persons_persons_id)
     VALUES (?, '', ?, '', null, ?)
 '''
+
+insert_findings_persons_null_couple = '''
+    INSERT INTO findings_persons
+    VALUES (null, ?, '', ?, '', ?, ?)
+'''
+
+# insert_findings_persons_null_couple = '''
+    # INSERT INTO findings_persons
+    # VALUES (null, ?, '', null, '', null, ?)
+# '''
+
+insert_finding_places_new = '''
+    INSERT INTO finding_places (
+        finding_id, nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
+    VALUES (?, 1, null, null, null, null, null, null, null, null)
+'''
+
+insert_finding_places_new_event = '''
+    INSERT INTO finding_places
+       (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8, finding_id)
+    VALUES ({})
+'''.format(','.join(['?'] * 10))
 
 insert_findings_roles = '''
     INSERT INTO findings_roles 
@@ -223,6 +233,11 @@ insert_person_new = '''
 insert_persons_persons = '''
     INSERT INTO persons_persons (person_id1, person_id2)
     VALUES (?, ?)
+'''
+
+insert_persons_persons_null = '''
+    INSERT INTO persons_persons
+    VALUES (null, null, null)
 '''
 
 insert_persons_persons_one_person = '''
@@ -549,12 +564,6 @@ select_default_formats = '''
     WHERE default_format_id = 1
 '''
 
-select_event_type_id = '''
-    SELECT event_type_id, couple
-    FROM event_type
-    WHERE event_types = ?
-'''
-
 select_event_type_after_death = '''
     SELECT event_types
     FROM event_type
@@ -569,6 +578,18 @@ select_event_type_after_death_bool = '''
 
 select_event_type_couple_bool = '''
     SELECT couple
+    FROM event_type
+    WHERE event_types = ?
+'''
+
+select_event_type_id = '''
+    SELECT event_type_id, couple
+    FROM event_type
+    WHERE event_types = ?
+'''
+
+select_event_type_via_event_string = '''
+    SELECT event_type_id
     FROM event_type
     WHERE event_types = ?
 '''

@@ -13,8 +13,6 @@ from dev_tools import looky, seeline
 
 
 
-# formats = make_formats_dict()
-
 class EntryAuto(EntryUnhilited):
     '''
         To use this class, after instantiating it, you have to call 

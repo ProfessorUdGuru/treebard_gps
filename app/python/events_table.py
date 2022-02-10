@@ -50,7 +50,9 @@ from query_strings import (
     insert_finding_birth, update_findings_persons_age2, select_person,
     select_finding_event_type, delete_findings_persons_offspring,
     select_findings_persons_person_id, update_finding_date, 
-    select_findings_persons_alt_parents)
+    select_findings_persons_alt_parents, select_event_type_via_event_string,
+    insert_persons_persons_null, insert_findings_persons_null_couple,
+    )
 
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -418,6 +420,7 @@ class EventsTable(Frame):
         event_types = get_all_event_types()
         self.event_autofill_values = EntryAuto.create_lists(event_types)
         self.couple_event_types = get_couple_event_types()
+        # self.new_alt_parent_event = False
         self.after_death_events = get_after_death_event_types()
         if self.after_death_events is None:
             return
@@ -1023,6 +1026,7 @@ class EventsTable(Frame):
                 current_person=self.current_person)
         else: # user pressed OK to change current person for example   
             self.main_window.nuke_table.make_nuke_inputs()
+
         self.resize_scrollbar(self.root, self.main_canvas)
 
     def resize_scrollbar(self, root, canvas):
@@ -1186,6 +1190,7 @@ class NewEventDialog(Toplevel):
 
         self.couple_event = None
         self.visited = []
+        self.new_alt_parent_event = False
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
@@ -1357,6 +1362,7 @@ class NewEventDialog(Toplevel):
         lab3.grid(column=0, row=3, sticky="e")
         self.particulars_input.grid(column=1, row=3, sticky="w", padx=(3,0))
         if self.couple_event == 0:
+            print("line", looky(seeline()).lineno, "self.new_event:", self.new_event)
             if self.new_event == "offspring":
                 self.withdraw()
                 msg = open_message(
@@ -1366,7 +1372,11 @@ class NewEventDialog(Toplevel):
                     "OK") 
                 msg[0].grab_set()
                 msg[2].config(command=err_done8)
-                return           
+                return 
+            elif self.new_event in ("adoption", "fosterage", "guardianship"):
+                self.new_alt_parent_event = True
+                # self.events_table.new_alt_parent_event = True
+                self.show_one_person()
             else:
                 self.show_one_person()
         elif self.couple_event == 1:
@@ -1529,7 +1539,14 @@ class NewEventDialog(Toplevel):
         conn.commit()
 
         update_particulars(
-            self.particulars_input.get().strip(), self.new_finding)        
+            self.particulars_input.get().strip(), self.new_finding) 
+
+        if self.new_alt_parent_event is True:
+            make_alt_parent_event(conn, cur, self.event_type_id)
+            self.new_alt_parent_event = False  
+        # if self.events_table.new_alt_parent_event is True:
+            # make_alt_parent_event(conn, cur)
+            # self.events_table.new_alt_parent_event = False         
 
         cur.close()
         conn.close()
@@ -1655,6 +1672,28 @@ class NewEventDialog(Toplevel):
     def focus_new_event_dialog(self, evt=None):
         self.grab_set()
         self.lift()
+
+def make_alt_parent_event(conn, cur, event_type_id):
+    """ Auto-create the database rows needed to store alt parents. 
+        In module-level namespace so both classes have access to it and/or
+        because it has nothing to do with the events table but the redraw()
+        method needs access.
+    """
+    print("line", looky(seeline()).lineno, "event_type_id:", event_type_id)
+    if event_type_id == 48:
+        unisex_alt_parent = 130
+    elif event_type_id == 83:
+        unisex_alt_parent = 110
+    elif event_type_id == 95:
+        unisex_alt_parent = 120
+    cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
+    event_id = cur.fetchone()[0]
+    cur.execute(insert_persons_persons_null)
+    conn.commit()
+    cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
+    ppid = cur.fetchone()[0]
+    cur.execute(insert_findings_persons_null_couple, (event_id, unisex_alt_parent, unisex_alt_parent, ppid))
+    conn.commit() 
  
 short_values = ['red', 'white', 'blue', 'black', 'rust', 'pink', 'steelblue']
 

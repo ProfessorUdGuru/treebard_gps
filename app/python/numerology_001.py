@@ -35,7 +35,9 @@ consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', '
 
 
 
-name = "John David McAfee"
+
+
+name = "Henry Saint Claire Fredericks Junior"
 
 name = name.split()
 lowered = []
@@ -195,6 +197,7 @@ root.mainloop()
 # robert eugene murray
 # Taran Gostavo Braga Maquiran
 # David Robert Magin Junior (pat's father)
+# Henry St. Claire Fredericks Junior (musician Taj Mahal) born May 17, 1942 Harlem, New York
 
 # 314
 # jovilla ortega maquiran
@@ -206,8 +209,7 @@ root.mainloop()
 # David Andrew Sinclair Born: 26 June 1969, Sydney, Australia (biology of aging)
 
 # 415
-# David Byrne (songwriter, artist)
-# 14 May 1952 (age 68) Dumbarton, Dunbartonshire, Scotland
+# David Byrne (songwriter, artist) 14 May 1952 (age 68) Dumbarton, Dunbartonshire, Scotland
 
 # 235
 # Zachary Monroe Bush MD, biology/environment/farming/health/teacher

@@ -12,14 +12,15 @@ from names import (open_new_person_dialog, make_all_names_list_for_person_select
     get_any_name_with_id, delete_person_from_tree)
 from messages import InputMessage
 from dates import format_stored_date, get_date_formats, OK_MONTHS
-from events_table import get_current_person    
+from events_table import get_current_person
 from query_strings import (
     select_finding_id_birth, delete_findings_persons, select_persons_persons,
     select_person_id_gender, select_finding_date, select_finding_id_birth,
     select_finding_id_death, select_finding_date_and_sorter,
     update_findings_persons_finding, insert_persons_persons_one_person,
     insert_findings_persons_new_parent, select_findings_persons_birth,
-    update_persons_persons_1, update_persons_persons_2
+    update_persons_persons_1, update_persons_persons_2, select_kin_type_string,
+    
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -64,11 +65,6 @@ class NuclearFamiliesTable(Frame):
             [None, None], 
             {"id": None, "name": None, "widget": None}, 
             {"id": None, "name": None, "widget": None}]
-
-        # self.parent_couple = [
-            # [None, None], 
-            # {"id": None, "name": None, "widget": None, "label": None}, 
-            # {"id": None, "name": None, "widget": None, "label": None}]
 
         self.nuke_containers = []
         self.current_person_alt_parents = []
@@ -217,9 +213,6 @@ class NuclearFamiliesTable(Frame):
     def get_original(self, evt):
         self.original = evt.widget.get()
 
-# IT'S NOT CURRENT PERSON SO IT CAN'T BE CHANGED, HAVE TO MAKE CURRENT FIRST.
-# Don't disable it; this will make it look like a label whereas it needs to accept highlighting and insertion cursor so user knows it can do something. Just make it re-insert the original name no matter what user tries to do. If empty, it will accept any input including new person. It will autofill normally and PersonAdd dlg will open. But if a person is in the input, 3 things can happen: 1) it will autofill the person who is already in the field, adding the #id as per normal, if the right key strokes for that person are tried. 2) if any other keys are tried, it will refill in with self.original. 3) If delete or backspace is pressed, it will unlink and the dlg will list everything that was unlinked AND save a deletion log so the user can reference which events were altered.
-
     def change_current_person(self, evt):
         widg = evt.widget
         if len(widg.get()) == 0:
@@ -251,64 +244,6 @@ class NuclearFamiliesTable(Frame):
         """ If the field is not blank, emulate a disabled field for any input that tries to
             change the contents to a different person (to change a parent, partner, or child,
             make that person the current person first.)
-
-            The database for person_id 1's biological parents looks like this:
-            select * from findings_persons where finding_id = 1;
-            findings_persons_id|finding_id|age1|kin_type_id1|age2|kin_type_id2|persons_persons_id
-            3|1|33|2|42|1|3
-            select * from finding where finding_id = 1;
-            finding_id|date|particulars|age|person_id|event_type_id|date_sorter
-            1|-1884-ap-7-------||0|1|1|1884,4,7
-            select * from persons_persons where persons_persons_id = 3;
-            persons_persons_id|person_id1|person_id2
-            3|2|3
-
-            Treebard auto-creates an offspring event for each biological parent 
-            based on the finding_id where event_type_id is 1 (birth event). Such
-            auto-created events use the same finding_id as the child's birth event.
-
-            Unlike birth, the terms "adoption" and "fosterage" refer to either parents (the fosterers) or 
-            child (the one fostered), so a distinguishing word pair corresponding
-            to birth/offspring (for child/parents) isn't necessary in English but would be desirable. It could be
-            correct to say that these are events with up to three participants:
-            a child and two parents. The event could be displayed as fosterage, adoption,
-            or guardianship for all the parties involved. But this would be
-            ambiguous because you'd have to guess based on age which is the child.
-            So the right way is to use more contrived but less ambiguous terms in
-            both the GUI and the code so everyone's role in the event can be 
-            instantly understood.
-
-            To keep the code symmetrical, the events adoption, guardianship, and 
-            fosterage will be treated like birth, as the event experienced by
-            the child. The more contrived terms will be used for the parents:
-            "adopted a child, granted guardianship, fostered a child".
-
-            Since it's possible for a person to be adopted or fostered by more
-            than one guardian or couple, the functionality of the
-            kintips will have to be expanded to show guardians when the user
-            points at an adoption, fosterage, or guardianship. The kintips will
-            name the child when the user points as the contrived events listed
-            above. The kintips are in addition to the inclusion of the pertinent
-            names in the immediate family table.
-
-            In the case of a guardianship, there's no semantic distinction between the 
-            male and female partner if the guardianship is granted to a couple, as there is with
-            terminology like adoptive mother or foster father.
-            Possibly the code can detect if two guardians of the same child are
-            partners, and if so, they would be displayed together as parents.
-            Otherwise, they'd be displayed on separate lines.
-
-            The user will have the option of displaying adoptive parents, foster
-            parents, and guardians with the roles feature. For example the user
-            might choose to show adoptive parents who raised a child for many
-            years as parents in the immediate family table, but show temporary
-            foster parents in the roles dialog. The user has to be free to do it
-            either way in any case, because an unofficial foster parent or a 
-            legal guardian could raise a child from birth to majority, or for
-            some substantial portion of his childhood, in which case the guardians
-            should be displayed as parents. It has to be up to the user, but to
-            show a pair of persons as parents, the parent system will have to be
-            used, rather than the role system.
         """
         print("line", looky(seeline()).lineno, "self.original:", self.original)
         for dkt in self.current_person_parents[1:]:
@@ -326,7 +261,6 @@ class NuclearFamiliesTable(Frame):
         print("line", looky(seeline()).lineno, "ok_content:", ok_content)
         print("line", looky(seeline()).lineno, "self.current_person_parents:", self.current_person_parents)
         if len(self.original) != 0 and self.final not in ok_content:
-            print("line", looky(seeline()).lineno, "running:")
             widg.delete(0, "end")
             widg.insert(0, self.original)
             return
@@ -337,78 +271,43 @@ class NuclearFamiliesTable(Frame):
             print("line", looky(seeline()).lineno, "self.progeny_dicts[iD]:", self.progeny_dicts[iD])
             print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         elif len(self.original) == 0:
-            print("line", looky(seeline()).lineno, "self.final:", self.final)
-            new_parent_id = open_new_person_dialog(
-                self, widg, self.root, self.treebard, self.formats)
-            print("line", looky(seeline()).lineno, "new_parent_id:", new_parent_id)
+            self.make_parent(widg, conn, cur)
+            people = make_all_names_list_for_person_select()
+            all_birth_names = EntryAuto.create_lists(people)
+            for ent in EntryAuto.all_person_autofills:
+                ent.values = all_birth_names
 
-# line 341 self.current_person_parents: [[None, None], {'id': None, 'name': '', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.ma>}, {'id': None, 'name': '', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.pa>}]
-            if widg.winfo_name() == "ma":
-                parent_type = 1
-            elif widg.winfo_name() == "pa":
-                parent_type = 2
-            birth_id = self.current_person_parents[0][1]
-            cur.execute(select_findings_persons_birth, (birth_id,))
-            fpid = cur.fetchone()
-            if fpid:
-                # We know one parent is blank and one is not, so find out what to update.
-                fpid, ppid = fpid
-                cur.execute(select_persons_persons, (ppid,))
-                persons_persons = cur.fetchone()
-                print("line", looky(seeline()).lineno, "persons_persons:", persons_persons)
-                if persons_persons[0] is None:
-                    cur.execute(update_persons_persons_1, (new_parent_id, ppid))
-                elif persons_persons[1] is None:
-                    cur.execute(update_persons_persons_2, (new_parent_id, ppid))
-                conn.commit()
-            else:
-                # if there's no row yet for persons_persons, make one
-                cur.execute(insert_persons_persons_one_person, (new_parent_id,))
-                conn.commit()
-                cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
-                ppid = cur.fetchone()[0]
-                cur.execute(insert_findings_persons_new_parent, (birth_id, parent_type, ppid))
-                conn.commit()
-        
-
-
-# line 251 ok_content: ('Rolanda Alcaraz', 'Rolanda Alcaraz  #5773', None, '')
-# line 251 ok_content: ('Clair Preston Boudreau (wrong name)', 'Clair Preston Boudreau  #5719', 'Clair Preston Boudreau', '')
-
-
-
-
-
-
-
-# line 227 self.original: Clair Preston Boudreau (wrong name)
-# line 228 self.final: Clair Preston Boudreau  #5719
-# line 229 self.current_person_parents: [(99, 873), {'id': 5773, 'name': 'Rolanda Alcaraz', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.ma>}, {'id': 5719, 'name': 'Clair Preston Boudreau (wrong name)', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.pa>}]
-
-
-        # new_parent_id, unlink = self.edit_parent(final, widg)
-        # birth_id = self.current_person_parents[0][1]
-        # birth_fpid = self.current_person_parents[0][0]
-        # if kin_type == 1:
-            # self.make_parents_dict(ma_id=new_parent_id) #
-        # elif kin_type == 2:
-            # self.make_parents_dict(pa_id=new_parent_id) #
-        # if self.parent_record[3] == kin_type: #
-            # which = 1
-        # elif self.parent_record[5] == kin_type: #
-            # which = 2  
-        # if unlink is False:
-            # if which == 1:
-                # query = update_findings_persons_by_id1
-            # elif which == 2:
-                # query = update_findings_persons_by_id2 
-            # cur.execute(query, (new_parent_id, birth_fpid))
-            # conn.commit()        
-        # elif unlink is True:
-            # if which == 1:
-                # self.query = update_findings_persons_by_id1
-            # elif which == 2:
-                # self.query = update_findings_persons_by_id2
+    def make_parent(self, widg, conn, cur):
+        """ Add a parent from a blank input on the nukes table. """
+        print("line", looky(seeline()).lineno, "self.final:", self.final)
+        new_parent_id = open_new_person_dialog(
+            self, widg, self.root, self.treebard, self.formats)
+        if widg.winfo_name() == "ma":
+            parent_type = 1
+        elif widg.winfo_name() == "pa":
+            parent_type = 2
+        birth_id = self.current_person_parents[0][1]
+        cur.execute(select_findings_persons_birth, (birth_id,))
+        fpid = cur.fetchone()
+        if fpid:
+            # We know one parent is blank and one is not, so find out what to update.
+            fpid, ppid = fpid
+            cur.execute(select_persons_persons, (ppid,))
+            persons_persons = cur.fetchone()
+            print("line", looky(seeline()).lineno, "persons_persons:", persons_persons)
+            if persons_persons[0] is None:
+                cur.execute(update_persons_persons_1, (new_parent_id, ppid))
+            elif persons_persons[1] is None:
+                cur.execute(update_persons_persons_2, (new_parent_id, ppid))
+            conn.commit()
+        else:
+            # if there's no row yet for persons_persons, make one
+            cur.execute(insert_persons_persons_one_person, (new_parent_id,))
+            conn.commit()
+            cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
+            ppid = cur.fetchone()[0]
+            cur.execute(insert_findings_persons_new_parent, (birth_id, parent_type, ppid))
+            conn.commit()
 
     def update_partner(self, final, conn, cur, widg):
     
@@ -878,10 +777,11 @@ class NuclearFamiliesTable(Frame):
             female parent, display her to the left of the male parent.
             This can easily be changed if too many people complain as I'm
             not doing it for political reasons, just for fun to see if
-            anyone complains about women going first. """
+            anyone complains about women going first. 
+        """
         cur.execute(
         '''
-            SELECT finding_id, date_sorter 
+            SELECT finding_id, date_sorter, event_type_id 
             FROM finding 
             WHERE person_id = ? 
                 AND event_type_id in (48, 83, 95)
@@ -902,6 +802,13 @@ class NuclearFamiliesTable(Frame):
         alt_parent_events = sorted(alt_parent_events, key=lambda i: i[1])
         
         for event in alt_parent_events:
+            print("line", looky(seeline()).lineno, "event:", event)
+            # if event[2] == 48:
+                # alt_parent_type = ("guardian", "guardian")
+            # elif event[2] == 83:
+                # alt_parent_type = ("adoptive mother", "adoptive father")
+            # elif event[2] == 95:
+                # alt_parent_type = ("foster mother", "foster father")
             parent_couple = [
                 [None, None], 
                 {"id": None, "name": None, "widget": None, "label": None}, 
@@ -914,11 +821,18 @@ class NuclearFamiliesTable(Frame):
             ''',
             (event[0],))
             couple_details = list(cur.fetchone())
-            parent_couple[0] = [couple_details.pop(), event[0]]
+# line 839 couple_details: [61, None, None, 123]
+            print("line", looky(seeline()).lineno, "couple_details:", couple_details)
+            alt_parent_type = []
+            for kintype in couple_details[1:3]:
+                cur.execute(select_kin_type_string, (kintype,))
+                alt_parent_type.append(cur.fetchone()[0])
+            parent_couple[0] = [couple_details.pop(), event[0], alt_parent_type]
             alt_parent_details.append(couple_details)
             self.current_person_alt_parents.append(parent_couple)
 
         for lst in alt_parent_details:
+            print("line", looky(seeline()).lineno, "lst:", lst) # line 845 lst: [61, None, None]
             cur.execute(
             '''
                 SELECT person_id1, person_id2
@@ -939,7 +853,8 @@ class NuclearFamiliesTable(Frame):
                 WHERE person_id = ?
             ''',
             (lst[1],))
-            if cur.fetchone()[0] == "female":
+            gender = cur.fetchone()
+            if gender and gender == "female":
                 continue
             else:
                 copy = []
@@ -972,6 +887,9 @@ class NuclearFamiliesTable(Frame):
                 (lst[2],))
                 result = cur.fetchone()[0]
                 lst[2] = result
+            else:
+                alt_parent_type = self.current_person_alt_parents[w][0][2]
+                lst[2] = alt_parent_type[0]
             if name2:
                 self.current_person_alt_parents[w][2]["name"] = name2
                 lst[3] = name2
@@ -984,29 +902,38 @@ class NuclearFamiliesTable(Frame):
                 (lst[4],))
                 result = cur.fetchone()[0]
                 lst[4] = result
+            else:
+                alt_parent_type = self.current_person_alt_parents[w][0][2]
+                lst[4] = alt_parent_type[1]
             w += 1
        
         j = 0
         for lst in alt_parent_details:
-
-            malab = Label(self.parentslab, text=lst[2].title(), anchor="e")
-            widg_l = EntryAuto(
+            print("line", looky(seeline()).lineno, "lst:", lst)
+            lab_l = Label(self.parentslab, anchor="e")
+            ent_l = EntryAuto(
                 self.parentslab, width=30, autofill=True, 
                 values=self.person_autofill_values)
-            widg_l.insert(0, lst[1])
-            self.current_person_alt_parents[j][1]["widget"] = widg_l
-            self.current_person_alt_parents[j][1]["label"] = malab
+            if lst[1]:
+                ent_l.insert(0, lst[1])
+            self.current_person_alt_parents[j][1]["widget"] = ent_l
+            self.current_person_alt_parents[j][1]["label"] = lab_l
+            if lst[2]:
+                lab_l.config(text=lst[2].title())
 
-            palab = Label(self.parentslab, text=lst[4].title(), anchor="e")
-            widg_r = EntryAuto(
+            lab_r = Label(self.parentslab, anchor="e")
+            ent_r = EntryAuto(
                 self.parentslab, width=30, autofill=True, 
-                values=self.person_autofill_values) 
-            widg_r.insert(0, lst[3]) 
-            self.current_person_alt_parents[j][2]["widget"] = widg_r
-            self.current_person_alt_parents[j][2]["label"] = palab
+                values=self.person_autofill_values)
+            if lst[3]:
+                ent_r.insert(0, lst[3]) 
+            self.current_person_alt_parents[j][2]["widget"] = ent_r
+            self.current_person_alt_parents[j][2]["label"] = lab_r
+            if lst[4]:
+                lab_r.config(text=lst[4].title())
 
-            EntryAuto.all_person_autofills.extend([widg_l, widg_r])
-            for ent in (widg_l, widg_r):
+            EntryAuto.all_person_autofills.extend([ent_l, ent_r])
+            for ent in (ent_l, ent_r):
                 ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
                 ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
                 ent.bind("<FocusIn>", self.get_original, add="+")
@@ -1014,7 +941,7 @@ class NuclearFamiliesTable(Frame):
                 ent.bind("<Double-Button-1>", self.change_current_person) 
                 self.nuke_containers.append(ent)
 
-            self.nuke_containers.extend([malab, palab])           
+            self.nuke_containers.extend([lab_l, lab_r])           
             j += 1
 
     def grid_alt_parents(self):
@@ -1422,3 +1349,64 @@ class NuclearFamiliesTable(Frame):
     not necessary to create a hypothetical spouse in order to identify the
     parents in a nuclear family.
 ''' 
+
+# dev docs: parents & alternate parents
+'''
+    The database for person_id 1's biological parents looks like this:
+    select * from findings_persons where finding_id = 1;
+    findings_persons_id|finding_id|age1|kin_type_id1|age2|kin_type_id2|persons_persons_id
+    3|1|33|2|42|1|3
+    select * from finding where finding_id = 1;
+    finding_id|date|particulars|age|person_id|event_type_id|date_sorter
+    1|-1884-ap-7-------||0|1|1|1884,4,7
+    select * from persons_persons where persons_persons_id = 3;
+    persons_persons_id|person_id1|person_id2
+    3|2|3
+
+    Treebard auto-creates an offspring event for each biological parent 
+    based on the finding_id where event_type_id is 1 (birth event). Such
+    auto-created events use the same finding_id as the child's birth event.
+
+    Unlike birth, the terms "adoption" and "fosterage" refer to either parents (the fosterers) or 
+    child (the one fostered), so a distinguishing word pair corresponding
+    to birth/offspring (for child/parents) isn't necessary in English but would be desirable. It could be
+    correct to say that these are events with up to three participants:
+    a child and two parents. The event could be displayed as fosterage, adoption,
+    or guardianship for all the parties involved. But this would be
+    ambiguous because you'd have to guess based on age which is the child.
+    So the right way is to use more contrived but less ambiguous terms in
+    both the GUI and the code so everyone's role in the event can be 
+    instantly understood.
+
+    To keep the code symmetrical, the events adoption, guardianship, and 
+    fosterage will be treated like birth, as the event experienced by
+    the child. The more contrived terms will be used for the parents:
+    "adopted a child, granted guardianship, fostered a child".
+
+    Since it's possible for a person to be adopted or fostered by more
+    than one guardian or couple, the functionality of the
+    kintips will have to be expanded to show guardians when the user
+    points at an adoption, fosterage, or guardianship. The kintips will
+    name the child when the user points as the contrived events listed
+    above. The kintips are in addition to the inclusion of the pertinent
+    names in the immediate family table.
+
+    In the case of a guardianship, there's no semantic distinction between the 
+    male and female partner if the guardianship is granted to a couple, as there is with
+    terminology like adoptive mother or foster father.
+    If two guardians of the same child are
+    partners, they'll be in the same record in the persons_persons db table, so they would be displayed together as parents in the nukes table.
+    Otherwise, they'd be displayed on separate lines in both tables.
+
+    The user will have the option of displaying adoptive parents, foster
+    parents, and guardians with the roles feature. For example the user
+    might choose to show adoptive parents who raised a child for many
+    years as parents in the immediate family table, but show temporary
+    foster parents in the roles dialog. The user has to be free to do it
+    either way in any case, because an unofficial foster parent or a 
+    legal guardian could raise a child from birth to majority, or for
+    some substantial portion of his childhood, in which case the guardians
+    should be displayed as parents. It has to be up to the user, but to
+    show a pair of persons as parents, the parent system will have to be
+    used, rather than the role system.
+'''
