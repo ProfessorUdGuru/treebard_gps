@@ -70,7 +70,8 @@ def get_matches(search_input):
 class PersonSearch(Toplevel):
     def __init__(
             self, master, root, treebard, entry, findings_table, 
-            show_top_pic, pic, formats, *args, **kwargs):
+            show_top_pic, formats, *args, **kwargs): 
+            # show_top_pic, pic, formats, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.master = master # Main
@@ -80,7 +81,7 @@ class PersonSearch(Toplevel):
         self.findings_table = findings_table
         # self.attributes_table = attributes_table
         self.show_top_pic = show_top_pic
-        self.pic = pic
+        # self.pic = pic
         self.formats = formats
 
         self.result_rows = []
@@ -757,10 +758,9 @@ class LabelSearch(Label):
         this class separately from other labels. 
     '''
 
-    def __init__(self, master, *args, **kwargs):
-        Label.__init__(self, master, formats, *args, **kwargs)
+    def __init__(self, master, formats, *args, **kwargs):
+        Label.__init__(self, master, *args, **kwargs)
 
-        # self.formats = make_formats_dict()
         self.formats = formats
         self.config(anchor='w')
 

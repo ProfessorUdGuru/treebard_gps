@@ -469,7 +469,8 @@ class Main(Frame):
             self.findings_table,
             self.show_top_pic,
             self.formats,
-            pic=None)    
+            # pic=None
+)    
 
     def change_person(self):
         if "#" not in self.person_entry.get():

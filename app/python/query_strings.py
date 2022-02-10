@@ -1244,39 +1244,83 @@ select_persons_persons = '''
     WHERE persons_persons_id = ?
 '''
 
-select_persons_persons_ma_id1 = '''
+# select_persons_persons_ma_id1 = '''
+    # SELECT person_id1
+    # FROM findings_persons
+    # JOIN persons_persons
+        # ON persons_persons.person_id1 = person.person_id
+    # WHERE kin_type_id1 = 1
+        # AND finding_id = ?
+# '''
+
+# select_persons_persons_ma_id2 = '''
+    # SELECT person_id2
+    # FROM findings_persons
+    # JOIN persons_persons    
+        # ON persons_persons.person_id2 = person.person_id
+    # WHERE kin_type_id2 = 1
+        # AND finding_id = ?
+# '''
+
+# select_persons_persons_pa_id1 = '''
+    # SELECT person_id1
+    # FROM findings_persons
+        # JOIN persons_persons
+            # ON persons_persons.person_id1 = person.person_id
+    # WHERE kin_type_id1 = 2
+        # AND finding_id = ?
+# '''
+
+# select_persons_persons_pa_id2 = '''
+    # SELECT person_id2
+    # FROM findings_persons
+        # JOIN persons_persons
+            # ON persons_persons.person_id2 = person.person_id
+    # WHERE kin_type_id2 = 2
+        # AND finding_id = ?
+# '''
+
+select_persons_persons_ma_id1 = '''   
     SELECT person_id1
-    FROM findings_persons
+    FROM person
     JOIN persons_persons
-        ON persons_persons.person_id1 = person.person_id
+        ON persons_persons.person_id1 = person.person_id    
+    JOIN findings_persons
+        ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
     WHERE kin_type_id1 = 1
         AND finding_id = ?
 '''
 
-select_persons_persons_ma_id2 = '''
+select_persons_persons_ma_id2 = '''   
     SELECT person_id2
-    FROM findings_persons
-    JOIN persons_persons    
-        ON persons_persons.person_id2 = person.person_id
+    FROM person
+    JOIN persons_persons
+        ON persons_persons.person_id1 = person.person_id    
+    JOIN findings_persons
+        ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
     WHERE kin_type_id2 = 1
         AND finding_id = ?
 '''
 
-select_persons_persons_pa_id1 = '''
+select_persons_persons_pa_id1 = '''   
     SELECT person_id1
-    FROM findings_persons
-        JOIN persons_persons
-            ON persons_persons.person_id1 = person.person_id
-    WHERE kin_type_id1 = 2
+    FROM person
+    JOIN persons_persons
+        ON persons_persons.person_id1 = person.person_id    
+    JOIN findings_persons
+        ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
+    WHERE kin_type_id1 = 1
         AND finding_id = ?
 '''
 
-select_persons_persons_pa_id2 = '''
+select_persons_persons_pa_id2 = '''   
     SELECT person_id2
-    FROM findings_persons
-        JOIN persons_persons
-            ON persons_persons.person_id2 = person.person_id
-    WHERE kin_type_id2 = 2
+    FROM person
+    JOIN persons_persons
+        ON persons_persons.person_id1 = person.person_id    
+    JOIN findings_persons
+        ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
+    WHERE kin_type_id2 = 1
         AND finding_id = ?
 '''
 
@@ -1715,6 +1759,24 @@ update_persons_persons_2 = '''
     UPDATE persons_persons
     SET person_id2 = ?
     WHERE persons_persons_id = ?
+'''
+
+update_persons_persons1_by_finding = '''
+    UPDATE persons_persons
+    SET person_id1 = ?
+    WHERE persons_persons_id = (
+        SELECT persons_persons_id
+        FROM findings_persons
+        WHERE finding_id = ?)
+'''
+
+update_persons_persons2_by_finding = '''
+    UPDATE persons_persons
+    SET person_id2 = ?
+    WHERE persons_persons_id = (
+        SELECT persons_persons_id
+        FROM findings_persons
+        WHERE finding_id = ?)
 '''
 
 update_place_hint = '''

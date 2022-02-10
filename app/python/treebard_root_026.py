@@ -171,8 +171,8 @@ if __name__ == '__main__':
 
 # BRANCH: kin_parents
 
-# make new_alt_arent_event an attrib of NewEventDialog instead of EventsTable and test
-# add adoptive parent and foster parent to kin types and try to make some same sex parents; this will involve ASSIGNING KIN TYPES INSTEAD OF NULL when creating a new alt parent evt
+# able to add an existing person as alt parent to existing alt parent input but it displays in wrong field on redreaw see Emilio #295
+# try to make some same sex parents and other types of alt parents in existing fields ie empty fields created bec there are alt parent events recorded
 # Can't figure out how I make db input for a new birth evt PROBABLY WASN'T EVEN DOING IT yet except manually, look at `if this is still needed` which prints if you try giving a mother to someone SO DO THIS: you make an offspring evt by making a parent which adds a row to findings_persons, a row to persons_persons, and a p_p FK to the pertinent row (birth evt) in the finding table********************* 
 # Add adoptive & foster parents to nukes table. To do this, just make the parents' area like the partners' area, in a loop. Instead of just 1 & 2 kin types, also query adoptive parents, legal guardians, and foster parents: 
     # 111, 'adoptive mother'
