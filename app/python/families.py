@@ -4,12 +4,14 @@
 import tkinter as tk
 import sqlite3
 from widgets import (
-    Frame, LabelH3, Label, Button, Canvas, LabelEntry, Radiobutton, LabelFrame)
+    Frame, LabelH3, Label, Button, Canvas, LabelEntry, Radiobutton, LabelFrame,
+    FrameHilited)
+from custom_combobox_widget import Combobox
 from files import get_current_file
 from autofill import EntryAutoHilited, EntryAuto    
 from scrolling import Scrollbar
 from names import (open_new_person_dialog, make_all_names_list_for_person_select,
-    get_any_name_with_id, delete_person_from_tree)
+    get_any_name_with_id, delete_person_from_tree, update_person_autofill_values)
 from messages import InputMessage
 from dates import format_stored_date, get_date_formats, OK_MONTHS
 from events_table import get_current_person
@@ -21,6 +23,8 @@ from query_strings import (
     insert_findings_persons_new_parent, select_findings_persons_birth,
     update_persons_persons_1, update_persons_persons_2, select_kin_type_string,
     update_persons_persons1_by_finding, update_persons_persons2_by_finding,
+    select_kin_type_alt_parent, update_findings_persons_kintype1,
+    update_findings_persons_kintype2
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -41,6 +45,9 @@ def get_all_marital_event_types():
     ''')
 
     marital_event_types = [i[0] for i in cur.fetchall()]
+
+    cur.close()
+    conn.close()
 
     return marital_event_types
 
@@ -100,31 +107,32 @@ class NuclearFamiliesTable(Frame):
         labelwidget = LabelH3(self.parentslab, text="Parents of the Current Person")
         self.pardlabs.append(labelwidget)
         self.parentslab.config(labelwidget=labelwidget)
-        malab = Label(self.parentslab, text="Mother", anchor="e")
-        self.ma_input = EntryAuto(
-            self.parentslab, width=30, autofill=True,
-            values=self.person_autofill_values, name="ma")
         palab = Label(self.parentslab, text="Father", anchor="e")
         self.pa_input = EntryAuto(
-            self.parentslab, width=30, autofill=True, 
+            self.parentslab, width=30, autofill=True, cursor="hand2", 
             values=self.person_autofill_values, name="pa")
+        malab = Label(self.parentslab, text="Mother", anchor="e")
+        self.ma_input = EntryAuto(
+            self.parentslab, width=30, autofill=True, cursor="hand2",
+            values=self.person_autofill_values, name="ma")
 
         # children of self.nuke_window
         self.parentslab.grid(column=0, row=0, sticky="w")
 
         # children of self.parentslab
-        malab.grid(column=0, row=0, sticky="ew", padx=(12,12), pady=(6,12))
-        self.ma_input.grid(column=1, row=0, pady=(6,12), padx=(0,0))
-        palab.grid(column=2, row=0, sticky="ew", padx=(12,12), pady=(6,12))
-        self.pa_input.grid(column=3, row=0, pady=(6,12), padx=(0,0))
+        palab.grid(column=0, row=0, sticky="ew", padx=(12,12), pady=(6,12))
+        self.pa_input.grid(column=1, row=0, pady=(6,12), padx=(0,0))
+        malab.grid(column=2, row=0, sticky="ew", padx=(12,12), pady=(6,12))
+        self.ma_input.grid(column=3, row=0, pady=(6,12), padx=(0,0))
 
         EntryAuto.all_person_autofills.extend([self.ma_input, self.pa_input])
-        for ent in (self.ma_input, self.pa_input):
+        for ent in (self.pa_input, self.ma_input):
             ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
             ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
             ent.bind("<FocusIn>", self.get_original, add="+")
             ent.bind("<FocusOut>", self.get_final, add="+")
             ent.bind("<Double-Button-1>", self.change_current_person)
+        
 
     def fix_button_state(self):
         
@@ -218,12 +226,12 @@ class NuclearFamiliesTable(Frame):
         widgname = widg.winfo_name()
         if len(widg.get()) == 0:
             return
-        if widgname in ("ma", "pa"):
+        if widgname in ("pa", "ma"):
             col = widg.grid_info()["column"]
             if col == 1:
-                print("line", looky(seeline()).lineno, "update_parent(ma):")
-            elif col == 3:
                 print("line", looky(seeline()).lineno, "update_parent(pa):")
+            elif col == 3:
+                print("line", looky(seeline()).lineno, "update_parent(ma):")
         elif widgname.startswith("altparent"):
             update_parent(alt_parent)
         elif widgname.startswith("pard"):
@@ -251,10 +259,10 @@ class NuclearFamiliesTable(Frame):
         else:
             new_parent_id = open_new_person_dialog(
                 self, widg, self.root, self.treebard, self.formats)
-        if widg.winfo_name() == "ma":
-            parent_type = 1
-        elif widg.winfo_name() == "pa":
+        if widg.winfo_name() == "pa":
             parent_type = 2
+        elif widg.winfo_name() == "ma":
+            parent_type = 1
         birth_id = self.current_person_parents[0][1]
         cur.execute(select_findings_persons_birth, (birth_id,))
         fpid = cur.fetchone()
@@ -309,7 +317,7 @@ class NuclearFamiliesTable(Frame):
             cur.execute(select_findings_persons_ppid, (birth_fpid,))
             ppid = cur.fetchone()[0]
             
-            if parent_type == "Mother":
+            if parent_type == "Father":
                 if order == "1-2":   
                     cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
                     conn.commit()
@@ -321,7 +329,7 @@ class NuclearFamiliesTable(Frame):
                     cur.execute(update_persons_persons_2, (new_partner_id, ppid))
                     conn.commit()
                     
-            elif parent_type == "Father":
+            elif parent_type == "Mother":
                 if order == "1-2":      
                     cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
                     conn.commit()
@@ -481,10 +489,11 @@ class NuclearFamiliesTable(Frame):
             print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         elif len(self.original) == 0:
             self.make_parent(widg, conn, cur)
-            people = make_all_names_list_for_person_select()
-            all_birth_names = EntryAuto.create_lists(people)
-            for ent in EntryAuto.all_person_autofills:
-                ent.values = all_birth_names
+            # people = make_all_names_list_for_person_select()
+            # all_birth_names = EntryAuto.create_lists(people)
+            # for ent in EntryAuto.all_person_autofills:
+                # ent.values = all_birth_names
+            update_person_autofill_values()
 
     def update_altparent(self, final, conn, cur, widg, column, row, kin_type=None):
         """ Maybe this can be combined with update_parent by parameterizing the 
@@ -495,11 +504,13 @@ class NuclearFamiliesTable(Frame):
         print("line", looky(seeline()).lineno, "kin_type:", kin_type) 
         print("line", looky(seeline()).lineno, "column:", column)
         print("line", looky(seeline()).lineno, "row:", row)
-        # print("line", looky(seeline()).lineno, "self.current_person_alt_parents:", self.current_person_alt_parents)
-# line 490 final: Marta Morrow  #5810
-# line 491 widg: .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_l0
-# line 492 kin_type: 95
-# line 496 self.current_person_alt_parents: [[[137, 1090, ['foster parent', 'foster parent']], {'id': None, 'name': None, 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_l0>, 'label': <widgets.Label object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.!label3>}, {'id': None, 'name': None, 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_r0>, 'label': <widgets.Label object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.!label4>}]]
+        print("line", looky(seeline()).lineno, "self.current_person_alt_parents:", self.current_person_alt_parents)
+# line 493 final: Louis Decicco
+# line 494 widg: .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_l0
+# line 495 kin_type: 95
+# line 496 column: 1
+# line 497 row: 1
+# line 498 self.current_person_alt_parents: [[[137, 1090, ['foster parent', 'foster parent']], {'id': None, 'name': None, 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_l0>, 'label': <widgets.Label object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.!label3>}, {'id': 5810, 'name': 'Marta Morrow', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_r0>, 'label': <widgets.Label object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.!label4>}]]
 
         y = 1
         for lst in self.current_person_alt_parents:
@@ -507,22 +518,28 @@ class NuclearFamiliesTable(Frame):
                 if widg == dkt["widget"]:
                     fpid, finding_id = lst[0][0:2]
                     break
-
-            y += 1
-                
+            y += 1                
 
         if "#" in final:
             alt_parent_id = final.split("  #")[1]
             print("line", looky(seeline()).lineno, "fpid, finding_id:", fpid, finding_id)
-            if column == 1:
-                cur.execute(update_persons_persons1_by_finding, (alt_parent_id, finding_id))
-            elif column == 3:
-                cur.execute(update_persons_persons2_by_finding, (alt_parent_id, finding_id))
-            conn.commit()
+            # if column == 1:
+                # cur.execute(update_persons_persons1_by_finding, (alt_parent_id, finding_id))
+            # elif column == 3:
+                # cur.execute(update_persons_persons2_by_finding, (alt_parent_id, finding_id))
+            # conn.commit()
             
         else:
             alt_parent_id = open_new_person_dialog(
                 self, widg, self.root, self.treebard, self.formats)
+
+        if column == 1:
+            cur.execute(update_persons_persons1_by_finding, (alt_parent_id, finding_id))
+        elif column == 3:
+            cur.execute(update_persons_persons2_by_finding, (alt_parent_id, finding_id))
+        conn.commit()
+
+        update_person_autofill_values()
         
 
 
@@ -539,18 +556,14 @@ class NuclearFamiliesTable(Frame):
         gridinfo = widg.grid_info()
         column, row = gridinfo["column"], gridinfo["row"]
         widgname = widg.winfo_name()
-        if widgname == "ma":
-            self.update_parent(self.final, conn, cur, widg, kin_type=1)
-        elif widgname == "pa":
+        if widgname == "pa":
             self.update_parent(self.final, conn, cur, widg, kin_type=2)
+        elif widgname == "ma":
+            self.update_parent(self.final, conn, cur, widg, kin_type=1)
         elif widgname.startswith("altparent"):
-            # gridinfo = widg.grid_info()
-            # column, row = gridinfo["column"], gridinfo["row"]
             labcol = column - 1
-            # print("line", looky(seeline()).lineno, "column, row, labcol:", column, row, labcol)
             for child in self.parentslab.winfo_children():
                 if child.winfo_class() == "Label" and child.winfo_subclass() == "Label":
-                    # print("line", looky(seeline()).lineno, "child:", child)
                     childgridinfo = child.grid_info()
                     if childgridinfo["column"] == labcol and childgridinfo["row"] == row:
                         text = child.cget("text")
@@ -665,7 +678,7 @@ class NuclearFamiliesTable(Frame):
             self.pardlabs.append(pardlab)
             pardlab.grid(column=1, row=n)
             pardent = EntryAuto(
-                pardframe, width=48, autofill=True, 
+                pardframe, width=48, autofill=True, cursor="hand2", 
                 values=self.person_autofill_values, name=pard)
             pardent.insert(0, name)
             pardent.grid(column=2, row=n)
@@ -691,7 +704,7 @@ class NuclearFamiliesTable(Frame):
                     elif c == 1:
                         text = dkt["name"]
                         ent = EntryAuto(
-                            progeny_frame, width=0, autofill=True, 
+                            progeny_frame, width=0, autofill=True, cursor="hand2", 
                             values=self.person_autofill_values)
                         if len(text) > self.findings_table.kin_widths[c]:
                             self.findings_table.kin_widths[c] = len(text)
@@ -837,12 +850,7 @@ class NuclearFamiliesTable(Frame):
         conn.close()
 
     def get_alt_parents(self, cur):
-        """ Get adoptive parents, foster parents & guardians. If there's a
-            female parent, display her to the left of the male parent.
-            This can easily be changed if too many people complain as I'm
-            not doing it for political reasons, just for fun to see if
-            anyone complains about women going first. 
-        """
+        """ Get adoptive parents, foster parents & guardians. """
         cur.execute(
         '''
             SELECT finding_id, date_sorter, event_type_id 
@@ -885,6 +893,7 @@ class NuclearFamiliesTable(Frame):
             parent_couple[0] = [couple_details.pop(), event[0], alt_parent_type]
             alt_parent_details.append(couple_details)
             self.current_person_alt_parents.append(parent_couple)
+        print("line", looky(seeline()).lineno, "self.current_person_alt_parents:", self.current_person_alt_parents)
 
         for lst in alt_parent_details:
             cur.execute(
@@ -898,27 +907,36 @@ class NuclearFamiliesTable(Frame):
             lst.insert(2, couple_ids[1])
             lst.insert(1, couple_ids[0])
 
-        u = 0
-        for lst in alt_parent_details:
-            cur.execute(
-            '''
-                SELECT gender
-                FROM person
-                WHERE person_id = ?
-            ''',
-            (lst[1],))
-            gender = cur.fetchone()
-            if gender and gender == "female":
-                continue
-            else:
-                copy = []
-                for i in (0, 3, 4, 1, 2):
-                    copy.append(lst[i])
-                alt_parent_details[u] = copy
-            u += 1
+        # u = 0
+        # for lst in alt_parent_details:
+            # cur.execute(
+            # '''
+                # SELECT gender
+                # FROM person
+                # WHERE person_id = ?
+            # ''',
+            # (lst[1],))
+            # gender = cur.fetchone()
+            # if gender and gender == "female":
+                # continue
+            # else:
+                # copy = []
+                # # This re-ordering is supposed to get females to display to the 
+                # #   left of males but if gender is unknown obviously it doesn't
+                # #   work so if user wants females on left he has to label them
+                # #   females. If I change this to the traditional order whith the
+                # #   males on the left, the same problem will exist with males
+                # #   recorded as gender unknown. Try to leave it alone and see
+                # #   what happens. If it proves to be glitchy then just don't 
+                # #   order by gender at all, and see if that works better.
+                # for i in (0, 3, 4, 1, 2):
+                    # copy.append(lst[i])
+                # alt_parent_details[u] = copy
+            # u += 1
 
         w = 0
         for lst in alt_parent_details:
+            print("line", looky(seeline()).lineno, "lst:", lst)
             name1 = None
             name2 = None
             id1 = lst[1]
@@ -945,6 +963,7 @@ class NuclearFamiliesTable(Frame):
                 alt_parent_type = self.current_person_alt_parents[w][0][2]
                 lst[2] = alt_parent_type[0]
             if name2:
+                print("line", looky(seeline()).lineno, "self.current_person_alt_parents:", self.current_person_alt_parents)
                 self.current_person_alt_parents[w][2]["name"] = name2
                 lst[3] = name2
                 cur.execute(
@@ -965,7 +984,7 @@ class NuclearFamiliesTable(Frame):
         for lst in alt_parent_details:
             lab_l = Label(self.parentslab, anchor="e")
             ent_l = EntryAuto(
-                self.parentslab, width=30, autofill=True, 
+                self.parentslab, width=30, autofill=True, cursor="hand2", 
                 values=self.person_autofill_values,
                 name="altparent_l{}".format(str(j)))
             if lst[1]:
@@ -977,7 +996,7 @@ class NuclearFamiliesTable(Frame):
 
             lab_r = Label(self.parentslab, anchor="e")
             ent_r = EntryAuto(
-                self.parentslab, width=30, autofill=True, 
+                self.parentslab, width=30, autofill=True, cursor="hand2", 
                 values=self.person_autofill_values,
                 name="altparent_r{}".format(str(j)))
             if lst[3]:
@@ -995,6 +1014,8 @@ class NuclearFamiliesTable(Frame):
                 ent.bind("<FocusOut>", self.get_final, add="+")
                 ent.bind("<Double-Button-1>", self.change_current_person) 
                 self.nuke_containers.append(ent)
+            for lab in (lab_l, lab_r):
+                lab.bind("<Double-Button-1>", self.change_kin_type)
 
             self.nuke_containers.extend([lab_l, lab_r])           
             j += 1
@@ -1019,6 +1040,37 @@ class NuclearFamiliesTable(Frame):
 
         self.make_parents_dict()
 
+# DO NOT DELETE THIS PROBABLY WILL BE NEEDED? ********************************************************
+ # 111, 'adoptive mother'
+# 112, 'adoptive father'
+# 122, 'foster father'
+# 121, 'foster mother'
+# 131, 'legal guardian'
+# 130, 'guardian'
+# 110, 'adoptive parent'
+# 120, 'foster parent'
+        # all_parent_types = (1, 2, 111, 112, 122, 121, 131, 130, 110, 120)
+
+        # cur.execute(
+            # '''
+                # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 
+                # FROM findings_persons 
+                # JOIN persons_persons
+                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                # WHERE person_id1 = ? AND kin_type_id1 IN (1, 2, 111, 112, 122, 121, 131, 130, 110, 120)
+            # ''',
+            # (self.current_person,))
+        # result1 = cur.fetchall()
+        # cur.execute(
+            # '''
+                # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 
+                # FROM findings_persons 
+                # JOIN persons_persons
+                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                # WHERE person_id2 = ? AND kin_type_id2 IN (1, 2, 111, 112, 122, 121, 131, 130, 110, 120)
+            # ''',
+            # (self.current_person,))
+
         cur.execute(
             '''
                 SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 
@@ -1042,6 +1094,10 @@ class NuclearFamiliesTable(Frame):
         births = []
         self.progeny_dicts = {}
         births = [tup for q in (result1, result2) for tup in q]
+        print("line", looky(seeline()).lineno, "births:", births)
+        # ********************************************************************************************
+
+
         marital_event_types = get_all_marital_event_types()
         qlen = len(marital_event_types)
         sql = '''
@@ -1099,25 +1155,27 @@ class NuclearFamiliesTable(Frame):
             if v["offspring"] is True:
                 for tup in births:
                     order = "{}-{}".format(str(tup[3]), str(tup[5]))                
-                    if tup[4] == pardner:
+                    if tup[4] == pardner:                        
                         parent_type = tup[5]
+                        print("line", looky(seeline()).lineno, "parent_type:", parent_type)
                         pard_id = tup[4]
-                        self.make_pard_dict(pard_id, parent_type)
+                        self.make_pard_dict(pard_id, parent_type, cur)
                         if pard_id == pardner:
                             self.progeny_dicts[pardner]["children"].append(
                                 {"findings_persons_id": tup[0], 
                                     "birth_id": tup[1], "order": order})
                     elif tup[2] == pardner:
                         parent_type = tup[3]
+                        print("line", looky(seeline()).lineno, "parent_type:", parent_type)
                         pard_id = tup[2]
-                        self.make_pard_dict(pard_id, parent_type) 
+                        self.make_pard_dict(pard_id, parent_type, cur) 
                         if pard_id == pardner:
                             self.progeny_dicts[pardner]["children"].append(
                                 {"findings_persons_id": tup[0], 
                                     "birth_id": tup[1], "order": order})      
 
             if v["events"] is True and v["offspring"] is False:
-                self.make_pard_dict(pardner, "")
+                self.make_pard_dict(pardner, "", cur)
         for pard_id in progenies:
             for k,v in self.progeny_dicts.items():
                 if k == pard_id:
@@ -1138,12 +1196,21 @@ class NuclearFamiliesTable(Frame):
                 self.progeny_dicts.items(), key=lambda i: i[1]["sorter"]))
         cur.close()
         conn.close()
+        print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
 
-    def make_pard_dict(self, pard_id, parent_type):
+    def make_pard_dict(self, pard_id, parent_type, cur):
         if parent_type == 1:
             parent_type = "Mother"
         elif parent_type == 2:
             parent_type = "Father"
+        elif parent_type is None:
+            print("line", looky(seeline()).lineno, "parent_type:", parent_type)
+            # cur.execute(select_
+            print("line", looky(seeline()).lineno, "self.progeny_dicts:", self.progeny_dicts)
+            print("line", looky(seeline()).lineno, "pard_id:", pard_id)
+            # self.progeny_dicts[pard_id]["parent_type"] = "rotorooter"
+            
+            
         partner_name = get_any_name_with_id(pard_id)
         self.progeny_dicts[pard_id]["parent_type"] = parent_type
         self.progeny_dicts[pard_id]["partner_name"] = partner_name   
@@ -1338,6 +1405,72 @@ class NuclearFamiliesTable(Frame):
         cur.close()
         conn.close()
         self.treebard.main.findings_table.redraw()
+
+    def change_kin_type(self, evt):
+        """ Change alt parent kin type on double-click of label such as 
+            "Guardian", "Foster Parent" etc.
+        """
+        def ok_change():
+
+            current_file = get_current_file()[0]
+            conn = sqlite3.connect(current_file)
+            conn.execute('PRAGMA foreign_keys = 1')
+            cur = conn.cursor()
+            new_kin_type = combo.entry.get()
+            widg.config(text=new_kin_type.title())
+            gridinfo = widg.grid_info()
+            col = gridinfo["column"]
+            row = gridinfo["row"]
+            for tup in names_ids:
+                if tup[0] == new_kin_type:
+                    new_id = tup[1]
+                    break
+# HOW TO GET THE RIGHT FPID???
+            # print("line", looky(seeline()).lineno, "self.current_person_alt_parents:", self.current_person_alt_parents)
+# line 1422 self.current_person_alt_parents: [[[139, 1097, ['guardian', 'guardian']], {'id': 5843, 'name': 'Raphael Fish', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_l0>, 'label': <widgets.Label object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.!label3>}, {'id': None, 'name': None, 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_r0>, 'label': <widgets.Label object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.!label4>}]]
+
+            print("line", looky(seeline()).lineno, "self.current_person_alt_parents[row - 1][0][0]:", self.current_person_alt_parents[row - 1][0][0])
+            fpid = self.current_person_alt_parents[row - 1][0][0]
+
+            print("line", looky(seeline()).lineno, "col:", col)
+            print("line", looky(seeline()).lineno, "new_id, fpid:", new_id, fpid)
+# line 1455 names_ids: [('adoptive parent', 110), ('adoptive mother', 111), ('adoptive father', 112), ('foster parent', 120), ('foster mother', 121), ('foster father', 122), ('guardian', 130), ('legal guardian', 131)]
+# line 1432 self.current_person_alt_parents[row - 1][0][0]: 139
+# line 1435 col: 0
+# line 1436 new_id, fpid: 112 139
+            if col == 0:
+                cur.execute(update_findings_persons_kintype1, (new_id, fpid))
+            elif col == 2:
+                cur.execute(update_findings_persons_kintype2, (new_id, fpid))                
+            conn.commit()
+            cancel_change()
+            cur.close()
+            conn.close()
+
+        def cancel_change():
+            frm.destroy()
+
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        # conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(select_kin_type_alt_parent)
+        names_ids = cur.fetchall()
+        print("line", looky(seeline()).lineno, "names_ids:", names_ids)
+        alt_parent_types = [i[0] for i in names_ids]
+        widg = evt.widget
+        frm = FrameHilited(widg)
+        combo = Combobox(frm, self.root, values=alt_parent_types)
+        ok_butt = Button(frm, text="OK", command=ok_change, width=7)
+        cancel_butt = Button(frm, text="CANCEL", command=cancel_change, width=7)
+        frm.grid(column=0, row=0, sticky="ew")
+        combo.grid(column=0, row=0) 
+        ok_butt.grid(column=1, row=0)
+        cancel_butt.grid(column=2, row=0)
+
+        cur.close()
+        conn.close()
+        
 
 
 '''

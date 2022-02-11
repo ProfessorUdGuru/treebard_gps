@@ -5,13 +5,18 @@
 
 import tkinter as tk
 from widgets import EntryUnhilited
-# from styles import make_formats_dict
+# from names import make_all_names_list_for_person_select
 import dev_tools as dt
 from dev_tools import looky, seeline
 
 
 
 
+# def update_person_autofill_values():
+    # people = make_all_names_list_for_person_select()
+    # all_birth_names = EntryAuto.create_lists(people)
+    # for ent in EntryAuto.all_person_autofills:
+        # ent.values = all_birth_names
 
 class EntryAuto(EntryUnhilited):
     '''

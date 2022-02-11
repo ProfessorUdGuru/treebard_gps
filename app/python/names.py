@@ -183,6 +183,12 @@ def make_all_names_list_for_person_select():
         people.append(line)
     return people
 
+def update_person_autofill_values():
+    people = make_all_names_list_for_person_select()
+    all_birth_names = EntryAuto.create_lists(people)
+    for ent in EntryAuto.all_person_autofills:
+        ent.values = all_birth_names
+
 def get_all_persons():
     current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)

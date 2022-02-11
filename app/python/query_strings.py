@@ -975,6 +975,13 @@ select_images_elements_main_image = '''
         AND images_elements.person_id = ?
 '''
 
+select_kin_type_alt_parent = '''
+    SELECT kin_types, kin_type_id
+    FROM kin_type
+    WHERE kin_code = 'B'
+        AND kin_type_id NOT IN (1, 2, 3, 26, 27, 28)
+'''
+
 select_kin_type_string = '''
     SELECT kin_types FROM kin_type WHERE kin_type_id = ?
 '''
@@ -1656,6 +1663,18 @@ update_findings_persons_age2 = '''
 update_findings_persons_finding = '''
     UPDATE findings_persons
     SET finding_id = ?
+    WHERE findings_persons_id = ?
+'''
+
+update_findings_persons_kintype1 = '''
+    UPDATE findings_persons
+    SET kin_type_id1 = ?
+    WHERE findings_persons_id = ?
+'''
+
+update_findings_persons_kintype2 = '''
+    UPDATE findings_persons
+    SET kin_type_id2 = ?
     WHERE findings_persons_id = ?
 '''
 

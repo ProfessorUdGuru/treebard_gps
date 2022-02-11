@@ -37,7 +37,7 @@ consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', '
 
 
 
-name = "Henry Saint Claire Fredericks Junior"
+name = "Mateo Gustavo Wilson"
 
 name = name.split()
 lowered = []
@@ -242,6 +242,7 @@ root.mainloop()
 # 178
 # Terry Robert Miller born feb 9 1934 Neosho, Newton Co MO
 # Bessie Louise Rathbun
+# Mateo Gustavo Wilson
 
 # 371
 # Donald Scott Robertson
