@@ -413,6 +413,7 @@ class EventsTable(Frame):
         self.kintip = None
         self.kintip_text = None
         self.kin_widths = [0, 0, 0, 0, 0, 0]
+        self.kintip_bindings = {"on_enter": [], "on_leave": []}
 
         self.screen_height = self.winfo_screenheight()
         self.column_padding = 2
@@ -913,21 +914,25 @@ class EventsTable(Frame):
                         name = dkt.get("child_name")
                         if not name:
                             name = get_any_name_with_id(dkt["child_id"])
-                        widg.bind(
+                        offspring_in = widg.bind(
                             "<Enter>", lambda evt, 
                             kin="child", name=name: self.handle_enter(kin, name))
-                        widg.bind("<Leave>", self.on_leave)
+                        offspring_out = widg.bind("<Leave>", self.on_leave)
                         self.widget = widg
+                        self.kintip_bindings["on_enter"].append([widg, offspring_in])
+                        self.kintip_bindings["on_leave"].append([widg, offspring_out])
                     elif evtype in self.couple_event_types:
                         name = dkt.get("partner_name")
                         if not name:
                             name = get_any_name_with_id(dkt["partner_id"])
-                        widg.bind(
+                        couple_in = widg.bind(
                             "<Enter>", lambda evt, 
                             kin=dkt["partner_kin_type"], 
                             name=name: self.handle_enter(kin, name))
-                        widg.bind("<Leave>", self.on_leave)
+                        couple_out = widg.bind("<Leave>", self.on_leave)
                         self.widget = widg
+                        self.kintip_bindings["on_enter"].append([widg, couple_in])
+                        self.kintip_bindings["on_leave"].append([widg, couple_out])
                 c += 1
             r += 1
         z = 0
@@ -1035,6 +1040,15 @@ class EventsTable(Frame):
 
     def forget_cells(self):
         self.update_idletasks()
+        for k,v in self.kintip_bindings.items():
+            if k == "on_enter":
+                for lst in v:
+                    lst[0].unbind("<Enter>", lst[1])                    
+            elif k == "on_leave":
+                for lst in v:
+                    lst[0].unbind("<Leave>", lst[1])
+            self.kintip_bindings = {"on_enter": [], "on_leave": []}
+
         for lst in self.cell_pool:
             for widg in lst[1]:
                 if widg.winfo_subclass() == 'EntryAuto':
@@ -1056,10 +1070,16 @@ class EventsTable(Frame):
 
         self.main_window.nuke_table.nuke_containers = []
 
-        self.main_window.nuke_table.current_person_parents = [
-            [None, None], 
-            {"id": None, "name": None, "widget": None}, 
-            {"id": None, "name": None, "widget": None}]
+        self.main_window.nuke_table.family_data = [
+            [
+                [
+                    {'fpid': None, 'finding': None, 'sorter': [0, 0, 0]}, 
+                    {'id': None, 'name': '', 'labtext': 'father', 'labwidg': None, 'inwidg': None}, 
+                    {'id': None, 'name': '', 'labtext': 'mother', 'labwidg': None, 'inwidg': None}
+                ],
+            ],
+            {},
+        ]
 
     def make_header(self):
         y = 0

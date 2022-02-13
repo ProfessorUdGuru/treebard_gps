@@ -171,8 +171,7 @@ if __name__ == '__main__':
 
 # BRANCH: kin_parents
 
-# change the names of all the dicts to short & symmetrical and if possible create one master dict as a list of lists like [[parents],[alt parents],[progeny]] 
-# break up the 2 longest functions
+# break up the 2 longest functions SEE: # THIS IS WHERE i LEFT OFF
 # adding a new person to a blank alt parent field adds the person but the new person is not available to autofills yet.
 # make sure there's a way to change unisex alt parent kin types in parents area when user adds a parent to a blank field
 # test by giving Rick a guardian, foster & adoptive parents using the GUI, if that works give him 2 of each
@@ -379,6 +378,45 @@ if __name__ == '__main__':
     display the name type along with the non-name as such: "_____ _____ (unknown name)".
 
     Characters not allowed in a person's name: parentheses, pound sign (#).
+'''
+
+# DEV DOC: GENDER
+'''
+    Wherever couples are shown together, if gender matters, the male should go on the left and 
+    the female on the right. This will be what people expect. This translates to storing male-
+    oriented kin types such as father and husband in kin_type_id1 and female kin types
+    in kin_type_id2 (re: findings_persons table). The rest of the time, for example in the case of 
+    unisex kin types such as "spouse" or "foster parent", or same-gender relationships, 
+    Treebard will display each person on the left or right depending on where the user inputs them.
+    So if the user wants to store Bob and Jim's relationship, and Jim is input to the left, 
+    then his data will be stored as kin_type_id1 in findings_persons and as person_id1 in
+    persons_persons. Bob will end up displaying on the right, stored in the _2 columns in the db.
+    There is no other way to do this, without writing rules for fluctuating cultural trends
+    which are basically none of Treebard's business such as whether or not "wife" and "husband" 
+    can be used for same-gender couples. Treebard doesn't care about current or modern trends
+    because we don't want to change our code every time a new terminology becomes trendy
+    in reference to gender issues. Treebard plans to still be here when these issues are no
+    longer issues, 10,000 years from now. So flexibility has to be built into our policies from 
+    the start. Flexibility built into the code, not an attitude of waiting for the trends to
+    dictate what our next refactoring will look like. The goal is for the code to not generally
+    change with the times, because of flexibility being built into the original design. The point
+    is that it's up to the coder to make sure that fathers & husbands, etc., go into the _1
+    db columns, not by manipulating the user's input with code, but by providing inputs that
+    will make it normal for the user to put them in this way. The drawback is that if user
+    inputs Marci on the left and Jane on the right, then changes their mind and decides that
+    Jane was supposed to occupy the husband role but Treebard is only so compliant, well sorry, 
+    it's not my problem. The user will have to solve problems like that, probably by deleting 
+    some data and re-entering it.
+
+    Actually this probably doesn't apply to biological parents since fathers and mothers are 
+    constrained by code manipulations to
+    display on the left and right respectively, but this doesn't extend to adoptive parents,
+    for example, so it's better to always put males in the _1 columns and females in the
+    _2 columns so as to not be entertaining exceptions in the code design.
+
+    Since there can be gender constraints only in regards to biological father and mother roles,
+    the _1 & _2 columns in the db can't be changed to _m & _f. You still have to be able to put
+    either gender in either column.
 '''
 
 

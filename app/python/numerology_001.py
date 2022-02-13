@@ -242,7 +242,7 @@ root.mainloop()
 # 178
 # Terry Robert Miller born feb 9 1934 Neosho, Newton Co MO
 # Bessie Louise Rathbun
-# Mateo Gustavo Wilson
+# Mateo Gustavo Wilson born Nov 22 2020
 
 # 371
 # Donald Scott Robertson
