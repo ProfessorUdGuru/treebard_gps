@@ -32,9 +32,6 @@ from dev_tools import looky, seeline
 
 
 def get_all_marital_event_types(conn, cur):
-    # current_file = get_current_file()[0]
-    # conn = sqlite3.connect(current_file)
-    # cur = conn.cursor()
 
     cur.execute(
     '''
@@ -45,9 +42,6 @@ def get_all_marital_event_types(conn, cur):
 
     marital_event_types = [i[0] for i in cur.fetchall()]
 
-    # cur.close()
-    # conn.close()
-
     return marital_event_types
 
 class NuclearFamiliesTable(Frame):
@@ -57,7 +51,8 @@ class NuclearFamiliesTable(Frame):
             *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         """ `fpid` refers to findings_persons_id` in the database table 
-            `findings_persons`.
+            `findings_persons`, and `ppid` refers to persons_perons_id in the
+            database table `persons_persons`.
         """
 
         self.master = master
@@ -76,9 +71,12 @@ class NuclearFamiliesTable(Frame):
         self.family_data = [
             [
                 [
-                    {'fpid': None, 'finding': None, 'sorter': [0, 0, 0]}, 
-                    {'id': None, 'name': '', 'labtext': 'father', 'labwidg': None, 'inwidg': None}, 
-                    {'id': None, 'name': '', 'labtext': 'mother', 'labwidg': None, 'inwidg': None}
+                    {'fpid': None, 'ppid': None, 'finding': None, 
+                        'sorter': [0, 0, 0]}, 
+                    {'id': None, 'name': '', 'kin_type_id': 2, 
+                        'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
+                    {'id': None, 'name': '', 'kin_type_id': 1, 
+                        'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
                 ],
             ],
             {},
@@ -195,10 +193,6 @@ class NuclearFamiliesTable(Frame):
 
     def get_marital_event_types(self, conn, cur):
 
-        # current_file = get_current_file()[0]
-        # conn = sqlite3.connect(current_file)
-        # cur = conn.cursor()
-
         marital_event_types = get_all_marital_event_types(conn, cur)
         qlen = len(marital_event_types)
         marital_event_types.insert(0, self.current_person)
@@ -219,8 +213,6 @@ class NuclearFamiliesTable(Frame):
 
         cur.execute(sql, marital_event_types)
         marital_events_current_person = [list(i) for i in cur.fetchall()]
-        # cur.close()
-        # conn.close()
         return marital_events_current_person
 
     def make_nuke_inputs(self, current_person=None, on_load=False):
@@ -319,64 +311,8 @@ class NuclearFamiliesTable(Frame):
             self.nuke_containers.append(progeny_frame)
             top_child_rows.append(progeny_frame)
 
-            r = 0
-            for dkt in v["children"]:
-                c = 0
-                for i in range(6):
-                    if c == 0:
-                        spacer = Frame(progeny_frame, width=48)
-                        spacer.grid(column=c, row=r)
-                    elif c == 1:
-                        text = dkt["name"]
-                        ent = EntryAuto(
-                            progeny_frame, width=0, autofill=True, cursor="hand2", 
-                            values=self.person_autofill_values)
-                        if len(text) > self.findings_table.kin_widths[c]:
-                            self.findings_table.kin_widths[c] = len(text)
-                        ent.insert(0, text)
-                        ent.grid(column=c, row=r, sticky="w")
-                        self.nuke_inputs.append(ent)
-                        dkt["name_widg"] = ent
-                        EntryAuto.all_person_autofills.append(ent)
-                        ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
-                        ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
-                        ent.bind("<Double-Button-1>", self.change_current_person)
-                    elif c == 2:
-                        text = dkt["gender"]
-                        ent = EntryAuto(progeny_frame, width=0)
-                        if len(text) > self.findings_table.kin_widths[c]:
-                            self.findings_table.kin_widths[c] = len(text)
-                        ent.insert(0, text)
-                        ent.grid(column=c, row=r, sticky="w")
-                        self.nuke_inputs.append(ent)
-                        dkt["gender_widg"] = ent
-                    elif c == 3:
-                        text = dkt["birth"]
-                        ent = EntryAuto(progeny_frame, width=0)
-                        if len(text) > self.findings_table.kin_widths[c]:
-                            self.findings_table.kin_widths[c] = len(text)
-                        ent.insert(0, text)
-                        ent.grid(column=c, row=r, sticky="w")
-                        self.nuke_inputs.append(ent)
-                        dkt["birth_widg"] = ent
-                    elif c == 4:
-                        text = "to"
-                        if len(text) > self.findings_table.kin_widths[c]:
-                            self.findings_table.kin_widths[c] = len(text)
-                        lab = LabelEntry(progeny_frame, text=text, anchor="w")
-                        lab.grid(column=c, row=r, sticky="w")
-                    elif c == 5:
-                        text = dkt["death"]
-                        ent = EntryAuto(progeny_frame, width=0)
-                        if len(text) > self.findings_table.kin_widths[c]:
-                            self.findings_table.kin_widths[c] = len(text)
-                        ent.insert(0, text)
-                        ent.grid(column=c, row=r, sticky="w")
-                        self.nuke_inputs.append(ent)
-                        dkt["death_widg"] = ent 
-                    c += 1
-                r += 1
-           
+            self.make_progeny_frames(v, progeny_frame)
+
         self.last_row = n + 2
 
         for frm in top_child_rows:            
@@ -386,6 +322,65 @@ class NuclearFamiliesTable(Frame):
             for widg in top_row[1:]:
                 widg.config(width=self.findings_table.kin_widths[z] + 2)
                 z += 1
+
+    def make_progeny_frames(self, v, progeny_frame):
+        r = 0
+        for dkt in v["children"]:
+            c = 0
+            for i in range(6):
+                if c == 0:
+                    spacer = Frame(progeny_frame, width=48)
+                    spacer.grid(column=c, row=r)
+                elif c == 1:
+                    text = dkt["name"]
+                    ent = EntryAuto(
+                        progeny_frame, width=0, autofill=True, cursor="hand2", 
+                        values=self.person_autofill_values)
+                    if len(text) > self.findings_table.kin_widths[c]:
+                        self.findings_table.kin_widths[c] = len(text)
+                    ent.insert(0, text)
+                    ent.grid(column=c, row=r, sticky="w")
+                    self.nuke_inputs.append(ent)
+                    dkt["name_widg"] = ent
+                    EntryAuto.all_person_autofills.append(ent)
+                    ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
+                    ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
+                    ent.bind("<Double-Button-1>", self.change_current_person)
+                elif c == 2:
+                    text = dkt["gender"]
+                    ent = EntryAuto(progeny_frame, width=0)
+                    if len(text) > self.findings_table.kin_widths[c]:
+                        self.findings_table.kin_widths[c] = len(text)
+                    ent.insert(0, text)
+                    ent.grid(column=c, row=r, sticky="w")
+                    self.nuke_inputs.append(ent)
+                    dkt["gender_widg"] = ent
+                elif c == 3:
+                    text = dkt["birth"]
+                    ent = EntryAuto(progeny_frame, width=0)
+                    if len(text) > self.findings_table.kin_widths[c]:
+                        self.findings_table.kin_widths[c] = len(text)
+                    ent.insert(0, text)
+                    ent.grid(column=c, row=r, sticky="w")
+                    self.nuke_inputs.append(ent)
+                    dkt["birth_widg"] = ent
+                elif c == 4:
+                    text = "to"
+                    if len(text) > self.findings_table.kin_widths[c]:
+                        self.findings_table.kin_widths[c] = len(text)
+                    lab = LabelEntry(progeny_frame, text=text, anchor="w")
+                    lab.grid(column=c, row=r, sticky="w")
+                elif c == 5:
+                    text = dkt["death"]
+                    ent = EntryAuto(progeny_frame, width=0)
+                    if len(text) > self.findings_table.kin_widths[c]:
+                        self.findings_table.kin_widths[c] = len(text)
+                    ent.insert(0, text)
+                    ent.grid(column=c, row=r, sticky="w")
+                    self.nuke_inputs.append(ent)
+                    dkt["death_widg"] = ent 
+                c += 1
+            r += 1
 
     def make_parents_dict(self, ma_id=None, pa_id=None):
         '''
@@ -474,9 +469,7 @@ class NuclearFamiliesTable(Frame):
         alt_parent_events = cur.fetchall()
         if alt_parent_events is None:
             return
-        
-        alt_parent_details = []
-
+        # Get data about alt parent events and sort events by date.
         r = 0
         for event in alt_parent_events:
             event = list(event)
@@ -484,87 +477,9 @@ class NuclearFamiliesTable(Frame):
             alt_parent_events[r] = event
             r += 1
         alt_parent_events = sorted(alt_parent_events, key=lambda i: i[1])
-        
-        for finding in alt_parent_events:
-            parent_couple = [
-                {'fpid': None, 'finding': None, 'sorter': [0, 0, 0]}, 
-                {'id': None, 'name': '', 'labtext': '', 'labwidg': None, 'inwidg': None}, 
-                {'id': None, 'name': '', 'labtext': '', 'labwidg': None, 'inwidg': None}]
-            cur.execute(
-            '''
-                SELECT persons_persons_id, kin_type_id1, kin_type_id2, findings_persons_id
-                FROM findings_persons
-                WHERE finding_id = ?
-            ''',
-            (finding[0],))
-            couple_details = list(cur.fetchone())
-            alt_parent_type = []
-            for kintype in couple_details[1:3]:
-                cur.execute(select_kin_type_string, (kintype,))
-                alt_parent_type.append(cur.fetchone()[0])
-            ids = parent_couple[0]
-            ids["fpid"], ids[""] = [couple_details.pop(), finding[0]]
-            parent_couple[1]["labtext"], parent_couple[2]["labtext"] = couple_details[1:3]
-            alt_parent_details.append(couple_details)
-            self.family_data[0].append(parent_couple)
 
-        for lst in alt_parent_details:
-            cur.execute(
-            '''
-                SELECT person_id1, person_id2
-                FROM persons_persons
-                WHERE persons_persons_id = ?
-            ''',
-            (lst[0],))
-            couple_ids = cur.fetchone()
-            lst.insert(2, couple_ids[1])
-            lst.insert(1, couple_ids[0])
-
-        alt_parents = self.family_data[0][1:] 
-        w = 0
-        for lst in alt_parent_details:
-            name1 = None
-            name2 = None
-            id1 = lst[1]
-            id2 = lst[3]
-            if id1:
-                name1 = get_any_name_with_id(id1)
-                alt_parents[w][1]["id"] = id1
-            if id2:
-                name2 = get_any_name_with_id(id2)
-                alt_parents[w][2]["id"] = id2
-            if name1:
-                alt_parents[w][1]["name"] = name1
-                lst[1] = name1
-                cur.execute(
-                '''
-                    SELECT kin_types 
-                    FROM kin_type
-                    WHERE kin_type_id = ?
-                ''',
-                (lst[2],))
-                result = cur.fetchone()[0]
-                lst[2] = result
-            else:
-                alt_parent_type = alt_parents[w][0][2]
-                lst[2] = alt_parent_type[0]
-            if name2:
-                alt_parents[w][2]["name"] = name2
-                lst[3] = name2
-                cur.execute(
-                '''
-                    SELECT kin_types 
-                    FROM kin_type
-                    WHERE kin_type_id = ?
-                ''',
-                (lst[4],))
-                result = cur.fetchone()[0]
-                lst[4] = result
-            else:
-                alt_parent_type = alt_parents[w][0][2]
-                lst[4] = alt_parent_type[1]
-            w += 1
-       
+        self.make_alt_parents_dict(alt_parent_events, cur)
+        alt_parent_details = self.family_data[0][1:]
         j = 0
         for lst in alt_parent_details:
             lab_l = Label(self.parentslab, anchor="e")
@@ -572,24 +487,24 @@ class NuclearFamiliesTable(Frame):
                 self.parentslab, width=30, autofill=True, cursor="hand2", 
                 values=self.person_autofill_values,
                 name="altparent_l{}".format(str(j)))
-            if lst[1]:
-                ent_l.insert(0, lst[1])
-            alt_parents[j][1]["inwidg"] = ent_l
-            alt_parents[j][1]["labwidg"] = lab_l
-            if lst[2]:
-                lab_l.config(text=lst[2].title())
+            if lst[1]["kin_type"]:
+                ent_l.insert(0, lst[1]["name"])
+            lst[1]["inwidg"] = ent_l
+            lst[1]["labwidg"] = lab_l
+            if lst[1]["kin_type"]:
+                lab_l.config(text=lst[1]["kin_type"].title())
 
             lab_r = Label(self.parentslab, anchor="e")
             ent_r = EntryAuto(
                 self.parentslab, width=30, autofill=True, cursor="hand2", 
                 values=self.person_autofill_values,
                 name="altparent_r{}".format(str(j)))
-            if lst[3]:
-                ent_r.insert(0, lst[3]) 
-            alt_parents[j][2]["inwidg"] = ent_r
-            alt_parents[j][2]["labwidg"] = lab_r
-            if lst[4]:
-                lab_r.config(text=lst[4].title())
+            if lst[2]["kin_type"]:
+                ent_r.insert(0, lst[2]["name"]) 
+            lst[2]["inwidg"] = ent_r
+            lst[2]["labwidg"] = lab_r
+            if lst[2]["kin_type"]:
+                lab_r.config(text=lst[2]["kin_type"].title())
 
             EntryAuto.all_person_autofills.extend([ent_l, ent_r])
             for ent in (ent_l, ent_r):
@@ -604,6 +519,55 @@ class NuclearFamiliesTable(Frame):
 
             self.nuke_containers.extend([lab_l, lab_r])           
             j += 1
+
+    def make_alt_parents_dict(self, alt_parent_events, cur):
+     
+        for finding in alt_parent_events:
+            parent_couple = [ 
+                {'fpid': None, 'ppid': None, 'finding': finding[0], 
+                    'sorter': finding[1]}, 
+                {'id': None, 'name': '', 'kin_type_id': None, 'kin_type': '', 
+                    'labwidg': None, 'inwidg': None}, 
+                {'id': None, 'name': '', 'kin_type_id': None, 'kin_type': '', 
+                    'labwidg': None, 'inwidg': None}]
+            ids, alt_parent1, alt_parent2 = parent_couple
+            cur.execute(
+            '''
+                SELECT persons_persons_id, kin_type_id1, kin_type_id2, findings_persons_id
+                FROM findings_persons
+                WHERE finding_id = ?
+            ''',
+            (ids["finding"],))
+            ids["ppid"], alt_parent1["kin_type_id"], alt_parent2["kin_type_id"], ids["fpid"] = cur.fetchone()
+            h = 1
+            for kintype in (alt_parent1["kin_type_id"], alt_parent2["kin_type_id"]):
+                cur.execute(select_kin_type_string, (kintype,))
+                parent_couple[h]["kin_type"] = cur.fetchone()[0]
+                h += 1
+            self.family_data[0].append(parent_couple)
+        alt_parents = self.family_data[0][1:] 
+        for lst in alt_parents:
+            ppid = lst[0]["ppid"]
+            cur.execute(
+            '''
+                SELECT person_id1, person_id2
+                FROM persons_persons
+                WHERE persons_persons_id = ?
+            ''',
+            (ppid,))
+            lst[1]["id"], lst[2]["id"] = cur.fetchone()
+        w = 0
+
+        for lst in alt_parents:
+            name1 = None
+            name2 = None
+            id1 = lst[1]["id"]
+            id2 = lst[2]["id"]
+            if id1:
+                lst[1]["name"] = get_any_name_with_id(id1)
+            if id2:
+                lst[2]["name"] = get_any_name_with_id(id2)
+            w += 1      
 
     def grid_alt_parents(self):
         """ Grid widgets as children of self.parentslab. """
@@ -627,7 +591,25 @@ class NuclearFamiliesTable(Frame):
         self.make_parents_dict()
 
         partners1, births = self.query_nukes_data(conn, cur)
-# THIS IS WHERE i LEFT OFF
+
+        self.arrange_partners_progenies(partners1, births, conn, cur)
+
+        main_sorter = [0, 0, 0]
+        for k,v in self.family_data[1].items():
+            kids = v["children"]
+            kids = sorted(kids, key=lambda i: i["sorter"])
+            v["children"] = kids
+            if len(v["children"]) != 0:
+                main_sorter = v["children"][0]["sorter"]
+            if len(v.get("sorter")) == 0:
+                v["sorter"] = main_sorter
+        self.family_data[1] = dict(
+            sorted(
+                self.family_data[1].items(), key=lambda i: i[1]["sorter"]))
+        cur.close()
+        conn.close()
+
+    def arrange_partners_progenies(self, partners1, births, conn, cur):
         progenies = {}
         all_partners = []        
         partners = []
@@ -673,7 +655,6 @@ class NuclearFamiliesTable(Frame):
                     order = "{}-{}".format(str(tup[3]), str(tup[5]))                
                     if tup[4] == pardner:                        
                         parent_type = tup[5]
-                        print("line", looky(seeline()).lineno, "parent_type:", parent_type)
                         pard_id = tup[4]
                         self.make_pard_dict(pard_id, parent_type, cur)
                         if pard_id == pardner:
@@ -696,22 +677,7 @@ class NuclearFamiliesTable(Frame):
             for k,v in self.family_data[1].items():
                 if k == pard_id:
                     for dkt in v["children"]:
-                        self.finish_progeny_dict(dkt, cur)
-        
-        main_sorter = [0, 0, 0]
-        for k,v in self.family_data[1].items():
-            kids = v["children"]
-            kids = sorted(kids, key=lambda i: i["sorter"])
-            v["children"] = kids
-            if len(v["children"]) != 0:
-                main_sorter = v["children"][0]["sorter"]
-            if len(v.get("sorter")) == 0:
-                v["sorter"] = main_sorter
-        self.family_data[1] = dict(
-            sorted(
-                self.family_data[1].items(), key=lambda i: i[1]["sorter"]))
-        cur.close()
-        conn.close()
+                        self.finish_progeny_dict(dkt, cur)  
 
     def query_nukes_data(self, conn, cur):
 
@@ -1198,8 +1164,6 @@ class NuclearFamiliesTable(Frame):
         conn.commit()
 
         update_person_autofill_values()
-        
-
 
     def get_final(self, evt):
 
@@ -1363,19 +1327,7 @@ class NuclearFamiliesTable(Frame):
                 if tup[0] == new_kin_type:
                     new_id = tup[1]
                     break
-# HOW TO GET THE RIGHT FPID???
-            # print("line", looky(seeline()).lineno, "self.family_data[0][1:]:", self.family_data[0][1:])
-# line 1422 self.family_data[0][1:]: [[[139, 1097, ['guardian', 'guardian']], {'id': 5843, 'name': 'Raphael Fish', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_l0>, 'label': <widgets.Label object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.!label3>}, {'id': None, 'name': None, 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_r0>, 'label': <widgets.Label object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.!label4>}]]
-
-            print("line", looky(seeline()).lineno, "self.family_data[0][1:][row - 1][0][0]:", self.family_data[0][1:][row - 1][0][0])
             fpid = self.family_data[0][1:][row - 1][0]["fpid"]
-
-            print("line", looky(seeline()).lineno, "col:", col)
-            print("line", looky(seeline()).lineno, "new_id, fpid:", new_id, fpid)
-# line 1455 names_ids: [('adoptive parent', 110), ('adoptive mother', 111), ('adoptive father', 112), ('foster parent', 120), ('foster mother', 121), ('foster father', 122), ('guardian', 130), ('legal guardian', 131)]
-# line 1432 self.family_data[0][1:][row - 1][0][0]: 139
-# line 1435 col: 0
-# line 1436 new_id, fpid: 112 139
             if col == 0:
                 cur.execute(update_findings_persons_kintype1, (new_id, fpid))
             elif col == 2:
@@ -1390,11 +1342,9 @@ class NuclearFamiliesTable(Frame):
 
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
-        # conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         cur.execute(select_kin_type_alt_parent)
         names_ids = cur.fetchall()
-        print("line", looky(seeline()).lineno, "names_ids:", names_ids)
         alt_parent_types = [i[0] for i in names_ids]
         widg = evt.widget
         frm = FrameHilited(widg)
@@ -1408,8 +1358,6 @@ class NuclearFamiliesTable(Frame):
 
         cur.close()
         conn.close()
-        
-
 
 '''
     Two means of determining partnership are used. 1) a couple has 

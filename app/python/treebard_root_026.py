@@ -171,7 +171,7 @@ if __name__ == '__main__':
 
 # BRANCH: kin_parents
 
-# break up the 2 longest functions SEE: # THIS IS WHERE i LEFT OFF
+# ADDDING existing person to blank alt parent field SEE:  # THIS IS WHERE i LEFT OFF, the new goal is to get everything into the dict as soon as the value is known and don't make a bunch of little lists at all, just use the dict for everything
 # adding a new person to a blank alt parent field adds the person but the new person is not available to autofills yet.
 # make sure there's a way to change unisex alt parent kin types in parents area when user adds a parent to a blank field
 # test by giving Rick a guardian, foster & adoptive parents using the GUI, if that works give him 2 of each

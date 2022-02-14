@@ -1073,13 +1073,25 @@ class EventsTable(Frame):
         self.main_window.nuke_table.family_data = [
             [
                 [
-                    {'fpid': None, 'finding': None, 'sorter': [0, 0, 0]}, 
-                    {'id': None, 'name': '', 'labtext': 'father', 'labwidg': None, 'inwidg': None}, 
-                    {'id': None, 'name': '', 'labtext': 'mother', 'labwidg': None, 'inwidg': None}
+                    {'fpid': None, 'ppid': None, 'finding': None, 
+                        'sorter': [0, 0, 0]}, 
+                    {'id': None, 'name': '', 'kin_type_id': 2, 
+                        'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
+                    {'id': None, 'name': '', 'kin_type_id': 1, 
+                        'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
                 ],
             ],
             {},
         ]
+            # [
+                # [
+                    # {'fpid': None, 'finding': None, 'sorter': [0, 0, 0]}, 
+                    # {'id': None, 'name': '', 'labtext': 'father', 'labwidg': None, 'inwidg': None}, 
+                    # {'id': None, 'name': '', 'labtext': 'mother', 'labwidg': None, 'inwidg': None}
+                # ],
+            # ],
+            # {},
+        # ]
 
     def make_header(self):
         y = 0
