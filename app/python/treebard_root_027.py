@@ -1,6 +1,6 @@
-# treebard_root_026.py
+# treebard_root_027.py
 
-# This is to announce the end of the attributes table because it's too fuzzy to distinguish between them. The single table will be divided into two areas with attributes sorted abc on bottom and events sorted by date on top. Adding date moves an attribute. One table, one set of columns, one instance of EventsTable.
+# retiring _026, it works but family table not finished and needs refactoring. Main goal right now for _027: # create from scratch a new procedure (singular) to create offspring and alt_parentage conclusions
 
 import tkinter as tk
 import sqlite3    
@@ -171,17 +171,15 @@ if __name__ == '__main__':
 
 # BRANCH: kin_parents
 
-# ADDDING existing person to blank alt parent field SEE:  # THIS IS WHERE i LEFT OFF, the new goal is to get everything into the dict as soon as the value is known and don't make a bunch of little lists at all, just use the dict for everything
-# adding a new person to a blank alt parent field adds the person but the new person is not available to autofills yet.
-# make sure there's a way to change unisex alt parent kin types in parents area when user adds a parent to a blank field
-# test by giving Rick a guardian, foster & adoptive parents using the GUI, if that works give him 2 of each
-# actual goals: 2) add code for creating the parent info in evt table dict during load so kintips will work for parents & alt parents; apparently parents are already in dict but not being used? 3) unlink on delete/backspace
+# create from scratch a new procedure (singular) to create offspring and alt_parentage conclusions
+# actual goals: 1) a fosterage event (for example) doesn't seem to be creating anything on the foster parents' events table. If it were a birth event, an offspring event would be created on the parents' events table, so I guess I have yet to deal with creating a "fostered a child" event for the parents. 2) add code for creating the parent info in evt table dict during load so kintips will work for parents & alt parents; apparently parents are already in dict but not being used? 3) unlink on delete/backspace; 4) make it possible to add/access/edit roles & notes on offspring/alt_parentage event rows of the events table
 # add parents of all kinds to kintips and add children of all kinds so parents will also be displayed by kintips; is this done by dkt["father_name"] for example, ie the names have to be in the findings_data dict even though maybe not used bec stopped doing kintips for parents but have to start again, maybe model that and add lists of adoptive parents, guardians, & foster parents to the events table dict only for kin tips
 # make it impossible to delete or create a birth event--it's only done by Treebard--also can't change age at birth = 0; error message states that to create a birth event, you just create a person; to create an offspring event you just create a parent; to create a fosterage/adoption/guardianship event you just create the event and inputs for the parents will appear in nukes table
 # copy the schema for findings_persons to default_new_tree and _untouched (NOT NULL constraint was removed from kin_type_id1 and _2); copy the whole table kin_type to defaultx2
 # ABOUT EDITING A PARENT ROLE FROM CURRENT PERSON TAB: 
     # IT'S NOT CURRENT PERSON SO IT CAN'T BE CHANGED, HAVE TO MAKE CURRENT FIRST.
     # Don't disable it; this will make it look like a label whereas it needs to accept highlighting and insertion cursor so user knows it can do something. Just make it re-insert the original name no matter what user tries to do. If empty, it will accept any input including new person. It will autofill normally and PersonAdd dlg will open. But if a person is in the input, 3 things can happen: 1) it will autofill the person who is already in the field, adding the #id as per normal, if the right key strokes for that person are tried. 2) if any other keys are tried, it will refill in with self.original. 3) If delete or backspace is pressed, it will unlink and the dlg will list everything that was unlinked AND save a deletion log so the user can reference which events were altered.
+# add to main do list: unhide kintype ids 3, 26, 27, 28 and make them work same as 1 & 2
 
 # BRANCH: kin_partner
 # SEE all_parent_types; get alt parent types to show for partners who have children eg where it shd say "Children's Guardian" instead of "Children's Father" etc. Add a mixed situation for example like Terry Franklin's parents, bio mother and adoptive father.
@@ -200,6 +198,7 @@ if __name__ == '__main__':
 # double click any name in table to change curr per
 
 # BRANCH: kin_cleanup
+# make it impossible for a person to be their own parent, partner or child, see Nettie Womble who is her own father
 # window border of new event dialog shows no name if the person has no birth name, need to use get_any_name_with_id()?
 # pressing enter in person autofill on person tab after name fills in throws an error re: colors
 # ADD/FIND button doesn't work
@@ -274,6 +273,9 @@ if __name__ == '__main__':
 # In notes dialog, if a non-unique topic is entered, there should be an error message, currently there's a SQLite error which locks the database.
 # center content in prefs tabs
 
+# BRANCH: conclusions
+# change events_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, it is now time to start sticking to Treebard's core philosophy and differentiate between conclusions and assertions at all times. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs events table > conclusions table. And the first step is to change the name of the module from events_table.py to conclusions_table.py.
+
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain because you sometimes don't remember what's in a clipboard till you try pasting it. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, like a plus sign, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing individual citations on nearly empty dialogs that you have to sift through looking for the right one, and seeing them all together might be useful for the sake of comparison.
 # Edit official do list and move to directory /etc/, edit ReadMe, re-dump 2 databases to .sql files.
@@ -282,6 +284,7 @@ if __name__ == '__main__':
 # Post new screenshots and announce next phase (export GEDCOM?).
 
 # BRANCH: after_refactor
+# update the website, add topics eg parents (now incl alt parents), change screenshots & code in the forum
 # install virtual machine and linux
 # Export GEDCOM.
 # Make sure there's a way to make new person, new name, new place, new source, citation, etc. for all elements and types.
@@ -298,6 +301,7 @@ if __name__ == '__main__':
 # nuke area on Person Tab: remove scrollbars & canvas & window if the hideable ones never appear, it seems they might not be necessary.
 # colorizer: get Tab traversal to trigger autoscroll when going from a visible to a non-visible row. Already works for arrow traversal.
 # colorizer: swatch_canvas: adding to mousewheel scrolling doesn't work
+# website topics: add a button at bottom to view all topics on one page, then create the page and upload it, with all topics on one page, this is so search engines will find the text, otherwise it's buried in javascript and can't be searched
 
 # DEV DOCS:
 # Files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run.

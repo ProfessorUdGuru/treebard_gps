@@ -304,7 +304,7 @@ class NuclearFamiliesTable(Frame):
             pardent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
             pardent.bind("<Double-Button-1>", self.change_current_person)
 
-            v["widget"] = pardent
+            v["inwidg"] = pardent
             self.nuke_inputs.append(pardent)
             progeny_frame = Frame(self.nuke_window)
             progeny_frame.grid(column=0, row=n+1)
@@ -447,8 +447,8 @@ class NuclearFamiliesTable(Frame):
         parents[2]["id"] = pa_id
         parents[1]["name"] = ma_name
         parents[2]["name"] = pa_name
-        parents[1]["widget"] = self.ma_input
-        parents[2]["widget"] = self.pa_input 
+        parents[1]["inwidg"] = self.ma_input
+        parents[2]["inwidg"] = self.pa_input 
 
         self.get_alt_parents(cur)
         self.grid_alt_parents()
@@ -642,7 +642,7 @@ class NuclearFamiliesTable(Frame):
         for pard_id in progenies:
             progeny = {
                 "sorter": [], "partner_name": "", "parent_type": "",
-                "partner_kin_type": "", "widget": None, "children": [],
+                "partner_kin_type": "", "inwidg": None, "children": [],
                 "marital_events": []}
             self.family_data[1][pard_id] = progeny
 
@@ -663,7 +663,6 @@ class NuclearFamiliesTable(Frame):
                                     "birth_id": tup[1], "order": order})
                     elif tup[2] == pardner:
                         parent_type = tup[3]
-                        print("line", looky(seeline()).lineno, "parent_type:", parent_type)
                         pard_id = tup[2]
                         self.make_pard_dict(pard_id, parent_type, cur) 
                         if pard_id == pardner:
@@ -863,7 +862,7 @@ class NuclearFamiliesTable(Frame):
             print("line", looky(seeline()).lineno, "update_partner:")
         else:
             for k,v in self.family_data[1].items():
-                if v["widget"] == widg:
+                if v["inwidg"] == widg:
                     print("line", looky(seeline()).lineno, "v['children']:", v['children'])
                     break
             col = widg.grid_info()["column"]
@@ -878,7 +877,6 @@ class NuclearFamiliesTable(Frame):
 
     def make_parent(self, widg, conn, cur):
         """ Add a parent from a blank input on the nukes table. """
-        print("line", looky(seeline()).lineno, "self.final:", self.final)
         if "#" in self.final:
             new_parent_id = self.final.split("  #")[1]
         else:
@@ -896,7 +894,6 @@ class NuclearFamiliesTable(Frame):
             fpid, ppid = fpid
             cur.execute(select_persons_persons, (ppid,))
             persons_persons = cur.fetchone()
-            print("line", looky(seeline()).lineno, "persons_persons:", persons_persons)
             if persons_persons[0] is None:
                 cur.execute(update_persons_persons_1, (new_parent_id, ppid))
             elif persons_persons[1] is None:
@@ -989,16 +986,16 @@ class NuclearFamiliesTable(Frame):
             new_partner_id = None
         else:
             for k,v in self.family_data[1].items():
-                if widg != v["widget"]:
+                if widg != v["inwidg"]:
                     continue
-                elif widg == v["widget"]:
+                elif widg == v["inwidg"]:
                     if k != new_partner_id:
                         print("line", looky(seeline()).lineno, "v:", v)
                 else: 
                     print("line", looky(seeline()).lineno, "case not handled:")
         
         for k,v in self.family_data[1].items():
-            if widg != v["widget"]:
+            if widg != v["inwidg"]:
                 continue
             for child in v["children"]:
                 update_partners_child(
@@ -1086,9 +1083,7 @@ class NuclearFamiliesTable(Frame):
             change the contents to a different person (to change a parent, partner, or child,
             make that person the current person first.)
         """
-        print("line", looky(seeline()).lineno, "running:")
         for dkt in self.family_data[0][0][1:]:
-            print("line", looky(seeline()).lineno, "dkt:", dkt)
             if widg == dkt["inwidg"]:
                 iD = dkt["id"]
                 name = dkt["name"]
@@ -1100,7 +1095,6 @@ class NuclearFamiliesTable(Frame):
         else:
             name_id = "{}  #{}".format(name, iD)
         ok_content = (name, name_id, bare_name, "") 
-        print("line", looky(seeline()).lineno, "ok_content:", ok_content)
         if len(self.original) != 0 and self.final not in ok_content:
             widg.delete(0, "end")
             widg.insert(0, self.original)
@@ -1113,10 +1107,6 @@ class NuclearFamiliesTable(Frame):
             print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         elif len(self.original) == 0:
             self.make_parent(widg, conn, cur)
-            # people = make_all_names_list_for_person_select()
-            # all_birth_names = EntryAuto.create_lists(people)
-            # for ent in EntryAuto.all_person_autofills:
-                # ent.values = all_birth_names
             update_person_autofill_values()
 
     def update_altparent(self, final, conn, cur, widg, column, row, kin_type=None):
@@ -1128,31 +1118,18 @@ class NuclearFamiliesTable(Frame):
         print("line", looky(seeline()).lineno, "kin_type:", kin_type) 
         print("line", looky(seeline()).lineno, "column:", column)
         print("line", looky(seeline()).lineno, "row:", row)
-        print("line", looky(seeline()).lineno, "self.family_data[0][1:]:", self.family_data[0][1:])
-# line 493 final: Louis Decicco
-# line 494 widg: .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_l0
-# line 495 kin_type: 95
-# line 496 column: 1
-# line 497 row: 1
-# line 498 self.family_data[0][1:]: [[[137, 1090, ['foster parent', 'foster parent']], {'id': None, 'name': None, 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_l0>, 'label': <widgets.Label object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.!label3>}, {'id': 5810, 'name': 'Marta Morrow', 'widget': <autofill.EntryAuto object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.altparent_r0>, 'label': <widgets.Label object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!labelframe.!label4>}]]
+        # print("line", looky(seeline()).lineno, "self.family_data[0][1:]:", self.family_data[0][1:])
 
         y = 1
         for lst in self.family_data[0][1:]:
             for dkt in lst[1:]:
-                if widg == dkt["widget"]:
-                    fpid, finding_id = lst[0][0:2]
+                if widg == dkt["inwidg"]:
+                    fpid, finding_id = lst[0]["fpid"], lst[0]["finding"]
                     break
             y += 1                
 
         if "#" in final:
-            alt_parent_id = final.split("  #")[1]
-            print("line", looky(seeline()).lineno, "fpid, finding_id:", fpid, finding_id)
-            # if column == 1:
-                # cur.execute(update_persons_persons1_by_finding, (alt_parent_id, finding_id))
-            # elif column == 3:
-                # cur.execute(update_persons_persons2_by_finding, (alt_parent_id, finding_id))
-            # conn.commit()
-            
+            alt_parent_id = final.split("  #")[1]            
         else:
             alt_parent_id = open_new_person_dialog(
                 self, widg, self.root, self.treebard, self.formats)
