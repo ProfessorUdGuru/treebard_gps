@@ -55,7 +55,8 @@ from query_strings import (
     insert_persons_persons_null, insert_findings_persons_null_couple,
     select_finding_id_alt_parentage, select_event_type_id_only,
     select_finding_ids_age1_alt_parents, select_finding_ids_age2_alt_parents,
-    select_person_id_alt_parentage, 
+    select_person_id_alt_parentage, select_kin_type_string, 
+    
     )
 
 import dev_tools as dt
@@ -447,16 +448,18 @@ def get_findings():
         get_generic_findings(
             dkt, cur, finding_id, findings_data, 
             current_person, non_empty_roles, non_empty_notes)
-        print("line", looky(seeline()).lineno, "dkt['event']:", dkt['event'])
+        # print("line", looky(seeline()).lineno, "dkt['event']:", dkt['event'])
         # if dkt["event"] == "birth": # WRONG PERSON'S BIRTH; IRRELEVANT; WORKED BY COINCIDENCE SINCE ALL PERSONS HAVE A BIRTH AUTOCREATED FOR THEM
-    get_birth_findings( # SHD BE OFFSPRING_FINDING?
-        dkt, cur, current_person, findings_data,
-        non_empty_roles, non_empty_notes)
-        # elif dkt["event"] in ("adoption", "fosterage", "guardianship"):
-        # print("line", looky(seeline()).lineno, "dkt:", dkt)
-        # get_alt_birth_findings(
-            # dkt, cur, current_person, findings_data,
-            # non_empty_roles, non_empty_notes)
+    # get_birth_findings( # SHD BE OFFSPRING_FINDING?
+        # dkt, cur, current_person, findings_data,
+        # non_empty_roles, non_empty_notes)
+        # # elif dkt["event"] in ("adoption", "fosterage", "guardianship"):
+        # # print("line", looky(seeline()).lineno, "dkt:", dkt)
+    # get_alt_birth_findings(
+        # dkt, cur, current_person, findings_data,
+        # non_empty_roles, non_empty_notes)
+
+    autocreate_parent_findings(cur, current_person, findings_data)
 
     get_couple_findings(
         cur, current_person, rowtotype, findings_data, 
@@ -465,6 +468,76 @@ def get_findings():
     cur.close()
     conn.close()  
     return findings_data, non_empty_roles, non_empty_notes    
+
+def autocreate_parent_findings(cur, current_person, findings_data):
+    """ Get birth & alt_birth findings to autocreate rows when parent is current 
+        person. """
+
+    def get_event_type_string(iD):
+        cur.execute(select_finding_event_type, (iD,))
+        event_type_id = cur.fetchone()[0]
+        conversion = {
+            1: "offspring", 83: "adopted a child", 95: "fostered a child", 
+            48: "acted as guardian"}
+        for k,v in conversion.items():
+            if event_type_id == k:
+                event_type = v
+        return event_type
+
+    cur.execute(select_finding_ids_age1_alt_parents, (current_person,))
+    offspring1 = [list(i) for i in cur.fetchall()]
+
+    cur.execute(select_finding_ids_age2_alt_parents, (current_person,))
+    offspring2 = [list(i) for i in cur.fetchall()]
+
+    offspring = offspring1 + offspring2
+
+    for child in offspring:
+        print("line", looky(seeline()).lineno, "child:", child)# line 496 child: [1103, '']
+        finding = child[0]
+        cur.execute(select_person, (finding,))
+        child_id = cur.fetchone()
+        # print("line", looky(seeline()).lineno, "child_id:", child_id)# line 504 child_id: (5779,)
+        if child_id:
+            child.append(child_id[0])
+        # print("line", looky(seeline()).lineno, "child:", child)
+# line 507 child: [1103, '', 5779]
+
+    for child in offspring: # THIS IS WHERE i LEFT OFF
+        offspring_event_id, parent_age, child_id = child
+        cur.execute(select_findings_details_offspring, (child_id,))     
+        offspring_details = cur.fetchone()
+
+        child_name = get_name_with_id(child_id)
+
+        sorter = split_sorter(offspring_details[1])
+        date_prefs = get_date_formats(tree_is_open=1)
+        date = format_stored_date(offspring_details[0], date_prefs=date_prefs)
+
+        particulars = offspring_details[2]
+        place = get_place_string((offspring_event_id,), cur)
+
+        cur.execute(select_count_finding_id_sources, (offspring_event_id,))
+        source_count = cur.fetchone()[0]      
+        findings_data[offspring_event_id] = {}
+        findings_data[offspring_event_id]["event"] = "offspring" # make conditional on type
+        findings_data[offspring_event_id]["date"] = date
+        findings_data[offspring_event_id]["place"] = place
+        findings_data[offspring_event_id]["particulars"] = particulars
+        findings_data[offspring_event_id]["age"] = parent_age
+        findings_data[offspring_event_id]["source_count"] = source_count
+        findings_data[offspring_event_id]["child_id"] = child_id
+        findings_data[offspring_event_id]["child_name"] = child_name
+        findings_data[offspring_event_id]["sorter"] = sorter
+
+
+
+    # for child in offspring:
+        # dkt = dict(prototype)
+        # dkt["event"] = get_event_type_string(child[0])
+        # dkt["age"] = child[1]
+
+        # print("line", looky(seeline()).lineno, "dkt:", dkt)
 
 class EventsTable(Frame):
 

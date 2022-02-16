@@ -582,6 +582,14 @@ select_event_type_couple_bool = '''
     WHERE event_types = ?
 '''
 
+select_event_type_by_finding = '''
+    SELECT event_types
+    FROM event_type
+    JOIN finding
+        ON finding.event_type_id = event_type.event_type_id
+    WHERE finding_id = ?
+'''
+
 select_event_type_id = '''
     SELECT event_type_id, couple
     FROM event_type
@@ -592,6 +600,12 @@ select_event_type_id_only = '''
     SELECT event_type_id
     FROM event_type
     WHERE event_types = ?
+'''
+
+select_event_type_string = '''
+    SELECT event_types
+    FROM event_type
+    WHERE event_type_id = ?
 '''
 
 select_event_type_via_event_string = '''
@@ -647,18 +661,18 @@ select_finding_ids_age1_alt_parents = '''
     JOIN findings_persons
         ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
     WHERE person_id1 = ?
-        AND kin_type_id1 in (110, 111, 112, 120, 121, 122, 130, 131)
+        AND kin_type_id1 in (1, 2, 110, 111, 112, 120, 121, 122, 130, 131)
 '''
 
 select_finding_ids_age2_alt_parents = '''
-    SELECT finding_id, age2
+    SELECT finding_id, age2, kin_type_id2
     FROM person  
     JOIN persons_persons
         ON persons_persons.person_id2 = person.person_id
     JOIN findings_persons
         ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
     WHERE person_id2 = ?
-        AND kin_type_id2 in (110, 111, 112, 120, 121, 122, 130, 131)
+        AND kin_type_id2 in (1, 2, 110, 111, 112, 120, 121, 122, 130, 131)
 '''
 
 select_finding_ids_age1_parents = '''
@@ -812,56 +826,6 @@ select_findings_persons_id_kin_type2 = '''
     WHERE finding_id = ?
 '''
 
-# select_findings_persons_id_kin_type1 = '''
-    # SELECT findings_persons_id
-    # FROM findings_persons
-    # WHERE finding_id = ?
-        # AND person_id1 = ? 
-        # AND kin_type_id1 = ?
-# '''
-
-# select_findings_persons_id_kin_type2 = '''
-    # SELECT findings_persons_id
-    # FROM findings_persons
-    # WHERE finding_id = ?
-        # AND person_id2 = ? 
-        # AND kin_type_id2 = ?
-# '''
-
-# select_findings_persons_ma_id1 = '''
-    # SELECT person_id1
-    # FROM findings_persons
-    # WHERE kin_type_id1 = 1
-        # AND finding_id = ?
-# '''
-
-# select_findings_persons_ma_id2 = '''
-    # SELECT person_id2
-    # FROM findings_persons
-    # WHERE kin_type_id2 = 1
-        # AND finding_id = ?
-# '''
-
-# select_findings_persons_pa_id1 = '''
-    # SELECT person_id1
-    # FROM findings_persons
-    # WHERE kin_type_id1 = 2
-        # AND finding_id = ?
-# '''
-# select_findings_persons_pa_id2 = '''
-    # SELECT person_id2
-    # FROM findings_persons
-    # WHERE kin_type_id2 = 2
-        # AND finding_id = ?
-# '''
-
-
-
-# select_findings_persons_person_id = '''
-    # SELECT person_id1, person_id2
-    # FROM findings_persons
-    # WHERE finding_id = ?
-# '''
 
 select_findings_persons_person_id = '''
     SELECT a.person_id1, b.person_id2, a.persons_persons_id
