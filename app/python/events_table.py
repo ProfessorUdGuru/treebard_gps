@@ -246,52 +246,44 @@ def get_couple_findings(
         dkt["source_count"] = source_count
 
         dkt["event"], dkt["date"], dkt["sorter"], dkt["particulars"] = couple_generic_details
-        findings_data[finding_id[0]] = dkt
+        findings_data[finding_id[0]] = dkt  
 
-def get_birth_findings( # get rid of dkt, non_empty_roles, non_empty_notes parameters
-        dkt, cur, current_person, findings_data, non_empty_roles, non_empty_notes):
-    # PUTS STUFF INTO DICT THAT IS NEVER USED
-    # cur.execute(select_finding_id_birth, (current_person,))
-    # birth_id = cur.fetchone()
-    # print("line", looky(seeline()).lineno, "birth_id:", birth_id)
-    # parents = (None, None)
-    # if birth_id:
-        # cur.execute(select_person_ids_kin_types, birth_id)
-        # parents = cur.fetchone()
-    # print("line", looky(seeline()).lineno, "parents:", parents)
-    # if parents is None:
-        # pass
-    # elif parents[1] == "mother":
-        # dkt["mother_id"] = parents[0]
-        # dkt["mother_name"] = get_name_with_id(parents[0])
-        # dkt["father_id"] = parents[2]
-        # dkt["father_name"] = get_name_with_id(parents[2])
-    # elif parents[3] == "mother":
-        # dkt["father_id"] = parents[0]
-        # dkt["father_name"] = get_name_with_id(parents[0])
-        # dkt["mother_id"] = parents[2]
-        # dkt["mother_name"] = get_name_with_id(parents[2])
-    # print("line", looky(seeline()).lineno, "dkt:", dkt)
-    cur.execute(select_finding_ids_age1_parents, (current_person,))
-    children1 = [list(i) for i in cur.fetchall()]
+def autocreate_parent_findings(cur, current_person, findings_data):
+    """ Get birth & alt_birth findings to autocreate rows when parent is current 
+        person. """
 
-    cur.execute(select_finding_ids_age2_parents, (current_person,))
-    children2 = [list(i) for i in cur.fetchall()]
+    def get_event_type_string(iD):
+        cur.execute(select_finding_event_type, (iD,))
+        event_type_id = cur.fetchone()[0]
+        conversion = {
+            1: "offspring", 83: "adopted a child", 95: "fostered a child", 
+            48: "acted as guardian"}
+        for k,v in conversion.items():
+            if event_type_id == k:
+                event_type = v
+        return event_type
 
-    children = children1 + children2
-    print("line", looky(seeline()).lineno, "children:", children)
-    for lst in children:
-        offspring_event_id = lst[0]
-        cur.execute(select_person_id_birth, (offspring_event_id,))
-        offspring = cur.fetchone()
-        if offspring:
-            lst.append(offspring[0])
-        print("line", looky(seeline()).lineno, "lst:", lst)
+    cur.execute(select_finding_ids_age1_alt_parents, (current_person,))
+    offspring1 = [list(i) for i in cur.fetchall()]
 
-    for lst in children:
-        offspring_event_id, parent_age, child_id = lst
+    cur.execute(select_finding_ids_age2_alt_parents, (current_person,))
+    offspring2 = [list(i) for i in cur.fetchall()]
+
+    offspring = offspring1 + offspring2
+
+    for child in offspring:
+        finding = child[0]
+        cur.execute(select_person, (finding,))
+        child_id = cur.fetchone()
+        if child_id:
+            child.append(child_id[0])
+
+    for child in offspring:
+        offspring_event_id, parent_age, child_id = child
         cur.execute(select_findings_details_offspring, (child_id,))     
         offspring_details = cur.fetchone()
+
+        event_type = get_event_type_string(offspring_event_id)
 
         child_name = get_name_with_id(child_id)
 
@@ -305,7 +297,7 @@ def get_birth_findings( # get rid of dkt, non_empty_roles, non_empty_notes param
         cur.execute(select_count_finding_id_sources, (offspring_event_id,))
         source_count = cur.fetchone()[0]      
         findings_data[offspring_event_id] = {}
-        findings_data[offspring_event_id]["event"] = "offspring"
+        findings_data[offspring_event_id]["event"] = event_type
         findings_data[offspring_event_id]["date"] = date
         findings_data[offspring_event_id]["place"] = place
         findings_data[offspring_event_id]["particulars"] = particulars
@@ -314,97 +306,6 @@ def get_birth_findings( # get rid of dkt, non_empty_roles, non_empty_notes param
         findings_data[offspring_event_id]["child_id"] = child_id
         findings_data[offspring_event_id]["child_name"] = child_name
         findings_data[offspring_event_id]["sorter"] = sorter
-# APPEARS TO DO NOTHING... passing dkt was wrong...
-        # if offspring_event_id in non_empty_roles:
-            # print("line", looky(seeline()).lineno, "running:")
-            # get_role_findings(
-                # dkt, offspring_event_id, cur, current_person, 
-                # findings_data=findings_data)
-
-        # if offspring_event_id in non_empty_notes:
-            # print("line", looky(seeline()).lineno, "running:")
-            # get_note_findings(
-                # dkt, offspring_event_id, cur, current_person, 
-                # findings_data=findings_data)
-
-def get_alt_birth_findings(
-        dkt, cur, current_person, findings_data, non_empty_roles, non_empty_notes):
-    """ `alt_birth...` refers to adoption, guardianship, & fosterage. """    
-    # cur.execute(select_event_type_id_only, (dkt["event"],))
-    # event_type_id = cur.fetchone()[0]
-    # cur.execute(select_finding_id_alt_parentage, (event_type_id, current_person))
-    # alt_birth_id = cur.fetchone()
-    # print("line", looky(seeline()).lineno, "alt_birth_id:", alt_birth_id)
-    # alt_parents = (None, None)
-    # if alt_birth_id:
-        # cur.execute(select_person_ids_kin_types, alt_birth_id)
-        # alt_parents = cur.fetchone()
-    # print("line", looky(seeline()).lineno, "alt_parents:", alt_parents)
-    # if alt_parents is None:
-        # pass
-    # elif alt_parents[1] == "mother":
-        # dkt["mother_id"] = alt_parents[0]
-        # dkt["mother_name"] = get_name_with_id(alt_parents[0])
-        # dkt["father_id"] = alt_parents[2]
-        # dkt["father_name"] = get_name_with_id(alt_parents[2])
-    # elif alt_parents[3] == "mother":
-        # dkt["father_id"] = alt_parents[0]
-        # dkt["father_name"] = get_name_with_id(alt_parents[0])
-        # dkt["mother_id"] = alt_parents[2]
-        # dkt["mother_name"] = get_name_with_id(alt_parents[2])
-    print("line", looky(seeline()).lineno, "running:")
-    cur.execute(select_finding_ids_age1_alt_parents, (current_person,))
-    children1 = [list(i) for i in cur.fetchall()]
-
-    cur.execute(select_finding_ids_age2_alt_parents, (current_person,))
-    children2 = [list(i) for i in cur.fetchall()]
-
-    children = children1 + children2
-    print("line", looky(seeline()).lineno, "children:", children)
-    for lst in children:
-        alt_parent_event_id = lst[0]
-        cur.execute(select_person_id_alt_parentage, (alt_parent_event_id,))
-        offspring = cur.fetchone()
-        print("line", looky(seeline()).lineno, "offspring:", offspring)
-        if offspring:
-            lst.append(offspring[0])
-
-    for lst in children:
-        alt_parent_event_id, parent_age, child_id = lst
-        cur.execute(select_findings_details_offspring, (child_id,))     
-        offspring_details = cur.fetchone()
-
-        child_name = get_name_with_id(child_id)
-
-        sorter = split_sorter(offspring_details[1])
-        date_prefs = get_date_formats(tree_is_open=1)
-        date = format_stored_date(offspring_details[0], date_prefs=date_prefs)
-
-        particulars = offspring_details[2]
-        place = get_place_string((alt_parent_event_id,), cur)
-
-        cur.execute(select_count_finding_id_sources, (alt_parent_event_id,))
-        source_count = cur.fetchone()[0]      
-        findings_data[alt_parent_event_id] = {}
-        findings_data[alt_parent_event_id]["event"] = "offspring" # THIS IS THE ONLY DIFFERENCE? No? bec there can be more than one?
-        findings_data[alt_parent_event_id]["date"] = date
-        findings_data[alt_parent_event_id]["place"] = place
-        findings_data[alt_parent_event_id]["particulars"] = particulars
-        findings_data[alt_parent_event_id]["age"] = parent_age
-        findings_data[alt_parent_event_id]["source_count"] = source_count
-        findings_data[alt_parent_event_id]["child_id"] = child_id
-        findings_data[alt_parent_event_id]["child_name"] = child_name
-        findings_data[alt_parent_event_id]["sorter"] = sorter
-
-        # if alt_parent_event_id in non_empty_roles:
-            # get_role_findings(
-                # dkt, alt_parent_event_id, cur, current_person, 
-                # findings_data=findings_data)
-
-        # if alt_parent_event_id in non_empty_notes:
-            # get_note_findings(
-                # dkt, alt_parent_event_id, cur, current_person, 
-                # findings_data=findings_data)
 
 def get_role_findings(
     dkt, finding_id, cur, current_person, findings_data=None):
@@ -448,16 +349,6 @@ def get_findings():
         get_generic_findings(
             dkt, cur, finding_id, findings_data, 
             current_person, non_empty_roles, non_empty_notes)
-        # print("line", looky(seeline()).lineno, "dkt['event']:", dkt['event'])
-        # if dkt["event"] == "birth": # WRONG PERSON'S BIRTH; IRRELEVANT; WORKED BY COINCIDENCE SINCE ALL PERSONS HAVE A BIRTH AUTOCREATED FOR THEM
-    # get_birth_findings( # SHD BE OFFSPRING_FINDING?
-        # dkt, cur, current_person, findings_data,
-        # non_empty_roles, non_empty_notes)
-        # # elif dkt["event"] in ("adoption", "fosterage", "guardianship"):
-        # # print("line", looky(seeline()).lineno, "dkt:", dkt)
-    # get_alt_birth_findings(
-        # dkt, cur, current_person, findings_data,
-        # non_empty_roles, non_empty_notes)
 
     autocreate_parent_findings(cur, current_person, findings_data)
 
@@ -467,77 +358,7 @@ def get_findings():
 
     cur.close()
     conn.close()  
-    return findings_data, non_empty_roles, non_empty_notes    
-
-def autocreate_parent_findings(cur, current_person, findings_data):
-    """ Get birth & alt_birth findings to autocreate rows when parent is current 
-        person. """
-
-    def get_event_type_string(iD):
-        cur.execute(select_finding_event_type, (iD,))
-        event_type_id = cur.fetchone()[0]
-        conversion = {
-            1: "offspring", 83: "adopted a child", 95: "fostered a child", 
-            48: "acted as guardian"}
-        for k,v in conversion.items():
-            if event_type_id == k:
-                event_type = v
-        return event_type
-
-    cur.execute(select_finding_ids_age1_alt_parents, (current_person,))
-    offspring1 = [list(i) for i in cur.fetchall()]
-
-    cur.execute(select_finding_ids_age2_alt_parents, (current_person,))
-    offspring2 = [list(i) for i in cur.fetchall()]
-
-    offspring = offspring1 + offspring2
-
-    for child in offspring:
-        print("line", looky(seeline()).lineno, "child:", child)# line 496 child: [1103, '']
-        finding = child[0]
-        cur.execute(select_person, (finding,))
-        child_id = cur.fetchone()
-        # print("line", looky(seeline()).lineno, "child_id:", child_id)# line 504 child_id: (5779,)
-        if child_id:
-            child.append(child_id[0])
-        # print("line", looky(seeline()).lineno, "child:", child)
-# line 507 child: [1103, '', 5779]
-
-    for child in offspring: # THIS IS WHERE i LEFT OFF
-        offspring_event_id, parent_age, child_id = child
-        cur.execute(select_findings_details_offspring, (child_id,))     
-        offspring_details = cur.fetchone()
-
-        child_name = get_name_with_id(child_id)
-
-        sorter = split_sorter(offspring_details[1])
-        date_prefs = get_date_formats(tree_is_open=1)
-        date = format_stored_date(offspring_details[0], date_prefs=date_prefs)
-
-        particulars = offspring_details[2]
-        place = get_place_string((offspring_event_id,), cur)
-
-        cur.execute(select_count_finding_id_sources, (offspring_event_id,))
-        source_count = cur.fetchone()[0]      
-        findings_data[offspring_event_id] = {}
-        findings_data[offspring_event_id]["event"] = "offspring" # make conditional on type
-        findings_data[offspring_event_id]["date"] = date
-        findings_data[offspring_event_id]["place"] = place
-        findings_data[offspring_event_id]["particulars"] = particulars
-        findings_data[offspring_event_id]["age"] = parent_age
-        findings_data[offspring_event_id]["source_count"] = source_count
-        findings_data[offspring_event_id]["child_id"] = child_id
-        findings_data[offspring_event_id]["child_name"] = child_name
-        findings_data[offspring_event_id]["sorter"] = sorter
-
-
-
-    # for child in offspring:
-        # dkt = dict(prototype)
-        # dkt["event"] = get_event_type_string(child[0])
-        # dkt["age"] = child[1]
-
-        # print("line", looky(seeline()).lineno, "dkt:", dkt)
+    return findings_data, non_empty_roles, non_empty_notes  
 
 class EventsTable(Frame):
 

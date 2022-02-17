@@ -665,7 +665,7 @@ select_finding_ids_age1_alt_parents = '''
 '''
 
 select_finding_ids_age2_alt_parents = '''
-    SELECT finding_id, age2, kin_type_id2
+    SELECT finding_id, age2
     FROM person  
     JOIN persons_persons
         ON persons_persons.person_id2 = person.person_id
