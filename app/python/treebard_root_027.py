@@ -171,7 +171,8 @@ if __name__ == '__main__':
 
 # BRANCH: kin_parents
 
-# actual goals: 2) kintips for offspring event work, now make kintips work for alt parentage events (eg point to "adopted a child" and kintip will say Child: James Woodland), then for parents in the child's table eg point to offspring or adoption event and kintip will say "Parent(s): Elrinda Alburo, Dan Wozniak"; 3) unlink on delete/backspace; 4) make it possible to add/access/edit roles & notes on offspring/alt_parentage event rows of the events table
+# sort like events such as 2 foster parent evts by date
+# actual goals: 2) make kintips work for parents in the child's table eg point to offspring or adoption event and kintip will say "Parent(s): Elrinda Alburo, Dan Wozniak"; 3) unlink on delete/backspace; 4) make it possible to add/access/edit roles & notes on offspring/alt_parentage event rows of the events table; SEE "non_empty_roles, non_empty_notes"
 # make it impossible to delete or create a birth event--it's only done by Treebard--also can't change age at birth = 0; error message states that to create a birth event, you just create a person; to create an offspring event you just create a parent; to create a fosterage/adoption/guardianship event you just create the event and inputs for the parents will appear in nukes table
 # copy the schema for findings_persons to default_new_tree and _untouched (NOT NULL constraint was removed from kin_type_id1 and _2); copy the whole table kin_type to defaultx2
 # ABOUT EDITING A PARENT ROLE FROM CURRENT PERSON TAB: 

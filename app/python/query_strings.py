@@ -632,10 +632,17 @@ select_finding_event_type = '''
     WHERE finding_id = ?
 '''
 
-select_finding_id_alt_parentage = '''
+# select_finding_id_alt_parentage = '''
+    # SELECT finding_id 
+    # FROM finding
+    # WHERE event_type_id in (48, 83, 95)
+        # AND person_id = ?
+# '''
+
+select_finding_id_adoption = '''
     SELECT finding_id 
     FROM finding
-    WHERE event_type_id = ?
+    WHERE event_type_id = 83
         AND person_id = ?
 '''
 
@@ -650,6 +657,20 @@ select_finding_id_death = '''
     SELECT finding_id 
     FROM finding
     WHERE event_type_id = 4
+        AND person_id = ?
+'''
+
+select_finding_id_fosterage = '''
+    SELECT finding_id 
+    FROM finding
+    WHERE event_type_id = 95
+        AND person_id = ?
+'''
+
+select_finding_id_guardianship = '''
+    SELECT finding_id 
+    FROM finding
+    WHERE event_type_id = 48
         AND person_id = ?
 '''
 
@@ -1161,18 +1182,30 @@ select_person_id_finding = '''
     FROM finding
     WHERE finding_id = ?
 '''
-# this query doesn't appear to get any results (either version)
+# this query doesn't appear to get any results
+# select_person_ids_kin_types = '''
+    # SELECT q.person_id1, a.kin_types, r.person_id2, b.kin_types
+    # FROM person as f
+    # JOIN person as g
+        # ON f.person_id = g.person_id
+    # JOIN persons_persons as q
+        # ON q.person_id1 = f.person_id
+    # JOIN persons_persons as r
+        # ON r.person_id2 = g.person_id
+    # JOIN findings_persons
+        # ON findings_persons.persons_persons_id = q.persons_persons_id
+    # JOIN kin_type as a
+        # ON a.kin_type_id = findings_persons.kin_type_id1
+    # JOIN kin_type as b
+        # ON b.kin_type_id = findings_persons.kin_type_id2
+    # WHERE finding_id = ?
+# '''
+
 select_person_ids_kin_types = '''
-    SELECT q.person_id1, a.kin_types, r.person_id2, b.kin_types
-    FROM person as f
-    JOIN person as g
-        ON f.person_id = g.person_id
-    JOIN persons_persons as q
-        ON q.person_id1 = f.person_id
-    JOIN persons_persons as r
-        ON r.person_id2 = g.person_id
-    JOIN findings_persons
-        ON findings_persons.persons_persons_id = q.persons_persons_id
+    SELECT person_id1, a.kin_types, person_id2, b.kin_types
+    FROM findings_persons
+    JOIN persons_persons
+        ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
     JOIN kin_type as a
         ON a.kin_type_id = findings_persons.kin_type_id1
     JOIN kin_type as b
@@ -1180,15 +1213,9 @@ select_person_ids_kin_types = '''
     WHERE finding_id = ?
 '''
 
-# select_person_ids_kin_types = '''
-    # SELECT q.person_id1, a.kin_types, r.person_id2, b.kin_types
-    # FROM person   
-    # JOIN persons_persons as q
-        # ON q.person_id1 = person.person_id
-    # JOIN persons_persons as r
-        # ON r.person_id2 = person.person_id
-    # JOIN findings_persons
-        # ON findings_persons.persons_persons_id = q.persons_persons_id
+# select_person_id_kin_types_birth = '''
+    # SELECT person_id1, a.kin_types, person_id2, b.kin_types
+    # FROM findings_persons
     # JOIN kin_type as a
         # ON a.kin_type_id = findings_persons.kin_type_id1
     # JOIN kin_type as b

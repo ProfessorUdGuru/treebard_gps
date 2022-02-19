@@ -53,7 +53,8 @@ from query_strings import (
     select_findings_persons_person_id, update_finding_date, 
     select_findings_persons_alt_parents, select_event_type_via_event_string,
     insert_persons_persons_null, insert_findings_persons_null_couple,
-    select_finding_id_alt_parentage, select_event_type_id_only,
+    select_finding_id_adoption, select_finding_id_fosterage, 
+    select_finding_id_guardianship, select_event_type_id_only,
     select_finding_ids_age1_alt_parents, select_finding_ids_age2_alt_parents,
     select_person_id_alt_parentage, select_kin_type_string, 
     
@@ -246,9 +247,99 @@ def get_couple_findings(
         dkt["source_count"] = source_count
 
         dkt["event"], dkt["date"], dkt["sorter"], dkt["particulars"] = couple_generic_details
-        findings_data[finding_id[0]] = dkt  
+        findings_data[finding_id[0]] = dkt 
 
-def autocreate_parent_findings(cur, current_person, findings_data):
+def make_parent_kintips(dkt, current_person, cur):
+    cur.execute(select_finding_id_birth, (current_person,))
+    birth_id = cur.fetchone()
+    parents = (None, None)
+    if birth_id:
+        cur.execute(select_person_ids_kin_types, birth_id)
+        parents = cur.fetchone()
+    print("line", looky(seeline()).lineno, "parents:", parents)
+    if not parents:
+        pass
+    elif parents[1] == "mother":
+        dkt["mother_id"] = parents[0]
+        dkt["mother_name"] = get_any_name_with_id(parents[0]) # changed these to _any_ 20220219
+        dkt["father_id"] = parents[2]
+        dkt["father_name"] = get_any_name_with_id(parents[2])
+    elif parents[3] == "mother":
+        dkt["father_id"] = parents[0]
+        dkt["father_name"] = get_any_name_with_id(parents[0])
+        dkt["mother_id"] = parents[2]
+        dkt["mother_name"] = get_any_name_with_id(parents[2])
+
+def make_adoption_kintips(dkt, current_person, cur, finding_id):
+    cur.execute(select_finding_id_adoption, (current_person,))
+    event_id = cur.fetchall()
+    parents = None
+    if event_id is None:
+        return
+    elif finding_id in event_id:
+        cur.execute(select_person_ids_kin_types, finding_id)
+        parents = cur.fetchone()
+    if not parents:
+        pass
+    else:
+        key1 = parents[1].replace(" ", "_")
+        key2 = parents[3].replace(" ", "_")
+        key1a = "{}_id1".format(key1)
+        key1b = "{}_name1".format(key1)
+        key2a = "{}_id2".format(key2)
+        key2b = "{}_name2".format(key2)
+        dkt[key1a] = parents[0]
+        dkt[key1b] = get_any_name_with_id(parents[0])
+        dkt[key2a] = parents[2]
+        dkt[key2b] = get_any_name_with_id(parents[2])
+
+def make_fosterage_kintips(dkt, current_person, cur, finding_id):
+    cur.execute(select_finding_id_fosterage, (current_person,))
+    event_id = cur.fetchall()
+    parents = None
+    if event_id is None:
+        return
+    elif finding_id in event_id:
+        cur.execute(select_person_ids_kin_types, finding_id)
+        parents = cur.fetchone()
+    if not parents:
+        pass
+    else:
+        key1 = parents[1].replace(" ", "_")
+        key2 = parents[3].replace(" ", "_")
+        key1a = "{}_id1".format(key1)
+        key1b = "{}_name1".format(key1)
+        key2a = "{}_id2".format(key2)
+        key2b = "{}_name2".format(key2)
+        dkt[key1a] = parents[0]
+        dkt[key1b] = get_any_name_with_id(parents[0])
+        dkt[key2a] = parents[2]
+        dkt[key2b] = get_any_name_with_id(parents[2])
+
+def make_guardianship_kintips(dkt, current_person, cur, finding_id):
+    cur.execute(select_finding_id_guardianship, (current_person,))
+    event_id = cur.fetchall()
+    parents = None
+    if event_id is None:
+        return
+    elif finding_id in event_id:
+        cur.execute(select_person_ids_kin_types, finding_id)
+        parents = cur.fetchone()
+    if not parents:
+        pass
+    else:            
+        key1 = parents[1].replace(" ", "_")
+        key2 = parents[3].replace(" ", "_")
+        key1a = "{}_id1".format(key1)
+        key1b = "{}_name1".format(key1)
+        key2a = "{}_id2".format(key2)
+        key2b = "{}_name2".format(key2)
+        dkt[key1a] = parents[0]
+        dkt[key1b] = get_any_name_with_id(parents[0])
+        dkt[key2a] = parents[2]
+        dkt[key2b] = get_any_name_with_id(parents[2])
+
+def autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id):
     """ Get birth & alt_birth findings to autocreate rows when parent is current 
         person. """
 
@@ -306,6 +397,15 @@ def autocreate_parent_findings(cur, current_person, findings_data):
         findings_data[offspring_event_id]["child_id"] = child_id
         findings_data[offspring_event_id]["child_name"] = child_name
         findings_data[offspring_event_id]["sorter"] = sorter
+    event_type = dkt["event"]
+    if event_type == "birth":
+        make_parent_kintips(dkt, current_person, cur)
+    elif event_type == "adoption":
+        make_adoption_kintips(dkt, current_person, cur, finding_id)
+    elif event_type == "fosterage":
+        make_fosterage_kintips(dkt, current_person, cur, finding_id)
+    elif event_type == "guardianship":
+        make_guardianship_kintips(dkt, current_person, cur, finding_id)
 
 def get_role_findings(
     dkt, finding_id, cur, current_person, findings_data=None):
@@ -350,7 +450,18 @@ def get_findings():
             dkt, cur, finding_id, findings_data, 
             current_person, non_empty_roles, non_empty_notes)
 
-    autocreate_parent_findings(cur, current_person, findings_data)
+        if dkt["event"] == "birth":
+            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id)
+                # non_empty_roles, non_empty_notes)
+        elif dkt["event"] == "adoption":
+            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id)
+            print("line", looky(seeline()).lineno, "dkt['event']:", dkt['event'])
+        elif dkt["event"] == "fosterage":
+            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id)
+            print("line", looky(seeline()).lineno, "dkt['event']:", dkt['event'])
+        elif dkt["event"] == "guardianship":
+            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id)
+            print("line", looky(seeline()).lineno, "dkt['event']:", dkt['event'])
 
     get_couple_findings(
         cur, current_person, rowtotype, findings_data, 
@@ -837,7 +948,7 @@ class EventsTable(Frame):
         return new_order
 
     def show_table_cells(self): 
-
+        print("line", looky(seeline()).lineno, "running:")
         current_file = get_current_file()[0]
         row_order = self.sort_by_date()
        
@@ -858,6 +969,7 @@ class EventsTable(Frame):
                 if c < 5:
                     text = self.findings_data[finding_id][HEADS[c]]
                 elif c == 7:
+                    # print("line", looky(seeline()).lineno, "running:")
                     text = self.findings_data[finding_id]["source_count"]
                 else:
                     text = "     "
@@ -877,9 +989,11 @@ class EventsTable(Frame):
                         self.widths[c] = len(text)
                     widg.insert(0, text) 
                 if c == 0:
+                    # kintips
                     dkt = self.findings_data[finding_id]
                     evtype = dkt["event"]
-                    if evtype == "offspring":
+                    if evtype in ("adopted a child", "acted as guardian", 
+                            "fostered a child", "offspring"):
                         name = dkt.get("child_name")
                         if not name:
                             name = get_any_name_with_id(dkt["child_id"])
@@ -902,6 +1016,84 @@ class EventsTable(Frame):
                         self.widget = widg
                         self.kintip_bindings["on_enter"].append([widg, couple_in])
                         self.kintip_bindings["on_leave"].append([widg, couple_out])
+                    elif evtype in ("birth", "adoption", "guardianship", "fosterage"):
+                        # print("line", looky(seeline()).lineno, "evtype:", evtype)
+                        # print("line", looky(seeline()).lineno, "dkt:", dkt)
+                        if evtype == "birth":
+                            name1 = dkt.get("father_name")
+                            if not name1:
+                                name1 = get_any_name_with_id(dkt["father_id"])
+                            name2 = dkt.get("mother_name")
+                            if not name2:
+                                name2 = get_any_name_with_id(dkt["mother_id"])
+                            names = "{}, {}".format(name1, name2)
+                            parents_in = widg.bind(
+                                "<Enter>", lambda evt, 
+                                kin="parent(s)", names=names: self.handle_enter(kin, names))
+                            parents_out = widg.bind("<Leave>", self.on_leave)
+                            self.widget = widg
+                            self.kintip_bindings["on_enter"].append([widg, parents_in])
+                            self.kintip_bindings["on_leave"].append([widg, parents_out])
+                        elif evtype == "adoption":
+                            alts1 = ("adoptive_parent_name1", "adoptive_father_name1", "adoptive_mother_name1")
+                            alts2 = ("adoptive_parent_name2", "adoptive_father_name2", "adoptive_mother_name2")
+                            for key in alts1:
+                                name1 = dkt.get(key)
+                                if name1:
+                                    break
+                            for key in alts2:
+                                name2 = dkt.get(key)
+                                if name2:
+                                    break
+                            print("line", looky(seeline()).lineno, "name1, name2:", name1, name2)
+                            names = "{}, {}".format(name1, name2)
+                            adoptive_parents_in = widg.bind(
+                                "<Enter>", lambda evt, 
+                                kin="adoptive parent(s)", names=names: self.handle_enter(kin, names))
+                            adoptive_parents_out = widg.bind("<Leave>", self.on_leave)
+                            self.widget = widg
+                            self.kintip_bindings["on_enter"].append([widg, adoptive_parents_in])
+                            self.kintip_bindings["on_leave"].append([widg, adoptive_parents_out])
+                        elif evtype == "fosterage":
+                            alts1 = ("foster_parent_name1", "foster_father_name1", "foster_mother_name1")
+                            alts2 = ("foster_parent_name2", "foster_father_name2", "foster_mother_name2")
+                            for key in alts1:
+                                name1 = dkt.get(key)
+                                if name1:
+                                    break
+                            for key in alts2:
+                                name2 = dkt.get(key)
+                                if name2:
+                                    break
+                            # print("line", looky(seeline()).lineno, "name1, name2:", name1, name2)
+                            names = "{}, {}".format(name1, name2)
+                            foster_parents_in = widg.bind(
+                                "<Enter>", lambda evt, 
+                                kin="foster parent(s)", names=names: self.handle_enter(kin, names))
+                            foster_parents_out = widg.bind("<Leave>", self.on_leave)
+                            self.widget = widg
+                            self.kintip_bindings["on_enter"].append([widg, foster_parents_in])
+                            self.kintip_bindings["on_leave"].append([widg, foster_parents_out])
+                        elif evtype == "guardianship":
+                            alts1 = ("guardian_name1", "legal_guardian_name1")
+                            alts2 = ("guardian_name2", "legal_guardian_name2")
+                            for key in alts1:
+                                name1 = dkt.get(key)
+                                if name1:
+                                    break
+                            for key in alts2:
+                                name2 = dkt.get(key)
+                                if name2:
+                                    break
+                            print("line", looky(seeline()).lineno, "name1, name2:", name1, name2)
+                            names = "{}, {}".format(name1, name2)
+                            guardians_in = widg.bind(
+                                "<Enter>", lambda evt, 
+                                kin="guardian(s)", names=names: self.handle_enter(kin, names))
+                            guardians_out = widg.bind("<Leave>", self.on_leave)
+                            self.widget = widg
+                            self.kintip_bindings["on_enter"].append([widg, guardians_in])
+                            self.kintip_bindings["on_leave"].append([widg, guardians_out])
                 c += 1
             r += 1
         z = 0
@@ -912,7 +1104,7 @@ class EventsTable(Frame):
                 widg.config(width=self.widths[z] + 2)
             z += 1
 
-        self.fix_tab_traversal()
+        self.fix_tab_traversal() # DO NOT DELETE THIS IS NEEDED
         for row_num in range(self.grid_size()[1]):
             self.grid_rowconfigure(row_num, weight=0)
         self.new_row = row_num + 1
@@ -1052,15 +1244,6 @@ class EventsTable(Frame):
             ],
             {},
         ]
-            # [
-                # [
-                    # {'fpid': None, 'finding': None, 'sorter': [0, 0, 0]}, 
-                    # {'id': None, 'name': '', 'labtext': 'father', 'labwidg': None, 'inwidg': None}, 
-                    # {'id': None, 'name': '', 'labtext': 'mother', 'labwidg': None, 'inwidg': None}
-                # ],
-            # ],
-            # {},
-        # ]
 
     def make_header(self):
         y = 0

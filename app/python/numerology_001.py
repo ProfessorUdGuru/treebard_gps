@@ -37,7 +37,7 @@ consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', '
 
 
 
-name = "Mateo Gustavo Wilson"
+name = "Hilary Ann Swank"
 
 name = name.split()
 lowered = []
@@ -243,6 +243,7 @@ root.mainloop()
 # Terry Robert Miller born feb 9 1934 Neosho, Newton Co MO
 # Bessie Louise Rathbun
 # Mateo Gustavo Wilson born Nov 22 2020
+# Hilary Ann Swank (actress), born July 30, 1974, Lincoln, Nebraska
 
 # 371
 # Donald Scott Robertson
