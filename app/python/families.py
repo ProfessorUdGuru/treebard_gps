@@ -65,7 +65,7 @@ class NuclearFamiliesTable(Frame):
         self.right_panel = right_panel
         self.formats = formats
 
-        # There's an exact copy of this blank collection in redraw() in events_table.py
+        # There's an exact copy of this blank collection in forget_cells() in events_table.py
         #   so it has to be changed if this is changed. Initial attempt to not repeat
         #   the code didn't work.
         self.family_data = [
@@ -252,21 +252,19 @@ class NuclearFamiliesTable(Frame):
         self.fix_button_state()
 
     def populate_nuke_tables(self):
-        lst = [
-            
+        lst = [            
             self.family_data[0][0][1]["name"],
             self.family_data[0][0][2]["name"]]
         for name in lst:
             if name == "name unknown":
                 idx = lst.index(name)
                 lst[idx] = ""
-
         a = 0
         for name in lst:
             if name and a == 0:
-                self.ma_input.insert(0, name)
-            elif name and a == 1:
                 self.pa_input.insert(0, name)
+            elif name and a == 1:
+                self.ma_input.insert(0, name)
             a += 1
 
         top_child_rows = []
@@ -397,7 +395,7 @@ class NuclearFamiliesTable(Frame):
             anyone. Then when the user inputs an alternate parent event 
             (guardianship, fosterage, adoption), the same process will create
             inputs for the alternate parents. All symmetrical procedures except
-            that the person's birth is assumed so exactly two inputs are always
+            that the person's birth is assumed so inputs are automatically
             created for biological parents.
         '''
 
@@ -423,33 +421,32 @@ class NuclearFamiliesTable(Frame):
         else:
             self.parent_record = None
 
-        ma_name = ""
         pa_name = ""
-        parent1 = None
-        parent2 = None
+        ma_name = ""
+        dad = None
+        mom = None
         if self.parent_record:
-            parent1 = self.parent_record[2:4]
-            parent2 = self.parent_record[4:]
-            pa_id = parent1[0]
-            ma_id = parent2[0]
+            dad = self.parent_record[2:4]
+            mom = self.parent_record[4:]
+            pa_id = dad[0]
+            ma_id = mom[0]
             ids = self.family_data[0][0][0]
             ids["fpid"], ids["finding"] = self.parent_record[0:2]
         else:
             # This only runs when there are no parents recorded.
             self.family_data[0][0][0]["finding"] = birth_id
 
-        if ma_id:
-            ma_name = get_any_name_with_id(ma_id)
         if pa_id:
             pa_name = get_any_name_with_id(pa_id)
+        if ma_id:
+            ma_name = get_any_name_with_id(ma_id)
         parents = self.family_data[0][0]
-        parents[1]["id"] = ma_id
-        parents[2]["id"] = pa_id
-        parents[1]["name"] = ma_name
-        parents[2]["name"] = pa_name
-        parents[1]["inwidg"] = self.ma_input
-        parents[2]["inwidg"] = self.pa_input 
-
+        parents[1]["id"] = pa_id
+        parents[2]["id"] = ma_id
+        parents[1]["name"] = pa_name
+        parents[2]["name"] = ma_name
+        parents[1]["inwidg"] = self.pa_input
+        parents[2]["inwidg"] = self.ma_input
         self.get_alt_parents(cur)
         self.grid_alt_parents()
 
@@ -724,10 +721,10 @@ class NuclearFamiliesTable(Frame):
             parent_type = "Mother"
         elif parent_type == 2:
             parent_type = "Father"
-        elif parent_type is None:
+        elif parent_type is None:  
             print("line", looky(seeline()).lineno, "parent_type:", parent_type)
             print("line", looky(seeline()).lineno, "self.family_data[1]:", self.family_data[1])
-            print("line", looky(seeline()).lineno, "pard_id:", pard_id)             
+            print("line", looky(seeline()).lineno, "pard_id:", pard_id)           
         partner_name = get_any_name_with_id(pard_id)
         self.family_data[1][pard_id]["parent_type"] = parent_type
         self.family_data[1][pard_id]["partner_name"] = partner_name   
@@ -1083,6 +1080,14 @@ class NuclearFamiliesTable(Frame):
             change the contents to a different person (to change a parent, partner, or child,
             make that person the current person first.)
         """
+        def delete_parent(column):
+            finding_id = self.family_data[0][0][0]["finding"]
+            if column == 1:
+                cur.execute(update_persons_persons1_by_finding, (None, finding_id))
+            elif column == 3:
+                cur.execute(update_persons_persons2_by_finding, (None, finding_id))
+            conn.commit()
+
         for dkt in self.family_data[0][0][1:]:
             if widg == dkt["inwidg"]:
                 iD = dkt["id"]
@@ -1100,11 +1105,8 @@ class NuclearFamiliesTable(Frame):
             widg.insert(0, self.original)
             return
         elif len(self.final) == 0:
-            print("line", looky(seeline()).lineno, "unlink is true:")
-            print("line", looky(seeline()).lineno, "iD:", iD)
-            # if unlink from partner, also unlink from all kids of these 2 parents but kids stay linked to current person
-            print("line", looky(seeline()).lineno, "self.family_data[1][iD]:", self.family_data[1][iD])
-            print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
+            column = widg.grid_info()["column"]
+            delete_parent(column)
         elif len(self.original) == 0:
             self.make_parent(widg, conn, cur)
             update_person_autofill_values()
@@ -1113,13 +1115,6 @@ class NuclearFamiliesTable(Frame):
         """ Maybe this can be combined with update_parent by parameterizing the 
             2 separate methods. 
         """
-        print("line", looky(seeline()).lineno, "final:", final)
-        print("line", looky(seeline()).lineno, "widg:", widg)
-        print("line", looky(seeline()).lineno, "kin_type:", kin_type) 
-        print("line", looky(seeline()).lineno, "column:", column)
-        print("line", looky(seeline()).lineno, "row:", row)
-        # print("line", looky(seeline()).lineno, "self.family_data[0][1:]:", self.family_data[0][1:])
-
         y = 1
         for lst in self.family_data[0][1:]:
             for dkt in lst[1:]:
@@ -1129,10 +1124,12 @@ class NuclearFamiliesTable(Frame):
             y += 1                
 
         if "#" in final:
-            alt_parent_id = final.split("  #")[1]            
-        else:
+            alt_parent_id = final.split("  #")[1]        
+        elif len(final) != 0:
             alt_parent_id = open_new_person_dialog(
                 self, widg, self.root, self.treebard, self.formats)
+        elif len(final) == 0:
+            alt_parent_id = None
 
         if column == 1:
             cur.execute(update_persons_persons1_by_finding, (alt_parent_id, finding_id))
@@ -1216,29 +1213,37 @@ class NuclearFamiliesTable(Frame):
             return
         widgname = widg.winfo_name()
         parent_type = ""
-        message = "Clicking OK will unlink this person from the current person "
-        "and relevant events (listed below). If your real goal is to delete "
-        "the person from the tree, change the person's name, etc., first "
-        "double-click the person to make them the current person."
-        self.changing_values = {}
-        if widgname in ("ma", "pa"):
+        head2 = ""
+        message = "Clicking OK will unlink this person from the current person and relevant events (listed below). If the goal is to delete the person from the tree, or change the person's name, etc., first double-click the person to make them the current person."
+        dkt = None
+        changing_values = []
+        if widgname in ("pa", "ma"):
             col = widg.grid_info()["column"]
             relative_type = "parent"
+            dkt = self.family_data[0][0][2]
+            changing_values.extend([
+                "Offspring Event", dkt["name"], dkt["id"], dkt["kin_type"]])
             if col == 1:
-                parent_type = "ma"
-            elif col == 3:
                 parent_type = "pa"
+            elif col == 3:
+                parent_type = "ma"
         elif widgname.startswith("pard"):
             relative_type = "partner"
         else:
-            relative_type = "child"
+            relative_type = "child" 
+
+        if len(changing_values) != 0: 
+            head2 = "{}: {} #{} will be unlinked as {} of the current person.".format(
+                *changing_values)
         self.unlinker = InputMessage(
             self.root, root=self.root, title="Confirm Unlink", ok_txt="OK", 
             cancel_txt="CANCEL", grab=True, head1=message, wraplength=650,
-            head2=self.changing_values.items())
-        if self.unlinker.ok_was_pressed: 
-            self.show = self.unlinker.show()
+            head2=head2)
+        print("line", looky(seeline()).lineno, "self.unlinker.ok_was_pressed:", self.unlinker.ok_was_pressed)
+        if self.unlinker.ok_was_pressed is True: 
+            # self.show = self.unlinker.show()
             self.ok_unlink(relative_type, parent_type)
+            # print("line", looky(seeline()).lineno, "self.show:", self.show)
 
     def ok_unlink(self, relative_type, parent_type):
         current_file = get_current_file()[0]
@@ -1250,7 +1255,6 @@ class NuclearFamiliesTable(Frame):
             print("line", looky(seeline()).lineno, "self.show:", self.show)
             print("line", looky(seeline()).lineno, "parent_type:", parent_type)
             print("line", looky(seeline()).lineno, "birth_fpid:", birth_fpid)
-            print("line", looky(seeline()).lineno, "self.changing_values:", self.changing_values)
             # if self.show == 0:
                 # cur.execute(self.query, (None, birth_fpid))
                 # conn.commit()
@@ -1278,7 +1282,7 @@ class NuclearFamiliesTable(Frame):
             elif self.show == 1:
                 pass
 
-            elif shelf.show == 2:
+            elif self.show == 2:
                 pass
 
         cur.close()

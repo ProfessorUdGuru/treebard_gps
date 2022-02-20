@@ -463,6 +463,8 @@ class NotesDialog(Toplevel):
         self.root.focus_set()
 
     def size_toc(self):
+        # if self.length == 0: # added 20220220 to avoid division by zero error but there are consequences
+            # return
         self.update_idletasks()
         self.win_ht = self.toc.winfo_reqheight()
         panel_ht = self.right_panel.winfo_reqheight()
@@ -476,7 +478,7 @@ class NotesDialog(Toplevel):
         self.toc_canvas.config(
             width=self.toc_width, # this is the problem
             height=self.canv_ht,
-            scrollregion=(0, 0, self.toc_width, self.win_ht))  
+            scrollregion=(0, 0, self.toc_width, self.win_ht)) 
         self.widg_ht = int(self.win_ht / self.length)
         lines_fit = int(self.canv_ht / self.widg_ht)
         if self.length > lines_fit:

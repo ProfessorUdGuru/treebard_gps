@@ -171,9 +171,11 @@ if __name__ == '__main__':
 
 # BRANCH: kin_parents
 
-# sort like events such as 2 foster parent evts by date
-# actual goals: 2) make kintips work for parents in the child's table eg point to offspring or adoption event and kintip will say "Parent(s): Elrinda Alburo, Dan Wozniak"; 3) unlink on delete/backspace; 4) make it possible to add/access/edit roles & notes on offspring/alt_parentage event rows of the events table; SEE "non_empty_roles, non_empty_notes"
+# person is still unlinked if you press CANCEL in the unlink dlg; THIS IS CAUSED BY confusion, both update_parent() and open_delete_or_unlink_dialog() are trying to do stuff at the same time, one is run by get_final and the other is run by the delete key, so the two efforts have to be coordinated or combined somehow so nothing happens if CANCEL is pressed.
+# changing_events (head2 label) works for parents, now fix it for alt parents
+# unlink dlg has to be modal
 # make it impossible to delete or create a birth event--it's only done by Treebard--also can't change age at birth = 0; error message states that to create a birth event, you just create a person; to create an offspring event you just create a parent; to create a fosterage/adoption/guardianship event you just create the event and inputs for the parents will appear in nukes table
+# take events_table.make_alt_parent_event() out of module-level namespace, put in the class where it's used.
 # copy the schema for findings_persons to default_new_tree and _untouched (NOT NULL constraint was removed from kin_type_id1 and _2); copy the whole table kin_type to defaultx2
 # ABOUT EDITING A PARENT ROLE FROM CURRENT PERSON TAB: 
     # IT'S NOT CURRENT PERSON SO IT CAN'T BE CHANGED, HAVE TO MAKE CURRENT FIRST.
@@ -233,6 +235,7 @@ if __name__ == '__main__':
     like this.
 """
 # person search table is messed up. Same person shows for both mother and father. Sorting only works right for ID. Clicking a name to make the person current works but the nukes table is not redrawn.
+# rename names.py to persons.py and change everywhere.
 
 # BRANCH: dates
 
@@ -271,6 +274,7 @@ if __name__ == '__main__':
 # Add to do list for new_event dialog: add person search button.
 # In notes dialog, if a non-unique topic is entered, there should be an error message, currently there's a SQLite error which locks the database.
 # center content in prefs tabs
+# notes dialog: can't create a first note when none exist yet for a conclusion because of division by zero error in size_toc(); 20220220 mini-effort to fix this had consequences undealt-with; also re: autocreated kin events like adoption, fosterage, offspring, guardianship: make it possible to add/access/edit roles & notes on offspring/alt_parentage event rows of the events table; SEE "non_empty_roles, non_empty_notes"
 
 # BRANCH: conclusions
 # change events_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, it is now time to start sticking to Treebard's core philosophy and differentiate between conclusions and assertions at all times. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs events table > conclusions table. And the first step is to change the name of the module from events_table.py to conclusions_table.py. Remember that conclusions are called findings in the code; "events" are cases where something like an event_type refers equally to assertions and conclusions (claims & findings) and never use "event" where "finding" shd be used.

@@ -256,12 +256,11 @@ def make_parent_kintips(dkt, current_person, cur):
     if birth_id:
         cur.execute(select_person_ids_kin_types, birth_id)
         parents = cur.fetchone()
-    print("line", looky(seeline()).lineno, "parents:", parents)
     if not parents:
         pass
     elif parents[1] == "mother":
         dkt["mother_id"] = parents[0]
-        dkt["mother_name"] = get_any_name_with_id(parents[0]) # changed these to _any_ 20220219
+        dkt["mother_name"] = get_any_name_with_id(parents[0])
         dkt["father_id"] = parents[2]
         dkt["father_name"] = get_any_name_with_id(parents[2])
     elif parents[3] == "mother":
@@ -455,13 +454,10 @@ def get_findings():
                 # non_empty_roles, non_empty_notes)
         elif dkt["event"] == "adoption":
             autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id)
-            print("line", looky(seeline()).lineno, "dkt['event']:", dkt['event'])
         elif dkt["event"] == "fosterage":
             autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id)
-            print("line", looky(seeline()).lineno, "dkt['event']:", dkt['event'])
         elif dkt["event"] == "guardianship":
             autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id)
-            print("line", looky(seeline()).lineno, "dkt['event']:", dkt['event'])
 
     get_couple_findings(
         cur, current_person, rowtotype, findings_data, 
@@ -948,7 +944,6 @@ class EventsTable(Frame):
         return new_order
 
     def show_table_cells(self): 
-        print("line", looky(seeline()).lineno, "running:")
         current_file = get_current_file()[0]
         row_order = self.sort_by_date()
        
@@ -969,7 +964,6 @@ class EventsTable(Frame):
                 if c < 5:
                     text = self.findings_data[finding_id][HEADS[c]]
                 elif c == 7:
-                    # print("line", looky(seeline()).lineno, "running:")
                     text = self.findings_data[finding_id]["source_count"]
                 else:
                     text = "     "
@@ -1017,15 +1011,9 @@ class EventsTable(Frame):
                         self.kintip_bindings["on_enter"].append([widg, couple_in])
                         self.kintip_bindings["on_leave"].append([widg, couple_out])
                     elif evtype in ("birth", "adoption", "guardianship", "fosterage"):
-                        # print("line", looky(seeline()).lineno, "evtype:", evtype)
-                        # print("line", looky(seeline()).lineno, "dkt:", dkt)
                         if evtype == "birth":
                             name1 = dkt.get("father_name")
-                            if not name1:
-                                name1 = get_any_name_with_id(dkt["father_id"])
                             name2 = dkt.get("mother_name")
-                            if not name2:
-                                name2 = get_any_name_with_id(dkt["mother_id"])
                             names = "{}, {}".format(name1, name2)
                             parents_in = widg.bind(
                                 "<Enter>", lambda evt, 
@@ -1045,7 +1033,6 @@ class EventsTable(Frame):
                                 name2 = dkt.get(key)
                                 if name2:
                                     break
-                            print("line", looky(seeline()).lineno, "name1, name2:", name1, name2)
                             names = "{}, {}".format(name1, name2)
                             adoptive_parents_in = widg.bind(
                                 "<Enter>", lambda evt, 
@@ -1065,7 +1052,6 @@ class EventsTable(Frame):
                                 name2 = dkt.get(key)
                                 if name2:
                                     break
-                            # print("line", looky(seeline()).lineno, "name1, name2:", name1, name2)
                             names = "{}, {}".format(name1, name2)
                             foster_parents_in = widg.bind(
                                 "<Enter>", lambda evt, 
@@ -1085,7 +1071,6 @@ class EventsTable(Frame):
                                 name2 = dkt.get(key)
                                 if name2:
                                     break
-                            print("line", looky(seeline()).lineno, "name1, name2:", name1, name2)
                             names = "{}, {}".format(name1, name2)
                             guardians_in = widg.bind(
                                 "<Enter>", lambda evt, 
@@ -1546,7 +1531,6 @@ class NewEventDialog(Toplevel):
         lab3.grid(column=0, row=3, sticky="e")
         self.particulars_input.grid(column=1, row=3, sticky="w", padx=(3,0))
         if self.couple_event == 0:
-            print("line", looky(seeline()).lineno, "self.new_event:", self.new_event)
             if self.new_event == "offspring":
                 self.withdraw()
                 msg = open_message(
@@ -1855,12 +1839,9 @@ class NewEventDialog(Toplevel):
 
 def make_alt_parent_event(conn, cur, event_type_id):
     """ Auto-create the database rows needed to store alt parents. 
-        In module-level namespace so both classes have access to it and/or
-        because it has nothing to do with the events table but the redraw()
-        method needs access.
+        In module-level namespace for reasons maybe no longer relevant?
         
     """
-    print("line", looky(seeline()).lineno, "event_type_id:", event_type_id)
     if event_type_id == 48:
         unisex_alt_parent = 130
     elif event_type_id == 83:

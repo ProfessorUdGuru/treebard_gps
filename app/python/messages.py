@@ -199,7 +199,7 @@ class InputMessage(Dialogue):
             column=0, row=0, sticky='news', padx=12,  
             columnspan=2, ipadx=6, ipady=3)
         self.info = Label(self.header, text=self.head2)
-        self.info.grid(column=0, row=1, padx=12)        
+        self.info.grid(column=0, row=1, padx=12, pady=12)        
         maxx = max(len(self.ok_txt), len(self.cancel_txt))
         if self.ok_button is True:
             self.b1 = Button(
@@ -250,6 +250,8 @@ class InputMessage(Dialogue):
         self.cancel()
 
     def cancel(self, evt=None):
+        print("line", looky(seeline()).lineno, "self.ok_was_pressed:", self.ok_was_pressed)
+        self.ok_was_pressed = False
         self.destroy()
 
     def show(self):
