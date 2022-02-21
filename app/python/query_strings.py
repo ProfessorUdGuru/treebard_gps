@@ -151,33 +151,26 @@ insert_findings_notes_new = '''
     VALUES (null, ?, ?, 0)
 '''
 
-# insert_findings_persons_new_couple = '''
-    # INSERT INTO findings_persons (
-        # finding_id, person_id1, age1, kin_type_id1, 
-        # person_id2, age2, kin_type_id2)
-    # VALUES (?, ?, ?, 128, ?, ?, 129)
-# '''
-
 insert_findings_persons_new_couple = '''
     INSERT INTO findings_persons (
         finding_id, age1, kin_type_id1, age2, kin_type_id2)
     VALUES (?, ?, 128, ?, 129)
 '''
 
-insert_findings_persons_new_parent = '''
+insert_findings_persons_new_father = '''
     INSERT INTO findings_persons (finding_id, age1, kin_type_id1, age2, kin_type_id2, persons_persons_id)
-    VALUES (?, '', ?, '', null, ?)
+    VALUES (?, '', 2, '', null, ?)
+'''
+
+insert_findings_persons_new_mother = '''
+    INSERT INTO findings_persons (finding_id, age1, kin_type_id1, age2, kin_type_id2, persons_persons_id)
+    VALUES (?, '', null, '', 1, ?)
 '''
 
 insert_findings_persons_null_couple = '''
     INSERT INTO findings_persons
     VALUES (null, ?, '', ?, '', ?, ?)
 '''
-
-# insert_findings_persons_null_couple = '''
-    # INSERT INTO findings_persons
-    # VALUES (null, ?, '', null, '', null, ?)
-# '''
 
 insert_finding_places_new = '''
     INSERT INTO finding_places (
@@ -240,8 +233,13 @@ insert_persons_persons_null = '''
     VALUES (null, null, null)
 '''
 
-insert_persons_persons_one_person = '''
+insert_persons_persons_father = '''
     INSERT INTO persons_persons (person_id1)
+    VALUES (?)
+'''
+
+insert_persons_persons_mother = '''
+    INSERT INTO persons_persons (person_id2)
     VALUES (?)
 '''
 
@@ -435,21 +433,6 @@ select_color_scheme_by_id = '''
     WHERE color_scheme_id = ?
 '''
 
-# select_color_scheme_current = '''
-    # SELECT bg, highlight_bg, head_bg, fg 
-    # FROM format 
-    # WHERE format_id = 1
-# '''
-
-# select_color_scheme_current_id = '''
-    # SELECT color_scheme_id
-    # FROM color_scheme
-    # WHERE bg = ?
-        # AND highlight_bg = ?
-        # AND head_bg = ?
-        # AND fg = ?
-# '''
-
 select_color_scheme_current_id = '''
     SELECT color_scheme_id
     FROM current
@@ -631,13 +614,6 @@ select_finding_event_type = '''
     FROM finding
     WHERE finding_id = ?
 '''
-
-# select_finding_id_alt_parentage = '''
-    # SELECT finding_id 
-    # FROM finding
-    # WHERE event_type_id in (48, 83, 95)
-        # AND person_id = ?
-# '''
 
 select_finding_id_adoption = '''
     SELECT finding_id 
@@ -1182,24 +1158,6 @@ select_person_id_finding = '''
     FROM finding
     WHERE finding_id = ?
 '''
-# this query doesn't appear to get any results
-# select_person_ids_kin_types = '''
-    # SELECT q.person_id1, a.kin_types, r.person_id2, b.kin_types
-    # FROM person as f
-    # JOIN person as g
-        # ON f.person_id = g.person_id
-    # JOIN persons_persons as q
-        # ON q.person_id1 = f.person_id
-    # JOIN persons_persons as r
-        # ON r.person_id2 = g.person_id
-    # JOIN findings_persons
-        # ON findings_persons.persons_persons_id = q.persons_persons_id
-    # JOIN kin_type as a
-        # ON a.kin_type_id = findings_persons.kin_type_id1
-    # JOIN kin_type as b
-        # ON b.kin_type_id = findings_persons.kin_type_id2
-    # WHERE finding_id = ?
-# '''
 
 select_person_ids_kin_types = '''
     SELECT person_id1, a.kin_types, person_id2, b.kin_types
@@ -1212,16 +1170,6 @@ select_person_ids_kin_types = '''
         ON b.kin_type_id = findings_persons.kin_type_id2
     WHERE finding_id = ?
 '''
-
-# select_person_id_kin_types_birth = '''
-    # SELECT person_id1, a.kin_types, person_id2, b.kin_types
-    # FROM findings_persons
-    # JOIN kin_type as a
-        # ON a.kin_type_id = findings_persons.kin_type_id1
-    # JOIN kin_type as b
-        # ON b.kin_type_id = findings_persons.kin_type_id2
-    # WHERE finding_id = ?
-# '''
 
 select_persons_persons = '''
     SELECT person_id1, person_id2
@@ -1400,13 +1348,6 @@ update_color_scheme_hide = '''
     WHERE color_scheme_id = ?
 '''
 
-# update_color_scheme_null = '''
-    # UPDATE format 
-    # SET (bg, highlight_bg, head_bg, fg) = 
-        # (null, null, null, null) 
-                # WHERE format_id = 1
-# '''
-
 update_current_person = '''
     UPDATE current
     SET person_id = ?
@@ -1525,75 +1466,12 @@ update_findings_notes_order = '''
     WHERE findings_notes_id = ?
 '''
 
-# update_findings_persons_1 = '''
-    # UPDATE findings_persons
-    # SET person_id1 = ?
-    # WHERE finding_id = ?
-# '''
-
-# update_findings_persons_1_null = '''
-    # UPDATE findings_persons
-    # SET person_id1 = null
-    # WHERE person_id1 = ?
-# '''
-
-# update_findings_persons_2 = '''
-    # UPDATE findings_persons
-    # SET person_id2 = ?
-    # WHERE finding_id = ?
-# '''
-
-
-# update_findings_persons_1_2 = '''
-    # UPDATE findings_persons
-    # SET (person_id1, person_id2) = (?, ?)
-    # WHERE finding_id = ?
-# '''
-
-# update_findings_persons_by_id1 = '''
-    # UPDATE findings_persons
-    # SET (person_id1, age1) = (?, "")
-    # WHERE findings_persons_id = ?
-# '''
-
-# update_findings_persons_by_id2 = '''
-    # UPDATE findings_persons
-    # SET (person_id2, age2) = (?, "")
-    # WHERE findings_persons_id = ?
-# '''
-
-# update_findings_persons_by_id1_unlink = '''
-    # UPDATE findings_persons
-    # SET (person_id1, age1) = (?, '')
-    # WHERE findings_persons_id = ?
-# '''
-
-# update_findings_persons_by_id2_unlink = '''
-    # UPDATE findings_persons
-    # SET (person_id2, age2) = (?, '')
-    # WHERE findings_persons_id = ?
-# '''
-
-# update_findings_persons_age1 = '''
-    # UPDATE findings_persons
-    # SET age1 = ?
-    # WHERE finding_id = ?
-        # AND person_id1 = ?
-# '''
-
 update_findings_persons_age1 = '''
     UPDATE findings_persons
     SET age1 = ?
     WHERE finding_id = ?
         AND persons_persons_id = ?
 '''
-
-# update_findings_persons_age2 = '''
-    # UPDATE findings_persons
-    # SET age2 = ?
-    # WHERE finding_id = ?
-        # AND person_id2 = ?
-# '''
 
 update_findings_persons_age2 = '''
     UPDATE findings_persons

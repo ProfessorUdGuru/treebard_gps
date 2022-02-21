@@ -18,12 +18,13 @@ from query_strings import (
     select_finding_id_birth, delete_findings_persons, select_persons_persons,
     select_person_id_gender, select_finding_date, select_finding_id_birth,
     select_finding_id_death, select_finding_date_and_sorter,
-    update_findings_persons_finding, insert_persons_persons_one_person,
-    insert_findings_persons_new_parent, select_findings_persons_birth,
+    update_findings_persons_finding, insert_persons_persons_father,
+    insert_findings_persons_new_father, select_findings_persons_birth,
     update_persons_persons_1, update_persons_persons_2, select_kin_type_string,
     update_persons_persons1_by_finding, update_persons_persons2_by_finding,
     select_kin_type_alt_parent, update_findings_persons_kintype1,
-    update_findings_persons_kintype2
+    update_findings_persons_kintype2, insert_persons_persons_mother,
+    insert_findings_persons_new_mother, 
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -135,8 +136,8 @@ class NuclearFamiliesTable(Frame):
 
         EntryAuto.all_person_autofills.extend([self.ma_input, self.pa_input])
         for ent in (self.pa_input, self.ma_input):
-            ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
-            ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
+            # ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
+            # ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
             ent.bind("<FocusIn>", self.get_original, add="+")
             ent.bind("<FocusOut>", self.get_final, add="+")
             ent.bind("<Double-Button-1>", self.change_current_person)
@@ -298,8 +299,8 @@ class NuclearFamiliesTable(Frame):
             pardent.insert(0, name)
             pardent.grid(column=2, row=n)
             EntryAuto.all_person_autofills.append(pardent)
-            pardent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
-            pardent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
+            # pardent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
+            # pardent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
             pardent.bind("<Double-Button-1>", self.change_current_person)
 
             v["inwidg"] = pardent
@@ -341,8 +342,8 @@ class NuclearFamiliesTable(Frame):
                     self.nuke_inputs.append(ent)
                     dkt["name_widg"] = ent
                     EntryAuto.all_person_autofills.append(ent)
-                    ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
-                    ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
+                    # ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
+                    # ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
                     ent.bind("<Double-Button-1>", self.change_current_person)
                 elif c == 2:
                     text = dkt["gender"]
@@ -505,8 +506,8 @@ class NuclearFamiliesTable(Frame):
 
             EntryAuto.all_person_autofills.extend([ent_l, ent_r])
             for ent in (ent_l, ent_r):
-                ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
-                ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
+                # ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
+                # ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
                 ent.bind("<FocusIn>", self.get_original, add="+")
                 ent.bind("<FocusOut>", self.get_final, add="+")
                 ent.bind("<Double-Button-1>", self.change_current_person) 
@@ -887,23 +888,29 @@ class NuclearFamiliesTable(Frame):
         cur.execute(select_findings_persons_birth, (birth_id,))
         fpid = cur.fetchone()
         if fpid:
-            # We know one parent is blank and one is not, so find out what to update.
             fpid, ppid = fpid
-            cur.execute(select_persons_persons, (ppid,))
-            persons_persons = cur.fetchone()
-            if persons_persons[0] is None:
+            if parent_type == 2:
                 cur.execute(update_persons_persons_1, (new_parent_id, ppid))
-            elif persons_persons[1] is None:
+            elif parent_type == 1:
                 cur.execute(update_persons_persons_2, (new_parent_id, ppid))
             conn.commit()
         else:
             # if there's no row yet for persons_persons, make one
-            cur.execute(insert_persons_persons_one_person, (new_parent_id,))
-            conn.commit()
-            cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
-            ppid = cur.fetchone()[0]
-            cur.execute(insert_findings_persons_new_parent, (birth_id, parent_type, ppid))
-            conn.commit()
+            if parent_type == 2:
+                cur.execute(insert_persons_persons_father, (new_parent_id,))
+                conn.commit()
+                cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
+                ppid = cur.fetchone()[0]
+                cur.execute(insert_findings_persons_new_father, (birth_id, ppid))
+                conn.commit()
+
+            elif parent_type == 1:
+                cur.execute(insert_persons_persons_mother, (new_parent_id,))
+                conn.commit()
+                cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
+                ppid = cur.fetchone()[0]
+                cur.execute(insert_findings_persons_new_mother, (birth_id, ppid))
+                conn.commit()
 
     def update_partner(self, final, conn, cur, widg):
     
@@ -1197,6 +1204,19 @@ class NuclearFamiliesTable(Frame):
 
     def open_delete_or_unlink_dialog(self, evt):
         '''
+            This dialog currently is not being used. It looked OK but its was a
+            case of duplicated effort (NOTES: # Parent is still unlinked if you 
+            press CANCEL in the unlink dlg; THIS IS CAUSED BY confusion, both 
+            update_parent() and open_delete_or_unlink_dialog() are trying to do 
+            stuff at the same time, one is run by get_final and the other is 
+            run by the delete key, so the two efforts have to be coordinated 
+            or combined somehow so nothing happens if CANCEL is pressed.) 
+            Currently I prefer to try not having a dialog at all when user 
+            unlinks a person. This might be too radical for some users so I'll 
+            leave this method in case it's decided to reinstitute the dialog at 
+            some point, but I'm not going to fix it right now. (CANCEL and OK 
+            were both doing the job THAT only OK button should do, see NOTES.)
+
             Open a dialog on press of Delete or BackSpace in one of the person 
             inputs. 
 
@@ -1239,13 +1259,13 @@ class NuclearFamiliesTable(Frame):
             self.root, root=self.root, title="Confirm Unlink", ok_txt="OK", 
             cancel_txt="CANCEL", grab=True, head1=message, wraplength=650,
             head2=head2)
-        print("line", looky(seeline()).lineno, "self.unlinker.ok_was_pressed:", self.unlinker.ok_was_pressed)
-        if self.unlinker.ok_was_pressed is True: 
-            # self.show = self.unlinker.show()
+        if self.unlinker.ok_was_pressed is True:
             self.ok_unlink(relative_type, parent_type)
-            # print("line", looky(seeline()).lineno, "self.show:", self.show)
 
     def ok_unlink(self, relative_type, parent_type):
+        """ Not being used, do not delete, see docstring 
+            in open_delete_or_unlink_dialog().
+        """
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute("PRAGMA foreign_keys = 1")
@@ -1255,15 +1275,6 @@ class NuclearFamiliesTable(Frame):
             print("line", looky(seeline()).lineno, "self.show:", self.show)
             print("line", looky(seeline()).lineno, "parent_type:", parent_type)
             print("line", looky(seeline()).lineno, "birth_fpid:", birth_fpid)
-            # if self.show == 0:
-                # cur.execute(self.query, (None, birth_fpid))
-                # conn.commit()
-            # elif self.show == 1:
-                # if parent_type == "ma":
-                    # parent_id = self.family_data[0][0][1]["id"]
-                # elif parent_type == "pa":
-                    # parent_id = self.family_data[0][0][2]["id"]
-                # delete_person_from_tree(parent_id)
 
         elif relative_type == "partner":
             if self.show == 0:

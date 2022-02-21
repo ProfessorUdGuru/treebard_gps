@@ -171,11 +171,9 @@ if __name__ == '__main__':
 
 # BRANCH: kin_parents
 
-# person is still unlinked if you press CANCEL in the unlink dlg; THIS IS CAUSED BY confusion, both update_parent() and open_delete_or_unlink_dialog() are trying to do stuff at the same time, one is run by get_final and the other is run by the delete key, so the two efforts have to be coordinated or combined somehow so nothing happens if CANCEL is pressed.
-# changing_events (head2 label) works for parents, now fix it for alt parents
-# unlink dlg has to be modal
 # make it impossible to delete or create a birth event--it's only done by Treebard--also can't change age at birth = 0; error message states that to create a birth event, you just create a person; to create an offspring event you just create a parent; to create a fosterage/adoption/guardianship event you just create the event and inputs for the parents will appear in nukes table
 # take events_table.make_alt_parent_event() out of module-level namespace, put in the class where it's used.
+# problem if hit enter in a blank parent field
 # copy the schema for findings_persons to default_new_tree and _untouched (NOT NULL constraint was removed from kin_type_id1 and _2); copy the whole table kin_type to defaultx2
 # ABOUT EDITING A PARENT ROLE FROM CURRENT PERSON TAB: 
     # IT'S NOT CURRENT PERSON SO IT CAN'T BE CHANGED, HAVE TO MAKE CURRENT FIRST.

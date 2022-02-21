@@ -34,10 +34,12 @@ consonants = ('b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', '
  
 
 
+	
 
 
 
-name = "Hilary Ann Swank"
+
+name = "David Vaughan Icke"
 
 name = name.split()
 lowered = []
@@ -354,8 +356,7 @@ root.mainloop()
 # Theodore Robert Bundy (Ted Bundy serial killer)
 # Richard Milhous Nixon, Born: January 9, 1913, Yorba Linda, California 
 # Thomas Earl Petty, singer
-# Demi Gene Guynes, actress Demi Moore, born November 11, 1962 (quadruple Scorpio)
-# Roswell, New Mexico, U.S.
+# Demi Gene Guynes, actress Demi Moore, born November 11, 1962 (quadruple Scorpio) Roswell, New Mexico, U.S.
 
 # 742
 # Eldon Russell Carter Junior
@@ -367,6 +368,7 @@ root.mainloop()
 # 257
 # Minnie Julia Riperton was born in Chicago, Illinois on November 8, 1947
 # Thomas Alva Edison Born: 11 February 1847, Milan, Ohio Died: 18 October 1931, West Orange, New Jersey
+# David Vaughan Icke, conspiracy teacher, 29 April 1952 in Leicester, England
 
 # 797
 # Jeffrey David McDonald
@@ -383,8 +385,8 @@ root.mainloop()
 # Phoebe Ann Laub (Phoebe Snow) July 17, 1950 -  April 26, 2011 b. New York City
 
 # 832
-# aka Paul Rubens aka PeeWee Herman
 # Paul Rubenfeld, August 27, 1952, Peekskill, New York
+# aka Paul Rubens aka PeeWee Herman
 
 # 224
 # James Thomas Patrick Kiernan
