@@ -42,15 +42,15 @@ from query_strings import (
     update_findings_persons_age1, select_max_finding_id, insert_place_new,
     select_event_type_couple_bool, insert_kin_type_new, update_event_types,    
     insert_places_places_new, insert_finding_places_new_event,
-    insert_event_type_new, select_max_event_type_id, delete_finding,delete_claims_findings, 
+    insert_event_type_new, select_max_event_type_id, delete_finding,
     delete_finding_places, delete_findings_persons, insert_persons_persons,
     delete_findings_roles_finding, delete_findings_notes_finding,         
-    select_findings_for_person, insert_finding_places_new,
+    select_findings_for_person, insert_finding_places_new, delete_claims_findings, 
     select_event_type_after_death, select_event_type_after_death_bool,
     select_findings_persons_parents, select_findings_persons_age,    
     insert_finding_birth, update_findings_persons_age2, select_person,
-    select_finding_event_type, delete_findings_persons_offspring,
-    select_findings_persons_person_id, update_finding_date, 
+    select_finding_event_type, select_findings_persons_persons_persons_id,
+    select_findings_persons_person_id, update_finding_date, delete_persons_persons,
     select_findings_persons_alt_parents, select_event_type_via_event_string,
     insert_persons_persons_null, insert_findings_persons_null_couple,
     select_finding_id_adoption, select_finding_id_fosterage, 
@@ -497,7 +497,6 @@ class EventsTable(Frame):
         event_types = get_all_event_types()
         self.event_autofill_values = EntryAuto.create_lists(event_types)
         self.couple_event_types = get_couple_event_types()
-        # self.new_alt_parent_event = False
         self.after_death_events = get_after_death_event_types()
         if self.after_death_events is None:
             return
@@ -552,9 +551,17 @@ class EventsTable(Frame):
             widg.insert(0, initial)
             widg.focus_set()
 
+        def err_done1():
+            msg1[0].grab_release()
+            msg1[0].destroy()
+            widg.focus_set()
+            widg.delete(0, 'end')
+            widg.insert(0, initial)
+
         def proceed(initial_value):
 
             def delete_generic_finding():
+                print("line", looky(seeline()).lineno, "finding_id:", finding_id)
                 cur.execute(delete_finding_places, (finding_id,))
                 conn.commit()
                 cur.execute(delete_findings_roles_finding, (finding_id,))
@@ -563,21 +570,19 @@ class EventsTable(Frame):
                 conn.commit()
                 cur.execute(delete_claims_findings, (finding_id,))
                 conn.commit()
+                cur.execute(select_findings_persons_persons_persons_id, (finding_id,))
+                ppid = cur.fetchone()
+                cur.execute(delete_findings_persons, (finding_id,))
+                conn.commit()
+                if ppid:
+                    cur.execute(delete_persons_persons, ppid)
+                    conn.commit()
                 cur.execute(delete_finding, (finding_id,))
                 conn.commit()
 
             def delete_couple_finding():
                 cur.execute(delete_findings_persons, (finding_id,))
                 conn.commit()
-                delete_generic_finding()
-
-            def delete_offspring_finding():
-                cur.execute(select_findings_persons_parents, (finding_id,))
-                parents = cur.fetchone()
-                for person in parents:
-                    cur.execute(
-                        delete_findings_persons_offspring, (finding_id,))
-                conn.commit()       
                 delete_generic_finding()
 
             current_person = self.current_person
@@ -591,10 +596,7 @@ class EventsTable(Frame):
             if couple_event_old == 0:
                 cur.execute(select_finding_event_type, (finding_id,))
                 event_type = cur.fetchone()[0]
-                if event_type == 1:
-                    delete_offspring_finding()
-                else:
-                    delete_generic_finding()
+                delete_generic_finding()
             elif couple_event_old == 1:
                 delete_couple_finding()
             self.redraw()
@@ -605,6 +607,18 @@ class EventsTable(Frame):
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
+
+        cur.execute(select_finding_event_type, (finding_id,))
+        event_type = cur.fetchone()[0]
+        if event_type == 1:
+            msg1 = open_message(
+                self, 
+                events_msg[9], 
+                "Birth Events Undeletable Error", 
+                "OK")
+            msg1[0].grab_set()
+            msg1[2].config(command=err_done1)
+            return
 
         msg = open_yes_no_message(
             self, 
@@ -622,7 +636,6 @@ class EventsTable(Frame):
     def update_db(self, widg, col_num):
 
         def update_event_type():
-
 
             def err_done3():
                 msg[0].destroy()
@@ -793,7 +806,8 @@ class EventsTable(Frame):
                     couple_or_not = cur.fetchone()[0]
                     if couple_or_not == 1:
                         couple = True
-                    else: couple = False
+                    else: 
+                        couple = False
                     if event_string == "offspring":
                         offspring_event = True
                         row = row
@@ -1709,7 +1723,7 @@ class NewEventDialog(Toplevel):
             self.particulars_input.get().strip(), self.new_finding) 
 
         if self.new_alt_parent_event is True:
-            make_alt_parent_event(conn, cur, self.event_type_id)
+            self.make_alt_parent_event(conn, cur, self.event_type_id)
             self.new_alt_parent_event = False         
 
         cur.close()
@@ -1837,26 +1851,26 @@ class NewEventDialog(Toplevel):
         self.grab_set()
         self.lift()
 
-def make_alt_parent_event(conn, cur, event_type_id):
-    """ Auto-create the database rows needed to store alt parents. 
-        In module-level namespace for reasons maybe no longer relevant?
-        
-    """
-    if event_type_id == 48:
-        unisex_alt_parent = 130
-    elif event_type_id == 83:
-        unisex_alt_parent = 110
-    elif event_type_id == 95:
-        unisex_alt_parent = 120
-    cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
-    event_id = cur.fetchone()[0]
-    cur.execute(insert_persons_persons_null)
-    conn.commit()
-    cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
-    ppid = cur.fetchone()[0]
-    cur.execute(insert_findings_persons_null_couple, (event_id, unisex_alt_parent, unisex_alt_parent, ppid))
-    conn.commit() 
- 
+    def make_alt_parent_event(self, conn, cur, event_type_id):
+        """ Auto-create the database rows needed to store alt parents. 
+            In module-level namespace for reasons maybe no longer relevant?
+            
+        """
+        if event_type_id == 48:
+            unisex_alt_parent = 130
+        elif event_type_id == 83:
+            unisex_alt_parent = 110
+        elif event_type_id == 95:
+            unisex_alt_parent = 120
+        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
+        event_id = cur.fetchone()[0]
+        cur.execute(insert_persons_persons_null)
+        conn.commit()
+        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
+        ppid = cur.fetchone()[0]
+        cur.execute(insert_findings_persons_null_couple, (event_id, unisex_alt_parent, unisex_alt_parent, ppid))
+        conn.commit() 
+
 short_values = ['red', 'white', 'blue', 'black', 'rust', 'pink', 'steelblue']
 
 if __name__ == '__main__':

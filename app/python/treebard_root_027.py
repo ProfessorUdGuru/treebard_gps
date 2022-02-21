@@ -170,15 +170,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: kin_parents
-
-# make it impossible to delete or create a birth event--it's only done by Treebard--also can't change age at birth = 0; error message states that to create a birth event, you just create a person; to create an offspring event you just create a parent; to create a fosterage/adoption/guardianship event you just create the event and inputs for the parents will appear in nukes table
-# take events_table.make_alt_parent_event() out of module-level namespace, put in the class where it's used.
-# problem if hit enter in a blank parent field
-# copy the schema for findings_persons to default_new_tree and _untouched (NOT NULL constraint was removed from kin_type_id1 and _2); copy the whole table kin_type to defaultx2
-# ABOUT EDITING A PARENT ROLE FROM CURRENT PERSON TAB: 
-    # IT'S NOT CURRENT PERSON SO IT CAN'T BE CHANGED, HAVE TO MAKE CURRENT FIRST.
-    # Don't disable it; this will make it look like a label whereas it needs to accept highlighting and insertion cursor so user knows it can do something. Just make it re-insert the original name no matter what user tries to do. If empty, it will accept any input including new person. It will autofill normally and PersonAdd dlg will open. But if a person is in the input, 3 things can happen: 1) it will autofill the person who is already in the field, adding the #id as per normal, if the right key strokes for that person are tried. 2) if any other keys are tried, it will refill in with self.original. 3) If delete or backspace is pressed, it will unlink and the dlg will list everything that was unlinked AND save a deletion log so the user can reference which events were altered.
-# add to main do list: unhide kintype ids 3, 26, 27, 28 and make them work same as 1 & 2
+# copy the schema for findings_persons to default_new_tree and _untouched (NOT NULL constraint was removed from kin_type_id1 and _2); copy the whole table kin_type to defaultx2; make a flat file for each and commit local then github
 
 # BRANCH: kin_partner
 # SEE all_parent_types; get alt parent types to show for partners who have children eg where it shd say "Children's Guardian" instead of "Children's Father" etc. Add a mixed situation for example like Terry Franklin's parents, bio mother and adoptive father.
@@ -303,6 +295,7 @@ if __name__ == '__main__':
 # colorizer: get Tab traversal to trigger autoscroll when going from a visible to a non-visible row. Already works for arrow traversal.
 # colorizer: swatch_canvas: adding to mousewheel scrolling doesn't work
 # website topics: add a button at bottom to view all topics on one page, then create the page and upload it, with all topics on one page, this is so search engines will find the text, otherwise it's buried in javascript and can't be searched
+# NUKES TABLE on person tab: unhide kintype ids 3, 26, 27, 28 and make them work same as 1 & 2
 
 # DEV DOCS:
 # Files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run.

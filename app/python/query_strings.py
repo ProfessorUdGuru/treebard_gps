@@ -64,11 +64,6 @@ delete_findings_persons = '''
     WHERE finding_id = ?
 '''
 
-delete_findings_persons_offspring = '''
-    DELETE FROM findings_persons
-    WHERE finding_id = ?
-'''
-
 delete_findings_roles_finding = '''
     DELETE FROM findings_roles
     WHERE finding_id = ?
@@ -107,6 +102,11 @@ delete_name_person = '''
 delete_person = '''
     DELETE FROM person
     WHERE person_id = ?
+'''
+
+delete_persons_persons = '''
+    DELETE FROM persons_persons
+    WHERE persons_persons_id = ?
 '''
 
 insert_color_scheme = '''
@@ -840,6 +840,12 @@ select_findings_persons_parents = '''
         ON a.person_id1 = person.person_id
     JOIN persons_persons as b
         ON b.person_id2 = person.person_id
+    FROM findings_persons
+    WHERE finding_id = ?
+'''
+
+select_findings_persons_persons_persons_id = '''
+    SELECT persons_persons_id 
     FROM findings_persons
     WHERE finding_id = ?
 '''

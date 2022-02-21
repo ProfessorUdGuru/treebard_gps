@@ -372,8 +372,10 @@ events_msg = (
         "delete an event, delete the event type in the first column.",
     "An event is about to be deleted. This can't be undone. For "
         "couple events, the event will be deleted for both "
-        "partners. For offspring events, the child's birth event "
-        "will be deleted, but not the child.",
+        "partners. To delete an offspring event, delete the child's name "
+        "from the current person's family table. To delete a birth event, "
+        "make the deletable person the current person and delete the person "
+        "from the tree.",
     "Each person has one birth and one death event. To add more "
         "hypothetical birth or death events, add them as assertions "
         "instead of conclusions. The events table is for conclusions, "
@@ -388,6 +390,8 @@ events_msg = (
         "will be created automatically.",
     "The event type doesn't exist. Create a new event type in the Types "
         "tab, and try again.",
+    "Birth events are created automatically when a new person is added to the "
+        "tree. To delete a birth event, delete the person from the tree.",
 )
 
 names_msg = (

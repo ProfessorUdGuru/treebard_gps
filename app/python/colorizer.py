@@ -51,7 +51,7 @@ class Colorizer(Frame):
         self.DIREX = ("Up", "Right", "Down", "Left")
 
         self.bind("<Map>", self.arrow_in_first)
-        self.root.bind('<Return>', self.apply)
+        # self.root.bind('<Return>', self.apply) # BIND TO THE RIGHT STUFF, NOT ROOT
 
         self.pad = 2
 
