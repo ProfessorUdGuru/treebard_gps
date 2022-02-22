@@ -170,7 +170,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: kin_parents
-# copy the schema for findings_persons to default_new_tree and _untouched (NOT NULL constraint was removed from kin_type_id1 and _2); copy the whole table kin_type to defaultx2; make a flat file for each and commit local then github
+# commit local then github
 
 # BRANCH: kin_partner
 # SEE all_parent_types; get alt parent types to show for partners who have children eg where it shd say "Children's Guardian" instead of "Children's Father" etc. Add a mixed situation for example like Terry Franklin's parents, bio mother and adoptive father.
