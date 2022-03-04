@@ -169,14 +169,16 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: kin_parents
-# commit local then github
+# BRANCH: kin_partners 
+# ALSO, recreating the marriage and divorce events for Selina/James added two extra birth events to James for some reason which should be impossible.
+# see: THIS IS WHERE YOU DELETE THE PARTNER FROM MARITAL EVENTS; currently, deleting a couple event shows a dialog informing the user that the entire event will be deleted for both people, and that's what happens. But it also finds all marital events and deletes the partner from all of them. Both are wrong. You should only delete the event that's being deleted, nothing else. So that has to be fixed FIRST in the events_table.py. For example, James and Selina had two marital events. Deleting the marriage event from Selina's currper tab shd only remove her from the event while preserving the event for James and replacing Selina's id with null. And it shd not touch the divorce event for either person. Each event and each person has to be handled individually and on purpose by the user. The less Treebard does, the better, and it will make it unnecessary to show a dialog so get rid of the dialog too.
 
-# BRANCH: kin_partner
-# SEE all_parent_types; get alt parent types to show for partners who have children eg where it shd say "Children's Guardian" instead of "Children's Father" etc. Add a mixed situation for example like Terry Franklin's parents, bio mother and adoptive father.
-# unlink partner on delete
+# push to repo
+# post on forum see bottom of page include screenshots
 
 # BRANCH: kin_child
+# if birth/deathdate unknown, replace "unknown" in case of birth or "" in case of death with "(birth) to (death)" since there are no column headings (still not great but better)
+# "Children's None" shd be "Children's Mother" or something, see Wesley Warren...'s partner/child
 # unlink child on delete
 # if gender is "other" don't display it in child table
 # make it possible to change gender, birth/death dates for children right there in the table
@@ -200,6 +202,7 @@ if __name__ == '__main__':
 # new kin person Input will be parsed to use existing person if # and create new person if not. make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner. It is also possible to add someone with a name that already exists in the table, just not an id
 # make it possible to change name, gender or date here & save in db; make it possible to unlink a person from the family by deleting their name from the table
 # the left margin of the child table should not vary depending on row widths. Compare James with Fannie, Fannie looks terrible bec her child has a short name and no dates. Fix Fannie to start at a left margin and James should then start at the same left margin.
+# get rid of dkt["order"] in the nukes table dict if it's not being used anywhere
 # Add to after death event types in default, default_untouched, and sample db's: autopsy, inquest.
 # see `if length == 2` in get_any_name_with_id() in names.py: this was just added and before that a similar process was done repeatedly in various places such as current_person display, wherever a name might need to be shown. Everything still works but this procedure should be deleted from where it's no longer needed since it's been added to get_any_name_with_id()
 # Did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thought the new class was supposed to replace all these as was done apparently already in dates.py. I thought the new class was made so these three overlapping large functions could be deleted from messages.py as well as the radio input message which hasn't even been tested.
@@ -344,10 +347,10 @@ if __name__ == '__main__':
     and we refer to members of a couple according to the user's wishes.
 '''
 
-# USER DOCS: names:
+# USER DOCS: names: REWRITE THIS, NO LONGER TRUE, EG CAN'T INPUT NAMES TO BLANK PARTNERS
 '''
     In Treebard, a person's name is not treated casually. On the current person page,
-    you can change the gender, birth date, or death date of a child, but not the
+    you can change the gender, birth date, or death date of the current person's child, but not the
     child's name. You can create a child by adding any name to a blank field, and 
     the same goes for partners and parents of the current person in the immediate
     family table. Once a name has been added to the field, in order to change

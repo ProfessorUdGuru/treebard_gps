@@ -44,7 +44,7 @@ For more details see the [forum](https://treebard.proboards.com/thread/22/histor
 
 ## We Support Each Other
 
-If you're trying to test what there is so far and want me to support you, post your question at the [informal forum](https://treebard.proboards.com) and I'll see what I can do. Same goes if you just want to give me some advice. (But don't tell me to give up...) If you want to support me, you can check out my bio and some info on the solar energy project I gave my previous life to at [GoFundMe.com](https://gofundme.com/whearly). 
+If you're trying to test what there is so far and want me to support you, post your question at the [informal forum](https://treebard.proboards.com) and I'll see what I can do. Same goes if you just want to give me some advice. (But don't tell me to give up...) If you want to support me, join the forum and send me a personal message. 
 
 ## Contributing is Allowable
 

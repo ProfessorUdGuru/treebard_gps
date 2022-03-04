@@ -153,8 +153,8 @@ insert_findings_notes_new = '''
 
 insert_findings_persons_new_couple = '''
     INSERT INTO findings_persons (
-        finding_id, age1, kin_type_id1, age2, kin_type_id2)
-    VALUES (?, ?, 128, ?, 129)
+        finding_id, age1, kin_type_id1, age2, kin_type_id2, persons_persons_id)
+    VALUES (?, ?, 128, ?, 129, ?)
 '''
 
 insert_findings_persons_new_father = '''
@@ -767,13 +767,14 @@ select_findings_details_generic = '''
     WHERE  finding_id = ?
 '''
 
-select_findings_details_offspring = '''
+select_findings_details_offspring_alt_parentage = '''
     SELECT date, date_sorter, particulars, finding_places_id
     FROM finding
     JOIN finding_places
         ON finding_places.finding_id = finding.finding_id
     WHERE person_id = ?
-        AND event_type_id = 1
+        AND event_type_id IN (1, 48, 83, 95)
+        AND finding.finding_id = ?
 '''
 
 select_findings_for_person = '''
@@ -1177,6 +1178,18 @@ select_person_ids_kin_types = '''
     WHERE finding_id = ?
 '''
 
+select_person_ids_kin_types_include_nulls = '''
+    SELECT person_id1, a.kin_types, person_id2, b.kin_types
+    FROM findings_persons
+    LEFT JOIN persons_persons
+        ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
+    LEFT JOIN kin_type as a
+        ON a.kin_type_id = findings_persons.kin_type_id1
+    LEFT JOIN kin_type as b
+        ON b.kin_type_id = findings_persons.kin_type_id2
+    WHERE finding_id = ?
+'''
+
 select_persons_persons = '''
     SELECT person_id1, person_id2
     FROM persons_persons
@@ -1492,13 +1505,13 @@ update_findings_persons_finding = '''
     WHERE findings_persons_id = ?
 '''
 
-update_findings_persons_kintype1 = '''
+update_findings_persons_kin_type1 = '''
     UPDATE findings_persons
     SET kin_type_id1 = ?
     WHERE findings_persons_id = ?
 '''
 
-update_findings_persons_kintype2 = '''
+update_findings_persons_kin_type2 = '''
     UPDATE findings_persons
     SET kin_type_id2 = ?
     WHERE findings_persons_id = ?

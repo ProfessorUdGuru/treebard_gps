@@ -22,8 +22,8 @@ from query_strings import (
     insert_findings_persons_new_father, select_findings_persons_birth,
     update_persons_persons_1, update_persons_persons_2, select_kin_type_string,
     update_persons_persons1_by_finding, update_persons_persons2_by_finding,
-    select_kin_type_alt_parent, update_findings_persons_kintype1,
-    update_findings_persons_kintype2, insert_persons_persons_mother,
+    select_kin_type_alt_parent, update_findings_persons_kin_type1,
+    update_findings_persons_kin_type2, insert_persons_persons_mother,
     insert_findings_persons_new_mother, 
 )
 import dev_tools as dt
@@ -31,6 +31,12 @@ from dev_tools import looky, seeline
 
 
 
+
+
+PARENT_TYPES = {
+    1: "Mother", 2: "Father", 110: "Adoptive Parent", 111: "Adoptive Mother", 
+    112: "Adoptive Father", 120: "Foster Parent", 121: "Foster Mother", 
+    122: "Foster Father", 130: "Guardian", 131: "Legal Guardian"}
 
 def get_all_marital_event_types(conn, cur):
 
@@ -46,15 +52,34 @@ def get_all_marital_event_types(conn, cur):
     return marital_event_types
 
 class NuclearFamiliesTable(Frame):
+    """ In general, `...alt...` in this class refers to alternate parents and
+        families such as relationships created by adoption, fosterage, and
+        guardianship.
+
+        `fpid` refers to findings_persons_id` in the database table 
+        `findings_persons`, and `ppid` refers to persons_perons_id in the
+        database table `persons_persons`.
+    """
     def __init__(
             self, master, root, treebard, current_person, findings_table, 
             right_panel, formats, person_autofill_values=[], 
             *args, **kwargs):
-        Frame.__init__(self, master, *args, **kwargs)
-        """ `fpid` refers to findings_persons_id` in the database table 
-            `findings_persons`, and `ppid` refers to persons_perons_id in the
-            database table `persons_persons`.
+        """ self.family_data[0] is for parents and alt parents of current person.
+            self.family_data[0][0] is for biological parents.
+            self.family_data[0][1] is for alt parents.
+            self.family_data[0][x][0] is for data that's true for both parents.
+            self.family_data[0][x][1] is for only the father or alt parent 1.
+            self.family_data[0][x][2] is for only the mother or alt parent 2.
+            self.family_data[1] is for partners & children of current person.
+            self.family_data[1] has a partner's person ids as its keys.
+            For its values see: 
+                `progeny = { 
+                    "sorter": [], "partner_name": "", "parent_type": "",
+                    "partner_kin_type": "", "inwidg": None, "children": [],
+                    "marital_events": []}
+                self.family_data[1][pard_id] = progeny`
         """
+        Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master
         self.root = root
@@ -65,6 +90,7 @@ class NuclearFamiliesTable(Frame):
         self.findings_table = findings_table
         self.right_panel = right_panel
         self.formats = formats
+        self.compound_parent_type = "Children's"
 
         # There's an exact copy of this blank collection in forget_cells() in events_table.py
         #   so it has to be changed if this is changed. Initial attempt to not repeat
@@ -267,7 +293,6 @@ class NuclearFamiliesTable(Frame):
             elif name and a == 1:
                 self.ma_input.insert(0, name)
             a += 1
-
         top_child_rows = []
         self.pardrads = []
         n = 0
@@ -286,7 +311,7 @@ class NuclearFamiliesTable(Frame):
             self.pardrads.append(pardrad)
             pardrad.grid(column=0, row=n)
             if len(v["children"]) != 0:
-                ma_pa = "Children's {}:".format(v["parent_type"])
+                ma_pa = "{}:".format(v["parent_type"])
                 pardlab = LabelH3(pardframe, text=ma_pa, anchor="w")
             else:
                 pardlab = LabelH3(
@@ -296,6 +321,8 @@ class NuclearFamiliesTable(Frame):
             pardent = EntryAuto(
                 pardframe, width=48, autofill=True, cursor="hand2", 
                 values=self.person_autofill_values, name=pard)
+            if name == "name unknown":
+                name = ""
             pardent.insert(0, name)
             pardent.grid(column=2, row=n)
             EntryAuto.all_person_autofills.append(pardent)
@@ -554,8 +581,8 @@ class NuclearFamiliesTable(Frame):
             ''',
             (ppid,))
             lst[1]["id"], lst[2]["id"] = cur.fetchone()
-        w = 0
 
+        w = 0
         for lst in alt_parents:
             name1 = None
             name2 = None
@@ -589,8 +616,8 @@ class NuclearFamiliesTable(Frame):
         self.make_parents_dict()
 
         partners1, births = self.query_nukes_data(conn, cur)
-
-        self.arrange_partners_progenies(partners1, births, conn, cur)
+        alt_parentage_events = self.query_alt_nukes_data(conn, cur)
+        self.arrange_partners_progenies(partners1, births, alt_parentage_events, conn, cur)
 
         main_sorter = [0, 0, 0]
         for k,v in self.family_data[1].items():
@@ -607,19 +634,21 @@ class NuclearFamiliesTable(Frame):
         cur.close()
         conn.close()
 
-    def arrange_partners_progenies(self, partners1, births, conn, cur):
+    def arrange_partners_progenies(
+            self, partners1, births, alt_parentage_events, conn, cur):
+        births = births + alt_parentage_events
         progenies = {}
-        all_partners = []        
-        partners = []
-        partners = [tup for tup in partners1 if self.current_person in tup]
+        all_partners = [] 
         event_pards = []
         offspring_pards = []
-        for tup in partners:
-            for num in tup:
-                if num != self.current_person:
-                    event_pards.append(num)
-                    all_partners.append(num)
-        event_pards = list(set(event_pards))
+        if partners1:
+            partners = [tup for tup in partners1 if self.current_person in tup]
+            for tup in partners:
+                for num in tup:
+                    if num != self.current_person:
+                        event_pards.append(num)
+                        all_partners.append(num)
+            event_pards = list(set(event_pards))
         for tup in births:
             if tup[2] != self.current_person:
                 pard_id = tup[2]              
@@ -645,7 +674,6 @@ class NuclearFamiliesTable(Frame):
             self.family_data[1][pard_id] = progeny
 
         self.collect_couple_events(cur, conn)
-
         for k,v in progenies.items():
             pardner = k
             if v["offspring"] is True:
@@ -674,13 +702,14 @@ class NuclearFamiliesTable(Frame):
             for k,v in self.family_data[1].items():
                 if k == pard_id:
                     for dkt in v["children"]:
-                        self.finish_progeny_dict(dkt, cur)  
+                        self.finish_progeny_dict(dkt, cur)
 
     def query_nukes_data(self, conn, cur):
 
         cur.execute(
             '''
-                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 
+                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
+                    person_id2, kin_type_id2 
                 FROM findings_persons 
                 JOIN persons_persons
                     ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
@@ -690,7 +719,8 @@ class NuclearFamiliesTable(Frame):
         result1 = cur.fetchall()
         cur.execute(
             '''
-                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, person_id2, kin_type_id2 
+                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
+                    person_id2, kin_type_id2 
                 FROM findings_persons 
                 JOIN persons_persons
                     ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
@@ -717,18 +747,61 @@ class NuclearFamiliesTable(Frame):
 
         return partners1, births
 
+    def query_alt_nukes_data(self, conn, cur):
+
+        cur.execute(
+            '''
+                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
+                    person_id2, kin_type_id2 
+                FROM findings_persons 
+                JOIN persons_persons
+                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                WHERE person_id1 = ? AND kin_type_id1 IN (110, 111, 112, 120, 121, 122, 130, 131)
+            ''',
+            (self.current_person,))
+        result1 = cur.fetchall()
+        cur.execute(
+            '''
+                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
+                    person_id2, kin_type_id2 
+                FROM findings_persons 
+                JOIN persons_persons
+                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                WHERE person_id2 = ? AND kin_type_id2 IN (110, 111, 112, 120, 121, 122, 130, 131)
+            ''',
+            (self.current_person,))
+        result2 = cur.fetchall()
+        alt_births = []
+        alt_births = [tup for q in (result1, result2) for tup in q]
+        alt_births = [list(i) for i in alt_births]
+        for lst in alt_births:
+            cur.execute(
+                '''
+                SELECT finding_id
+                FROM finding
+                WHERE person_id = (SELECT person_id FROM finding WHERE finding_id = ?)
+                    AND event_type_id = 1
+                ''',
+                (lst[1],))
+            birth_evt_id = cur.fetchone()[0]
+            lst[1] = birth_evt_id
+
+        return alt_births
+
     def make_pard_dict(self, pard_id, parent_type, cur):
-        if parent_type == 1:
-            parent_type = "Mother"
-        elif parent_type == 2:
-            parent_type = "Father"
-        elif parent_type is None:  
-            print("line", looky(seeline()).lineno, "parent_type:", parent_type)
-            print("line", looky(seeline()).lineno, "self.family_data[1]:", self.family_data[1])
-            print("line", looky(seeline()).lineno, "pard_id:", pard_id)           
+        
+        for k,v in PARENT_TYPES.items():
+            if k == parent_type:
+                parent_type = v
+                break
+        if self.compound_parent_type.lstrip("Children's ") != parent_type:
+            self.compound_parent_type = "{} or {}".format(self.compound_parent_type, parent_type)
+        if self.compound_parent_type.startswith("Children's or"):
+            self.compound_parent_type = self.compound_parent_type.replace("Children's or", "Children's")
         partner_name = get_any_name_with_id(pard_id)
-        self.family_data[1][pard_id]["parent_type"] = parent_type
-        self.family_data[1][pard_id]["partner_name"] = partner_name   
+        self.family_data[1][pard_id]["parent_type"] = self.compound_parent_type
+        self.family_data[1][pard_id]["partner_name"] = partner_name 
+        self.compound_parent_type = "Children's"
 
     def collect_couple_events(self, cur, conn):
         marital_events = self.get_marital_event_types(conn, cur) 
@@ -768,17 +841,70 @@ class NuclearFamiliesTable(Frame):
                 v["marital_events"].append(
                     {"fpid": lst[0], "finding": lst[3]})
 
-    def finish_progeny_dict(self, dkt, cur):   
+    def finish_progeny_dict(self, dkt, cur):
         cur.execute(
             '''
                 SELECT person_id, date
                 FROM finding
                 WHERE finding_id = ?
-                    AND event_type_id = 1
+                    AND event_type_id = 1                    
             ''',
-            (dkt["birth_id"],))
-        born_id, birth_date = cur.fetchone()
+            (dkt["birth_id"],)) 
 
+        result = cur.fetchone()
+        if result is None:
+            return self.finish_alt_progeny_dict(dkt, cur)
+        else:
+            born_id, birth_date = result 
+        cur.execute(
+            '''
+                SELECT date
+                FROM finding
+                WHERE person_id = ?
+                    AND event_type_id = 4
+            ''',
+            (born_id,))
+        death_date = cur.fetchone()
+        if death_date:
+            death_date = death_date[0]
+        else:
+            death_date = "-0000-00-00-------"
+
+        cur.execute(
+            '''
+                SELECT gender
+                FROM person
+                WHERE person_id = ?
+            ''',
+            (born_id,))
+        gender = cur.fetchone()[0]
+
+        sorter = self.make_sorter(birth_date)
+        name = get_any_name_with_id(born_id)
+
+        birth_date = format_stored_date(
+            birth_date, date_prefs=self.date_prefs)
+        death_date = format_stored_date(
+            death_date, date_prefs=self.date_prefs)                
+
+        dkt["gender"] = gender
+        dkt["birth"] = birth_date
+        dkt["sorter"] = sorter
+        dkt["death"] = death_date
+        dkt["name"] = name
+        dkt["id"] = born_id
+
+    def finish_alt_progeny_dict(self, dkt, cur):
+        cur.execute(
+            '''
+                SELECT person_id, date
+                FROM finding
+                WHERE finding_id = ?
+                AND event_type_id in (48, 83, 95)                   
+            ''',
+            (dkt["birth_id"],)) 
+
+        born_id, birth_date = cur.fetchone()
         cur.execute(
             '''
                 SELECT date
@@ -891,9 +1017,14 @@ class NuclearFamiliesTable(Frame):
             fpid, ppid = fpid
             if parent_type == 2:
                 cur.execute(update_persons_persons_1, (new_parent_id, ppid))
+                conn.commit()
+                cur.execute(update_findings_persons_kin_type1, (2, fpid,))
+                conn.commit()    
             elif parent_type == 1:
                 cur.execute(update_persons_persons_2, (new_parent_id, ppid))
-            conn.commit()
+                conn.commit()
+                cur.execute(update_findings_persons_kin_type2, (1, fpid,))
+                conn.commit()
         else:
             # if there's no row yet for persons_persons, make one
             if parent_type == 2:
@@ -915,6 +1046,7 @@ class NuclearFamiliesTable(Frame):
     def update_partner(self, final, conn, cur, widg):
     
         def update_partners_child(birth_fpid, order, parent_type, new_partner_id):
+            print("line", looky(seeline()).lineno, "birth_fpid, order, parent_type, new_partner_id:", birth_fpid, order, parent_type, new_partner_id)
             select_findings_persons_ppid = '''
                 SELECT persons_persons_id
                 FROM findings_persons
@@ -935,33 +1067,30 @@ class NuclearFamiliesTable(Frame):
                 SET age1 = ""
                 WHERE findings_persons_id = ?
             '''
-            update_persons_persons_1 = '''
-                UPDATE persons_persons
-                SET person_id1 = ?
-                WHERE persons_persons_id = ?
-            '''
             cur.execute(select_findings_persons_ppid, (birth_fpid,))
             ppid = cur.fetchone()[0]
-            
-            if parent_type == "Father":
+            print("line", looky(seeline()).lineno, "ppid:", ppid)
+            if parent_type == "Children's Father":
                 if order == "1-2":   
                     cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
                     conn.commit()
                     cur.execute(update_persons_persons_2, (new_partner_id, ppid))
                     conn.commit()
                 elif order == "2-1":      
-                    cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
+                    cur.execute(update_findings_persons_age1_blank, (birth_fpid,))
                     conn.commit()
-                    cur.execute(update_persons_persons_2, (new_partner_id, ppid))
+                    cur.execute(update_persons_persons_1, (new_partner_id, ppid))
                     conn.commit()
                     
-            elif parent_type == "Mother":
-                if order == "1-2":      
-                    cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
+            elif parent_type == "Children's Mother":
+                if order == "1-2":
+                    print("line", looky(seeline()).lineno, "running:")
+                    cur.execute(update_findings_persons_age1_blank, (birth_fpid,))
                     conn.commit()
-                    cur.execute(update_persons_persons_2, (new_partner_id, ppid))
+                    cur.execute(update_persons_persons_1, (new_partner_id, ppid))
                     conn.commit()
-                elif order == "2-1":   
+                elif order == "2-1":
+                    print("line", looky(seeline()).lineno, "running:")   
                     cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
                     conn.commit()
                     cur.execute(update_persons_persons_2, (new_partner_id, ppid))
@@ -973,20 +1102,23 @@ class NuclearFamiliesTable(Frame):
                 new_partner_id = final.split("#")[1]    
             elif len(final) == 0:
                 # user unlinks partner by deleting existing name in entry
+                print("line", looky(seeline()).lineno, "self.original:", self.original)
+                # THIS IS WHERE YOU DELETE THE PARTNER FROM MARITAL EVENTS
                 pass
             else:
                 new_partner_id = open_new_person_dialog(
                     self, widg, self.root, self.treebard, self.formats)
-            return new_partner_id     
+            return new_partner_id   
 
         orig = self.original
         new_partner_id = get_new_partner_id(final, widg)
-        # if dialog canceled change nothing in db
+        print("line", looky(seeline()).lineno, "new_partner_id:", new_partner_id)
         if new_partner_id is None:
             widg.delete(0, 'end')
             widg.insert(0, orig)
             return
         elif new_partner_id == 0:
+            # user unlinks partner by deleting existing name in entry
             new_partner_id = None
         else:
             for k,v in self.family_data[1].items():
@@ -994,14 +1126,14 @@ class NuclearFamiliesTable(Frame):
                     continue
                 elif widg == v["inwidg"]:
                     if k != new_partner_id:
-                        print("line", looky(seeline()).lineno, "v:", v)
+                        print("adding & editing partners not done here")
                 else: 
-                    print("line", looky(seeline()).lineno, "case not handled:")
-        
+                    print("line", looky(seeline()).lineno, "case not handled:")        
         for k,v in self.family_data[1].items():
             if widg != v["inwidg"]:
                 continue
             for child in v["children"]:
+                print("line", looky(seeline()).lineno, "new_partner_id:", new_partner_id)
                 update_partners_child(
                     child["fpid"], 
                     child["order"], 
@@ -1321,9 +1453,9 @@ class NuclearFamiliesTable(Frame):
                     break
             fpid = self.family_data[0][1:][row - 1][0]["fpid"]
             if col == 0:
-                cur.execute(update_findings_persons_kintype1, (new_id, fpid))
+                cur.execute(update_findings_persons_kin_type1, (new_id, fpid))
             elif col == 2:
-                cur.execute(update_findings_persons_kintype2, (new_id, fpid))                
+                cur.execute(update_findings_persons_kin_type2, (new_id, fpid))                
             conn.commit()
             cancel_change()
             cur.close()
@@ -1476,3 +1608,83 @@ class NuclearFamiliesTable(Frame):
     show a pair of persons as parents, the parent system will have to be
     used, rather than the role system.
 '''
+
+'''
+forum post1: 
+
+The alt parentage feature works now. It's straightforward and clear in the typical case, but I'll show screenshots of an atypical case where Treebard should only try to do so much vs. doing too much. This atypical case could be described succinctly in a report: 
+
+    Marge Robinson married Jack Swelto and they had a son named Terrence. They were divorced after a short time and Marge kept the boy, marrying Dwayne Franck shortly thereafter. Dwayne adopted Terrence whose name was legally changed to Terrence Franck. Marge and Dwayne had a child, Vespa Franck.
+
+This is a case where a few simple facts can be reported simply in prose but become messy in a table if you try to do too much. If you think the table would look messy, wait till you see what that code would look like.
+
+This case shows the limit to Treebard's family table as it exists right now. I don't think it's a serious problem but it threw me at first. I assumed it was doing something wrong but now I think it would be an unnecessary complification to "fix" it.
+
+The problem, if that's what it is, is that when you display Marge's current person page, Terrence is shown in the family table as Jack's son (correct) and Dwayne is shown as Marge's partner (correct), but Terrence is not shown as Dwayne's adopted son. This latter could be right or wrong depending on how you look at it. In Dwayne's event table, Terrence's adoption by Dwayne is shown as an event and Marge is shown as a partner in Dwayne's family table, with one child Vespa. But Terrence is not shown as a child of Marge in Dwayne's family table. Once again, this could be seen as either right or wrong, depending on what you expect.
+
+People have been trained by other genieware to expect couples to be treated as an entity and for data to be repeated redundantly. Treebard doesn't necessarily treat all couples as singular entities in every case, and Treebard tries to avoid redundancy.
+
+The reason Terrence's adoption doesn't show in Marge's family table under her partner Dwayne, and Terrence doesn't show as a child in Dwayne's family table under Marge, is that only Dwayne adopted the child. In terms of Terrence's adoption, Marge and Dwayne have little to do with each other, genealogically. Except she would have signed a paper to approve the adoption, but what I'm saying is that she didn't ADOPT the child like her 2nd husband did. 
+
+So I feel that this feature is working correctly. Treebard does not go in for redundancy. All the facts can quickly be gleaned by looking at the family tables and events table for the four people involved. Treebard sees everything from the point of view of the current person. The report feature (see above inset) would state this all quite succinctly.
+
+This could be changed so that Terrence would be listed under Dwayne on Marge's family table and Terrence would be listed under Marge on Dwayne's family table. This would result in the following questionable GUI features:
+--Terrence would be listed twice in Marge's family table; once for each of her two partners.
+--On Dwayne's family table, Terrence would be listed as Marge's son when Dwayne is not the child's father.
+--On Marge's family table, Terrence would be listed as Dwayne's adopted son when Marge is not the adoptive mother.
+
+What it boils down to is a strict adherence to the current person point-of-view.
+
+Changing the family table to do these questionable things might be hard or easy, I don't know which, but since Treebard is showing only true things about all four people, and since the "problem" is that it's not lumping unrelated and/or redundant information in with the right stuff, I don't think there's a problem that needs to be addressed right now. All the pertinent facts are displayed in the tables. A table can't be expected to do what a report can do, or vice versa, and that's why both features exist.
+
+'''
+
+'''
+forum post2:
+
+The first draft of the families table is finished through parents and partners of the current person, leaving the children of each partner to finish as well as an input under the table where the user can enter names for new partners and children of the current person. In the description below, remember that everything in this table is supposed to be from the viewpoint of the current person only, not the family unit or the couple unit as such. Limiting the scope of the table prevents confusion and makes it harder for the user to mistakenly edit something with mysterious consequences that would then have to be tracked down and reversed one at a time.
+
+In the parents section, I chose to make it possible to 1) add a parent to a blank parent cell or 2) delete a parent link from the current person by simply deleting the name of the parent from the cell. Trying to make existing parents editable in any other way would complicate the code and violate the principle of limiting the uses to editing a person by first making that person the current person.
+
+As it turns out, the code for partners was close to finished, and here's how that currently works in regards to the set of children indented under each partner, if any. (It can be seen from the screenshots that the children section is not finished.)
+
+Each partner has a row flush left in the table. Under each partner is a set of children, if any, and the child rows are indented so the user can see the family unit(s) that have been entered for the current person. If needed, a scrollbar will appear, and it will be needed frequently because all the current person's partners and children appear in the table at once, a feature which might be unique to Treebard. Partners and children are sorted logically by any dates associated with marital events and childbirth events.
+
+We have to draw the line somewhere when it comes to editing other people on the current person tab. Similarly to the limitation on editing parents, partners can be added and deleted (unlinked from the current person), but to change an existing partner, the user has to change to the existing partner to the current person and (for example) delete the partner from a marital event. The point being, you can add partners to empty fields or delete existing partners, and that's all.
+
+This gets interesting when there are children of the current person whose other parent are unknown. There are a few ways to handle this.
+
+1) If the user enters nothing for some of the current person's children, these children will be lumped together under a partner row with no name.
+
+2) But what if the user knows or suspects that the children didn't have the same two parents? In that case, the user can enter underscores, a question mark, or whatever symbol they prefer to create a person in the table with an unknown name. For example, Jed has two children and we don't want them lumped together because we have no reason to believe they had the same mother, and we don't know who either mother was. The user can change each child in turn to the current person and enter "_____" (or whatever he prefers) for each child's mother. Then there will be two separate unknown partners on Jed's family table and each will have one child. 
+
+3) If the user prefers to keep the two children under one unknown partner, Treebard will already have them listed this way. Codewise it's important to realize that this unknown partner is not a person in the database, and this happens because Python's `None` is being used as a dictionary key. This could be coded out of the GUI by replacing `None` with a programmatically-created key, but the result would be one unknown partner for each child. I'd prefer to let the user make this decision for himself.
+
+I'm aware of the argument that users should not create fictitious names for their unknown people, and that's why I suggest using "_____" for each unknown person. By using the same symbol for all unknown persons in the tree, the user will make it possible to search all unknown people by searching names equal to the symbol or string of symbols.
+
+Relatedly, it is bad practice to use words instead of symbols to denote a missing name. The common practice of using "unknown" or "UNK" when a name is unknown could conceivably lead to a genealogist who is unfamiliar with English to assume that a person's name was actually "Unk". Since that is my name, I'd prefer you didn't use it to refer to missing people.
+
+'''
+
+'''
+forum post 3:
+
+A key design fact to know about the family table is that partners of the current person are discovered for inclusion in the table by querying 1) marital events and 2) children common to the current person and each partner. A partner who's included in the table only on the basis of a marital event such as divorce or marriage or wedding will be listed by "wife", "spouse", "groom" or whatever kin type the user selects. But if there are children for the couple, then the partner will be labeled in the table as "Children's Mother", "Children's Foster Father", etc. To see if there are also marital events for the couple, the user can graze the events table for kin tips, i.e. tooltips naming the partner. This is all somewhat unusual and can be perfected later. What I like about it now is that it tells the user how the partner was chosen for the table. A partner might be included in the family table because of marital events, because of children, or both. The choice of wording on the labels gives some information about this. But down the road a less unexpected system of labeling partners might be found. What I won't ever do is to label a partner a "spouse" just because the partner and the current person have a child together. This is dishonest, or can be, say in the case where no marital events have been found.
+
+A happy side-effect of the family table is that if a partner has both marital events and children with the current person, and the user unlinks the partner from the children by deleting the partner's name from the family unit that has those children indented under it, then a new row will appear in the table listing the partner by kin type such as "spouse" or "husband".
+
+pic
+
+Another side effect of this design is that to use the family table to unlink a partner completely when there are both children and marital events, the partner's name will have to be deleted twice. This is as it should be, and it will help justify my desire to have no dialogs pop up during the process. The user will see "Children's Father" and delete the father's name. The father's name will reappear in its own row as "Husband" or "Spouse" or whatever the user has chosen as a kin type. The user will delete the name again, and this will remove the person from the marital events involving the current person and that partner.
+
+Another way to go about this would be for the user to make the partner the current person and delete the marital events one at a time, or delete only some of them. This will not delete the events from the other partner, just the current person. (NOT TRUE YET--ALSO CHANGE THE DIALOG TEXT OR DELETE THE DIALOG) So Treebard offers flexibility instead of coercion, which is why it's taking so long to write this code. It should not be hard or impossible to do complexish, custom-tailored things to the people in the database, and there should not be a bunch of R-U-Sure messages to slow the user down.
+'''
+
+
+
+
+
+
+
+
+

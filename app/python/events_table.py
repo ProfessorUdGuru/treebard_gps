@@ -33,7 +33,7 @@ from query_strings import (
     select_finding_id_birth, select_person_ids_kin_types,
     select_person_id_birth, select_finding_ids_age1_parents,
     select_finding_ids_age2_parents, select_all_findings_notes_ids,
-    select_findings_details_offspring, select_all_findings_roles_ids_distinct,     
+    select_all_findings_roles_ids_distinct,     
     select_count_finding_id_sources, select_nesting_fk_finding,
     update_finding_particulars, select_all_kin_ids_types_couple,
     update_finding_age, update_current_person, select_all_place_ids,
@@ -57,7 +57,8 @@ from query_strings import (
     select_finding_id_guardianship, select_event_type_id_only,
     select_finding_ids_age1_alt_parents, select_finding_ids_age2_alt_parents,
     select_person_id_alt_parentage, select_kin_type_string, 
-    
+    select_person_ids_kin_types_include_nulls, 
+    select_findings_details_offspring_alt_parentage,
     )
 
 import dev_tools as dt
@@ -254,23 +255,29 @@ def make_parent_kintips(dkt, current_person, cur):
     birth_id = cur.fetchone()
     parents = (None, None)
     if birth_id:
-        cur.execute(select_person_ids_kin_types, birth_id)
+        cur.execute(select_person_ids_kin_types_include_nulls, birth_id)
         parents = cur.fetchone()
     if not parents:
         pass
-    elif parents[1] == "mother":
-        dkt["mother_id"] = parents[0]
-        dkt["mother_name"] = get_any_name_with_id(parents[0])
-        dkt["father_id"] = parents[2]
-        dkt["father_name"] = get_any_name_with_id(parents[2])
-    elif parents[3] == "mother":
-        dkt["father_id"] = parents[0]
-        dkt["father_name"] = get_any_name_with_id(parents[0])
-        dkt["mother_id"] = parents[2]
-        dkt["mother_name"] = get_any_name_with_id(parents[2])
+    elif parents[1] == "father" or  parents[3] == "mother":
+        dad = parents[0]
+        mom = parents[2]
+        dkt["father_id"] = dad
+        dkt["father_name"] = get_any_name_with_id(dad)
+        dkt["mother_id"] = mom
+        dkt["mother_name"] = get_any_name_with_id(mom)
 
-def make_adoption_kintips(dkt, current_person, cur, finding_id):
-    cur.execute(select_finding_id_adoption, (current_person,))
+def make_alt_parent_kintips(
+        dkt, current_person, cur, finding_id, 
+        adoption=None, fosterage=None, guardianship=None):
+
+    if adoption:
+        query = select_finding_id_adoption
+    elif fosterage:
+        query = select_finding_id_fosterage
+    elif guardianship:
+        query = select_finding_id_guardianship
+    cur.execute(query, (current_person,))
     event_id = cur.fetchall()
     parents = None
     if event_id is None:
@@ -287,56 +294,18 @@ def make_adoption_kintips(dkt, current_person, cur, finding_id):
         key1b = "{}_name1".format(key1)
         key2a = "{}_id2".format(key2)
         key2b = "{}_name2".format(key2)
-        dkt[key1a] = parents[0]
-        dkt[key1b] = get_any_name_with_id(parents[0])
-        dkt[key2a] = parents[2]
-        dkt[key2b] = get_any_name_with_id(parents[2])
 
-def make_fosterage_kintips(dkt, current_person, cur, finding_id):
-    cur.execute(select_finding_id_fosterage, (current_person,))
-    event_id = cur.fetchall()
-    parents = None
-    if event_id is None:
-        return
-    elif finding_id in event_id:
-        cur.execute(select_person_ids_kin_types, finding_id)
-        parents = cur.fetchone()
-    if not parents:
-        pass
-    else:
-        key1 = parents[1].replace(" ", "_")
-        key2 = parents[3].replace(" ", "_")
-        key1a = "{}_id1".format(key1)
-        key1b = "{}_name1".format(key1)
-        key2a = "{}_id2".format(key2)
-        key2b = "{}_name2".format(key2)
-        dkt[key1a] = parents[0]
-        dkt[key1b] = get_any_name_with_id(parents[0])
-        dkt[key2a] = parents[2]
-        dkt[key2b] = get_any_name_with_id(parents[2])
+        parent1 = get_any_name_with_id(parents[0])
+        if parent1 == "name unknown":
+            parent1 = ""
+        parent2 = get_any_name_with_id(parents[2])
+        if parent2 == "name unknown":
+            parent2 = "" 
 
-def make_guardianship_kintips(dkt, current_person, cur, finding_id):
-    cur.execute(select_finding_id_guardianship, (current_person,))
-    event_id = cur.fetchall()
-    parents = None
-    if event_id is None:
-        return
-    elif finding_id in event_id:
-        cur.execute(select_person_ids_kin_types, finding_id)
-        parents = cur.fetchone()
-    if not parents:
-        pass
-    else:            
-        key1 = parents[1].replace(" ", "_")
-        key2 = parents[3].replace(" ", "_")
-        key1a = "{}_id1".format(key1)
-        key1b = "{}_name1".format(key1)
-        key2a = "{}_id2".format(key2)
-        key2b = "{}_name2".format(key2)
         dkt[key1a] = parents[0]
-        dkt[key1b] = get_any_name_with_id(parents[0])
+        dkt[key1b] = parent1
         dkt[key2a] = parents[2]
-        dkt[key2b] = get_any_name_with_id(parents[2])
+        dkt[key2b] = parent2
 
 def autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id):
     """ Get birth & alt_birth findings to autocreate rows when parent is current 
@@ -370,9 +339,8 @@ def autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_
 
     for child in offspring:
         offspring_event_id, parent_age, child_id = child
-        cur.execute(select_findings_details_offspring, (child_id,))     
+        cur.execute(select_findings_details_offspring_alt_parentage, (child_id, offspring_event_id))     
         offspring_details = cur.fetchone()
-
         event_type = get_event_type_string(offspring_event_id)
 
         child_name = get_name_with_id(child_id)
@@ -400,11 +368,11 @@ def autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_
     if event_type == "birth":
         make_parent_kintips(dkt, current_person, cur)
     elif event_type == "adoption":
-        make_adoption_kintips(dkt, current_person, cur, finding_id)
+        make_alt_parent_kintips(dkt, current_person, cur, finding_id, adoption=True)
     elif event_type == "fosterage":
-        make_fosterage_kintips(dkt, current_person, cur, finding_id)
+        make_alt_parent_kintips(dkt, current_person, cur, finding_id, fosterage=True)
     elif event_type == "guardianship":
-        make_guardianship_kintips(dkt, current_person, cur, finding_id)
+        make_alt_parent_kintips(dkt, current_person, cur, finding_id, guardianship=True)
 
 def get_role_findings(
     dkt, finding_id, cur, current_person, findings_data=None):
@@ -1225,6 +1193,7 @@ class EventsTable(Frame):
         self.main_window.nuke_table.pa_input.delete(0, "end")
         self.main_window.nuke_table.new_kin_frame.grid_forget()
         self.main_window.nuke_table.current_person_alt_parents = []
+        self.main_window.nuke_table.compound_parent_type = "Children's"        
         for widg in self.main_window.nuke_table.nuke_containers: 
             widg.destroy() 
 
@@ -1738,10 +1707,12 @@ class NewEventDialog(Toplevel):
         else:
             other_person_id = None
 
-        cur.execute(insert_findings_persons_new_couple, (
-            self.new_finding, self.age_1, self.age_2))
-        conn.commit()
         cur.execute(insert_persons_persons, (self.current_person, other_person_id))
+        conn.commit()        
+        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
+        ppid = cur.fetchone()[0]
+        cur.execute(insert_findings_persons_new_couple, (
+            self.new_finding, self.age_1, self.age_2, ppid))
         conn.commit()
         self.create_birth_event(other_person_id, cur, conn)
 
