@@ -172,6 +172,12 @@ insert_findings_persons_null_couple = '''
     VALUES (null, ?, '', ?, '', ?, ?)
 '''
 
+select_findings_persons_ppid = '''
+    SELECT persons_persons_id
+    FROM findings_persons
+    WHERE findings_persons_id = ?
+'''
+
 insert_finding_places_new = '''
     INSERT INTO finding_places (
         finding_id, nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
@@ -606,6 +612,14 @@ select_finding_date = '''
 select_finding_date_and_sorter = '''
     SELECT date, date_sorter
     FROM finding
+    WHERE finding_id = ?
+'''
+
+select_finding_details = '''
+    SELECT finding_id, date, event_types
+    FROM finding
+    JOIN event_type
+        ON finding.event_type_id = event_type.event_type_id
     WHERE finding_id = ?
 '''
 
@@ -1499,6 +1513,18 @@ update_findings_persons_age2 = '''
         AND persons_persons_id = ?
 '''
 
+update_findings_persons_age1_blank = '''
+    UPDATE findings_persons
+    SET age1 = ""
+    WHERE findings_persons_id = ?
+'''
+
+update_findings_persons_age2_blank = '''
+    UPDATE findings_persons
+    SET age2 = ""
+    WHERE findings_persons_id = ?
+'''
+
 update_findings_persons_finding = '''
     UPDATE findings_persons
     SET finding_id = ?
@@ -1595,10 +1621,28 @@ update_note_topic = '''
     WHERE topic = ?
 '''
 
+update_persons_persons_1 = '''
+    UPDATE persons_persons
+    SET person_id1 = ?
+    WHERE persons_persons_id = ?
+'''
+
 update_persons_persons_1_null = '''
     UPDATE persons_persons
     SET person_id1 = null
     WHERE person_id1 = ?
+'''
+
+update_persons_persons_1_null_by_id = '''
+    UPDATE persons_persons
+    SET person_id1 = null
+    WHERE persons_persons_id = ?
+'''
+
+update_persons_persons_2 = '''
+    UPDATE persons_persons
+    SET person_id2 = ?
+    WHERE persons_persons_id = ?
 '''
 
 update_persons_persons_2_null = '''
@@ -1607,15 +1651,9 @@ update_persons_persons_2_null = '''
     WHERE person_id2 = ?
 '''
 
-update_persons_persons_1 = '''
+update_persons_persons_2_null_by_id = '''
     UPDATE persons_persons
-    SET person_id1 = ?
-    WHERE persons_persons_id = ?
-'''
-
-update_persons_persons_2 = '''
-    UPDATE persons_persons
-    SET person_id2 = ?
+    SET person_id2 = null
     WHERE persons_persons_id = ?
 '''
 

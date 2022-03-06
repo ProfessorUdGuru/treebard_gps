@@ -169,12 +169,11 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: kin_partners 
-# ALSO, recreating the marriage and divorce events for Selina/James added two extra birth events to James for some reason which should be impossible.
-# see: THIS IS WHERE YOU DELETE THE PARTNER FROM MARITAL EVENTS; currently, deleting a couple event shows a dialog informing the user that the entire event will be deleted for both people, and that's what happens. But it also finds all marital events and deletes the partner from all of them. Both are wrong. You should only delete the event that's being deleted, nothing else. So that has to be fixed FIRST in the events_table.py. For example, James and Selina had two marital events. Deleting the marriage event from Selina's currper tab shd only remove her from the event while preserving the event for James and replacing Selina's id with null. And it shd not touch the divorce event for either person. Each event and each person has to be handled individually and on purpose by the user. The less Treebard does, the better, and it will make it unnecessary to show a dialog so get rid of the dialog too.
-
+# BRANCH: kin_partners
+# change events_table.delete_couple_finding() to module_namespace so it can be used in families.py in place of delete_finding_all()
+#  add person dlg is opening with maryland hopgood filled in when closing OK new event dlg on creation of james/selina divorce
 # push to repo
-# post on forum see bottom of page include screenshots
+# post on forum see bottom of families.py include screenshots inserted to the right places
 
 # BRANCH: kin_child
 # if birth/deathdate unknown, replace "unknown" in case of birth or "" in case of death with "(birth) to (death)" since there are no column headings (still not great but better)
@@ -189,6 +188,9 @@ if __name__ == '__main__':
 
 # BRANCH: kin_change_curr_per
 # double click any name in table to change curr per
+
+# BRANCH: edit_couple_event
+# make a functionality for adding or changing one of the partners in a couple event; currently there's a way to delete a partner from an event, there's a way to delete an event, there's a way to create a new event, but no way to edit an existing event as to its partners; maybe just double click the event ie label that says 'wedding' to open a dialog (identical to the new event dialog?) wherein the partner can be edited. It has to do everything that could be done in the family table and more.
 
 # BRANCH: kin_cleanup
 # make it impossible for a person to be their own parent, partner or child, see Nettie Womble who is her own father
@@ -229,6 +231,7 @@ if __name__ == '__main__':
 """
 # person search table is messed up. Same person shows for both mother and father. Sorting only works right for ID. Clicking a name to make the person current works but the nukes table is not redrawn.
 # rename names.py to persons.py and change everywhere.
+# go thru places where several db commits are called in a row and create transactions: BEGIN; COMMIT; so if there's an error I don't have to go thru and fix half-done stuff in db.
 
 # BRANCH: dates
 
@@ -268,6 +271,7 @@ if __name__ == '__main__':
 # In notes dialog, if a non-unique topic is entered, there should be an error message, currently there's a SQLite error which locks the database.
 # center content in prefs tabs
 # notes dialog: can't create a first note when none exist yet for a conclusion because of division by zero error in size_toc(); 20220220 mini-effort to fix this had consequences undealt-with; also re: autocreated kin events like adoption, fosterage, offspring, guardianship: make it possible to add/access/edit roles & notes on offspring/alt_parentage event rows of the events table; SEE "non_empty_roles, non_empty_notes"
+# get rid of checkbutton stuff in InputMessage and also radiobutton stuff if not used anywhere
 
 # BRANCH: conclusions
 # change events_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, it is now time to start sticking to Treebard's core philosophy and differentiate between conclusions and assertions at all times. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs events table > conclusions table. And the first step is to change the name of the module from events_table.py to conclusions_table.py. Remember that conclusions are called findings in the code; "events" are cases where something like an event_type refers equally to assertions and conclusions (claims & findings) and never use "event" where "finding" shd be used.

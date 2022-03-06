@@ -14,7 +14,6 @@ from dev_tools import looky, seeline
 
 
 
-
 file = "d:/treebard_gps/etc/numerology.db"
 
 select_matching_names = '''
@@ -740,6 +739,10 @@ if __name__ == '__main__':
 # Karen Sue Robertson
 # Debra Kay Robertson
 # Caryn Elaine Johnson, (actress whoopi goldberg) Born November 13, 1955, New York City (quadruple scorpio)
+# Theodore Robert Cowell, serial killer Ted Bundy, born November 24, 1946 Burlington, Vermont Died	January 24, 1989 Florida State Prison, Raiford, Florida (triple scorpio and triple sagittarius near cusp of sag/scorp--totally unbalanced chart)
+
+# 944
+# Gary Leon Ridgway, serial killer, born February 18, 1949, Salt Lake City, Utah, see also 494 for Ted Bundy
 
 # 652
 # Russell Edward Brand, comedian/activist # Born June 1975, Grays, Essex, England

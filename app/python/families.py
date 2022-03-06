@@ -4,7 +4,8 @@ import tkinter as tk
 import sqlite3
 from widgets import (
     Frame, LabelH3, Label, Button, Canvas, LabelEntry, Radiobutton, LabelFrame,
-    FrameHilited)
+    FrameHilited, LabelHeader, Checkbutton)
+from window_border import Dialogue
 from custom_combobox_widget import Combobox
 from files import get_current_file
 from autofill import EntryAutoHilited, EntryAuto    
@@ -24,11 +25,13 @@ from query_strings import (
     update_persons_persons1_by_finding, update_persons_persons2_by_finding,
     select_kin_type_alt_parent, update_findings_persons_kin_type1,
     update_findings_persons_kin_type2, insert_persons_persons_mother,
-    insert_findings_persons_new_mother, 
+    insert_findings_persons_new_mother, select_findings_persons_ppid,
+    update_findings_persons_age2_blank, update_findings_persons_age1_blank,
+    update_persons_persons_1_null_by_id, update_persons_persons_2_null_by_id,
+    select_finding_details,
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
-
 
 
 
@@ -91,6 +94,7 @@ class NuclearFamiliesTable(Frame):
         self.right_panel = right_panel
         self.formats = formats
         self.compound_parent_type = "Children's"
+        self.unlink_partners = []
 
         # There's an exact copy of this blank collection in forget_cells() in events_table.py
         #   so it has to be changed if this is changed. Initial attempt to not repeat
@@ -109,11 +113,15 @@ class NuclearFamiliesTable(Frame):
             {},
         ]
 
+        self.original = ""
+
         self.nuke_containers = []
 
         self.delete_or_unlink_ok = False
 
         self.newkinvar = tk.IntVar()
+
+        self.current_person_name = get_any_name_with_id(self.current_person).split("(")[0]
 
         self.make_widgets()
 
@@ -383,6 +391,8 @@ class NuclearFamiliesTable(Frame):
                     dkt["gender_widg"] = ent
                 elif c == 3:
                     text = dkt["birth"]
+                    if text in ("", "unknown"):
+                        text = "(birth date)"
                     ent = EntryAuto(progeny_frame, width=0)
                     if len(text) > self.findings_table.kin_widths[c]:
                         self.findings_table.kin_widths[c] = len(text)
@@ -398,6 +408,8 @@ class NuclearFamiliesTable(Frame):
                     lab.grid(column=c, row=r, sticky="w")
                 elif c == 5:
                     text = dkt["death"]
+                    if text in ("", "unknown"):
+                        text = "(death date)"
                     ent = EntryAuto(progeny_frame, width=0)
                     if len(text) > self.findings_table.kin_widths[c]:
                         self.findings_table.kin_widths[c] = len(text)
@@ -1046,30 +1058,8 @@ class NuclearFamiliesTable(Frame):
     def update_partner(self, final, conn, cur, widg):
     
         def update_partners_child(birth_fpid, order, parent_type, new_partner_id):
-            print("line", looky(seeline()).lineno, "birth_fpid, order, parent_type, new_partner_id:", birth_fpid, order, parent_type, new_partner_id)
-            select_findings_persons_ppid = '''
-                SELECT persons_persons_id
-                FROM findings_persons
-                WHERE findings_persons_id = ?
-            '''
-            update_findings_persons_age2_blank = '''
-                UPDATE findings_persons
-                SET age2 = ""
-                WHERE findings_persons_id = ?
-            '''
-            update_persons_persons_2 = '''
-                UPDATE persons_persons
-                SET person_id2 = ?
-                WHERE persons_persons_id = ?
-            '''
-            update_findings_persons_age1_blank = '''
-                UPDATE findings_persons
-                SET age1 = ""
-                WHERE findings_persons_id = ?
-            '''
             cur.execute(select_findings_persons_ppid, (birth_fpid,))
             ppid = cur.fetchone()[0]
-            print("line", looky(seeline()).lineno, "ppid:", ppid)
             if parent_type == "Children's Father":
                 if order == "1-2":   
                     cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
@@ -1084,13 +1074,11 @@ class NuclearFamiliesTable(Frame):
                     
             elif parent_type == "Children's Mother":
                 if order == "1-2":
-                    print("line", looky(seeline()).lineno, "running:")
                     cur.execute(update_findings_persons_age1_blank, (birth_fpid,))
                     conn.commit()
                     cur.execute(update_persons_persons_1, (new_partner_id, ppid))
                     conn.commit()
-                elif order == "2-1":
-                    print("line", looky(seeline()).lineno, "running:")   
+                elif order == "2-1":   
                     cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
                     conn.commit()
                     cur.execute(update_persons_persons_2, (new_partner_id, ppid))
@@ -1101,24 +1089,141 @@ class NuclearFamiliesTable(Frame):
             if "#" in final:
                 new_partner_id = final.split("#")[1]    
             elif len(final) == 0:
-                # user unlinks partner by deleting existing name in entry
-                print("line", looky(seeline()).lineno, "self.original:", self.original)
-                # THIS IS WHERE YOU DELETE THE PARTNER FROM MARITAL EVENTS
-                pass
+                unlink_partners_dialog(cur, conn)
             else:
                 new_partner_id = open_new_person_dialog(
                     self, widg, self.root, self.treebard, self.formats)
-            return new_partner_id   
+            return new_partner_id 
+
+        def ok_unlink_partner(checks):
+            copy = checks
+            i = 0
+            for dkt in copy:
+                h = 0
+                for var in dkt["vars"]:
+                    got = var.get()
+                    checks[i]["vars"][h] = got
+                    h += 1
+                i += 1            
+            self.unlink_partners = checks
+            cancel_unlink_partner()
+
+        def update_partners_unlink():
+            for dkt in self.unlink_partners:
+                if dkt["vars"] == [0, 0]:
+                    continue
+                elif dkt["vars"] == [1, 1]:
+                    delete_finding_all(dkt["finding"], dkt["fpid"])
+                elif dkt["vars"] == [0, 1]:
+                    unlink_partner(dkt["fpid"])
+                elif dkt["vars"] == [1, 0]:
+                    unlink_current_person(dkt["fpid"])
+
+        def unlink_partner(fpid):
+            cur.execute(select_findings_persons_ppid, (fpid,))
+            ppid = cur.fetchone()[0]
+            cur.execute(select_persons_persons, (ppid,))
+            person_id1, person_id2 = cur.fetchone()
+            if person_id1 != self.current_person:
+                cur.execute(update_persons_persons_1_null_by_id, (ppid,))
+            elif person_id2 != self.current_person:
+                cur.execute(update_persons_persons_2_null_by_id, (ppid,))
+            conn.commit()
+
+        def unlink_current_person(fpid):
+            cur.execute(select_findings_persons_ppid, (fpid,))
+            ppid = cur.fetchone()[0]
+            cur.execute(select_persons_persons, (ppid,))
+            person_id1, person_id2 = cur.fetchone()
+            if person_id1 == self.current_person:
+                cur.execute(update_persons_persons_1_null_by_id, (ppid,))
+            elif person_id2 == self.current_person:
+                cur.execute(update_persons_persons_2_null_by_id, (ppid,))
+            conn.commit()
+
+        def delete_finding_all(finding, fpid):
+            # if the method from event_table.py not used here, expand to incl roles, notes, claims see do list
+            from query_strings import delete_persons_persons, delete_finding_places, delete_finding#temp
+            cur.execute(select_findings_persons_ppid, (fpid,))
+            ppid = cur.fetchone()[0]
+            cur.execute(delete_findings_persons, (finding,))
+            conn.commit()
+            cur.execute(delete_persons_persons, (ppid,))
+            conn.commit()
+            cur.execute(delete_finding_places, (finding,))
+            conn.commit()
+            cur.execute(delete_finding, (finding,))
+            conn.commit() 
+            
+        def cancel_unlink_partner():
+            self.partner_unlinker.destroy()
+
+        def unlink_partners_dialog(cur, conn):
+            checks = []
+            for evt in self.family_data[1][5599]["marital_events"]:
+                checks.append(evt)
+                
+            message = "Select which events to unlink from whom:"
+            self.partner_unlinker = Dialogue(self.root)
+
+            head = LabelHeader(
+                self.partner_unlinker.window, text=message, justify='left', wraplength=650)
+            inputs = Frame(self.partner_unlinker.window)
+            currperlab = LabelH3(inputs, text=self.current_person_name)
+            currperlab.grid(column=1, row=0)
+            spacer0 = Label(inputs, width=3)
+            spacer0.grid(column=2, row=0)
+            pardlab = LabelH3(inputs, text=self.original)
+            pardlab.grid(column=3, row=0)
+            f = 1
+            for event in checks: 
+                cur.execute(select_finding_details, (event["finding"],))
+                event_id, event_date, event_type = cur.fetchone()
+                event_date = format_stored_date(event_date, date_prefs=self.date_prefs)
+                text = "{} {} (Conclusion #{}):".format(event_date, event_type, event_id)
+                evtlab = Label(inputs, text=text, anchor="e")
+                evtlab.grid(column=0, row=f, sticky="e")
+                var0 = tk.IntVar()
+                var1 = tk.IntVar()
+                chk0 = Checkbutton(inputs, variable=var0)
+                chk0.grid(column=1, row=f)
+                chk1 = Checkbutton(inputs, variable=var1)
+                event["vars"] = [var0, var1]
+                chk1.grid(column=3, row=f)
+                chk1.select()
+                f += 1
+
+            buttons = Frame(self.partner_unlinker.window)
+            b1 = Button(
+                buttons, text="OK", command=lambda checks=checks: ok_unlink_partner(checks))
+            b2 = Button(
+                buttons, text="CANCEL", command=cancel_unlink_partner)            
+
+            self.partner_unlinker.canvas.title_1.config(
+                text="Unlink Partner from Current Person's Marital Events")
+            self.partner_unlinker.canvas.title_2.config(text="")            
+
+            head.grid(
+                column=0, row=4, sticky='news', padx=12, pady=12,  
+                columnspan=2, ipady=6)
+            inputs.grid(column=1, row=5, sticky="news", padx=12)
+            buttons.grid(
+                column=1, row=6, sticky="e", padx=12, pady=12, columnspan=2)
+            b1.grid(column=0, row=0, sticky='e', ipadx=3)
+            b2.grid(column=1, row=0, padx=(6,0), sticky='e', ipadx=3)
+
+            self.partner_unlinker.resize_window()
+
+            self.root.wait_window(self.partner_unlinker)
+            update_partners_unlink()
 
         orig = self.original
         new_partner_id = get_new_partner_id(final, widg)
-        print("line", looky(seeline()).lineno, "new_partner_id:", new_partner_id)
         if new_partner_id is None:
             widg.delete(0, 'end')
             widg.insert(0, orig)
             return
         elif new_partner_id == 0:
-            # user unlinks partner by deleting existing name in entry
             new_partner_id = None
         else:
             for k,v in self.family_data[1].items():
@@ -1133,7 +1238,6 @@ class NuclearFamiliesTable(Frame):
             if widg != v["inwidg"]:
                 continue
             for child in v["children"]:
-                print("line", looky(seeline()).lineno, "new_partner_id:", new_partner_id)
                 update_partners_child(
                     child["fpid"], 
                     child["order"], 
@@ -1329,104 +1433,6 @@ class NuclearFamiliesTable(Frame):
                 self.update_child_death()
             else:
                 print("line", looky(seeline()).lineno, "case not handled:")    
-
-        cur.close()
-        conn.close()
-        self.treebard.main.findings_table.redraw()
-
-    def open_delete_or_unlink_dialog(self, evt):
-        '''
-            This dialog currently is not being used. It looked OK but its was a
-            case of duplicated effort (NOTES: # Parent is still unlinked if you 
-            press CANCEL in the unlink dlg; THIS IS CAUSED BY confusion, both 
-            update_parent() and open_delete_or_unlink_dialog() are trying to do 
-            stuff at the same time, one is run by get_final and the other is 
-            run by the delete key, so the two efforts have to be coordinated 
-            or combined somehow so nothing happens if CANCEL is pressed.) 
-            Currently I prefer to try not having a dialog at all when user 
-            unlinks a person. This might be too radical for some users so I'll 
-            leave this method in case it's decided to reinstitute the dialog at 
-            some point, but I'm not going to fix it right now. (CANCEL and OK 
-            were both doing the job THAT only OK button should do, see NOTES.)
-
-            Open a dialog on press of Delete or BackSpace in one of the person 
-            inputs. 
-
-            It looks like getting focus to return to the place where it
-            started is not going to be easy, probably because the original
-            widget is destroyed and replaced. I tried getting the original's
-            row & column but it didn't work--when the dialog closes, focus keeps
-            returning to the same place, root I guess, anyway the first Tab press
-            just goes back to the first widget on the page. Fix later.
-        '''
-
-        widg = evt.widget        
-        if len(self.original) == 0 or len(widg.get()) != 0: 
-            return
-        widgname = widg.winfo_name()
-        parent_type = ""
-        head2 = ""
-        message = "Clicking OK will unlink this person from the current person and relevant events (listed below). If the goal is to delete the person from the tree, or change the person's name, etc., first double-click the person to make them the current person."
-        dkt = None
-        changing_values = []
-        if widgname in ("pa", "ma"):
-            col = widg.grid_info()["column"]
-            relative_type = "parent"
-            dkt = self.family_data[0][0][2]
-            changing_values.extend([
-                "Offspring Event", dkt["name"], dkt["id"], dkt["kin_type"]])
-            if col == 1:
-                parent_type = "pa"
-            elif col == 3:
-                parent_type = "ma"
-        elif widgname.startswith("pard"):
-            relative_type = "partner"
-        else:
-            relative_type = "child" 
-
-        if len(changing_values) != 0: 
-            head2 = "{}: {} #{} will be unlinked as {} of the current person.".format(
-                *changing_values)
-        self.unlinker = InputMessage(
-            self.root, root=self.root, title="Confirm Unlink", ok_txt="OK", 
-            cancel_txt="CANCEL", grab=True, head1=message, wraplength=650,
-            head2=head2)
-        if self.unlinker.ok_was_pressed is True:
-            self.ok_unlink(relative_type, parent_type)
-
-    def ok_unlink(self, relative_type, parent_type):
-        """ Not being used, do not delete, see docstring 
-            in open_delete_or_unlink_dialog().
-        """
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
-        conn.execute("PRAGMA foreign_keys = 1")
-        cur = conn.cursor()
-        birth_fpid = self.family_data[0][0][0]["fpid"]
-        if relative_type == "parent":
-            print("line", looky(seeline()).lineno, "self.show:", self.show)
-            print("line", looky(seeline()).lineno, "parent_type:", parent_type)
-            print("line", looky(seeline()).lineno, "birth_fpid:", birth_fpid)
-
-        elif relative_type == "partner":
-            if self.show == 0:
-                pass
-
-            elif self.show == 1:
-                pass
-
-            elif self.show == 2:
-                pass
-
-        elif relative_type == "child":
-            if self.show == 0:
-                pass
-
-            elif self.show == 1:
-                pass
-
-            elif self.show == 2:
-                pass
 
         cur.close()
         conn.close()
@@ -1662,7 +1668,7 @@ This gets interesting when there are children of the current person whose other 
 
 I'm aware of the argument that users should not create fictitious names for their unknown people, and that's why I suggest using "_____" for each unknown person. By using the same symbol for all unknown persons in the tree, the user will make it possible to search all unknown people by searching names equal to the symbol or string of symbols.
 
-Relatedly, it is bad practice to use words instead of symbols to denote a missing name. The common practice of using "unknown" or "UNK" when a name is unknown could conceivably lead to a genealogist who is unfamiliar with English to assume that a person's name was actually "Unk". Since that is my name, I'd prefer you didn't use it to refer to missing people.
+Relatedly, it is bad practice to use words instead of symbols to denote a missing name. The common practice of using "unknown" or "UNK" when a name is unknown could conceivably lead a genealogist who is unfamiliar with English to assume that a person's name was actually "Unk". Since that is my name, I'd prefer you didn't use it to refer to missing people.
 
 '''
 
@@ -1675,9 +1681,12 @@ A happy side-effect of the family table is that if a partner has both marital ev
 
 pic
 
-Another side effect of this design is that to use the family table to unlink a partner completely when there are both children and marital events, the partner's name will have to be deleted twice. This is as it should be, and it will help justify my desire to have no dialogs pop up during the process. The user will see "Children's Father" and delete the father's name. The father's name will reappear in its own row as "Husband" or "Spouse" or whatever the user has chosen as a kin type. The user will delete the name again, and this will remove the person from the marital events involving the current person and that partner.
+Another side effect of this design is that to use the family table to unlink a partner completely when there are both children and marital events, the partner's name would have to be deleted twice, except this isn't going to happen. Assuming the partnership includes children, the user will see "Children's Father" and delete the father's name. The father's name will reappear in its own row as "Husband" or "Spouse" or whatever the user has chosen as a kin type. The user might delete the name again, expecting to remove the person from the marital events involving the current person and that partner. (That's probably how most of the other genieware works.) But Treebard won't allow it, because for each marital event there are two people involved, and Treebard won't make decisions for the user based on a typical scenario or a best guess. In honor of the edge cases when the typical decision would be wrong, Treebard treats individual decisions as single elements and lets the user make each single decision himself. A message informs the user who tries to unlink a partner who is linked to the current person by only marital events (no children) that this can be accomplished in two ways: 1) by deleting the event, in which case both partners will be unlinked from the event which will no longer exist, including a dialog so the user can change their mind, or 2) by deleting the partner in question from the event while keeping the current person as a participant in the event with a now-unknown partner.
 
-Another way to go about this would be for the user to make the partner the current person and delete the marital events one at a time, or delete only some of them. This will not delete the events from the other partner, just the current person. (NOT TRUE YET--ALSO CHANGE THE DIALOG TEXT OR DELETE THE DIALOG) So Treebard offers flexibility instead of coercion, which is why it's taking so long to write this code. It should not be hard or impossible to do complexish, custom-tailored things to the people in the database, and there should not be a bunch of R-U-Sure messages to slow the user down.
+In the first case, deleting the marital event from the partner's events table opens a dialog informing the user that both parties will be deleted from the event which will no longer exist. In the second case, the way to unlink only the partner from the event is for the user to delete the partner's name from the original current person's partner table cell. Treebard will show a dialog with all the marital events as rows and a set of checkbuttons for each event, in two columns. At the head of one column is the current person, at the head of column two is the partner. The partner's checkbuttons will be pre-checked for deletion from the event, but the user has the option of changing any of the checkbuttons. If all are selected, then both partners will be unlinked from all the marital events involving both partners. If none are selected, it will be the same as pressing CANCEL on the dialog.
+
+If a partner has no marital events linking them to the current person, just a child, then deleting the partner from the current person's family table will eliminate the partner's row completely from the family table in a single step, while placing the child in the "Children's Parent: [None]" group. From there, the user can change the the child to current person and give the child any parents desired.
+
 '''
 
 

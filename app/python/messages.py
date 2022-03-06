@@ -3,7 +3,8 @@
 from tkinter import StringVar, IntVar
 from window_border import Dialogue
 from scrolling import Scrollbar, resize_scrolled_content
-from widgets import Label, Button, Frame, LabelHeader, Entry, Radiobutton
+from widgets import (
+    Label, Button, Frame, LabelHeader, Entry, Radiobutton, Checkbutton)
 from styles import config_generic
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -66,8 +67,9 @@ class InputMessage(Dialogue):
     def __init__(
             self, master, return_focus_to=None, root=None, title="", 
             ok_txt="", cancel_txt="", head1="", head2="", wraplength=450, 
-            radtext=[], radfocal=0, entry=False, radio=False, scrolled=False, 
-            grab=False, treebard=None, ok_button=True, *args, **kwargs):
+            radtext=[], radfocal=0, entry=False, radio=False, 
+            check=False, chktext=[], chkfocal=0,
+            scrolled=False, grab=False, treebard=None, ok_button=True, *args, **kwargs):
         Dialogue.__init__(self, master, *args, **kwargs)
 
         self.master = master
@@ -83,6 +85,9 @@ class InputMessage(Dialogue):
         self.radfocal = radfocal
         self.entry = entry
         self.radio = radio
+        self.check = check
+        self.chktext = chktext
+        self.chkfocal = chkfocal
         self.scrolled = scrolled
         self.grab = grab
         self.treebard = treebard
@@ -93,6 +98,7 @@ class InputMessage(Dialogue):
 
         self.got = StringVar()
         self.radvar = IntVar(None, 0)
+        self.chkvar = IntVar(None, 0)
         if scrolled is True:
             self.make_scrollbars()
         self.make_containers()
@@ -232,7 +238,24 @@ class InputMessage(Dialogue):
                 rad.grid(column=0, row=i, sticky='ew')
                 radios.append(rad)    
             radios[self.radfocal].focus_set()
-        elif self.ok_button is False:
+        elif self.check is True:
+            self.chkframe = Frame(self.inputs)
+            self.chkframe.grid()
+            checks = []
+            print("line", looky(seeline()).lineno, "self.chktext:", self.chktext)
+# line 245 self.chktext: [{'fpid': 183, 'finding': 1157}, {'fpid': 184, 'finding': 1158}]
+            a = 0
+            for i in self.chktext:
+                chk = Checkbutton(
+                    self.chkframe,  
+                    text=self.chktext[a],
+                    variable=self.chkvar,
+                    anchor='w')
+                chk.grid(column=0, row=a, sticky='ew')
+                checks.append(chk) 
+                a += 1
+            checks[self.chkfocal].focus_set()
+        if self.ok_button is False:
             self.b2.focus_set()
         
     def run_post_op(self):
@@ -260,6 +283,9 @@ class InputMessage(Dialogue):
             return gotten
         elif self.radio:
             chosen = self.radvar.get()
+            return chosen
+        elif self.check:
+            chosen = self.chkvar.get()
             return chosen
 
 def open_input_message(master, message, title, ok_lab, cancel_lab, user_input):
@@ -488,5 +514,11 @@ colorizer_msg = (
         "Types Tab. To use it as a model for a new color scheme, change at least "
         "one color.",
 )
+
+# families_msg = (
+    # "The partner can be unlinked from the current person by deleting the marital "
+        # "events that bind them together or by unlinking only the partner from "
+        # "the marital events.",
+# )
 
 

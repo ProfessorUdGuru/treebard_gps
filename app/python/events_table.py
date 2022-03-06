@@ -540,7 +540,7 @@ class EventsTable(Frame):
                 conn.commit()
                 cur.execute(select_findings_persons_persons_persons_id, (finding_id,))
                 ppid = cur.fetchone()
-                cur.execute(delete_findings_persons, (finding_id,))
+                cur.execute(delete_findings_persons, (finding_id,)) # why is this here too? does it apply to any generic findings? birth>offspring?
                 conn.commit()
                 if ppid:
                     cur.execute(delete_persons_persons, ppid)
@@ -1665,7 +1665,7 @@ class NewEventDialog(Toplevel):
                 insert_finding_new_couple, 
                 (self.new_finding, self.event_type_id,))
             conn.commit()
-            self.couple_ok(cur, conn) 
+            self.couple_ok(cur, conn)
 
         if len(self.place_string) == 0:
             cur.execute(insert_finding_places_new, (self.new_finding,))
@@ -1714,10 +1714,10 @@ class NewEventDialog(Toplevel):
         cur.execute(insert_findings_persons_new_couple, (
             self.new_finding, self.age_1, self.age_2, ppid))
         conn.commit()
-        self.create_birth_event(other_person_id, cur, conn)
+        if self.event_type_id == 1:
+            self.create_birth_event(other_person_id, cur, conn)
 
     def create_birth_event(self, child_id, cur, conn):
-
         cur.execute(select_max_finding_id)
         new_finding = cur.fetchone()[0] + 1
         cur.execute(insert_finding_birth, (new_finding, child_id))
