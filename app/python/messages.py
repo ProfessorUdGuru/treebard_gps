@@ -397,11 +397,12 @@ events_msg = (
         "replace them if they're incompatible in this way. To "
         "delete an event, delete the event type in the first column.",
     "An event is about to be deleted. This can't be undone. For "
-        "couple events, the event will be deleted for both "
-        "partners. To delete an offspring event, delete the child's name "
-        "from the current person's family table. To delete a birth event, "
-        "make the deletable person the current person and delete the person "
-        "from the tree.",
+        "couple events, the event will be deleted for both partners. To "
+        "delete only one of the partners from a couple event, delete the "
+        "partner's name from the family table instead. To delete an offspring "
+        "event, delete the child's name from the current person's family table. "
+        "To delete a birth event, make the deletable person the current person "
+        "and delete the person from the tree.",
     "Each person has one birth and one death event. To add more "
         "hypothetical birth or death events, add them as assertions "
         "instead of conclusions. The events table is for conclusions, "

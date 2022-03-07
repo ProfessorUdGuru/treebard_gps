@@ -49,7 +49,7 @@ from query_strings import (
     select_event_type_after_death, select_event_type_after_death_bool,
     select_findings_persons_parents, select_findings_persons_age,    
     insert_finding_birth, update_findings_persons_age2, select_person,
-    select_finding_event_type, select_findings_persons_persons_persons_id,
+    select_finding_event_type, select_findings_persons_ppid,
     select_findings_persons_person_id, update_finding_date, delete_persons_persons,
     select_findings_persons_alt_parents, select_event_type_via_event_string,
     insert_persons_persons_null, insert_findings_persons_null_couple,
@@ -57,7 +57,7 @@ from query_strings import (
     select_finding_id_guardianship, select_event_type_id_only,
     select_finding_ids_age1_alt_parents, select_finding_ids_age2_alt_parents,
     select_person_id_alt_parentage, select_kin_type_string, 
-    select_person_ids_kin_types_include_nulls, 
+    select_person_ids_kin_types_include_nulls, select_findings_persons_id,
     select_findings_details_offspring_alt_parentage,
     )
 
@@ -75,6 +75,42 @@ date_prefs = get_date_formats()
 HEADS = (
     'event', 'date', 'place', 'particulars', 'age', 
     'roles', 'notes', 'sources')
+
+def delete_generic_finding(finding_id, fpid, conn, cur):
+    cur.execute(delete_finding_places, (finding_id,))
+    conn.commit()
+    cur.execute(delete_findings_roles_finding, (finding_id,))
+    conn.commit()
+    cur.execute(delete_findings_notes_finding, (finding_id,))
+    conn.commit()
+    cur.execute(delete_claims_findings, (finding_id,))
+    conn.commit()
+    if fpid is not None:
+        cur.execute(select_findings_persons_ppid, (fpid,))
+        ppid = cur.fetchone()
+    cur.execute(delete_findings_persons, (finding_id,))
+    conn.commit()
+    if ppid is not None:
+        cur.execute(delete_persons_persons, ppid)
+        conn.commit()
+    cur.execute(delete_finding, (finding_id,))
+    conn.commit()
+
+def delete_couple_finding(finding_id, fpid=None):
+    """ Used also in families.py. """
+    current_file = get_current_file()
+    if current_file is not None:
+        current_file = get_current_file()[0]
+    else:
+        return
+    conn = sqlite3.connect(current_file)
+    conn.execute('PRAGMA foreign_keys = 1')
+    cur = conn.cursor()
+    delete_generic_finding(finding_id, fpid, conn, cur) #1
+    cur.execute(delete_findings_persons, (finding_id,)) #2
+    conn.commit()
+    cur.close()
+    conn.close()
 
 def get_current_person():
     current_file = get_current_file()
@@ -527,32 +563,6 @@ class EventsTable(Frame):
             widg.insert(0, initial)
 
         def proceed(initial_value):
-
-            def delete_generic_finding():
-                print("line", looky(seeline()).lineno, "finding_id:", finding_id)
-                cur.execute(delete_finding_places, (finding_id,))
-                conn.commit()
-                cur.execute(delete_findings_roles_finding, (finding_id,))
-                conn.commit()
-                cur.execute(delete_findings_notes_finding, (finding_id,))
-                conn.commit()
-                cur.execute(delete_claims_findings, (finding_id,))
-                conn.commit()
-                cur.execute(select_findings_persons_persons_persons_id, (finding_id,))
-                ppid = cur.fetchone()
-                cur.execute(delete_findings_persons, (finding_id,)) # why is this here too? does it apply to any generic findings? birth>offspring?
-                conn.commit()
-                if ppid:
-                    cur.execute(delete_persons_persons, ppid)
-                    conn.commit()
-                cur.execute(delete_finding, (finding_id,))
-                conn.commit()
-
-            def delete_couple_finding():
-                cur.execute(delete_findings_persons, (finding_id,))
-                conn.commit()
-                delete_generic_finding()
-
             current_person = self.current_person
             conn = sqlite3.connect(current_file)
             conn.execute('PRAGMA foreign_keys = 1')
@@ -564,9 +574,11 @@ class EventsTable(Frame):
             if couple_event_old == 0:
                 cur.execute(select_finding_event_type, (finding_id,))
                 event_type = cur.fetchone()[0]
-                delete_generic_finding()
+                delete_generic_finding(finding_id, None, conn, cur)
             elif couple_event_old == 1:
-                delete_couple_finding()
+                cur.execute(select_findings_persons_id, (finding_id,))
+                fpid = cur.fetchone()[0]
+                delete_couple_finding(finding_id, fpid=fpid)
             self.redraw()
             cur.close()
             conn.close()
@@ -1129,7 +1141,8 @@ class EventsTable(Frame):
             name = list(name)
             name[1] = "({})".format(name[1])
             name = " ".join(name)
-
+        if name == "name unknown":
+            name = ""
         self.kintip_text = "{}: {}".format(kin_type, name)
 
         if self.kintip_text:

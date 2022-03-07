@@ -14,7 +14,8 @@ from names import (open_new_person_dialog, make_all_names_list_for_person_select
     get_any_name_with_id, delete_person_from_tree, update_person_autofill_values)
 from messages import InputMessage
 from dates import format_stored_date, get_date_formats, OK_MONTHS
-from events_table import get_current_person
+from events_table import (
+    get_current_person, delete_generic_finding, delete_couple_finding)
 from query_strings import (
     select_finding_id_birth, delete_findings_persons, select_persons_persons,
     select_person_id_gender, select_finding_date, select_finding_id_birth,
@@ -32,7 +33,6 @@ from query_strings import (
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
-
 
 
 
@@ -117,11 +117,12 @@ class NuclearFamiliesTable(Frame):
 
         self.nuke_containers = []
 
-        self.delete_or_unlink_ok = False
+        # self.delete_or_unlink_ok = False
+        self.cancel_unlink_partner_pressed = False
 
         self.newkinvar = tk.IntVar()
 
-        self.current_person_name = get_any_name_with_id(self.current_person).split("(")[0]
+        self.current_person_name = ""
 
         self.make_widgets()
 
@@ -817,6 +818,7 @@ class NuclearFamiliesTable(Frame):
 
     def collect_couple_events(self, cur, conn):
         marital_events = self.get_marital_event_types(conn, cur) 
+        print("line", looky(seeline()).lineno, "marital_events:", marital_events)
         for lst in marital_events:
             if lst[1] == self.current_person:
                 del lst[1:3]
@@ -893,6 +895,8 @@ class NuclearFamiliesTable(Frame):
 
         sorter = self.make_sorter(birth_date)
         name = get_any_name_with_id(born_id)
+        if name == "name unknown":
+            name = ""
 
         birth_date = format_stored_date(
             birth_date, date_prefs=self.date_prefs)
@@ -942,6 +946,8 @@ class NuclearFamiliesTable(Frame):
 
         sorter = self.make_sorter(birth_date)
         name = get_any_name_with_id(born_id)
+        if name == "name unknown":
+            name = ""
 
         birth_date = format_stored_date(
             birth_date, date_prefs=self.date_prefs)
@@ -1093,7 +1099,39 @@ class NuclearFamiliesTable(Frame):
             else:
                 new_partner_id = open_new_person_dialog(
                     self, widg, self.root, self.treebard, self.formats)
-            return new_partner_id 
+            return new_partner_id
+
+        def update_partners_unlink():
+            """ Run after dialog closes. """
+            if self.cancel_unlink_partner_pressed is True:
+                return
+            for dkt in self.unlink_partners:
+                if dkt["vars"] == [0, 0]:
+                    continue
+                elif dkt["vars"] == [1, 1]:
+                    delete_couple_finding(dkt["finding"], fpid=dkt["fpid"])
+                elif dkt["vars"] == [0, 1]:
+                    unlink_partner(dkt["fpid"], [0, 1])
+                elif dkt["vars"] == [1, 0]:
+                    unlink_partner(dkt["fpid"], [1, 0])
+
+        def unlink_partner(fpid, order):
+            cur.execute(select_findings_persons_ppid, (fpid,))
+            ppid = cur.fetchone()[0]
+            cur.execute(select_persons_persons, (ppid,))
+            person_id1, person_id2 = cur.fetchone()
+            currper = self.current_person
+            if currper == person_id1:
+                if order == [0, 1]:
+                    cur.execute(update_persons_persons_2_null_by_id, (ppid,))
+                elif order == [1, 0]:
+                    cur.execute(update_persons_persons_1_null_by_id, (ppid,))                
+            elif currper == person_id2:
+                if order == [0, 1]:
+                    cur.execute(update_persons_persons_1_null_by_id, (ppid,))
+                elif order == [1, 0]:
+                    cur.execute(update_persons_persons_2_null_by_id, (ppid,))
+            conn.commit()
 
         def ok_unlink_partner(checks):
             copy = checks
@@ -1106,61 +1144,22 @@ class NuclearFamiliesTable(Frame):
                     h += 1
                 i += 1            
             self.unlink_partners = checks
-            cancel_unlink_partner()
-
-        def update_partners_unlink():
-            for dkt in self.unlink_partners:
-                if dkt["vars"] == [0, 0]:
-                    continue
-                elif dkt["vars"] == [1, 1]:
-                    delete_finding_all(dkt["finding"], dkt["fpid"])
-                elif dkt["vars"] == [0, 1]:
-                    unlink_partner(dkt["fpid"])
-                elif dkt["vars"] == [1, 0]:
-                    unlink_current_person(dkt["fpid"])
-
-        def unlink_partner(fpid):
-            cur.execute(select_findings_persons_ppid, (fpid,))
-            ppid = cur.fetchone()[0]
-            cur.execute(select_persons_persons, (ppid,))
-            person_id1, person_id2 = cur.fetchone()
-            if person_id1 != self.current_person:
-                cur.execute(update_persons_persons_1_null_by_id, (ppid,))
-            elif person_id2 != self.current_person:
-                cur.execute(update_persons_persons_2_null_by_id, (ppid,))
-            conn.commit()
-
-        def unlink_current_person(fpid):
-            cur.execute(select_findings_persons_ppid, (fpid,))
-            ppid = cur.fetchone()[0]
-            cur.execute(select_persons_persons, (ppid,))
-            person_id1, person_id2 = cur.fetchone()
-            if person_id1 == self.current_person:
-                cur.execute(update_persons_persons_1_null_by_id, (ppid,))
-            elif person_id2 == self.current_person:
-                cur.execute(update_persons_persons_2_null_by_id, (ppid,))
-            conn.commit()
-
-        def delete_finding_all(finding, fpid):
-            # if the method from event_table.py not used here, expand to incl roles, notes, claims see do list
-            from query_strings import delete_persons_persons, delete_finding_places, delete_finding#temp
-            cur.execute(select_findings_persons_ppid, (fpid,))
-            ppid = cur.fetchone()[0]
-            cur.execute(delete_findings_persons, (finding,))
-            conn.commit()
-            cur.execute(delete_persons_persons, (ppid,))
-            conn.commit()
-            cur.execute(delete_finding_places, (finding,))
-            conn.commit()
-            cur.execute(delete_finding, (finding,))
-            conn.commit() 
+            self.partner_unlinker.destroy()
             
         def cancel_unlink_partner():
+            self.cancel_unlink_partner_pressed = True
             self.partner_unlinker.destroy()
+            self.cancel_unlink_partner_pressed = False
 
         def unlink_partners_dialog(cur, conn):
+            partner_id = None
             checks = []
-            for evt in self.family_data[1][5599]["marital_events"]:
+            for k,v in self.family_data[1].items():
+                if v["partner_name"] == self.original:
+                    partner_id = k
+                    break
+
+            for evt in self.family_data[1][partner_id]["marital_events"]:
                 checks.append(evt)
                 
             message = "Select which events to unlink from whom:"
@@ -1169,11 +1168,12 @@ class NuclearFamiliesTable(Frame):
             head = LabelHeader(
                 self.partner_unlinker.window, text=message, justify='left', wraplength=650)
             inputs = Frame(self.partner_unlinker.window)
+            self.current_person_name = get_any_name_with_id(self.current_person).split("(")[0]
             currperlab = LabelH3(inputs, text=self.current_person_name)
             currperlab.grid(column=1, row=0)
             spacer0 = Label(inputs, width=3)
             spacer0.grid(column=2, row=0)
-            pardlab = LabelH3(inputs, text=self.original)
+            pardlab = LabelH3(inputs, text=self.original.split("(")[0])
             pardlab.grid(column=3, row=0)
             f = 1
             for event in checks: 
@@ -1230,6 +1230,7 @@ class NuclearFamiliesTable(Frame):
                 if widg != v["inwidg"]:
                     continue
                 elif widg == v["inwidg"]:
+                    print("line", looky(seeline()).lineno, "k, new_partner_id:", k, new_partner_id)
                     if k != new_partner_id:
                         print("adding & editing partners not done here")
                 else: 

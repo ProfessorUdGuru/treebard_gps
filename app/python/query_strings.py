@@ -832,6 +832,12 @@ select_findings_persons_id_kin_type1 = '''
     WHERE finding_id = ?
 '''
 
+select_findings_persons_id = '''
+    SELECT findings_persons_id
+    FROM findings_persons
+    WHERE finding_id = ?
+'''
+
 select_findings_persons_id_kin_type2 = '''
     SELECT findings_persons_id
     FROM findings_persons
@@ -859,10 +865,10 @@ select_findings_persons_parents = '''
     WHERE finding_id = ?
 '''
 
-select_findings_persons_persons_persons_id = '''
+select_findings_persons_ppid = '''
     SELECT persons_persons_id 
     FROM findings_persons
-    WHERE finding_id = ?
+    WHERE findings_persons_id = ?
 '''
 
 select_findings_roles_generic = '''
