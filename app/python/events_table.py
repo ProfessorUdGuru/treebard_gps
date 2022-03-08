@@ -1173,6 +1173,8 @@ class EventsTable(Frame):
         else: # user pressed OK to change current person for example   
             self.main_window.nuke_table.make_nuke_inputs()
 
+        # self.main_window.person_entry.focus_set()
+
         self.resize_scrollbar(self.root, self.main_canvas)
 
     def resize_scrollbar(self, root, canvas):
@@ -1651,7 +1653,9 @@ class NewEventDialog(Toplevel):
                 "Birth name of the other person.")])
 
     def close_new_event_dialog(self):
-        self.root.focus_set()
+        # self.root.focus_set()
+        self.events_table.event_input.focus_set()
+        # self.events_table.event_input.delete(0, 'end')
         self.root.lift()
         self.grab_release()
         self.destroy()

@@ -235,8 +235,6 @@ class Combobox(FrameHilited3):
             b.config(command=self.callback)
         if self.fit_height <= self.height:
             self.height = self.fit_height
-        else:
-            print("line", looky(seeline()).lineno, "case not handled")        
 
     def get_tip_widg(self, evt):
         '''

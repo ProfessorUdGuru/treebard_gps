@@ -447,7 +447,7 @@ class Main(Frame):
             self.date_options.prefcombos['Between...And...'].entry, 
             self.date_options.submit, self.date_options.revert)
                 
-        make_rc_menus(rcm_widgets, self.rc_menu, main_help_msg) 
+        make_rc_menus(rcm_widgets, self.rc_menu, main_help_msg)
 
     def get_current_values(self):
         self.current_person_name = get_any_name_with_id(self.current_person)

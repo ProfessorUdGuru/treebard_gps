@@ -516,10 +516,12 @@ colorizer_msg = (
         "one color.",
 )
 
-# families_msg = (
-    # "The partner can be unlinked from the current person by deleting the marital "
-        # "events that bind them together or by unlinking only the partner from "
-        # "the marital events.",
-# )
+families_msg = (
+    "To add a partner to the current person, click the ADD PARTNER button. "
+    "If it's grayed out, select the little round radio button to the left of "
+    "the buttons row. To add a parent to a child, make the child the current "
+    "person and add the parent to the family table there. To add a partner to "
+    "a couple event, double click the event in the event table.",
+)
 
 

@@ -12,7 +12,7 @@ from autofill import EntryAutoHilited, EntryAuto
 from scrolling import Scrollbar
 from names import (open_new_person_dialog, make_all_names_list_for_person_select,
     get_any_name_with_id, delete_person_from_tree, update_person_autofill_values)
-from messages import InputMessage
+from messages import InputMessage, open_message, families_msg
 from dates import format_stored_date, get_date_formats, OK_MONTHS
 from events_table import (
     get_current_person, delete_generic_finding, delete_couple_finding)
@@ -117,7 +117,6 @@ class NuclearFamiliesTable(Frame):
 
         self.nuke_containers = []
 
-        # self.delete_or_unlink_ok = False
         self.cancel_unlink_partner_pressed = False
 
         self.newkinvar = tk.IntVar()
@@ -171,10 +170,7 @@ class NuclearFamiliesTable(Frame):
 
         EntryAuto.all_person_autofills.extend([self.ma_input, self.pa_input])
         for ent in (self.pa_input, self.ma_input):
-            # ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
-            # ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
             ent.bind("<FocusIn>", self.get_original, add="+")
-            ent.bind("<FocusOut>", self.get_final, add="+")
             ent.bind("<Double-Button-1>", self.change_current_person)
         
 
@@ -267,7 +263,6 @@ class NuclearFamiliesTable(Frame):
         self.populate_nuke_tables()
         for widg in self.nuke_inputs:
             widg.bind("<FocusIn>", self.get_original, add="+")
-            widg.bind("<FocusOut>", self.get_final, add="+")
         if on_load:
             self.make_new_kin_inputs()
         self.new_kin_frame.grid(column=0, row=self.last_row, sticky="ew")
@@ -335,8 +330,6 @@ class NuclearFamiliesTable(Frame):
             pardent.insert(0, name)
             pardent.grid(column=2, row=n)
             EntryAuto.all_person_autofills.append(pardent)
-            # pardent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
-            # pardent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
             pardent.bind("<Double-Button-1>", self.change_current_person)
 
             v["inwidg"] = pardent
@@ -378,8 +371,6 @@ class NuclearFamiliesTable(Frame):
                     self.nuke_inputs.append(ent)
                     dkt["name_widg"] = ent
                     EntryAuto.all_person_autofills.append(ent)
-                    # ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
-                    # ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
                     ent.bind("<Double-Button-1>", self.change_current_person)
                 elif c == 2:
                     text = dkt["gender"]
@@ -546,10 +537,7 @@ class NuclearFamiliesTable(Frame):
 
             EntryAuto.all_person_autofills.extend([ent_l, ent_r])
             for ent in (ent_l, ent_r):
-                # ent.bind("<KeyRelease-Delete>", self.open_delete_or_unlink_dialog)
-                # ent.bind("<KeyRelease-BackSpace>", self.open_delete_or_unlink_dialog)
                 ent.bind("<FocusIn>", self.get_original, add="+")
-                ent.bind("<FocusOut>", self.get_final, add="+")
                 ent.bind("<Double-Button-1>", self.change_current_person) 
                 self.nuke_containers.append(ent)
             for lab in (lab_l, lab_r):
@@ -818,7 +806,6 @@ class NuclearFamiliesTable(Frame):
 
     def collect_couple_events(self, cur, conn):
         marital_events = self.get_marital_event_types(conn, cur) 
-        print("line", looky(seeline()).lineno, "marital_events:", marital_events)
         for lst in marital_events:
             if lst[1] == self.current_person:
                 del lst[1:3]
@@ -985,6 +972,14 @@ class NuclearFamiliesTable(Frame):
         print("hey kid")
 
     def get_original(self, evt):
+        """ The binding to FocusOut can't be done till a FocusIn event has
+            taken place because for some reason a FocusOut event was being
+            triggered when making a new event. This caused a mismatch between
+            self.original and self.final on one of the partner inputs, which 
+            opened the PersonAdd dialog when it wasn't wanted. This seems to 
+            have solved the problem but the cause of the problem was not found. 
+        """
+        evt.widget.bind("<FocusOut>", self.get_final, add="+")
         self.original = evt.widget.get()
 
     def change_current_person(self, evt):
@@ -1164,7 +1159,7 @@ class NuclearFamiliesTable(Frame):
                 
             message = "Select which events to unlink from whom:"
             self.partner_unlinker = Dialogue(self.root)
-
+            # self.partner_unlinker.grab_set()
             head = LabelHeader(
                 self.partner_unlinker.window, text=message, justify='left', wraplength=650)
             inputs = Frame(self.partner_unlinker.window)
@@ -1230,9 +1225,14 @@ class NuclearFamiliesTable(Frame):
                 if widg != v["inwidg"]:
                     continue
                 elif widg == v["inwidg"]:
-                    print("line", looky(seeline()).lineno, "k, new_partner_id:", k, new_partner_id)
-                    if k != new_partner_id:
-                        print("adding & editing partners not done here")
+                    if k is None and k != new_partner_id:
+                        msg = open_message(
+                        self, 
+                        families_msg[0], 
+                        "Can't Add Partner to Ambiguous Field", 
+                        "OK")
+                    msg[0].grab_set()
+                    return
                 else: 
                     print("line", looky(seeline()).lineno, "case not handled:")        
         for k,v in self.family_data[1].items():
@@ -1384,7 +1384,6 @@ class NuclearFamiliesTable(Frame):
         update_person_autofill_values()
 
     def get_final(self, evt):
-
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -1489,212 +1488,4 @@ class NuclearFamiliesTable(Frame):
 
         cur.close()
         conn.close()
-
-'''
-    Two means of determining partnership are used. 1) a couple has 
-    children together, or 2) a couple are linked by a common couple
-    event such as marriage or divorce regardless of whether they
-    have children together.
-
-    Trying to provide the user with options for unlinking (from one
-    or both persons involved, etc.) proved to be an ever-expanding bag of
-    worms. Seems better to do a simple unlink and let the user do
-    the work instead of giving the user unlink options that are wordy and 
-    hard to understand, including
-    the option to delete a person altogether, and
-    then write hundreds of lines of tangled, unmaintainable code to make it possible for the
-    program to do what the user should be carefully doing himself one
-    piece at a time so he'll know how the change was made and when. The rest of this was written in an attempt to figure out what to do, and the answer turned out to be,
-    "as little as possible"...
-
-    (old:)
-    Problem is, if user unlinks a partner from current person's
-    marriage event, should Treebard auto-unlink the partner from the
-    divorce event too? Since partnerships are detected only on the
-    basis of existing marital events if there are no children, the
-    answer is yes. Not unlinking the marital events from a deleted
-    partner. or not editing a changed name on marital events if the
-    partner's name is changed... would be a disaster. And the deleted
-    partner would show up on the nukes table if the links were left
-    intact. The only way around this would be to find another way
-    to detect childless couples that doesn't involve detecting
-    marital events. (What about kin types such as spouse, wife, etc.)
-
-    Couple events are determined by a boolean in the event_type 
-    database table. But not all couple events are evidence for 
-    a partnership that you'd want on the nukes (nuclear family) table.
-    But all couple events are treated the same in other ways, for 
-    example, if two people get engaged, the user only has to create 
-    the event for one of them, and Treebard auto-creates the event
-    for the other person; all couple events should work this way.
-
-    So a second boolean is used to distinguish non-binding couple
-    events such as "first kiss" or "engagement" or "marriage banns".
-    For inclusion in the nukes table, partnership will be marked
-    by the boolean column called "marital". This category includes
-    anything that should mark a partnership even if there are no children,
-    such as marriage, wedding, divorce, cohabitation, separation, etc.
-
-    (The event or dated attribute "marital status" isn't even a couple
-    event, since it makes no reference to who the partner is and would
-    be asked of one person at a time. Even if both partners in a couple 
-    answered this question at the same time, the user would have to 
-    enter each answer separately for the two people.)
-
-    Kin types are used to state for example that a partner is a spouse,
-    wife, husband, etc. They aren't used to detect anything, because
-    they are too loose, the user just decides what to call a partner,
-    such as "boyfriend", "mistress", etc. The event should have all the
-    power, not kin type, when it comes to determining partnership if 
-    there are no children to determine it. The user should be the one
-    to decide whether to include a mistress on the nukes table, by
-    inputting a cohabitation event, for example, for a man with a 
-    second family hidden away somewhere. Unlike some genieware, Treebard
-    differentiates between "spouse" and "mother of children", so it's
-    not necessary to create a hypothetical spouse in order to identify the
-    parents in a nuclear family.
-''' 
-
-# dev docs: parents & alternate parents
-'''
-    The database for person_id 1's biological parents looks like this:
-    select * from findings_persons where finding_id = 1;
-    findings_persons_id|finding_id|age1|kin_type_id1|age2|kin_type_id2|persons_persons_id
-    3|1|33|2|42|1|3
-    select * from finding where finding_id = 1;
-    finding_id|date|particulars|age|person_id|event_type_id|date_sorter
-    1|-1884-ap-7-------||0|1|1|1884,4,7
-    select * from persons_persons where persons_persons_id = 3;
-    persons_persons_id|person_id1|person_id2
-    3|2|3
-
-    Treebard auto-creates an offspring event for each biological parent 
-    based on the finding_id where event_type_id is 1 (birth event). Such
-    auto-created events use the same finding_id as the child's birth event.
-
-    Unlike birth, the terms "adoption" and "fosterage" refer to either parents (the fosterers) or 
-    child (the one fostered), so a distinguishing word pair corresponding
-    to birth/offspring (for child/parents) isn't necessary in English but would be desirable. It could be
-    correct to say that these are events with up to three participants:
-    a child and two parents. The event could be displayed as fosterage, adoption,
-    or guardianship for all the parties involved. But this would be
-    ambiguous because you'd have to guess based on age which is the child.
-    So the right way is to use more contrived but less ambiguous terms in
-    both the GUI and the code so everyone's role in the event can be 
-    instantly understood.
-
-    To keep the code symmetrical, the events adoption, guardianship, and 
-    fosterage will be treated like birth, as the event experienced by
-    the child. The more contrived terms will be used for the parents:
-    "adopted a child, granted guardianship, fostered a child".
-
-    Since it's possible for a person to be adopted or fostered by more
-    than one guardian or couple, the functionality of the
-    kintips will have to be expanded to show guardians when the user
-    points at an adoption, fosterage, or guardianship. The kintips will
-    name the child when the user points as the contrived events listed
-    above. The kintips are in addition to the inclusion of the pertinent
-    names in the immediate family table.
-
-    In the case of a guardianship, there's no semantic distinction between the 
-    male and female partner if the guardianship is granted to a couple, as there is with
-    terminology like adoptive mother or foster father.
-    If two guardians of the same child are
-    partners, they'll be in the same record in the persons_persons db table, so they would be displayed together as parents in the nukes table.
-    Otherwise, they'd be displayed on separate lines in both tables.
-
-    The user will have the option of displaying adoptive parents, foster
-    parents, and guardians with the roles feature. For example the user
-    might choose to show adoptive parents who raised a child for many
-    years as parents in the immediate family table, but show temporary
-    foster parents in the roles dialog. The user has to be free to do it
-    either way in any case, because an unofficial foster parent or a 
-    legal guardian could raise a child from birth to majority, or for
-    some substantial portion of his childhood, in which case the guardians
-    should be displayed as parents. It has to be up to the user, but to
-    show a pair of persons as parents, the parent system will have to be
-    used, rather than the role system.
-'''
-
-'''
-forum post1: 
-
-The alt parentage feature works now. It's straightforward and clear in the typical case, but I'll show screenshots of an atypical case where Treebard should only try to do so much vs. doing too much. This atypical case could be described succinctly in a report: 
-
-    Marge Robinson married Jack Swelto and they had a son named Terrence. They were divorced after a short time and Marge kept the boy, marrying Dwayne Franck shortly thereafter. Dwayne adopted Terrence whose name was legally changed to Terrence Franck. Marge and Dwayne had a child, Vespa Franck.
-
-This is a case where a few simple facts can be reported simply in prose but become messy in a table if you try to do too much. If you think the table would look messy, wait till you see what that code would look like.
-
-This case shows the limit to Treebard's family table as it exists right now. I don't think it's a serious problem but it threw me at first. I assumed it was doing something wrong but now I think it would be an unnecessary complification to "fix" it.
-
-The problem, if that's what it is, is that when you display Marge's current person page, Terrence is shown in the family table as Jack's son (correct) and Dwayne is shown as Marge's partner (correct), but Terrence is not shown as Dwayne's adopted son. This latter could be right or wrong depending on how you look at it. In Dwayne's event table, Terrence's adoption by Dwayne is shown as an event and Marge is shown as a partner in Dwayne's family table, with one child Vespa. But Terrence is not shown as a child of Marge in Dwayne's family table. Once again, this could be seen as either right or wrong, depending on what you expect.
-
-People have been trained by other genieware to expect couples to be treated as an entity and for data to be repeated redundantly. Treebard doesn't necessarily treat all couples as singular entities in every case, and Treebard tries to avoid redundancy.
-
-The reason Terrence's adoption doesn't show in Marge's family table under her partner Dwayne, and Terrence doesn't show as a child in Dwayne's family table under Marge, is that only Dwayne adopted the child. In terms of Terrence's adoption, Marge and Dwayne have little to do with each other, genealogically. Except she would have signed a paper to approve the adoption, but what I'm saying is that she didn't ADOPT the child like her 2nd husband did. 
-
-So I feel that this feature is working correctly. Treebard does not go in for redundancy. All the facts can quickly be gleaned by looking at the family tables and events table for the four people involved. Treebard sees everything from the point of view of the current person. The report feature (see above inset) would state this all quite succinctly.
-
-This could be changed so that Terrence would be listed under Dwayne on Marge's family table and Terrence would be listed under Marge on Dwayne's family table. This would result in the following questionable GUI features:
---Terrence would be listed twice in Marge's family table; once for each of her two partners.
---On Dwayne's family table, Terrence would be listed as Marge's son when Dwayne is not the child's father.
---On Marge's family table, Terrence would be listed as Dwayne's adopted son when Marge is not the adoptive mother.
-
-What it boils down to is a strict adherence to the current person point-of-view.
-
-Changing the family table to do these questionable things might be hard or easy, I don't know which, but since Treebard is showing only true things about all four people, and since the "problem" is that it's not lumping unrelated and/or redundant information in with the right stuff, I don't think there's a problem that needs to be addressed right now. All the pertinent facts are displayed in the tables. A table can't be expected to do what a report can do, or vice versa, and that's why both features exist.
-
-'''
-
-'''
-forum post2:
-
-The first draft of the families table is finished through parents and partners of the current person, leaving the children of each partner to finish as well as an input under the table where the user can enter names for new partners and children of the current person. In the description below, remember that everything in this table is supposed to be from the viewpoint of the current person only, not the family unit or the couple unit as such. Limiting the scope of the table prevents confusion and makes it harder for the user to mistakenly edit something with mysterious consequences that would then have to be tracked down and reversed one at a time.
-
-In the parents section, I chose to make it possible to 1) add a parent to a blank parent cell or 2) delete a parent link from the current person by simply deleting the name of the parent from the cell. Trying to make existing parents editable in any other way would complicate the code and violate the principle of limiting the uses to editing a person by first making that person the current person.
-
-As it turns out, the code for partners was close to finished, and here's how that currently works in regards to the set of children indented under each partner, if any. (It can be seen from the screenshots that the children section is not finished.)
-
-Each partner has a row flush left in the table. Under each partner is a set of children, if any, and the child rows are indented so the user can see the family unit(s) that have been entered for the current person. If needed, a scrollbar will appear, and it will be needed frequently because all the current person's partners and children appear in the table at once, a feature which might be unique to Treebard. Partners and children are sorted logically by any dates associated with marital events and childbirth events.
-
-We have to draw the line somewhere when it comes to editing other people on the current person tab. Similarly to the limitation on editing parents, partners can be added and deleted (unlinked from the current person), but to change an existing partner, the user has to change to the existing partner to the current person and (for example) delete the partner from a marital event. The point being, you can add partners to empty fields or delete existing partners, and that's all.
-
-This gets interesting when there are children of the current person whose other parent are unknown. There are a few ways to handle this.
-
-1) If the user enters nothing for some of the current person's children, these children will be lumped together under a partner row with no name.
-
-2) But what if the user knows or suspects that the children didn't have the same two parents? In that case, the user can enter underscores, a question mark, or whatever symbol they prefer to create a person in the table with an unknown name. For example, Jed has two children and we don't want them lumped together because we have no reason to believe they had the same mother, and we don't know who either mother was. The user can change each child in turn to the current person and enter "_____" (or whatever he prefers) for each child's mother. Then there will be two separate unknown partners on Jed's family table and each will have one child. 
-
-3) If the user prefers to keep the two children under one unknown partner, Treebard will already have them listed this way. Codewise it's important to realize that this unknown partner is not a person in the database, and this happens because Python's `None` is being used as a dictionary key. This could be coded out of the GUI by replacing `None` with a programmatically-created key, but the result would be one unknown partner for each child. I'd prefer to let the user make this decision for himself.
-
-I'm aware of the argument that users should not create fictitious names for their unknown people, and that's why I suggest using "_____" for each unknown person. By using the same symbol for all unknown persons in the tree, the user will make it possible to search all unknown people by searching names equal to the symbol or string of symbols.
-
-Relatedly, it is bad practice to use words instead of symbols to denote a missing name. The common practice of using "unknown" or "UNK" when a name is unknown could conceivably lead a genealogist who is unfamiliar with English to assume that a person's name was actually "Unk". Since that is my name, I'd prefer you didn't use it to refer to missing people.
-
-'''
-
-'''
-forum post 3:
-
-A key design fact to know about the family table is that partners of the current person are discovered for inclusion in the table by querying 1) marital events and 2) children common to the current person and each partner. A partner who's included in the table only on the basis of a marital event such as divorce or marriage or wedding will be listed by "wife", "spouse", "groom" or whatever kin type the user selects. But if there are children for the couple, then the partner will be labeled in the table as "Children's Mother", "Children's Foster Father", etc. To see if there are also marital events for the couple, the user can graze the events table for kin tips, i.e. tooltips naming the partner. This is all somewhat unusual and can be perfected later. What I like about it now is that it tells the user how the partner was chosen for the table. A partner might be included in the family table because of marital events, because of children, or both. The choice of wording on the labels gives some information about this. But down the road a less unexpected system of labeling partners might be found. What I won't ever do is to label a partner a "spouse" just because the partner and the current person have a child together. This is dishonest, or can be, say in the case where no marital events have been found.
-
-A happy side-effect of the family table is that if a partner has both marital events and children with the current person, and the user unlinks the partner from the children by deleting the partner's name from the family unit that has those children indented under it, then a new row will appear in the table listing the partner by kin type such as "spouse" or "husband".
-
-pic
-
-Another side effect of this design is that to use the family table to unlink a partner completely when there are both children and marital events, the partner's name would have to be deleted twice, except this isn't going to happen. Assuming the partnership includes children, the user will see "Children's Father" and delete the father's name. The father's name will reappear in its own row as "Husband" or "Spouse" or whatever the user has chosen as a kin type. The user might delete the name again, expecting to remove the person from the marital events involving the current person and that partner. (That's probably how most of the other genieware works.) But Treebard won't allow it, because for each marital event there are two people involved, and Treebard won't make decisions for the user based on a typical scenario or a best guess. In honor of the edge cases when the typical decision would be wrong, Treebard treats individual decisions as single elements and lets the user make each single decision himself. A message informs the user who tries to unlink a partner who is linked to the current person by only marital events (no children) that this can be accomplished in two ways: 1) by deleting the event, in which case both partners will be unlinked from the event which will no longer exist, including a dialog so the user can change their mind, or 2) by deleting the partner in question from the event while keeping the current person as a participant in the event with a now-unknown partner.
-
-In the first case, deleting the marital event from the partner's events table opens a dialog informing the user that both parties will be deleted from the event which will no longer exist. In the second case, the way to unlink only the partner from the event is for the user to delete the partner's name from the original current person's partner table cell. Treebard will show a dialog with all the marital events as rows and a set of checkbuttons for each event, in two columns. At the head of one column is the current person, at the head of column two is the partner. The partner's checkbuttons will be pre-checked for deletion from the event, but the user has the option of changing any of the checkbuttons. If all are selected, then both partners will be unlinked from all the marital events involving both partners. If none are selected, it will be the same as pressing CANCEL on the dialog.
-
-If a partner has no marital events linking them to the current person, just a child, then deleting the partner from the current person's family table will eliminate the partner's row completely from the family table in a single step, while placing the child in the "Children's Parent: [None]" group. From there, the user can change the the child to current person and give the child any parents desired.
-
-'''
-
-
-
-
-
-
-
-
 

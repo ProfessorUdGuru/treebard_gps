@@ -533,8 +533,6 @@ def make_date_dict(final):
         for item in lst:
             if item.isdigit():
                 nums.append(item)
-                print("line", looky(seeline()).lineno, "item:", item)
-                print("line", looky(seeline()).lineno, "under_two:", under_two)
                 if len(item) < 3:
                     if under_two > 0:
                         if clarify_year(nums, lst) is None:
