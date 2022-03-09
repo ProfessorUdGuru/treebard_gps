@@ -1213,6 +1213,7 @@ class EventsTable(Frame):
             widg.destroy() 
 
         self.main_window.nuke_table.nuke_containers = []
+        # self.main_window.nuke_table.original = ""
 
         self.main_window.nuke_table.family_data = [
             [

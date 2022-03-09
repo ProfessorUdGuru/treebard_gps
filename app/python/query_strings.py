@@ -64,6 +64,11 @@ delete_findings_persons = '''
     WHERE finding_id = ?
 '''
 
+delete_findings_persons_by_id = '''
+    DELETE FROM findings_persons
+    WHERE findings_persons_id = ?
+'''
+
 delete_findings_roles_finding = '''
     DELETE FROM findings_roles
     WHERE finding_id = ?

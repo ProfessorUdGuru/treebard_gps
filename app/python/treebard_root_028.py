@@ -1,6 +1,6 @@
-# treebard_root_027.py
+# treebard_root_028.py
 
-# retiring _026, it works but family table not finished and needs refactoring. Main goal right now for _027: # create from scratch a new procedure (singular) to create offspring and alt_parentage conclusions
+# retiring _027 to 1) consolidate various stray collections back into a single family_data dict (again) and 2) refactor the way name strings are displayed, stored and parsed.
 
 import tkinter as tk
 import sqlite3    
@@ -169,20 +169,38 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: kin_partners
+
+# BRANCH: names_refactor
+# refactor the way name strings are displayed, stored and parsed. see forum post . Plan in advance a simple way to ensure that AddPerson dialog will never open unwantedly.
+# Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
+# In save_new_name() in names.py, have to indicate whether the image is supposed to be main_image (1) vs (0). 1 is now the default in the insert query (insert_images_elements) to images_elements, which makes the new person's image display correctly for now; if it's made main and there's already a main_image the main has to be changed to 0 programmatically.
+# Don't let a default image be entered (see new person dialog) if a non-default image already exists for that person. If the person already has a default image, it can be changed to a different default image, a real image, or to no image.
+# If user selects his own photo as default, prepend "default_image_" to user's file name.
+# If no main_image has been input to db, Treebard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. Treebard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
+# export dbs to .sql
 
 # BRANCH: kin_child
+# consolidate various stray collections back into a single family_data dict (again) 
+# adding an existing person as father works but adding an existing person as mother opens PersonAdd wrongly unless it's the first thing you do; vice versa (switch father and mother above)
+# after checkbutton dlg works for deleting offspring, make sure it works for alt birth children
+# see `# WHAT ABOUT ALSO GETTING OFFSPRING/ALT BIRTH EVENTS HERE?`  2) make the list checks a list of dicts with a dict for events and a dict for children; 3) when making the dlg, put events at top and children below, not mixed up POINT BEING IF YOU CAN UNLINK EVENTS INDIVIDUALLY YOU HAVE TO BE ABLE TO UNLINK CHILDREN TOO BECAUSE THESE ARE THE 2 THINGS THAT GET PARTNERS INTO THE FAMILY TABLE
+# adding james to melodie's father input doesn't work; if you don't restart the app, the add father is then broken for all, ie it opens add person dialog when trying to add existing person as father; the latter problem will probably be fixed automatically when the former one is fixed.
+# if you delete an existing parent of child, 1) unlink dlg opens w/out checks and 2) if you click cancel it unlinks but should not. It's expected that this should do something since it works for childless partners linked only by marital events. Solution is to deal with children unlinking same as event unlinking on same dlg see above.
 # make a functionality for adding or changing one of the partners in a couple event; currently there's a way to delete a partner from an event, there's a way to delete an event, there's a way to create a new event, but no way to edit an existing event as to its partners; maybe just double click the event ie label that says 'wedding' to open a dialog (identical to the new event dialog?) wherein the partner can be edited. It has to do everything that could be done in the family table and more.
-# "Children's None" shd be "Children's Mother" or something, see Wesley Warren...'s partner/child
+# "Children's None" should be "Children's Mother" or something, see Wesley Warren...'s partner/child
+# still getting "name unknown" on some kintips?
 # unlink child on delete
 # make it possible to change gender, birth/death dates for children right there in the table
+# export dbs to .sql
 
 # BRANCH: kin_add_buttons
 # add parent button & radio; mother & father entries already exist even if blank but the radio allows input of alt parents
 # add partner/add child buttons & entry
+# export dbs to .sql
 
 # BRANCH: kin_change_curr_per
 # double click any name in table to change curr per
+# export dbs to .sql
 
 # BRANCH: kin_cleanup
 # make it impossible for a person to be their own parent, partner or child, see Nettie Womble who is her own father
@@ -193,14 +211,14 @@ if __name__ == '__main__':
 # rename queries not named acc to standard eg select_person_id_finding
 # add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f)
 # if the nuke_table is small, there's too much space above & below the top_pic. What if top_pic had rowspan=2?
-# new kin person Input will be parsed to use existing person if # and create new person if not. make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner. It is also possible to add someone with a name that already exists in the table, just not an id
+# new kin person Input will be parsed to use existing person if # and create new person if not. make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner. It is also possible to add someone with a name that already exists in the table, just not an ID
 # make it possible to change name, gender or date here & save in db; make it possible to unlink a person from the family by deleting their name from the table
 # the left margin of the child table should not vary depending on row widths. Compare James with Fannie, Fannie looks terrible bec her child has a short name and no dates. Fix Fannie to start at a left margin and James should then start at the same left margin.
 # get rid of dkt["order"] in the nukes table dict if it's not being used anywhere
 # Add to after death event types in default, default_untouched, and sample db's: autopsy, inquest.
 # see `if length == 2` in get_any_name_with_id() in names.py: this was just added and before that a similar process was done repeatedly in various places such as current_person display, wherever a name might need to be shown. Everything still works but this procedure should be deleted from where it's no longer needed since it's been added to get_any_name_with_id()
 # Did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thought the new class was supposed to replace all these as was done apparently already in dates.py. I thought the new class was made so these three overlapping large functions could be deleted from messages.py as well as the radio input message which hasn't even been tested.
-# getting this error sometimes when changing current person w/ id, as soon as # is typed:
+# getting this error sometimes when changing current person w/ ID, as soon as # is typed:
 # Exception in Tkinter callback
 # Traceback (most recent call last):
   # File "C:\Users\Lutherman\AppData\Local\Programs\Python\Python39\lib\tkinter\__init__.py", line 1884, in __call__
@@ -210,7 +228,7 @@ if __name__ == '__main__':
   # File "D:\treebard_gps\app\python\autofill.py", line 66, in do_it
     # self.show_hits(hits, self.pos)
 # AttributeError: 'EntryAutoHilited' object has no attribute 'pos'
-# colorizer: if click copy then immed click apply, error (pass? return?) Happens bec no scheme, so deal with if no scheme hilit, apply shd do nothing
+# colorizer: if click copy then immed click apply, error (pass? return?) Happens bec no scheme, so deal with if no scheme hilit, apply should do nothing
 # find all the usages of queries that have to be run twice to deal with columns that can be used either of 2 ways such as parent_id1/parent_id2 and rewrite the code so that the whole record is gotten once with select * (or as much as will be needed) and parse the record with python, assign values according to obvious correspondences
 # dump the sample db so repo will get the right stuff
 # put padding around attributes table
@@ -224,10 +242,12 @@ if __name__ == '__main__':
 # person search table is messed up. Same person shows for both mother and father. Sorting only works right for ID. Clicking a name to make the person current works but the nukes table is not redrawn.
 # rename names.py to persons.py and change everywhere.
 # go thru places where several db commits are called in a row and create transactions: BEGIN; COMMIT; so if there's an error I don't have to go thru and fix half-done stuff in db.
+# export dbs to .sql
 
 # BRANCH: dates
 
 # clarify_year might not working in dates.py, there is a chain of error messages, sometimes it has to be OK'd twice, and make sure it doesn't run on CANCEL and original value is returned to the input (InputMessage works now in notes.py and families.py for a model). Currently cancel seems to be deleting the date which moves the event to the attributes table. The second time it sort of works but deletes the number that's not a year. It also doesn't display AD on years less than 4 digits long.
+# export dbs to .sql
 
 # BRANCH: types
 
@@ -243,13 +263,7 @@ if __name__ == '__main__':
 # Failed to consider that font is also stored in format currently so a current_font_id needs to be stored in current as an fk but there is no table for font_schemes as there is for color schemes, nor should there be. A font scheme is a size and a family. Defaults for both exist in treebard.db already, re: output font. Defaults for input font aren't user changable. So a place is needed for 2 font columns and we don't want a bunch of saved schemes. The solution is to put the 2 columns in current. This leads to another question: what's the difference between current and closing_state? They both have one record. They're both used to open things the same way they were closed. Answer: they're both needed. Closing state is global stuff that applies no matter what tree is open or closed. Current needs a row for each tree. Make a new table in treebard.db called trees and one called current. Each tree will get a pk in trees. Then in closing state, there will be a prior_tree_id fk instead of a text field for prior_tree. Delete the column tree_is_open. In current there will be a record for each tree. So things can open the same way they were closed, without first opening the tree to read its prefs. So when a tree is created or destroyed, its name is added to or deleted from the trees table. Make a new table in treebard.db called current with this schema: current_id PK, tree_id refs tree.tree_id, cols for font size & family, fk col for color_scheme_id
 # types tab: have a combobox to change content from one type to another. Start with color schemes. Have a button to delete all hidden schemes (if not built-in).
 # drop table format from default.db, etc., copy to untouched.db, make a treebard_untouched.db to keep in app/default also
-
-# BRANCH: names_images
-# Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
-# In save_new_name() in names.py, have to indicate whether the image is supposed to be main_image (1) vs (0). 1 is now the default in the insert query (insert_images_elements) to images_elements, which makes the new person's image display correctly for now; if it's made main and there's already a main_image the main has to be changed to 0 programmatically.
-# Don't let a default image be entered (see new person dialog) if a non-default image already exists for that person. If the person already has a default image, it can be changed to a different default image, a real image, or to no image.
-# If user selects his own photo as default, prepend "default_image_" to user's file name.
-# If no main_image has been input to db, Treebard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. Treebard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
+# export dbs to .sql
 
 # BRANCH: dialogs
 # in each tab of each tabbook, use Map event to focus one of the widgets on that tab when that tab is switched to, see colorizer arrow_in_first() as an example
@@ -264,9 +278,11 @@ if __name__ == '__main__':
 # center content in prefs tabs
 # notes dialog: can't create a first note when none exist yet for a conclusion because of division by zero error in size_toc(); 20220220 mini-effort to fix this had consequences undealt-with; also re: autocreated kin events like adoption, fosterage, offspring, guardianship: make it possible to add/access/edit roles & notes on offspring/alt_parentage event rows of the events table; SEE "non_empty_roles, non_empty_notes"
 # get rid of checkbutton stuff in InputMessage and also radiobutton stuff if not used anywhere
+# export dbs to .sql
 
 # BRANCH: conclusions
-# change events_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, it is now time to start sticking to Treebard's core philosophy and differentiate between conclusions and assertions at all times. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs events table > conclusions table. And the first step is to change the name of the module from events_table.py to conclusions_table.py. Remember that conclusions are called findings in the code; "events" are cases where something like an event_type refers equally to assertions and conclusions (claims & findings) and never use "event" where "finding" shd be used.
+# change events_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, it is now time to start sticking to Treebard's core philosophy and differentiate between conclusions and assertions at all times. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs events table > conclusions table. And the first step is to change the name of the module from events_table.py to conclusions_table.py. Remember that conclusions are called findings in the code; "events" are cases where something like an event_type refers equally to assertions and conclusions (claims & findings) and never use "event" where "finding" should be used.
+# export dbs to .sql
 
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain because you sometimes don't remember what's in a clipboard till you try pasting it. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, like a plus sign, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing individual citations on nearly empty dialogs that you have to sift through looking for the right one, and seeing them all together might be useful for the sake of comparison.
@@ -274,9 +290,11 @@ if __name__ == '__main__':
 # Website: change "units of genealogy" to "elements of genealogy", add FAQ to Treebard Topics.
 # Get rid of the quote marks in the rcm messages, just use one long line per message.
 # Post new screenshots and announce next phase (export GEDCOM?).
+# export dbs to .sql
 
 # BRANCH: after_refactor
-# update the website, add topics eg parents (now incl alt parents), change screenshots & code in the forum
+# delete extraneous backups and rollbacks from hard drive, keep the backups only
+# update the website, add topics eg parents (now including alt parents), change screenshots & code in the forum
 # install virtual machine and linux
 # Export GEDCOM.
 # Make sure there's a way to make new person, new name, new place, new source, citation, etc. for all elements and types.
@@ -288,13 +306,14 @@ if __name__ == '__main__':
 # Combobox: when scrolling if the mouse strays off the scrollbar the dropdown undrops, I've seen a way to fix that but what was it?
 # Links tab: start with making a way to link any note to any element.
 # Files: when new empty tree is made, "name unknown" is a person in the db autofill list should not include this, search should not include this.
+# export dbs to .sql
 
 # ADD TO MAIN DO LIST:
 # nuke area on Person Tab: remove scrollbars & canvas & window if the hideable ones never appear, it seems they might not be necessary.
 # colorizer: get Tab traversal to trigger autoscroll when going from a visible to a non-visible row. Already works for arrow traversal.
 # colorizer: swatch_canvas: adding to mousewheel scrolling doesn't work
 # website topics: add a button at bottom to view all topics on one page, then create the page and upload it, with all topics on one page, this is so search engines will find the text, otherwise it's buried in javascript and can't be searched
-# NUKES TABLE on person tab: unhide kintype ids 3, 26, 27, 28 and make them work same as 1 & 2
+# NUKES TABLE on person tab: unhide kintype IDs 3, 26, 27, 28 and make them work same as 1 & 2
 
 # DEV DOCS:
 # Files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run.
