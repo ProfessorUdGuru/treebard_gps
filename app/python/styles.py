@@ -96,9 +96,10 @@ bgStd_fgStd = ('Sizer', 'LabelFrame')
 bgStd_fgStd_fontOut = ('Label',)
 
 bgLite_fgStd_fontIn_insFg = (
-    'Entry', 'Text', 'EntryAutoHilited', 'EntryHilited1')
+    'Entry', 'Text', 'EntryAutoHilited', 'EntryHilited1', 'EntryAutoPersonHilited')
 
-bgStd_fgStd_fontIn_insFg = ('EntryAuto', 'EntryAutofill', 'EntryUnhilited')
+bgStd_fgStd_fontIn_insFg = (
+    'EntryAuto', 'EntryAutofill', 'EntryUnhilited', 'EntryAutoPerson')
 
 bgStd_fgStd_fontIn = ('LabelEntry',)
 

@@ -8,7 +8,7 @@ from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
     LabelH3, Button, Entry, EntryHilited1, LabelHeader, LabelHilited,
     LabelNegative)
-from autofill import EntryAuto, EntryAutoHilited
+from autofill import EntryAuto, EntryAutoHilited, EntryAutoPerson
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
 from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator, run_statusbar_tooltips
@@ -1372,7 +1372,7 @@ class NewEventDialog(Toplevel):
         cur = conn.cursor()
 
         people = make_all_names_list_for_person_select()        
-        self.all_names = EntryAuto.create_lists(people)
+        self.all_names = EntryAutoPerson.create_lists(people)
 
         self.focus_new_event_dialog()
         self.get_some_info()
@@ -1618,7 +1618,7 @@ class NewEventDialog(Toplevel):
         spacer = Frame(self.couple_data_inputs)
 
         name2 = Label(self.couple_data_inputs, text="Partner")
-        self.other_person_input = EntryAutoHilited(
+        self.other_person_input = EntryAutoPersonHilited(
             self.couple_data_inputs, self.formats, width=48, autofill=True, 
             values=self.all_names)
         self.other_person_input.bind(

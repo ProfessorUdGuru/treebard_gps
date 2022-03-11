@@ -80,6 +80,7 @@ class Border(Canvas):
             self.border_bottom)
 
         Border.pool.append(self)
+        print("line", looky(seeline()).lineno, "Border.pool:", Border.pool)
         if self.master.winfo_name() != "tk":
             self.master.bind("<Destroy>", self.clean_pool)
         self.colorize_border()
@@ -94,8 +95,8 @@ class Border(Canvas):
                 widg.winfo_subclass() == "Border"):
             idx = Border.pool.index(widg)
             del Border.pool[idx]
-
-        Border.pool[0].colorize_border()
+        if len(Border.pool) != 0: # hack to use Dialogue class in misc test module
+            Border.pool[0].colorize_border()
 
     def set_title_bar_size(self):
         sizes = { 
@@ -489,10 +490,10 @@ class Dialogue(Toplevel):
         self.canvas.create_window(0, 0, anchor='nw', window=self.window)
 
     def resize_window(self):
-        '''
-            Added to requested width and height are allowances for widgets not
-            in self.window e.g. borders, statusbar.
-        '''
+        """ Call this to show the dialog. Added to requested width and height 
+            are allowances for widgets not in self.window such as borders, 
+            title bar, and status bar.
+        """
         self.update_idletasks()    
         width = self.window.winfo_reqwidth() + 6
         height = self.window.winfo_reqheight() + 42

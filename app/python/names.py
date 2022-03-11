@@ -9,7 +9,7 @@ from widgets import (
 from window_border import Border
 from custom_combobox_widget import Combobox  
 from scrolling import MousewheelScrolling, Scrollbar, resize_scrolled_content 
-from autofill import EntryAuto
+from autofill import EntryAutoPerson
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import person_add_help_msg
@@ -48,7 +48,7 @@ NAME_TYPES_HIERARCHY = (
     'legally changed name', 'pseudonym', 'pen name', 'stage name', 'nickname', 
     'call name', 'official name', 'anglicized name', 'religious order name', 
     'alternate spelling', 'mis-spelling', 'ID number', 'handle', 
-    'other name type', 'given name', 'unknown name', 'wrong name')
+    'other name type', 'given name', 'unknown name')
 
 def get_current_person():
     current_person_id = 1
@@ -93,7 +93,7 @@ def get_any_name_with_id(iD):
         has to be in the hierarchy.
 
         Returns 'name unknown' if no name or if the only available name type
-        is not considered viable, such as `wrong_name`.
+        is not considered viable.
 
         Since this viability hierarchy was applied, some names will not display
         at all, so the hierarchy should actually include all name types so one
@@ -117,7 +117,8 @@ def get_any_name_with_id(iD):
     current_file = get_current_file()[0]
     birth_name = get_name_with_id(iD)
     if len(birth_name) == 0:
-        use_name = 'name unknown'
+        use_name = ""
+        # use_name = 'name unknown'
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_name_with_id_any, (iD,))
@@ -137,56 +138,70 @@ def get_any_name_with_id(iD):
 
         return use_name
     else:
-        return birth_name    
+        return birth_name   
 
-def make_values_list_for_person_select():
-    ''' 
-        birth names only, probably not useful for autofills 
-    '''
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(select_birth_names_ids)
-
-    peeps = cur.fetchall()
-    peeps = [list(i) for i in peeps]
-
-    cur.close()
-    conn.close()
-
-    combo_peeps = sorted(peeps, key=lambda i: i[2])
-    people = []
-    for tup in combo_peeps:
-        line = '{}  #{}'.format(tup[0], tup[1])
-        people.append(line)
-    return people
-
-def make_all_names_list_for_person_select():
-    ''' 
-        all name types, best for autofill values 
-    '''
+def make_all_names_list_for_person_select(): # change to _dict_
+    """ Make a name dict for global use in all name autofills.
+    """
     current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_all_names_ids)
 
     peeps = cur.fetchall()
-    peeps = [list(i) for i in peeps]
 
     cur.close()
     conn.close()
 
-    combo_peeps = sorted(peeps, key=lambda i: i[2])
-    people = []
-    for tup in combo_peeps:
-        line = '{}  #{}'.format(tup[0], tup[1])
-        people.append(line)
-    return people
+    peeps = sorted(peeps, key=lambda i: i[2])
+    people = dict(peeps)
+    print("line", looky(seeline()).lineno, "people:", people)
+    return people 
+
+# people = {
+    # 12: {
+        # "birth name": "James Norton", "alt name": "James Woodland", 
+        # "alt name type": "adopted name", "sort order": "Woodland, James"},
+    # 1: {
+        # "birth name": "Jeremiah Grimaldo", "alt name": "G-Man", 
+        # "alt name type": "nickname", "sort order": "Grimaldo, Jeremiah"}, 
+    # 6: {
+        # "birth name": "Ronnie Webb", "alt name": "Miss Polly", 
+        # "alt name type": "stage name", "sort order": "Webb, Ronnie"}, 
+    # 5599: {
+        # "birth name": "", "alt name": "Selina Savoy", 
+        # "alt name type": "pseudonym", "sort order": "Savoy, Selina"}, 
+    # 5: {
+        # "birth name": "Donald Webb", "alt name": "Donny Boxer", 
+        # "alt name type": "nickname", "sort order": "Webb, Donald"}} 
+
+# def make_all_names_list_for_person_select():
+    # ''' 
+        # all name types, best for autofill values 
+    # '''
+    # current_file = get_current_file()[0]
+    # conn = sqlite3.connect(current_file)
+    # cur = conn.cursor()
+    # cur.execute(select_all_names_ids)
+
+    # peeps = cur.fetchall()
+    # peeps = [list(i) for i in peeps]
+
+    # cur.close()
+    # conn.close()
+
+    # combo_peeps = sorted(peeps, key=lambda i: i[2])
+    # people = []
+    # for tup in combo_peeps:
+        # line = '{}  #{}'.format(tup[0], tup[1])
+        # people.append(line)
+    # print("line", looky(seeline()).lineno, "people:", people)
+    # return people
 
 def update_person_autofill_values():
     people = make_all_names_list_for_person_select()
-    all_birth_names = EntryAuto.create_lists(people)
-    for ent in EntryAuto.all_person_autofills:
+    all_birth_names = EntryAutoPerson.create_lists(people)
+    for ent in EntryAutoPerson.all_person_autofills:
         ent.values = all_birth_names
 
 def get_all_persons():
@@ -273,8 +288,8 @@ def delete_person_from_tree(person_id):
     conn.commit()
 
     people = make_all_names_list_for_person_select()
-    all_birth_names = EntryAuto.create_lists(people)
-    for ent in EntryAuto.all_person_autofills:
+    all_birth_names = EntryAutoPerson.create_lists(people)
+    for ent in EntryAutoPerson.all_person_autofills:
         ent.values = all_birth_names
 
     cur.close()
@@ -624,7 +639,7 @@ class PersonAdd(Toplevel):
 
     def show(self):
         people = make_all_names_list_for_person_select()        
-        all_birth_names = EntryAuto.create_lists(people)
+        all_birth_names = EntryAutoPerson.create_lists(people)
 
         return self.new_person_id
 

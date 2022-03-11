@@ -171,12 +171,22 @@ if __name__ == '__main__':
 
 
 # BRANCH: names_refactor
+# 
+
+# add a small dialog to autofill.py that opens up if there is more than one exact match. User picks the right one. If that's not good enough he can manually open up search. Get rid of the ID field, the autofill already takes id input. This is an edge case, the duplicate name match dialog is the right way to deal with it. This is pretty much the only time the user needs to know an id anyway. At the bottom of the dlg put a button that opens search with the right person filled already.
+# deal with create_lists & prepend_match; now have to deal with the reason I made autofill strings like "James Woodland  #12" to begin with. It's because there could be more than James Woodland so the user can see which one filled in. This is where the new input comes in. When name fills into name input, the corresponding id fills into the id input. It's up to the user to decide if it's the wrong id, and if the right John Smith won't fill in, the user has to find the right id with search and fill it into the id input manually, press OK then all is well. Does this mean I'll need an id input for each name input? That would be unacceptable. So have to keep the feature where autofill workds by typing #12 to fill in his name. 
+# Put the old EntryAuto back for places and events and change EntryAutoHilited to EntryAutoPerson or inherit
+# Consider a global names dict which is created on load and refreshed whenever a person is added or deleted or whenever a person's name is changed or a name is added or deleted. The dict will be reachable from any module and it will be used for autofilling of name inputs, person search, changing current person, deciding on display names, nametips (both kinds--events table & person search results table), kintips, family table, etc. Instead of all these executions of get name with id, names will just be looked up whenever needed. Keys will include "birth name", "alt name", "person id", etc.
+# change names.py to persons.py 
+# get rid of 'name unknown' everywhere, all refs to it, I already replaced it with "" in get_any_name_with_id().
+# redo NAME_TYPES_HIERARCHY see get_any_name_with_id, add a column for the hierarchy and make it default 9999 so name types added will be low priority; this can be changable in types tab maybe later.
 # refactor the way name strings are displayed, stored and parsed. see forum post . Plan in advance a simple way to ensure that AddPerson dialog will never open unwantedly.
 # Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
 # In save_new_name() in names.py, have to indicate whether the image is supposed to be main_image (1) vs (0). 1 is now the default in the insert query (insert_images_elements) to images_elements, which makes the new person's image display correctly for now; if it's made main and there's already a main_image the main has to be changed to 0 programmatically.
 # Don't let a default image be entered (see new person dialog) if a non-default image already exists for that person. If the person already has a default image, it can be changed to a different default image, a real image, or to no image.
 # If user selects his own photo as default, prepend "default_image_" to user's file name.
 # If no main_image has been input to db, Treebard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. Treebard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
+# add self.id_entry to rcm_widgets in main.py
 # export dbs to .sql
 
 # BRANCH: kin_child

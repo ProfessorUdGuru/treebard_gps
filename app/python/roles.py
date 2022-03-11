@@ -8,7 +8,7 @@ from widgets import (
     Frame, Toplevel, Label, LabelButtonText, ButtonQuiet,
     LabelH3, Button, EntryHilited1, LabelHeader)
 from custom_combobox_widget import Combobox 
-from autofill import EntryAuto, EntryAutoHilited
+from autofill import EntryAutoPerson, EntryAutoPersonHilited
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import roles_dlg_help_msg, role_edit_help_msg
 from styles import config_generic
@@ -53,7 +53,7 @@ class RolesDialog(Toplevel):
 
         self.current_name = get_any_name_with_id(self.current_person)
         people = make_all_names_list_for_person_select()        
-        self.all_names = EntryAuto.create_lists(people)
+        self.all_names = EntryAutoPerson.create_lists(people)
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
         self.make_widgets()
@@ -175,7 +175,7 @@ class RolesDialog(Toplevel):
         self.role_type_input = Combobox(
             new_roles_area, self.root, values=self.role_types)
 
-        self.person_input = EntryAutoHilited(
+        self.person_input = EntryAutoPersonHilited(
             new_roles_area, self.formats, width=32, 
             autofill=True, values=self.all_names)
         
@@ -351,7 +351,7 @@ class RolesDialog(Toplevel):
         self.edit_role_type = Combobox(
             self.edit_row, self.root, values=self.role_types)
 
-        self.edit_role_person = EntryAutoHilited(
+        self.edit_role_person = EntryAutoPersonHilited(
             self.edit_row, self.formats, width=32, 
             autofill=True, values=self.all_names) 
 

@@ -8,7 +8,7 @@ from widgets import (
 from window_border import Dialogue
 from custom_combobox_widget import Combobox
 from files import get_current_file
-from autofill import EntryAutoHilited, EntryAuto    
+from autofill import EntryAutoPerson, EntryAutoPersonHilited 
 from scrolling import Scrollbar
 from names import (open_new_person_dialog, make_all_names_list_for_person_select,
     get_any_name_with_id, delete_person_from_tree, update_person_autofill_values)
@@ -152,11 +152,11 @@ class NuclearFamiliesTable(Frame):
         self.pardlabs.append(labelwidget)
         self.parentslab.config(labelwidget=labelwidget)
         palab = Label(self.parentslab, text="Father", anchor="e")
-        self.pa_input = EntryAuto(
+        self.pa_input = EntryAutoPerson(
             self.parentslab, width=30, autofill=True, cursor="hand2", 
             values=self.person_autofill_values, name="pa")
         malab = Label(self.parentslab, text="Mother", anchor="e")
-        self.ma_input = EntryAuto(
+        self.ma_input = EntryAutoPerson(
             self.parentslab, width=30, autofill=True, cursor="hand2",
             values=self.person_autofill_values, name="ma")
 
@@ -169,7 +169,7 @@ class NuclearFamiliesTable(Frame):
         malab.grid(column=2, row=0, sticky="ew", padx=(12,12), pady=(6,12))
         self.ma_input.grid(column=3, row=0, pady=(6,12), padx=(0,0))
 
-        EntryAuto.all_person_autofills.extend([self.ma_input, self.pa_input])
+        EntryAutoPerson.all_person_autofills.extend([self.ma_input, self.pa_input])
         for ent in (self.pa_input, self.ma_input):
             ent.bind("<FocusIn>", self.get_original, add="+")
             ent.bind("<Double-Button-1>", self.change_current_person)
@@ -203,7 +203,7 @@ class NuclearFamiliesTable(Frame):
             self.new_kin_frame, variable=self.newkinvar,
             value=100, anchor="w", 
             command=self.fix_button_state)
-        self.new_kin_input = EntryAutoHilited(
+        self.new_kin_input = EntryAutoPersonHilited(
             self.new_kin_frame, self.formats, width=48, 
             autofill=True, 
             values=self.person_autofill_values)
@@ -222,7 +222,7 @@ class NuclearFamiliesTable(Frame):
         self.pardmaker.grid(column=2, row=0, padx=(6,0), pady=(12,0))
         self.childmaker.grid(column=3, row=0, padx=(6,0), pady=(12,0))        
 
-        EntryAuto.all_person_autofills.append(self.new_kin_input)
+        EntryAutoPerson.all_person_autofills.append(self.new_kin_input)
 
     def get_marital_event_types(self, conn, cur):
 
@@ -323,14 +323,14 @@ class NuclearFamiliesTable(Frame):
                     pardframe, text=pard_kin_type, anchor="w")
             self.pardlabs.append(pardlab)
             pardlab.grid(column=1, row=n)
-            pardent = EntryAuto(
+            pardent = EntryAutoPerson(
                 pardframe, width=48, autofill=True, cursor="hand2", 
                 values=self.person_autofill_values, name=pard)
             if name == "name unknown":
                 name = ""
             pardent.insert(0, name)
             pardent.grid(column=2, row=n)
-            EntryAuto.all_person_autofills.append(pardent)
+            EntryAutoPerson.all_person_autofills.append(pardent)
             pardent.bind("<Double-Button-1>", self.change_current_person)
 
             v["inwidg"] = pardent
@@ -362,7 +362,7 @@ class NuclearFamiliesTable(Frame):
                     spacer.grid(column=c, row=r)
                 elif c == 1:
                     text = dkt["name"]
-                    ent = EntryAuto(
+                    ent = EntryAutoPerson(
                         progeny_frame, width=0, autofill=True, cursor="hand2", 
                         values=self.person_autofill_values)
                     if len(text) > self.findings_table.kin_widths[c]:
@@ -371,11 +371,11 @@ class NuclearFamiliesTable(Frame):
                     ent.grid(column=c, row=r, sticky="w")
                     self.nuke_inputs.append(ent)
                     dkt["name_widg"] = ent
-                    EntryAuto.all_person_autofills.append(ent)
+                    EntryAutoPerson.all_person_autofills.append(ent)
                     ent.bind("<Double-Button-1>", self.change_current_person)
                 elif c == 2:
                     text = dkt["gender"]
-                    ent = EntryAuto(progeny_frame, width=0)
+                    ent = EntryAutoPerson(progeny_frame, width=0)
                     if len(text) > self.findings_table.kin_widths[c]:
                         self.findings_table.kin_widths[c] = len(text)
                     ent.insert(0, text)
@@ -386,7 +386,7 @@ class NuclearFamiliesTable(Frame):
                     text = dkt["birth"]
                     if text in ("", "unknown"):
                         text = "(birth date)"
-                    ent = EntryAuto(progeny_frame, width=0)
+                    ent = EntryAutoPerson(progeny_frame, width=0)
                     if len(text) > self.findings_table.kin_widths[c]:
                         self.findings_table.kin_widths[c] = len(text)
                     ent.insert(0, text)
@@ -403,7 +403,7 @@ class NuclearFamiliesTable(Frame):
                     text = dkt["death"]
                     if text in ("", "unknown"):
                         text = "(death date)"
-                    ent = EntryAuto(progeny_frame, width=0)
+                    ent = EntryAutoPerson(progeny_frame, width=0)
                     if len(text) > self.findings_table.kin_widths[c]:
                         self.findings_table.kin_widths[c] = len(text)
                     ent.insert(0, text)
@@ -513,7 +513,7 @@ class NuclearFamiliesTable(Frame):
         j = 0
         for lst in alt_parent_details:
             lab_l = Label(self.parentslab, anchor="e")
-            ent_l = EntryAuto(
+            ent_l = EntryAutoPerson(
                 self.parentslab, width=30, autofill=True, cursor="hand2", 
                 values=self.person_autofill_values,
                 name="altparent_l{}".format(str(j)))
@@ -525,7 +525,7 @@ class NuclearFamiliesTable(Frame):
                 lab_l.config(text=lst[1]["kin_type"].title())
 
             lab_r = Label(self.parentslab, anchor="e")
-            ent_r = EntryAuto(
+            ent_r = EntryAutoPerson(
                 self.parentslab, width=30, autofill=True, cursor="hand2", 
                 values=self.person_autofill_values,
                 name="altparent_r{}".format(str(j)))
@@ -536,7 +536,7 @@ class NuclearFamiliesTable(Frame):
             if lst[2]["kin_type"]:
                 lab_r.config(text=lst[2]["kin_type"].title())
 
-            EntryAuto.all_person_autofills.extend([ent_l, ent_r])
+            EntryAutoPerson.all_person_autofills.extend([ent_l, ent_r])
             for ent in (ent_l, ent_r):
                 ent.bind("<FocusIn>", self.get_original, add="+")
                 ent.bind("<Double-Button-1>", self.change_current_person) 

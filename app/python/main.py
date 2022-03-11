@@ -24,7 +24,7 @@ from widgets import (
     LabelBoilerplate, LabelEntry, Radiobutton, LabelFrame)
 from window_border import Border
 from custom_tabbed_widget import TabBook
-from autofill import EntryAutoHilited, EntryAuto
+from autofill import EntryAutoPerson, EntryAutoPersonHilited
 from scrolling import Scrollbar    
 from families import NuclearFamiliesTable
 from events_table import EventsTable
@@ -83,7 +83,7 @@ class Main(Frame):
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
         all_names = make_all_names_list_for_person_select()
-        self.person_autofill_values = EntryAutoHilited.create_lists(all_names)
+        self.person_autofill_values = EntryAutoPersonHilited.create_lists(all_names)
         self.make_widgets()
         self.get_current_values()
 
@@ -128,11 +128,17 @@ class Main(Frame):
         self.current_person_label = LabelH2(current_person_area)
         change_current_person = LabelH3(
             current_person_area, text="Change current person to:")
-        self.person_entry = EntryAutoHilited(
-            current_person_area, self.formats, 
-            width=36,
+        # self.person_entry = EntryAutoPersonHilited(
+            # current_person_area, self.formats, 
+            # width=36,
+            # autofill=True)
+        current_person_frm = Frame(current_person_area)
+        self.person_entry = EntryAutoPersonHilited(
+            current_person_frm, self.formats, 
+            width=30,
             autofill=True)
-        EntryAuto.all_person_autofills.append(self.person_entry)
+        EntryAutoPerson.all_person_autofills.append(self.person_entry)
+        self.id_entry = EntryAutoPersonHilited(current_person_frm, self.formats, width=6)
         person_change = Button(
             current_person_area, text="OK", command=self.change_person)
         person_search = Button(
@@ -275,9 +281,14 @@ class Main(Frame):
         # children of current_person_area
         self.current_person_label.pack(side="left", fill="x", expand="0", padx=(0,12))
         change_current_person.pack(side="left", padx=(0,12))
-        self.person_entry.pack(side="left", padx=(0,12))
+        # self.person_entry.pack(side="left", padx=(0,12))
+        current_person_frm.pack(side="left", padx=(0,12))
         person_change.pack(side="left", padx=(0,12))
         person_search.pack(side="right")
+
+        # children of current_person_frm
+        self.person_entry.pack(side="left", padx=(0,12))
+        self.id_entry.pack(side="left", padx=(0,12))
 
         # children of images tab
         self.right_panel.store['images'].columnconfigure(0, weight=1)
@@ -287,8 +298,12 @@ class Main(Frame):
         visited = (
             (self.person_entry,
                 "New Current Person Entry",
-                "Any name of new current person and their ID will auto-fill "
-                    "when you start typing; a new person can be entered also. "),
+                "Any name and ID of a prospective new current person will auto-fill "
+                    "when you start typing; a new person can be entered also."),
+            (self.id_entry,
+                "New Current Person ID Entry",
+                "Any name of a prospective new current person will auto-fill at left "
+                    "when you input the ID of an existing person."),
             (person_change,
                 "New Current Person OK Button",
                 "Press OK to change current person as per input to the left."),
@@ -468,9 +483,7 @@ class Main(Frame):
             self.person_entry, 
             self.findings_table,
             self.show_top_pic,
-            self.formats,
-            # pic=None
-)    
+            self.formats)    
 
     def change_person(self):
         if "#" not in self.person_entry.get():
