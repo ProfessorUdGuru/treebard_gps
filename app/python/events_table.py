@@ -16,8 +16,10 @@ from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import new_event_dlg_help_msg
 from styles import config_generic, make_formats_dict
 from names import (
-    get_name_with_id, make_all_names_list_for_person_select,
-    open_new_person_dialog, get_any_name_with_id)
+    get_name_with_id, make_all_names_dict_for_person_select,
+    open_new_person_dialog, 
+    # get_any_name_with_id
+)
 from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places
@@ -299,9 +301,17 @@ def make_parent_kintips(dkt, current_person, cur):
         dad = parents[0]
         mom = parents[2]
         dkt["father_id"] = dad
-        dkt["father_name"] = get_any_name_with_id(dad)
+        # dkt["father_name"] = get_any_name_with_id(dad)
+        dad_name = person_autofill_values[dad]["birth name"]
+        if dad_name is None:
+            dad_name = person_autofill_values[dad]["alt name"]
+        dkt["father_name"] = dad_name
         dkt["mother_id"] = mom
-        dkt["mother_name"] = get_any_name_with_id(mom)
+        # dkt["mother_name"] = get_any_name_with_id(mom)
+        mom_name = person_autofill_values[mom]["birth name"]
+        if mom_name is None:
+            mom_name = person_autofill_values[mom]["alt name"]
+        dkt["mother_name"] = mom_name
 
 def make_alt_parent_kintips(
         dkt, current_person, cur, finding_id, 
@@ -331,12 +341,19 @@ def make_alt_parent_kintips(
         key2a = "{}_id2".format(key2)
         key2b = "{}_name2".format(key2)
 
-        parent1 = get_any_name_with_id(parents[0])
-        if parent1 == "name unknown":
-            parent1 = ""
-        parent2 = get_any_name_with_id(parents[2])
-        if parent2 == "name unknown":
-            parent2 = "" 
+        # parent1 = get_any_name_with_id(parents[0])
+        parent1 = person_autofill_values[parents[0]]["birth name"]
+        if parent1 is None:
+            parent1 = person_autofill_values[parents[0]]["alt name"]
+
+        # if parent1 == "name unknown":
+            # parent1 = ""
+        # parent2 = get_any_name_with_id(parents[2])
+        # if parent2 == "name unknown":
+            # parent2 = "" 
+        parent2 = person_autofill_values[parents[2]]["birth name"]
+        if parent2 is None:
+            parent2 = person_autofill_values[parents[2]]["alt name"]
 
         dkt[key1a] = parents[0]
         dkt[key1b] = parent1
@@ -984,7 +1001,10 @@ class EventsTable(Frame):
                             "fostered a child", "offspring"):
                         name = dkt.get("child_name")
                         if not name:
-                            name = get_any_name_with_id(dkt["child_id"])
+                            # name = get_any_name_with_id(dkt["child_id"])
+                            name = self.person_autofill_values[dkt["child_id"]]["birth name"]
+                            if name is None:
+                                name = self.person_autofill_values[dkt["child_id"]]["alt name"]
                         offspring_in = widg.bind(
                             "<Enter>", lambda evt, 
                             kin="child", name=name: self.handle_enter(kin, name))
@@ -995,7 +1015,10 @@ class EventsTable(Frame):
                     elif evtype in self.couple_event_types:
                         name = dkt.get("partner_name")
                         if not name:
-                            name = get_any_name_with_id(dkt["partner_id"])
+                            # name = get_any_name_with_id(dkt["partner_id"])
+                            name = self.person_autofill_values[dkt["partner_id"]]["birth name"]
+                            if name is None:
+                                name = self.person_autofill_values[dkt["partner_id"]]["alt name"]
                         couple_in = widg.bind(
                             "<Enter>", lambda evt, 
                             kin=dkt["partner_kin_type"], 
@@ -1371,7 +1394,7 @@ class NewEventDialog(Toplevel):
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
-        people = make_all_names_list_for_person_select()        
+        people = make_all_names_dict_for_person_select()        
         self.all_names = EntryAutoPerson.create_lists(people)
 
         self.focus_new_event_dialog()

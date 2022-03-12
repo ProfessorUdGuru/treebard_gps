@@ -80,7 +80,6 @@ class Border(Canvas):
             self.border_bottom)
 
         Border.pool.append(self)
-        print("line", looky(seeline()).lineno, "Border.pool:", Border.pool)
         if self.master.winfo_name() != "tk":
             self.master.bind("<Destroy>", self.clean_pool)
         self.colorize_border()

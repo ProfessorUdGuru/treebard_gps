@@ -1000,8 +1000,16 @@ select_name_person = '''
 '''
 
 select_name_sort_order = '''
-    SELECT
-        sort_order
+    SELECT sort_order
+    FROM name
+    JOIN person
+        ON person.person_id = name.person_id
+    WHERE name.person_id = ?
+        AND name_type_id = 1 
+'''
+
+select_name_sorter = '''
+    SELECT names, sort_order
     FROM name
     JOIN person
         ON person.person_id = name.person_id
@@ -1021,6 +1029,16 @@ select_name_with_id = '''
         ON name.person_id = person.person_id 
     WHERE name_type_id = 1
         AND name.person_id = ?
+'''
+
+select_name_type_sorter_with_id = '''
+    SELECT names, name_types, sort_order
+    FROM name 
+        JOIN person 
+            ON name.person_id = person.person_id
+        JOIN name_type 
+            ON name_type.name_type_id = name.name_type_id
+    WHERE name.person_id = ?
 '''
 
 select_name_with_id_any = '''

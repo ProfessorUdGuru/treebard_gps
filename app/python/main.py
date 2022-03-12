@@ -36,8 +36,9 @@ from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import main_help_msg
 from font_picker import FontPicker
 from names import (
-    make_all_names_list_for_person_select, open_new_person_dialog, 
-    get_any_name_with_id)
+    make_all_names_dict_for_person_select, open_new_person_dialog, 
+    # get_any_name_with_id
+)
 from search import PersonSearch
 from query_strings import (
     select_images_elements_main_image, select_current_person_id,
@@ -82,8 +83,9 @@ class Main(Frame):
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
-        all_names = make_all_names_list_for_person_select()
-        self.person_autofill_values = EntryAutoPersonHilited.create_lists(all_names)
+        # all_names = make_all_names_dict_for_person_select()
+        # self.person_autofill_values = EntryAutoPersonHilited.create_lists(all_names)
+        self.person_autofill_values = make_all_names_dict_for_person_select()
         self.make_widgets()
         self.get_current_values()
 
@@ -125,20 +127,35 @@ class Main(Frame):
         self.names_tab = Frame(self.main_tabs.store["names"])
         prefs_tab = Frame(self.main_tabs.store["preferences"])
 
+        # self.current_person_label = LabelH2(current_person_area)
+        # change_current_person = LabelH3(
+            # current_person_area, text="Change current person to:")
+        # # self.person_entry = EntryAutoPersonHilited(
+            # # current_person_area, self.formats, 
+            # # width=36,
+            # # autofill=True)
+        # current_person_frm = Frame(current_person_area)
+        # self.person_entry = EntryAutoPersonHilited(
+            # current_person_frm, self.formats, 
+            # width=30,
+            # autofill=True)
+        # EntryAutoPerson.all_person_autofills.append(self.person_entry)
+        # self.id_entry = EntryAutoPersonHilited(current_person_frm, self.formats, width=6)
+        # person_change = Button(
+            # current_person_area, text="OK", command=self.change_person)
+        # person_search = Button(
+            # current_person_area, 
+            # text="ADD/FIND", 
+            # command=self.open_person_search)
+
         self.current_person_label = LabelH2(current_person_area)
         change_current_person = LabelH3(
             current_person_area, text="Change current person to:")
-        # self.person_entry = EntryAutoPersonHilited(
-            # current_person_area, self.formats, 
-            # width=36,
-            # autofill=True)
-        current_person_frm = Frame(current_person_area)
         self.person_entry = EntryAutoPersonHilited(
-            current_person_frm, self.formats, 
-            width=30,
+            current_person_area, self.formats, 
+            width=36,
             autofill=True)
         EntryAutoPerson.all_person_autofills.append(self.person_entry)
-        self.id_entry = EntryAutoPersonHilited(current_person_frm, self.formats, width=6)
         person_change = Button(
             current_person_area, text="OK", command=self.change_person)
         person_search = Button(
@@ -278,17 +295,24 @@ class Main(Frame):
         # children of preferences tab
         options_tabs.grid(column=0, row=0, sticky="news", padx=12, pady=12)
 
+        # # children of current_person_area
+        # self.current_person_label.pack(side="left", fill="x", expand="0", padx=(0,12))
+        # change_current_person.pack(side="left", padx=(0,12))
+        # # self.person_entry.pack(side="left", padx=(0,12))
+        # current_person_frm.pack(side="left", padx=(0,12))
+        # person_change.pack(side="left", padx=(0,12))
+        # person_search.pack(side="right")
+
+        # # children of current_person_frm
+        # self.person_entry.pack(side="left", padx=(0,12))
+        # self.id_entry.pack(side="left", padx=(0,12))
+
         # children of current_person_area
         self.current_person_label.pack(side="left", fill="x", expand="0", padx=(0,12))
         change_current_person.pack(side="left", padx=(0,12))
-        # self.person_entry.pack(side="left", padx=(0,12))
-        current_person_frm.pack(side="left", padx=(0,12))
+        self.person_entry.pack(side="left", padx=(0,12))
         person_change.pack(side="left", padx=(0,12))
         person_search.pack(side="right")
-
-        # children of current_person_frm
-        self.person_entry.pack(side="left", padx=(0,12))
-        self.id_entry.pack(side="left", padx=(0,12))
 
         # children of images tab
         self.right_panel.store['images'].columnconfigure(0, weight=1)
@@ -300,10 +324,10 @@ class Main(Frame):
                 "New Current Person Entry",
                 "Any name and ID of a prospective new current person will auto-fill "
                     "when you start typing; a new person can be entered also."),
-            (self.id_entry,
-                "New Current Person ID Entry",
-                "Any name of a prospective new current person will auto-fill at left "
-                    "when you input the ID of an existing person."),
+            # (self.id_entry,
+                # "New Current Person ID Entry",
+                # "Any name of a prospective new current person will auto-fill at left "
+                    # "when you input the ID of an existing person."),
             (person_change,
                 "New Current Person OK Button",
                 "Press OK to change current person as per input to the left."),
@@ -465,7 +489,10 @@ class Main(Frame):
         make_rc_menus(rcm_widgets, self.rc_menu, main_help_msg)
 
     def get_current_values(self):
-        self.current_person_name = get_any_name_with_id(self.current_person)
+        # self.current_person_name = get_any_name_with_id(self.current_person)
+        self.current_person_name = self.person_autofill_values[self.current_person]["birth name"]
+        if self.current_person_name is None:
+            self.current_person_name = self.person_autofill_values[self.current_person]["alt name"]
         if type(self.current_person_name) is tuple:
             use_name = list(self.current_person_name)
             self.current_person_name = "({}) {}".format(use_name[1], use_name[0])
@@ -495,7 +522,10 @@ class Main(Frame):
         else:
             new_person = self.person_entry.get().split("#")
             self.current_person = int(new_person[1])
-        self.current_person_name = get_any_name_with_id(self.current_person)
+        # self.current_person_name = get_any_name_with_id(self.current_person)
+        self.current_person_name = self.person_autofill_values[self.current_person]["birth name"]
+        if self.current_person_name is None:
+            self.current_person_name = self.person_autofill_values[self.current_person]["alt name"]
         if type(self.current_person_name) is tuple:
             currents = list(self.current_person_name)
             self.current_person_name = currents[0]

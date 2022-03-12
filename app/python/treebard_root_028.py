@@ -171,12 +171,12 @@ if __name__ == '__main__':
 
 
 # BRANCH: names_refactor
-# 
-
-# add a small dialog to autofill.py that opens up if there is more than one exact match. User picks the right one. If that's not good enough he can manually open up search. Get rid of the ID field, the autofill already takes id input. This is an edge case, the duplicate name match dialog is the right way to deal with it. This is pretty much the only time the user needs to know an id anyway. At the bottom of the dlg put a button that opens search with the right person filled already.
-# deal with create_lists & prepend_match; now have to deal with the reason I made autofill strings like "James Woodland  #12" to begin with. It's because there could be more than James Woodland so the user can see which one filled in. This is where the new input comes in. When name fills into name input, the corresponding id fills into the id input. It's up to the user to decide if it's the wrong id, and if the right John Smith won't fill in, the user has to find the right id with search and fill it into the id input manually, press OK then all is well. Does this mean I'll need an id input for each name input? That would be unacceptable. So have to keep the feature where autofill workds by typing #12 to fill in his name. 
-# Put the old EntryAuto back for places and events and change EntryAutoHilited to EntryAutoPerson or inherit
-# Consider a global names dict which is created on load and refreshed whenever a person is added or deleted or whenever a person's name is changed or a name is added or deleted. The dict will be reachable from any module and it will be used for autofilling of name inputs, person search, changing current person, deciding on display names, nametips (both kinds--events table & person search results table), kintips, family table, etc. Instead of all these executions of get name with id, names will just be looked up whenever needed. Keys will include "birth name", "alt name", "person id", etc.
+# events table line 303 have to get a copy of person_autofill_values to events table somehow, inside some global namespace functions and also inside the class.
+# one of james' children (ross-5783, finding 668, fpid 93, ppid 25) has blank name...line 712 tup: (93, 668, 12, 2, 5635, 1), maybe because he has no birth name, his name is a stage name FIXED BY HACK,,, HAD TO DETECT A NAME = '', FIX THIS LINE 929... how did this happen (birth name shd be None): 
+    # line 929 self.person_autofill_values[born_id]: {'birth name': '', 'alt name': 'Ross Aldo Marquis', 'alt name type': 'stage name', 'sort order': 'Marquis, Ross Aldo'}
+# get rid of all uses of get_any_name_with_id and get_all_persons() and get_name_with_id() everywhere
+# there are lots of names where sort_order = ""
+# fix kintips for offspring
 # change names.py to persons.py 
 # get rid of 'name unknown' everywhere, all refs to it, I already replaced it with "" in get_any_name_with_id().
 # redo NAME_TYPES_HIERARCHY see get_any_name_with_id, add a column for the hierarchy and make it default 9999 so name types added will be low priority; this can be changable in types tab maybe later.
@@ -186,7 +186,7 @@ if __name__ == '__main__':
 # Don't let a default image be entered (see new person dialog) if a non-default image already exists for that person. If the person already has a default image, it can be changed to a different default image, a real image, or to no image.
 # If user selects his own photo as default, prepend "default_image_" to user's file name.
 # If no main_image has been input to db, Treebard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. Treebard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
-# add self.id_entry to rcm_widgets in main.py
+# put a separator btwn events and attributes
 # export dbs to .sql
 
 # BRANCH: kin_child

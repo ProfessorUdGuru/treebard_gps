@@ -28,7 +28,8 @@ from query_strings import (
     update_persons_persons_1_null, update_persons_persons_2_null,
     delete_finding_person, delete_claims_roles_person, delete_person,
     update_claims_persons_1_null, update_claims_persons_2_null,
-    delete_images_elements_person, delete_claim_person,    
+    delete_images_elements_person, delete_claim_person, select_name_sorter,
+    select_name_type_sorter_with_id, 
     )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -114,48 +115,141 @@ def get_any_name_with_id(iD):
         so that no one goes without a display name.
     """
 
-    current_file = get_current_file()[0]
-    birth_name = get_name_with_id(iD)
-    if len(birth_name) == 0:
-        use_name = ""
-        # use_name = 'name unknown'
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-        cur.execute(select_name_with_id_any, (iD,))
-        all_names_types = cur.fetchall()
-        for tup in all_names_types:
-            for name in NAME_TYPES_HIERARCHY:
-                if tup[1] == name:
-                    use_name = tup
-                    break
-        cur.close()
-        conn.close()
+    # current_file = get_current_file()[0]
+    # birth_name = get_name_with_id(iD)
+    # if len(birth_name) == 0:
+        # use_name = ""
+        # conn = sqlite3.connect(current_file)
+        # cur = conn.cursor()
+        # cur.execute(select_name_with_id_any, (iD,))
+        # all_names_types = cur.fetchall()
+        # for tup in all_names_types:
+            # for name in NAME_TYPES_HIERARCHY:
+                # if tup[1] == name:
+                    # use_name = tup
+                    # break
+        # cur.close()
+        # conn.close()
 
-        length = len(use_name)
-        if length == 2:
-            use_name = "{} ({})".format(
-                use_name[0], use_name[1])
+        # length = len(use_name)
+        # if length == 2:
+            # use_name = "{} ({})".format(
+                # use_name[0], use_name[1])
 
-        return use_name
-    else:
-        return birth_name   
+        # return use_name
+    # else:
+        # return birth_name   
 
-def make_all_names_list_for_person_select(): # change to _dict_
+
+# keys1 = (12, 1, 6, 5599, 5, 9898, 9999)
+# keys2 = ("birth name", "alt name", "alt name type", "sort order")
+# values = [
+    # ("James Norton", "James Woodland", "adopted name", "Woodland, James"),
+    # ("Jeremiah Grimaldo", "G-Man", "nickname", "Grimaldo, Jeremiah"),
+    # ("Ronnie Webb", "Miss Polly", "stage name", "Webb, Ronnie"),
+    # ("", "Selina Savoy", "pseudonym", "Savoy, Selina"),
+    # ("Donald Webb", "Donny Boxer", "nickname", "Webb, Donald"),
+    # ("John Smith", "Smitty", "nickname", "Smith, John"),
+    # ("John Smith", "Mack", "nickname", "Smith, John"),
+# ]
+
+# # inner_dict = list(zip(keys2, values))
+# # print(inner_dict)
+# inner_dict = []
+# for tup in values:
+    # indict = dict(zip(keys2, tup))
+    # inner_dict.append(indict)
+# # print(inner_dict)
+
+# outer_dict = dict(zip(keys1, inner_dict))
+# # print(outer_dict)
+# # {12: {'birth name': 'James Norton', 'alt name': 'James Woodland', 'alt name type': 'adopted name', 'sort order': 'Woodland, James'}, 1: {'birth name': 'Jeremiah Grimaldo', 'alt name': 'G-Man', 'alt name type': 'nickname', 'sort order': 'Grimaldo, Jeremiah'}, 6: {'birth name': 'Ronnie Webb', 'alt name': 'Miss Polly', 'alt name type': 'stage name', 'sort order': 'Webb, Ronnie'}, 5599: {'birth name': '', 'alt name': 'Selina Savoy', 'alt name type': 'pseudonym', 'sort order': 'Savoy, Selina'}, 5: {'birth name': 'Donald Webb', 'alt name': 'Donny Boxer', 'alt name type': 'nickname', 'sort order': 'Webb, Donald'}}
+
+# people = outer_dict
+
+PERSON_DATA = ("birth name", "alt name", "alt name type", "sort order")
+def make_all_names_dict_for_person_select():
     """ Make a name dict for global use in all name autofills.
     """
+
+    # def get_any_name(iD, cur):
+        # birth_name, sorter = ("", "")
+        # cur.execute(select_name_sorter, (iD,))
+        # result = cur.fetchone()
+        # if result:
+            # birth_name, sorter = result
+        # if len(birth_name) == 0:
+            # name_data = []
+            # cur.execute(select_name_type_sorter_with_id, (iD,))
+            # all_names_types = cur.fetchall()
+            # for tup in all_names_types:
+                # for alt_name_type in NAME_TYPES_HIERARCHY:
+                    # if tup[1] == alt_name_type:
+                        # name_data = list(tup)
+                        # break
+            # return [""] + name_data
+        # else:
+            # return birth_name, "", "", sorter
+
     current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
-    cur.execute(select_all_names_ids)
+    cur.execute(select_all_person_ids)
+    person_ids = [i[0] for i in cur.fetchall()]
+    values = []
+    for iD in person_ids:
+        # birth_name, name_data, alt_name_type, sort_order = get_any_name(iD)
+        values.append(get_any_name(iD, cur))
+    # print("line", looky(seeline()).lineno, "values[1:5]:", values[1:5])
 
-    peeps = cur.fetchall()
+    inner_dict = []
+    for tup in values:
+        indict = dict(zip(PERSON_DATA, tup))
+        inner_dict.append(indict)
 
     cur.close()
     conn.close()
 
-    peeps = sorted(peeps, key=lambda i: i[2])
-    people = dict(peeps)
-    print("line", looky(seeline()).lineno, "people:", people)
+    return dict(zip(person_ids, inner_dict))
+
+def get_any_name(iD, cur):
+    birth_name, sorter = ("", "")
+    cur.execute(select_name_sorter, (iD,))
+    result = cur.fetchone()
+    if result:
+        birth_name, sorter = result
+    if len(birth_name) == 0:
+        name_data = []
+        cur.execute(select_name_type_sorter_with_id, (iD,))
+        all_names_types = cur.fetchall()
+        for tup in all_names_types:
+            for alt_name_type in NAME_TYPES_HIERARCHY:
+                if tup[1] == alt_name_type:
+                    name_data = list(tup)
+                    break
+        return [""] + name_data
+    else:
+        return birth_name, "", "", sorter
+    
+
+def make_all_names_list_for_person_select(): # change to _dict_
+    """ Make a name dict for global use in all name autofills.
+    """
+# COMMENTED GOOD STUFF GETTING READY TO DELETE THIS FUNCTION SO JUST COVERING UP ERRORS NOW
+    people = []
+    # current_file = get_current_file()[0]
+    # conn = sqlite3.connect(current_file)
+    # cur = conn.cursor()
+    # cur.execute(select_all_names_ids)
+
+    # peeps = cur.fetchall()
+
+    # cur.close()
+    # conn.close()
+
+    # peeps = sorted(peeps, key=lambda i: i[2])
+    # people = dict(peeps)
+    # print("line", looky(seeline()).lineno, "people:", people)
     return people 
 
 # people = {
@@ -199,7 +293,8 @@ def make_all_names_list_for_person_select(): # change to _dict_
     # return people
 
 def update_person_autofill_values():
-    people = make_all_names_list_for_person_select()
+    people = make_all_names_dict_for_person_select()
+    # people = make_all_names_list_for_person_select()
     all_birth_names = EntryAutoPerson.create_lists(people)
     for ent in EntryAutoPerson.all_person_autofills:
         ent.values = all_birth_names

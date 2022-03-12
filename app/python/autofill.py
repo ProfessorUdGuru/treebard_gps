@@ -12,11 +12,7 @@ from dev_tools import looky, seeline
 
 
 
-# def update_person_autofill_values():
-    # people = make_all_names_list_for_person_select()
-    # all_birth_names = EntryAuto.create_lists(people)
-    # for ent in EntryAuto.all_person_autofills:
-        # ent.values = all_birth_names
+
 
 class EntryAutoPerson(EntryUnhilited):
     '''
@@ -28,14 +24,46 @@ class EntryAutoPerson(EntryUnhilited):
     all_person_autofills = []
 
     def create_lists(all_items):
+        """ Run this whenever autofill entries are being created to get the 
+            values for the autofill. After values change, run something like
+            update_person_autofill_values() which runs this function and 
+            updates the values of all the autofill entries.
+
+            Keeps a temporary list during one app session which will 
+            prioritize the autofill values with the most recently used values
+            given priority over the alphabetical list of the values not used in
+            the current session.
+
+            The `prepend_match()` method is used in conjuction with this 
+            to add the most recently used value to the very front of the list.
+
+            Since this function and the list `all_person_autofills` comprise a 
+            class-level procedure, values used and moved to the front of the 
+            list by one input will become available as first match to all the 
+            other inputs too, until the app is closed. Next time the app opens,
+            a fresh list of recently-used autofill values will be started.
+        """
+        # f = 0
+        # for k,v in all_items.items():
+            # if f < 25:
+                # print("line", looky(seeline()).lineno, "k:", k)
+            # f += 1
+        key_list = list(all_items.items())
+        # print("line", looky(seeline()).lineno, "key_list[0:5]:", key_list[0:5])
         recent_items = []
         all_items_unique = []
 
-        for item in all_items:
+        for item in key_list:
             if item not in recent_items:
                 all_items_unique.append(item)
-        final_items = recent_items + all_items_unique
-        print("line", looky(seeline()).lineno, "final_items, recent_items, all_items_unique:", final_items, recent_items, all_items_unique)
+        final_items = dict(recent_items + all_items_unique)
+        
+        # print("line", looky(seeline()).lineno, "final_items[0:5]:", final_items[0:5])
+        # for item in all_items:
+            # if item not in recent_items:
+                # all_items_unique.append(item)
+        # final_items = recent_items + all_items_unique
+        # print("line", looky(seeline()).lineno, "final_items, recent_items, all_items_unique:", final_items, recent_items, all_items_unique)
         return final_items
 
     def __init__(self, master, autofill=False, values=None, *args, **kwargs):
@@ -44,6 +72,7 @@ class EntryAutoPerson(EntryUnhilited):
         self.autofill = autofill
         self.values = values
 
+        self.pos = 0
         self.current_id = None
 
         if autofill is True:
@@ -84,8 +113,8 @@ class EntryAutoPerson(EntryUnhilited):
         # allow alphanumeric characters
         if len(key) == 1:
             do_it()
-        # allow hyphens and apostrophes
-        elif key in ('minus', 'quoteright'):
+        # allow pound signs, hyphens and apostrophes
+        elif key in ('numbersign', 'minus', 'quoteright'):
             do_it()
         # to do: look for other chars that should be allowed in nested names
         else:
@@ -94,7 +123,7 @@ class EntryAutoPerson(EntryUnhilited):
     def match_string(self):
         """ Match typed input to birth name, or alt name if no birth name. """
         def match_alt_string():
-            for key,val in use_list.items():
+            for key,val in self.values.items():
                 for k,v in val.items():
                     if k == "alt name":
                         if v.lower().startswith(got.lower()):
@@ -110,7 +139,7 @@ class EntryAutoPerson(EntryUnhilited):
 
         hits = []
         got = self.get()
-        use_list = self.values
+        # use_list = self.values
 # line 91 use_list: {12: {'birth name': 'James Norton', 'alt name': 'James Woodland', 'alt name type': 'adopted name', 'sort order': 'Woodland, James'}, 1: {'birth name': 'Jeremiah Grimaldo', 'alt name': 'G-Man', 'alt name type': 'nickname', 'sort order': 'Grimaldo, Jeremiah'}, 6: {'birth name': 'Ronnie Webb', 'alt name': 'Miss Polly', 'alt name type': 'stage name', 'sort order': 'Webb, Ronnie'}, 5599: {'birth name': '', 'alt name': 'Selina Savoy', 'alt name type': 'pseudonym', 'sort order': 'Savoy, Selina'}, 5: {'birth name': 'Donald Webb', 'alt name': 'Donny Boxer', 'alt name type': 'nickname', 'sort order': 'Webb, Donald'}}
         # for v in use_list.values():
             # for k,v in v.items():
@@ -120,7 +149,7 @@ class EntryAutoPerson(EntryUnhilited):
                     # elif v.lower().startswith(got.lower()):
                         # hits.append(v)
 
-        for key,val in use_list.items():
+        for key,val in self.values.items():
             for k,v in val.items():
                 if k == "birth name":
                     if len(v) == 0:
@@ -137,7 +166,7 @@ class EntryAutoPerson(EntryUnhilited):
     def show_hits(self, hits, pos):
         cursor = pos + 1
         if len(hits) != 0:
-            print("line", looky(seeline()).lineno, "hits:", hits)
+            # print("line", looky(seeline()).lineno, "hits:", hits)
             if len(hits) > 1:
                 first = hits[0][0]
                 all_same = False
@@ -147,13 +176,13 @@ class EntryAutoPerson(EntryUnhilited):
                     else:
                         all_same = False
                         break
-                print("line", looky(seeline()).lineno, "all_same:", all_same)
+                # print("line", looky(seeline()).lineno, "all_same:", all_same)
                 if all_same:
                     radval = self.open_dialog(hits)
                     self.delete(0, 'end')
                     self.insert(0, radval[0])
                     self.current_id = radval[1]
-                    print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
+                    # print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
                 else:
                     self.delete(0, 'end')
                     self.insert(0, hits[0][0])
@@ -168,11 +197,11 @@ class EntryAutoPerson(EntryUnhilited):
     def open_dialog(self, hits):
 
         def ok_dupe_name():
-            print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
+            # print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
             cancel_dupe_name()
     
         def search_dupe_name():
-            print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
+            # print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
             cancel_dupe_name()
 
         def cancel_dupe_name():
@@ -221,13 +250,33 @@ class EntryAutoPerson(EntryUnhilited):
         return self.right_id.get()
 
     def prepend_match(self, evt):
+        """ Determine which ID was used to fill in a value. Move the autofill
+            value corresponding with that ID to the front of the valus list.
+        """
+        print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
         # print("line", looky(seeline()).lineno, "self.values:", self.values)
         content = self.get()
-        if content in self.values:
+        if self.current_id in self.values:
+            key_list = list(self.values.items())
+            print("line", looky(seeline()).lineno, "key_list[0]:", key_list[0])
+            u = 0
+            for tup in key_list:
+                if tup[0] == self.current_id:
+                    idx = u
+                    break
+                u += 1
+            # idx = key_list.index(self.current_id)
+            print("line", looky(seeline()).lineno, "idx:", idx)
+            used = key_list.pop(idx)
+            key_list.insert(0, used)
+            print("line", looky(seeline()).lineno, "key_list[0]:", key_list[0])
+            self.values = dict(key_list)
+# STILL HAVE TO UPDATE GLOBAL LIST FOR ALL INSTANCES*************
+        # if content in self.values:
             # print("line", looky(seeline()).lineno, "content:", content)
-            idx = self.values.index(content)
-            del self.values[idx]
-            self.values.insert(0, content)
+            # idx = self.values.index(content)
+            # del self.values[idx]
+            # self.values.insert(0, content)
         # print("line", looky(seeline()).lineno, "self.values:", self.values)
 
     def deselect(self, evt):
