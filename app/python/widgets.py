@@ -424,6 +424,7 @@ class LabelDots(LabelButtonText):
             dialog_class,
             treebard,
             formats,
+            person_autofill_values=None,
             *args, **kwargs):
         LabelButtonText.__init__(self, master, *args, **kwargs)
 
@@ -431,6 +432,8 @@ class LabelDots(LabelButtonText):
         self.dialog_class = dialog_class
         self.treebard = treebard
         self.formats = formats
+        self.person_autofill_values = person_autofill_values
+
         self.current_person = None
         
         self.root = master.master
@@ -450,7 +453,8 @@ class LabelDots(LabelButtonText):
             self.current_person,
             self.treebard,
             self.formats,
-            pressed=evt.widget)
+            pressed=evt.widget,
+            person_autofill_values=self.person_autofill_values)
 
 class LabelBoilerplate(Labelx):
     ''' 

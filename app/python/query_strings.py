@@ -344,6 +344,10 @@ select_all_name_types = '''
     SELECT name_types FROM name_type ORDER BY name_types
 '''
 
+select_all_names = '''
+    SELECT names from name
+'''
+
 select_all_names_ids = '''
     SELECT names, name.person_id, sort_order 
     FROM name JOIN person 

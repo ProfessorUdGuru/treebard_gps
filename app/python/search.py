@@ -9,7 +9,7 @@ from styles import config_generic
 from widgets import (
     Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3,
     LabelNegative)
-from names import open_new_person_dialog, get_any_name_with_id
+from names import open_new_person_dialog
 from dates import OK_PREFIXES, format_stored_date
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
@@ -70,7 +70,7 @@ def get_matches(search_input):
 class PersonSearch(Toplevel):
     def __init__(
             self, master, root, treebard, entry, findings_table, 
-            show_top_pic, formats, *args, **kwargs): 
+            show_top_pic, formats, person_autofill_values, *args, **kwargs): 
             # show_top_pic, pic, formats, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
@@ -83,6 +83,7 @@ class PersonSearch(Toplevel):
         self.show_top_pic = show_top_pic
         # self.pic = pic
         self.formats = formats
+        self.person_autofill_values = person_autofill_values
 
         self.result_rows = []
         self.hilit_row = None
@@ -198,7 +199,8 @@ class PersonSearch(Toplevel):
                 inwidg=self.entry,
                 root=self.root,
                 inwidg2=self.search_input: open_new_person_dialog(
-                    master, inwidg, root, self.treebard, self.formats, inwidg2))
+                    master, inwidg, root, self.treebard, self.formats, 
+                    inwidg2, person_autofill_values=self.person_autofill_values))
 
         self.person_adder.grid(column=2, row=1, padx=12, pady=12)
 
@@ -361,7 +363,11 @@ class PersonSearch(Toplevel):
         if evt.type != '4':
             self.new_current_id = evt.widget['text']
 
-        self.new_current_person = get_any_name_with_id(self.new_current_id)
+        # self.new_current_person = get_any_name_with_id(self.new_current_id)
+        self.new_current_person = self.person_autofill_values[self.new_current_id]["birth name"]
+        if self.new_current_person is None or len(self.new_current_person) == 0:
+            self.new_current_person = self.person_autofill_values[self.new_current_id]["alt name"]
+            
         self.close_search_dialog()
         if type(self.new_current_person) is tuple:
             use_name = list(self.new_current_person)
@@ -477,10 +483,15 @@ class PersonSearch(Toplevel):
         self.row_list.append(self.found_person)
         self.other_names = unique_match[1]
 
-        self.display_name = get_any_name_with_id(self.found_person)
-        if type(self.display_name) is tuple:
-            self.display_name = "({}) {}".format(
-                self.display_name[1], self.display_name[0])
+        # self.display_name = get_any_name_with_id(self.found_person)        
+        # if type(self.display_name) is tuple:
+            # self.display_name = "({}) {}".format(
+                # self.display_name[1], self.display_name[0])
+
+        self.display_name = self.person_autofill_values[self.found_person]["birth name"]
+        if self.display_name is None or len (self.display_name) == 0:
+            self.display_name = self.person_autofill_values[self.found_person]["alt name"]
+            
 
         self.row_list.append(self.display_name)
         ext = [[], [], '', '', '', '', '', [], [], []]
@@ -592,6 +603,7 @@ class PersonSearch(Toplevel):
         self.row_list[8] = self.get_sort_names(self.pa_id)
 
     def get_ma(self):
+        name = None
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_persons_persons_ma_id1, (self.offspring_event,))
@@ -607,15 +619,23 @@ class PersonSearch(Toplevel):
                 self.ma_id = None
 
 
-        self.row_list[4] = get_any_name_with_id(self.ma_id)
-        if type(self.row_list[4]) is tuple:
-            self.row_list[4] = "({}) {}".format(
-                self.row_list[4][1], self.row_list[4][0])
+        # self.row_list[4] = get_any_name_with_id(self.ma_id)
+        if self.ma_id is not None:
+            name = self.person_autofill_values[self.ma_id]["birth name"]
+            if name is None or len(name) == 0:
+                name = self.person_autofill_values[self.ma_id]["alt name"]
+        
+        
+        self.row_list[4] = name
+        # if type(self.row_list[4]) is tuple:
+            # self.row_list[4] = "({}) {}".format(
+                # self.row_list[4][1], self.row_list[4][0])
 
         cur.close()
         conn.close()
 
     def get_pa(self):
+        name = None
         
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -631,11 +651,18 @@ class PersonSearch(Toplevel):
                 self.pa_id = pop[0]
             else:
                 self.pa_id = None
+        if self.pa_id is not None:
+            name = self.person_autofill_values[self.pa_id]["birth name"]
+            if name is None or len(name) == 0:
+                name = self.person_autofill_values[self.pa_id]["alt name"]
+        
+        self.row_list[5] = name
 
-        self.row_list[5] = get_any_name_with_id(self.pa_id)
-        if type(self.row_list[5]) is tuple:
-            self.row_list[5] = "({}) {}".format(
-                self.row_list[5][1], self.row_list[5][0])
+        # self.row_list[5] = get_any_name_with_id(self.pa_id)
+        
+        # if type(self.row_list[5]) is tuple:
+            # self.row_list[5] = "({}) {}".format(
+                # self.row_list[5][1], self.row_list[5][0])
 
         cur.close()
         conn.close()

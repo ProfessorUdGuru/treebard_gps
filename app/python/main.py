@@ -36,9 +36,7 @@ from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import main_help_msg
 from font_picker import FontPicker
 from names import (
-    make_all_names_dict_for_person_select, open_new_person_dialog, 
-    # get_any_name_with_id
-)
+    make_all_names_dict_for_person_select, open_new_person_dialog)
 from search import PersonSearch
 from query_strings import (
     select_images_elements_main_image, select_current_person_id,
@@ -83,8 +81,6 @@ class Main(Frame):
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
-        # all_names = make_all_names_dict_for_person_select()
-        # self.person_autofill_values = EntryAutoPersonHilited.create_lists(all_names)
         self.person_autofill_values = make_all_names_dict_for_person_select()
         self.make_widgets()
         self.get_current_values()
@@ -175,7 +171,12 @@ class Main(Frame):
             command=self.open_person_gallery)
 
         self.findings_table = EventsTable(
-            persons_tab, self.root, self.treebard, self, self.formats)
+            persons_tab, 
+            self.root, 
+            self.treebard, 
+            self, 
+            self.formats, 
+            self.person_autofill_values)
         self.current_person = self.findings_table.current_person
 
         self.nuke_table = NuclearFamiliesTable(
@@ -510,19 +511,20 @@ class Main(Frame):
             self.person_entry, 
             self.findings_table,
             self.show_top_pic,
-            self.formats)    
+            self.formats,
+            self.person_autofill_values)    
 
     def change_person(self):
         if "#" not in self.person_entry.get():
             old_current_person = self.current_person
             self.current_person = open_new_person_dialog(
-                self, self.person_entry, self.root, self.treebard, self.formats)
+                self, self.person_entry, self.root, self.treebard, self.formats, 
+                self.person_autofill_values)
             if self.current_person is None:
                 self.current_person = old_current_person
         else:
             new_person = self.person_entry.get().split("#")
             self.current_person = int(new_person[1])
-        # self.current_person_name = get_any_name_with_id(self.current_person)
         self.current_person_name = self.person_autofill_values[self.current_person]["birth name"]
         if self.current_person_name is None:
             self.current_person_name = self.person_autofill_values[self.current_person]["alt name"]

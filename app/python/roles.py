@@ -12,10 +12,9 @@ from autofill import EntryAutoPerson, EntryAutoPersonHilited
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import roles_dlg_help_msg, role_edit_help_msg
 from styles import config_generic
-# from styles import make_formats_dict, config_generic
-from names import (
-    get_any_name_with_id, make_all_names_list_for_person_select, PersonAdd,
-    get_all_persons)
+from names import ( 
+    make_all_names_dict_for_person_select, PersonAdd,
+    update_person_autofill_values)
 from scrolling import Scrollbar, resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from query_strings import (
@@ -36,7 +35,7 @@ from dev_tools import looky, seeline
 class RolesDialog(Toplevel):
     def __init__(
             self, master, finding_id, header, current_person, treebard,
-            formats, pressed=None, *args, **kwargs):
+            formats, pressed=None, person_autofill_values=None, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.root = master
@@ -46,14 +45,18 @@ class RolesDialog(Toplevel):
         self.treebard = treebard
         self.formats = formats
         self.pressed = pressed
+        self.persons = person_autofill_values
 
         self.role_types = []
-        self.persons = get_all_persons()
+        
         self.roles_per_finding = []
 
-        self.current_name = get_any_name_with_id(self.current_person)
-        people = make_all_names_list_for_person_select()        
+        self.current_name = self.persons[self.current_person]["birth name"]
+        if self.current_name is None:
+            self.current_name = self.persons[self.current_person]["alt name"]
+        people = make_all_names_dict_for_person_select()        
         self.all_names = EntryAutoPerson.create_lists(people)
+        self.all_names = self.person_autofill_values
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
         self.make_widgets()
@@ -177,7 +180,8 @@ class RolesDialog(Toplevel):
 
         self.person_input = EntryAutoPersonHilited(
             new_roles_area, self.formats, width=32, 
-            autofill=True, values=self.all_names)
+            autofill=True, values=self.persons) 
+            # autofill=True, values=self.all_names)
         
         self.add_butt = Button(
             new_roles_area, 
@@ -259,8 +263,12 @@ class RolesDialog(Toplevel):
             self.roles_per_finding = [list(i) for i in roles_per_finding]
 
         for lst in self.roles_per_finding:
-            name = get_any_name_with_id(lst[2])
-            lst.append(lst[2])
+            print("line", looky(seeline()).lineno, "lst:", lst)#line 268 lst: [250, 'assistant', None, 13]
+            iD = lst[2]
+            name = self.persons[iD]["birth name"]
+            if name is None or len(name) == 0:
+                name = self.persons[iD]["alt name"]
+            lst.append(iD)
             lst[2] = name
         cur.close()
         conn.close()
@@ -353,7 +361,8 @@ class RolesDialog(Toplevel):
 
         self.edit_role_person = EntryAutoPersonHilited(
             self.edit_row, self.formats, width=32, 
-            autofill=True, values=self.all_names) 
+            autofill=True, values=self.persons) 
+            # autofill=True, values=self.all_names) 
 
         self.ok_butt = Button( 
             self.edit_row, 
@@ -388,6 +397,7 @@ class RolesDialog(Toplevel):
         else:
             self.make_new_role_type(edited_role_type)
             self.update_role_type(edited_role_type)
+        print("line", looky(seeline()).lineno, "edited_role_person:", edited_role_person)
         if edited_role_person in self.persons:
             if edited_role_person != self.original_role_person:
                 self.change_role_person(edited_role_person)
@@ -468,15 +478,19 @@ class RolesDialog(Toplevel):
     def make_new_person(self, from_edit=False):
         if from_edit is False:
             self.person_add = PersonAdd(
-                self.root, self.person_input, self.root, None) 
+                self.root, self.person_input, self.root, self.treebard, None, 
+                self.formats, self.persons) 
         else:
             self.person_add = PersonAdd(
-                self.root, self.edit_role_person, self.root, None)
+                self.root, self.edit_role_person, self.root, self.treebard, None, 
+                self.formats, self.persons)
         self.person_add.gender_input.entry.focus_set()
+        # prevents a null from going into findings_roles for the person_id?
         self.wait_window(self.person_add)
-        self.persons = get_all_persons() 
+        update_person_autofill_values()
 
     def make_new_role(self, role_type):
+        print("line", looky(seeline()).lineno, "self.user_input_person:", self.user_input_person)
         if len(self.user_input_person) == 0: 
             self.person_input.focus_set()
             return
@@ -519,6 +533,7 @@ class RolesDialog(Toplevel):
         conn.close()
 
     def change_role_person(self, edited_role_person):
+        print("line", looky(seeline()).lineno, "edited_role_person:", edited_role_person)
         if "#" in edited_role_person:
             new_person_data = edited_role_person.split('  #')
         else:

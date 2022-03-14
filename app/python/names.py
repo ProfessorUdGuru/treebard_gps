@@ -1,4 +1,4 @@
-# names.py
+# persons.py
 
 import tkinter as tk
 import sqlite3
@@ -29,13 +29,14 @@ from query_strings import (
     delete_finding_person, delete_claims_roles_person, delete_person,
     update_claims_persons_1_null, update_claims_persons_2_null,
     delete_images_elements_person, delete_claim_person, select_name_sorter,
-    select_name_type_sorter_with_id, 
+    select_name_type_sorter_with_id, select_all_names,
     )
 import dev_tools as dt
 from dev_tools import looky, seeline
 
 
 
+person_autofill_values = None
 
 GENDER_TYPES = ('unknown', 'female', 'male', 'other')
 
@@ -73,124 +74,10 @@ def get_name_types():
 
     return name_types
 
-def get_name_with_id(iD):
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(select_name_with_id, (iD,))
-    full_name = cur.fetchone()
-
-    cur.close()
-    conn.close()
-
-    if full_name:
-        return full_name[0]
-    elif not full_name:
-        return ''
-
-def get_any_name_with_id(iD):
-    """ Get any available name that Treebard considers a viable name type
-        even if there is no birth name available. To be viable, the name type
-        has to be in the hierarchy.
-
-        Returns 'name unknown' if no name or if the only available name type
-        is not considered viable.
-
-        Since this viability hierarchy was applied, some names will not display
-        at all, so the hierarchy should actually include all name types so one
-        will display if it's all that's available.
-
-        Currently dealing with this problem with a hard-coded tuple 
-        NAME_TYPES_HIERARCHY which has to have each name type added to it. So if
-        the user creates a new name type, it will not be viable (the name won't display
-        if the person has no name type in the hierarchy.)
-
-        The solution is to let the user prioritize any added name types, 
-        by interfiling them in the tuple which will have to be a list. Birth 
-        name will be priority 1. All other names will be priority 2 or 3 or maybe
-        2 thru 5. This will be saved in the database for each type in a new column
-        called `hierarchy`. Then the hard-coded list could be dispensed with.
-
-        For now I'm just going to add non-viable name types to the end of the tuple
-        so that no one goes without a display name.
-    """
-
-    # current_file = get_current_file()[0]
-    # birth_name = get_name_with_id(iD)
-    # if len(birth_name) == 0:
-        # use_name = ""
-        # conn = sqlite3.connect(current_file)
-        # cur = conn.cursor()
-        # cur.execute(select_name_with_id_any, (iD,))
-        # all_names_types = cur.fetchall()
-        # for tup in all_names_types:
-            # for name in NAME_TYPES_HIERARCHY:
-                # if tup[1] == name:
-                    # use_name = tup
-                    # break
-        # cur.close()
-        # conn.close()
-
-        # length = len(use_name)
-        # if length == 2:
-            # use_name = "{} ({})".format(
-                # use_name[0], use_name[1])
-
-        # return use_name
-    # else:
-        # return birth_name   
-
-
-# keys1 = (12, 1, 6, 5599, 5, 9898, 9999)
-# keys2 = ("birth name", "alt name", "alt name type", "sort order")
-# values = [
-    # ("James Norton", "James Woodland", "adopted name", "Woodland, James"),
-    # ("Jeremiah Grimaldo", "G-Man", "nickname", "Grimaldo, Jeremiah"),
-    # ("Ronnie Webb", "Miss Polly", "stage name", "Webb, Ronnie"),
-    # ("", "Selina Savoy", "pseudonym", "Savoy, Selina"),
-    # ("Donald Webb", "Donny Boxer", "nickname", "Webb, Donald"),
-    # ("John Smith", "Smitty", "nickname", "Smith, John"),
-    # ("John Smith", "Mack", "nickname", "Smith, John"),
-# ]
-
-# # inner_dict = list(zip(keys2, values))
-# # print(inner_dict)
-# inner_dict = []
-# for tup in values:
-    # indict = dict(zip(keys2, tup))
-    # inner_dict.append(indict)
-# # print(inner_dict)
-
-# outer_dict = dict(zip(keys1, inner_dict))
-# # print(outer_dict)
-# # {12: {'birth name': 'James Norton', 'alt name': 'James Woodland', 'alt name type': 'adopted name', 'sort order': 'Woodland, James'}, 1: {'birth name': 'Jeremiah Grimaldo', 'alt name': 'G-Man', 'alt name type': 'nickname', 'sort order': 'Grimaldo, Jeremiah'}, 6: {'birth name': 'Ronnie Webb', 'alt name': 'Miss Polly', 'alt name type': 'stage name', 'sort order': 'Webb, Ronnie'}, 5599: {'birth name': '', 'alt name': 'Selina Savoy', 'alt name type': 'pseudonym', 'sort order': 'Savoy, Selina'}, 5: {'birth name': 'Donald Webb', 'alt name': 'Donny Boxer', 'alt name type': 'nickname', 'sort order': 'Webb, Donald'}}
-
-# people = outer_dict
-
 PERSON_DATA = ("birth name", "alt name", "alt name type", "sort order")
 def make_all_names_dict_for_person_select():
     """ Make a name dict for global use in all name autofills.
     """
-
-    # def get_any_name(iD, cur):
-        # birth_name, sorter = ("", "")
-        # cur.execute(select_name_sorter, (iD,))
-        # result = cur.fetchone()
-        # if result:
-            # birth_name, sorter = result
-        # if len(birth_name) == 0:
-            # name_data = []
-            # cur.execute(select_name_type_sorter_with_id, (iD,))
-            # all_names_types = cur.fetchall()
-            # for tup in all_names_types:
-                # for alt_name_type in NAME_TYPES_HIERARCHY:
-                    # if tup[1] == alt_name_type:
-                        # name_data = list(tup)
-                        # break
-            # return [""] + name_data
-        # else:
-            # return birth_name, "", "", sorter
-
     current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
@@ -198,10 +85,7 @@ def make_all_names_dict_for_person_select():
     person_ids = [i[0] for i in cur.fetchall()]
     values = []
     for iD in person_ids:
-        # birth_name, name_data, alt_name_type, sort_order = get_any_name(iD)
         values.append(get_any_name(iD, cur))
-    # print("line", looky(seeline()).lineno, "values[1:5]:", values[1:5])
-
     inner_dict = []
     for tup in values:
         indict = dict(zip(PERSON_DATA, tup))
@@ -235,91 +119,15 @@ def get_any_name(iD, cur):
 def make_all_names_list_for_person_select(): # change to _dict_
     """ Make a name dict for global use in all name autofills.
     """
-# COMMENTED GOOD STUFF GETTING READY TO DELETE THIS FUNCTION SO JUST COVERING UP ERRORS NOW
-    people = []
-    # current_file = get_current_file()[0]
-    # conn = sqlite3.connect(current_file)
-    # cur = conn.cursor()
-    # cur.execute(select_all_names_ids)
-
-    # peeps = cur.fetchall()
-
-    # cur.close()
-    # conn.close()
-
-    # peeps = sorted(peeps, key=lambda i: i[2])
-    # people = dict(peeps)
-    # print("line", looky(seeline()).lineno, "people:", people)
-    return people 
-
-# people = {
-    # 12: {
-        # "birth name": "James Norton", "alt name": "James Woodland", 
-        # "alt name type": "adopted name", "sort order": "Woodland, James"},
-    # 1: {
-        # "birth name": "Jeremiah Grimaldo", "alt name": "G-Man", 
-        # "alt name type": "nickname", "sort order": "Grimaldo, Jeremiah"}, 
-    # 6: {
-        # "birth name": "Ronnie Webb", "alt name": "Miss Polly", 
-        # "alt name type": "stage name", "sort order": "Webb, Ronnie"}, 
-    # 5599: {
-        # "birth name": "", "alt name": "Selina Savoy", 
-        # "alt name type": "pseudonym", "sort order": "Savoy, Selina"}, 
-    # 5: {
-        # "birth name": "Donald Webb", "alt name": "Donny Boxer", 
-        # "alt name type": "nickname", "sort order": "Webb, Donald"}} 
-
-# def make_all_names_list_for_person_select():
-    # ''' 
-        # all name types, best for autofill values 
-    # '''
-    # current_file = get_current_file()[0]
-    # conn = sqlite3.connect(current_file)
-    # cur = conn.cursor()
-    # cur.execute(select_all_names_ids)
-
-    # peeps = cur.fetchall()
-    # peeps = [list(i) for i in peeps]
-
-    # cur.close()
-    # conn.close()
-
-    # combo_peeps = sorted(peeps, key=lambda i: i[2])
-    # people = []
-    # for tup in combo_peeps:
-        # line = '{}  #{}'.format(tup[0], tup[1])
-        # people.append(line)
-    # print("line", looky(seeline()).lineno, "people:", people)
-    # return people
-
 def update_person_autofill_values():
     people = make_all_names_dict_for_person_select()
-    # people = make_all_names_list_for_person_select()
     all_birth_names = EntryAutoPerson.create_lists(people)
     for ent in EntryAutoPerson.all_person_autofills:
         ent.values = all_birth_names
 
-def get_all_persons():
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(select_all_person_ids)
-    person_ids = cur.fetchall()
-    person_ids = [i[0] for i in person_ids]
-    cur.close()
-    conn.close()
-    persons = []
-    for iD in person_ids:
-        name = get_any_name_with_id(iD)
-        if type(name) is tuple:
-            name = "{}  #{}".format(name[0], iD)
-        elif len(name) != 0:
-            name = '{}  #{}'.format(name, iD)
-        persons.append(name)
-    return persons
-
-def open_new_person_dialog(master, inwidg, root, treebard, formats, inwidg2=None):
-    person_add = PersonAdd(master, inwidg, root, treebard, inwidg2, formats)
+def open_new_person_dialog(
+        master, inwidg, root, treebard, formats, inwidg2=None, person_autofill_values=None):
+    person_add = PersonAdd(master, inwidg, root, treebard, inwidg2, formats, person_autofill_values)
     root.wait_window(person_add)
     new_person_id = person_add.show()
     return new_person_id
@@ -393,13 +201,14 @@ def delete_person_from_tree(person_id):
 class PersonAdd(Toplevel):
     def __init__(
             self, master, inwidg, root, treebard, inwidg2, 
-            formats, *args, **kwargs):
+            formats, person_autofill_values, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
         self.master = master
         self.inwidg = inwidg
         self.root = root
         self.inwidg2 = inwidg2
         self.formats = formats
+        self.person_autofill_values = person_autofill_values
 
         self.xfr = self.inwidg.get()
         self.role_person_edited = False
@@ -611,6 +420,8 @@ class PersonAdd(Toplevel):
         self.name_type_input.entry.insert(0, 'birth name')
         self.name_input.delete(0, 'end')
         get2 = self.inwidg2
+        # print("line", looky(seeline()).lineno, "get2:", get2)
+        # print("line", looky(seeline()).lineno, "get2.get():", get2.get())
         if get2 and len(get2.get()) != 0:
             self.name_input.insert(0, get2.get())
         elif get2 and len(get2.get()) == 0:
@@ -695,6 +506,8 @@ class PersonAdd(Toplevel):
             self.selected_image = selected_image 
 
     def save_new_name(self):
+        global person_autofill_values
+
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -732,6 +545,9 @@ class PersonAdd(Toplevel):
             child.config(text='')
         self.gender_input.delete(0, 'end')
 
+        update_person_autofill_values()
+        person_autofill_values = self.person_autofill_values
+
     def show(self):
         people = make_all_names_list_for_person_select()        
         all_birth_names = EntryAutoPerson.create_lists(people)
@@ -768,29 +584,53 @@ class PersonAdd(Toplevel):
             msg[0].destroy()
             self.reset()
             self.name_input.focus_set()
+
+# # THIS SHOULD BE DELETED
+        # def get_name_with_id(iD):
+            # # current_file = get_current_file()[0]
+            # # conn = sqlite3.connect(current_file)
+            # # cur = conn.cursor()
+            # cur.execute(select_name_with_id, (iD,))
+            # full_name = cur.fetchone()
+
+            # # cur.close()
+            # # conn.close()
+
+            # if full_name:
+                # return full_name[0]
+            # elif not full_name:
+                # return ''
  
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        cur.execute(select_all_person_ids)
-        all_people = cur.fetchall()
-        cur.close()
-        conn.close()
-        
-        all_people = [[i[0]] for i in all_people]
+        # # # cur.execute(select_all_person_ids)
+        # # # all_people = cur.fetchall()
+        # # # cur.close()
+        # # # conn.close()        
+        # # # all_people = [[i[0]] for i in all_people]
 
-        names_only = []
+        # # # names_only = []
 
-        for iD in all_people:
-            display_name = get_name_with_id(iD[0]) 
-            names_only.append(display_name)
-            iD.insert(0, display_name)
+        # # # for iD in all_people:
+            # # # display_name = get_name_with_id(iD[0])  
+            # # # # person_id = iD[0]
+            # # # # display_name = self.person_autofill_values[person_id]["birth name"] # NOT HERE, NAME DOESN'T EXIST YET
+            # # # # if display_name is None or len(display_name) == 0:
+                # # # # display_name = self.person_autofill_values[person_id]["alt name"]
+# # # # THIS IS A COMPLICATED WAY TO CREATE A LIST OF ALL EXISTING NAMES    
+            # # # names_only.append(display_name)
+            # # # iD.insert(0, display_name)
 
-        people_vals = []
-        for lst in all_people:
-            if not lst[0]:
-                lst[0] = ''
-            people_vals.append(' #'.join([lst[0], str(lst[1])]))
+        # # # people_vals = []
+        # # # for lst in all_people:
+            # # # if lst[0] is None:
+                # # # lst[0] = ''
+            # # # people_vals.append(' #'.join([lst[0], str(lst[1])]))
+
+        cur.execute(select_all_names)
+        names_only = [i[0] for i in cur.fetchall()]
+
         if self.full_name not in names_only:
             self.make_temp_person_id()
             self.make_sort_order_to_store()
@@ -809,6 +649,8 @@ class PersonAdd(Toplevel):
                 self.reset()
             else:
                 self.reset() 
+        cur.close()
+        conn.close()
 
     def reset(self):
         self.preset()

@@ -13,7 +13,6 @@ from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import notes_dlg_help_msg, links_dlg_help_msg
 from styles import config_generic
-from names import get_name_with_id, make_all_names_list_for_person_select
 from places import make_all_nestings    
 from messages import (
     open_yes_no_message, notes_msg, open_message, InputMessage)
@@ -39,7 +38,7 @@ class NotesDialog(Toplevel):
 
     def __init__(
             self, master, finding, header, current_person, treebard, 
-            formats, pressed=None, *args, **kwargs):
+            formats, pressed=None, person_autofill_values=None, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.root = master
@@ -49,13 +48,19 @@ class NotesDialog(Toplevel):
         self.treebard = treebard
         self.formats = formats
         self.pressed = pressed
+        self.person_autofill_values = person_autofill_values
 
         self.current_file = get_current_file()[0]
         self.selected = None
         self.topics = []
         self.notes = []
 
-        self.current_name = get_name_with_id(self.current_person)
+        # self.current_name = get_name_with_id(self.current_person)
+        self.current_name = self.person_autofill_values[self.current_person]["birth name"]
+        if self.current_name is None or len(self.current_name) == 0:
+            self.current_name = self.person_autofill_values[self.current_person]["alt name"]
+
+            
 
         self.privacy = tk.IntVar()
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
@@ -256,8 +261,8 @@ class NotesDialog(Toplevel):
             this dialog opens.
         '''
 
-        people = make_all_names_list_for_person_select()        
-        self.all_names = EntryAutoPersonHilited.create_lists(people)
+        # people = make_all_names_list_for_person_select()        
+        # self.all_names = EntryAutoPersonHilited.create_lists(people)
 
         places = make_all_nestings(select_all_place_ids)
         self.place_autofill_values = EntryAutoHilited.create_lists(places)
@@ -310,7 +315,8 @@ class NotesDialog(Toplevel):
         if self.link_type not in ELEMENTS:
             return
         elif self.link_type == "persons":
-            self.link_input.values = self.all_names
+            # self.link_input.values = self.all_names
+            self.link_input.values = self.person_autofill_values
         elif self.link_type == "places":
             self.link_input.values = self.place_autofill_values
         else:

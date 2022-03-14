@@ -467,31 +467,14 @@ class NuclearFamiliesTable(Frame):
             # This only runs when there are no parents recorded.
             self.family_data[0][0][0]["finding"] = birth_id
 
-        # if pa_id:
-            # pa_name = get_any_name(pa_id)
-        # if ma_id:
-            # ma_name = get_any_name(ma_id)
-        # for num in (pa_id, ma_id):
-            # for iD in 
-        # print("line", looky(seeline()).lineno, "pa_name, ma_name:", pa_name, ma_name)
-        # for iD in self.person_autofill_values:
-            # if iD in (pa_id, ma_id):
-                # print("line", looky(seeline()).lineno, "dkt:", dkt)
-        # for iD in (pa_id, ma_id):
-            # for person in self.person_autofill_values:
-                # if person == iD:
-                    # print("line", looky(seeline()).lineno, "self.person_autofill_values[iD]['birth name']:", self.person_autofill_values[iD]['birth name']) # OK BUT ?DON'T DO IN LOOP???*****
-
         for person in self.person_autofill_values:
             if person == pa_id:
                 pa_name = self.person_autofill_values[pa_id]["birth name"]
                 if pa_name is None:
                     pa_name = self.person_autofill_values[pa_id]["alt name"]
 
-                # print("line", looky(seeline()).lineno, "self.person_autofill_values[pa_id]['birth name']:", self.person_autofill_values[pa_id]['birth name']) 
         for person in self.person_autofill_values:
             if person == ma_id:
-                # print("line", looky(seeline()).lineno, "self.person_autofill_values[ma_id]['birth name']:", self.person_autofill_values[ma_id]['birth name']) 
                 ma_name = self.person_autofill_values[ma_id]["birth name"]
                 if ma_name is None:
                     ma_name = self.person_autofill_values[ma_id]["alt name"]
@@ -541,8 +524,6 @@ class NuclearFamiliesTable(Frame):
                 values=self.person_autofill_values,
                 name="altparent_l{}".format(str(j)))
             if lst[1]["kin_type"]:
-                print("line", looky(seeline()).lineno, "lst:", lst)
-# line 523 lst: [{'fpid': 113, 'ppid': 43, 'finding': 1069, 'sorter': [1888, 0, 0]}, {'id': 5807, 'name': None, 'kin_type_id': 112, 'kin_type': 'adoptive father', 'labwidg': None, 'inwidg': None}, {'id': 5808, 'name': None, 'kin_type_id': 111, 'kin_type': 'adoptive mother', 'labwidg': None, 'inwidg': None}]
                 ent_l.insert(0, lst[1]["name"])
             lst[1]["inwidg"] = ent_l
             lst[1]["labwidg"] = lab_l
@@ -709,8 +690,6 @@ class NuclearFamiliesTable(Frame):
             pardner = k
             if v["offspring"] is True:
                 for tup in births:
-                    print("line", looky(seeline()).lineno, "tup:", tup)
-#line 712 tup: (93, 668, 12, 2, 5635, 1)
                     order = "{}-{}".format(str(tup[3]), str(tup[5]))                
                     if tup[4] == pardner:                        
                         parent_type = tup[5]
@@ -831,13 +810,11 @@ class NuclearFamiliesTable(Frame):
             self.compound_parent_type = "{} or {}".format(self.compound_parent_type, parent_type)
         if self.compound_parent_type.startswith("Children's or"):
             self.compound_parent_type = self.compound_parent_type.replace("Children's or", "Children's")
-        # partner_name = get_any_name(pard_id)
-        print("line", looky(seeline()).lineno, "pard_id:", pard_id)
         if pard_id is None:
             partner_name = ""
         else:
             partner_name = self.person_autofill_values[pard_id]["birth name"]
-            if partner_name is None:
+            if partner_name is None or len(partner_name) == 0:
                 partner_name = self.person_autofill_values[pard_id]["alt name"]
             
         self.family_data[1][pard_id]["parent_type"] = self.compound_parent_type
@@ -891,13 +868,11 @@ class NuclearFamiliesTable(Frame):
                     AND event_type_id = 1                    
             ''',
             (dkt["birth_id"],)) 
-        print("line", looky(seeline()).lineno, "dkt:", dkt)
         result = cur.fetchone()
-        print("line", looky(seeline()).lineno, "result:", result)
         if result is None:
             return self.finish_alt_progeny_dict(dkt, cur)
         else:
-            born_id, birth_date = result 
+            born_id, birth_date = result
         cur.execute(
             '''
                 SELECT date
@@ -922,15 +897,9 @@ class NuclearFamiliesTable(Frame):
         gender = cur.fetchone()[0]
 
         sorter = self.make_sorter(birth_date)
-        # name = get_any_name(born_id)
-        # if name == "name unknown":
-            # name = ""
-
-        print("line", looky(seeline()).lineno, "self.person_autofill_values[born_id]:", self.person_autofill_values[born_id])
         name = self.person_autofill_values[born_id]["birth name"]
-        if name is None or len(name) == 0: # SHOULD NOT BE LEN 0... FIND AND FIX...
+        if len(name) == 0:
             name = self.person_autofill_values[born_id]["alt name"]
-        print("line", looky(seeline()).lineno, "name:", name)
         birth_date = format_stored_date(
             birth_date, date_prefs=self.date_prefs)
         death_date = format_stored_date(
@@ -1075,7 +1044,8 @@ class NuclearFamiliesTable(Frame):
 
         else:
             new_parent_id = open_new_person_dialog(
-                self, widg, self.root, self.treebard, self.formats)
+                self, widg, self.root, self.treebard, self.formats, 
+                self.person_autofill_values)
         if widg.winfo_name() == "pa":
             parent_type = 2
         elif widg.winfo_name() == "ma":
@@ -1149,7 +1119,8 @@ class NuclearFamiliesTable(Frame):
                 self.unlink_partners_dialog(cur, conn, widg)
             else:
                 new_partner_id = open_new_person_dialog(
-                    self, widg, self.root, self.treebard, self.formats)
+                    self, widg, self.root, self.treebard, self.formats,
+                    self.person_autofill_values)
             return new_partner_id
 
         orig = self.original
@@ -1232,7 +1203,6 @@ class NuclearFamiliesTable(Frame):
                 elif dkt["vars"] == [1, 0]:
                     unlink_partner(dkt["fpid"], [1, 0])
             for dkt in self.unlink_partners["children"]:
-                print("line", looky(seeline()).lineno, "dkt:", dkt)
                 if dkt["vars"] == [0, 0]:
                     continue
                 elif dkt["vars"] == [1, 1]:
@@ -1289,29 +1259,21 @@ class NuclearFamiliesTable(Frame):
         partner_id = None
         checks = {"events": [], "children": []}
         for k,v in self.family_data[1].items():
-            # THIS TEST WON'T WORK FOR DUPLICATE NAMES EG IF CURRPER HAD 2 PARTNERS W/ SAME NAME
-            # print("line", looky(seeline()).lineno, "v:", v)
-            # if v["partner_name"] == self.original:
             if v["inwidg"] == widg:
                 partner_id = k
                 break
 
         for event in self.family_data[1][partner_id]["marital_events"]:
             checks["events"].append(event)
-        # print("line", looky(seeline()).lineno, "checks:", checks)
-        # # WHAT ABOUT ALSO GETTING OFFSPRING/ALT BIRTH EVENTS HERE?
         for child in self.family_data[1][partner_id]["children"]:
             print("line", looky(seeline()).lineno, "child['name'], child['id']:", child['name'], child['id'])
             checks["children"].append(child)
-
-        # print("line", looky(seeline()).lineno, "checks:", checks)
             
         message = "Select which events/children to unlink from whom:"
         self.partner_unlinker = Dialogue(self.root)
         head = LabelHeader(
             self.partner_unlinker.window, text=message, justify='left', wraplength=650)
         inputs = Frame(self.partner_unlinker.window)
-        # self.current_person_name = get_any_name(self.current_person).split("(")[0]
         self.current_person_name = self.person_autofill_values[self.current_person]["birth name"]
         if self.current_person_name is None:
             self.current_person_name = self.person_autofill_values[self.current_person]["alt name"]
@@ -1341,11 +1303,6 @@ class NuclearFamiliesTable(Frame):
 
         g = f
         for child in checks["children"]: 
-            print("line", looky(seeline()).lineno, "child:", child)
-            # cur.execute(select_finding_details, (child["finding"],))
-            # event_id, event_date, event_type = cur.fetchone()
-            # event_date = format_stored_date(event_date, date_prefs=self.date_prefs)
-            # text = "{} {} (Conclusion #{}):".format(event_date, event_type, event_id)
             text = "{}  #{}:".format(child["name"], child["id"])
             kidlab = Label(inputs, text=text, anchor="e")
             kidlab.grid(column=0, row=g, sticky="e")
@@ -1358,7 +1315,6 @@ class NuclearFamiliesTable(Frame):
             chk1.grid(column=3, row=g)
             chk1.select()
             g += 1
-
 
         buttons = Frame(self.partner_unlinker.window)
         b1 = Button(
@@ -1424,7 +1380,8 @@ class NuclearFamiliesTable(Frame):
                 # HAVE TO BLANK OUT GENDER, BIRTH, DEATH TOO
             else:
                 child_id = open_new_person_dialog(
-                    self, widg, self.root, self.treebard, self.formats)
+                    self, widg, self.root, self.treebard, self.formats,
+                    self.person_autofill_values)
                 cur.execute(select_finding_id_birth, (child_id,))
                 birth_id = cur.fetchone()[0] # CANCEL THROWS ERROR HERE
                 cur.execute(select_person_id_gender, (child_id,))
@@ -1475,15 +1432,7 @@ class NuclearFamiliesTable(Frame):
             if widg == dkt["inwidg"]:
                 iD = dkt["id"]
                 name = dkt["name"]
-                print("line", looky(seeline()).lineno, "name:", name)
                 break
-        # bare_name = None
-        # if "(" in name:
-            # bare_name = name.split(" (")[-2]
-            # name_id = "{}  #{}".format(bare_name, iD)
-        # else:
-            # name_id = "{}  #{}".format(name, iD)
-        # ok_content = (name, name_id, bare_name, "") 
         ok_content = (name, "", "{}".format(iD), "#{}".format(iD))
         if len(self.original) != 0 and self.final not in ok_content:
             widg.delete(0, "end")
@@ -1512,7 +1461,8 @@ class NuclearFamiliesTable(Frame):
             alt_parent_id = final.split("  #")[1]        
         elif len(final) != 0:
             alt_parent_id = open_new_person_dialog(
-                self, widg, self.root, self.treebard, self.formats)
+                self, widg, self.root, self.treebard, self.formats,
+                self.person_autofill_values)
         elif len(final) == 0:
             alt_parent_id = None
 

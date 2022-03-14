@@ -171,15 +171,18 @@ if __name__ == '__main__':
 
 
 # BRANCH: names_refactor
-# events table line 303 have to get a copy of person_autofill_values to events table somehow, inside some global namespace functions and also inside the class.
-# one of james' children (ross-5783, finding 668, fpid 93, ppid 25) has blank name...line 712 tup: (93, 668, 12, 2, 5635, 1), maybe because he has no birth name, his name is a stage name FIXED BY HACK,,, HAD TO DETECT A NAME = '', FIX THIS LINE 929... how did this happen (birth name shd be None): 
-    # line 929 self.person_autofill_values[born_id]: {'birth name': '', 'alt name': 'Ross Aldo Marquis', 'alt name type': 'stage name', 'sort order': 'Marquis, Ross Aldo'}
-# get rid of all uses of get_any_name_with_id and get_all_persons() and get_name_with_id() everywhere
-# there are lots of names where sort_order = ""
-# fix kintips for offspring
 # change names.py to persons.py 
-# get rid of 'name unknown' everywhere, all refs to it, I already replaced it with "" in get_any_name_with_id().
-# redo NAME_TYPES_HIERARCHY see get_any_name_with_id, add a column for the hierarchy and make it default 9999 so name types added will be low priority; this can be changable in types tab maybe later.
+# get rid of 'name unknown' everywhere, all refs to it
+# redo NAME_TYPES_HIERARCHY see get_any_name_with_id, add a column for the hierarchy and make it default 9999 so name types added will be low priority; this can be changeable in types tab maybe later.
+# get change person feature to work with names, currently it works with #id
+# autofilling with ID has key error if input bad ID--open error message?
+# try to get rid of the function that opens PersonAdd and just instantiate PersonAdd like any other class; if it's found that the function is still needed, make a docstring to explain why
+# the process of creating and updating the person_autofill_values dict needs to be streamlined and customized to fit the new circumstances of the new dict collection which is created on load and passed around vs. the old way which was to create name strings on demand from the ID.
+# GET ADD PERSON TO WORK RIGHT STARTING WITH roles.py:
+# see roles.py line 500 `split('  #')` get rid of this and find anything else like it to get rid of
+# `if "  #" in` FIND AND DELETE EVERYWHERE
+# "James Woodland  #12" still displays in the edit row of roles dlg
+# roles.py line 490 updating person values upon closing person add dlg not working until close app & reload FIRST FIX ANY MISCELLANEOUS STUFF BELOW BEFORE FOCUSING IN ON ADD PERSON BECAUSE MANFUNCTIONS IN ADD PERSON IS WHERE THIS WHOLE PROJECT STARTED SO HAVE TO FINISH THE PROJECT BEFORE TACKLING THE PROBLEMS THAT MOTIVATED THE PROJECT
 # refactor the way name strings are displayed, stored and parsed. see forum post . Plan in advance a simple way to ensure that AddPerson dialog will never open unwantedly.
 # Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
 # In save_new_name() in names.py, have to indicate whether the image is supposed to be main_image (1) vs (0). 1 is now the default in the insert query (insert_images_elements) to images_elements, which makes the new person's image display correctly for now; if it's made main and there's already a main_image the main has to be changed to 0 programmatically.
@@ -187,7 +190,8 @@ if __name__ == '__main__':
 # If user selects his own photo as default, prepend "default_image_" to user's file name.
 # If no main_image has been input to db, Treebard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. Treebard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
 # put a separator btwn events and attributes
-# export dbs to .sql
+# make sure PersonAdd never opens when it should not
+# export .db and .tbd to .sql
 
 # BRANCH: kin_child
 # consolidate various stray collections back into a single family_data dict (again) 
