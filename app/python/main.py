@@ -33,10 +33,12 @@ from gallery import Gallery
 from colorizer import Colorizer
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
+from messages import open_message, main_msg
 from messages_context_help import main_help_msg
 from font_picker import FontPicker
-from names import (
-    make_all_names_dict_for_person_select, open_new_person_dialog)
+from persons import (
+    make_all_names_dict_for_person_select, open_new_person_dialog,
+    update_person_autofill_values)
 from search import PersonSearch
 from query_strings import (
     select_images_elements_main_image, select_current_person_id,
@@ -58,7 +60,8 @@ MAIN_TABS = (
 
 RIGHT_PANEL_TABS = (("images", "I"), ("do list", "O"))
 
-PREFS_TABS = (("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"), 
+PREFS_TABS = (
+    ("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"), 
     ("images", "M"))
 
 NUKE_HEADS = ("NAME OF CHILD", "GENDER", "DATE OF BIRTH", "DATE OF DEATH")
@@ -122,27 +125,6 @@ class Main(Frame):
         sources_tab = Frame(self.main_tabs.store["sources"], name="sourcetab")
         self.names_tab = Frame(self.main_tabs.store["names"])
         prefs_tab = Frame(self.main_tabs.store["preferences"])
-
-        # self.current_person_label = LabelH2(current_person_area)
-        # change_current_person = LabelH3(
-            # current_person_area, text="Change current person to:")
-        # # self.person_entry = EntryAutoPersonHilited(
-            # # current_person_area, self.formats, 
-            # # width=36,
-            # # autofill=True)
-        # current_person_frm = Frame(current_person_area)
-        # self.person_entry = EntryAutoPersonHilited(
-            # current_person_frm, self.formats, 
-            # width=30,
-            # autofill=True)
-        # EntryAutoPerson.all_person_autofills.append(self.person_entry)
-        # self.id_entry = EntryAutoPersonHilited(current_person_frm, self.formats, width=6)
-        # person_change = Button(
-            # current_person_area, text="OK", command=self.change_person)
-        # person_search = Button(
-            # current_person_area, 
-            # text="ADD/FIND", 
-            # command=self.open_person_search)
 
         self.current_person_label = LabelH2(current_person_area)
         change_current_person = LabelH3(
@@ -490,13 +472,12 @@ class Main(Frame):
         make_rc_menus(rcm_widgets, self.rc_menu, main_help_msg)
 
     def get_current_values(self):
-        # self.current_person_name = get_any_name_with_id(self.current_person)
         self.current_person_name = self.person_autofill_values[self.current_person]["birth name"]
-        if self.current_person_name is None:
+        if self.current_person_name is None or len(self.current_person_name) == 0:
             self.current_person_name = self.person_autofill_values[self.current_person]["alt name"]
-        if type(self.current_person_name) is tuple:
-            use_name = list(self.current_person_name)
-            self.current_person_name = "({}) {}".format(use_name[1], use_name[0])
+        # if type(self.current_person_name) is tuple:
+            # use_name = list(self.current_person_name)
+            # self.current_person_name = "({}) {}".format(use_name[1], use_name[0])
         self.current_person_label.config(
             text="Current Person (ID): {} ({})".format(
                 self.current_person_name, self.current_person))
@@ -515,30 +496,44 @@ class Main(Frame):
             self.person_autofill_values)    
 
     def change_person(self):
-        if "#" not in self.person_entry.get():
+
+        def err_done():
+            self.person_entry.delete(0, 'end')
+            msg[0].destroy()
+            self.person_entry.focus_set()
+
+        got = self.person_entry.get()
+
+        if len(got) != 0 and "#" not in got:
+            self.current_person = self.person_entry.current_id
+        if self.person_entry.current_id is None and "#" not in got:
             old_current_person = self.current_person
             self.current_person = open_new_person_dialog(
                 self, self.person_entry, self.root, self.treebard, self.formats, 
-                self.person_autofill_values)
+                person_autofill_values=self.person_autofill_values)
             if self.current_person is None:
                 self.current_person = old_current_person
+        elif "#" in got:
+            self.current_person = int(got.lstrip("#"))
+        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
+# autofill values need to be updated right here
+        self.person_autofill_values = update_person_autofill_values()
+        if self.person_autofill_values.get(self.current_person) is not None:
+            self.current_person_name = self.person_autofill_values[self.current_person]["birth name"]
+            if self.current_person_name is None or len(self.current_person_name) == 0:
+                self.current_person_name = self.person_autofill_values[self.current_person]["alt name"]
         else:
-            new_person = self.person_entry.get().split("#")
-            self.current_person = int(new_person[1])
-        self.current_person_name = self.person_autofill_values[self.current_person]["birth name"]
-        if self.current_person_name is None:
-            self.current_person_name = self.person_autofill_values[self.current_person]["alt name"]
-        if type(self.current_person_name) is tuple:
-            currents = list(self.current_person_name)
-            self.current_person_name = currents[0]
-            name_type = currents[1]
-            self.current_person_label.config(
-                text="Current Person (ID): ({}) {} ({})".format(
-                    name_type, self.current_person_name, self.current_person))
-        else:
-            self.current_person_label.config(
-                text="Current Person (ID): {} ({})".format(
-                    self.current_person_name, self.current_person))
+            msg = open_message(
+                self, 
+                main_msg[0], 
+                "Unknown Person ID", 
+                "OK")
+            msg[0].grab_set()
+            msg[2].config(command=err_done)
+            return
+        self.current_person_label.config(
+            text="Current Person (ID): {} ({})".format(
+                self.current_person_name, self.current_person))
         self.findings_table.current_person = self.current_person
         self.findings_table.kin_widths = [0, 0, 0, 0, 0]
         self.person_entry.delete(0, 'end')
@@ -562,20 +557,30 @@ class Main(Frame):
             current_person_name=self.current_person_name)
 
     def show_top_pic(self, current_file, current_dir, current_person):
+        """ Trying to change the file names on the default images created an
+            unprecedented problem I'll note here to save time in the future.
+            The program kept trying to use old values for image strings that
+            no longer existed anywhere. To solve it I had to hard code a value
+            for top_pic below (see 'SAVE FOREVER') and when the correct line was
+            uncommented, the old values had cleared and all was well. It took
+            two hours to get around to trying something so weird because SQLite
+            has never let me down before, however I suspect it might have been
+            Pillow that was trying to use a cached value, not SQLite.
+        """
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         if current_person is None:
             cur.execute(select_current_person_id)
             current_person = cur.fetchone()[0]
-        cur.execute(select_images_elements_main_image, (current_person,))        
-        top_pic = cur.fetchone()
+        cur.execute(select_images_elements_main_image, (current_person,)) #       
+        top_pic = cur.fetchone() #
+        # top_pic = "0_default_image_unisex.jpg" # SAVE FOREVER
         cur.close()
         conn.close()
         if top_pic:
             img_stg = ''.join(top_pic)
             new_stg = '{}treebard_gps/data/{}/images/{}'.format(
                 current_drive, current_dir, img_stg)
-
             top = Image.open(new_stg)
             img1 = ImageTk.PhotoImage(top, master=self.master)
 

@@ -524,4 +524,8 @@ families_msg = (
     "a couple event, double click the event in the event table.",
 )
 
+main_msg = (
+    "The person ID entered does not exist.",
+)
+
 

@@ -12,8 +12,8 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import sqlite3
 from files import get_current_file, current_drive, app_path
+from persons import get_current_person
 from styles import config_generic
-# from styles import make_formats_dict, config_generic
 from scrolling import Scrollbar, resize_scrolled_content
 from widgets import (
     Frame, Canvas, Button, Label, Radiobutton, FrameHilited4, 
@@ -22,7 +22,6 @@ from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import gallery_help_msg, gallery_thumbnail_help_msg
 from utes import create_tooltip
-from names import get_current_person
 from query_strings import (
     select_all_place_images, select_all_source_images, 
     select_all_person_images, select_current_person_id, 
@@ -60,7 +59,7 @@ class Gallery(Frame):
 
         self.current_file, self.current_dir = get_current_file()
 
-        self.main_pic = "default_image_unisex.jpg"
+        self.main_pic = "0_default_image_unisex.jpg"
         self.caption_text = ""
 
         if current_person_name:
@@ -477,7 +476,7 @@ class Gallery(Frame):
         copy = list(pix_data)
         pix_data = []
         for pic in copy:
-            if not pic[0].startswith("default_image"):
+            if not pic[0].startswith("0_default_image"):
                 pic_name = pic[0]
                 if not pic in pix_data:
                     pix_data.append(pic)        

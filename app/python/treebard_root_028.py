@@ -171,13 +171,14 @@ if __name__ == '__main__':
 
 
 # BRANCH: names_refactor
-# change names.py to persons.py 
-# get rid of 'name unknown' everywhere, all refs to it
-# redo NAME_TYPES_HIERARCHY see get_any_name_with_id, add a column for the hierarchy and make it default 9999 so name types added will be low priority; this can be changeable in types tab maybe later.
-# get change person feature to work with names, currently it works with #id
-# autofilling with ID has key error if input bad ID--open error message?
+# duplicate stored names dlg opening before the value fills in to the person_entry, try typing a z
+# IMAGE PROBLEM FIXED NOW REFACTOR THE PROCEDURE SO NOTHING IS HARD-CODED ANYWHERE AND TRY TO MAKE IT VERY SIMPLE SO SQLITE WON'T HAVE AN EXCUSE TO USE CACHED VALUES AND GET RID OF ALL THE EXTRA COPIES AND MAKE SURE THE ONLY COPIES ARE IN DEFAULT IMAGES FOLDER(S)
+# nothing below is true till it's fixed, when it's fixed find every `0_default` hard coded and get it without any hard-coding from a single place so this doesn't happen again, and make an input in a prefs tab so user can input his own images and choose default images and test it
+# "default_image_unisex.jpg" must be hard-coded somewhere but where???  the default images are kept in D:\treebard_gps\data\settings\images and shd be deleted everywhere else (2 or 3 other folders) and the code is in files.py at top `default_new_tree_images` MAKE DOCSTRING IN main.py
+# find the code that is getting default image `default_image_unisex.jpg` and fix the problem (app won't start because of this ?hard-coded value that I can't find anywhere... when fixed, get rid of the multiple storage places for this item and use the on in defaults only if possible from D:\treebard_gps\app\default\images and make a doc string so it won't be hard to find next time; if possible delete these images from the other 2 or 3 images directories where they exist
+# change names of default images so they alphabetize first in the combobox on add person dlg
+# the process of creating and updating the person_autofill_values dict needs to be streamlined and customized to fit the new circumstances of the new dict collection which is created on load and passed around vs. the old way which was to create name strings on demand from the ID. GET RID OF 2 GLOBALS EVEN IF IT MEANS MAKING THE GUI LESS SNAPPY
 # try to get rid of the function that opens PersonAdd and just instantiate PersonAdd like any other class; if it's found that the function is still needed, make a docstring to explain why
-# the process of creating and updating the person_autofill_values dict needs to be streamlined and customized to fit the new circumstances of the new dict collection which is created on load and passed around vs. the old way which was to create name strings on demand from the ID.
 # GET ADD PERSON TO WORK RIGHT STARTING WITH roles.py:
 # see roles.py line 500 `split('  #')` get rid of this and find anything else like it to get rid of
 # `if "  #" in` FIND AND DELETE EVERYWHERE
@@ -292,6 +293,8 @@ if __name__ == '__main__':
 # center content in prefs tabs
 # notes dialog: can't create a first note when none exist yet for a conclusion because of division by zero error in size_toc(); 20220220 mini-effort to fix this had consequences undealt-with; also re: autocreated kin events like adoption, fosterage, offspring, guardianship: make it possible to add/access/edit roles & notes on offspring/alt_parentage event rows of the events table; SEE "non_empty_roles, non_empty_notes"
 # get rid of checkbutton stuff in InputMessage and also radiobutton stuff if not used anywhere
+# change default image system instead of prepending 0_ to image names, have a boolean col in image table for the 5 default image male, female, unisex, place, source, and prepend these to the list when sorting; also the hard-coded string `0_default_image_unisex.jpg` needs to be a variable defined by a query instead of being hard-coded in gallery.py and persons.py
+# in main do list change names.py to persons.py
 # export dbs to .sql
 
 # BRANCH: conclusions

@@ -12,7 +12,7 @@ from autofill import EntryAutoPerson, EntryAutoPersonHilited
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import roles_dlg_help_msg, role_edit_help_msg
 from styles import config_generic
-from names import ( 
+from persons import ( 
     make_all_names_dict_for_person_select, PersonAdd,
     update_person_autofill_values)
 from scrolling import Scrollbar, resize_scrolled_content

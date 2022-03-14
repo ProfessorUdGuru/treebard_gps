@@ -1021,6 +1021,12 @@ select_name_sorter = '''
         AND name_type_id = 1 
 '''
 
+select_name_type_hierarchy = '''
+    SELECT name_types
+    FROM name_type
+    ORDER BY hierarchy
+'''
+
 select_name_type_id = '''
     SELECT name_type_id 
     FROM name_type

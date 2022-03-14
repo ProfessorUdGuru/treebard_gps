@@ -30,6 +30,7 @@ global_db_path = "{}treebard_gps/data/settings/treebard.db".format(
 default_new_tree = "{}treebard_gps/data/settings/default_new_tree.db".format(
     current_drive)
 default_new_tree_images = "{}treebard_gps/data/settings/images".format(current_drive)
+print("line", looky(seeline()).lineno, "default_new_tree_images:", default_new_tree_images)
 untouched_copy_default_new_tree = "treebard_gps/app/default/default_new_tree.db"
 
 print("current_path:", current_path)

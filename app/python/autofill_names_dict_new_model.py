@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from autofill import EntryAutoPersonHilited
-from names import make_all_names_dict_for_person_select
+from persons import make_all_names_dict_for_person_select
 import dev_tools as dt
 from dev_tools import looky, seeline
 

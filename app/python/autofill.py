@@ -6,7 +6,6 @@
 import tkinter as tk
 from widgets import EntryUnhilited, Radiobutton, Button, Frame, LabelHeader
 from window_border import Dialogue
-# from names import make_all_names_list_for_person_select
 import dev_tools as dt
 from dev_tools import looky, seeline
 

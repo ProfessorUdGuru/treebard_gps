@@ -10,7 +10,7 @@ from custom_combobox_widget import Combobox
 from files import get_current_file
 from autofill import EntryAutoPerson, EntryAutoPersonHilited 
 from scrolling import Scrollbar
-from names import (open_new_person_dialog, make_all_names_dict_for_person_select,
+from persons import (open_new_person_dialog, make_all_names_dict_for_person_select,
     delete_person_from_tree, update_person_autofill_values)
 from messages import InputMessage, open_message, families_msg
 from dates import format_stored_date, get_date_formats, OK_MONTHS
@@ -1159,7 +1159,6 @@ class NuclearFamiliesTable(Frame):
     def unlink_partners_dialog(self, cur, conn, widg):
 
         def ok_unlink_partner(checks):
-            print("line", looky(seeline()).lineno, "checks:", checks)
             copy = checks
             i = 0
             for dkt in copy["events"]:
@@ -1266,7 +1265,6 @@ class NuclearFamiliesTable(Frame):
         for event in self.family_data[1][partner_id]["marital_events"]:
             checks["events"].append(event)
         for child in self.family_data[1][partner_id]["children"]:
-            print("line", looky(seeline()).lineno, "child['name'], child['id']:", child['name'], child['id'])
             checks["children"].append(child)
             
         message = "Select which events/children to unlink from whom:"

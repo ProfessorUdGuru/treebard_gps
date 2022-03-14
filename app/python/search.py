@@ -9,7 +9,7 @@ from styles import config_generic
 from widgets import (
     Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3,
     LabelNegative)
-from names import open_new_person_dialog
+from persons import open_new_person_dialog
 from dates import OK_PREFIXES, format_stored_date
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus

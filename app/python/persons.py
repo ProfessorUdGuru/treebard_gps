@@ -29,7 +29,8 @@ from query_strings import (
     delete_finding_person, delete_claims_roles_person, delete_person,
     update_claims_persons_1_null, update_claims_persons_2_null,
     delete_images_elements_person, delete_claim_person, select_name_sorter,
-    select_name_type_sorter_with_id, select_all_names,
+    select_name_type_sorter_with_id, select_all_names, 
+    select_name_type_hierarchy,
     )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -45,12 +46,13 @@ NAME_SUFFIXES = (
     'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 
     'ix', 'x', 'xi', 'xii', 'xiii', 'xiv', 'xv')
 
-NAME_TYPES_HIERARCHY = (
-    'reference name', 'adoptive name', 'also known as', 'married name', 
-    'legally changed name', 'pseudonym', 'pen name', 'stage name', 'nickname', 
-    'call name', 'official name', 'anglicized name', 'religious order name', 
-    'alternate spelling', 'mis-spelling', 'ID number', 'handle', 
-    'other name type', 'given name', 'unknown name')
+current_file = get_current_file()[0]
+conn = sqlite3.connect(current_file)
+cur = conn.cursor()
+cur.execute(select_name_type_hierarchy)
+NAME_TYPES_HIERARCHY = [i[0] for i in cur.fetchall()]
+cur.close()
+conn.close()
 
 def get_current_person():
     current_person_id = 1
@@ -60,6 +62,8 @@ def get_current_person():
     cur = conn.cursor()
     cur.execute(select_current_person)
     result = cur.fetchone()
+    cur.close()
+    conn.close()
     return result
 
 def get_name_types():
@@ -107,7 +111,7 @@ def get_any_name(iD, cur):
         cur.execute(select_name_type_sorter_with_id, (iD,))
         all_names_types = cur.fetchall()
         for tup in all_names_types:
-            for alt_name_type in NAME_TYPES_HIERARCHY:
+            for alt_name_type in NAME_TYPES_HIERARCHY[1:]:
                 if tup[1] == alt_name_type:
                     name_data = list(tup)
                     break
@@ -115,22 +119,13 @@ def get_any_name(iD, cur):
     else:
         return birth_name, "", "", sorter
     
-
-def make_all_names_list_for_person_select(): # change to _dict_
-    """ Make a name dict for global use in all name autofills.
-    """
 def update_person_autofill_values():
     people = make_all_names_dict_for_person_select()
-    all_birth_names = EntryAutoPerson.create_lists(people)
+    new_values = EntryAutoPerson.create_lists(people)
     for ent in EntryAutoPerson.all_person_autofills:
-        ent.values = all_birth_names
-
-def open_new_person_dialog(
-        master, inwidg, root, treebard, formats, inwidg2=None, person_autofill_values=None):
-    person_add = PersonAdd(master, inwidg, root, treebard, inwidg2, formats, person_autofill_values)
-    root.wait_window(person_add)
-    new_person_id = person_add.show()
-    return new_person_id
+        ent.values = new_values
+    # print("line", looky(seeline()).lineno, "new_values:", new_values) # works
+    return new_values
 
 def delete_person_from_tree(person_id):
     """Remove all references to a person.""" 
@@ -190,13 +185,20 @@ def delete_person_from_tree(person_id):
     cur.execute(delete_person, (person_id,))
     conn.commit()
 
-    people = make_all_names_list_for_person_select()
+    people = make_all_names_dict_for_person_select()
     all_birth_names = EntryAutoPerson.create_lists(people)
     for ent in EntryAutoPerson.all_person_autofills:
         ent.values = all_birth_names
 
     cur.close()
     conn.close()
+
+def open_new_person_dialog(
+        master, inwidg, root, treebard, formats, inwidg2=None, person_autofill_values=None):
+    person_add = PersonAdd(master, inwidg, root, treebard, inwidg2, formats, person_autofill_values)
+    root.wait_window(person_add)
+    new_person_id = person_add.show()
+    return new_person_id
 
 class PersonAdd(Toplevel):
     def __init__(
@@ -414,14 +416,12 @@ class PersonAdd(Toplevel):
         self.gender_input.entry.delete(0, 'end')
         self.gender_input.entry.insert(0, 'unknown')
         self.image_input.entry.delete(0, 'end')
-        self.image_input.entry.insert(0, 'default_image_unisex.jpg')
+        self.image_input.entry.insert(0, '0_default_image_unisex.jpg')
         self.name_type_input.entry.config(state='normal')
         self.name_type_input.entry.delete(0, 'end')
         self.name_type_input.entry.insert(0, 'birth name')
         self.name_input.delete(0, 'end')
         get2 = self.inwidg2
-        # print("line", looky(seeline()).lineno, "get2:", get2)
-        # print("line", looky(seeline()).lineno, "get2.get():", get2.get())
         if get2 and len(get2.get()) != 0:
             self.name_input.insert(0, get2.get())
         elif get2 and len(get2.get()) == 0:
@@ -528,15 +528,14 @@ class PersonAdd(Toplevel):
         birth_id = cur.fetchone()[0]
         cur.execute(insert_finding_places_new, (birth_id,))
         conn.commit()
-
-        new_name_string = "{}  #{}".format(self.full_name, self.new_person_id)
+        new_name_string = self.full_name
         self.inwidg.delete(0, 'end')
         self.inwidg.insert(0, new_name_string)
         cur.close()
         conn.close()
 
         self.image_input.delete(0, 'end')
-        self.image_input.insert(0, 'default_image_unisex.jpg')
+        self.image_input.insert(0, '0_default_image_unisex.jpg')
 
         for widg in (self.name_type_input, self.name_input):
             widg.delete(0, 'end')
@@ -544,13 +543,17 @@ class PersonAdd(Toplevel):
         for child in self.order_frm.winfo_children():
             child.config(text='')
         self.gender_input.delete(0, 'end')
-
-        update_person_autofill_values()
+        # print("line", looky(seeline()).lineno, "len(self.person_autofill_values):", len(self.person_autofill_values))
+        update_person_autofill_values()# THIS DOESN'T WORK HERE
+        # print("line", looky(seeline()).lineno, "len(self.person_autofill_values):", len(self.person_autofill_values))
         person_autofill_values = self.person_autofill_values
 
     def show(self):
-        people = make_all_names_list_for_person_select()        
-        all_birth_names = EntryAutoPerson.create_lists(people)
+        # people = make_all_names_dict_for_person_select()        
+        # all_birth_names = EntryAutoPerson.create_lists(people)
+        print("line", looky(seeline()).lineno, "len(self.person_autofill_values):", len(self.person_autofill_values))
+        # update_person_autofill_values()# THIS DOESN'T WORK HERE
+        print("line", looky(seeline()).lineno, "len(self.person_autofill_values):", len(self.person_autofill_values))
 
         return self.new_person_id
 

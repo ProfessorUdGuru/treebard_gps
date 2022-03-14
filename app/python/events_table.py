@@ -15,11 +15,8 @@ from toykinter_widgets import Separator, run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import new_event_dlg_help_msg
 from styles import config_generic, make_formats_dict
-from names import (
-    make_all_names_dict_for_person_select,
-    open_new_person_dialog, 
-    # get_any_name_with_id
-)
+from persons import (
+    make_all_names_dict_for_person_select, open_new_person_dialog)
 from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places
@@ -1237,6 +1234,8 @@ class EventsTable(Frame):
         self.event_input.grid_forget()
         self.add_event_button.grid_forget()
 
+        self.main_window.person_entry.current_id = None
+
         for ent in self.main_window.nuke_table.nuke_inputs:
             ent.delete(0, "end")
         self.main_window.nuke_table.ma_input.delete(0, "end")
@@ -1248,7 +1247,6 @@ class EventsTable(Frame):
             widg.destroy() 
 
         self.main_window.nuke_table.nuke_containers = []
-        # self.main_window.nuke_table.original = ""
 
         self.main_window.nuke_table.family_data = [
             [
