@@ -475,9 +475,6 @@ class Main(Frame):
         self.current_person_name = self.person_autofill_values[self.current_person]["birth name"]
         if self.current_person_name is None or len(self.current_person_name) == 0:
             self.current_person_name = self.person_autofill_values[self.current_person]["alt name"]
-        # if type(self.current_person_name) is tuple:
-            # use_name = list(self.current_person_name)
-            # self.current_person_name = "({}) {}".format(use_name[1], use_name[0])
         self.current_person_label.config(
             text="Current Person (ID): {} ({})".format(
                 self.current_person_name, self.current_person))
@@ -504,9 +501,9 @@ class Main(Frame):
 
         got = self.person_entry.get()
 
-        if len(got) != 0 and "#" not in got:
-            self.current_person = self.person_entry.current_id
-        if self.person_entry.current_id is None and "#" not in got:
+        if self.person_entry.current_is_dupe:
+            self.current_person_name, self.current_person = self.person_entry.open_dupe_dialog(self.person_entry.hits)
+        elif self.person_entry.current_id is None and "#" not in got:
             old_current_person = self.current_person
             self.current_person = open_new_person_dialog(
                 self, self.person_entry, self.root, self.treebard, self.formats, 
@@ -515,8 +512,9 @@ class Main(Frame):
                 self.current_person = old_current_person
         elif "#" in got:
             self.current_person = int(got.lstrip("#"))
-        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
-# autofill values need to be updated right here
+        elif len(got) != 0 and "#" not in got:
+            self.current_person = self.person_entry.current_id
+            self.current_id = None
         self.person_autofill_values = update_person_autofill_values()
         if self.person_autofill_values.get(self.current_person) is not None:
             self.current_person_name = self.person_autofill_values[self.current_person]["birth name"]
@@ -572,9 +570,12 @@ class Main(Frame):
         if current_person is None:
             cur.execute(select_current_person_id)
             current_person = cur.fetchone()[0]
-        cur.execute(select_images_elements_main_image, (current_person,)) #       
-        top_pic = cur.fetchone() #
-        # top_pic = "0_default_image_unisex.jpg" # SAVE FOREVER
+        # Due to a possible Pillow glitch, manually changing image names might
+        #   result in anomalous use of old values. If so change these 2 lines
+        #   for the commented line below, then change back.
+        cur.execute(select_images_elements_main_image, (current_person,)) #****      
+        top_pic = cur.fetchone() #************
+        # top_pic = "0_default_image_unisex.jpg" # SAVE FOREVER************
         cur.close()
         conn.close()
         if top_pic:

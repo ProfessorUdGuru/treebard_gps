@@ -67,7 +67,7 @@ from dev_tools import looky, seeline
 
 
 
-person_autofill_values = None
+# person_autofill_values = None
 
 date_prefs = get_date_formats()
 
@@ -212,7 +212,7 @@ def get_generic_findings(
 
 def get_couple_findings(
         cur, current_person, rowtotype, findings_data, 
-        non_empty_roles, non_empty_notes):
+        non_empty_roles, non_empty_notes, person_autofill_values):
 
     couple_kin_type_ids = get_couple_kin_types()
     curr_per_kin_types = tuple([current_person] + couple_kin_type_ids)
@@ -295,7 +295,7 @@ def get_couple_findings(
         dkt["event"], dkt["date"], dkt["sorter"], dkt["particulars"] = couple_generic_details
         findings_data[finding_id[0]] = dkt 
 
-def make_parent_kintips(dkt, current_person, cur):
+def make_parent_kintips(dkt, current_person, cur, person_autofill_values):
     cur.execute(select_finding_id_birth, (current_person,))
     birth_id = cur.fetchone()
     parents = (None, None)
@@ -323,7 +323,7 @@ def make_parent_kintips(dkt, current_person, cur):
             dkt["mother_name"] = mom_name
 
 def make_alt_parent_kintips(
-        dkt, current_person, cur, finding_id, 
+        dkt, current_person, cur, finding_id, person_autofill_values,  
         adoption=None, fosterage=None, guardianship=None):
 
     if adoption:
@@ -367,7 +367,7 @@ def make_alt_parent_kintips(
         dkt[key2a] = parent2_id
         dkt[key2b] = parent2
 
-def autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id):
+def autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id, person_autofill_values):
     """ Get birth & alt_birth findings to autocreate rows when parent is current 
         person. """
 
@@ -429,13 +429,13 @@ def autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_
         findings_data[offspring_event_id]["sorter"] = sorter
     event_type = dkt["event"]
     if event_type == "birth":
-        make_parent_kintips(dkt, current_person, cur)
+        make_parent_kintips(dkt, current_person, cur, person_autofill_values)
     elif event_type == "adoption":
-        make_alt_parent_kintips(dkt, current_person, cur, finding_id, adoption=True)
+        make_alt_parent_kintips(dkt, current_person, cur, finding_id, person_autofill_values, adoption=True)
     elif event_type == "fosterage":
-        make_alt_parent_kintips(dkt, current_person, cur, finding_id, fosterage=True)
+        make_alt_parent_kintips(dkt, current_person, cur, finding_id, person_autofill_values, fosterage=True)
     elif event_type == "guardianship":
-        make_alt_parent_kintips(dkt, current_person, cur, finding_id, guardianship=True)
+        make_alt_parent_kintips(dkt, current_person, cur, finding_id, person_autofill_values, guardianship=True)
 
 def get_role_findings(
     dkt, finding_id, cur, current_person, findings_data=None):
@@ -473,26 +473,28 @@ def get_findings():
     cur.execute(select_all_findings_notes_ids)
     non_empty_notes = [i[0] for i in cur.fetchall()]
 
+    person_autofill_values = make_all_names_dict_for_person_select()  
+
     for finding_id in generic_finding_ids:
         dkt = dict(rowtotype)
         
         get_generic_findings(
             dkt, cur, finding_id, findings_data, 
-            current_person, non_empty_roles, non_empty_notes)
+            current_person, non_empty_roles, non_empty_notes)     
 
         if dkt["event"] == "birth":
-            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id)
+            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id, person_autofill_values)
                 # non_empty_roles, non_empty_notes)
         elif dkt["event"] == "adoption":
-            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id)
+            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id, person_autofill_values)
         elif dkt["event"] == "fosterage":
-            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id)
+            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id, person_autofill_values)
         elif dkt["event"] == "guardianship":
-            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id)
+            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id, person_autofill_values)
 
     get_couple_findings(
         cur, current_person, rowtotype, findings_data, 
-        non_empty_roles, non_empty_notes)
+        non_empty_roles, non_empty_notes, person_autofill_values)
 
     cur.close()
     conn.close()  
@@ -831,9 +833,9 @@ class EventsTable(Frame):
             symmetrical for all the text columns, with autofill defaulting to 
             False except for the places column.
         '''
-        global person_autofill_values
+        # global person_autofill_values
     
-        person_autofill_values = self.person_autofill_values
+        # person_autofill_values = self.person_autofill_values
         self.place_autofill_values = EntryAuto.create_lists(self.place_strings)
         self.table_cells = []
         for i in range(int(qty/8)):

@@ -171,26 +171,22 @@ if __name__ == '__main__':
 
 
 # BRANCH: names_refactor
-# duplicate stored names dlg opening before the value fills in to the person_entry, try typing a z
-# IMAGE PROBLEM FIXED NOW REFACTOR THE PROCEDURE SO NOTHING IS HARD-CODED ANYWHERE AND TRY TO MAKE IT VERY SIMPLE SO SQLITE WON'T HAVE AN EXCUSE TO USE CACHED VALUES AND GET RID OF ALL THE EXTRA COPIES AND MAKE SURE THE ONLY COPIES ARE IN DEFAULT IMAGES FOLDER(S)
-# nothing below is true till it's fixed, when it's fixed find every `0_default` hard coded and get it without any hard-coding from a single place so this doesn't happen again, and make an input in a prefs tab so user can input his own images and choose default images and test it
-# "default_image_unisex.jpg" must be hard-coded somewhere but where???  the default images are kept in D:\treebard_gps\data\settings\images and shd be deleted everywhere else (2 or 3 other folders) and the code is in files.py at top `default_new_tree_images` MAKE DOCSTRING IN main.py
-# find the code that is getting default image `default_image_unisex.jpg` and fix the problem (app won't start because of this ?hard-coded value that I can't find anywhere... when fixed, get rid of the multiple storage places for this item and use the on in defaults only if possible from D:\treebard_gps\app\default\images and make a doc string so it won't be hard to find next time; if possible delete these images from the other 2 or 3 images directories where they exist
-# change names of default images so they alphabetize first in the combobox on add person dlg
-# the process of creating and updating the person_autofill_values dict needs to be streamlined and customized to fit the new circumstances of the new dict collection which is created on load and passed around vs. the old way which was to create name strings on demand from the ID. GET RID OF 2 GLOBALS EVEN IF IT MEANS MAKING THE GUI LESS SNAPPY
-# try to get rid of the function that opens PersonAdd and just instantiate PersonAdd like any other class; if it's found that the function is still needed, make a docstring to explain why
+# If you input a dupe person and tab to the OK button as soon as the name fills in (WHICH SHD NOT HAPPEN, IT SHD NOT FILL IN BEC DUPE), it just changes curr per to the first dupe. If you try to keep typing after the autofill fills in the name, the dialog opens, and doesn't change person on OK. Then on main curr per OK it opens add person dlg again. THE PROBLEM IS THAT THE PROCEDURE IS CONFUSING AND ICKY. Rewrite the procedure like this: 
+    # Detect if the hit is a dupe.
+    # If dupe, mark current_is_dupe = True and let input fill in completely.
+    # On OK, if current_is_dupe is True, open rad select dlg.
+
 # GET ADD PERSON TO WORK RIGHT STARTING WITH roles.py:
-# see roles.py line 500 `split('  #')` get rid of this and find anything else like it to get rid of
-# `if "  #" in` FIND AND DELETE EVERYWHERE
-# "James Woodland  #12" still displays in the edit row of roles dlg
-# roles.py line 490 updating person values upon closing person add dlg not working until close app & reload FIRST FIX ANY MISCELLANEOUS STUFF BELOW BEFORE FOCUSING IN ON ADD PERSON BECAUSE MANFUNCTIONS IN ADD PERSON IS WHERE THIS WHOLE PROJECT STARTED SO HAVE TO FINISH THE PROJECT BEFORE TACKLING THE PROBLEMS THAT MOTIVATED THE PROJECT
+    # see roles.py line 500 `split('  #')` get rid of this and find anything else like it to get rid of
+    # `if "  #" in` FIND AND DELETE EVERYWHERE
+    # "James Woodland  #12" still displays in the edit row of roles dlg
+    # roles.py line 490 updating person values upon closing person add dlg not working until close app & reload FIRST FIX ANY MISCELLANEOUS STUFF BELOW BEFORE FOCUSING IN ON ADD PERSON BECAUSE MANFUNCTIONS IN ADD PERSON IS WHERE THIS WHOLE PROJECT STARTED SO HAVE TO FINISH THE PROJECT BEFORE TACKLING THE PROBLEMS THAT MOTIVATED THE PROJECT
 # refactor the way name strings are displayed, stored and parsed. see forum post . Plan in advance a simple way to ensure that AddPerson dialog will never open unwantedly.
 # Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
 # In save_new_name() in names.py, have to indicate whether the image is supposed to be main_image (1) vs (0). 1 is now the default in the insert query (insert_images_elements) to images_elements, which makes the new person's image display correctly for now; if it's made main and there's already a main_image the main has to be changed to 0 programmatically.
 # Don't let a default image be entered (see new person dialog) if a non-default image already exists for that person. If the person already has a default image, it can be changed to a different default image, a real image, or to no image.
-# If user selects his own photo as default, prepend "default_image_" to user's file name.
+# If user selects his own photo as default, prepend "0_default_image_" to user's file name.
 # If no main_image has been input to db, Treebard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. Treebard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
-# put a separator btwn events and attributes
 # make sure PersonAdd never opens when it should not
 # export .db and .tbd to .sql
 
@@ -257,6 +253,11 @@ if __name__ == '__main__':
 # person search table is messed up. Same person shows for both mother and father. Sorting only works right for ID. Clicking a name to make the person current works but the nukes table is not redrawn.
 # rename names.py to persons.py and change everywhere.
 # go thru places where several db commits are called in a row and create transactions: BEGIN; COMMIT; so if there's an error I don't have to go thru and fix half-done stuff in db.
+# IMAGE PROBLEM FIXED NOW REFACTOR THE PROCEDURE SO NOTHING IS HARD-CODED ANYWHERE AND TRY TO MAKE IT VERY SIMPLE SO SQLITE WON'T HAVE AN EXCUSE TO USE CACHED VALUES AND GET RID OF ALL THE EXTRA COPIES AND MAKE SURE THE ONLY COPIES ARE IN DEFAULT IMAGES FOLDER(S)
+    # nothing below is true till it's fixed, when it's fixed find every `0_default` hard coded and get it without any hard-coding from a single place so this doesn't happen again, and make an input in a prefs tab so user can input his own images and choose default images and test it
+    # "default_image_unisex.jpg" must be hard-coded somewhere but where???  the default images are kept in D:\treebard_gps\data\settings\images and shd be deleted everywhere else (2 or 3 other folders) and the code is in files.py at top `default_new_tree_images` MAKE DOCSTRING IN main.py
+    # find the code that is getting default image `default_image_unisex.jpg` and fix the problem (app won't start because of this ?hard-coded value that I can't find anywhere... when fixed, get rid of the multiple storage places for this item and use the on in defaults only if possible from D:\treebard_gps\app\default\images and make a doc string so it won't be hard to find next time; if possible delete these images from the other 2 or 3 images directories where they exist
+    # change names of default images so they alphabetize first in the combobox on add person dlg
 # export dbs to .sql
 
 # BRANCH: dates
@@ -281,6 +282,7 @@ if __name__ == '__main__':
 # export dbs to .sql
 
 # BRANCH: dialogs
+# put a separator btwn events and attributes
 # in each tab of each tabbook, use Map event to focus one of the widgets on that tab when that tab is switched to, see colorizer arrow_in_first() as an example
 # Refactor gallery so all work the same in a dialog opened by clicking a main image in a tab. Also I found out when I deleted all the padding that there's no scridth. There should be nothing in any tab that's ever bigger than the persons tab events table. Then the tabs could be used for what they're needed for, like searching and getting details about links and stuff, instead of looking at pictures that don't fit in the tab anyway.
 # In main.py make_widgets() should be broken up into smaller funx eg make_family_table() etc. after restructing gallery into 3 dialogs.
@@ -452,6 +454,9 @@ if __name__ == '__main__':
     either gender in either column.
 '''
 
+# Add to devdocs and user docs: 
+'''There's a quirk in the system for autofilling names that will rarely if ever show up, and seems to be harmless so far when it shows up in the Change Current Person field at the top of the app, above the tabs section. If you type a "z" and there are only two names--say "Zachary Dupree"--that start with a "z" and both names are exactly the same, the duplicate name chooser will open as soon as you type the "z", asking you to select which Zachary Dupree you wanted. This is fine if you wanted to use Zachary Dupree but not if you wanted to enter Zoe Blankenship for the first time. The glitch is harmless and the workaround is simple. Cancel out of the duplicates dialog, delete EVERTHING BUT THE Z that autofills, and finish typing Zoe's name. Everything will work as expected. This could be "fixed" with several lines of code but it will happen so rarely that Treebard prefers the workaround, which possibly anyone could figure out if they weren't reading this. As soon as there are two differently spelled names in the database--i.e. one other name that starts with a "z" besides the two "Zachary Duprees"--the problem will never occur again when typing a "z". To test this with the sample_tree.tbd file, delete any name starting with a "z" except for the two instances of Zachary somebody, and follow the instructions above. We are confident that this problem will seldom occur and will easily be worked around.
+'''
 
 
 

@@ -37,7 +37,6 @@ from dev_tools import looky, seeline
 
 
 
-person_autofill_values = None
 
 GENDER_TYPES = ('unknown', 'female', 'male', 'other')
 
@@ -124,7 +123,6 @@ def update_person_autofill_values():
     new_values = EntryAutoPerson.create_lists(people)
     for ent in EntryAutoPerson.all_person_autofills:
         ent.values = new_values
-    # print("line", looky(seeline()).lineno, "new_values:", new_values) # works
     return new_values
 
 def delete_person_from_tree(person_id):
@@ -213,6 +211,8 @@ class PersonAdd(Toplevel):
         self.person_autofill_values = person_autofill_values
 
         self.xfr = self.inwidg.get()
+        if "+" in self.xfr:
+            self.xfr = self.xfr.strip().strip("+").strip()
         self.role_person_edited = False
         self.rc_menu = RightClickMenu(self.root, treebard=treebard)
 
@@ -452,14 +452,13 @@ class PersonAdd(Toplevel):
             msg[0].grab_release()
             msg[0].destroy()
             self.name_type_input.entry.focus_set()
-    
+
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         self.get_entered_values(cur, conn)
         self.findings_roles_id = findings_roles_id
-        # can these 2 queries be combined?
         cur.execute(select_image_id, (self.selected_image,))
         self.img_id = cur.fetchone()[0]
         cur.execute(select_name_type_id, (self.name_type,))
@@ -506,7 +505,6 @@ class PersonAdd(Toplevel):
             self.selected_image = selected_image 
 
     def save_new_name(self):
-        global person_autofill_values
 
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
@@ -543,18 +541,10 @@ class PersonAdd(Toplevel):
         for child in self.order_frm.winfo_children():
             child.config(text='')
         self.gender_input.delete(0, 'end')
-        # print("line", looky(seeline()).lineno, "len(self.person_autofill_values):", len(self.person_autofill_values))
-        update_person_autofill_values()# THIS DOESN'T WORK HERE
-        # print("line", looky(seeline()).lineno, "len(self.person_autofill_values):", len(self.person_autofill_values))
-        person_autofill_values = self.person_autofill_values
+        # person_autofill_values = self.person_autofill_values
+        self.person_autofill_values = update_person_autofill_values
 
     def show(self):
-        # people = make_all_names_dict_for_person_select()        
-        # all_birth_names = EntryAutoPerson.create_lists(people)
-        print("line", looky(seeline()).lineno, "len(self.person_autofill_values):", len(self.person_autofill_values))
-        # update_person_autofill_values()# THIS DOESN'T WORK HERE
-        print("line", looky(seeline()).lineno, "len(self.person_autofill_values):", len(self.person_autofill_values))
-
         return self.new_person_id
 
     def make_temp_person_id(self):
@@ -587,49 +577,10 @@ class PersonAdd(Toplevel):
             msg[0].destroy()
             self.reset()
             self.name_input.focus_set()
-
-# # THIS SHOULD BE DELETED
-        # def get_name_with_id(iD):
-            # # current_file = get_current_file()[0]
-            # # conn = sqlite3.connect(current_file)
-            # # cur = conn.cursor()
-            # cur.execute(select_name_with_id, (iD,))
-            # full_name = cur.fetchone()
-
-            # # cur.close()
-            # # conn.close()
-
-            # if full_name:
-                # return full_name[0]
-            # elif not full_name:
-                # return ''
  
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        # # # cur.execute(select_all_person_ids)
-        # # # all_people = cur.fetchall()
-        # # # cur.close()
-        # # # conn.close()        
-        # # # all_people = [[i[0]] for i in all_people]
-
-        # # # names_only = []
-
-        # # # for iD in all_people:
-            # # # display_name = get_name_with_id(iD[0])  
-            # # # # person_id = iD[0]
-            # # # # display_name = self.person_autofill_values[person_id]["birth name"] # NOT HERE, NAME DOESN'T EXIST YET
-            # # # # if display_name is None or len(display_name) == 0:
-                # # # # display_name = self.person_autofill_values[person_id]["alt name"]
-# # # # THIS IS A COMPLICATED WAY TO CREATE A LIST OF ALL EXISTING NAMES    
-            # # # names_only.append(display_name)
-            # # # iD.insert(0, display_name)
-
-        # # # people_vals = []
-        # # # for lst in all_people:
-            # # # if lst[0] is None:
-                # # # lst[0] = ''
-            # # # people_vals.append(' #'.join([lst[0], str(lst[1])]))
 
         cur.execute(select_all_names)
         names_only = [i[0] for i in cur.fetchall()]

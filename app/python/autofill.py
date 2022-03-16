@@ -1,8 +1,5 @@
 # autofill.py
 
-# EntryAutofill is shown for comparison, it's not to be used; 
-#   this module is about EntryAuto which is defined below
-
 import tkinter as tk
 from widgets import EntryUnhilited, Radiobutton, Button, Frame, LabelHeader
 from window_border import Dialogue
@@ -17,7 +14,8 @@ class EntryAutoPerson(EntryUnhilited):
     '''
         To use this class, after instantiating it, you have to call 
         EntryAuto.create_lists(all_items). Other than getting all_items
-        (e.g. from a database query), the class is self-contained.        
+        (e.g. from a database query), and updating the values list when
+        a new value is added, the class is self-contained.        
     '''
 
     all_person_autofills = []
@@ -42,13 +40,7 @@ class EntryAutoPerson(EntryUnhilited):
             other inputs too, until the app is closed. Next time the app opens,
             a fresh list of recently-used autofill values will be started.
         """
-        # f = 0
-        # for k,v in all_items.items():
-            # if f < 25:
-                # print("line", looky(seeline()).lineno, "k:", k)
-            # f += 1
         key_list = list(all_items.items())
-        # print("line", looky(seeline()).lineno, "key_list[0:5]:", key_list[0:5])
         recent_items = []
         all_items_unique = []
 
@@ -56,13 +48,6 @@ class EntryAutoPerson(EntryUnhilited):
             if item not in recent_items:
                 all_items_unique.append(item)
         final_items = dict(recent_items + all_items_unique)
-        
-        # print("line", looky(seeline()).lineno, "final_items[0:5]:", final_items[0:5])
-        # for item in all_items:
-            # if item not in recent_items:
-                # all_items_unique.append(item)
-        # final_items = recent_items + all_items_unique
-        # print("line", looky(seeline()).lineno, "final_items, recent_items, all_items_unique:", final_items, recent_items, all_items_unique)
         return final_items
 
     def __init__(self, master, autofill=False, values=None, *args, **kwargs):
@@ -73,6 +58,8 @@ class EntryAutoPerson(EntryUnhilited):
 
         self.pos = 0
         self.current_id = None
+        self.current_is_dupe = False
+        self.hits = None
 
         if autofill is True:
             self.bind("<KeyPress>", self.detect_pressed)
@@ -90,32 +77,30 @@ class EntryAutoPerson(EntryUnhilited):
         if len(key) == 1:
             self.pos = self.index('insert')
             keep = self.get()[0:self.pos]
-
-            # self.current_id = None
-
             self.delete(0, 'end')
             self.insert(0, keep)
 
     def get_typed(self, evt):
-        '''
-            runs on every key release; filters out most non-alpha-numeric 
-            keys; runs the functions not triggered by events.
-        '''
+        """ Run on every key release. Filter out most non-alpha-numeric 
+            keys. Run the functions not triggered by events.
+        """
         def do_it():
             hits = self.match_string()
-            print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
             self.show_hits(hits, self.pos)
 
+        self.current_id = None
         if self.autofill is False:
             return
         key = evt.keysym
-        # allow alphanumeric characters
+        # Allow alphanumeric characters.
         if len(key) == 1:
             do_it()
-        # allow pound signs, hyphens and apostrophes
+        # Allow number signs, hyphens and apostrophes (#, -, ').
         elif key in ('numbersign', 'minus', 'quoteright'):
             do_it()
-        # to do: look for other chars that should be allowed in nested names
+        # Open the PersonAdd dialog with the "+" stripped off the input.
+        elif key == "plus":
+            pass
         else:
             pass
 
@@ -126,27 +111,11 @@ class EntryAutoPerson(EntryUnhilited):
                 for k,v in val.items():
                     if k == "alt name":
                         if v.lower().startswith(got.lower()):
-                            hits.append((v, key))
-                            # # print("line", looky(seeline()).lineno, "key:", key)
-                            # self.current_id = key
-                            # print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
-            # for v in use_list.values():
-                # for k,v in v.items():
-                    # if k == "alt name":
-                        # if v.lower().startswith(got.lower()):
-                            # hits.append(v)
+                            if (v, key) not in hits:
+                                hits.append((v, key))
 
         hits = []
         got = self.get()
-        # use_list = self.values
-# line 91 use_list: {12: {'birth name': 'James Norton', 'alt name': 'James Woodland', 'alt name type': 'adopted name', 'sort order': 'Woodland, James'}, 1: {'birth name': 'Jeremiah Grimaldo', 'alt name': 'G-Man', 'alt name type': 'nickname', 'sort order': 'Grimaldo, Jeremiah'}, 6: {'birth name': 'Ronnie Webb', 'alt name': 'Miss Polly', 'alt name type': 'stage name', 'sort order': 'Webb, Ronnie'}, 5599: {'birth name': '', 'alt name': 'Selina Savoy', 'alt name type': 'pseudonym', 'sort order': 'Savoy, Selina'}, 5: {'birth name': 'Donald Webb', 'alt name': 'Donny Boxer', 'alt name type': 'nickname', 'sort order': 'Webb, Donald'}}
-        # for v in use_list.values():
-            # for k,v in v.items():
-                # if k == "birth name":
-                    # if len(v) == 0:
-                        # match_alt_string()
-                    # elif v.lower().startswith(got.lower()):
-                        # hits.append(v)
 
         for key,val in self.values.items():
             for k,v in val.items():
@@ -154,53 +123,44 @@ class EntryAutoPerson(EntryUnhilited):
                     if len(v) == 0:
                         match_alt_string()
                     elif v.lower().startswith(got.lower()):
-                        hits.append((v, key))
-                        # # print("line", looky(seeline()).lineno, "key:", key)
-                        # self.current_id = key
-                        # print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
-
-
+                        if (v, key) not in hits:
+                            hits.append((v, key))
         return hits
 
     def show_hits(self, hits, pos):
         cursor = pos + 1
         if len(hits) != 0:
-            # print("line", looky(seeline()).lineno, "hits:", hits)
             if len(hits) > 1:
                 first = hits[0][0]
-                all_same = False
+                self.current_is_dupe = False
                 for hit in hits:
                     if hit[0] == first:
-                        all_same = True
+                        self.current_is_dupe = True
+                        self.hits = hits
                     else:
-                        all_same = False
+                        self.current_is_dupe = False
                         break
-                # print("line", looky(seeline()).lineno, "all_same:", all_same)
-                if all_same:
-                    radval = self.open_dialog(hits)
-                    self.delete(0, 'end')
-                    self.insert(0, radval[0])
-                    self.current_id = radval[1]
-                    # print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
+                # if self.current_is_dupe:
+                    # radval = self.open_dupe_dialog(hits)
+                    # self.delete(0, 'end')
+                    # self.insert(0, radval[0])
+                    # self.current_id = radval[1]
                 else:
                     self.delete(0, 'end')
                     self.insert(0, hits[0][0])
                     self.current_id = hits[0][1]
-
             else:
                 self.delete(0, 'end')
                 self.insert(0, hits[0][0])
                 self.current_id = hits[0][1]
         self.icursor(cursor)
 
-    def open_dialog(self, hits):
+    def open_dupe_dialog(self, hits):
 
         def ok_dupe_name():
-            # print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
             cancel_dupe_name()
     
         def search_dupe_name():
-            # print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
             cancel_dupe_name()
 
         def cancel_dupe_name():
@@ -252,31 +212,18 @@ class EntryAutoPerson(EntryUnhilited):
         """ Determine which ID was used to fill in a value. Move the autofill
             value corresponding with that ID to the front of the valus list.
         """
-        print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
-        # print("line", looky(seeline()).lineno, "self.values:", self.values)
         content = self.get()
         if self.current_id in self.values:
             key_list = list(self.values.items())
-            print("line", looky(seeline()).lineno, "key_list[0]:", key_list[0])
             u = 0
             for tup in key_list:
                 if tup[0] == self.current_id:
                     idx = u
                     break
                 u += 1
-            # idx = key_list.index(self.current_id)
-            print("line", looky(seeline()).lineno, "idx:", idx)
             used = key_list.pop(idx)
             key_list.insert(0, used)
-            print("line", looky(seeline()).lineno, "key_list[0]:", key_list[0])
             self.values = dict(key_list)
-# STILL HAVE TO UPDATE GLOBAL LIST FOR ALL INSTANCES*************
-        # if content in self.values:
-            # print("line", looky(seeline()).lineno, "content:", content)
-            # idx = self.values.index(content)
-            # del self.values[idx]
-            # self.values.insert(0, content)
-        # print("line", looky(seeline()).lineno, "self.values:", self.values)
 
     def deselect(self, evt):
         '''
@@ -339,7 +286,7 @@ class EntryAuto(EntryUnhilited):
 
     def get_typed(self, evt):
         '''
-            runs on every key release; filters out most non-alpha-numeric 
+            Run on every key release; filters out most non-alpha-numeric 
             keys; runs the functions not triggered by events.
         '''
         def do_it():
@@ -364,7 +311,6 @@ class EntryAuto(EntryUnhilited):
         got = self.get()
         use_list = self.values
         for item in use_list:
-            print("line", looky(seeline()).lineno, "item:", item)#line 92 item: 12
             if item.lower().startswith(got.lower()):
                 hits.append(item)
         return hits
