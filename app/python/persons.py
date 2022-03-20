@@ -84,8 +84,10 @@ def make_all_names_dict_for_person_select():
     current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
-    cur.execute(select_all_person_ids)
-    person_ids = [i[0] for i in cur.fetchall()]
+    cur.execute(select_all_names_ids)
+    results = cur.fetchall()
+    all_names = [i[0] for i in results]
+    person_ids = [i[1] for i in results]
     values = []
     for iD in person_ids:
         values.append(get_any_name(iD, cur))
@@ -94,8 +96,17 @@ def make_all_names_dict_for_person_select():
         indict = dict(zip(PERSON_DATA, tup))
         inner_dict.append(indict)
 
+    seen = set()
+    dupes = [x for x in all_names if x in seen or seen.add(x)] 
+
+    for dkt in inner_dict:
+        if dkt["birth name"] in dupes or dkt["alt name"] in dupes:
+            dkt["dupe name"] = True
+        else:
+            dkt["dupe name"] = False
+
     cur.close()
-    conn.close()
+    conn.close()    
 
     return dict(zip(person_ids, inner_dict))
 
@@ -182,12 +193,7 @@ def delete_person_from_tree(person_id):
     # person (primary key)
     cur.execute(delete_person, (person_id,))
     conn.commit()
-
-    people = make_all_names_dict_for_person_select()
-    all_birth_names = EntryAutoPerson.create_lists(people)
-    for ent in EntryAutoPerson.all_person_autofills:
-        ent.values = all_birth_names
-
+    update_person_autofill_values()
     cur.close()
     conn.close()
 
@@ -541,8 +547,6 @@ class PersonAdd(Toplevel):
         for child in self.order_frm.winfo_children():
             child.config(text='')
         self.gender_input.delete(0, 'end')
-        # person_autofill_values = self.person_autofill_values
-        self.person_autofill_values = update_person_autofill_values
 
     def show(self):
         return self.new_person_id

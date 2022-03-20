@@ -525,7 +525,11 @@ families_msg = (
 )
 
 main_msg = (
-    "The person ID entered does not exist.",
+    "There's no record of the person ID entered.",
+)
+
+roles_msg = (
+    main_msg[0],
 )
 
 

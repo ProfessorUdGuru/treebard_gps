@@ -11,27 +11,23 @@ from dev_tools import looky, seeline
 
 
 class EntryAutoPerson(EntryUnhilited):
-    '''
-        To use this class, after instantiating it, you have to call 
-        EntryAuto.create_lists(all_items). Other than getting all_items
-        (e.g. from a database query), and updating the values list when
-        a new value is added, the class is self-contained.        
-    '''
+    """ To use this class, each person autofill input has to be given the 
+        ability to use its newest values with a line like this: 
+            `EntryAutoPerson.all_person_autofills.append(person_entry)`.
+        Then, after instantiating a class that uses autofills, you have to call 
+        `EntryAuto.create_lists(all_items)`. After values change, run something 
+        like `update_person_autofill_values()`.        
+    """
 
     all_person_autofills = []
 
     def create_lists(all_items):
-        """ Run this whenever autofill entries are being created to get the 
-            values for the autofill. After values change, run something like
-            update_person_autofill_values() which runs this function and 
-            updates the values of all the autofill entries.
-
-            Keeps a temporary list during one app session which will 
+        """ Keeps a temporary list during one app session which will 
             prioritize the autofill values with the most recently used values
             given priority over the alphabetical list of the values not used in
             the current session.
 
-            The `prepend_match()` method is used in conjuction with this 
+            The `prepend_match()` method is used in conjunction with this 
             to add the most recently used value to the very front of the list.
 
             Since this function and the list `all_person_autofills` comprise a 
@@ -58,7 +54,7 @@ class EntryAutoPerson(EntryUnhilited):
 
         self.pos = 0
         self.current_id = None
-        self.current_is_dupe = False
+        self.right_dupe = None
         self.hits = None
 
         if autofill is True:
@@ -132,19 +128,18 @@ class EntryAutoPerson(EntryUnhilited):
         if len(hits) != 0:
             if len(hits) > 1:
                 first = hits[0][0]
-                self.current_is_dupe = False
+                all_same = False
                 for hit in hits:
                     if hit[0] == first:
-                        self.current_is_dupe = True
-                        self.hits = hits
+                        all_same = True
                     else:
-                        self.current_is_dupe = False
+                        all_same = False
                         break
-                # if self.current_is_dupe:
-                    # radval = self.open_dupe_dialog(hits)
-                    # self.delete(0, 'end')
-                    # self.insert(0, radval[0])
-                    # self.current_id = radval[1]
+                if all_same:
+                    self.right_dupe = self.open_dupe_dialog(hits) 
+                    self.delete(0, 'end')
+                    self.insert(0, self.right_dupe[0])
+                    self.current_id = self.right_dupe[1]
                 else:
                     self.delete(0, 'end')
                     self.insert(0, hits[0][0])
@@ -175,7 +170,7 @@ class EntryAutoPerson(EntryUnhilited):
 
         radfrm = Frame(dupe_name_dlg.window)
         radfrm.grid(column=0, row=1)
-
+        print("line", looky(seeline()).lineno, "hits:", hits)
         r = 0
         for hit in hits:
             name, iD = [hit[0], str(hit[1])]
@@ -203,10 +198,8 @@ class EntryAutoPerson(EntryUnhilited):
 
         dupe_name_dlg.resize_window()
         self.wait_window(dupe_name_dlg)
-        return hits[self.show_current_id()]
-
-    def show_current_id(self):
-        return self.right_id.get()
+        print("line", looky(seeline()).lineno, "hits[self.right_id.get()]:", hits[self.right_id.get()])
+        return hits[self.right_id.get()]
 
     def prepend_match(self, evt):
         """ Determine which ID was used to fill in a value. Move the autofill
@@ -406,9 +399,6 @@ if __name__ == "__main__":
 
     traverse = Entry(root, bg="tan")
     traverse.grid()
-    traverse.autofill = True
-    traverse.values = all_items
-    # traverse.config(textvariable=traverse.var)
 
     place_values = EntryAuto.create_lists(all_items)
 

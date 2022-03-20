@@ -8,7 +8,7 @@ from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
     LabelH3, Button, Entry, EntryHilited1, LabelHeader, LabelHilited,
     LabelNegative)
-from autofill import EntryAuto, EntryAutoHilited, EntryAutoPerson
+from autofill import EntryAuto, EntryAutoHilited, EntryAutoPersonHilited
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
 from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator, run_statusbar_tooltips
@@ -76,6 +76,7 @@ HEADS = (
     'roles', 'notes', 'sources')
 
 def delete_generic_finding(finding_id, fpid, conn, cur):
+    ppid = None
     cur.execute(delete_finding_places, (finding_id,))
     conn.commit()
     cur.execute(delete_findings_roles_finding, (finding_id,))
@@ -1368,14 +1369,16 @@ class EventsTable(Frame):
             self.current_person,
             self.place_strings,
             self.place_autofill_values,   
-            self.redraw)
+            self.redraw,
+            self.person_autofill_values)
         self.event_input.delete(0, 'end')
 
 class NewEventDialog(Toplevel):
     def __init__(
             self, master, treebard, events_table, formats, new_event,
             current_person, place_strings, place_autofill_values, 
-            redraw, finding=None, ma_pa=False, *args, **kwargs):
+            redraw, person_autofill_values, finding=None, ma_pa=False, 
+            *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.withdraw()
@@ -1390,6 +1393,7 @@ class NewEventDialog(Toplevel):
         self.place_autofill_values = place_autofill_values
         self.redraw = redraw
         self.finding = finding
+        self.person_autofill_values = person_autofill_values
 
         self.couple_event = None
         self.visited = []
@@ -1410,7 +1414,7 @@ class NewEventDialog(Toplevel):
         cur = conn.cursor()
 
         people = make_all_names_dict_for_person_select()        
-        self.all_names = EntryAutoPerson.create_lists(people)
+        self.person_autofill_values = EntryAutoPersonHilited.create_lists(people)
 
         self.focus_new_event_dialog()
         self.get_some_info()
@@ -1658,12 +1662,13 @@ class NewEventDialog(Toplevel):
         name2 = Label(self.couple_data_inputs, text="Partner")
         self.other_person_input = EntryAutoPersonHilited(
             self.couple_data_inputs, self.formats, width=48, autofill=True, 
-            values=self.all_names)
+            values=self.person_autofill_values)
         self.other_person_input.bind(
             "<FocusOut>", 
             lambda  evt, 
                     widg=self.other_person_input: self.catch_dupe_or_new_person(
                         evt, widg))
+        EntryAutoPerson.all_person_autofills.append(self.other_person_input)
 
         age2 = Label(self.couple_data_inputs, text="Age")
         self.age2_input = EntryHilited1(self.couple_data_inputs, width=6)

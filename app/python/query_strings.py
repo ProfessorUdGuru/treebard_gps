@@ -349,7 +349,7 @@ select_all_names = '''
 '''
 
 select_all_names_ids = '''
-    SELECT names, name.person_id, sort_order 
+    SELECT names, name.person_id 
     FROM name JOIN person 
         ON person.person_id = name.person_id 
 '''

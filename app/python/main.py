@@ -501,8 +501,31 @@ class Main(Frame):
 
         got = self.person_entry.get()
 
-        if self.person_entry.current_is_dupe:
-            self.current_person_name, self.current_person = self.person_entry.open_dupe_dialog(self.person_entry.hits)
+
+        print("line", looky(seeline()).lineno, "got:", got)
+
+            # for k,v in self.person_autofill_values.items():
+                # if v["birth name"] == self.user_input_person:
+                    # is_dupe = v["dupe name"]
+                    # if is_dupe is False:
+                        # selected_id = k                
+                        # break
+                    # elif is_dupe is True:
+                        # selected_id = self.person_input.right_dupe[1]
+                        # break
+        # if selected_id not in self.person_autofill_values:
+            # self.make_new_person()
+
+        is_dupe = False
+        for k,v in self.person_autofill_values.items():
+            if got == v["birth name"] or got == v["alt name"]:
+                if v["dupe name"]:
+                    is_dupe = True
+                    self.current_person = self.person_entry.right_dupe[1]
+                break
+        if is_dupe:
+            pass
+            # self.current_person_name, self.current_person = self.person_entry.open_dupe_dialog(self.person_entry.hits)            
         elif self.person_entry.current_id is None and "#" not in got:
             old_current_person = self.current_person
             self.current_person = open_new_person_dialog(

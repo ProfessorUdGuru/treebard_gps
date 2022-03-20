@@ -8,7 +8,7 @@ from widgets import (
     Label, Button, Entry, Canvas, LabelFrame, LabelH3, FrameHilited6,
     LabelMovable, Toplevel, LabelHeader, Radiobutton, Frame)
 from custom_combobox_widget import Combobox
-from autofill import EntryAutoHilited, EntryAutoPersonHilited
+from autofill import EntryAutoHilited
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import notes_dlg_help_msg, links_dlg_help_msg
@@ -260,9 +260,6 @@ class NotesDialog(Toplevel):
             can be used. This way, the lists can be populated once when
             this dialog opens.
         '''
-
-        # people = make_all_names_list_for_person_select()        
-        # self.all_names = EntryAutoPersonHilited.create_lists(people)
 
         places = make_all_nestings(select_all_place_ids)
         self.place_autofill_values = EntryAutoHilited.create_lists(places)

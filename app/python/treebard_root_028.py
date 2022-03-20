@@ -170,17 +170,14 @@ if __name__ == '__main__':
 # DO LIST
 
 
-# BRANCH: names_refactor
-# If you input a dupe person and tab to the OK button as soon as the name fills in (WHICH SHD NOT HAPPEN, IT SHD NOT FILL IN BEC DUPE), it just changes curr per to the first dupe. If you try to keep typing after the autofill fills in the name, the dialog opens, and doesn't change person on OK. Then on main curr per OK it opens add person dlg again. THE PROBLEM IS THAT THE PROCEDURE IS CONFUSING AND ICKY. Rewrite the procedure like this: 
-    # Detect if the hit is a dupe.
-    # If dupe, mark current_is_dupe = True and let input fill in completely.
-    # On OK, if current_is_dupe is True, open rad select dlg.
-
-# GET ADD PERSON TO WORK RIGHT STARTING WITH roles.py:
-    # see roles.py line 500 `split('  #')` get rid of this and find anything else like it to get rid of
-    # `if "  #" in` FIND AND DELETE EVERYWHERE
-    # "James Woodland  #12" still displays in the edit row of roles dlg
-    # roles.py line 490 updating person values upon closing person add dlg not working until close app & reload FIRST FIX ANY MISCELLANEOUS STUFF BELOW BEFORE FOCUSING IN ON ADD PERSON BECAUSE MANFUNCTIONS IN ADD PERSON IS WHERE THIS WHOLE PROJECT STARTED SO HAVE TO FINISH THE PROJECT BEFORE TACKLING THE PROBLEMS THAT MOTIVATED THE PROJECT
+# BRANCH: names_refactor 
+# ALSO SHD PROBABLY ADD A LIST OF ALL NAMES AS ANOTHER KEY in person_autofill_values dict "all names": [(140, "G-Man", "nickname"), (143, "Jerry Grimm", "nickname")]. This could be used when making nametips in person search table and it could be used in the names tab. It is essential so that typing a nickname will autofill the current person input and change to the right person.
+# after clicking one of the partner radios, the bottom radio at the input doesn't work anymore
+# make sure delete_role() still works
+# add idtips to name inputs in the roles dialog
+# re-test all features of roles dialog
+# GET ADD PERSON TO WORK RIGHT everywhere it's used
+# test making new person in NewEventDialog, maybe missing some stuff, see docstring in EntryAutoPerson
 # refactor the way name strings are displayed, stored and parsed. see forum post . Plan in advance a simple way to ensure that AddPerson dialog will never open unwantedly.
 # Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
 # In save_new_name() in names.py, have to indicate whether the image is supposed to be main_image (1) vs (0). 1 is now the default in the insert query (insert_images_elements) to images_elements, which makes the new person's image display correctly for now; if it's made main and there's already a main_image the main has to be changed to 0 programmatically.
@@ -259,6 +256,7 @@ if __name__ == '__main__':
     # find the code that is getting default image `default_image_unisex.jpg` and fix the problem (app won't start because of this ?hard-coded value that I can't find anywhere... when fixed, get rid of the multiple storage places for this item and use the on in defaults only if possible from D:\treebard_gps\app\default\images and make a doc string so it won't be hard to find next time; if possible delete these images from the other 2 or 3 images directories where they exist
     # change names of default images so they alphabetize first in the combobox on add person dlg
 # export dbs to .sql
+# fix redraw() so top pic changes on ctrl-s if the main pic was changed w/ radio in gallery
 
 # BRANCH: dates
 
@@ -454,8 +452,11 @@ if __name__ == '__main__':
     either gender in either column.
 '''
 
-# Add to devdocs and user docs: 
+# DEVDOCS: person autofill inputs: 
 '''There's a quirk in the system for autofilling names that will rarely if ever show up, and seems to be harmless so far when it shows up in the Change Current Person field at the top of the app, above the tabs section. If you type a "z" and there are only two names--say "Zachary Dupree"--that start with a "z" and both names are exactly the same, the duplicate name chooser will open as soon as you type the "z", asking you to select which Zachary Dupree you wanted. This is fine if you wanted to use Zachary Dupree but not if you wanted to enter Zoe Blankenship for the first time. The glitch is harmless and the workaround is simple. Cancel out of the duplicates dialog, delete EVERTHING BUT THE Z that autofills, and finish typing Zoe's name. Everything will work as expected. This could be "fixed" with several lines of code but it will happen so rarely that Treebard prefers the workaround, which possibly anyone could figure out if they weren't reading this. As soon as there are two differently spelled names in the database--i.e. one other name that starts with a "z" besides the two "Zachary Duprees"--the problem will never occur again when typing a "z". To test this with the sample_tree.tbd file, delete any name starting with a "z" except for the two instances of Zachary somebody, and follow the instructions above. We are confident that this problem will seldom occur and will easily be worked around.
+'''
+'''
+Treebard uses an original-vs.-final-content test to eliminate validating and responding to inputs that haven't changed as the user tabs through them. It also eliminates superfluous dialogs. This works fine in the case where the input empties after use, and in the case where content is programatically inserted and not always changed. But in the case where there's always content inserted programatically and content is generally always going to change, an extra test is needed to detect duplicate names. For example, in the roles dialog, role names can be changed, but if John Smith is changed to a different John Smith, the usual test isn't enough. So in edit autofills, we have to test not only for whether the content has changed, but also if the content hasn't changed, we have to test for whether the final content has duplicates. A change might have been intended. That way, tabbing out of John Smith's edit input will always open a dupe checking dialog. There is a simple workaround, but the user would have to know the ID of the new John Smith and input it like "#5927" instead of inputting "John Smith". Users who happen to remember IDs for duplicate names might be able to use this sometimes, and looking up an ID is easy, but generally the inconvenience of having to look at a simple dialog to clarify which John Smith was meant, each time a role person named John Smith is edited, would be no big deal and would happen rarely.
 '''
 
 
