@@ -997,7 +997,7 @@ select_name_details = '''
     WHERE person_id = ?
 '''
 
-select_name_person = '''
+select_name_id_by_person_id = '''
     SELECT name_id
     FROM name
     WHERE person_id = ?

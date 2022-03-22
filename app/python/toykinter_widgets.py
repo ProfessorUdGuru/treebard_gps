@@ -11,22 +11,20 @@ from dev_tools import looky, seeline
 
 
 formats = make_formats_dict()
-
+print("line", looky(seeline()).lineno, "formats['status']:", formats['status'])
 
 # ************** statusbar tooltips sizegrip **************
 
 class LabelStatusbar(Labelx):
+    """ Statusbar messages on focus-in to individual widgets,
+        non-obtrusive tooltips, and replacement for ttk.Sizegrip.
+    """
     def __init__(self, master, formats, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
         self.config(
             bg=formats['bg'], 
             fg=formats['fg'],
             font=formats['status'])
-
-'''
-    Statusbar messages on focus-in to individual widgets,
-    non-obtrusive tooltips, and replacement for ttk.Sizegrip.
-'''
 
 def run_statusbar_tooltips(visited, status_label, tooltip_label):
     '''
@@ -104,14 +102,14 @@ class StatusbarTooltips(Frame):
         #   because edge grabber for resizing is below statusbar 
         #   so border looks wrong there. Instead put a Separator 
         #   above the statusbar frame.
-        relief = Frame(self, bd=0)
-        relief.grid(column=0, row=0, sticky='news')
-        relief.grid_columnconfigure(0, weight=1)
+        frm = Frame(self, bd=0)
+        frm.grid(column=0, row=0, sticky='news')
+        frm.grid_columnconfigure(0, weight=1)
 
         self.status_label = LabelStatusbar(
-            relief, formats, cursor='arrow', anchor='w')
+            frm, formats, cursor='arrow', anchor='w')
         self.tooltip_label = LabelStatusbar(
-            relief, formats, bd=2, relief='sunken', anchor='e')
+            frm, formats, bd=2, relief='sunken', anchor='e')
 
         if resizer is True:
             self.sizer.place(relx=1.0, x=-3, rely=1.0, anchor='se')

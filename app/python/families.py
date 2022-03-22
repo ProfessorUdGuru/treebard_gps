@@ -8,10 +8,11 @@ from widgets import (
 from window_border import Dialogue
 from custom_combobox_widget import Combobox
 from files import get_current_file
-from autofill import EntryAutoPerson, EntryAutoPersonHilited 
 from scrolling import Scrollbar
-from persons import (open_new_person_dialog, make_all_names_dict_for_person_select,
-    delete_person_from_tree, update_person_autofill_values)
+from persons import (
+    open_new_person_dialog, make_all_names_dict_for_person_select,
+    delete_person_from_tree, update_person_autofill_values, EntryAutoPerson, 
+    EntryAutoPersonHilited)
 from messages import InputMessage, open_message, families_msg
 from dates import format_stored_date, get_date_formats, OK_MONTHS
 from events_table import (

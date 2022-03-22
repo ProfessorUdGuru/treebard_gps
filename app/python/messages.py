@@ -382,7 +382,14 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
 
 places_err = (
     "A place cannot contain itself.\n\nSelect a "
-    "chain of places that are nested inside each other.",
+        "chain of places that are nested inside each other.",
+)
+
+main_msg = (
+    "There's no record of the person ID entered.",
+    "When typing a duplicately-existing name into an autofill, keep typing "
+        "till the Dupe Name Selection dialog opens, or type #ID in autofill "
+        "if you know the person's unique ID.",
 )
 
 events_msg = (
@@ -419,6 +426,7 @@ events_msg = (
         "tab, and try again.",
     "Birth events are created automatically when a new person is added to the "
         "tree. To delete a birth event, delete the person from the tree.",
+    main_msg[0],
 )
 
 names_msg = (
@@ -518,14 +526,10 @@ colorizer_msg = (
 
 families_msg = (
     "To add a partner to the current person, click the ADD PARTNER button. "
-    "If it's grayed out, select the little round radio button to the left of "
-    "the buttons row. To add a parent to a child, make the child the current "
-    "person and add the parent to the family table there. To add a partner to "
-    "a couple event, double click the event in the event table.",
-)
-
-main_msg = (
-    "There's no record of the person ID entered.",
+        "If it's grayed out, select the little round radio button to the left of "
+        "the buttons row. To add a parent to a child, make the child the current "
+        "person and add the parent to the family table there. To add a partner to "
+        "a couple event, double click the event in the event table.",
 )
 
 roles_msg = (

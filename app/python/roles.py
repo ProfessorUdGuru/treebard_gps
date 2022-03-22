@@ -8,14 +8,14 @@ from widgets import (
     Frame, Toplevel, Label, LabelButtonText, ButtonQuiet,
     LabelH3, Button, EntryHilited1, LabelHeader)
 from custom_combobox_widget import Combobox 
-from autofill import EntryAutoPerson, EntryAutoPersonHilited
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages import open_message, roles_msg
 from messages_context_help import roles_dlg_help_msg, role_edit_help_msg
 from styles import config_generic
 from persons import ( 
     make_all_names_dict_for_person_select, 
-    update_person_autofill_values, open_new_person_dialog)
+    update_person_autofill_values, open_new_person_dialog, EntryAutoPerson, 
+    EntryAutoPersonHilited)
 from scrolling import Scrollbar, resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from query_strings import (
@@ -262,6 +262,7 @@ class RolesDialog(Toplevel):
             self.roles_per_finding = [list(i) for i in roles_per_finding]
 
         for lst in self.roles_per_finding:
+            print("line", looky(seeline()).lineno, "lst:", lst)
             iD = lst[2]
             name = self.person_autofill_values[iD]["birth name"]
             if name is None or len(name) == 0:
@@ -394,33 +395,6 @@ class RolesDialog(Toplevel):
             return
 
         selected_id = self.get_selected_id(self.person_input, self.user_input_person, False)[0]
-
-# # *****************************try to parameterize**********************************************
-        # selected_id = None
-        # if "#" in self.user_input_person:
-            # selected_id = int(self.user_input_person.lstrip("#").strip())
-            # if selected_id not in self.person_autofill_values:
-                # msg = open_message(
-                    # self, 
-                    # roles_msg[0], 
-                    # "Unknown Person ID", 
-                    # "OK")
-                # msg[0].grab_set()
-                # msg[2].config(
-                    # command=lambda entry=self.person_input, msg=msg: self.err_done(
-                        # entry, msg))
-                # return
-        # else:
-            # for k,v in self.person_autofill_values.items():
-                # if v["birth name"] == self.user_input_person:
-                    # is_dupe = v["dupe name"]
-                    # if is_dupe is False:
-                        # selected_id = k                
-                        # break
-                    # elif is_dupe is True:
-                        # selected_id = self.person_input.right_dupe[1]
-                        # break
-# # ***************************************************************************
         if selected_id not in self.person_autofill_values:
             self.make_new_person()
             role_person_id = self.person_id
@@ -486,6 +460,14 @@ class RolesDialog(Toplevel):
                     elif is_dupe is True:
                         selected_id = inwidg.right_dupe[1]
                         break
+                elif v["alt name"] == got:
+                    is_dupe = v["dupe name"]
+                    if is_dupe is False:
+                        selected_id = k                
+                        break
+                    elif is_dupe is True:
+                        selected_id = inwidg.right_dupe[1]
+                        break
         return selected_id, id_was_input
 
     def get_edit_state(self):
@@ -503,34 +485,6 @@ class RolesDialog(Toplevel):
 
         selected_id, id_was_input = self.get_selected_id(
             self.edit_role_person_input, edited_role_person, True)
-
-# # *****************************try to parameterize**********************************************
-        # selected_id = None
-        # id_was_input = False
-        # if "#" in edited_role_person:
-            # selected_id = int(edited_role_person.lstrip("#").strip())
-            # if selected_id not in self.person_autofill_values:
-                # msg = open_message(
-                    # self, 
-                    # roles_msg[0], 
-                    # "Unknown Person ID", 
-                    # "OK")
-                # msg[0].grab_set()
-                # msg[2].config(
-                    # command=lambda entry=self.edit_role_person_input, msg=msg, from_edit=True: self.err_done(entry, msg, from_edit))
-                # return
-            # id_was_input = True
-        # else:
-            # for k,v in self.person_autofill_values.items():
-                # if v["birth name"] == edited_role_person:
-                    # is_dupe = v["dupe name"]
-                    # if is_dupe is False:
-                        # selected_id = k                
-                        # break
-                    # elif is_dupe is True:
-                        # selected_id = self.edit_role_person_input.right_dupe[1]
-                        # break
-# # ***************************************************************************
 
         if selected_id in self.person_autofill_values:
             if id_was_input: 

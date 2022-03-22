@@ -170,12 +170,12 @@ if __name__ == '__main__':
 # DO LIST
 
 
-# BRANCH: names_refactor 
-# ALSO SHD PROBABLY ADD A LIST OF ALL NAMES AS ANOTHER KEY in person_autofill_values dict "all names": [(140, "G-Man", "nickname"), (143, "Jerry Grimm", "nickname")]. This could be used when making nametips in person search table and it could be used in the names tab. It is essential so that typing a nickname will autofill the current person input and change to the right person.
+# BRANCH: names_refactor
+# see # if this works copy to roles.py get_selected_id() in events, test to see if the one in roles works for alt names eg james, it shouldn't, right? fix it now while i still know what the heck it is
+# copy code from roles.get_selected_id() to events_table.py or main.py and families.py and everywhere that a person_autofill_values is used
+# fix names in search.py and notes.py and families.py
 # after clicking one of the partner radios, the bottom radio at the input doesn't work anymore
-# make sure delete_role() still works
 # add idtips to name inputs in the roles dialog
-# re-test all features of roles dialog
 # GET ADD PERSON TO WORK RIGHT everywhere it's used
 # test making new person in NewEventDialog, maybe missing some stuff, see docstring in EntryAutoPerson
 # refactor the way name strings are displayed, stored and parsed. see forum post . Plan in advance a simple way to ensure that AddPerson dialog will never open unwantedly.
@@ -185,6 +185,7 @@ if __name__ == '__main__':
 # If user selects his own photo as default, prepend "0_default_image_" to user's file name.
 # If no main_image has been input to db, Treebard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. Treebard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
 # make sure PersonAdd never opens when it should not
+# re-test all features of families.py, roles dialog, change current person, search dialog, notes dialog, add person dialog
 # export .db and .tbd to .sql
 
 # BRANCH: kin_child

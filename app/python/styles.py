@@ -616,10 +616,9 @@ def get_opening_settings_default():
     return default_formats
   
 def make_formats_dict():
-    ''' 
-        To add a style, add a string to the end of keys list
+    """ To add a style, add a string to the end of keys list
         and a line below values.append...
-    '''
+    """
     prefs_to_use = list(get_opening_settings())
     prefs_to_use.insert(5, 'dejavu sans mono')
 

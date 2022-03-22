@@ -70,8 +70,7 @@ def get_matches(search_input):
 class PersonSearch(Toplevel):
     def __init__(
             self, master, root, treebard, entry, findings_table, 
-            show_top_pic, formats, person_autofill_values, *args, **kwargs): 
-            # show_top_pic, pic, formats, *args, **kwargs):
+            show_top_pic, formats, person_autofill_values, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.master = master # Main
@@ -79,9 +78,7 @@ class PersonSearch(Toplevel):
         self.treebard = treebard
         self.entry = entry
         self.findings_table = findings_table
-        # self.attributes_table = attributes_table
         self.show_top_pic = show_top_pic
-        # self.pic = pic
         self.formats = formats
         self.person_autofill_values = person_autofill_values
 
@@ -483,15 +480,9 @@ class PersonSearch(Toplevel):
         self.row_list.append(self.found_person)
         self.other_names = unique_match[1]
 
-        # self.display_name = get_any_name_with_id(self.found_person)        
-        # if type(self.display_name) is tuple:
-            # self.display_name = "({}) {}".format(
-                # self.display_name[1], self.display_name[0])
-
         self.display_name = self.person_autofill_values[self.found_person]["birth name"]
         if self.display_name is None or len (self.display_name) == 0:
-            self.display_name = self.person_autofill_values[self.found_person]["alt name"]
-            
+            self.display_name = self.person_autofill_values[self.found_person]["alt name"]            
 
         self.row_list.append(self.display_name)
         ext = [[], [], '', '', '', '', '', [], [], []]
@@ -618,18 +609,12 @@ class PersonSearch(Toplevel):
             else:
                 self.ma_id = None
 
-
-        # self.row_list[4] = get_any_name_with_id(self.ma_id)
         if self.ma_id is not None:
             name = self.person_autofill_values[self.ma_id]["birth name"]
             if name is None or len(name) == 0:
-                name = self.person_autofill_values[self.ma_id]["alt name"]
-        
+                name = self.person_autofill_values[self.ma_id]["alt name"]        
         
         self.row_list[4] = name
-        # if type(self.row_list[4]) is tuple:
-            # self.row_list[4] = "({}) {}".format(
-                # self.row_list[4][1], self.row_list[4][0])
 
         cur.close()
         conn.close()
@@ -657,12 +642,6 @@ class PersonSearch(Toplevel):
                 name = self.person_autofill_values[self.pa_id]["alt name"]
         
         self.row_list[5] = name
-
-        # self.row_list[5] = get_any_name_with_id(self.pa_id)
-        
-        # if type(self.row_list[5]) is tuple:
-            # self.row_list[5] = "({}) {}".format(
-                # self.row_list[5][1], self.row_list[5][0])
 
         cur.close()
         conn.close()
@@ -751,11 +730,10 @@ class PersonSearch(Toplevel):
         self.widget.bind('<Leave>', self.on_leave)
 
     def handle_enter(self, evt):
-        ''' 
-            Get person id from text in column 0 of pointed row. Find that
+        """ Get person id from text in column 0 of pointed row. Find that
             person id as row[id] in search results dicts. In that dict get
             row[other names].
-        '''
+        """
 
         self.pointed_to = evt.widget
         pointed_row = self.pointed_to.grid_info()['row']
@@ -778,12 +756,11 @@ class PersonSearch(Toplevel):
         self.off()
 
 class LabelSearch(Label): 
-    ''' 
-        Label for search results column cells. Since this widget responds to 
+    """ Label for search results column cells. Since this widget responds to 
         several different events, and then still has to respond to the 
         colorizer, somewhere along the way it made the code simpler to treat
         this class separately from other labels. 
-    '''
+    """
 
     def __init__(self, master, formats, *args, **kwargs):
         Label.__init__(self, master, *args, **kwargs)

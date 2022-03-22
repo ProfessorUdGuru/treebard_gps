@@ -24,7 +24,6 @@ from widgets import (
     LabelBoilerplate, LabelEntry, Radiobutton, LabelFrame)
 from window_border import Border
 from custom_tabbed_widget import TabBook
-from autofill import EntryAutoPerson, EntryAutoPersonHilited
 from scrolling import Scrollbar    
 from families import NuclearFamiliesTable
 from events_table import EventsTable
@@ -38,7 +37,7 @@ from messages_context_help import main_help_msg
 from font_picker import FontPicker
 from persons import (
     make_all_names_dict_for_person_select, open_new_person_dialog,
-    update_person_autofill_values)
+    update_person_autofill_values, EntryAutoPerson, EntryAutoPersonHilited)
 from search import PersonSearch
 from query_strings import (
     select_images_elements_main_image, select_current_person_id,
@@ -278,18 +277,6 @@ class Main(Frame):
         # children of preferences tab
         options_tabs.grid(column=0, row=0, sticky="news", padx=12, pady=12)
 
-        # # children of current_person_area
-        # self.current_person_label.pack(side="left", fill="x", expand="0", padx=(0,12))
-        # change_current_person.pack(side="left", padx=(0,12))
-        # # self.person_entry.pack(side="left", padx=(0,12))
-        # current_person_frm.pack(side="left", padx=(0,12))
-        # person_change.pack(side="left", padx=(0,12))
-        # person_search.pack(side="right")
-
-        # # children of current_person_frm
-        # self.person_entry.pack(side="left", padx=(0,12))
-        # self.id_entry.pack(side="left", padx=(0,12))
-
         # children of current_person_area
         self.current_person_label.pack(side="left", fill="x", expand="0", padx=(0,12))
         change_current_person.pack(side="left", padx=(0,12))
@@ -305,12 +292,8 @@ class Main(Frame):
         visited = (
             (self.person_entry,
                 "New Current Person Entry",
-                "Any name and ID of a prospective new current person will auto-fill "
-                    "when you start typing; a new person can be entered also."),
-            # (self.id_entry,
-                # "New Current Person ID Entry",
-                # "Any name of a prospective new current person will auto-fill at left "
-                    # "when you input the ID of an existing person."),
+                "Name of a change-to current person will auto-fill when you "
+                    "start typing. Start or end a new person with a plus sign."),
             (person_change,
                 "New Current Person OK Button",
                 "Press OK to change current person as per input to the left."),
@@ -501,31 +484,30 @@ class Main(Frame):
 
         got = self.person_entry.get()
 
-
-        print("line", looky(seeline()).lineno, "got:", got)
-
-            # for k,v in self.person_autofill_values.items():
-                # if v["birth name"] == self.user_input_person:
-                    # is_dupe = v["dupe name"]
-                    # if is_dupe is False:
-                        # selected_id = k                
-                        # break
-                    # elif is_dupe is True:
-                        # selected_id = self.person_input.right_dupe[1]
-                        # break
-        # if selected_id not in self.person_autofill_values:
-            # self.make_new_person()
-
+        if len(got) == 0:
+            return
         is_dupe = False
         for k,v in self.person_autofill_values.items():
             if got == v["birth name"] or got == v["alt name"]:
                 if v["dupe name"]:
                     is_dupe = True
-                    self.current_person = self.person_entry.right_dupe[1]
+                    selected_id = self.person_entry.right_dupe
+                    if selected_id:
+                        self.current_person = selected_id[1]
+                    else:
+                        msg = open_message(
+                            self, 
+                            main_msg[1], 
+                            "Dupe Name Autofill Workaround", 
+                            "OK")
+                        msg[0].grab_set()
+                        msg[2].config(command=err_done)
+                        self.person_entry.right_dupe = None
+                        return
                 break
+
         if is_dupe:
-            pass
-            # self.current_person_name, self.current_person = self.person_entry.open_dupe_dialog(self.person_entry.hits)            
+            pass  
         elif self.person_entry.current_id is None and "#" not in got:
             old_current_person = self.current_person
             self.current_person = open_new_person_dialog(
@@ -535,10 +517,11 @@ class Main(Frame):
                 self.current_person = old_current_person
         elif "#" in got:
             self.current_person = int(got.lstrip("#"))
-        elif len(got) != 0 and "#" not in got:
+        elif "#" not in got:
             self.current_person = self.person_entry.current_id
             self.current_id = None
         self.person_autofill_values = update_person_autofill_values()
+
         if self.person_autofill_values.get(self.current_person) is not None:
             self.current_person_name = self.person_autofill_values[self.current_person]["birth name"]
             if self.current_person_name is None or len(self.current_person_name) == 0:
@@ -561,6 +544,7 @@ class Main(Frame):
         current_file, current_dir = get_current_file()
         self.show_top_pic(current_file, current_dir, self.current_person)
         self.findings_table.redraw()
+        self.person_entry.right_dupe = None
 
     def open_person_gallery(self):
         person_gallery_dlg = Toplevel(self.root)
@@ -593,9 +577,9 @@ class Main(Frame):
         if current_person is None:
             cur.execute(select_current_person_id)
             current_person = cur.fetchone()[0]
-        # Due to a possible Pillow glitch, manually changing image names might
-        #   result in anomalous use of old values. If so change these 2 lines
-        #   for the commented line below, then change back.
+        # Due to a possible Pillow glitch, manually changing image names in db might
+        #   result in anomalous use of old values. If so, exchange these 2 lines
+        #   for the commented line below, then change back. SAVE FOREVER*****
         cur.execute(select_images_elements_main_image, (current_person,)) #****      
         top_pic = cur.fetchone() #************
         # top_pic = "0_default_image_unisex.jpg" # SAVE FOREVER************

@@ -5,11 +5,11 @@ import sqlite3
 from files import get_current_file
 from styles import config_generic
 from widgets import (
-    Frame, Label, Button, LabelMovable, LabelH3, Entry, Toplevel)
-from window_border import Border
+    Frame, Label, Button, LabelMovable, LabelH3, Entry, Toplevel, 
+    EntryUnhilited, Radiobutton, LabelHeader)
+from window_border import Border, Dialogue
 from custom_combobox_widget import Combobox  
 from scrolling import MousewheelScrolling, Scrollbar, resize_scrolled_content 
-from autofill import EntryAutoPerson
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import person_add_help_msg
@@ -24,7 +24,7 @@ from query_strings import (
     insert_image_new, select_name_with_id_any, select_birth_names_ids,
     insert_finding_birth_new_person, insert_finding_places_new,
     select_current_person_id, delete_name_person, delete_findings_roles_person,
-    select_name_person, delete_links_links_person, delete_links_links_name,
+    select_name_id_by_person_id, delete_links_links_person, delete_links_links_name,
     update_persons_persons_1_null, update_persons_persons_2_null,
     delete_finding_person, delete_claims_roles_person, delete_person,
     update_claims_persons_1_null, update_claims_persons_2_null,
@@ -79,7 +79,7 @@ def get_name_types():
 
 PERSON_DATA = ("birth name", "alt name", "alt name type", "sort order")
 def make_all_names_dict_for_person_select():
-    """ Make a name dict for global use in all name autofills.
+    """ Make a name dict for use in all name autofills.
     """
     current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
@@ -98,7 +98,6 @@ def make_all_names_dict_for_person_select():
 
     seen = set()
     dupes = [x for x in all_names if x in seen or seen.add(x)] 
-
     for dkt in inner_dict:
         if dkt["birth name"] in dupes or dkt["alt name"] in dupes:
             dkt["dupe name"] = True
@@ -151,7 +150,7 @@ def delete_person_from_tree(person_id):
     if current_person == person_id:
         delete_current_person_dialog()
     # links_links.name_id
-    cur.execute(select_name_person, (person_id,))
+    cur.execute(select_name_id_by_person_id, (person_id,))
     names = [i[0] for i in cur.fetchall()]
     for name_id in names:    
         cur.execute(delete_links_links_name, (name_id,))
@@ -217,6 +216,10 @@ class PersonAdd(Toplevel):
         self.person_autofill_values = person_autofill_values
 
         self.xfr = self.inwidg.get()
+        # There was going to be an AddPerson dialog(?) if the name input had a +
+        #   on either side of it but I don't remember if that was implemented,
+        #   put off till later, found unnecessary, or replaced. It was only a 
+        #   week ago, March 2022?
         if "+" in self.xfr:
             self.xfr = self.xfr.strip().strip("+").strip()
         self.role_person_edited = False
@@ -428,6 +431,7 @@ class PersonAdd(Toplevel):
         self.name_type_input.entry.insert(0, 'birth name')
         self.name_input.delete(0, 'end')
         get2 = self.inwidg2
+        print("line", looky(seeline()).lineno, "get2:", get2)
         if get2 and len(get2.get()) != 0:
             self.name_input.insert(0, get2.get())
         elif get2 and len(get2.get()) == 0:
@@ -616,6 +620,260 @@ class PersonAdd(Toplevel):
         for child in self.order_frm.winfo_children():
             child['text'] = ''
         self.make_dupe = True 
+
+
+""" These two autofill inputs are based on simpler code in autofill.py. """
+
+class EntryAutoPerson(EntryUnhilited):
+    """ To use this class, each person autofill input has to be given the 
+        ability to use its newest values with a line like this: 
+            `EntryAutoPerson.all_person_autofills.append(person_entry)`.
+        Then, after instantiating a class that uses autofills, you have to call 
+        `EntryAuto.create_lists(all_items)`. After values change, run something 
+        like `update_person_autofill_values()`.        
+    """
+
+    all_person_autofills = []
+
+    def create_lists(all_items):
+        """ Keeps a temporary list during one app session which will 
+            prioritize the autofill values with the most recently used values
+            given priority over the alphabetical list of the values not used in
+            the current session.
+
+            The `prepend_match()` method is used in conjunction with this 
+            to add the most recently used value to the very front of the list.
+
+            Since this function and the list `all_person_autofills` comprise a 
+            class-level procedure, values used and moved to the front of the 
+            list by one input will become available as first match to all the 
+            other inputs too, until the app is closed. Next time the app opens,
+            a fresh list of recently-used autofill values will be started.
+        """
+        key_list = list(all_items.items())
+        recent_items = []
+        all_items_unique = []
+
+        for item in key_list:
+            if item not in recent_items:
+                all_items_unique.append(item)
+        final_items = dict(recent_items + all_items_unique)
+        return final_items
+
+    def __init__(self, master, autofill=False, values=None, *args, **kwargs):
+        EntryUnhilited.__init__(self, master, *args, **kwargs)
+        self.master = master
+        self.autofill = autofill
+        self.values = values
+        self.pos = 0
+        self.current_id = None
+        self.right_dupe = None
+        self.hits = None
+
+
+        # self.reject_existing_dupe = False
+
+        if autofill is True:
+            self.bind("<KeyPress>", self.detect_pressed)
+            self.bind("<KeyRelease>", self.get_typed)
+            self.bind("<FocusOut>", self.prepend_match, add="+")
+            self.bind("<FocusIn>", self.deselect, add="+")
+
+    def detect_pressed(self, evt):
+        """ Run on every key press.
+        """
+        if self.autofill is False:
+            return
+        key = evt.keysym
+        if len(key) == 1:
+            self.pos = self.index('insert')
+            keep = self.get()[0:self.pos]
+            self.delete(0, 'end')
+            self.insert(0, keep)
+
+    def get_typed(self, evt):
+        """ Run on every key release. Filter out most non-alpha-numeric 
+            keys. Run the functions not triggered by events.
+        """
+        def do_it():
+            hits = self.match_string()
+            self.show_hits(hits, self.pos)
+
+        self.current_id = None
+        if self.autofill is False:
+            return
+        key = evt.keysym
+        # Allow alphanumeric characters.
+        if len(key) == 1:
+            do_it()
+        # Allow number signs, hyphens and apostrophes (#, -, ').
+        elif key in ('numbersign', 'minus', 'quoteright'):
+            do_it()
+        # Open the PersonAdd dialog with the "+" stripped off the input.
+        elif key == "plus":
+            pass
+
+    def match_string(self):
+        """ Match typed input to birth name, or alt name if no birth name. """
+        def match_alt_string():
+            for key,val in self.values.items():
+                for k,v in val.items():
+                    if k == "alt name":
+                        if v.lower().startswith(got.lower()):
+                            if (v, key) not in hits:
+                                hits.append((v, key))
+
+        hits = []
+        got = self.get()
+
+        for key,val in self.values.items():
+            for k,v in val.items():
+                if k == "birth name":
+                    if len(v) == 0:
+                        match_alt_string()
+                    elif v.lower().startswith(got.lower()):
+                        if (v, key) not in hits:
+                            hits.append((v, key))
+        return hits
+
+    def show_hits(self, hits, pos):
+        cursor = pos + 1
+        if len(hits) != 0:
+            if len(hits) > 1:
+                first = hits[0][0]
+                all_same = False
+                for hit in hits:
+                    if hit[0] == first:
+                        all_same = True
+                    else:
+                        all_same = False
+                        break
+                if all_same:
+                    self.right_dupe = self.open_dupe_dialog(hits) 
+                    self.delete(0, 'end')
+                    if self.right_dupe is None:
+                        return
+                    self.insert(0, self.right_dupe[0])
+                    self.current_id = self.right_dupe[1]
+                else:
+                    self.delete(0, 'end')
+                    self.insert(0, hits[0][0])
+                    self.current_id = hits[0][1]
+            else:
+                self.delete(0, 'end')
+                self.insert(0, hits[0][0])
+                self.current_id = hits[0][1]
+        self.icursor(cursor)
+
+    def open_dupe_dialog(self, hits):
+
+        def ok_dupe_name():
+            self.delete(0, "end")
+            dupe_name_dlg.destroy()
+    
+        def search_dupe_name():
+            self.delete(0, "end")
+            dupe_name_dlg.destroy()
+
+        def cancel_dupe_name():
+            nonlocal dupe_name_dlg_cancelled
+            dupe_name_dlg_cancelled = True
+            self.delete(0, "end")
+            dupe_name_dlg.destroy()
+
+        dupe_name_dlg_cancelled = False
+        self.right_id = tk.IntVar()
+        dupe_name_dlg = Dialogue(self)
+
+        lab = LabelHeader(
+            dupe_name_dlg.window, justify='left', wraplength=450)
+        lab.grid(column=0, row=0, padx=12, pady=12, ipadx=6, ipady=6)
+
+        radfrm = Frame(dupe_name_dlg.window)
+        radfrm.grid(column=0, row=1)
+        r = 0
+        for hit in hits:
+            name, iD = [hit[0], str(hit[1])]
+            rdo = Radiobutton(
+                radfrm, text="{}  #{}".format(name, iD), 
+                variable=self.right_id, value=r)
+            rdo.grid(column=0, row=r)
+            if r == 0:
+                rdo.select()
+                rdo.focus_set()
+                lab.config(text="Which {}?".format(name))
+            r += 1
+        # s = r
+        # name = name
+        # rdo = Radiobutton(
+            # radfrm, 
+            # text="Add a new person with the same name.", 
+            # variable=self.right_id, 
+            # value=s)
+        # rdo.grid(column=0, row=s)
+        
+        buttons = Frame(dupe_name_dlg.window)
+        buttons.grid(column=0, row=2, pady=12, padx=12)
+        dupe_name_ok = Button(buttons, text="OK", command=ok_dupe_name, width=7)
+        dupe_name_ok.grid(column=0, row=0, sticky="e", padx=(0,12))
+        search_name = Button(buttons, text="SEARCH DUPE NAME", command=search_dupe_name)
+        search_name.grid(column=1, row=0, sticky="e", padx=(0,12))
+        dupe_name_cancel = Button(buttons, text="CANCEL", command=cancel_dupe_name, width=7)
+        dupe_name_cancel.grid(column=2, row=0, sticky="e", padx=0)
+
+        dupe_name_dlg.canvas.title_1.config(text="Duplicate Stored Names")
+        dupe_name_dlg.canvas.title_2.config(text="")
+
+        dupe_name_dlg.resize_window()
+        self.wait_window(dupe_name_dlg)
+        if dupe_name_dlg_cancelled is False:
+            selected = self.right_id.get()
+            # if selected == len(hits):
+                # self.reject_existing_dupe = True
+            # else:
+            return hits[selected]
+        # else:
+            # print("line", looky(seeline()).lineno, "dupe_name_dlg_cancelled:", dupe_name_dlg_cancelled)
+            # self.reject_existing_dupe = True
+            # pass
+
+    def prepend_match(self, evt):
+        """ Determine which ID was used to fill in a value. Move the autofill
+            value corresponding with that ID to the front of the valus list.
+        """
+        content = self.get()
+        if self.current_id in self.values:
+            key_list = list(self.values.items())
+            u = 0
+            for tup in key_list:
+                if tup[0] == self.current_id:
+                    idx = u
+                    break
+                u += 1
+            used = key_list.pop(idx)
+            key_list.insert(0, used)
+            self.values = dict(key_list)
+
+    def deselect(self, evt):
+        '''
+            This callback was added because something in the code for this 
+            widget caused the built-in replacement of selected text with 
+            typed text to stop working. So if you tabbed into an autofill entry
+            that already had text in it, the text was all selected as expected 
+            but if you typed, the typing was added to the end of the existing 
+            text instead of replacing it, which is unexpected. Instead of 
+            finding out why this is happening, I added this callback so that 
+            tabbing into a filled-out autofill will not select its text. This 
+            might be better since the value in the field is not often changed 
+            and should not be easy to change by mistake.
+        '''
+        self.select_clear()
+
+class EntryAutoPersonHilited(EntryAutoPerson):
+    def __init__(self, master, formats, *args, **kwargs):
+        EntryAutoPerson.__init__(self, master, *args, **kwargs)
+
+        self.config(bg=formats["highlight_bg"])
 
 if __name__ == "__main__":
 

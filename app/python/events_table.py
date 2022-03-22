@@ -8,7 +8,7 @@ from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
     LabelH3, Button, Entry, EntryHilited1, LabelHeader, LabelHilited,
     LabelNegative)
-from autofill import EntryAuto, EntryAutoHilited, EntryAutoPersonHilited
+from autofill import EntryAuto, EntryAutoHilited
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
 from nested_place_strings import make_all_nestings
 from toykinter_widgets import Separator, run_statusbar_tooltips
@@ -16,7 +16,8 @@ from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import new_event_dlg_help_msg
 from styles import config_generic, make_formats_dict
 from persons import (
-    make_all_names_dict_for_person_select, open_new_person_dialog)
+    make_all_names_dict_for_person_select, open_new_person_dialog, 
+    EntryAutoPersonHilited)
 from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places
@@ -67,7 +68,6 @@ from dev_tools import looky, seeline
 
 
 
-# person_autofill_values = None
 
 date_prefs = get_date_formats()
 
@@ -1404,7 +1404,8 @@ class NewEventDialog(Toplevel):
         self.place_dicts = None
         self.unknown_event_type = False
 
-        # self.current_name = get_name_with_id(self.current_person)
+        self.other_person_id = None
+
         self.current_name = self.person_autofill_values[self.current_person]["birth name"]
         if self.current_name is None or len(self.current_name) == 0:
             self.current_name = self.person_autofill_values[self.current_person]["alt name"]
@@ -1668,7 +1669,7 @@ class NewEventDialog(Toplevel):
             lambda  evt, 
                     widg=self.other_person_input: self.catch_dupe_or_new_person(
                         evt, widg))
-        EntryAutoPerson.all_person_autofills.append(self.other_person_input)
+        EntryAutoPersonHilited.all_person_autofills.append(self.other_person_input)
 
         age2 = Label(self.couple_data_inputs, text="Age")
         self.age2_input = EntryHilited1(self.couple_data_inputs, width=6)
@@ -1697,9 +1698,7 @@ class NewEventDialog(Toplevel):
                 "Birth name of the other person.")])
 
     def close_new_event_dialog(self):
-        # self.root.focus_set()
         self.events_table.event_input.focus_set()
-        # self.events_table.event_input.delete(0, 'end')
         self.root.lift()
         self.grab_release()
         self.destroy()
@@ -1763,8 +1762,9 @@ class NewEventDialog(Toplevel):
 
     def couple_ok(self, cur, conn):                
         if len(self.other_person) != 0:
-            other_person_all = self.other_person.split(" #")
-            other_person_id = other_person_all[1]
+            other_person_id = self.other_person_id
+            # other_person_all = self.other_person.split(" #")
+            # other_person_id = other_person_all[1]
         else:
             other_person_id = None
 
@@ -1836,22 +1836,62 @@ class NewEventDialog(Toplevel):
 
         self.place_autofill_values = EntryAuto.create_lists(self.place_strings)
 
-    def catch_dupe_or_new_person(self, evt, input_widget):
+    def catch_dupe_or_new_person(self, evt, inwidg):
 
         def err_done(): 
-            input_widget.focus_set()
-            input_widget.delete(0, 'end')
+            inwidg.focus_set()
+            inwidg.delete(0, 'end')
             self.grab_set()
             msg[0].destroy()
 
-        person_and_id = input_widget.get().split("#")
-        if len(person_and_id[0]) == 0: 
+        def err_done0(self, entry, msg):
+            entry.delete(0, 'end')
+            msg[0].grab_release()
+            msg[0].destroy()
+            entry.focus_set()
+
+        got = inwidg.get() # added today
+        if len(got) == 0:
             return
-        elif len(person_and_id) == 1:
+        selected_id = None
+        id_was_input = False
+        if "#" in got:
+            selected_id = int(got.lstrip("#").strip())
+            if selected_id not in self.person_autofill_values:
+                msg0 = open_message(
+                    self, 
+                    events_msg[10], 
+                    "Unknown Person ID", 
+                    "OK")
+                msg0[0].grab_set()
+                msg0[2].config(command=lambda entry=inwidg, msg=msg0: err_done0(
+                    entry, msg))
+                return
+            id_was_input = True
+        else:
+            for k,v in self.person_autofill_values.items():
+                if v["birth name"] == got:
+                    is_dupe = v["dupe name"]
+                    if is_dupe is False:
+                        selected_id = k                
+                        break
+                    elif is_dupe is True:
+                        selected_id = inwidg.right_dupe[1]
+                        break
+                elif v["alt name"] == got:
+                    is_dupe = v["dupe name"]
+                    if is_dupe is False:
+                        selected_id = k                
+                        break
+                    elif is_dupe is True:
+                        selected_id = inwidg.right_dupe[1]
+                        break
+        if selected_id is None:
             new_partner = open_new_person_dialog(
-                self, input_widget, self.root, self.treebard, self.formats,
-                self.person_autofill_values)
-        elif self.current_person == int(person_and_id[1]):
+                self, inwidg, self.root, self.treebard, self.formats,
+                person_autofill_values=self.person_autofill_values)
+
+        elif selected_id == self.current_person:
             msg = open_message(
                 self, 
                 events_msg[0], 
@@ -1859,6 +1899,8 @@ class NewEventDialog(Toplevel):
                 "OK")
             msg[0].grab_set()
             msg[2].config(command=err_done)  
+
+        self.other_person_id = selected_id  
 
     def validate_place(self, evt):
         inwidg = evt.widget
