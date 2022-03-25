@@ -429,11 +429,12 @@ events_msg = (
     main_msg[0],
 )
 
-names_msg = (
-    "This birth name already exists. To create a "
+persons_msg = (
+    "This name already exists in the tree. To create a "
         "new person by the same name, click OK. The "
         "two persons can be merged later if desired.",
     "The name type doesn't exist. Create it in the Types Tab and try again.",
+    main_msg[0],
 )
 
 notes_msg = (
@@ -526,10 +527,11 @@ colorizer_msg = (
 
 families_msg = (
     "To add a partner to the current person, click the ADD PARTNER button. "
-        "If it's grayed out, select the little round radio button to the left of "
-        "the buttons row. To add a parent to a child, make the child the current "
+        "(If it's grayed out, select the little round radio button to the left of "
+        "the buttons row.) To add a parent to a child, make the child the current "
         "person and add the parent to the family table there. To add a partner to "
-        "a couple event, double click the event in the event table.",
+        "a couple event, double click the event in the conclusions table.",
+    main_msg[0],
 )
 
 roles_msg = (

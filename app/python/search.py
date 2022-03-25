@@ -9,7 +9,7 @@ from styles import config_generic
 from widgets import (
     Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3,
     LabelNegative)
-from persons import open_new_person_dialog
+from persons import open_new_person_dialog, update_person_autofill_values
 from dates import OK_PREFIXES, format_stored_date
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
@@ -29,7 +29,6 @@ from dev_tools import looky, seeline
 
 
 current_file, current_dir = get_current_file()
-# formats = make_formats_dict()
 COL_HEADS = ('ID', 'Name', 'Birth', 'Death', 'Mother', 'Father')
 
 NONPRINT_KEYS = (
@@ -191,13 +190,13 @@ class PersonSearch(Toplevel):
 
         self.person_adder = Button(
             header, 
-            text='Add New Person',
+            text='ADD NEW PERSON',
             command=lambda master=self,
                 inwidg=self.entry,
                 root=self.root,
-                inwidg2=self.search_input: open_new_person_dialog(
+                inwidg2=self.search_input: self.make_new_person(
                     master, inwidg, root, self.treebard, self.formats, 
-                    inwidg2, person_autofill_values=self.person_autofill_values))
+                    inwidg2, person_autofill_values=self.person_autofill_values)) 
 
         self.person_adder.grid(column=2, row=1, padx=12, pady=12)
 
@@ -230,6 +229,14 @@ class PersonSearch(Toplevel):
         self.make_header_row()
         config_generic(self)
         resize_scrolled_content(self, self.canvas, self.window)
+
+    def make_new_person(self, master, inwidg, root, treebard, formats, 
+        inwidg2, person_autofill_values=None):
+        open_new_person_dialog(
+            master, inwidg, root, self.treebard, self.formats, 
+            inwidg2, person_autofill_values=self.person_autofill_values)
+        self.person_autofill_values = update_person_autofill_values()
+        inwidg.delete(0, 'end')
 
     def cancel(self):
         self.grab_release()
@@ -360,17 +367,16 @@ class PersonSearch(Toplevel):
         if evt.type != '4':
             self.new_current_id = evt.widget['text']
 
-        # self.new_current_person = get_any_name_with_id(self.new_current_id)
-        self.new_current_person = self.person_autofill_values[self.new_current_id]["birth name"]
-        if self.new_current_person is None or len(self.new_current_person) == 0:
-            self.new_current_person = self.person_autofill_values[self.new_current_id]["alt name"]
+        self.new_current_person = self.person_autofill_values[self.new_current_id][0]["name"]
+        # self.new_current_person = self.person_autofill_values[self.new_current_id]["birth name"]
+        # if self.new_current_person is None or len(self.new_current_person) == 0:
+            # self.new_current_person = self.person_autofill_values[self.new_current_id]["alt name"]
             
         self.close_search_dialog()
         if type(self.new_current_person) is tuple:
             use_name = list(self.new_current_person)
             self.new_current_person = "({}) {}".format(use_name[1], use_name[0])
         self.findings_table.redraw(evt, current_person=self.new_current_id)
-        # self.attributes_table.redraw(evt, current_person=self.new_current_id)
         self.show_top_pic(current_file, current_dir, self.new_current_id)
 
         self.master.current_person_label.config(
@@ -480,9 +486,10 @@ class PersonSearch(Toplevel):
         self.row_list.append(self.found_person)
         self.other_names = unique_match[1]
 
-        self.display_name = self.person_autofill_values[self.found_person]["birth name"]
-        if self.display_name is None or len (self.display_name) == 0:
-            self.display_name = self.person_autofill_values[self.found_person]["alt name"]            
+        self.display_name = self.person_autofill_values[self.found_person][0]["name"]
+        # self.display_name = self.person_autofill_values[self.found_person]["birth name"]
+        # if self.display_name is None or len (self.display_name) == 0:
+            # self.display_name = self.person_autofill_values[self.found_person]["alt name"]            
 
         self.row_list.append(self.display_name)
         ext = [[], [], '', '', '', '', '', [], [], []]
@@ -610,9 +617,10 @@ class PersonSearch(Toplevel):
                 self.ma_id = None
 
         if self.ma_id is not None:
-            name = self.person_autofill_values[self.ma_id]["birth name"]
-            if name is None or len(name) == 0:
-                name = self.person_autofill_values[self.ma_id]["alt name"]        
+            name = self.person_autofill_values[self.ma_id][0]["name"]
+            # name = self.person_autofill_values[self.ma_id]["birth name"]
+            # if name is None or len(name) == 0:
+                # name = self.person_autofill_values[self.ma_id]["alt name"]        
         
         self.row_list[4] = name
 
@@ -637,9 +645,10 @@ class PersonSearch(Toplevel):
             else:
                 self.pa_id = None
         if self.pa_id is not None:
-            name = self.person_autofill_values[self.pa_id]["birth name"]
-            if name is None or len(name) == 0:
-                name = self.person_autofill_values[self.pa_id]["alt name"]
+            name = self.person_autofill_values[self.pa_id][0]["name"]
+            # name = self.person_autofill_values[self.pa_id]["birth name"]
+            # if name is None or len(name) == 0:
+                # name = self.person_autofill_values[self.pa_id]["alt name"]
         
         self.row_list[5] = name
 

@@ -51,9 +51,7 @@ class RolesDialog(Toplevel):
         
         self.roles_per_finding = []
 
-        self.current_name = self.person_autofill_values[self.current_person]["birth name"]
-        if self.current_name is None:
-            self.current_name = self.person_autofill_values[self.current_person]["alt name"]
+        self.current_name = self.person_autofill_values[self.current_person][0]["name"]
         people = make_all_names_dict_for_person_select()       
         self.person_autofill_values = EntryAutoPerson.create_lists(people)
 
@@ -262,11 +260,8 @@ class RolesDialog(Toplevel):
             self.roles_per_finding = [list(i) for i in roles_per_finding]
 
         for lst in self.roles_per_finding:
-            print("line", looky(seeline()).lineno, "lst:", lst)
             iD = lst[2]
-            name = self.person_autofill_values[iD]["birth name"]
-            if name is None or len(name) == 0:
-                name = self.person_autofill_values[iD]["alt name"]
+            name = self.person_autofill_values[iD][0]["name"]
             lst.append(iD)
             lst[2] = name
         cur.close()
@@ -321,7 +316,8 @@ class RolesDialog(Toplevel):
                 widg.focus_set()
                 return
         chosen_role_type = self.role_type_input.get()
-        self.user_input_person = self.person_input.get()            
+        self.user_input_person = self.person_input.get() 
+        print("line", looky(seeline()).lineno, "self.user_input_person:", self.user_input_person)
         if chosen_role_type not in self.role_types:
             chosen_role_type = self.make_new_role_type(chosen_role_type)
         self.make_new_role(chosen_role_type)
@@ -393,13 +389,15 @@ class RolesDialog(Toplevel):
         if len(self.user_input_person) == 0: 
             self.person_input.focus_set()
             return
+        # selected_id = self.get_selected_id(
+            # self.person_input, self.user_input_person, False)[0]
+        # if selected_id not in self.person_autofill_values:
+            # self.make_new_person()
+            # role_person_id = self.person_id
+        # else:
+            # role_person_id = selected_id
 
-        selected_id = self.get_selected_id(self.person_input, self.user_input_person, False)[0]
-        if selected_id not in self.person_autofill_values:
-            self.make_new_person()
-            role_person_id = self.person_id
-        else:
-            role_person_id = selected_id
+        role_person_id = 12 # DELETE THIS
 
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
@@ -433,49 +431,36 @@ class RolesDialog(Toplevel):
         cur.close()
         conn.close()
 
-    def get_selected_id(self, inwidg, got, from_edit):
-        selected_id = None
-        id_was_input = False
-        if "#" in got:
-            selected_id = int(got.lstrip("#").strip())
-            if selected_id not in self.person_autofill_values:
-                msg = open_message(
-                    self, 
-                    roles_msg[0], 
-                    "Unknown Person ID", 
-                    "OK")
-                msg[0].grab_set()
-                msg[2].config(
-                    command=lambda entry=inwidg, msg=msg, from_edit=from_edit: self.err_done(
-                        entry, msg, from_edit))
-                return
-            id_was_input = True
-        else:
-            for k,v in self.person_autofill_values.items():
-                if v["birth name"] == got:
-                    is_dupe = v["dupe name"]
-                    if is_dupe is False:
-                        selected_id = k                
-                        break
-                    elif is_dupe is True:
-                        selected_id = inwidg.right_dupe[1]
-                        break
-                elif v["alt name"] == got:
-                    is_dupe = v["dupe name"]
-                    if is_dupe is False:
-                        selected_id = k                
-                        break
-                    elif is_dupe is True:
-                        selected_id = inwidg.right_dupe[1]
-                        break
-        return selected_id, id_was_input
+    # def get_selected_id(self, inwidg, got, from_edit):
+        # pass # delete this
+        # selected_id = None
+        # id_was_input = False
+        # if "#" in got:
+            # selected_id = int(got.lstrip("#").strip())
+            # if selected_id not in self.person_autofill_values:
+                # msg = open_message(
+                    # self, 
+                    # roles_msg[0], 
+                    # "Unknown Person ID", 
+                    # "OK")
+                # msg[0].grab_set()
+                # msg[2].config(
+                    # command=lambda entry=inwidg, msg=msg, from_edit=from_edit: self.err_done(
+                        # entry, msg, from_edit))
+                # return
+            # id_was_input = True
+        # else:
+            # for k,v in self.person_autofill_values.items():
+                # if v["birth name"] == got or v["alt name"] == got:
+                    # selected_id = k
+                    # break
+        # return selected_id, id_was_input
 
     def get_edit_state(self):
         '''
             Detect and respond to changes in existing roles on OK button.
         '''
         edited_role_type = self.edit_role_type.get()
-        edited_role_person = self.edit_role_person_input.get()
         if edited_role_type in self.role_types:
             if edited_role_type != self.original_role_type:
                 self.update_role_type(edited_role_type)
@@ -483,24 +468,23 @@ class RolesDialog(Toplevel):
             self.make_new_role_type(edited_role_type)
             self.update_role_type(edited_role_type)
 
-        selected_id, id_was_input = self.get_selected_id(
-            self.edit_role_person_input, edited_role_person, True)
+        edited_role_person = self.edit_role_person_input.get()
+        # selected_id, id_was_input = self.get_selected_id(
+            # self.edit_role_person_input, edited_role_person, True)
 
-        if selected_id in self.person_autofill_values:
-            if id_was_input: 
-                new_name = self.person_autofill_values[selected_id]["birth name"]
-                if new_name is None or len(new_name) == 0:
-                    new_name = self.person_autofill_values[selected_id]["alt name"]                    
-                self.change_role_person(new_name, selected_id)
-            elif edited_role_person != self.original_role_person:
-                self.change_role_person(edited_role_person, selected_id)
-        else:
-            self.make_new_person(from_edit=True) 
-            edited_person_id = self.person_id
-            self.change_role_person(edited_role_person, edited_person_id)
-        self.original_role_type = edited_role_type
-        self.original_role_person = self.edit_role_person_input.get()
-        self.edit_row.grid_remove()
+        # if selected_id in self.person_autofill_values:
+            # if id_was_input: 
+                # new_name = self.person_autofill_values[selected_id][0]["name"]                    
+                # self.change_role_person(new_name, selected_id)
+            # elif edited_role_person != self.original_role_person:
+                # self.change_role_person(edited_role_person, selected_id)
+        # else:
+            # self.make_new_person(from_edit=True) 
+            # edited_person_id = self.person_id
+            # self.change_role_person(edited_role_person, edited_person_id)
+        # self.original_role_type = edited_role_type
+        # self.original_role_person = self.edit_role_person_input.get()
+        # self.edit_row.grid_remove()
 
     def delete_role(self):
 

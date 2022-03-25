@@ -13,7 +13,7 @@ from scrolling import MousewheelScrolling, Scrollbar, resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import person_add_help_msg
-from messages import open_yes_no_message, names_msg, open_message
+from messages import open_yes_no_message, persons_msg, open_message
 from images import get_all_pics    
 from query_strings import (
     select_current_person, select_name_with_id, select_all_names_ids,
@@ -30,10 +30,13 @@ from query_strings import (
     update_claims_persons_1_null, update_claims_persons_2_null,
     delete_images_elements_person, delete_claim_person, select_name_sorter,
     select_name_type_sorter_with_id, select_all_names, 
-    select_name_type_hierarchy,
+    select_name_type_hierarchy, select_all_names_all_details_order_hierarchy,
+
     )
 import dev_tools as dt
 from dev_tools import looky, seeline
+
+
 
 
 
@@ -45,13 +48,7 @@ NAME_SUFFIXES = (
     'i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii', 
     'ix', 'x', 'xi', 'xii', 'xiii', 'xiv', 'xv')
 
-current_file = get_current_file()[0]
-conn = sqlite3.connect(current_file)
-cur = conn.cursor()
-cur.execute(select_name_type_hierarchy)
-NAME_TYPES_HIERARCHY = [i[0] for i in cur.fetchall()]
-cur.close()
-conn.close()
+PERSON_DATA = ("name", "name type", "name id", "sort order", "used by", "dupe name")
 
 def get_current_person():
     current_person_id = 1
@@ -77,56 +74,82 @@ def get_name_types():
 
     return name_types
 
-PERSON_DATA = ("birth name", "alt name", "alt name type", "sort order")
 def make_all_names_dict_for_person_select():
     """ Make a name dict for use in all name autofills.
     """
     current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
-    cur.execute(select_all_names_ids)
+
+    cur.execute(select_all_names_all_details_order_hierarchy)
     results = cur.fetchall()
-    all_names = [i[0] for i in results]
-    person_ids = [i[1] for i in results]
-    values = []
-    for iD in person_ids:
-        values.append(get_any_name(iD, cur))
+    person_ids = [i[0] for i in results]
+    values = [list(i[1:]) for i in results]
+    values = [i + [False] for i in values]
     inner_dict = []
     for tup in values:
         indict = dict(zip(PERSON_DATA, tup))
         inner_dict.append(indict)
-
-    seen = set()
-    dupes = [x for x in all_names if x in seen or seen.add(x)] 
-    for dkt in inner_dict:
-        if dkt["birth name"] in dupes or dkt["alt name"] in dupes:
-            dkt["dupe name"] = True
-        else:
-            dkt["dupe name"] = False
-
     cur.close()
-    conn.close()    
+    conn.close() 
 
-    return dict(zip(person_ids, inner_dict))
+    values = list(zip(person_ids, inner_dict))
+    new_values = {}
+    for tup in values:
+        iD, name_dict = tup
+        if new_values.get(iD):
+            new_values[iD].append(name_dict)
+        else:
+            new_values[iD] = [name_dict]
 
-def get_any_name(iD, cur):
-    birth_name, sorter = ("", "")
-    cur.execute(select_name_sorter, (iD,))
-    result = cur.fetchone()
-    if result:
-        birth_name, sorter = result
-    if len(birth_name) == 0:
-        name_data = []
-        cur.execute(select_name_type_sorter_with_id, (iD,))
-        all_names_types = cur.fetchall()
-        for tup in all_names_types:
-            for alt_name_type in NAME_TYPES_HIERARCHY[1:]:
-                if tup[1] == alt_name_type:
-                    name_data = list(tup)
-                    break
-        return [""] + name_data
-    else:
-        return birth_name, "", "", sorter
+    all_names = []
+    dupes = []
+
+    for lst in new_values.values():
+        for dkt in lst:
+            for k,v in dkt.items():
+                if k == "name":
+                    stg = v
+                    if stg in all_names and stg not in dupes:                    
+                        dupes.append(stg)
+                    else:
+                        all_names.append(stg)
+    person_autofill_values = new_values
+
+    a = 0
+    for k,v in new_values.items():
+        b = 0
+        for dkt in v:
+            c = 0
+            for kk,vv in dkt.items():
+                if dkt["name"] in dupes:
+                    person_autofill_values[k][b]["dupe name"] = True
+                c += 1
+            b += 1
+        a += 1
+
+    return person_autofill_values
+
+person_autofill_values = make_all_names_dict_for_person_select() # GET RID OF THIS global
+
+# def get_any_name(iD, cur):
+    # birth_name, sorter = ("", "")
+    # cur.execute(select_name_sorter, (iD,))
+    # result = cur.fetchone()
+    # if result:
+        # birth_name, sorter = result
+    # if len(birth_name) == 0:
+        # name_data = []
+        # cur.execute(select_name_type_sorter_with_id, (iD,))
+        # all_names_types = cur.fetchall()
+        # for tup in all_names_types:
+            # for alt_name_type in NAME_TYPES_HIERARCHY[1:]:
+                # if tup[1] == alt_name_type:
+                    # name_data = list(tup)
+                    # break
+        # return [""] + name_data
+    # else:
+        # return birth_name, "", "", sorter
     
 def update_person_autofill_values():
     people = make_all_names_dict_for_person_select()
@@ -134,6 +157,99 @@ def update_person_autofill_values():
     for ent in EntryAutoPerson.all_person_autofills:
         ent.values = new_values
     return new_values
+
+def validate_id(iD, entry):
+    """ Get a name to fill in when ID is input. Unlike name autofill, the best
+        name to fill in is determined by hierarchy column in name_type table so
+        names are put into the dict in the right order so the first name
+        found will be the most suitable one according to the name types hierarchy.
+        E.G. birth name trumps pseudonym and pseudonym trumps nickname.
+    """
+        
+    def err_done(entry, msg):
+        entry.delete(0, 'end')
+        msg[0].grab_release()
+        msg[0].destroy()
+        entry.focus_set()
+
+    if iD not in person_autofill_values:
+        msg = open_message(
+            entry, 
+            persons_msg[2], 
+            "Unknown Person ID", 
+            "OK")
+        msg[0].grab_set()
+        msg[2].config(
+            command=lambda entry=entry, msg=msg: err_done(
+                entry, msg))
+    else:
+        name_from_id = get_name_from_id(iD)
+        return name_from_id   
+
+def get_name_from_id(iD):
+    name_from_id = None
+    for k,v in person_autofill_values.items():
+        if iD == k:
+            name_from_id = (v[0], k)
+            break 
+    return name_from_id
+
+def check_name(evt=None, ent=None, label=None):
+    iD = None
+    name_from_id = None
+    if evt:
+        ent = evt.widget
+    elif ent:
+        ent = ent
+    else:
+        return
+    filled = ent.get().strip()
+    if filled.startswith("#"):
+        filled = filled
+    elif filled.startswith("+"):
+        filled = filled
+    else:
+        filled = ent.filled_name
+    if filled == ent.original or filled is None:
+        return
+    elif filled.startswith("#"):
+        name_from_id = validate_id(int(filled.lstrip("#").strip()), ent)
+        if name_from_id is None:
+            return 
+        else:
+            if label:
+                label.config(text=name_from_id)
+            ent.delete(0, 'end')
+            return name_from_id
+    elif filled.startswith("+"):
+        return "add_new_person"
+
+    dupes = []
+    for hit in ent.hits:
+        the_one = hit[0]
+        if the_one["dupe name"] is False or the_one["name"] != ent.filled_name:
+            continue
+        else:
+            dupes.append(hit)
+    if len(dupes) > 1:
+        right_dupe = ent.open_dupe_dialog(dupes)
+        if label:
+            label.config(text=right_dupe)
+        return right_dupe
+    elif len(ent.hits) > 0: 
+        if label:
+            label.config(text=ent.hits[0])
+        ent.delete(0, 'end')
+    else:
+        if label:
+            label.config(text="")
+        ent.delete(0, 'end')
+    if len(ent.hits) != 0:
+        return ent.hits[0]
+
+def get_original(evt):
+    widg=evt.widget
+    widg.original = widg.get() 
 
 def delete_person_from_tree(person_id):
     """Remove all references to a person.""" 
@@ -216,10 +332,6 @@ class PersonAdd(Toplevel):
         self.person_autofill_values = person_autofill_values
 
         self.xfr = self.inwidg.get()
-        # There was going to be an AddPerson dialog(?) if the name input had a +
-        #   on either side of it but I don't remember if that was implemented,
-        #   put off till later, found unnecessary, or replaced. It was only a 
-        #   week ago, March 2022?
         if "+" in self.xfr:
             self.xfr = self.xfr.strip().strip("+").strip()
         self.role_person_edited = False
@@ -431,7 +543,6 @@ class PersonAdd(Toplevel):
         self.name_type_input.entry.insert(0, 'birth name')
         self.name_input.delete(0, 'end')
         get2 = self.inwidg2
-        print("line", looky(seeline()).lineno, "get2:", get2)
         if get2 and len(get2.get()) != 0:
             self.name_input.insert(0, get2.get())
         elif get2 and len(get2.get()) == 0:
@@ -479,7 +590,7 @@ class PersonAdd(Toplevel):
         else:
             msg = open_message(
                 self, 
-                names_msg[1], 
+                persons_msg[1], 
                 "Unknown Name Type", 
                 "OK")
             msg[0].grab_set()
@@ -600,7 +711,7 @@ class PersonAdd(Toplevel):
         else:
             msg = open_yes_no_message(
                 self, 
-                names_msg[0], 
+                persons_msg[0], 
                 "Duplicate Name in Tree", 
                 "OK", "CANCEL")
             msg[0].grab_set()
@@ -667,11 +778,8 @@ class EntryAutoPerson(EntryUnhilited):
         self.values = values
         self.pos = 0
         self.current_id = None
-        self.right_dupe = None
+        self.filled_name = None
         self.hits = None
-
-
-        # self.reject_existing_dupe = False
 
         if autofill is True:
             self.bind("<KeyPress>", self.detect_pressed)
@@ -714,56 +822,28 @@ class EntryAutoPerson(EntryUnhilited):
             pass
 
     def match_string(self):
-        """ Match typed input to birth name, or alt name if no birth name. """
-        def match_alt_string():
-            for key,val in self.values.items():
-                for k,v in val.items():
-                    if k == "alt name":
-                        if v.lower().startswith(got.lower()):
-                            if (v, key) not in hits:
-                                hits.append((v, key))
+        """ Match typed input to names already stored in hierarchical order. """
 
         hits = []
         got = self.get()
 
-        for key,val in self.values.items():
-            for k,v in val.items():
-                if k == "birth name":
-                    if len(v) == 0:
-                        match_alt_string()
-                    elif v.lower().startswith(got.lower()):
-                        if (v, key) not in hits:
-                            hits.append((v, key))
+        for k, v in self.values.items():
+            for dkt in v:
+                if dkt["name"].lower().startswith(got.lower()):
+                    if (dkt, k) not in hits:
+                        
+                        hits.append((dkt, k))
         return hits
 
     def show_hits(self, hits, pos):
         cursor = pos + 1
         if len(hits) != 0:
-            if len(hits) > 1:
-                first = hits[0][0]
-                all_same = False
-                for hit in hits:
-                    if hit[0] == first:
-                        all_same = True
-                    else:
-                        all_same = False
-                        break
-                if all_same:
-                    self.right_dupe = self.open_dupe_dialog(hits) 
-                    self.delete(0, 'end')
-                    if self.right_dupe is None:
-                        return
-                    self.insert(0, self.right_dupe[0])
-                    self.current_id = self.right_dupe[1]
-                else:
-                    self.delete(0, 'end')
-                    self.insert(0, hits[0][0])
-                    self.current_id = hits[0][1]
-            else:
-                self.delete(0, 'end')
-                self.insert(0, hits[0][0])
-                self.current_id = hits[0][1]
+            self.current_id = hits[0][1]
+            self.filled_name = hits[0][0]["name"]
+            self.delete(0, 'end')
+            self.insert(0, self.filled_name)
         self.icursor(cursor)
+        self.hits = hits
 
     def open_dupe_dialog(self, hits):
 
@@ -793,25 +873,21 @@ class EntryAutoPerson(EntryUnhilited):
         radfrm.grid(column=0, row=1)
         r = 0
         for hit in hits:
-            name, iD = [hit[0], str(hit[1])]
+            dkt, iD = hit
+            name, name_type, used_by, dupe_name = (
+                dkt["name"], dkt["name type"], dkt["used by"], dkt["dupe name"])
+            if len(used_by) != 0:
+                used_by = ", name used by {}".format(used_by)
             rdo = Radiobutton(
-                radfrm, text="{}  #{}".format(name, iD), 
-                variable=self.right_id, value=r)
-            rdo.grid(column=0, row=r)
+                radfrm, text="person #{} {} ({}){} ".format(iD, name, name_type, used_by), 
+                variable=self.right_id, value=r, anchor="w")
+            rdo.grid(column=0, row=r, sticky="ew")
             if r == 0:
                 rdo.select()
                 rdo.focus_set()
                 lab.config(text="Which {}?".format(name))
             r += 1
-        # s = r
-        # name = name
-        # rdo = Radiobutton(
-            # radfrm, 
-            # text="Add a new person with the same name.", 
-            # variable=self.right_id, 
-            # value=s)
-        # rdo.grid(column=0, row=s)
-        
+     
         buttons = Frame(dupe_name_dlg.window)
         buttons.grid(column=0, row=2, pady=12, padx=12)
         dupe_name_ok = Button(buttons, text="OK", command=ok_dupe_name, width=7)
@@ -828,14 +904,7 @@ class EntryAutoPerson(EntryUnhilited):
         self.wait_window(dupe_name_dlg)
         if dupe_name_dlg_cancelled is False:
             selected = self.right_id.get()
-            # if selected == len(hits):
-                # self.reject_existing_dupe = True
-            # else:
             return hits[selected]
-        # else:
-            # print("line", looky(seeline()).lineno, "dupe_name_dlg_cancelled:", dupe_name_dlg_cancelled)
-            # self.reject_existing_dupe = True
-            # pass
 
     def prepend_match(self, evt):
         """ Determine which ID was used to fill in a value. Move the autofill

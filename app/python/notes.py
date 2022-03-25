@@ -55,17 +55,10 @@ class NotesDialog(Toplevel):
         self.topics = []
         self.notes = []
 
-        # self.current_name = get_name_with_id(self.current_person)
-        self.current_name = self.person_autofill_values[self.current_person]["birth name"]
-        if self.current_name is None or len(self.current_name) == 0:
-            self.current_name = self.person_autofill_values[self.current_person]["alt name"]
-
-            
+        self.current_name = self.person_autofill_values[self.current_person][0]["name"]            
 
         self.privacy = tk.IntVar()
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
-
-        # self.formats = make_formats_dict()
 
         self.autoscroll_on_arrow = False
 
@@ -312,7 +305,6 @@ class NotesDialog(Toplevel):
         if self.link_type not in ELEMENTS:
             return
         elif self.link_type == "persons":
-            # self.link_input.values = self.all_names
             self.link_input.values = self.person_autofill_values
         elif self.link_type == "places":
             self.link_input.values = self.place_autofill_values

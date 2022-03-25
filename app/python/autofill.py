@@ -12,7 +12,11 @@ class EntryAuto(EntryUnhilited):
     '''
         To use this class, after instantiating it, you have to call 
         EntryAuto.create_lists(all_items). Other than getting all_items
-        (e.g. from a database query), the class is self-contained.        
+        (e.g. from a database query), the class is self-contained. 
+
+        To extend this class, rule number 1 is don't try doing logic on a
+        string being autofilled until the typing/autofilling is done and
+        focus is out of the widget. See EntryAutoPerson in persons.py.
     '''
 
     all_person_autofills = []

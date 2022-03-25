@@ -16,8 +16,7 @@ from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import new_event_dlg_help_msg
 from styles import config_generic, make_formats_dict
 from persons import (
-    make_all_names_dict_for_person_select, open_new_person_dialog, 
-    EntryAutoPersonHilited)
+    make_all_names_dict_for_person_select, EntryAutoPersonHilited, check_name)
 from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places
@@ -248,25 +247,25 @@ def get_couple_findings(
         if gotgot:
             if gotgot[0] == current_person:
                 iD = gotgot[3]
-                name = person_autofill_values[iD]["birth name"]
-                if name is None or len(name) == 0:
-                    name = person_autofill_values[iD]["alt name"]
+                name = person_autofill_values[iD][0]["name"] 
+                # name = person_autofill_values[iD]["birth name"]
+                # if name is None or len(name) == 0:
+                    # name = person_autofill_values[iD]["alt name"]
                 dkt["age"] = gotgot[1]
                 dkt["kin_type"] = gotgot[2]
                 dkt["partner_id"] = iD
                 dkt["partner_kin_type"] = gotgot[5]
-                # dkt["partner_name"] = get_name_with_id(iD)
                 dkt["partner_name"] = name
             elif gotgot[3] == current_person:
                 iD = gotgot[0]
-                name = person_autofill_values[iD]["birth name"]
-                if name is None or len(name) == 0:
-                    name = person_autofill_values[iD]["alt name"]
+                name = person_autofill_values[iD][0]["name"] 
+                # name = person_autofill_values[iD]["birth name"]
+                # if name is None or len(name) == 0:
+                    # name = person_autofill_values[iD]["alt name"]
                 dkt["age"] = gotgot[4]
                 dkt["kin_type"] = gotgot[5]
                 dkt["partner_id"] = iD
                 dkt["partner_kin_type"] = gotgot[2]
-                # dkt["partner_name"] = get_name_with_id(iD)
                 dkt["partner_name"] = name
 
         cur.execute(select_findings_details_couple_generic, finding_id)
@@ -312,15 +311,18 @@ def make_parent_kintips(dkt, current_person, cur, person_autofill_values):
         mom_name = None
         dkt["father_id"] = dad
         if dad:
-            dad_name = person_autofill_values[dad]["birth name"]
-            if dad_name is None:
-                dad_name = person_autofill_values[dad]["alt name"]        
+            
+            dad_name = person_autofill_values[dad][0]["name"] 
+            # dad_name = person_autofill_values[dad]["birth name"]
+            # if dad_name is None:
+                # dad_name = person_autofill_values[dad]["alt name"]        
         dkt["father_name"] = dad_name
         dkt["mother_id"] = mom
         if mom:
-            mom_name = person_autofill_values[mom]["birth name"]
-            if mom_name is None:
-                mom_name = person_autofill_values[mom]["alt name"]
+            mom_name = person_autofill_values[mom][0]["name"]
+            # mom_name = person_autofill_values[mom]["birth name"]
+            # if mom_name is None:
+                # mom_name = person_autofill_values[mom]["alt name"]
             dkt["mother_name"] = mom_name
 
 def make_alt_parent_kintips(
@@ -355,20 +357,23 @@ def make_alt_parent_kintips(
         parent1_id = parents[0]
         parent2_id = parents[2]
         if parent1_id:
-            parent1 = person_autofill_values[parent1_id]["birth name"]
-            if parent1 is None:
-                parent1 = person_autofill_values[parent1_id]["alt name"]
+            parent1 = person_autofill_values[parent1_id][0]["name"]
+            # parent1 = person_autofill_values[parent1_id]["birth name"]
+            # if parent1 is None:
+                # parent1 = person_autofill_values[parent1_id]["alt name"]
         if parent2_id:
-            parent2 = person_autofill_values[parent2_id]["birth name"]
-            if parent2 is None:
-                parent2 = person_autofill_values[parent2_id]["alt name"]
+            parent2 = person_autofill_values[parent2_id][0]["name"]
+            # parent2 = person_autofill_values[parent2_id]["birth name"]
+            # if parent2 is None:
+                # parent2 = person_autofill_values[parent2_id]["alt name"]
 
         dkt[key1a] = parent1_id
         dkt[key1b] = parent1
         dkt[key2a] = parent2_id
         dkt[key2b] = parent2
 
-def autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id, person_autofill_values):
+def autocreate_parent_findings(
+    dkt, cur, current_person, findings_data, finding_id, person_autofill_values):
     """ Get birth & alt_birth findings to autocreate rows when parent is current 
         person. """
 
@@ -403,11 +408,11 @@ def autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_
         cur.execute(select_findings_details_offspring_alt_parentage, (child_id, offspring_event_id))     
         offspring_details = cur.fetchone()
         event_type = get_event_type_string(offspring_event_id)
-
-        # child_name = get_name_with_id(child_id)
-        child_name = person_autofill_values[child_id]["birth name"]
-        if child_name is None or len(child_name) == 0:
-            child_name = person_autofill_values[child_id]["birth name"]
+        # print("line", looky(seeline()).lineno, "len(person_autofill_values):", len(person_autofill_values))
+        child_name = person_autofill_values[child_id][0]["name"]
+        # child_name = person_autofill_values[child_id]["birth name"]
+        # if child_name is None or len(child_name) == 0:
+            # child_name = person_autofill_values[child_id]["birth name"]
 
         sorter = split_sorter(offspring_details[1])
         date_prefs = get_date_formats(tree_is_open=1)
@@ -475,7 +480,7 @@ def get_findings():
     non_empty_notes = [i[0] for i in cur.fetchall()]
 
     person_autofill_values = make_all_names_dict_for_person_select()  
-
+    # print("line", looky(seeline()).lineno, "len(person_autofill_values):", len(person_autofill_values))
     for finding_id in generic_finding_ids:
         dkt = dict(rowtotype)
         
@@ -484,14 +489,21 @@ def get_findings():
             current_person, non_empty_roles, non_empty_notes)     
 
         if dkt["event"] == "birth":
-            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id, person_autofill_values)
-                # non_empty_roles, non_empty_notes)
+            autocreate_parent_findings(
+                dkt, cur, current_person, findings_data, finding_id, 
+                person_autofill_values)
         elif dkt["event"] == "adoption":
-            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id, person_autofill_values)
+            autocreate_parent_findings(
+                dkt, cur, current_person, findings_data, finding_id, 
+                person_autofill_values)
         elif dkt["event"] == "fosterage":
-            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id, person_autofill_values)
+            autocreate_parent_findings(
+                dkt, cur, current_person, findings_data, finding_id, 
+                person_autofill_values)
         elif dkt["event"] == "guardianship":
-            autocreate_parent_findings(dkt, cur, current_person, findings_data, finding_id, person_autofill_values)
+            autocreate_parent_findings(
+                dkt, cur, current_person, findings_data, finding_id, 
+                person_autofill_values)
 
     get_couple_findings(
         cur, current_person, rowtotype, findings_data, 
@@ -834,9 +846,6 @@ class EventsTable(Frame):
             symmetrical for all the text columns, with autofill defaulting to 
             False except for the places column.
         '''
-        # global person_autofill_values
-    
-        # person_autofill_values = self.person_autofill_values
         self.place_autofill_values = EntryAuto.create_lists(self.place_strings)
         self.table_cells = []
         for i in range(int(qty/8)):
@@ -864,12 +873,10 @@ class EventsTable(Frame):
                     cell = LabelDots(
                         self, RolesDialog, self.treebard, self.formats, 
                         person_autofill_values=self.person_autofill_values
-                        # finding_row=None # what is this for? 
 )
                 elif j == 6:
                     cell = LabelDots(
                         self, NotesDialog, self.treebard, self.formats, 
-                        # finding_row=None # what is this for?
                         person_autofill_values=self.person_autofill_values
 )
                 elif j == 7:
@@ -1022,7 +1029,8 @@ class EventsTable(Frame):
                         name = dkt.get("child_name")
                         child_id = dkt["child_id"]
                         if len(name) == 0:
-                            name = self.person_autofill_values[child_id]["alt name"]
+                            name = self.person_autofill_values[child_id]["name"]
+                            # name = self.person_autofill_values[child_id]["alt name"]
                         offspring_in = widg.bind(
                             "<Enter>", lambda evt, 
                             kin="child", name=name: self.handle_enter(kin, name))
@@ -1033,9 +1041,10 @@ class EventsTable(Frame):
                     elif evtype in self.couple_event_types:
                         name = dkt.get("partner_name")
                         if name is None:
-                            name = self.person_autofill_values[dkt["partner_id"]]["birth name"]
-                            if name is None:
-                                name = self.person_autofill_values[dkt["partner_id"]]["alt name"]
+                            name = self.person_autofill_values[dkt["partner_id"]]["name"]
+                            # name = self.person_autofill_values[dkt["partner_id"]]["birth name"]
+                            # if name is None:
+                                # name = self.person_autofill_values[dkt["partner_id"]]["alt name"]
                         couple_in = widg.bind(
                             "<Enter>", lambda evt, 
                             kin=dkt["partner_kin_type"], 
@@ -1406,9 +1415,10 @@ class NewEventDialog(Toplevel):
 
         self.other_person_id = None
 
-        self.current_name = self.person_autofill_values[self.current_person]["birth name"]
-        if self.current_name is None or len(self.current_name) == 0:
-            self.current_name = self.person_autofill_values[self.current_person]["alt name"]
+        self.current_name = self.person_autofill_values[self.current_person]["name"]
+        # self.current_name = self.person_autofill_values[self.current_person]["birth name"]
+        # if self.current_name is None or len(self.current_name) == 0:
+            # self.current_name = self.person_autofill_values[self.current_person]["alt name"]
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -1664,11 +1674,13 @@ class NewEventDialog(Toplevel):
         self.other_person_input = EntryAutoPersonHilited(
             self.couple_data_inputs, self.formats, width=48, autofill=True, 
             values=self.person_autofill_values)
+        # self.other_person_input.bind(
+            # "<FocusOut>", 
+            # lambda  evt, 
+                    # widg=self.other_person_input: self.catch_dupe_or_new_person(
+                        # evt, widg))
         self.other_person_input.bind(
-            "<FocusOut>", 
-            lambda  evt, 
-                    widg=self.other_person_input: self.catch_dupe_or_new_person(
-                        evt, widg))
+            "<FocusOut>", lambda evt=evt: check_name(evt))
         EntryAutoPersonHilited.all_person_autofills.append(self.other_person_input)
 
         age2 = Label(self.couple_data_inputs, text="Age")
@@ -1836,71 +1848,59 @@ class NewEventDialog(Toplevel):
 
         self.place_autofill_values = EntryAuto.create_lists(self.place_strings)
 
-    def catch_dupe_or_new_person(self, evt, inwidg):
+    # def catch_dupe_or_new_person(self, evt, inwidg):
 
-        def err_done(): 
-            inwidg.focus_set()
-            inwidg.delete(0, 'end')
-            self.grab_set()
-            msg[0].destroy()
+        # def err_done(): 
+            # inwidg.focus_set()
+            # inwidg.delete(0, 'end')
+            # self.grab_set()
+            # msg[0].destroy()
 
-        def err_done0(self, entry, msg):
-            entry.delete(0, 'end')
-            msg[0].grab_release()
-            msg[0].destroy()
-            entry.focus_set()
+        # def err_done0(self, entry, msg):
+            # entry.delete(0, 'end')
+            # msg[0].grab_release()
+            # msg[0].destroy()
+            # entry.focus_set()
 
-        got = inwidg.get() # added today
-        if len(got) == 0:
-            return
-        selected_id = None
-        id_was_input = False
-        if "#" in got:
-            selected_id = int(got.lstrip("#").strip())
-            if selected_id not in self.person_autofill_values:
-                msg0 = open_message(
-                    self, 
-                    events_msg[10], 
-                    "Unknown Person ID", 
-                    "OK")
-                msg0[0].grab_set()
-                msg0[2].config(command=lambda entry=inwidg, msg=msg0: err_done0(
-                    entry, msg))
-                return
-            id_was_input = True
-        else:
-            for k,v in self.person_autofill_values.items():
-                if v["birth name"] == got:
-                    is_dupe = v["dupe name"]
-                    if is_dupe is False:
-                        selected_id = k                
-                        break
-                    elif is_dupe is True:
-                        selected_id = inwidg.right_dupe[1]
-                        break
-                elif v["alt name"] == got:
-                    is_dupe = v["dupe name"]
-                    if is_dupe is False:
-                        selected_id = k                
-                        break
-                    elif is_dupe is True:
-                        selected_id = inwidg.right_dupe[1]
-                        break
-        if selected_id is None:
-            new_partner = open_new_person_dialog(
-                self, inwidg, self.root, self.treebard, self.formats,
-                person_autofill_values=self.person_autofill_values)
+        # got = inwidg.get()
+        # if len(got) == 0:
+            # return
+        # selected_id = None
+        # id_was_input = False
+        # if "#" in got:
+            # selected_id = int(got.lstrip("#").strip())
+            # if selected_id not in self.person_autofill_values:
+                # msg0 = open_message(
+                    # self, 
+                    # events_msg[10], 
+                    # "Unknown Person ID", 
+                    # "OK")
+                # msg0[0].grab_set()
+                # msg0[2].config(command=lambda entry=inwidg, msg=msg0: err_done0(
+                    # entry, msg))
+                # return
+            # id_was_input = True
+        # else:
+            # for k,v in self.person_autofill_values.items():
+                # if v["birth name"] == got or v["alt name"] == got:
+                    # selected_id = k
+                    # break
+        # if selected_id is None:
+            # new_partner = open_new_person_dialog(
+                # self, inwidg, self.root, self.treebard, self.formats,
+                # person_autofill_values=self.person_autofill_values)
+            # self.person_autofill_value = update_person_autofill_values()
 
-        elif selected_id == self.current_person:
-            msg = open_message(
-                self, 
-                events_msg[0], 
-                "Duplicate Persons in Couple", 
-                "OK")
-            msg[0].grab_set()
-            msg[2].config(command=err_done)  
+        # elif selected_id == self.current_person:
+            # msg = open_message(
+                # self, 
+                # events_msg[0], 
+                # "Duplicate Persons in Couple", 
+                # "OK")
+            # msg[0].grab_set()
+            # msg[2].config(command=err_done)  
 
-        self.other_person_id = selected_id  
+        # self.other_person_id = selected_id  
 
     def validate_place(self, evt):
         inwidg = evt.widget

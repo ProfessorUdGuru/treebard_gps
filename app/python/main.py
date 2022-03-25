@@ -36,8 +36,9 @@ from messages import open_message, main_msg
 from messages_context_help import main_help_msg
 from font_picker import FontPicker
 from persons import (
-    make_all_names_dict_for_person_select, open_new_person_dialog,
-    update_person_autofill_values, EntryAutoPerson, EntryAutoPersonHilited)
+    make_all_names_dict_for_person_select, check_name, get_original,
+    update_person_autofill_values, EntryAutoPerson, EntryAutoPersonHilited,
+    open_new_person_dialog)
 from search import PersonSearch
 from query_strings import (
     select_images_elements_main_image, select_current_person_id,
@@ -132,6 +133,7 @@ class Main(Frame):
             current_person_area, self.formats, 
             width=36,
             autofill=True)
+        self.person_entry.bind("<FocusIn>", get_original, add="+")
         EntryAutoPerson.all_person_autofills.append(self.person_entry)
         person_change = Button(
             current_person_area, text="OK", command=self.change_person)
@@ -455,9 +457,7 @@ class Main(Frame):
         make_rc_menus(rcm_widgets, self.rc_menu, main_help_msg)
 
     def get_current_values(self):
-        self.current_person_name = self.person_autofill_values[self.current_person]["birth name"]
-        if self.current_person_name is None or len(self.current_person_name) == 0:
-            self.current_person_name = self.person_autofill_values[self.current_person]["alt name"]
+        self.current_person_name = self.person_autofill_values[self.current_person][0]["name"]
         self.current_person_label.config(
             text="Current Person (ID): {} ({})".format(
                 self.current_person_name, self.current_person))
@@ -477,74 +477,31 @@ class Main(Frame):
 
     def change_person(self):
 
-        def err_done():
-            self.person_entry.delete(0, 'end')
-            msg[0].destroy()
-            self.person_entry.focus_set()
+        data = check_name(ent=self.person_entry)
 
-        got = self.person_entry.get()
-
-        if len(got) == 0:
-            return
-        is_dupe = False
-        for k,v in self.person_autofill_values.items():
-            if got == v["birth name"] or got == v["alt name"]:
-                if v["dupe name"]:
-                    is_dupe = True
-                    selected_id = self.person_entry.right_dupe
-                    if selected_id:
-                        self.current_person = selected_id[1]
-                    else:
-                        msg = open_message(
-                            self, 
-                            main_msg[1], 
-                            "Dupe Name Autofill Workaround", 
-                            "OK")
-                        msg[0].grab_set()
-                        msg[2].config(command=err_done)
-                        self.person_entry.right_dupe = None
-                        return
-                break
-
-        if is_dupe:
-            pass  
-        elif self.person_entry.current_id is None and "#" not in got:
+        if data == "add_new_person":
             old_current_person = self.current_person
+            added = self.person_entry.get().lstrip("+").strip()
             self.current_person = open_new_person_dialog(
                 self, self.person_entry, self.root, self.treebard, self.formats, 
                 person_autofill_values=self.person_autofill_values)
             if self.current_person is None:
-                self.current_person = old_current_person
-        elif "#" in got:
-            self.current_person = int(got.lstrip("#"))
-        elif "#" not in got:
-            self.current_person = self.person_entry.current_id
-            self.current_id = None
-        self.person_autofill_values = update_person_autofill_values()
-
-        if self.person_autofill_values.get(self.current_person) is not None:
-            self.current_person_name = self.person_autofill_values[self.current_person]["birth name"]
-            if self.current_person_name is None or len(self.current_person_name) == 0:
-                self.current_person_name = self.person_autofill_values[self.current_person]["alt name"]
+                self.current_person = old_current_person 
+            else:
+                self.person_autofill_values = update_person_autofill_values()
         else:
-            msg = open_message(
-                self, 
-                main_msg[0], 
-                "Unknown Person ID", 
-                "OK")
-            msg[0].grab_set()
-            msg[2].config(command=err_done)
-            return
-        self.current_person_label.config(
-            text="Current Person (ID): {} ({})".format(
-                self.current_person_name, self.current_person))
+            self.current_person_name = data[0]["name"]
+            self.current_person = data[1]
+            self.current_person_label.config(
+                text="Current Person (ID): {} ({})".format(
+                    self.current_person_name, self.current_person))
+
         self.findings_table.current_person = self.current_person
         self.findings_table.kin_widths = [0, 0, 0, 0, 0]
         self.person_entry.delete(0, 'end')
         current_file, current_dir = get_current_file()
         self.show_top_pic(current_file, current_dir, self.current_person)
         self.findings_table.redraw()
-        self.person_entry.right_dupe = None
 
     def open_person_gallery(self):
         person_gallery_dlg = Toplevel(self.root)

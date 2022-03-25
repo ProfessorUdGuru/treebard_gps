@@ -217,7 +217,7 @@ insert_kin_type_new = '''
 
 insert_name = '''
     INSERT INTO name 
-    VALUES (null, ?, ?, ?, ?, null)
+    VALUES (null, ?, ?, ?, ?, '')
 '''
 
 insert_name_type_new = '''
@@ -989,6 +989,22 @@ select_max_person_id = '''
 
 select_max_place_id = ''' SELECT MAX(place_id) FROM place '''
 
+select_all_names_all_details = '''
+    SELECT person_id, names, name_types, name.name_id, sort_order, used_by
+    FROM name
+    JOIN name_type
+        ON name.name_type_id = name_type.name_type_id
+    ORDER BY hierarchy
+'''
+
+select_all_names_all_details_order_hierarchy = '''
+    SELECT person_id, names, name_types, name.name_id, sort_order, used_by
+    FROM name
+    JOIN name_type
+        ON name.name_type_id = name_type.name_type_id
+    ORDER BY person_id, hierarchy
+'''
+
 select_name_details = '''
     SELECT names, name_types, used_by
     FROM name
@@ -1023,6 +1039,12 @@ select_name_sorter = '''
 
 select_name_type_hierarchy = '''
     SELECT name_types
+    FROM name_type
+    ORDER BY hierarchy
+'''
+
+select_name_type_hierarchy_by_id = '''
+    SELECT name_type_id
     FROM name_type
     ORDER BY hierarchy
 '''
