@@ -130,26 +130,7 @@ def make_all_names_dict_for_person_select():
 
     return person_autofill_values
 
-person_autofill_values = make_all_names_dict_for_person_select() # GET RID OF THIS global
-
-# def get_any_name(iD, cur):
-    # birth_name, sorter = ("", "")
-    # cur.execute(select_name_sorter, (iD,))
-    # result = cur.fetchone()
-    # if result:
-        # birth_name, sorter = result
-    # if len(birth_name) == 0:
-        # name_data = []
-        # cur.execute(select_name_type_sorter_with_id, (iD,))
-        # all_names_types = cur.fetchall()
-        # for tup in all_names_types:
-            # for alt_name_type in NAME_TYPES_HIERARCHY[1:]:
-                # if tup[1] == alt_name_type:
-                    # name_data = list(tup)
-                    # break
-        # return [""] + name_data
-    # else:
-        # return birth_name, "", "", sorter
+person_autofill_values = make_all_names_dict_for_person_select()
     
 def update_person_autofill_values():
     people = make_all_names_dict_for_person_select()
@@ -204,16 +185,24 @@ def check_name(evt=None, ent=None, label=None):
     else:
         return
     filled = ent.get().strip()
+    print("line", looky(seeline()).lineno, "filled:", filled)
+    # if filled.startswith(("#", "+")) or filled.endswith("+"):
     if filled.startswith("#"):
         filled = filled
-    elif filled.startswith("+"):
+    elif filled.startswith("+") or filled.endswith("+"):
         filled = filled
+        print("line", looky(seeline()).lineno, "filled:", filled)
     else:
         filled = ent.filled_name
+        print("line", looky(seeline()).lineno, "filled:", filled)
+    # needed in case original() is overridden by a class method:
+    ent.original = ""
+    print("line", looky(seeline()).lineno, "filled:", filled)
     if filled == ent.original or filled is None:
         return
     elif filled.startswith("#"):
         name_from_id = validate_id(int(filled.lstrip("#").strip()), ent)
+        print("line", looky(seeline()).lineno, "name_from_id:", name_from_id)
         if name_from_id is None:
             return 
         else:
@@ -221,7 +210,7 @@ def check_name(evt=None, ent=None, label=None):
                 label.config(text=name_from_id)
             ent.delete(0, 'end')
             return name_from_id
-    elif filled.startswith("+"):
+    elif filled.startswith("+") or filled.endswith("+"):
         return "add_new_person"
 
     dupes = []
@@ -237,10 +226,12 @@ def check_name(evt=None, ent=None, label=None):
             label.config(text=right_dupe)
         return right_dupe
     elif len(ent.hits) > 0: 
+        print("line", looky(seeline()).lineno, "ent.hits:", ent.hits)
         if label:
             label.config(text=ent.hits[0])
-        ent.delete(0, 'end')
+        # ent.delete(0, 'end') # commented bec other person input in new event couple input clearing on focus out
     else:
+        print("line", looky(seeline()).lineno, "ent:", ent)
         if label:
             label.config(text="")
         ent.delete(0, 'end')
@@ -649,6 +640,7 @@ class PersonAdd(Toplevel):
         conn.commit()
         new_name_string = self.full_name
         self.inwidg.delete(0, 'end')
+        print("line", looky(seeline()).lineno, "new_name_string:", new_name_string)
         self.inwidg.insert(0, new_name_string)
         cur.close()
         conn.close()
@@ -687,6 +679,7 @@ class PersonAdd(Toplevel):
         def ok_new_name():
             self.make_dupe = True
             msg[0].destroy()
+            print("line", looky(seeline()).lineno, "self.full_name:", self.full_name)
             self.name_input.insert(0, self.full_name)
             self.make_temp_person_id()
             self.make_sort_order_to_store()
@@ -795,7 +788,7 @@ class EntryAutoPerson(EntryUnhilited):
         key = evt.keysym
         if len(key) == 1:
             self.pos = self.index('insert')
-            keep = self.get()[0:self.pos]
+            keep = self.get()[0:self.pos].strip("+")
             self.delete(0, 'end')
             self.insert(0, keep)
 

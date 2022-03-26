@@ -10,7 +10,7 @@ from custom_combobox_widget import Combobox
 from files import get_current_file
 from scrolling import Scrollbar
 from persons import (
-    open_new_person_dialog, make_all_names_dict_for_person_select,
+    open_new_person_dialog, make_all_names_dict_for_person_select, check_name,
     delete_person_from_tree, update_person_autofill_values, EntryAutoPerson, 
     EntryAutoPersonHilited)
 from messages import InputMessage, open_message, families_msg
@@ -471,16 +471,10 @@ class NuclearFamiliesTable(Frame):
         for person in self.person_autofill_values:
             if person == pa_id:
                 pa_name = self.person_autofill_values[pa_id][0]["name"]
-                # pa_name = self.person_autofill_values[pa_id]["birth name"]
-                # if pa_name is None:
-                    # pa_name = self.person_autofill_values[pa_id]["alt name"]
 
         for person in self.person_autofill_values:
             if person == ma_id:
                 ma_name = self.person_autofill_values[ma_id][0]["name"]
-                # ma_name = self.person_autofill_values[ma_id]["birth name"]
-                # if ma_name is None:
-                    # ma_name = self.person_autofill_values[ma_id]["alt name"]
         
         parents = self.family_data[0][0]
         parents[1]["id"] = pa_id
@@ -992,7 +986,7 @@ class NuclearFamiliesTable(Frame):
     def add_child(self):
         print("hey kid")
 
-    def get_original(self, evt):
+    def get_original(self, evt): # DON'T DELETE TILL TESTING FOR BUG MENTIONED IN DOCSTRING
         """ The binding to FocusOut can't be done till a FocusIn event has
             taken place because for some reason a FocusOut event was being
             triggered when making a new event. This caused a mismatch between
@@ -1042,8 +1036,8 @@ class NuclearFamiliesTable(Frame):
             # entry.focus_set()
 
         # got = inwidg.get()
-        if len(got) == 0:
-            return
+        # if len(got) == 0:
+            # return
 
         # selected_id = None
         # id_was_input = False
@@ -1075,6 +1069,34 @@ class NuclearFamiliesTable(Frame):
             # self.person_autofill_values = update_person_autofill_values()
         # else:
             # new_parent_id = selected_id
+
+
+
+
+
+        data = check_name(ent=inwidg)
+
+        if data == "add_new_person":
+            old_parent_id = new_parent_id
+            new_parent_id = open_new_person_dialog(
+                self, inwidg, self.root, self.treebard, self.formats, 
+                person_autofill_values=self.person_autofill_values)
+            if new_parent_id is None:
+                new_parent_id = old_parent_id 
+            else:
+                self.person_autofill_values = update_person_autofill_values()
+        else:
+            new_parent_name = data[0]["name"]
+            new_parent_id = data[1]
+        print("line", looky(seeline()).lineno, "new_parent_name, new_parent_id:", new_parent_name, new_parent_id)
+            # self.current_person_label.config(
+                # text="Current Person (ID): {} ({})".format(
+                    # new_parent_name, new_parent_id))
+
+        # inwidg.delete(0, 'end')
+
+
+
 
         if inwidg.winfo_name() == "pa":
             parent_type = 2

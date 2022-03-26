@@ -171,13 +171,14 @@ if __name__ == '__main__':
 
 
 # BRANCH: names_refactor
-# GET RID OF GLOBAL IN PERSONS.PY
-# roles.py is ready to fix, it works without error but some parts are cheated eg selected id is hard coded to 12 and edit doesn't do anything but there's no errors, and if you create a new role with either an existing or new person it will just assign it to person 12. Then fix families.py.
+# other person input not working in new events dlg see commented line 1757 WORKS WITH EXISTING PERSON BUT NOT WITH NEW PERSON solution is to REWRITE THIS ONE input so it's validated on OK not on focusout, it's too complicated this way and there's no reason for it
+# test to see if NOT deleting content on focus out of person autofill is a problem I just added it in other person in put in new event dlg
+# fix new event input, and families.py
 # The right way is to use name strings only for the autofill, it literally has zero interest in IDs. It only fills in strings. STEP ONE delete all code regarding dupes and test to see if everything works. It will fill in first instead of sifting thru dupes. Then fix the dict see below, include used_by and whatever else is stored about names so this won't have to be done over again. On FocusOut or button press, get() evaluates content as to whether it's blank, same as original, different from original or #ID. If different from original, look for dupes, If dupes, then open dlg, otherwise the name is as unique as the id. PersonAdd will never open for any dupe ever unless + is added to the input.
 # fix names in families.py; #id, add dupe existing person, add dupe new person, change person existing/dupe/new dupe, unlink person for: parents, partners, children
 # user shd be allowed to change parents of current person; using the from_edit boolean as in get_selected_id in roles.py might be the key to changing existing person into different person.
-# find code similar to get_selected_id() in roles.py and parameterize all, see events_table.py, main.py, families.py, roles.py, etc. The original shd be in persons.py.
 # after clicking one of the partner radios, the bottom radio at the input doesn't work anymore
+# if no partners, both buttons are active and the single radio button is not selected, both of which are wrong
 # add idtips to name inputs in the roles dialog
 # Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
 # In save_new_name() in names.py, have to indicate whether the image is supposed to be main_image (1) vs (0). 1 is now the default in the insert query (insert_images_elements) to images_elements, which makes the new person's image display correctly for now; if it's made main and there's already a main_image the main has to be changed to 0 programmatically.

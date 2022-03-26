@@ -32,7 +32,6 @@ from gallery import Gallery
 from colorizer import Colorizer
 from toykinter_widgets import run_statusbar_tooltips
 from right_click_menu import RightClickMenu, make_rc_menus
-from messages import open_message, main_msg
 from messages_context_help import main_help_msg
 from font_picker import FontPicker
 from persons import (
@@ -481,7 +480,6 @@ class Main(Frame):
 
         if data == "add_new_person":
             old_current_person = self.current_person
-            added = self.person_entry.get().lstrip("+").strip()
             self.current_person = open_new_person_dialog(
                 self, self.person_entry, self.root, self.treebard, self.formats, 
                 person_autofill_values=self.person_autofill_values)

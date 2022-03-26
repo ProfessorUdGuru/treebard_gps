@@ -386,7 +386,6 @@ places_err = (
 )
 
 main_msg = (
-    "There's no record of the person ID entered.",
     "When typing a duplicately-existing name into an autofill, keep typing "
         "till the Dupe Name Selection dialog opens, or type #ID in autofill "
         "if you know the person's unique ID.",
@@ -426,7 +425,6 @@ events_msg = (
         "tab, and try again.",
     "Birth events are created automatically when a new person is added to the "
         "tree. To delete a birth event, delete the person from the tree.",
-    main_msg[0],
 )
 
 persons_msg = (
@@ -434,7 +432,7 @@ persons_msg = (
         "new person by the same name, click OK. The "
         "two persons can be merged later if desired.",
     "The name type doesn't exist. Create it in the Types Tab and try again.",
-    main_msg[0],
+    "There's no record of the person ID entered.",
 )
 
 notes_msg = (
@@ -531,11 +529,11 @@ families_msg = (
         "the buttons row.) To add a parent to a child, make the child the current "
         "person and add the parent to the family table there. To add a partner to "
         "a couple event, double click the event in the conclusions table.",
-    main_msg[0],
 )
 
 roles_msg = (
-    main_msg[0],
+    "To create a new person in a person autofill field, type a plus sign after the "
+    "name of the new person.",
 )
 
 
