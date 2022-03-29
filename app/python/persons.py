@@ -185,24 +185,18 @@ def check_name(evt=None, ent=None, label=None):
     else:
         return
     filled = ent.get().strip()
-    print("line", looky(seeline()).lineno, "filled:", filled)
-    # if filled.startswith(("#", "+")) or filled.endswith("+"):
     if filled.startswith("#"):
         filled = filled
     elif filled.startswith("+") or filled.endswith("+"):
         filled = filled
-        print("line", looky(seeline()).lineno, "filled:", filled)
     else:
         filled = ent.filled_name
-        print("line", looky(seeline()).lineno, "filled:", filled)
-    # needed in case original() is overridden by a class method:
     ent.original = ""
-    print("line", looky(seeline()).lineno, "filled:", filled)
     if filled == ent.original or filled is None:
+        print("line", looky(seeline()).lineno, "filled:", filled)
         return
     elif filled.startswith("#"):
         name_from_id = validate_id(int(filled.lstrip("#").strip()), ent)
-        print("line", looky(seeline()).lineno, "name_from_id:", name_from_id)
         if name_from_id is None:
             return 
         else:
@@ -226,12 +220,9 @@ def check_name(evt=None, ent=None, label=None):
             label.config(text=right_dupe)
         return right_dupe
     elif len(ent.hits) > 0: 
-        print("line", looky(seeline()).lineno, "ent.hits:", ent.hits)
         if label:
             label.config(text=ent.hits[0])
-        # ent.delete(0, 'end') # commented bec other person input in new event couple input clearing on focus out
     else:
-        print("line", looky(seeline()).lineno, "ent:", ent)
         if label:
             label.config(text="")
         ent.delete(0, 'end')
@@ -240,7 +231,8 @@ def check_name(evt=None, ent=None, label=None):
 
 def get_original(evt):
     widg=evt.widget
-    widg.original = widg.get() 
+    widg.original = widg.get()
+    print("line", looky(seeline()).lineno, "widg.original:", widg.original)
 
 def delete_person_from_tree(person_id):
     """Remove all references to a person.""" 
@@ -591,7 +583,7 @@ class PersonAdd(Toplevel):
         conn.close()
 
     def ok_new_person(self):
-        self.save_new_name()
+        self.save_new_person()
         self.close_new_person() 
 
     def close_new_person(self):
@@ -616,8 +608,7 @@ class PersonAdd(Toplevel):
             conn.commit()
             self.selected_image = selected_image 
 
-    def save_new_name(self):
-
+    def save_new_person(self):
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
@@ -639,11 +630,11 @@ class PersonAdd(Toplevel):
         cur.execute(insert_finding_places_new, (birth_id,))
         conn.commit()
         new_name_string = self.full_name
-        self.inwidg.delete(0, 'end')
-        print("line", looky(seeline()).lineno, "new_name_string:", new_name_string)
-        self.inwidg.insert(0, new_name_string)
         cur.close()
         conn.close()
+
+        self.inwidg.delete(0, 'end')
+        self.inwidg.insert(0, new_name_string)
 
         self.image_input.delete(0, 'end')
         self.image_input.insert(0, '0_default_image_unisex.jpg')
@@ -679,7 +670,6 @@ class PersonAdd(Toplevel):
         def ok_new_name():
             self.make_dupe = True
             msg[0].destroy()
-            print("line", looky(seeline()).lineno, "self.full_name:", self.full_name)
             self.name_input.insert(0, self.full_name)
             self.make_temp_person_id()
             self.make_sort_order_to_store()
@@ -812,7 +802,11 @@ class EntryAutoPerson(EntryUnhilited):
             do_it()
         # Open the PersonAdd dialog with the "+" stripped off the input.
         elif key == "plus":
-            pass
+            content = self.get()
+            idx = content.index("+")
+            fixed = content.replace("+", "")
+            self.delete(0, "end")
+            self.insert(0, "{}+".format(fixed))
 
     def match_string(self):
         """ Match typed input to names already stored in hierarchical order. """

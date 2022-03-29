@@ -17,7 +17,8 @@ from messages_context_help import new_event_dlg_help_msg
 from styles import config_generic, make_formats_dict
 from persons import (
     make_all_names_dict_for_person_select, EntryAutoPersonHilited, check_name, 
-    get_original, open_new_person_dialog, update_person_autofill_values)
+    get_original, open_new_person_dialog, update_person_autofill_values,
+    EntryAutoPerson)
 from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places
@@ -462,7 +463,6 @@ def get_findings():
     non_empty_notes = [i[0] for i in cur.fetchall()]
 
     person_autofill_values = make_all_names_dict_for_person_select()  
-    # print("line", looky(seeline()).lineno, "len(person_autofill_values):", len(person_autofill_values))
     for finding_id in generic_finding_ids:
         dkt = dict(rowtotype)
         
@@ -554,6 +554,8 @@ class EventsTable(Frame):
         self.inwidg = evt.widget
 
     def get_final(self, evt):
+        if not self.initial:
+            return
         widg = evt.widget
         final = widg.get()
         if final != self.initial:
@@ -1044,8 +1046,12 @@ class EventsTable(Frame):
                             self.kintip_bindings["on_enter"].append([widg, parents_in])
                             self.kintip_bindings["on_leave"].append([widg, parents_out])
                         elif evtype == "adoption":
-                            alts1 = ("adoptive_parent_name1", "adoptive_father_name1", "adoptive_mother_name1")
-                            alts2 = ("adoptive_parent_name2", "adoptive_father_name2", "adoptive_mother_name2")
+                            alts1 = (
+                                "adoptive_parent_name1", "adoptive_father_name1", 
+                                "adoptive_mother_name1")
+                            alts2 = (
+                                "adoptive_parent_name2", "adoptive_father_name2", 
+                                "adoptive_mother_name2")
                             for key in alts1:
                                 name1 = dkt.get(key)
                                 if name1:
@@ -1234,6 +1240,7 @@ class EventsTable(Frame):
         self.main_window.nuke_table.current_person_alt_parents = []
         self.main_window.nuke_table.compound_parent_type = "Children's"        
         for widg in self.main_window.nuke_table.nuke_containers: 
+            # pardframe, prodigy_frame, alt parent entries & labels
             widg.destroy() 
 
         self.main_window.nuke_table.nuke_containers = []
@@ -1411,6 +1418,20 @@ class NewEventDialog(Toplevel):
         conn.close()
 
     def get_some_info(self):
+        """ `self.new_finding` ID is predicted reluctantly, see `maxx`. It's 
+            used in `validate_place()` before OK is pressed and in `couple_ok()` 
+            and `update_db_place()` after OK is pressed. Between these two uses
+            another finding ID is created in 
+                persons.py `PersonAdd.save_new_person()`.
+            Then `self.new_finding` has already been used. So it has to be +1
+            twice in case of a new person being added here. This is hard to 
+            debug in case of unforeseen changes so it should be refactored. The
+            reason for doing it is so that the place input is validated first,
+            which prevents more than one dialog from opening on pressing OK, in
+            a case where the user inputs both a new person and a place that 
+            needs a validation dialog to open. I don't want two dialogs to open
+            when the new event dialog closes.
+        """
 
         def err_done2():
             self.destroy()
@@ -1422,17 +1443,16 @@ class NewEventDialog(Toplevel):
         conn =  sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        cur.execute(select_max_finding_id)        
-        max = cur.fetchone()[0]
-        print("line", looky(seeline()).lineno, "max:", max)
-        if max is None:
-            self.new_finding = 1
+        cur.execute(select_max_finding_id)  
+        maxx = cur.fetchone()
+        if maxx is None:
+            self.new_finding = 1 # first event in db
         else:
-            self.new_finding = max + 1
+            self.new_finding = maxx[0] + 1 # see docstring
         cur.execute(select_event_type_id, (self.new_event,))
-        max = cur.fetchone()
-        if max is not None:
-            self.event_type_id, self.couple_event = max
+        result = cur.fetchone()
+        if result is not None:
+            self.event_type_id, self.couple_event = result
         else:
             self.unknown_event_type = True
             msg = open_message(
@@ -1650,16 +1670,16 @@ class NewEventDialog(Toplevel):
         self.other_person_input = EntryAutoPersonHilited(
             self.couple_data_inputs, self.formats, width=48, autofill=True, 
             values=self.person_autofill_values)
-        self.other_person_input.bind(
-            "<FocusOut>", 
-            lambda  evt, 
-                    widg=self.other_person_input: self.catch_dupe_or_new_person(
-                        evt, widg))
+        # self.other_person_input.bind(
+            # "<FocusOut>", 
+            # lambda  evt, 
+                    # widg=self.other_person_input: self.catch_dupe_or_new_person(
+                        # evt, widg))
         self.other_person_input.bind(
             "<FocusIn>", lambda evt: get_original(evt))
         # self.other_person_input.bind(
             # "<FocusOut>", lambda evt: check_name(evt))
-        EntryAutoPersonHilited.all_person_autofills.append(self.other_person_input)
+        EntryAutoPerson.all_person_autofills.append(self.other_person_input)
 
         age2 = Label(self.couple_data_inputs, text="Age")
         self.age2_input = EntryHilited1(self.couple_data_inputs, width=6)
@@ -1699,11 +1719,23 @@ class NewEventDialog(Toplevel):
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
+        data = check_name(ent=self.other_person_input)
+        print("line", looky(seeline()).lineno, "data:", data)
+        if data == "add_new_person":
+            self.other_person_id = open_new_person_dialog(
+                self, self.other_person_input, self.root, self.treebard, self.formats, 
+                person_autofill_values=self.person_autofill_values)
+            self.person_autofill_values = update_person_autofill_values()
+            self.new_finding += 1 # see get_some_info() docstring
+        elif self.couple_event == 1:
+            self.other_person_id = data[1]
+            print("line", looky(seeline()).lineno, "self.other_person_id:", self.other_person_id)
         self.age_1 = self.age1_input.get()
         if self.couple_event == 1:
             self.age_2 = self.age2_input.get()
-            self.other_person = self.other_person_input.get()
-
+            self.other_person = data[0]["name"]
+            # self.other_person = self.other_person_input.get()
+            print("line", looky(seeline()).lineno, "self.other_person:", self.other_person)
         if self.couple_event == 0:
             cur.execute(
                 insert_finding_new, (
@@ -1711,27 +1743,11 @@ class NewEventDialog(Toplevel):
                     self.event_type_id, self.current_person))
             conn.commit()            
         else:
-            # THIS SELECT FOR TESTING ONLY--DELETE IT
-            cur.execute(select_max_finding_id)
-            max = cur.fetchone()
-            print("line", looky(seeline()).lineno, "max:", max)
-            print("line", looky(seeline()).lineno, "self.new_finding, self.event_type_id:", self.new_finding, self.event_type_id)
             cur.execute(
                 insert_finding_new_couple, 
                 (self.new_finding, self.event_type_id,))
             conn.commit()
             self.couple_ok(cur, conn)
-
-# THIS HAPPENS ON CLICK OK OF NEW EVT DLG ALL OK TILL THEN
-# line 643 new_name_string: Cortez Dino Rael
-# line 1713 self.new_finding, self.event_type_id: 1300 15
-# Exception in Tkinter callback
-# Traceback (most recent call last):
-  # File "C:\Users\Lutherman\AppData\Local\Programs\Python\Python39\lib\tkinter\__init__.py", line 1884, in __call__
-    # return self.func(*args)
-  # File "D:\treebard_gps\app\python\events_table.py", line 1714, in add_event
-    # cur.execute(
-# sqlite3.IntegrityError: UNIQUE constraint failed: finding.finding_id
 
         if len(self.place_string) == 0:
             cur.execute(insert_finding_places_new, (self.new_finding,))
@@ -1766,12 +1782,11 @@ class NewEventDialog(Toplevel):
         self.close_new_event_dialog()
         self.events_table.redraw()
 
-    def couple_ok(self, cur, conn):                
+    def couple_ok(self, cur, conn):  
+        print("line", looky(seeline()).lineno, "self.other_person:", self.other_person)
+        print("line", looky(seeline()).lineno, "self.other_person_id:", self.other_person_id)
         if len(self.other_person) != 0:
-            other_person_id = self.other_person_id
-            # other_person_all = self.other_person.split(" #")
-            # other_person_id = other_person_all[1]
- 
+            other_person_id = self.other_person_id 
         else:
             other_person_id = None
 
@@ -1842,19 +1857,6 @@ class NewEventDialog(Toplevel):
         self.place_strings.insert(0, self.place_string)
 
         self.place_autofill_values = EntryAuto.create_lists(self.place_strings)
-
-    def catch_dupe_or_new_person(self, evt, inwidg):
-
-        data = check_name(ent=self.other_person_input)
-        print("line", looky(seeline()).lineno, "data:", data)
-        if data == "add_new_person":
-            self.other_person_id = open_new_person_dialog(
-                self, self.other_person_input, self.root, self.treebard, self.formats, 
-                person_autofill_values=self.person_autofill_values)
-            self.person_autofill_values = update_person_autofill_values()
-        else:
-            # self.other_person = data[0]["name"] # not needed?
-            self.other_person_id = data[1]
 
     def validate_place(self, evt):
         inwidg = evt.widget

@@ -524,16 +524,20 @@ colorizer_msg = (
 )
 
 families_msg = (
-    "To add a partner to the current person, click the ADD PARTNER button. "
-        "(If it's grayed out, select the little round radio button to the left of "
-        "the buttons row.) To add a parent to a child, make the child the current "
-        "person and add the parent to the family table there. To add a partner to "
-        "a couple event, double click the event in the conclusions table.",
+    "To add a partner to the current person, select the radio button to the left "
+        "of the ADD PARTNER button, and press the button. You can also add a "
+        "partner to a couple event while creating a new event, or you can double-click "
+        "an existing event in the Conclusions Table to edit the event.\n\nTo add a "
+        "parent to a child, make the child the current person and add the parent "
+        "to the family table there.",
+    "To create a new person in a person autofill field, type a plus sign after the "
+        "name of the new person.",
+    "To change an existing parent, delete the parent and tab out, then add a "
+        "parent to the blank field.",
 )
 
 roles_msg = (
-    "To create a new person in a person autofill field, type a plus sign after the "
-    "name of the new person.",
+    families_msg[1],
 )
 
 
