@@ -48,7 +48,7 @@ from query_strings import (
     delete_findings_roles_finding, delete_findings_notes_finding,         
     select_findings_for_person, insert_finding_places_new, delete_claims_findings, 
     select_event_type_after_death, select_event_type_after_death_bool,
-    select_findings_persons_parents, select_findings_persons_age,    
+    select_findings_persons_parents, select_findings_persons_age2,    
     insert_finding_birth, update_findings_persons_age2, select_person,
     select_finding_event_type, select_findings_persons_ppid,
     select_findings_persons_person_id, update_finding_date, delete_persons_persons,
@@ -64,7 +64,6 @@ from query_strings import (
 
 import dev_tools as dt
 from dev_tools import looky, seeline
-
 
 
 
@@ -257,6 +256,7 @@ def get_couple_findings(
                 dkt["partner_id"] = iD
                 dkt["partner_kin_type"] = gotgot[5]
                 dkt["partner_name"] = name
+                dkt["partner_age"] = gotgot[4]
             elif gotgot[3] == current_person:
                 iD = gotgot[0]
                 if iD:
@@ -266,6 +266,7 @@ def get_couple_findings(
                 dkt["partner_id"] = iD
                 dkt["partner_kin_type"] = gotgot[2]
                 dkt["partner_name"] = name
+                dkt["partner_age"] = gotgot[1]
 
         cur.execute(select_findings_details_couple_generic, finding_id)
         couple_generics = list(cur.fetchone())
@@ -523,8 +524,8 @@ class EventsTable(Frame):
         self.screen_height = self.winfo_screenheight()
         self.column_padding = 2
         self.new_row = 0
-        event_types = get_all_event_types()
-        self.event_autofill_values = EntryAuto.create_lists(event_types)
+        self.event_types = get_all_event_types()
+        self.event_autofill_values = EntryAuto.create_lists(self.event_types)
         self.couple_event_types = get_couple_event_types()
         self.after_death_events = get_after_death_event_types()
         if self.after_death_events is None:
@@ -698,7 +699,7 @@ class EventsTable(Frame):
                 else:
                     print("line", looky(seeline()).lineno, "case not handled:")
             initval = self.initial
-            event_types = get_all_event_types()
+            self.event_types = get_all_event_types()
             self.final = self.final.strip().lower()
             if (self.initial == 'offspring' and len(self.final) != 0):
                 msg = open_message(
@@ -719,13 +720,13 @@ class EventsTable(Frame):
                 msg[0].grab_set()
                 msg[2].config(command=err_done7)
                 return
-                
-            if self.final in event_types:
+            if self.final in self.event_types:
                 update_to_existing_type()
             elif len(self.final) == 0:
                 initial = self.initial
                 self.delete_event(self.finding, widg, initial)
             else:
+                print("line", looky(seeline()).lineno, "self.final:", self.final)
                 msg = open_message(
                     self.root, 
                     events_msg[8], 
@@ -841,6 +842,7 @@ class EventsTable(Frame):
                             self, width=0,
                             autofill=True, 
                             values=self.event_autofill_values)
+                        cell.bind("<Double-Button-1>", self.open_edit_event_dialog)
                     elif j == 2:
                         cell = EntryAuto(
                             self, width=0, 
@@ -1359,19 +1361,55 @@ class EventsTable(Frame):
             self.treebard,
             self,
             self.formats,
-            new_event,
             self.current_person,
             self.place_strings,
             self.place_autofill_values,   
             self.redraw,
-            self.person_autofill_values)
+            self.person_autofill_values,
+            new_event=new_event)
         self.event_input.delete(0, 'end')
+
+    def open_edit_event_dialog (self, evt):
+        inwidg = evt.widget
+        for lst in self.cell_pool:
+            if lst[1][0] == inwidg:
+                finding = lst[0]
+                break
+
+        for k,v in self.findings_data.items():
+            if k == finding:
+                edit_event = v["event"]
+
+        if edit_event in self.couple_event_types:
+            is_couple_event = 1
+        elif edit_event in self.event_types:
+            is_couple_event = 0
+            
+        
+        data = self.findings_data[finding]
+
+        edit_event_dialog = NewEventDialog(
+            self.root, 
+            self.treebard,
+            self,
+            self.formats,
+            self.current_person,
+            self.place_strings,
+            self.place_autofill_values,   
+            self.redraw,
+            self.person_autofill_values,
+            finding=finding, 
+            inwidg=inwidg,
+            is_couple_event=is_couple_event,
+            data=data,
+            from_edit=True)
 
 class NewEventDialog(Toplevel):
     def __init__(
-            self, master, treebard, events_table, formats, new_event,
+            self, master, treebard, events_table, formats,
             current_person, place_strings, place_autofill_values, 
-            redraw, person_autofill_values, finding=None, ma_pa=False, 
+            redraw, person_autofill_values, finding=None, new_event=None, 
+            inwidg=None, is_couple_event=None, data=None, from_edit=False, 
             *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
@@ -1381,22 +1419,23 @@ class NewEventDialog(Toplevel):
         self.treebard = treebard
         self.events_table = events_table
         self.formats = formats
-        self.new_event = new_event
         self.current_person = current_person
         self.place_strings = place_strings
         self.place_autofill_values = place_autofill_values
         self.redraw = redraw
         self.finding = finding
         self.person_autofill_values = person_autofill_values
-
-        self.couple_event = None
+        self.new_event = new_event
+        self.inwidg = inwidg
+        self.is_couple_event = is_couple_event
+        self.data = data
+        self.from_edit = from_edit
         self.visited = []
         self.new_alt_parent_event = False
-
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
         self.place_dicts = None
-        self.unknown_event_type = False
+        self.unknown_event_type = False  
 
         self.other_person_id = None
 
@@ -1412,10 +1451,11 @@ class NewEventDialog(Toplevel):
         self.focus_new_event_dialog()
         self.get_some_info()
         if self.unknown_event_type is False:
-            self.make_widgets()
+            self.make_widgets(cur)
 
         cur.close()
         conn.close()
+        self.deiconify()
 
     def get_some_info(self):
         """ `self.new_finding` ID is predicted reluctantly, see `maxx`. It's 
@@ -1446,14 +1486,17 @@ class NewEventDialog(Toplevel):
         cur.execute(select_max_finding_id)  
         maxx = cur.fetchone()
         if maxx is None:
-            self.new_finding = 1 # first event in db
+            self.new_finding = 1 # first event recorded to database
         else:
             self.new_finding = maxx[0] + 1 # see docstring
         cur.execute(select_event_type_id, (self.new_event,))
         result = cur.fetchone()
         if result is not None:
-            self.event_type_id, self.couple_event = result
+            self.event_type_id, self.is_couple_event = result
+        elif result is None:
+            pass # eg when opening edit event dialog
         else:
+            print("line", looky(seeline()).lineno, "result:", result)
             self.unknown_event_type = True
             msg = open_message(
                 self.root, 
@@ -1466,7 +1509,7 @@ class NewEventDialog(Toplevel):
         cur.close()
         conn.close()
 
-    def make_widgets(self):
+    def make_widgets(self, cur):
 
         def show_message():
             window.columnconfigure(1, weight=1)
@@ -1479,7 +1522,10 @@ class NewEventDialog(Toplevel):
         self.rowconfigure(4, weight=1)
         self.new_event_canvas = Border(self, self.root, self.formats)
 
-        self.new_event_canvas.title_1.config(text="New Event Dialog")
+        if self.from_edit == 0:
+            self.new_event_canvas.title_1.config(text="New Event Dialog")
+        elif self.from_edit == 1:
+            self.new_event_canvas.title_1.config(text="Edit Event Dialog")
         self.new_event_canvas.title_2.config(
             text="Current Person: {}, id #{}".format(
                 self.current_name, self.current_person))
@@ -1532,10 +1578,10 @@ class NewEventDialog(Toplevel):
         self.frm.columnconfigure(0, weight=1)
         show_message()
 
-        self.make_inputs()
+        self.make_inputs(cur)
         resize_scrolled_content(self, self.new_event_canvas, window)
 
-    def make_inputs(self):
+    def make_inputs(self, cur):
 
         def err_done8():
             msg[0].destroy() 
@@ -1554,10 +1600,12 @@ class NewEventDialog(Toplevel):
         self.generic_data_inputs.grid(column=0, row=0, sticky="news")
         self.couple_data_inputs.grid(column=0, row=2, sticky='news')
         more.grid(column=0, row=4, columnspan=2, sticky="ew", pady=(12,0))
-        
-        self.lab0 = LabelH3(
-            self.generic_data_inputs, text="Event Type: {}".format(
-                self.new_event))
+
+        self.lab0 = LabelH3(self.generic_data_inputs)
+        if self.from_edit:
+            self.lab0.config(text="Event Type: {}".format(self.data["event"]))            
+        else:
+            self.lab0.config(text="Event Type: {}".format(self.new_event))
         lab1 = Label(self.generic_data_inputs, text="Date")
         self.date_input = EntryHilited1(self.generic_data_inputs)
         lab2 = Label(self.generic_data_inputs, text="Place")
@@ -1578,7 +1626,9 @@ class NewEventDialog(Toplevel):
             column=1, row=2, sticky="w", padx=(3,0), pady=(0,1))
         lab3.grid(column=0, row=3, sticky="e")
         self.particulars_input.grid(column=1, row=3, sticky="w", padx=(3,0))
-        if self.couple_event == 0:
+
+        print("line", looky(seeline()).lineno, "self.is_couple_event:", self.is_couple_event)
+        if self.is_couple_event == 0:
             if self.new_event == "offspring":
                 self.withdraw()
                 msg = open_message(
@@ -1594,9 +1644,15 @@ class NewEventDialog(Toplevel):
                 self.show_one_person()
             else:
                 self.show_one_person()
-        elif self.couple_event == 1:
+        elif self.is_couple_event == 1:
             self.show_other_person()
+        else:
+            print("line", looky(seeline()).lineno, "self.is_couple_event:", self.is_couple_event)
+            print("line", looky(seeline()).lineno, "case not handled:")
         self.b1.config(command=self.add_event)
+
+        if self.from_edit is True:
+            self.fill_inputs(cur)
 
         self.visited.extend([
             (self.date_input,
@@ -1627,7 +1683,6 @@ class NewEventDialog(Toplevel):
 
         config_generic(self)
         self.focus_first_empty()
-        self.deiconify()
 
     def show_one_person(self):
         self.new_evt_msg.config(text="Information about the new event "
@@ -1639,10 +1694,6 @@ class NewEventDialog(Toplevel):
         age1.grid(column=0, row=4, sticky="e", pady=(0,1))
         self.age1_input.grid(
             column=1, row=4, sticky="w", padx=(3,0), pady=(0,1))
-        
-        self.lab0.config(text="Event Type: {} ({})".format(
-            self.new_event,
-            self.current_name))
         self.lab0.grid_configure(columnspan=2)
 
     def show_other_person(self):
@@ -1654,7 +1705,7 @@ class NewEventDialog(Toplevel):
             elif parent_type == 2:
                 self.mother_or_father.config(text="mother")
 
-        self.new_evt_msg.config(text="Information about the new event "
+        self.new_evt_msg.config(text="Information about the event "
             "relating to the current person and other primary participants "
             "in the event.")
         sep1 = Separator(self.frm, width=3)
@@ -1670,15 +1721,8 @@ class NewEventDialog(Toplevel):
         self.other_person_input = EntryAutoPersonHilited(
             self.couple_data_inputs, self.formats, width=48, autofill=True, 
             values=self.person_autofill_values)
-        # self.other_person_input.bind(
-            # "<FocusOut>", 
-            # lambda  evt, 
-                    # widg=self.other_person_input: self.catch_dupe_or_new_person(
-                        # evt, widg))
         self.other_person_input.bind(
             "<FocusIn>", lambda evt: get_original(evt))
-        # self.other_person_input.bind(
-            # "<FocusOut>", lambda evt: check_name(evt))
         EntryAutoPerson.all_person_autofills.append(self.other_person_input)
 
         age2 = Label(self.couple_data_inputs, text="Age")
@@ -1713,7 +1757,122 @@ class NewEventDialog(Toplevel):
         self.grab_release()
         self.destroy()
 
+    def update_event(self):
+    
+        def change_stored_value(widg, key, final):
+            print("line", looky(seeline()).lineno, "widg, key, final:", widg, key, final)
+            self.changes[key] = final
+
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+
+        keys = ("date", "place", "particulars", "age", "partner_name", "partner_age")
+        widgets = [
+            self.date_input, self.place_input, self.particulars_input, 
+            self.age1_input]
+        widgets_couple = [self.other_person_input, self.age2_input]
+        if self.is_couple_event:
+            widgets = widgets + widgets_couple  
+
+        u = 0
+        for key in keys:
+            final = widgets[u].get()
+            print("line", looky(seeline()).lineno, "self.data[key], final:", self.data[key], final)
+            if final != self.data[key]:
+                self.changes[key] = final
+                widg = widgets[u]
+                row = self.inwidg.grid_info()["row"]
+                column = None
+                if u < 5:
+                    column = u + 1
+                if column:
+                    table_cell = row, column
+                    for child in self.events_table.winfo_children():
+                        if child.grid_info().get("row") is None:
+                            continue
+                        cell_row, cell_column = (child.grid_info()["row"], child.grid_info()["column"])
+                        if cell_row == row and cell_column == column:
+                            right_widget = child
+                            break
+                right_widget.delete(0, "end")
+                right_widget.insert(0, final)
+                change_stored_value(widg, key, final)
+            u += 1
+        print("line", looky(seeline()).lineno, "self.changes:", self.changes)
+
+
+
+
+
+
+        # data = check_name(ent=self.other_person_input)
+        # print("line", looky(seeline()).lineno, "data:", data)
+        # if data == "add_new_person":
+            # self.other_person_id = open_new_person_dialog(
+                # self, self.other_person_input, self.root, self.treebard, self.formats, 
+                # person_autofill_values=self.person_autofill_values)
+            # self.person_autofill_values = update_person_autofill_values()
+            # self.new_finding += 1 # see get_some_info() docstring
+        # elif self.is_couple_event == 1:
+            # self.other_person_id = data[1]
+            # print("line", looky(seeline()).lineno, "self.other_person_id:", self.other_person_id)
+        # self.age_1 = self.age1_input.get()
+        # if self.is_couple_event == 1:
+            # self.age_2 = self.age2_input.get()
+            # self.other_person = data[0]["name"]
+        # if self.is_couple_event == 0:
+            # cur.execute(
+                # insert_finding_new, (
+                    # self.new_finding, self.age_1, 
+                    # self.event_type_id, self.current_person))
+            # conn.commit()            
+        # else:
+            # cur.execute(
+                # insert_finding_new_couple, 
+                # (self.new_finding, self.event_type_id,))
+            # conn.commit()
+            # self.couple_ok(cur, conn)
+
+        # if len(self.place_string) == 0:
+            # cur.execute(insert_finding_places_new, (self.new_finding,))
+            # conn.commit()
+        # else:
+            # self.update_db_place(conn, cur)
+
+        # new_event_date = validate_date(
+            # self.root,
+            # self.date_input,
+            # self.date_input.get())
+        # if not new_event_date:
+            # new_event_date = "-0000-00-00-------"
+
+        # sorter = self.events_table.make_date_sorter(new_event_date)
+
+        # if new_event_date == "----------":
+            # new_event_date = "-0000-00-00-------"
+
+        # cur.execute(update_finding_date, (new_event_date, sorter, self.new_finding))
+        # conn.commit()
+
+        # update_particulars(
+            # self.particulars_input.get().strip(), self.new_finding) 
+
+        # if self.new_alt_parent_event is True:
+            # self.make_alt_parent_event(conn, cur, self.event_type_id)
+            # self.new_alt_parent_event = False
+
+        # self.close_new_event_dialog()
+        # self.events_table.redraw()
+
+        cur.close()
+        conn.close()
     def add_event(self):
+        if self.from_edit:
+            self.update_event()
+            return
+
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -1727,16 +1886,13 @@ class NewEventDialog(Toplevel):
                 person_autofill_values=self.person_autofill_values)
             self.person_autofill_values = update_person_autofill_values()
             self.new_finding += 1 # see get_some_info() docstring
-        elif self.couple_event == 1:
+        elif self.is_couple_event == 1:
             self.other_person_id = data[1]
-            print("line", looky(seeline()).lineno, "self.other_person_id:", self.other_person_id)
         self.age_1 = self.age1_input.get()
-        if self.couple_event == 1:
+        if self.is_couple_event == 1:
             self.age_2 = self.age2_input.get()
             self.other_person = data[0]["name"]
-            # self.other_person = self.other_person_input.get()
-            print("line", looky(seeline()).lineno, "self.other_person:", self.other_person)
-        if self.couple_event == 0:
+        if self.is_couple_event == 0:
             cur.execute(
                 insert_finding_new, (
                     self.new_finding, self.age_1, 
@@ -1782,9 +1938,7 @@ class NewEventDialog(Toplevel):
         self.close_new_event_dialog()
         self.events_table.redraw()
 
-    def couple_ok(self, cur, conn):  
-        print("line", looky(seeline()).lineno, "self.other_person:", self.other_person)
-        print("line", looky(seeline()).lineno, "self.other_person_id:", self.other_person_id)
+    def couple_ok(self, cur, conn): 
         if len(self.other_person) != 0:
             other_person_id = self.other_person_id 
         else:
@@ -1819,8 +1973,36 @@ class NewEventDialog(Toplevel):
                     widg.focus_set()
                     break
 
+    def fill_inputs(self, cur):
+
+        def change_event_type(evt):
+            print("line", looky(seeline()).lineno, "self.lab0.cget('text'):", self.lab0.cget('text'))
+
+        def get_final_text(widg):
+            print("line", looky(seeline()).lineno, "self.data:", self.data)
+
+        self.lab0.bind("<Double-Button-1>", change_event_type)
+
+        date = self.data["date"]
+        place = self.data["place"]
+        particulars = self.data["particulars"]
+        age1 = self.data["age"]
+
+        self.date_input.insert(0, date)
+        self.place_input.insert(0, place)
+        self.particulars_input.insert(0, particulars)
+        self.age1_input.insert(0, age1)
+        if self.is_couple_event:
+            age2 = self.data["partner_age"]
+            partner_name = self.data["partner_name"]
+            self.age2_input.insert(0, age2)
+            self.other_person_input.insert(0, partner_name)
+
+        self.changes = self.data
+
     def update_db_place(self, conn, cur):
-        if self.place_dicts is None: return
+        if self.place_dicts is None: 
+            return
 
         ids = []
         for dkt in self.place_dicts:            

@@ -814,11 +814,10 @@ select_findings_notes_order = '''
     WHERE finding_id = ?
 '''
 
-select_findings_persons_age = '''
-    SELECT age
+select_findings_persons_age2 = '''
+    SELECT age2
     FROM findings_persons
-    WHERE person_id = ?
-        AND finding_id = ?
+    WHERE finding_id = ?
 '''
 
 select_findings_persons_alt_parents = '''
