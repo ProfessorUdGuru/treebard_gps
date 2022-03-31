@@ -852,16 +852,27 @@ select_findings_persons_id_kin_type2 = '''
     WHERE finding_id = ?
 '''
 
-
 select_findings_persons_person_id = '''
-    SELECT a.person_id1, b.person_id2, a.persons_persons_id
-    FROM findings_persons
-    JOIN persons_persons as a
-        ON a.person_id1 = person.person_id
-    JOIN persons_persons as b
-        ON b.person_id2 = person.person_id
+    SELECT person_id1, person_id2
+    FROM persons_persons
+    JOIN person q
+        ON persons_persons.person_id1 = q.person_id
+    JOIN person r 
+        ON persons_persons.person_id2 = r.person_id
+    JOIN findings_persons
+        ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
     WHERE finding_id = ?
 '''
+
+# select_findings_persons_person_id = '''
+    # SELECT a.person_id1, b.person_id2, a.persons_persons_id
+    # FROM findings_persons
+    # JOIN persons_persons as a
+        # ON a.person_id1 = person.person_id
+    # JOIN persons_persons as b
+        # ON b.person_id2 = person.person_id
+    # WHERE finding_id = ?
+# '''
 
 select_findings_persons_parents = '''
     SELECT a.person_id1, b.person_id2
@@ -1563,15 +1574,27 @@ update_findings_persons_age1 = '''
     UPDATE findings_persons
     SET age1 = ?
     WHERE finding_id = ?
-        AND persons_persons_id = ?
 '''
 
 update_findings_persons_age2 = '''
     UPDATE findings_persons
     SET age2 = ?
     WHERE finding_id = ?
-        AND persons_persons_id = ?
 '''
+
+# update_findings_persons_age1 = '''
+    # UPDATE findings_persons
+    # SET age1 = ?
+    # WHERE finding_id = ?
+        # AND persons_persons_id = ?
+# '''
+
+# update_findings_persons_age2 = '''
+    # UPDATE findings_persons
+    # SET age2 = ?
+    # WHERE finding_id = ?
+        # AND persons_persons_id = ?
+# '''
 
 update_findings_persons_age1_blank = '''
     UPDATE findings_persons

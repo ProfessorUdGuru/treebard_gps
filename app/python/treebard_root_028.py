@@ -171,9 +171,8 @@ if __name__ == '__main__':
 
 
 # BRANCH: names_refactor
-# don't do the focus in and out to get orig and final, just get all orig when it fills in and get all final on ok. make a dict with widg, finding, category(?) and change if final != orig
-# Now make it do something--replace add_event with edit_event and if self.from_edit run the latter
-# Make an Edit Couple Event dialog which should be an instance of NewEventDialog or inherit from it.
+# when you change partner name, both partner_name and partner_age get set to the new name in db and dict
+# if double-clicked event is offspring or alt parentage event, open error message with instrux on how to edit these things (make the child the current person and edit the event from that current person's events table) see print
 # fix names in families.py; after each is fixed retest those marked OK: 
             # add existing | add dupe | change>existing | change>dupe | change>unique | unlink
 # parents           X           X              X              X              X             X        
