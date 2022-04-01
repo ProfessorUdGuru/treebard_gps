@@ -1,7 +1,5 @@
 # events_table.py
 
-# rolled back to events_table202203291920.py on 202204012035; trying to instantiate an altered NewEventDialog class for editing events was wrong because the only thing that's needed is a way to alter the partner, so a custom dialog shd be made for doing that. 4 things are needed: change partner to an existing person, change partner to a dupe name, change partner to a new person, and change a None partner to a person. In the latter case, the dialog will also list the children of None so the new person isn't given all the children unless the user wants that to happen.
-
 import tkinter as tk
 import sqlite3
 from files import get_current_file
@@ -50,7 +48,7 @@ from query_strings import (
     delete_findings_roles_finding, delete_findings_notes_finding,         
     select_findings_for_person, insert_finding_places_new, delete_claims_findings, 
     select_event_type_after_death, select_event_type_after_death_bool,
-    select_findings_persons_parents, 
+    select_findings_persons_parents, select_findings_persons_age,    
     insert_finding_birth, update_findings_persons_age2, select_person,
     select_finding_event_type, select_findings_persons_ppid,
     select_findings_persons_person_id, update_finding_date, delete_persons_persons,
