@@ -555,7 +555,7 @@ class EventsTable(Frame):
         self.inwidg = evt.widget
 
     def get_final(self, evt):
-        if not self.initial:
+        if self.initial is None:
             return
         widg = evt.widget
         final = widg.get()
@@ -795,7 +795,7 @@ class EventsTable(Frame):
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-
+        print("line", looky(seeline()).lineno, "col_num:", col_num)
         if col_num == 0:
             update_event_type()
         elif col_num == 1:

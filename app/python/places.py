@@ -403,7 +403,6 @@ class ValidatePlace():
     def __init__(
             self, root, treebard, inwidg, initial, 
             place_input, finding, formats):
-
         self.root = root
         self.treebard = treebard
         self.inwidg = inwidg
@@ -434,7 +433,6 @@ class ValidatePlace():
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-
         if len(self.place_input) == 0:
             cur.execute(update_finding_places_null, (self.finding,))
             conn.commit()
