@@ -1042,8 +1042,8 @@ class NuclearFamiliesTable(Frame):
             msg[0].destroy()
             entry.focus_set()
 
-        data = check_name(ent=inwidg)
-        if not data:
+        name_data = check_name(ent=inwidg)
+        if not name_data:
             msg1 = open_message(
                 self, 
                 families_msg[1], 
@@ -1054,13 +1054,13 @@ class NuclearFamiliesTable(Frame):
                 entry, msg))
             return
 
-        if data == "add_new_person":
+        if name_data == "add_new_person":
             new_parent_id = open_new_person_dialog(
                 self, inwidg, self.root, self.treebard, self.formats, 
                 person_autofill_values=self.person_autofill_values)
             self.person_autofill_values = update_person_autofill_values()
         else:
-            new_parent_id = data[1]
+            new_parent_id = name_data[1]
 
         if inwidg.winfo_name() == "pa":
             parent_type = 2
@@ -1136,18 +1136,18 @@ class NuclearFamiliesTable(Frame):
                 person to the tree but not to the relationship.
             """
 
-            data = check_name(ent=inwidg)
+            name_data = check_name(ent=inwidg)
 
-            if data == "add_new_person":
+            if name_data == "add_new_person":
                 new_partner_id = open_new_person_dialog(
                     self, inwidg, self.root, self.treebard, self.formats, 
                     person_autofill_values=self.person_autofill_values)
                 self.person_autofill_values = update_person_autofill_values()
-            elif not data:
+            elif not name_data:
                 new_partner_id = None # added to stop an error
                 self.unlink_partners_dialog(cur, conn, inwidg)
             else:
-                new_partner_id = data[1]
+                new_partner_id = name_data[1]
 
             return new_partner_id
 
@@ -1561,8 +1561,8 @@ class NuclearFamiliesTable(Frame):
             msg4[0].destroy()
             entry.focus_set()
 
-        data = check_name(ent=widg)
-        if not data:
+        name_data = check_name(ent=widg)
+        if not name_data:
             msg4 = open_message(
                 self, 
                 families_msg[1], 
@@ -1573,13 +1573,13 @@ class NuclearFamiliesTable(Frame):
                 entry, msg))
             return
 
-        if data == "add_new_person":
+        if name_data == "add_new_person":
             alt_parent_id = open_new_person_dialog(
                 self, widg, self.root, self.treebard, self.formats, 
                 person_autofill_values=self.person_autofill_values)
             self.person_autofill_values = update_person_autofill_values()
         else:
-            alt_parent_id = data[1]
+            alt_parent_id = name_data[1]
 
         if column == 1:
             cur.execute(update_persons_persons1_by_finding, (alt_parent_id, finding_id))
@@ -1599,7 +1599,6 @@ class NuclearFamiliesTable(Frame):
         gridinfo = widg.grid_info()
         column, row = gridinfo["column"], gridinfo["row"]
         widgname = widg.winfo_name()
-        print("line", looky(seeline()).lineno, "widgname, column:", widgname, column)
         if widgname == "pa":
             self.update_parent(self.final, conn, cur, widg, kin_type=2)
         elif widgname == "ma":
@@ -1620,7 +1619,6 @@ class NuclearFamiliesTable(Frame):
                 kin_type = 48                    
             self.update_altparent(self.final, conn, cur, widg, column, kin_type=kin_type)
         elif widgname.startswith("pard"):
-            print("line", looky(seeline()).lineno, "widgname, column:", widgname, column)
             if column == 2:
                 self.update_partner(self.final, conn, cur, widg)                
             else:

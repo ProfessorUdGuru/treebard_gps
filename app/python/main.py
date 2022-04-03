@@ -476,9 +476,9 @@ class Main(Frame):
 
     def change_person(self):
 
-        data = check_name(ent=self.person_entry)
+        name_data = check_name(ent=self.person_entry)
 
-        if data == "add_new_person":
+        if name_data == "add_new_person":
             old_current_person = self.current_person
             self.current_person = open_new_person_dialog(
                 self, self.person_entry, self.root, self.treebard, self.formats, 
@@ -488,8 +488,8 @@ class Main(Frame):
             else:
                 self.person_autofill_values = update_person_autofill_values()
         else:
-            self.current_person_name = data[0]["name"]
-            self.current_person = data[1]
+            self.current_person_name = name_data[0]["name"]
+            self.current_person = name_data[1]
             self.current_person_label.config(
                 text="Current Person (ID): {} ({})".format(
                     self.current_person_name, self.current_person))

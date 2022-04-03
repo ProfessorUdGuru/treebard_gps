@@ -1399,6 +1399,7 @@ class NewEventDialog(Toplevel):
         self.place_dicts = None
         self.unknown_event_type = False
 
+        self.other_person = None
         self.other_person_id = None
 
         self.current_name = self.person_autofill_values[self.current_person][0]["name"]
@@ -1720,23 +1721,22 @@ class NewEventDialog(Toplevel):
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
-        data = check_name(ent=self.other_person_input)
-        print("line", looky(seeline()).lineno, "data:", data)
-        if data == "add_new_person":
+        name_data = check_name(ent=self.other_person_input)
+        if name_data == "add_new_person":
             self.other_person_id = open_new_person_dialog(
                 self, self.other_person_input, self.root, self.treebard, self.formats, 
                 person_autofill_values=self.person_autofill_values)
             self.person_autofill_values = update_person_autofill_values()
             self.new_finding += 1 # see get_some_info() docstring
+        elif name_data is None:
+            pass
         elif self.couple_event == 1:
-            self.other_person_id = data[1]
-            print("line", looky(seeline()).lineno, "self.other_person_id:", self.other_person_id)
+            self.other_person_id = name_data[1]
         self.age_1 = self.age1_input.get()
         if self.couple_event == 1:
             self.age_2 = self.age2_input.get()
-            self.other_person = data[0]["name"]
-            # self.other_person = self.other_person_input.get()
-            print("line", looky(seeline()).lineno, "self.other_person:", self.other_person)
+            if name_data:
+                self.other_person = name_data[0]["name"]
         if self.couple_event == 0:
             cur.execute(
                 insert_finding_new, (
@@ -1783,10 +1783,8 @@ class NewEventDialog(Toplevel):
         self.close_new_event_dialog()
         self.events_table.redraw()
 
-    def couple_ok(self, cur, conn):  
-        print("line", looky(seeline()).lineno, "self.other_person:", self.other_person)
-        print("line", looky(seeline()).lineno, "self.other_person_id:", self.other_person_id)
-        if len(self.other_person) != 0:
+    def couple_ok(self, cur, conn):
+        if self.other_person and len(self.other_person) != 0:
             other_person_id = self.other_person_id 
         else:
             other_person_id = None

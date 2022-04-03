@@ -384,15 +384,14 @@ class RolesDialog(Toplevel):
             self.person_input.focus_set()
             return
 
-        data = check_name(ent=self.person_input)
-        print("line", looky(seeline()).lineno, "data:", data)
-        if data == "add_new_person":
+        name_data = check_name(ent=self.person_input)
+        if name_data == "add_new_person":
             role_person_id = open_new_person_dialog(
                 self, self.person_input, self.root, self.treebard, self.formats, 
                 person_autofill_values=self.person_autofill_values)
             self.person_autofill_values = update_person_autofill_values()
         else:
-            role_person_id = data[1]
+            role_person_id = name_data[1]
 
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
@@ -445,14 +444,14 @@ class RolesDialog(Toplevel):
 
         edited_role_person = self.edit_role_person_input.get()
 
-        data = check_name(ent=self.edit_role_person_input)
-        if data == "add_new_person":
+        name_data = check_name(ent=self.edit_role_person_input)
+        if name_data == "add_new_person":
             role_person_id = open_new_person_dialog(
                 self, self.edit_role_person_input, self.root, self.treebard, self.formats, 
                 person_autofill_values=self.person_autofill_values)
             self.person_autofill_values = update_person_autofill_values()
             self.change_role_person(edited_role_person, role_person_id)
-        elif data is None:
+        elif name_data is None:
             msg1 = open_message(
                 self, 
                 roles_msg[0], 
@@ -464,7 +463,7 @@ class RolesDialog(Toplevel):
                     entry, msg))
             return
         else:
-            role_person_id = data[1]
+            role_person_id = name_data[1]
             new_name = self.person_autofill_values[role_person_id][0]["name"]                    
             self.change_role_person(new_name, role_person_id)
 

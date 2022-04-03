@@ -169,37 +169,32 @@ if __name__ == '__main__':
 
 # DO LIST
 
-
 # BRANCH: names_refactor
-# Q: What is the real reason for having an edit event dialog? A: The real reason is so that partner name and age can be edited. This is not a reason to open up a big dialog where event, date, place, particulars and current person's age can be edited. These things are easily edited in the events table. So there shd only be 2 entries in the edit evts dialog thus it is not an edit evts dialog at all, it's an edit partner details dlg and it's only good for changing the name and age of a partner. Also it's wrong to open it by dbl-clicking the evt bec. there's no need for such a dlg on generic evts so in the name of symmetry, dbl clicking is wrong. Since parents can be changed in the families table, partners shd also be changeable in the families table, so if user tries to change a partner, if there's really some reason why this can't just go right thru, then a simple dialog can open with 2 entries. But if there's only one kind of partner (the None partner) that can't be directly edited, then the dlg shd only open for that case. The point is that the dlg shd open when user edits the field, that is intuitive, not an extra task of dbl-clicking the evts table which mixes functionality between the families table and the events table. MORE SPECIFICALLY, see chart below, there are 3 things this dlg needed to do: change partner if the new partner already exists, if the new partner is a dupe name, and if the new partner is a new person; to that I have to add if the old partner is None and there are children, in which case the dialog has to list the children so the user can say which children shd be linked to the new non-None partner. All this is much simpler and easier than what I set out to do which was to ruin a perfectly good class--the new events dialog--by giving it a double purpose thus bloating its code. Now the dialog only has two entries except for the case of a partner who starts out as None and has children. 
-# fix names in families.py; after each is fixed retest those marked OK: 
-            # add existing | add dupe | change>existing | change>dupe | change>unique | unlink | None>new/dupe/existing
-# parents           X           X              X              X              X             X        
-# alt parents       X           X              X              X              X             X                
-# partners          X           X                                                          X           
-# children
-# in all autofills, if the user types into an input where text is selected, the typed char shd replace the highlighted. If it's too hard don't bother, don't want to ruin the simple autofill thing.
+# export the dbs
+
+# BRANCH: families_table
+# Keep the UI and start the code from scratch. Here are the new goals.
+    # 1) Parents and alt parents work the same, parameterized. Parents and partners and children work the same, parameterized. There is one method for all. 
+    # 2) Since all the pertinent inputs are for names, they all work the same. An initial and final value are compared on FocusIn/FocusOut. Upon focus out, the final input is classified based on whether existing, dupe, new, or unlink is called for. All the if/else is done in one place, not inside the main procedure, then a single procedure is used for every name.
+    # 3) The data dict works the same for parents, alt parents, partners, and children. For example, there can be more than one set of alt parents, but that doesn't mean the bio parents shd work differently just because there's only one pair of them. There shd not be all these differnt sections of the dict. They are all names, all people, all have a name and an ID, a name type, etc. So just add another key as to whether they are parents, foster parents, partners, or children of the current person. Put all the person dicts in the same list or dict and sort them by category, then within each category sort them by date. The 2 main categories are parents and families. Each person has a key for their relationship to the current person. Then the list is built in this order: Father, mother, alt parents in order of related event dates, partners, children.
+    # 4) Each person will have an event date key which is a sorter for partners and children. For partners, it's a marital event. For children, it's a birth event.
+    # 5) A null person id will be treated the same in all cases. 
+    # 6) Create the table in a separate model space, leaving the families.py module intact till the code is ready to plug into it.
+    # 7) Nametips will be created for use in family table since this is where most of the names are, and extended to other places that they're used such as roles dialog.
+#                     PARENTS       ALT PARENTS    PARTNERS        CHILDREN
+# NONE>EXISTING          X              X             X
+# NONE>DUPE              X              X             X
+# NONE>NEW               
+# CHANGE>EXISTING        X              X             X
+# CHANGE>DUPE            X              X
+# CHANGE>NEW             X              X
+# UNLINK                 X              X             X
+# Keep the existing design (?) and get rid of the code. Start from scratch, use the table above to test each functionality. When one is fixed check all prior to make sure they have not been broken. Start with a complete dict of all needed data that will not have to be patched or appended to. Make every input work the same (just tab out; if ok no problem, if not ok or validation needed, open a dialog). Everything has to work the same. Keep the dupe dialog and unlink dialog, they work, keep the design of the table, but discard the code and start fresh. Try to make the queries as complex as the situation so nothing will have to be thought of and added later.
+# get rid of dkt["order"] in the nukes table dict if it's not being used anywhere
+# get rid of "nukes, nuke, nuclear" and replace with "nukefam"
 # when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here.
-# When a person is used they aren't being moved to the front of the list. Is this because the list is restarted after every time a new person is made?
 # after clicking one of the partner radios, the bottom radio at the input doesn't work anymore
 # if no partners, both buttons are active and the single radio button is not selected, both of which are wrong
-# add idtips to name inputs in the roles dialog
-# Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
-# In save_new_person() in names.py, have to indicate whether the image is supposed to be main_image (1) vs (0). 1 is now the default in the insert query (insert_images_elements) to images_elements, which makes the new person's image display correctly for now; if it's made main and there's already a main_image the main has to be changed to 0 programmatically.
-# Don't let a default image be entered (see new person dialog) if a non-default image already exists for that person. If the person already has a default image, it can be changed to a different default image, a real image, or to no image.
-# If user selects his own photo as default, prepend "0_default_image_" to user's file name.
-# If no main_image has been input to db, Treebard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. Treebard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
-# Can't open an empty notes dlg, division by zero error.
-# re-test all features of roles dialog, change current person, search dialog, notes dialog, add person dialog, add event dialog, families:
-# fix names in families.py; after each is fixed retest those marked OK: 
-            # add existing | add dupe | change>existing | change>dupe | change>unique | unlink | None>new/dupe/existing
-# parents           X           X                X                            X            X        
-# alt parents
-# partners
-# children
-# export .db and .tbd to .sql
-
-# BRANCH: kin_child
 # consolidate various stray collections back into a single family_data dict (again) 
 # adding an existing person as father works but adding an existing person as mother opens PersonAdd wrongly unless it's the first thing you do; vice versa (switch father and mother above)
 # after checkbutton dlg works for deleting offspring, make sure it works for alt birth children
@@ -211,72 +206,44 @@ if __name__ == '__main__':
 # still getting "name unknown" on some kintips?
 # unlink child on delete
 # make it possible to change gender, birth/death dates for children right there in the table
-# export dbs to .sql
-
-# BRANCH: kin_add_buttons
-# add parent button & radio; mother & father entries already exist even if blank but the radio allows input of alt parents
-# add partner/add child buttons & entry
-# export dbs to .sql
-
-# BRANCH: kin_change_curr_per
 # double click any name in table to change curr per
+# make it impossible for a person to be their own parent, partner or child, see Nettie Womble who is her own father
+# add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f); make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner.
+# the left margin of the child table should not vary depending on row widths. Compare James with Fannie, Fannie looks terrible bec her child has a short name and no dates. Fix Fannie to start at a left margin and James should then start at the same left margin.
+# add idtips to name inputs in the families table first, then other places except search which already has better name tips
 # export dbs to .sql
 
-# BRANCH: kin_cleanup
-# make it impossible for a person to be their own parent, partner or child, see Nettie Womble who is her own father
-# window border of new event dialog shows no name if the person has no birth name, need to use get_any_name_with_id()?
+# BRANCH: cleanup
+# When a person is used they aren't being moved to the front of the list. Is this because the list is restarted after every time a new person is made? Don't worry about it if it's not easy to fix, as long as this feature works with places which are much more complicated strings to type out.
 # pressing enter in person autofill on person tab after name fills in throws an error re: colors
 # ADD/FIND button doesn't work
 # move queries to module and delete import strings for unused queries
 # rename queries not named acc to standard eg select_person_id_finding
-# add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f)
-# if the nuke_table is small, there's too much space above & below the top_pic. What if top_pic had rowspan=2?
-# new kin person Input will be parsed to use existing person if # and create new person if not. make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner. It is also possible to add someone with a name that already exists in the table, just not an ID
-# make it possible to change name, gender or date here & save in db; make it possible to unlink a person from the family by deleting their name from the table
-# the left margin of the child table should not vary depending on row widths. Compare James with Fannie, Fannie looks terrible bec her child has a short name and no dates. Fix Fannie to start at a left margin and James should then start at the same left margin.
-# get rid of dkt["order"] in the nukes table dict if it's not being used anywhere
-# Add to after death event types in default, default_untouched, and sample db's: autopsy, inquest.
 # see `if length == 2` in get_any_name_with_id() in names.py: this was just added and before that a similar process was done repeatedly in various places such as current_person display, wherever a name might need to be shown. Everything still works but this procedure should be deleted from where it's no longer needed since it's been added to get_any_name_with_id()
 # Did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thought the new class was supposed to replace all these as was done apparently already in dates.py. I thought the new class was made so these three overlapping large functions could be deleted from messages.py as well as the radio input message which hasn't even been tested.
-# getting this error sometimes when changing current person w/ ID, as soon as # is typed:
-# Exception in Tkinter callback
-# Traceback (most recent call last):
-  # File "C:\Users\Lutherman\AppData\Local\Programs\Python\Python39\lib\tkinter\__init__.py", line 1884, in __call__
-    # return self.func(*args)
-  # File "D:\treebard_gps\app\python\autofill.py", line 73, in get_typed
-    # do_it()
-  # File "D:\treebard_gps\app\python\autofill.py", line 66, in do_it
-    # self.show_hits(hits, self.pos)
-# AttributeError: 'EntryAutoHilited' object has no attribute 'pos'
 # colorizer: if click copy then immed click apply, error (pass? return?) Happens bec no scheme, so deal with if no scheme hilit, apply should do nothing
 # find all the usages of queries that have to be run twice to deal with columns that can be used either of 2 ways such as parent_id1/parent_id2 and rewrite the code so that the whole record is gotten once with select * (or as much as will be needed) and parse the record with python, assign values according to obvious correspondences
-# dump the sample db so repo will get the right stuff
-# put padding around attributes table
-# delete unused imports main.py
-# make a custom tab traversal list so order is current person area, gallery, new event area, nukes table, events table
+# delete unused imports all modules
 # statustips rcm also for unlinker
-# RCM: Current Person Tab: Nuclear Family Table: This table shows the current person's parents, spouses and other marital partners, and biological children. The partners are all shown at the same time, along with any children that they had with the current person, so there's a scrollbar in case there are a lot of spouses and/or children. To change an existing partner who is a parent of some of the current person's children, just change what's in the table by typing a different name. The name you're looking for will fill in, along with the person's ID number, if the person is already in the tree. If not, a dialog will open so you can add the person to the tree and to the family. In either case, the previous parent/partner will now have his/her own row in the family table, if any marital events such as wedding, marriage, divorce, etc. were shared by the current person and his/her partner, to indicate that they were partners. The terminology used to input the partner, such as "spouse", "wife", "partner", etc. will be used instead of "mother/father of children". The various partners will be sorted in the family table by approximate date, using dates of marital events and dates of children's births to arrange the table chronologically as closely as possible.\n\nTo delete a partner, just delete them. If they have children with the current person, the children's names will remain, and the input for the missing parent will be blank. The deleted parent will not be deleted from the tree, but will be unlinked from the children. If the person has one or more marital events with the current person, he/she will have his own row in the family table.
 """ Redo all docstrings everywhere to look
     like this.
 """
-# person search table is messed up. Same person shows for both mother and father. Sorting only works right for ID. Clicking a name to make the person current works but the nukes table is not redrawn.
-# rename names.py to persons.py and change everywhere.
-# go thru places where several db commits are called in a row and create transactions: BEGIN; COMMIT; so if there's an error I don't have to go thru and fix half-done stuff in db.
-# IMAGE PROBLEM FIXED NOW REFACTOR THE PROCEDURE SO NOTHING IS HARD-CODED ANYWHERE AND TRY TO MAKE IT VERY SIMPLE SO SQLITE WON'T HAVE AN EXCUSE TO USE CACHED VALUES AND GET RID OF ALL THE EXTRA COPIES AND MAKE SURE THE ONLY COPIES ARE IN DEFAULT IMAGES FOLDER(S)
-    # nothing below is true till it's fixed, when it's fixed find every `0_default` hard coded and get it without any hard-coding from a single place so this doesn't happen again, and make an input in a prefs tab so user can input his own images and choose default images and test it
-    # "default_image_unisex.jpg" must be hard-coded somewhere but where???  the default images are kept in D:\treebard_gps\data\settings\images and shd be deleted everywhere else (2 or 3 other folders) and the code is in files.py at top `default_new_tree_images` MAKE DOCSTRING IN main.py
-    # find the code that is getting default image `default_image_unisex.jpg` and fix the problem (app won't start because of this ?hard-coded value that I can't find anywhere... when fixed, get rid of the multiple storage places for this item and use the on in defaults only if possible from D:\treebard_gps\app\default\images and make a doc string so it won't be hard to find next time; if possible delete these images from the other 2 or 3 images directories where they exist
-    # change names of default images so they alphabetize first in the combobox on add person dlg
 # export dbs to .sql
 # fix redraw() so top pic changes on ctrl-s if the main pic was changed w/ radio in gallery
 
 # BRANCH: dates
-
 # clarify_year might not working in dates.py, there is a chain of error messages, sometimes it has to be OK'd twice, and make sure it doesn't run on CANCEL and original value is returned to the input (InputMessage works now in notes.py and families.py for a model). Currently cancel seems to be deleting the date which moves the event to the attributes table. The second time it sort of works but deletes the number that's not a year. It also doesn't display AD on years less than 4 digits long.
 # export dbs to .sql
 
-# BRANCH: types
+# BRANCH: names_tab
+# Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
+# In save_new_person() in names.py, have to indicate whether the image is supposed to be main_image (1) vs (0). 1 is now the default in the insert query (insert_images_elements) to images_elements, which makes the new person's image display correctly for now; if it's made main and there's already a main_image the main has to be changed to 0 programmatically.
+# Don't let a default image be entered (see new person dialog) if a non-default image already exists for that person. If the person already has a default image, it can be changed to a different default image, a real image, or to no image.
+# If user selects his own photo as default, prepend "0_default_image_" to user's file name.
+# If no main_image has been input to db, Treebard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. Treebard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
+# export dbs to .sql
 
+# BRANCH: types
 # This started when I found I'd failed to stop using the formats table for default_formats, led to the realization that the formats table needs to go away, led to a grand new structure using the fact that I now have a global db again so might as well use it. Below it says to store an fk for color scheme but to do that right, color scheme table needs to be moved to treebard.db. So will keep using formats for fonts and current color scheme only till I get to this branch, since I have no other place to put them.
 # get rid of get_current_formats() in styles.py
 # get rid of tree_is_open column in treebard.db, see get_opening_settings() in styles.py which now has a get_opening_settings_default() which is not being used instead of the boolean which was not being used anymore. It should be used to open the bare app w/out a tree but apparently this is already being done somehow, not shure why it's working, whether I planned it that way or it just happened by accident. Look in opening.py and trace the code flow to see what's going on. Right now it's opening in the sample_tree current color scheme but not sure why.
@@ -310,6 +277,8 @@ if __name__ == '__main__':
 # place new/dupes dlg, if CANCEL pressed the orig content is filled in but not if dlg closed with X button
 # when autofilling a place in evts table, if the column is narrow due to lack of contents, it will change size every time you type a char which causes the whole table to flash while trying to type. Possibly while typing into the autofill, detect a max length as different places try to fill in, and keep that length until focus out, at which time that length can just be released so the col can resize to its final contents. However, the size will still change each time the max length increases, so better to start with a generous hard-coded max length so this will rarely happen.    
 # in main do list change names.py to persons.py
+# Can't open an empty notes dlg, division by zero error.
+# person search table is messed up. Same person shows for both mother and father. Sorting only works right for ID. Clicking a name to make the person current works but the nukes table is not redrawn.
 # export dbs to .sql
 
 # BRANCH: conclusions
