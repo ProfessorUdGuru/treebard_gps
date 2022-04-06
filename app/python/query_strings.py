@@ -297,6 +297,12 @@ select_all_event_types_couple = '''
         AND couple == 1
 '''
 
+select_all_event_type_ids_marital = '''
+    SELECT event_type_id 
+    FROM event_type
+    WHERE marital = 1
+'''
+
 select_all_finding_places_findings = '''
     SELECT finding_id FROM finding_places
 '''

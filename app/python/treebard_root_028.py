@@ -155,7 +155,7 @@ def start():
     #   error was prevented everywhere else by placing these lines of code last.
     try:
         treebard.scroll_mouse.append_to_list(
-            treebard.main.nuke_table.nuke_canvas, resizable=False)
+            treebard.main.nukefam_table.nukefam_canvas, resizable=False)
         treebard.scroll_mouse.configure_mousewheel_scrolling(in_root=True)
     except AttributeError:
         pass
@@ -169,33 +169,21 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: names_refactor
-# export the dbs
-
 # BRANCH: families_table
-# Keep the UI and start the code from scratch. Here are the new goals.
-    # 1) Parents and alt parents work the same, parameterized. Parents and partners and children work the same, parameterized. There is one method for all. 
-    # 2) Since all the pertinent inputs are for names, they all work the same. An initial and final value are compared on FocusIn/FocusOut. Upon focus out, the final input is classified based on whether existing, dupe, new, or unlink is called for. All the if/else is done in one place, not inside the main procedure, then a single procedure is used for every name.
-    # 3) The data dict works the same for parents, alt parents, partners, and children. For example, there can be more than one set of alt parents, but that doesn't mean the bio parents shd work differently just because there's only one pair of them. There shd not be all these differnt sections of the dict. They are all names, all people, all have a name and an ID, a name type, etc. So just add another key as to whether they are parents, foster parents, partners, or children of the current person. Put all the person dicts in the same list or dict and sort them by category, then within each category sort them by date. The 2 main categories are parents and families. Each person has a key for their relationship to the current person. Then the list is built in this order: Father, mother, alt parents in order of related event dates, partners, children.
-    # 4) Each person will have an event date key which is a sorter for partners and children. For partners, it's a marital event. For children, it's a birth event.
-    # 5) A null person id will be treated the same in all cases. 
-    # 6) Create the table in a separate model space, leaving the families.py module intact till the code is ready to plug into it.
-    # 7) Nametips will be created for use in family table since this is where most of the names are, and extended to other places that they're used such as roles dialog.
-#                     PARENTS       ALT PARENTS    PARTNERS        CHILDREN
-# NONE>EXISTING          X              X             X
-# NONE>DUPE              X              X             X
-# NONE>NEW               
-# CHANGE>EXISTING        X              X             X
-# CHANGE>DUPE            X              X
-# CHANGE>NEW             X              X
-# UNLINK                 X              X             X
-# Keep the existing design (?) and get rid of the code. Start from scratch, use the table above to test each functionality. When one is fixed check all prior to make sure they have not been broken. Start with a complete dict of all needed data that will not have to be patched or appended to. Make every input work the same (just tab out; if ok no problem, if not ok or validation needed, open a dialog). Everything has to work the same. Keep the dupe dialog and unlink dialog, they work, keep the design of the table, but discard the code and start fresh. Try to make the queries as complex as the situation so nothing will have to be thought of and added later.
-# get rid of dkt["order"] in the nukes table dict if it's not being used anywhere
-# get rid of "nukes, nuke, nuclear" and replace with "nukefam"
-# when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here.
-# after clicking one of the partner radios, the bottom radio at the input doesn't work anymore
-# if no partners, both buttons are active and the single radio button is not selected, both of which are wrong
-# consolidate various stray collections back into a single family_data dict (again) 
+#                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
+# NONE>EXISTING              x               x             x
+# NONE>DUPE                  x               x            dlg
+# NONE>NEW                   x               x             x
+# CHANGE>EXISTING            x               x             x
+# CHANGE>DUPE                x               x             x
+# CHANGE>NEW                 x               x             x
+# UNLINK                     x               x             x 
+
+# Dupe person doesn't work.
+# Using #id in null input the title doesn't show the name
+# when adding a new person with the null partner dialog, it works and name becomes instantly available to autofills but id # doesn't. Test to see if this is happening in other places where new people are being made, if so it should be fixable in one place.
+# Make sure it's impossible to add a name with length of 0.
+# when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here. Is this because the parent fields and alt parent fields aren't made at the same time? Does a tab order method need to be rerun when creating an alt parent field?
 # adding an existing person as father works but adding an existing person as mother opens PersonAdd wrongly unless it's the first thing you do; vice versa (switch father and mother above)
 # after checkbutton dlg works for deleting offspring, make sure it works for alt birth children
 # see `# WHAT ABOUT ALSO GETTING OFFSPRING/ALT BIRTH EVENTS HERE?`  2) make the list checks a list of dicts with a dict for events and a dict for children; 3) when making the dlg, put events at top and children below, not mixed up POINT BEING IF YOU CAN UNLINK EVENTS INDIVIDUALLY YOU HAVE TO BE ABLE TO UNLINK CHILDREN TOO BECAUSE THESE ARE THE 2 THINGS THAT GET PARTNERS INTO THE FAMILY TABLE
@@ -211,6 +199,7 @@ if __name__ == '__main__':
 # add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f); make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner.
 # the left margin of the child table should not vary depending on row widths. Compare James with Fannie, Fannie looks terrible bec her child has a short name and no dates. Fix Fannie to start at a left margin and James should then start at the same left margin.
 # add idtips to name inputs in the families table first, then other places except search which already has better name tips
+# RCM: An unknown partner name is either null or has to contain at least one character. Using letters in unknown name designators are not recommended. For example, 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. The purpose of a name such as '?' or '_____' is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name designators will differentiate the current person's two families. Otherwise, Treebard will lump all children of the current persons whose other parent is null into a single family. If you want to avoid this, use a name such as '?' or '_____' with at least one character and Treebard will give this person a unique ID instead of a null ID.
 # export dbs to .sql
 
 # BRANCH: cleanup
@@ -278,7 +267,7 @@ if __name__ == '__main__':
 # when autofilling a place in evts table, if the column is narrow due to lack of contents, it will change size every time you type a char which causes the whole table to flash while trying to type. Possibly while typing into the autofill, detect a max length as different places try to fill in, and keep that length until focus out, at which time that length can just be released so the col can resize to its final contents. However, the size will still change each time the max length increases, so better to start with a generous hard-coded max length so this will rarely happen.    
 # in main do list change names.py to persons.py
 # Can't open an empty notes dlg, division by zero error.
-# person search table is messed up. Same person shows for both mother and father. Sorting only works right for ID. Clicking a name to make the person current works but the nukes table is not redrawn.
+# person search table is messed up. Same person shows for both mother and father. Sorting only works right for ID. Clicking a name to make the person current works but the nukefams table is not redrawn.
 # export dbs to .sql
 
 # BRANCH: conclusions
@@ -310,11 +299,11 @@ if __name__ == '__main__':
 # export dbs to .sql
 
 # ADD TO MAIN DO LIST:
-# nuke area on Person Tab: remove scrollbars & canvas & window if the hideable ones never appear, it seems they might not be necessary.
+# nukefam area on Person Tab: remove scrollbars & canvas & window if the hideable ones never appear, it seems they might not be necessary.
 # colorizer: get Tab traversal to trigger autoscroll when going from a visible to a non-visible row. Already works for arrow traversal.
 # colorizer: swatch_canvas: adding to mousewheel scrolling doesn't work
 # website topics: add a button at bottom to view all topics on one page, then create the page and upload it, with all topics on one page, this is so search engines will find the text, otherwise it's buried in javascript and can't be searched
-# NUKES TABLE on person tab: unhide kintype IDs 3, 26, 27, 28 and make them work same as 1 & 2
+# NUKEFAM TABLE on person tab: unhide kintype IDs 3, 26, 27, 28 and make them work same as 1 & 2
 
 # DEV DOCS:
 # Files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run.

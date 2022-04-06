@@ -63,7 +63,7 @@ PREFS_TABS = (
     ("general", "X"), ("colors", "C"), ("fonts", "F"), ("dates", "D"), 
     ("images", "M"))
 
-NUKE_HEADS = ("NAME OF CHILD", "GENDER", "DATE OF BIRTH", "DATE OF DEATH")
+NUKEFAM_HEADS = ("NAME OF CHILD", "GENDER", "DATE OF BIRTH", "DATE OF DEATH")
 
 class Main(Frame):
     def __init__(self, master, root, treebard, *args, **kwargs):
@@ -87,7 +87,7 @@ class Main(Frame):
         self.make_widgets()
         self.get_current_values()
 
-        self.nuke_table.make_nuke_inputs(on_load=True)
+        self.nukefam_table.make_nukefam_inputs(on_load=True)
 
     def make_scrollbars(self):
 
@@ -161,7 +161,7 @@ class Main(Frame):
             self.person_autofill_values)
         self.current_person = self.findings_table.current_person
 
-        self.nuke_table = NuclearFamiliesTable(
+        self.nukefam_table = NuclearFamiliesTable(
             persons_tab,
             self.root, 
             self.treebard,
@@ -171,9 +171,9 @@ class Main(Frame):
             self.formats,
             person_autofill_values=self.person_autofill_values)
 
-        # Create a tab traversal since the nuke_table can't be made first
+        # Create a tab traversal since the nukefam_table can't be made first
         #   but should be traversed first.
-        for table in (self.nuke_table, self.findings_table):
+        for table in (self.nukefam_table, self.findings_table):
             table.lift()
 
         current_file, current_dir = get_current_file()
@@ -259,12 +259,12 @@ class Main(Frame):
         prefs_tab.grid(column=0, row=0, sticky='news')
 
         # children of persons_tab
-        self.nuke_table.grid(column=0, row=0, sticky="news", padx=12, pady=12)
+        self.nukefam_table.grid(column=0, row=0, sticky="news", padx=12, pady=12)
         self.right_panel.grid(column=1, row=0, sticky='e', padx=12, pady=12)
         self.findings_table.grid(
             column=0, row=1, columnspan=2, padx=12, pady=12)
 
-        # children of self.nuke_table gridded in families.py
+        # children of self.nukefam_table gridded in families.py
         persons_tab.columnconfigure(1, weight=1)
 
         # children of places tab

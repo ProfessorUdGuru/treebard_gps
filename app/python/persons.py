@@ -193,7 +193,6 @@ def check_name(evt=None, ent=None, label=None):
         filled = ent.filled_name
     ent.original = ""
     if filled == ent.original or filled is None:
-        print("line", looky(seeline()).lineno, "filled:", filled)
         return
     elif filled.startswith("#"):
         name_from_id = validate_id(int(filled.lstrip("#").strip()), ent)

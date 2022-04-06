@@ -36,7 +36,7 @@ from query_strings import (
     select_finding_id_birth, select_person_ids_kin_types,
     select_person_id_birth, select_finding_ids_age1_parents,
     select_finding_ids_age2_parents, select_all_findings_notes_ids,
-    select_all_findings_roles_ids_distinct,     
+    select_all_findings_roles_ids_distinct, select_findings_persons_parents,      
     select_count_finding_id_sources, select_nesting_fk_finding,
     update_finding_particulars, select_all_kin_ids_types_couple,
     update_finding_age, update_current_person, select_all_place_ids,
@@ -50,14 +50,12 @@ from query_strings import (
     delete_findings_roles_finding, delete_findings_notes_finding,         
     select_findings_for_person, insert_finding_places_new, delete_claims_findings, 
     select_event_type_after_death, select_event_type_after_death_bool,
-    select_findings_persons_parents, 
     insert_finding_birth, update_findings_persons_age2, select_person,
     select_finding_event_type, select_findings_persons_ppid,
     select_findings_persons_person_id, update_finding_date, delete_persons_persons,
-    select_findings_persons_alt_parents, select_event_type_via_event_string,
+    select_findings_persons_alt_parents, select_finding_id_guardianship, 
     insert_persons_persons_null, insert_findings_persons_null_couple,
-    select_finding_id_adoption, select_finding_id_fosterage, 
-    select_finding_id_guardianship, select_event_type_id_only,
+    select_finding_id_adoption, select_finding_id_fosterage,
     select_finding_ids_age1_alt_parents, select_finding_ids_age2_alt_parents,
     select_person_id_alt_parentage, select_kin_type_string, 
     select_person_ids_kin_types_include_nulls, select_findings_persons_id,
@@ -1199,10 +1197,10 @@ class EventsTable(Frame):
         self.set_cell_content()
         self.show_table_cells()
         if evt: # user pressed CTRL+S for example
-            self.main_window.nuke_table.make_nuke_inputs(
+            self.main_window.nukefam_table.make_nukefam_inputs(
                 current_person=self.current_person)
         else: # user pressed OK to change current person for example   
-            self.main_window.nuke_table.make_nuke_inputs()
+            self.main_window.nukefam_table.make_nukefam_inputs()
 
         self.resize_scrollbar(self.root, self.main_canvas)
 
@@ -1233,20 +1231,20 @@ class EventsTable(Frame):
 
         self.main_window.person_entry.current_id = None
 
-        for ent in self.main_window.nuke_table.nuke_inputs:
+        for ent in self.main_window.nukefam_table.nukefam_inputs:
             ent.delete(0, "end")
-        self.main_window.nuke_table.ma_input.delete(0, "end")
-        self.main_window.nuke_table.pa_input.delete(0, "end")
-        self.main_window.nuke_table.new_kin_frame.grid_forget()
-        self.main_window.nuke_table.current_person_alt_parents = []
-        self.main_window.nuke_table.compound_parent_type = "Children's"        
-        for widg in self.main_window.nuke_table.nuke_containers: 
+        self.main_window.nukefam_table.ma_input.delete(0, "end")
+        self.main_window.nukefam_table.pa_input.delete(0, "end")
+        self.main_window.nukefam_table.new_kid_frame.grid_forget()
+        self.main_window.nukefam_table.current_person_alt_parents = []
+        self.main_window.nukefam_table.compound_parent_type = "Children's"        
+        for widg in self.main_window.nukefam_table.nukefam_containers: 
             # pardframe, prodigy_frame, alt parent entries & labels
             widg.destroy() 
 
-        self.main_window.nuke_table.nuke_containers = []
+        self.main_window.nukefam_table.nukefam_containers = []
 
-        self.main_window.nuke_table.family_data = [
+        self.main_window.nukefam_table.family_data = [
             [
                 [
                     {'fpid': None, 'ppid': None, 'finding': None, 
