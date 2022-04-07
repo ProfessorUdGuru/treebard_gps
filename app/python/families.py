@@ -14,12 +14,12 @@ from persons import (
     delete_person_from_tree, update_person_autofill_values, EntryAutoPerson, 
     EntryAutoPersonHilited)
 from messages import InputMessage, open_message, families_msg
-from dates import format_stored_date, get_date_formats, OK_MONTHS
+from dates import format_stored_date, get_date_formats, OK_MONTHS, validate_date
 from events_table import (
     get_current_person, delete_generic_finding, delete_couple_finding)
 from query_strings import (
     select_finding_id_birth, delete_findings_persons, select_persons_persons,
-    select_person_id_gender, select_finding_date, select_finding_id_birth,
+    select_person_gender_by_id, select_finding_date, select_finding_id_birth,
     select_finding_id_death, select_finding_date_and_sorter,
     update_findings_persons_finding, insert_persons_persons_father,
     insert_findings_persons_new_father, select_findings_persons_birth,
@@ -31,7 +31,10 @@ from query_strings import (
     update_findings_persons_age2_blank, update_findings_persons_age1_blank,
     update_persons_persons_1_null_by_id, update_persons_persons_2_null_by_id,
     select_finding_details, delete_findings_persons_by_id, 
-    delete_persons_persons, select_all_event_type_ids_marital
+    delete_persons_persons, select_all_event_type_ids_marital,
+    insert_findings_persons, insert_persons_persons, update_person_gender,
+    update_finding_date, insert_finding_death, insert_finding_places_new,
+
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -177,7 +180,7 @@ class NuclearFamiliesTable(Frame):
             self.make_nukefam_inputs().
         """
         self.new_kid_frame = Frame(self.nukefam_window)
-        new_kid_input = EntryAutoPersonHilited(
+        self.new_kid_input = EntryAutoPersonHilited(
             self.new_kid_frame, self.formats, width=48, 
             autofill=True, 
             values=self.person_autofill_values)
@@ -185,10 +188,10 @@ class NuclearFamiliesTable(Frame):
             self.new_kid_frame, 
             text="ADD CHILD TO SELECTED PARTNER", 
             command=self.add_child)
-        new_kid_input.grid(column=0, row=0)
+        self.new_kid_input.grid(column=0, row=0)
         childmaker.grid(column=1, row=0, padx=(6,0), pady=(12,0))        
 
-        EntryAutoPerson.all_person_autofills.append(new_kid_input)
+        EntryAutoPerson.all_person_autofills.append(self.new_kid_input)
 
     def get_marital_event_types(self, conn, cur):
 
@@ -242,13 +245,6 @@ class NuclearFamiliesTable(Frame):
         self.nukefam_canvas.config(width=wd, height=ht)        
         self.nukefam_canvas.config(scrollregion=self.nukefam_canvas.bbox('all'))
 
-        if len(self.family_data[1]) != 0:
-            self.newkidvar.set(100)
-        else:
-            # set to non-existent value so no Radiobutton will be selected
-            self.newkidvar.set(999)
-        # self.fix_button_state()
-
     def populate_nuke_tables(self):
         lst = [            
             self.family_data[0][0][1]["name"],
@@ -280,10 +276,12 @@ class NuclearFamiliesTable(Frame):
             self.nukefam_containers.append(pardframe)
             pardrad = Radiobutton(
                 pardframe, variable=self.newkidvar, 
+                # value=varval, anchor="w") 
                 value=n, anchor="w")
-                # value=n, anchor="w", command=self.fix_button_state)
             self.pardrads.append(pardrad)
             pardrad.grid(column=0, row=n)
+            if n == 1:
+                pardrad.select()
 
             if len(v["children"]) != 0 and len(v["partner_kin_type"]) == 0:
                 ma_pa = "{}:".format(v["parent_type"])
@@ -667,16 +665,14 @@ class NuclearFamiliesTable(Frame):
                         self.make_pard_dict(pard_id, parent_type, cur)
                         if pard_id == pardner:
                             self.family_data[1][pardner]["children"].append(
-                                {"fpid": tup[0], 
-                                    "birth_id": tup[1], "order": order})
+                                {"fpid": tup[0], "birth_id": tup[1], "order": order})
                     elif tup[2] == pardner:
                         parent_type = tup[3]
                         pard_id = tup[2]
                         self.make_pard_dict(pard_id, parent_type, cur) 
                         if pard_id == pardner:
                             self.family_data[1][pardner]["children"].append(
-                                {"fpid": tup[0], 
-                                    "birth_id": tup[1], "order": order})      
+                                {"fpid": tup[0], "birth_id": tup[1], "order": order})      
 
             if v["events"] is True and v["offspring"] is False:
                 self.make_pard_dict(pardner, "", cur)
@@ -687,7 +683,6 @@ class NuclearFamiliesTable(Frame):
                         self.finish_progeny_dict(dkt, cur)
 
     def query_nukefams_data(self, conn, cur):
-
         cur.execute(
             '''
                 SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
@@ -784,11 +779,11 @@ class NuclearFamiliesTable(Frame):
             partner_name = ""
         else:
             partner_name = self.person_autofill_values[pard_id][0]["name"]
-            
-        self.family_data[1][pard_id]["parent_type"] = self.compound_parent_type
+        
+        compound_parent_type = self.compound_parent_type
+        self.family_data[1][pard_id]["parent_type"] = compound_parent_type
         self.family_data[1][pard_id]["partner_name"] = partner_name 
         self.compound_parent_type = "Children's"
-
     def collect_couple_events(self, cur, conn):
         marital_events = self.get_marital_event_types(conn, cur) 
         for lst in marital_events:
@@ -843,7 +838,7 @@ class NuclearFamiliesTable(Frame):
             born_id, birth_date = result
         cur.execute(
             '''
-                SELECT date
+                SELECT date, finding_id
                 FROM finding
                 WHERE person_id = ?
                     AND event_type_id = 4
@@ -851,9 +846,10 @@ class NuclearFamiliesTable(Frame):
             (born_id,))
         death_date = cur.fetchone()
         if death_date:
-            death_date = death_date[0]
+            death_date, death_id = death_date
         else:
             death_date = "-0000-00-00-------"
+            death_id = None
 
         cur.execute(
             '''
@@ -877,6 +873,7 @@ class NuclearFamiliesTable(Frame):
         dkt["death"] = death_date
         dkt["name"] = name
         dkt["id"] = born_id
+        dkt["death_id"] = death_id
 
     def finish_alt_progeny_dict(self, dkt, cur):
         cur.execute(
@@ -945,7 +942,64 @@ class NuclearFamiliesTable(Frame):
         return sorter
 
     def add_child(self):
-        print("hey kid")
+
+        def err_done7(entry, msg):
+            entry.delete(0, 'end')
+            msg7[0].grab_release()
+            msg7[0].destroy()
+            entry.focus_set()
+        
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+
+        self.family_data[1]
+        for k,v in self.family_data[1].items():
+            row = v["inwidg"].grid_info()["row"]
+            if self.newkidvar.get() == row:
+                other_parent_id = k
+                break
+
+        name_data = check_name(ent=self.new_kid_input)
+        if not name_data:
+            msg7 = open_message(
+                self, 
+                families_msg[1], 
+                "Person Name Unknown", 
+                "OK")
+            msg7[0].grab_set()
+            msg7[2].config(command=lambda entry=inwidg, msg=msg7: err_done7(
+                entry, msg))
+            return
+
+        if name_data == "add_new_person":
+            new_child_id = open_new_person_dialog(
+                self, self.new_kid_input, self.root, self.treebard, self.formats, 
+                person_autofill_values=self.person_autofill_values)
+            self.person_autofill_values = update_person_autofill_values()
+        else:
+            new_child_id = name_data[1]
+
+        cur.execute(select_finding_id_birth, (new_child_id,))
+        birth_id = cur.fetchone()[0]
+        if self.family_data[1][other_parent_id]["parent_type"] == "Children's Father":
+            ma_id = self.current_person
+            pa_id = other_parent_id
+        elif self.family_data[1][other_parent_id]["parent_type"] == "Children's Mother":
+            pa_id = self.current_person
+            ma_id = other_parent_id
+
+        cur.execute(insert_persons_persons, (pa_id, ma_id))
+        conn.commit()
+        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
+        ppid = cur.fetchone()[0]
+        cur.execute(insert_findings_persons, (birth_id, ppid))
+        conn.commit()
+
+        cur.close()
+        conn.close()
+        self.treebard.main.findings_table.redraw()
 
     def get_original(self, evt):
         """ The binding to FocusOut can't be done till a FocusIn event has
@@ -1063,7 +1117,7 @@ class NuclearFamiliesTable(Frame):
                     person_autofill_values=self.person_autofill_values)
                 self.person_autofill_values = update_person_autofill_values()
             elif not name_data:
-                new_partner_id = None # added to stop an error
+                new_partner_id = None
                 # Keep unlink dlg from opening when replacing 
                 #   existing partner with new person:
                 if len(new_string) == 0:
@@ -1469,12 +1523,6 @@ class NuclearFamiliesTable(Frame):
 
         def do_update(widg, parent_id, child, cur, conn):
 
-            # def err_done6(entry, msg):
-                # entry.delete(0, 'end')
-                # msg6[0].grab_release()
-                # msg6[0].destroy()
-                # entry.focus_set()
-
             orig_child_id = child["id"]
             new_child_id = None 
             birth_id = None
@@ -1483,9 +1531,6 @@ class NuclearFamiliesTable(Frame):
             death_date = "-0000-00-00-------"
             birth_date = "-0000-00-00-------"
             sorter = (0,0,0)
-
-
-
 
             if len(self.final) == 0:
                 cur.execute(select_findings_persons_ppid, (fpid,))
@@ -1498,7 +1543,6 @@ class NuclearFamiliesTable(Frame):
                 conn.commit()
                 return
 
-
             name_data = check_name(ent=widg)
             if not name_data:
                 msg6 = open_message(
@@ -1507,8 +1551,6 @@ class NuclearFamiliesTable(Frame):
                     "Person Name Unknown", 
                     "OK")
                 msg6[0].grab_set()
-                # msg6[2].config(command=lambda entry=widg, msg=msg6: err_done6(
-                    # entry, msg))
                 return
 
             if name_data == "add_new_person":
@@ -1521,7 +1563,7 @@ class NuclearFamiliesTable(Frame):
 
             cur.execute(select_finding_id_birth, (new_child_id,))
             birth_id = cur.fetchone()[0]
-            cur.execute(select_person_id_gender, (new_child_id,))
+            cur.execute(select_person_gender_by_id, (new_child_id,))
             gender = cur.fetchone()[0]
             cur.execute(select_finding_id_death, (new_child_id,))
             death_id = cur.fetchone()
@@ -1532,62 +1574,8 @@ class NuclearFamiliesTable(Frame):
                 death_id = death_id[0]
                 cur.execute(select_finding_date, (death_id,))
                 death_date = cur.fetchone()[0] 
-
-            # # is all this necessary? isn't the dict rebuilt on redraw() when any change made?
-            # child["id"] = new_child_id
-            # child["name"] = self.final
-            # child["gender"] = gender
-            # child["birth"] = birth_date
-            # child["sorter"] = sorter
-            # child["death"] = death_date 
-
-            # if birth_id:
             cur.execute(update_findings_persons_finding, (birth_id, fpid))
             conn.commit()
-           
-
-
-            # if "  #" in self.final:
-                # new_child_id = self.final.split("  #")[1]
-                # cur.execute(select_finding_id_birth, (new_child_id,))
-                # birth_id = cur.fetchone()[0]
-                # cur.execute(select_person_id_gender, (new_child_id,))
-                # gender = cur.fetchone()[0]
-                # cur.execute(select_finding_id_death, (new_child_id,))
-                # death_id = cur.fetchone()
-                # cur.execute(select_finding_date_and_sorter, (birth_id,))
-                # birth_date, sorter = cur.fetchone()
-                # sorter = self.make_sorter(birth_date)
-                # if death_id:
-                    # death_id = death_id[0]
-                    # cur.execute(select_finding_date, (death_id,))
-                    # death_date = cur.fetchone()[0] 
-            # elif len(self.final) == 0:
-                # cur.execute(select_finding_id_birth, (orig_child_id,))
-                # birth_id = cur.fetchone()[0]
-                # cur.execute(delete_findings_persons, (birth_id,))
-                # conn.commit()
-                # # HAVE TO BLANK OUT GENDER, BIRTH, DEATH TOO
-            # else:
-                # new_child_id = open_new_person_dialog(
-                    # self, widg, self.root, self.treebard, self.formats,
-                    # self.person_autofill_values)
-                # cur.execute(select_finding_id_birth, (new_child_id,))
-                # birth_id = cur.fetchone()[0] # CANCEL THROWS ERROR HERE
-                # cur.execute(select_person_id_gender, (new_child_id,))
-                # gender = cur.fetchone()[0]
-
-            # # is all this necessary? isn't the dict rebuilt on redraw() when any change made?
-            # child["id"] = new_child_id
-            # child["name"] = self.final
-            # child["gender"] = gender
-            # child["birth"] = birth_date
-            # child["sorter"] = sorter
-            # child["death"] = death_date  
-
-            # if birth_id:
-                # cur.execute(update_findings_persons_finding, (birth_id, fpid))
-                # conn.commit()
 
         for k,v in self.family_data[1].items():
             for child in v["children"]:
@@ -1598,14 +1586,63 @@ class NuclearFamiliesTable(Frame):
                     do_update(widg, parent_id, child, cur, conn)
                     break
 
-    def update_child_gender(self):
-        print("line", looky(seeline()).lineno, "self.family_data[1]:", self.family_data[1])
+    def update_child_gender(self, widg, conn, cur):
+        new_gender = widg.get().strip()
+        if new_gender not in ("male", "female", "unknown", "other"):
+            return  
+        for k,v in self.family_data[1].items():
+            s = 0
+            for child in v["children"]:
+                if widg != child["gender_widg"]:
+                    continue
+                else:
+                    child_id = child["id"]
+                    cur.execute(update_person_gender, (new_gender, child_id))
+                    conn.commit()
+                    break
+                s += 1
 
-    def update_child_birth(self):
-        print("line", looky(seeline()).lineno, "self.family_data[1]:", self.family_data[1])
+    def update_child_birth(self, widg, conn, cur):
+        new_date = validate_date(self, widg, widg.get().strip())
+        sorter = self.make_sorter(new_date)
+        sorter = [str(i) for i in sorter]
+        sorter = ",".join(sorter)
+        for k,v in self.family_data[1].items():
+            s = 0
+            for child in v["children"]:
+                if widg != child["birth_widg"]:
+                    continue
+                else:
+                    birth_id = child["birth_id"]
+                    cur.execute(update_finding_date, (new_date, sorter, birth_id))
+                    conn.commit()
+                    break
+                s += 1
 
-    def update_child_death(self):
-        print("line", looky(seeline()).lineno, "self.family_data[1]:", self.family_data[1])
+    def update_child_death(self, widg, conn, cur):
+        new_date = validate_date(self, widg, widg.get().strip())
+        sorter = self.make_sorter(new_date)
+        sorter = [str(i) for i in sorter]
+        sorter = ",".join(sorter)
+        for k,v in self.family_data[1].items():
+            s = 0
+            for child in v["children"]:
+                if widg != child["death_widg"]:
+                    continue
+                else:
+                    death_id = child["death_id"]
+                    if death_id is None:
+                        cur.execute(insert_finding_death, (new_date, child["id"], sorter))
+                        conn.commit()
+                        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
+                        death_id = cur.fetchone()[0]
+                        cur.execute(insert_finding_places_new, (death_id,))
+                        conn.commit()
+                    else:
+                        cur.execute(update_finding_date, (new_date, sorter, death_id))
+                        conn.commit()
+                    break
+                s += 1
 
     def update_parent(self, final, conn, cur, widg, kin_type=None):
         """ If the field is not blank, simulate a disabled field for any input that tries to
@@ -1794,11 +1831,11 @@ class NuclearFamiliesTable(Frame):
             if column == 1:
                 self.update_child(widg, conn, cur)
             elif column == 2:
-                self.update_child_gender()
+                self.update_child_gender(widg, conn, cur)
             elif column == 3:
-                self.update_child_birth()
+                self.update_child_birth(widg, conn, cur)
             elif column == 5:
-                self.update_child_death()
+                self.update_child_death(widg, conn, cur)
             else:
                 print("line", looky(seeline()).lineno, "case not handled:")    
 

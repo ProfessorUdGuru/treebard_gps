@@ -146,6 +146,11 @@ insert_finding_birth_new_person = '''
     VALUES (null, '-0000-00-00-------', '', '0', ?, 1, '0,0,0')
 '''
 
+insert_finding_death = '''
+    INSERT INTO finding
+    VALUES (null, ?, '', '', ?, 4, ?)
+'''
+
 insert_finding_new_couple = '''
     INSERT INTO finding (finding_id, event_type_id)
     VALUES (?, ?)
@@ -154,6 +159,11 @@ insert_finding_new_couple = '''
 insert_findings_notes_new = '''
     INSERT INTO findings_notes 
     VALUES (null, ?, ?, 0)
+'''
+
+insert_findings_persons = '''
+    INSERT INTO findings_persons (finding_id, kin_type_id1, kin_type_id2, persons_persons_id)
+    VALUES (?, 2, 1, ?)
 '''
 
 insert_findings_persons_new_couple = '''
@@ -177,16 +187,15 @@ insert_findings_persons_null_couple = '''
     VALUES (null, ?, '', ?, '', ?, ?)
 '''
 
-select_findings_persons_ppid = '''
-    SELECT persons_persons_id
-    FROM findings_persons
-    WHERE findings_persons_id = ?
-'''
+# insert_finding_places_new = '''
+    # INSERT INTO finding_places (
+        # finding_id, nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
+    # VALUES (?, 1, null, null, null, null, null, null, null, null)
+# '''
 
 insert_finding_places_new = '''
-    INSERT INTO finding_places (
-        finding_id, nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
-    VALUES (?, 1, null, null, null, null, null, null, null, null)
+    INSERT INTO finding_places (finding_id, nest0)
+    VALUES (?, 1)
 '''
 
 insert_finding_places_new_event = '''
@@ -858,16 +867,6 @@ select_findings_persons_person_id = '''
     WHERE finding_id = ?
 '''
 
-# select_findings_persons_person_id = '''
-    # SELECT a.person_id1, b.person_id2, a.persons_persons_id
-    # FROM findings_persons
-    # JOIN persons_persons as a
-        # ON a.person_id1 = person.person_id
-    # JOIN persons_persons as b
-        # ON b.person_id2 = person.person_id
-    # WHERE finding_id = ?
-# '''
-
 select_findings_persons_parents = '''
     SELECT a.person_id1, b.person_id2
     JOIN persons_persons as a
@@ -1233,7 +1232,7 @@ select_person_id_alt_parentage = '''
         AND event_type_id in (110, 111, 112, 120, 121, 122, 130, 131)
 '''
 
-select_person_id_gender = '''
+select_person_gender_by_id = '''
     SELECT gender 
     FROM person
     WHERE person_id = ?
@@ -1576,20 +1575,6 @@ update_findings_persons_age2 = '''
     WHERE finding_id = ?
 '''
 
-# update_findings_persons_age1 = '''
-    # UPDATE findings_persons
-    # SET age1 = ?
-    # WHERE finding_id = ?
-        # AND persons_persons_id = ?
-# '''
-
-# update_findings_persons_age2 = '''
-    # UPDATE findings_persons
-    # SET age2 = ?
-    # WHERE finding_id = ?
-        # AND persons_persons_id = ?
-# '''
-
 update_findings_persons_age1_blank = '''
     UPDATE findings_persons
     SET age1 = ""
@@ -1696,6 +1681,12 @@ update_note_topic = '''
     UPDATE note
     SET topic = ?
     WHERE topic = ?
+'''
+
+update_person_gender = '''
+    UPDATE person
+    SET gender = ?
+    WHERE person_id = ?
 '''
 
 update_persons_persons_1 = '''

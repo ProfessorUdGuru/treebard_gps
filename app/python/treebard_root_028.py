@@ -169,7 +169,7 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: families_table
+# BRANCH: families_table SAVE THIS CHART FOR DEVDOCS
 #                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
 # NONE>EXISTING              x               x             x              n/a
 # NONE>DUPE                  x               x             x              n/a
@@ -179,13 +179,12 @@ if __name__ == '__main__':
 # CHANGE>NEW                 x               x             x               x
 # UNLINK                     x               x             x               x 
 
-# Make sure it's impossible to add a name with length of 0.
-# when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here. Is this because the parent fields and alt parent fields aren't made at the same time? Does a tab order method need to be rerun when creating an alt parent field?
-# make it possible to change gender, birth/death dates for children right there in the table
 # double click any name in table to change curr per
 # make it impossible for a person to be their own parent, partner or child, see Nettie Womble who is her own father
+# Make sure it's impossible to add a name with length of 0.
 # add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f); make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner.
 # add idtips to name inputs in the families table first, then other places except search which already has better name tips
+# when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here. Is this because the parent fields and alt parent fields aren't made at the same time? Does a tab order method need to be rerun when creating an alt parent field? See also gender field in child row--tab traversal works if just tabbing thru, but after changing something, focus out doesn't go to next widget because of redraw(). So the autofill needs a feature wherein it registers itself as self.current_widget on FocusIn so that redraw() can go like self.current_widget.tkFocusNext().focus_set()(
 # RCM: There are two ways to deal with unknown partners of the current person: unknown name labels and null persons. An unknown name label has to contain at least one character. Using letters in unknown name labels is a bad idea. For example, the label 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. The purpose of an unknown name label made with symbols (a name such as '?' or '_____') is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name labels will differentiate the current person's two families. This works since duplicate names are allowed, such as two people that are both temporarily named '_____', and each person will have a unique ID number. It's OK to not use unknown name labels, but in that case, Treebard will lump all children and marital events of the current person's whose partner is null into a single family. If you want to avoid this, use a name such as '?' or '_____' with at least one character and Treebard will give this person a unique ID instead of a null ID. If you use null partners when creating marital events, for example, all the children and marital events for the current person where the current person's partner is left blank will be lumped together into one family. This is easy to change, but most users will probably prefer to differentiate families of unknown partners by using unknown name labels. To change from a null partner to unknown name labels, type an unknown name label into an empty partner field. Empty partner fields exist when there are marital events with null partner or children with a null parent. When you tab out of the field, a dialog will open listing all the marital events and children for the current person with a null partner. You can choose which one to link to the new unnamed person you're creating. This is easier to do than it is to describe. Just try it.
 # export dbs to .sql
 

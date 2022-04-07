@@ -1235,6 +1235,7 @@ class EventsTable(Frame):
             ent.delete(0, "end")
         self.main_window.nukefam_table.ma_input.delete(0, "end")
         self.main_window.nukefam_table.pa_input.delete(0, "end")
+        self.main_window.nukefam_table.new_kid_input.delete(0, "end")
         self.main_window.nukefam_table.new_kid_frame.grid_forget()
         self.main_window.nukefam_table.current_person_alt_parents = []
         self.main_window.nukefam_table.compound_parent_type = "Children's"        
