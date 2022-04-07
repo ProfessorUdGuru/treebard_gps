@@ -957,6 +957,7 @@ class NuclearFamiliesTable(Frame):
         """
         evt.widget.bind("<FocusOut>", self.get_final, add="+")
         self.original = evt.widget.get()
+
     def change_current_person(self, evt):
         widg = evt.widget
         widgname = widg.winfo_name()
@@ -978,7 +979,7 @@ class NuclearFamiliesTable(Frame):
                     break
             col = widg.grid_info()["column"]
             if col == 1:
-                print("line", looky(seeline()).lineno, "update_child_name:")
+                print("line", looky(seeline()).lineno, "update_child:")
             elif col == 2:
                 print("line", looky(seeline()).lineno, "update_child_gender:")
             elif col == 3:
@@ -1464,63 +1465,129 @@ class NuclearFamiliesTable(Frame):
         self.root.wait_window(self.partner_unlinker)
         update_partners_unlink(conn, cur)
 
-    def update_child_name(self, widg, conn, cur):
+    def update_child(self, widg, conn, cur):
 
-        def update_child(widg, parent_id, child, cur, conn):
+        def do_update(widg, parent_id, child, cur, conn):
+
+            # def err_done6(entry, msg):
+                # entry.delete(0, 'end')
+                # msg6[0].grab_release()
+                # msg6[0].destroy()
+                # entry.focus_set()
+
             orig_child_id = child["id"]
-            child_id = None 
+            new_child_id = None 
             birth_id = None
             gender = "unknown"
             fpid = child["fpid"]
-            orig_child = child["id"] # need this & widg in case user presses CANCEL etc.
             death_date = "-0000-00-00-------"
             birth_date = "-0000-00-00-------"
             sorter = (0,0,0)
-            if "  #" in self.final:
-                child_id = self.final.split("  #")[1]
-                cur.execute(select_finding_id_birth, (child_id,))
-                birth_id = cur.fetchone()[0]
-                cur.execute(select_person_id_gender, (child_id,))
-                gender = cur.fetchone()[0]
-                cur.execute(select_finding_id_death, (child_id,))
-                death_id = cur.fetchone()
-                cur.execute(select_finding_date_and_sorter, (birth_id,))
-                birth_date, sorter = cur.fetchone()
-                sorter = self.make_sorter(birth_date)
-                if death_id:
-                    death_id = death_id[0]
-                    cur.execute(select_finding_date, (death_id,))
-                    death_date = cur.fetchone()[0] 
-            elif len(self.final) == 0:
-                # user unlinks child from both parents 
-                #   by deleting existing name in entry; what about unlinking
-                #   child only from current person? Try it this way first
-                #   since the nukefams tables does allow changes to partners
-                #   and children of the current person.
+
+
+
+
+            if len(self.final) == 0:
+                cur.execute(select_findings_persons_ppid, (fpid,))
+                ppid = cur.fetchone()[0]
                 cur.execute(select_finding_id_birth, (orig_child_id,))
                 birth_id = cur.fetchone()[0]
                 cur.execute(delete_findings_persons, (birth_id,))
                 conn.commit()
-                # HAVE TO BLANK OUT GENDER, BIRTH, DEATH TOO
-            else:
-                child_id = open_new_person_dialog(
-                    self, widg, self.root, self.treebard, self.formats,
-                    self.person_autofill_values)
-                cur.execute(select_finding_id_birth, (child_id,))
-                birth_id = cur.fetchone()[0] # CANCEL THROWS ERROR HERE
-                cur.execute(select_person_id_gender, (child_id,))
-                gender = cur.fetchone()[0]
-
-            child["id"] = child_id
-            child["name"] = self.final
-            child["gender"] = gender
-            child["birth"] = birth_date
-            child["sorter"] = sorter
-            child["death"] = death_date  
-
-            if birth_id:
-                cur.execute(update_findings_persons_finding, (birth_id, fpid))
+                cur.execute(delete_persons_persons, (ppid,))
                 conn.commit()
+                return
+
+
+            name_data = check_name(ent=widg)
+            if not name_data:
+                msg6 = open_message(
+                    self, 
+                    families_msg[1], 
+                    "Person Name Unknown", 
+                    "OK")
+                msg6[0].grab_set()
+                # msg6[2].config(command=lambda entry=widg, msg=msg6: err_done6(
+                    # entry, msg))
+                return
+
+            if name_data == "add_new_person":
+                new_child_id = open_new_person_dialog(
+                    self, widg, self.root, self.treebard, self.formats, 
+                    person_autofill_values=self.person_autofill_values)
+                self.person_autofill_values = update_person_autofill_values()
+            else:
+                new_child_id = name_data[1]
+
+            cur.execute(select_finding_id_birth, (new_child_id,))
+            birth_id = cur.fetchone()[0]
+            cur.execute(select_person_id_gender, (new_child_id,))
+            gender = cur.fetchone()[0]
+            cur.execute(select_finding_id_death, (new_child_id,))
+            death_id = cur.fetchone()
+            cur.execute(select_finding_date_and_sorter, (birth_id,))
+            birth_date, sorter = cur.fetchone()
+            sorter = self.make_sorter(birth_date)
+            if death_id:
+                death_id = death_id[0]
+                cur.execute(select_finding_date, (death_id,))
+                death_date = cur.fetchone()[0] 
+
+            # # is all this necessary? isn't the dict rebuilt on redraw() when any change made?
+            # child["id"] = new_child_id
+            # child["name"] = self.final
+            # child["gender"] = gender
+            # child["birth"] = birth_date
+            # child["sorter"] = sorter
+            # child["death"] = death_date 
+
+            # if birth_id:
+            cur.execute(update_findings_persons_finding, (birth_id, fpid))
+            conn.commit()
+           
+
+
+            # if "  #" in self.final:
+                # new_child_id = self.final.split("  #")[1]
+                # cur.execute(select_finding_id_birth, (new_child_id,))
+                # birth_id = cur.fetchone()[0]
+                # cur.execute(select_person_id_gender, (new_child_id,))
+                # gender = cur.fetchone()[0]
+                # cur.execute(select_finding_id_death, (new_child_id,))
+                # death_id = cur.fetchone()
+                # cur.execute(select_finding_date_and_sorter, (birth_id,))
+                # birth_date, sorter = cur.fetchone()
+                # sorter = self.make_sorter(birth_date)
+                # if death_id:
+                    # death_id = death_id[0]
+                    # cur.execute(select_finding_date, (death_id,))
+                    # death_date = cur.fetchone()[0] 
+            # elif len(self.final) == 0:
+                # cur.execute(select_finding_id_birth, (orig_child_id,))
+                # birth_id = cur.fetchone()[0]
+                # cur.execute(delete_findings_persons, (birth_id,))
+                # conn.commit()
+                # # HAVE TO BLANK OUT GENDER, BIRTH, DEATH TOO
+            # else:
+                # new_child_id = open_new_person_dialog(
+                    # self, widg, self.root, self.treebard, self.formats,
+                    # self.person_autofill_values)
+                # cur.execute(select_finding_id_birth, (new_child_id,))
+                # birth_id = cur.fetchone()[0] # CANCEL THROWS ERROR HERE
+                # cur.execute(select_person_id_gender, (new_child_id,))
+                # gender = cur.fetchone()[0]
+
+            # # is all this necessary? isn't the dict rebuilt on redraw() when any change made?
+            # child["id"] = new_child_id
+            # child["name"] = self.final
+            # child["gender"] = gender
+            # child["birth"] = birth_date
+            # child["sorter"] = sorter
+            # child["death"] = death_date  
+
+            # if birth_id:
+                # cur.execute(update_findings_persons_finding, (birth_id, fpid))
+                # conn.commit()
 
         for k,v in self.family_data[1].items():
             for child in v["children"]:
@@ -1528,7 +1595,8 @@ class NuclearFamiliesTable(Frame):
                     continue
                 else:
                     parent_id = k
-                    update_child(widg, parent_id, child, cur, conn)
+                    do_update(widg, parent_id, child, cur, conn)
+                    break
 
     def update_child_gender(self):
         print("line", looky(seeline()).lineno, "self.family_data[1]:", self.family_data[1])
@@ -1724,7 +1792,7 @@ class NuclearFamiliesTable(Frame):
                     "case not handled for column", column)
         else:
             if column == 1:
-                self.update_child_name(widg, conn, cur)
+                self.update_child(widg, conn, cur)
             elif column == 2:
                 self.update_child_gender()
             elif column == 3:

@@ -171,13 +171,13 @@ if __name__ == '__main__':
 
 # BRANCH: families_table
 #                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
-# NONE>EXISTING              x               x             x
-# NONE>DUPE                  x               x             x
-# NONE>NEW                   x               x             x
-# CHANGE>EXISTING            x               x             x
-# CHANGE>DUPE                x               x             x
-# CHANGE>NEW                 x               x             x
-# UNLINK                     x               x             x 
+# NONE>EXISTING              x               x             x              n/a
+# NONE>DUPE                  x               x             x              n/a
+# NONE>NEW                   x               x             x              n/a
+# CHANGE>EXISTING            x               x             x               x
+# CHANGE>DUPE                x               x             x               x
+# CHANGE>NEW                 x               x             x               x
+# UNLINK                     x               x             x               x 
 
 # Make sure it's impossible to add a name with length of 0.
 # when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here. Is this because the parent fields and alt parent fields aren't made at the same time? Does a tab order method need to be rerun when creating an alt parent field?
