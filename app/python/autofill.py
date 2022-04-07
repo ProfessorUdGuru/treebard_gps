@@ -37,6 +37,8 @@ class EntryAuto(EntryUnhilited):
         self.autofill = autofill
         self.values = values
 
+        # self.pos = 0 # added 20220407 to prevent error which couldn't be replicated
+
         if autofill is True:
             self.bind("<KeyPress>", self.detect_pressed)
             self.bind("<KeyRelease>", self.get_typed)

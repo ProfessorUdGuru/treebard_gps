@@ -1210,8 +1210,7 @@ class NuclearFamiliesTable(Frame):
         for child in self.family_data[1][partner_id]["children"]:
             checks["children"].append(child)
 
-        new_string = inwidg.get()
-        message = "Select which events & children to link to\n{}:".format(new_string)
+        message = "Select which events & children to link to added partner:"
         self.null_partner_replacer = Dialogue(self.root)
         
         head = LabelHeader(

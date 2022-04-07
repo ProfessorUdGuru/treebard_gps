@@ -600,22 +600,10 @@ select_event_type_id = '''
     WHERE event_types = ?
 '''
 
-select_event_type_id_only = '''
-    SELECT event_type_id
-    FROM event_type
-    WHERE event_types = ?
-'''
-
 select_event_type_string = '''
     SELECT event_types
     FROM event_type
     WHERE event_type_id = ?
-'''
-
-select_event_type_via_event_string = '''
-    SELECT event_type_id
-    FROM event_type
-    WHERE event_types = ?
 '''
 
 select_finding_date = '''
