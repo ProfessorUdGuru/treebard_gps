@@ -6,7 +6,7 @@ from files import get_current_file
 from window_border import Border 
 from widgets import (
     Frame, Toplevel, Label, LabelButtonText, ButtonQuiet,
-    LabelH3, Button, EntryHilited1, LabelHeader)
+    LabelH3, Button, EntryHilited1, LabelHeader, LabelNegative)
 from custom_combobox_widget import Combobox 
 from right_click_menu import RightClickMenu, make_rc_menus
 from messages import open_message, roles_msg
@@ -50,6 +50,12 @@ class RolesDialog(Toplevel):
         self.role_types = []
         
         self.roles_per_finding = []
+
+        self.widget = None
+        self.idtip = None
+        self.idtip_text = None
+        self.idtip_bindings = {"on_enter": [], "on_leave": []}
+        self.person_inputs = []
 
         self.current_name = self.person_autofill_values[self.current_person][0]["name"]
         people = make_all_names_dict_for_person_select()       
@@ -210,6 +216,8 @@ class RolesDialog(Toplevel):
 
         self.make_edit_row()
         self.get_role_types()
+
+        self.make_idtips()
 
     def make_roles_table(self):
 
@@ -552,5 +560,75 @@ class RolesDialog(Toplevel):
         self.make_roles_list()
         cur.close()
         conn.close()
+
+    def show_idtip(self, iD, name_type):
+        """Based on show_idtip() in families.py."""
+        maxvert = self.winfo_screenheight()
+
+        if self.idtip or not self.idtip_text:
+            return
+        x, y, cx, cy = self.widget.bbox('insert')        
+
+        self.idtip = d_tip = tk.Toplevel(self.widget)
+        label = LabelNegative(
+            d_tip, 
+            text=self.idtip_text, 
+            justify='left',
+            relief='solid', 
+            bd=1,
+            bg=self.formats['highlight_bg'])
+        label.pack(ipadx=6, ipady=3)
+
+        mouse_at = self.winfo_pointerxy()
+
+        tip_shift = 48 
+
+        if mouse_at[1] < maxvert - tip_shift * 2:
+            x = mouse_at[0] + tip_shift
+            y = mouse_at[1] + tip_shift
+        else:
+            x = mouse_at[0] + tip_shift
+            y = mouse_at[1] - tip_shift
+
+        d_tip.wm_overrideredirect(1)
+        d_tip.wm_geometry('+{}+{}'.format(x, y))
+
+    def off(self):
+        d_tip = self.idtip
+        self.idtip = None
+        if d_tip:
+            d_tip.destroy()
+
+    def handle_enter(self, evt):
+        row = evt.widget.master.grid_info()['row']
+        iD, name_type = self.person_inputs[row][1:]
+        if len(name_type) == 2:
+            name_type = list(name_type)
+            name_type[1] = "({})".format(name_type[1])
+            name_type = " ".join(name_type)
+        self.idtip_text = "ID #{}: {}".format(iD, name_type)
+
+        if self.idtip_text:
+            self.show_idtip(iD, name_type)
+
+    def on_leave(self, evt):
+        self.off()
+
+    def make_idtips(self):
+
+        row = 0
+        for lst in self.roles_per_finding:
+            iD = lst[4]
+            name_type = self.person_autofill_values[iD][0]["name type"]
+            widg = self.edit_role_person_input
+            self.person_inputs.append((widg, iD, name_type))
+            row += 1
+
+        widg = self.edit_role_person_input
+        name_in = widg.bind("<Enter>", self.handle_enter)
+        name_out = widg.bind("<Leave>", self.on_leave)
+        self.widget = widg
+        self.idtip_bindings["on_enter"].append([widg, name_in])
+        self.idtip_bindings["on_leave"].append([widg, name_out])
 
 

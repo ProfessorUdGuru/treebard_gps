@@ -1219,6 +1219,15 @@ class EventsTable(Frame):
                     lst[0].unbind("<Leave>", lst[1])
             self.kintip_bindings = {"on_enter": [], "on_leave": []}
 
+        for k,v in self.main_window.nukefam_table.idtip_bindings.items():
+            if k == "on_enter":
+                for lst in v:
+                    lst[0].unbind("<Enter>", lst[1])                    
+            elif k == "on_leave":
+                for lst in v:
+                    lst[0].unbind("<Leave>", lst[1])
+            self.main_window.nukefam_table.idtip_bindings = {"on_enter": [], "on_leave": []}
+
         for lst in self.cell_pool:
             for widg in lst[1]:
                 if widg.winfo_subclass() == 'EntryAuto':

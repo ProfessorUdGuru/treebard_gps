@@ -4,7 +4,7 @@ import tkinter as tk
 import sqlite3
 from widgets import (
     Frame, LabelH3, Label, Button, Canvas, LabelEntry, Radiobutton, LabelFrame,
-    FrameHilited, LabelHeader, Checkbutton)
+    FrameHilited, LabelHeader, Checkbutton, LabelNegative)
 from window_border import Dialogue
 from custom_combobox_widget import Combobox
 from files import get_current_file
@@ -113,6 +113,11 @@ class NuclearFamiliesTable(Frame):
             {},
         ]
 
+        self.widget = None
+        self.idtip = None
+        self.idtip_text = None
+        self.idtip_bindings = {"on_enter": [], "on_leave": []}
+
         self.original = ""
 
         self.nukefam_containers = []
@@ -177,7 +182,7 @@ class NuclearFamiliesTable(Frame):
     def make_new_kin_inputs(self):
         """ Get self.new_kid_frame into the correct row by ungridding it in 
             self.findings_table.forget_cells() and regridding it in 
-            self.make_nukefam_inputs().
+            self.make_nukefam_inputs() which runs in self.findings_table.redraw().
         """
         self.new_kid_frame = Frame(self.nukefam_window)
         self.new_kid_input = EntryAutoPersonHilited(
@@ -192,6 +197,8 @@ class NuclearFamiliesTable(Frame):
         childmaker.grid(column=1, row=0, padx=(6,0), pady=(12,0))        
 
         EntryAutoPerson.all_person_autofills.append(self.new_kid_input)
+
+        self.make_idtips()
 
     def get_marital_event_types(self, conn, cur):
 
@@ -245,6 +252,8 @@ class NuclearFamiliesTable(Frame):
         self.nukefam_canvas.config(width=wd, height=ht)        
         self.nukefam_canvas.config(scrollregion=self.nukefam_canvas.bbox('all'))
 
+        self.make_idtips()
+
     def populate_nuke_tables(self):
         lst = [            
             self.family_data[0][0][1]["name"],
@@ -276,7 +285,6 @@ class NuclearFamiliesTable(Frame):
             self.nukefam_containers.append(pardframe)
             pardrad = Radiobutton(
                 pardframe, variable=self.newkidvar, 
-                # value=varval, anchor="w") 
                 value=n, anchor="w")
             self.pardrads.append(pardrad)
             pardrad.grid(column=0, row=n)
@@ -1893,4 +1901,93 @@ class NuclearFamiliesTable(Frame):
 
         cur.close()
         conn.close()
+
+    def show_idtip(self, iD, name_type):
+        """Based on show_kintip() in events_table.py."""
+        maxvert = self.winfo_screenheight()
+
+        if self.idtip or not self.idtip_text:
+            return
+        x, y, cx, cy = self.widget.bbox('insert')        
+
+        self.idtip = d_tip = tk.Toplevel(self.widget)
+        label = LabelNegative(
+            d_tip, 
+            text=self.idtip_text, 
+            justify='left',
+            relief='solid', 
+            bd=1,
+            bg=self.formats['highlight_bg'])
+        label.pack(ipadx=6, ipady=3)
+
+        mouse_at = self.winfo_pointerxy()
+
+        tip_shift = 48 
+
+        if mouse_at[1] < maxvert - tip_shift * 2:
+            x = mouse_at[0] + tip_shift
+            y = mouse_at[1] + tip_shift
+        else:
+            x = mouse_at[0] + tip_shift
+            y = mouse_at[1] - tip_shift
+
+        d_tip.wm_overrideredirect(1)
+        d_tip.wm_geometry('+{}+{}'.format(x, y))
+
+    def off(self):
+        d_tip = self.idtip
+        self.idtip = None
+        if d_tip:
+            d_tip.destroy()
+
+    def handle_enter(self, iD, name_type):
+        if len(name_type) == 2:
+            name_type = list(name_type)
+            name_type[1] = "({})".format(name_type[1])
+            name_type = " ".join(name_type)
+        self.idtip_text = "ID #{}: {}".format(iD, name_type)
+
+        if self.idtip_text:
+            self.show_idtip(iD, name_type)
+
+    def on_leave(self, evt):
+        self.off()
+
+    def make_idtips(self):
+        person_inputs = []
+        parents, partners = self.family_data
+
+        for lst in parents:
+            pa, ma = lst[1:]
+            pa_id = pa["id"]
+            pa_name_type = self.person_autofill_values[pa_id][0]["name type"]
+            pa_widg = pa["inwidg"]
+            ma_id = ma["id"]
+            ma_name_type = self.person_autofill_values[ma_id][0]["name type"]
+            ma_widg = ma["inwidg"]
+            person_inputs.append((pa_widg, pa_id, pa_name_type))
+            person_inputs.append((ma_widg, ma_id, ma_name_type))
+
+        for k,v in partners.items():
+            iD = k
+            name_type = self.person_autofill_values[iD][0]["name type"]
+            widg = v["inwidg"]
+            person_inputs.append((widg, iD, name_type))
+            children = v["children"]
+            for dkt in children:
+                kid_id = dkt["id"]
+                kid_name_type = self.person_autofill_values[kid_id][0]["name type"]
+                kid_widg = dkt["name_widg"]
+                person_inputs.append((kid_widg, kid_id, kid_name_type))
+
+        for tup in person_inputs:
+            widg, iD, name_type = tup
+            name_in = widg.bind(
+                "<Enter>", lambda evt, 
+                iD=iD, name_type=name_type: self.handle_enter(iD, name_type))
+            name_out = widg.bind("<Leave>", self.on_leave)
+            self.widget = widg
+            self.idtip_bindings["on_enter"].append([widg, name_in])
+            self.idtip_bindings["on_leave"].append([widg, name_out])
+
 
