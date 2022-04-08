@@ -1,6 +1,6 @@
 # treebard_root_028.py
 
-# retiring _027 to 1) consolidate various stray collections back into a single family_data dict (again) and 2) refactor the way name strings are displayed, stored and parsed.
+
 
 import tkinter as tk
 import sqlite3    
@@ -169,17 +169,8 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: families_table SAVE THIS CHART FOR DEVDOCS
-#                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
-# NONE>EXISTING              x               x             x              n/a
-# NONE>DUPE                  x               x             x              n/a
-# NONE>NEW                   x               x             x              n/a
-# CHANGE>EXISTING            x               x             x               x
-# CHANGE>DUPE                x               x             x               x
-# CHANGE>NEW                 x               x             x               x
-# UNLINK                     x               x             x               x 
+# BRANCH: families_table
 
-# double click any name in table to change curr per
 # make it impossible for a person to be their own parent, partner or child, see Nettie Womble who is her own father
 # Make sure it's impossible to add a name with length of 0.
 # add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f); make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner.
@@ -421,6 +412,17 @@ Just type a plus sign in any person input, followed by the new name which can be
 '''
 Treebard uses an original-vs.-final-content test to eliminate validating and responding to inputs that haven't changed as the user tabs through them. It also eliminates superfluous dialogs. This works fine in the case where the input empties after use, and in the case where content is programatically inserted and not always changed. But in the case where there's always content inserted programatically and content is generally always going to change, an extra test is needed to detect duplicate names. For example, in the roles dialog, role names can be changed, but if John Smith is changed to a different John Smith, the usual test isn't enough. So in edit autofills, we have to test not only for whether the content has changed, but also if the content hasn't changed, we have to test for whether the final content has duplicates. A change might have been intended. That way, tabbing out of John Smith's edit input will always open a dupe checking dialog. There is a simple workaround, but the user would have to know the ID of the new John Smith and input it like "#5927" instead of inputting "John Smith". Users who happen to remember IDs for duplicate names might be able to use this sometimes, and looking up an ID is easy, but generally the inconvenience of having to look at a simple dialog to clarify which John Smith was meant, each time a role person named John Smith is edited, would be no big deal and would happen rarely.
 '''
+''' USE THIS TO TEST FAMILIES TABLE NAME INPUTS
+#                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
+# NONE>EXISTING              x               x             x              n/a
+# NONE>DUPE                  x               x             x              n/a
+# NONE>NEW                   x               x             x              n/a
+# CHANGE>EXISTING            x               x             x               x
+# CHANGE>DUPE                x               x             x               x
+# CHANGE>NEW                 x               x             x               x
+# UNLINK                     x               x             x               x 
+'''
+
 
 
 

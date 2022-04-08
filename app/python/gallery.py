@@ -34,7 +34,6 @@ from dev_tools import looky, seeline
 
 
 
-# formats = make_formats_dict()
 
 class Gallery(Frame):
 

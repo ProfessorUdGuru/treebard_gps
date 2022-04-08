@@ -1445,6 +1445,12 @@ update_color_scheme_hide = '''
     WHERE color_scheme_id = ?
 '''
 
+# update_current_person = '''
+    # UPDATE current
+    # SET person_id = ?
+    
+# '''
+
 update_current_person = '''
     UPDATE current
     SET person_id = ?

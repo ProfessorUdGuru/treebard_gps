@@ -793,7 +793,6 @@ class EventsTable(Frame):
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        print("line", looky(seeline()).lineno, "col_num:", col_num)
         if col_num == 0:
             update_event_type()
         elif col_num == 1:
@@ -1251,7 +1250,7 @@ class EventsTable(Frame):
         for widg in self.main_window.nukefam_table.nukefam_containers: 
             # pardframe, prodigy_frame, alt parent entries & labels
             widg.destroy() 
-
+        self.main_window.nukefam_table.parent_types = []
         self.main_window.nukefam_table.nukefam_containers = []
 
         self.main_window.nukefam_table.family_data = [
