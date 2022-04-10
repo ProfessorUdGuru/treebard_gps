@@ -92,11 +92,12 @@ class NuclearFamiliesTable(Frame):
         self.person_autofill_values = person_autofill_values
 
         self.date_prefs = get_date_formats(tree_is_open=1)
-        # self.compound_parent_type = "Children's"
         self.unlink_partners = {"events": [], "children": []}
         self.link_partners = {"events": [], "children": []}
 
         self.parent_types = []
+
+        self.temp_bind = None
 
         # There's an exact copy of this blank collection in forget_cells() in events_table.py
         #   so it has to be changed if this is changed. Initial attempt to not repeat
@@ -299,7 +300,7 @@ class NuclearFamiliesTable(Frame):
                 ma_pa = "{}:".format(v["parent_type"])
                 pardlab = LabelH3(pardframe, text=ma_pa, anchor="w")
             elif len(v["children"]) != 0 and len(v["partner_kin_type"]) != 0:
-                ma_pa = "{} ({}):".format(v["partner_kin_type"], v["parent_type"])
+                ma_pa = "{} ({}):".format(v["partner_kin_type"].title(), v["parent_type"])
                 pardlab = LabelH3(pardframe, text=ma_pa, anchor="w")
             else:
                 pardlab = LabelH3(
@@ -396,23 +397,6 @@ class NuclearFamiliesTable(Frame):
             r += 1
 
     def make_parents_dict(self, ma_id=None, pa_id=None):
-        '''
-            Treebard assumes that if someone exists, then they were born 
-            exactly once, had one mother and one father, and we can base 
-            application design decisions on these assumptions. I am finding it 
-            unsymmetrical and odd to have some persons in the tree not have a 
-            birth event while others do. I'm going to try auto-creating a birth 
-            event for every person as the user creates the person. It will make
-            updates to the parents section at the top of the nukefams table easy
-            and symmetrical since there will be no special case to deal with--
-            the person who exists but hasn't been born. This will also 
-            save the user time; they won't have to create a birth event for 
-            anyone. Then when the user inputs an alternate parent event 
-            (guardianship, fosterage, adoption), the same process will create
-            inputs for the alternate parents. All symmetrical procedures except
-            that the person's birth is assumed so inputs are automatically
-            created for biological parents.
-        '''
 
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
@@ -435,7 +419,6 @@ class NuclearFamiliesTable(Frame):
             self.parent_record = parent_record[0]
         else:
             self.parent_record = None
-
         pa_name = ""
         ma_name = ""
         dad = None
@@ -535,7 +518,7 @@ class NuclearFamiliesTable(Frame):
 
     def make_alt_parents_dict(self, alt_parent_events, cur):
      
-        for finding in alt_parent_events:
+        for finding in alt_parent_events:            
             parent_couple = [ 
                 {'fpid': None, 'ppid': None, 'finding': finding[0], 
                     'sorter': finding[1]}, 
@@ -801,7 +784,7 @@ class NuclearFamiliesTable(Frame):
 
         self.family_data[1][pard_id]["parent_type"] = compound_parent_type
         self.family_data[1][pard_id]["partner_name"] = partner_name 
-        compound_parent_type = "Children's"
+        # compound_parent_type = "Children's"
 
     def collect_couple_events(self, cur, conn):
         marital_events = self.get_marital_event_types(conn, cur) 
@@ -1028,74 +1011,9 @@ class NuclearFamiliesTable(Frame):
             opened the PersonAdd dialog when it wasn't wanted. This seems to 
             have solved the problem but the cause of the problem was not found. 
         """
-        evt.widget.bind("<FocusOut>", self.get_final, add="+")
+        # print("line", looky(seeline()).lineno, "binding to focus out:")
+        self.temp_bind = evt.widget.bind("<FocusOut>", self.get_final, add="+")
         self.original = evt.widget.get()
-
-    def make_parent(self, inwidg, conn, cur, got):
-        """ Add a parent from an input on the nukefams table. """
-
-        def err_done1(entry, msg):
-            entry.delete(0, 'end')
-            msg[0].grab_release()
-            msg[0].destroy()
-            entry.focus_set()
-
-        name_data = check_name(ent=inwidg)
-        if not name_data:
-            msg1 = open_message(
-                self, 
-                families_msg[1], 
-                "Person Name Unknown", 
-                "OK")
-            msg1[0].grab_set()
-            msg1[2].config(command=lambda entry=inwidg, msg=msg1: err_done1(
-                entry, msg))
-            return
-
-        if name_data == "add_new_person":
-            new_parent_id = open_new_person_dialog(
-                self, inwidg, self.root, self.treebard, self.formats, 
-                person_autofill_values=self.person_autofill_values)
-            self.person_autofill_values = update_person_autofill_values()
-        else:
-            new_parent_id = name_data[1]
-
-        if inwidg.winfo_name() == "pa":
-            parent_type = 2
-        elif inwidg.winfo_name() == "ma":
-            parent_type = 1
-        birth_id = self.family_data[0][0][0]["finding"]
-        cur.execute(select_findings_persons_birth, (birth_id,))
-        fpid = cur.fetchone()
-        if fpid:
-            fpid, ppid = fpid
-            if parent_type == 2:
-                cur.execute(update_persons_persons_1, (new_parent_id, ppid))
-                conn.commit()
-                cur.execute(update_findings_persons_kin_type1, (2, fpid,))
-                conn.commit()    
-            elif parent_type == 1:
-                cur.execute(update_persons_persons_2, (new_parent_id, ppid))
-                conn.commit()
-                cur.execute(update_findings_persons_kin_type2, (1, fpid,))
-                conn.commit()
-        else:
-            # if there's no row yet for persons_persons, make one
-            if parent_type == 2:
-                cur.execute(insert_persons_persons_father, (new_parent_id,))
-                conn.commit()
-                cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
-                ppid = cur.fetchone()[0]
-                cur.execute(insert_findings_persons_new_father, (birth_id, ppid))
-                conn.commit()
-
-            elif parent_type == 1:
-                cur.execute(insert_persons_persons_mother, (new_parent_id,))
-                conn.commit()
-                cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
-                ppid = cur.fetchone()[0]
-                cur.execute(insert_findings_persons_new_mother, (birth_id, ppid))
-                conn.commit()
 
     def update_partner(self, final, conn, cur, inwidg):
 
@@ -1109,8 +1027,6 @@ class NuclearFamiliesTable(Frame):
                 self.person_autofill_values = update_person_autofill_values()
             elif not name_data:
                 new_partner_id = None
-                # Keep unlink dlg from opening when replacing 
-                #   existing partner with new person:
                 if len(new_string) == 0:
                     self.unlink_partners_dialog(cur, conn, inwidg)
                 else:
@@ -1305,15 +1221,11 @@ class NuclearFamiliesTable(Frame):
         self.null_partner_replacer.canvas.title_1.config(
             text="Select Children & Marital Events to Link to Added Partner")
         self.null_partner_replacer.canvas.title_2.config(text="") 
-
         
         head.grid(
             column=0, row=0, sticky='news', padx=12, pady=12,  
             columnspan=2, ipady=6, ipadx=6)
         inputs.grid(column=1, row=1, sticky="news", padx=12)
-
-
-
 
         buttons.grid(
             column=1, row=6, sticky="e", padx=12, pady=12, columnspan=2)
@@ -1635,76 +1547,7 @@ class NuclearFamiliesTable(Frame):
                     break
                 s += 1
 
-    def update_parent(self, final, conn, cur, widg, kin_type=None):
-        """ If the field is not blank, simulate a disabled field for any input that tries to
-            change the contents to a different person (to change a parent, partner, or child,
-            make that person the current person first? UPDATE THIS DOCSTRING)
-        """
-        def delete_parent(column):
-            finding_id = self.family_data[0][0][0]["finding"]
-            if column == 1:
-                cur.execute(update_persons_persons1_by_finding, (None, finding_id))
-            elif column == 3:
-                cur.execute(update_persons_persons2_by_finding, (None, finding_id))
-            conn.commit()
-            widg.focus_set()
-
-        def err_done2(entry, msg):
-            """ It was thought necessary, with existing procedures, to delete a
-                parent first, tab out, focus back in, and input a new parent. 
-                All that, including this error message, was eliminated by
-                programatically returning focus to the empty field after the
-                parent is deleted. See `widg.focus_set()` at bottom of 
-                `delete_parent`. Keeping this for now but shouldn't need it.
-            """
-            msg[0].grab_release()
-            msg[0].destroy()
-            entry.focus_set()
-
-        for dkt in self.family_data[0][0][1:]:
-            if widg == dkt["inwidg"]:
-                iD = dkt["id"]
-                name = dkt["name"]
-                break
-
-        ok_content = (name, "", "#{}".format(iD))
-        if len(self.original) != 0 and self.final not in ok_content:
-            widg.delete(0, "end")
-            widg.insert(0, self.original)
-
-            msg2 = open_message(
-                self, 
-                families_msg[2], 
-                "Change Parent Workaround", 
-                "OK")
-            msg2[0].grab_set()
-            msg2[2].config(command=lambda entry=widg, msg=msg2: err_done2(
-                entry, msg))
-            return
-
-        elif len(self.final) == 0:
-            column = widg.grid_info()["column"]
-            delete_parent(column)
-        elif len(self.original) == 0:
-            self.make_parent(widg, conn, cur, self.final)
-
-    def update_altparent(self, final, conn, cur, widg, column, kin_type=None):
-
-        def err_done4(entry, msg):
-            """ See docstring in err_done2. The good fluke mentioned there
-                doesn't work here for alt parent. This msg still needed till I
-                figure out how to set focus correctly after making a change in
-                an alt parent field then tabbing out.
-            """
-            msg4[0].grab_release()
-            msg4[0].destroy()
-            entry.focus_set()
-
-        def err_done3(entry, msg):
-            entry.delete(0, 'end')
-            msg[0].grab_release()
-            msg[0].destroy()
-            entry.focus_set()
+    def update_parent(self, final, conn, cur, inwidg, column=None, kin_type=None, alt_parent=None):
 
         def delete_parent(column):
             if column == 1:
@@ -1712,40 +1555,24 @@ class NuclearFamiliesTable(Frame):
             elif column == 3:
                 cur.execute(update_persons_persons2_by_finding, (None, finding_id))
             conn.commit()
-            widg.focus_set()
-
-        y = 1
-        for lst in self.family_data[0][1:]:
-            for dkt in lst[1:]:
-                if widg == dkt["inwidg"]:
+            inwidg.focus_set()
+        z = 0
+        for lst in self.family_data[0]:
+            for dkt in lst[1:]: # father is 1, mother is 2
+                if inwidg == dkt["inwidg"]:
                     finding_id = lst[0]["finding"]
-                    iD = dkt["id"]
-                    name = dkt["name"]
                     break
-            y += 1 
-
-        ok_content = (name, "", "#{}".format(iD))
-        if len(self.original) != 0 and self.final not in ok_content:
-            widg.delete(0, "end")
-            widg.insert(0, self.original)
-
-            msg4 = open_message(
-                self, 
-                families_msg[2], 
-                "Change Parent Workaround", 
-                "OK")
-            msg4[0].grab_set()
-            msg4[2].config(command=lambda entry=widg, msg=msg4: err_done4(
-                entry, msg))
-            return
-
+            z += 1
+        if len(self.final) != 0 or len(self.original) == 0:
+            self.make_parent(column, finding_id, inwidg, conn, cur)
         elif len(self.final) == 0:
-            column = widg.grid_info()["column"]
+            column = inwidg.grid_info()["column"]
             delete_parent(column)
-        elif len(self.original) == 0:
-            self.make_alt_parent(column, finding_id, widg, conn, cur)
+            inwidg.focus_set()
+        else:
+            print("line", looky(seeline()).lineno, "case not handled:")
 
-    def make_alt_parent(self, column, finding_id, widg, conn, cur):
+    def make_parent(self, column, finding_id, widg, conn, cur):
 
         def err_done4(entry, msg):
             entry.delete(0, 'end')
@@ -1754,7 +1581,7 @@ class NuclearFamiliesTable(Frame):
             entry.focus_set()
 
         name_data = check_name(ent=widg)
-        if not name_data:
+        if name_data is None:
             msg4 = open_message(
                 self, 
                 families_msg[1], 
@@ -1764,20 +1591,22 @@ class NuclearFamiliesTable(Frame):
             msg4[2].config(command=lambda entry=widg, msg=msg4: err_done4(
                 entry, msg))
             return
-
-        if name_data == "add_new_person":
-            alt_parent_id = open_new_person_dialog(
+        elif name_data == "add_new_person":
+            new_parent_id = open_new_person_dialog(
                 self, widg, self.root, self.treebard, self.formats, 
                 person_autofill_values=self.person_autofill_values)
             self.person_autofill_values = update_person_autofill_values()
         else:
-            alt_parent_id = name_data[1]
+            new_parent_id = name_data[1]
 
         if column == 1:
-            cur.execute(update_persons_persons1_by_finding, (alt_parent_id, finding_id))
+            cur.execute(update_persons_persons1_by_finding, (new_parent_id, finding_id))
         elif column == 3:
-            cur.execute(update_persons_persons2_by_finding, (alt_parent_id, finding_id))
+            cur.execute(update_persons_persons2_by_finding, (new_parent_id, finding_id))
         conn.commit()
+        print("line", looky(seeline()).lineno, "self.temp_bind:", self.temp_bind)
+        if self.temp_bind:
+            widg.unbind("<FocusOut>", self.temp_bind)
 
     def get_final(self, evt):
         current_file = get_current_file()[0]
@@ -1792,9 +1621,9 @@ class NuclearFamiliesTable(Frame):
         column, row = gridinfo["column"], gridinfo["row"]
         widgname = widg.winfo_name()
         if widgname == "pa":
-            self.update_parent(self.final, conn, cur, widg, kin_type=2)
+            self.update_parent(self.final, conn, cur, widg, column=column, kin_type=1)
         elif widgname == "ma":
-            self.update_parent(self.final, conn, cur, widg, kin_type=1)
+            self.update_parent(self.final, conn, cur, widg, column=column, kin_type=2)
         elif widgname.startswith("altparent"):
             labcol = column - 1
             for child in self.parentslab.winfo_children():
@@ -1809,7 +1638,7 @@ class NuclearFamiliesTable(Frame):
                 kin_type = 95
             elif text.startswith("G"):
                 kin_type = 48                    
-            self.update_altparent(self.final, conn, cur, widg, column, kin_type=kin_type)
+            self.update_parent(self.final, conn, cur, widg, column, kin_type=kin_type)
         elif widgname.startswith("pard"):
             if column == 2:
                 self.update_partner(self.final, conn, cur, widg)                

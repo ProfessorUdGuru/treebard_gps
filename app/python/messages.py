@@ -528,8 +528,8 @@ families_msg = (
     "To create a new person in a person autofill field, type a plus sign after the "
         "name of the new person. If you type the plus sign within the name, it will "
         "be moved automatically to the end of the name. ",
-    "To change an existing parent, delete the parent and tab out, then add a "
-        "parent to the blank field.",
+    # "To change an existing parent, delete the parent and tab out, then add a "
+        # "parent to the blank field.",
 )
 
 roles_msg = (

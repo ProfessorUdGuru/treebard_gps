@@ -169,16 +169,48 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: families_table
+# BRANCH: families_table # TESTING NOT DONE TILL EACH OPTION IS xx DOUBLE CHECKED
+# rule: when making a change in the code, reduce any XXs to single x & test everything again
+#                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
+#   USING STRING INPUT:
+# NONE>EXISTING             xx               x             x              n/a
+# NONE>DUPE                  x               x             x              n/a
+# NONE>NEW                   x               x             x              n/a
+# CHANGE>EXISTING           xx               x             x               x
+# CHANGE>DUPE                x               x             x               x
+# CHANGE>NEW                 x               x             x               x
+# UNLINK                     x               x             x               x 
+#   USING #ID INPUT:
+# NONE>EXISTING             xx               x             x              n/a
+# NONE>DUPE                  x               x             x              n/a
+# NONE>NEW                   x               x             x              n/a
+# CHANGE>EXISTING           xx               x             x               x
+# CHANGE>DUPE                x               x             x               x
+# CHANGE>NEW                 x               x             x               x
+# UNLINK                     x               x             x               x 
 
-# make it impossible for a person to be their own parent, partner or child, see Nettie Womble who is her own father
+# "plus" msg opens wrongly if none>existing w/id but not on first loading app. solution: refactor first.
+
+# BRANCH: combine_3_tables
+# Get rid of both findings_persons and persons_persons.
+# birth finding: person_id = child, id1/id2 = bio parents
+# fosterage event: person_id = child, id1/id2 = alt parents (same for guardians, adoptives)
+# couple event: person_id = null, id1/id2 = male/female, female/female, male/male
+# export dbs to .sql
+
+# BRANCH: families_table_validation
+# make it impossible for a person to be their own parent, partner or child
 # Make sure it's impossible to add a name with length of 0.
 # add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f); make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner.
+# Often on ctrl+s, Jeremiah fills into whatever autofill is in focus.
 # when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here. Is this because the parent fields and alt parent fields aren't made at the same time? Does a tab order method need to be rerun when creating an alt parent field? See also gender field in child row--tab traversal works if just tabbing thru, but after changing something, focus out doesn't go to next widget because of redraw(). So the autofill needs a feature wherein it registers itself as self.current_widget on FocusIn so that redraw() can go like self.current_widget.tkFocusNext().focus_set()(
 # RCM: There are two ways to deal with unknown partners of the current person: unknown name labels and null persons. An unknown name label has to contain at least one character. Using letters in unknown name labels is a bad idea. For example, the label 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. The purpose of an unknown name label made with symbols (a name such as '?' or '_____') is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name labels will differentiate the current person's two families. This works since duplicate names are allowed, such as two people that are both temporarily named '_____', and each person will have a unique ID number. It's OK to not use unknown name labels, but in that case, Treebard will lump all children and marital events of the current person's whose partner is null into a single family. If you want to avoid this, use a name such as '?' or '_____' with at least one character and Treebard will give this person a unique ID instead of a null ID. If you use null partners when creating marital events, for example, all the children and marital events for the current person where the current person's partner is left blank will be lumped together into one family. This is easy to change, but most users will probably prefer to differentiate families of unknown partners by using unknown name labels. To change from a null partner to unknown name labels, type an unknown name label into an empty partner field. Empty partner fields exist when there are marital events with null partner or children with a null parent. When you tab out of the field, a dialog will open listing all the marital events and children for the current person with a null partner. You can choose which one to link to the new unnamed person you're creating. This is easier to do than it is to describe. Just try it.
+# move queries to query module, delete unused queries from module & queries module
+# Test everything on the video tour list before making the video.
 # export dbs to .sql
 
 # BRANCH: cleanup
+# When autofilling a new place, the width of the whole table flashes back and forth. Better to have an edit mode so that when you start typing in a place autofill ?or any autofill if autofill is True, it expands to a fixed size and doesn't change at all till you tab out, then it fits its content.
 # When a person is used they aren't being moved to the front of the list. Is this because the list is restarted after every time a new person is made? Don't worry about it if it's not easy to fix, as long as this feature works with places which are much more complicated strings to type out.
 # pressing enter in person autofill on person tab after name fills in throws an error re: colors
 # when adding a new person, the name becomes instantly available to autofills but id # doesn't till reloading app
@@ -198,6 +230,7 @@ if __name__ == '__main__':
 
 # BRANCH: dates
 # clarify_year might not working in dates.py, there is a chain of error messages, sometimes it has to be OK'd twice, and make sure it doesn't run on CANCEL and original value is returned to the input (InputMessage works now in notes.py and families.py for a model). Currently cancel seems to be deleting the date which moves the event to the attributes table. The second time it sort of works but deletes the number that's not a year. It also doesn't display AD on years less than 4 digits long.
+# when changing date format, then go to events table and ctrl_s, the dates in the events table reformat to the new format but the dates in the families table don't.
 # export dbs to .sql
 
 # BRANCH: names_tab
@@ -411,6 +444,18 @@ Just type a plus sign in any person input, followed by the new name which can be
 '''
 '''
 Treebard uses an original-vs.-final-content test to eliminate validating and responding to inputs that haven't changed as the user tabs through them. It also eliminates superfluous dialogs. This works fine in the case where the input empties after use, and in the case where content is programatically inserted and not always changed. But in the case where there's always content inserted programatically and content is generally always going to change, an extra test is needed to detect duplicate names. For example, in the roles dialog, role names can be changed, but if John Smith is changed to a different John Smith, the usual test isn't enough. So in edit autofills, we have to test not only for whether the content has changed, but also if the content hasn't changed, we have to test for whether the final content has duplicates. A change might have been intended. That way, tabbing out of John Smith's edit input will always open a dupe checking dialog. There is a simple workaround, but the user would have to know the ID of the new John Smith and input it like "#5927" instead of inputting "John Smith". Users who happen to remember IDs for duplicate names might be able to use this sometimes, and looking up an ID is easy, but generally the inconvenience of having to look at a simple dialog to clarify which John Smith was meant, each time a role person named John Smith is edited, would be no big deal and would happen rarely.
+'''
+'''
+
+
+
+
+
+
+
+
+
+
 '''
 ''' USE THIS TO TEST FAMILIES TABLE NAME INPUTS
 #                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN

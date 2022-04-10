@@ -308,8 +308,7 @@ def make_parent_kintips(dkt, current_person, cur, person_autofill_values):
         dad_name = None
         mom_name = None
         dkt["father_id"] = dad
-        if dad:
-            
+        if dad:            
             dad_name = person_autofill_values[dad][0]["name"]         
         dkt["father_name"] = dad_name
         dkt["mother_id"] = mom
@@ -1196,12 +1195,15 @@ class EventsTable(Frame):
         self.set_cell_content()
         self.show_table_cells()
         if evt: # user pressed CTRL+S for example
+            print("line", looky(seeline()).lineno, "evt:", evt)
             self.main_window.nukefam_table.make_nukefam_inputs(
                 current_person=self.current_person)
         else: # user pressed OK to change current person for example   
+            print("line", looky(seeline()).lineno, "evt:", evt)
             self.main_window.nukefam_table.make_nukefam_inputs()
 
         self.resize_scrollbar(self.root, self.main_canvas)
+        print("line", looky(seeline()).lineno, "self.root.focus_get():", self.root.focus_get())
 
     def resize_scrollbar(self, root, canvas):
         root.update_idletasks()
@@ -1258,9 +1260,9 @@ class EventsTable(Frame):
                 [
                     {'fpid': None, 'ppid': None, 'finding': None, 
                         'sorter': [0, 0, 0]}, 
-                    {'id': None, 'name': '', 'kin_type_id': 2, 
-                        'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
                     {'id': None, 'name': '', 'kin_type_id': 1, 
+                        'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
+                    {'id': None, 'name': '', 'kin_type_id': 2, 
                         'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
                 ],
             ],

@@ -163,7 +163,7 @@ insert_findings_notes_new = '''
 
 insert_findings_persons = '''
     INSERT INTO findings_persons (finding_id, kin_type_id1, kin_type_id2, persons_persons_id)
-    VALUES (?, 2, 1, ?)
+    VALUES (?, 1, 2, ?)
 '''
 
 insert_findings_persons_new_couple = '''
@@ -174,12 +174,12 @@ insert_findings_persons_new_couple = '''
 
 insert_findings_persons_new_father = '''
     INSERT INTO findings_persons (finding_id, age1, kin_type_id1, age2, kin_type_id2, persons_persons_id)
-    VALUES (?, '', 2, '', null, ?)
+    VALUES (?, '', 1, '', null, ?)
 '''
 
 insert_findings_persons_new_mother = '''
     INSERT INTO findings_persons (finding_id, age1, kin_type_id1, age2, kin_type_id2, persons_persons_id)
-    VALUES (?, '', null, '', 1, ?)
+    VALUES (?, '', null, '', 2, ?)
 '''
 
 insert_findings_persons_null_couple = '''
@@ -187,11 +187,6 @@ insert_findings_persons_null_couple = '''
     VALUES (null, ?, '', ?, '', ?, ?)
 '''
 
-# insert_finding_places_new = '''
-    # INSERT INTO finding_places (
-        # finding_id, nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
-    # VALUES (?, 1, null, null, null, null, null, null, null, null)
-# '''
 
 insert_finding_places_new = '''
     INSERT INTO finding_places (finding_id, nest0)
@@ -1292,7 +1287,7 @@ select_persons_persons_ma_id2 = '''
         ON persons_persons.person_id1 = person.person_id    
     JOIN findings_persons
         ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
-    WHERE kin_type_id2 = 1
+    WHERE kin_type_id2 = 2
         AND finding_id = ?
 '''
 

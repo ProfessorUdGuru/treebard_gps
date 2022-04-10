@@ -388,12 +388,30 @@ class RolesDialog(Toplevel):
 
     def make_new_role(self, role_type):
 
+        def err_done2(entry, msg2):
+            entry.delete(0, 'end')
+            msg2[0].grab_release()
+            msg2[0].destroy()
+            entry.focus_set()
+
         if len(self.user_input_person) == 0: 
             self.person_input.focus_set()
             return
 
         name_data = check_name(ent=self.person_input)
-        if name_data == "add_new_person":
+
+        if name_data is None:
+            msg2 = open_message(
+                self, 
+                roles_msg[0], 
+                "Person Name Unknown", 
+                "OK")
+            msg2[0].grab_set()
+            msg2[2].config(
+                command=lambda entry=self.edit_role_person_input, msg=msg2: err_done2(
+                    entry, msg))
+            return
+        elif name_data == "add_new_person":
             role_person_id = open_new_person_dialog(
                 self, self.person_input, self.root, self.treebard, self.formats, 
                 person_autofill_values=self.person_autofill_values)

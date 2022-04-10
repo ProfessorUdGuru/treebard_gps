@@ -183,6 +183,7 @@ def check_name(evt=None, ent=None, label=None):
     elif ent:
         ent = ent
     else:
+        print("line", looky(seeline()).lineno, "evt, ent:", evt, ent)
         return
     filled = ent.get().strip()
     if filled.startswith("#"):
@@ -231,7 +232,6 @@ def check_name(evt=None, ent=None, label=None):
 def get_original(evt):
     widg=evt.widget
     widg.original = widg.get()
-    print("line", looky(seeline()).lineno, "widg.original:", widg.original)
 
 def delete_person_from_tree(person_id):
     """Remove all references to a person.""" 
