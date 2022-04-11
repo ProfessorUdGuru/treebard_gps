@@ -1264,6 +1264,7 @@ class EventsTable(Frame):
         self.main_window.nukefam_table.compound_parent_type = "Children's"        
         for widg in self.main_window.nukefam_table.nukefam_containers: 
             # pardframe, prodigy_frame, alt parent entries & labels
+            print("line", looky(seeline()).lineno, "widg:", widg)
             widg.destroy() 
         self.main_window.nukefam_table.parent_types = []
         self.main_window.nukefam_table.nukefam_containers = []
@@ -1280,20 +1281,6 @@ class EventsTable(Frame):
             ],
             {},
         ]
-
-        # self.main_window.nukefam_table.family_data = [
-            # [
-                # [
-                    # {'fpid': None, 'ppid': None, 'finding': None, 
-                        # 'sorter': [0, 0, 0]}, 
-                    # {'id': None, 'name': '', 'kin_type_id': 1, 
-                        # 'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
-                    # {'id': None, 'name': '', 'kin_type_id': 2, 
-                        # 'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
-                # ],
-            # ],
-            # {},
-        # ]
 
     def make_header(self):
         y = 0

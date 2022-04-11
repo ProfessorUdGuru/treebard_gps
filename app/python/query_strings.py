@@ -5,11 +5,6 @@ from dev_tools import looky, seeline
 
 
 
-# get rid of findings_persons, persons_persons, finding_places, ppid, fpid
-
-
-
-
 '''
 	Since Sqlite queries are inserted as string in Python code,
 	the queries can be stored here to save space in the modules
@@ -48,11 +43,6 @@ delete_finding_person = '''
     WHERE person_id = ?
 '''
 
-# delete_finding_places = '''
-    # DELETE FROM finding_places
-    # WHERE finding_id = ?
-# '''
-
 delete_findings_notes_linked = '''
     DELETE FROM findings_notes
     WHERE findings_notes_id = ?
@@ -62,16 +52,6 @@ delete_findings_notes_finding = '''
     DELETE FROM findings_notes
     WHERE finding_id = ?
 '''
-
-# delete_findings_persons = '''
-    # DELETE FROM findings_persons
-    # WHERE finding_id = ?
-# '''
-
-# delete_findings_persons_by_id = '''
-    # DELETE FROM findings_persons
-    # WHERE findings_persons_id = ?
-# '''
 
 delete_findings_roles_finding = '''
     DELETE FROM findings_roles
@@ -150,20 +130,10 @@ insert_finding_birth_new_person = '''
     VALUES ('-0000-00-00-------', '0', ?, 1, '0,0,0', 1)
 '''
 
-# insert_finding_birth_new_person = '''
-    # INSERT INTO finding 
-    # VALUES (null, '-0000-00-00-------', '', '0', ?, 1, '0,0,0')
-# '''
-
 insert_finding_death = '''
     INSERT INTO finding (date, person_id, event_type_id, date_sorter, nest0)
     VALUES (?, ?, 4, ?, 1)
 '''
-
-# insert_finding_death = '''
-    # INSERT INTO finding 
-    # VALUES (null, ?, '', '', ?, 4, ?)
-# '''
 
 insert_finding_new_couple = '''
     INSERT INTO finding (finding_id, event_type_id, person_id1, person_id2)
@@ -182,11 +152,6 @@ insert_findings_notes_new = '''
     VALUES (null, ?, ?, 0)
 '''
 
-# insert_findings_persons = '''
-    # INSERT INTO findings_persons (finding_id, kin_type_id1, kin_type_id2, persons_persons_id)
-    # VALUES (?, 1, 2, ?)
-# '''
-
 insert_finding_new_couple_details = '''
     INSERT INTO finding (
         finding_id, person_id1, age1, kin_type_id1, 
@@ -194,20 +159,9 @@ insert_finding_new_couple_details = '''
     VALUES (?, ?, ?, 128, ?, ?, 129)
 '''
 
-# insert_findings_persons_new_couple = '''
-    # INSERT INTO findings_persons (
-        # finding_id, age1, kin_type_id1, age2, kin_type_id2, persons_persons_id)
-    # VALUES (?, ?, 128, ?, 129, ?)
-# '''
-
 insert_finding_null_couple = '''
     INSERT INTO finding ('', null, '', null)
 '''
-
-# insert_findings_persons_null_couple = '''
-    # INSERT INTO findings_persons
-    # VALUES (null, ?, '', ?, '', ?, ?)
-# '''
 
 update_finding_new_places_null = '''
     UPDATE finding 
@@ -215,22 +169,11 @@ update_finding_new_places_null = '''
     WHERE finding_id = ?    
 '''
 
-# insert_finding_places_new = '''
-    # INSERT INTO finding_places (finding_id, nest0)
-    # VALUES (?, 1)
-# '''
-
 insert_finding_places_new_event = '''
     INSERT INTO finding
        (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8, finding_id)
     VALUES ({})
 '''.format(','.join(['?'] * 10))
-
-# insert_finding_places_new_event = '''
-    # INSERT INTO finding_places
-       # (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8, finding_id)
-    # VALUES ({})
-# '''.format(','.join(['?'] * 10))
 
 insert_findings_roles = '''
     INSERT INTO findings_roles 
@@ -275,15 +218,6 @@ insert_finding_persons = '''
     INSERT INTO finding (person_id1, person_id2)
     VALUES (?, ?)
 '''
-# insert_persons_persons = '''
-    # INSERT INTO persons_persons (person_id1, person_id2)
-    # VALUES (?, ?)
-# '''
-
-# insert_persons_persons_null = '''
-    # INSERT INTO persons_persons
-    # VALUES (null, null, null)
-# '''
 
 insert_place_new = '''
     INSERT INTO place (place_id, places)
@@ -338,10 +272,6 @@ select_all_finding_places_findings = '''
     SELECT finding_id FROM finding
     WHERE nest0 != 1
 '''
-
-# select_all_finding_places_findings = '''
-    # SELECT finding_id FROM finding_places
-# '''
 
 select_all_findings_current_person = '''
     SELECT finding_id
@@ -732,34 +662,12 @@ select_finding_id_age1_alt_parents = '''
         AND kin_type_id1 in (1, 2, 110, 111, 112, 120, 121, 122, 130, 131)
 '''
 
-# select_finding_ids_age1_alt_parents = '''
-    # SELECT finding_id, age1
-    # FROM person
-    # JOIN persons_persons
-        # ON persons_persons.person_id1 = person.person_id
-    # JOIN findings_persons
-        # ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
-    # WHERE person_id1 = ?
-        # AND kin_type_id1 in (1, 2, 110, 111, 112, 120, 121, 122, 130, 131)
-# '''
-
 select_finding_id_age2_alt_parents = '''
     SELECT finding_id, age2
     FROM finding
     WHERE person_id2 = ?
         AND kin_type_id1 in (1, 2, 110, 111, 112, 120, 121, 122, 130, 131)
 '''
-
-# select_finding_ids_age2_alt_parents = '''
-    # SELECT finding_id, age2
-    # FROM person  
-    # JOIN persons_persons
-        # ON persons_persons.person_id2 = person.person_id
-    # JOIN findings_persons
-        # ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
-    # WHERE person_id2 = ?
-        # AND kin_type_id2 in (1, 2, 110, 111, 112, 120, 121, 122, 130, 131)
-# '''
 
 select_finding_person_date_alt_parent_event = '''
     SELECT person_id, date
@@ -791,22 +699,6 @@ select_finding_places_nesting = '''
     WHERE finding_id = ? 
 '''
 
-# select_finding_places_nesting = '''
-    # SELECT a.places, b.places, c.places, d.places, 
-        # e.places, f.places, g.places, h.places, i.places
-    # FROM finding_places
-    # LEFT JOIN place a ON a.place_id = finding_places.nest0
-    # LEFT JOIN place b ON b.place_id = finding_places.nest1
-    # LEFT JOIN place c ON c.place_id = finding_places.nest2
-    # LEFT JOIN place d ON d.place_id = finding_places.nest3
-    # LEFT JOIN place e ON e.place_id = finding_places.nest4
-    # LEFT JOIN place f ON f.place_id = finding_places.nest5
-    # LEFT JOIN place g ON g.place_id = finding_places.nest6
-    # LEFT JOIN place h ON h.place_id = finding_places.nest7
-    # LEFT JOIN place i ON i.place_id = finding_places.nest8             
-    # WHERE finding_id = ? 
-# '''
-
 select_finding_sorter = '''
     SELECT date_sorter
     FROM finding
@@ -824,19 +716,6 @@ select_findings_details_couple = '''
     WHERE finding_id = ?
 '''
 
-# select_findings_details_couple = '''
-    # SELECT persons_persons.person_id1, age1, a.kin_types,
-        # persons_persons.person_id2, age2, b.kin_types
-    # FROM persons_persons
-    # JOIN findings_persons
-        # ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
-    # JOIN kin_type as a
-        # ON a.kin_type_id = findings_persons.kin_type_id1
-    # JOIN kin_type as b
-        # ON b.kin_type_id = findings_persons.kin_type_id2
-    # WHERE findings_persons.finding_id = ?
-# '''
-
 select_findings_details_couple_generic = '''
     SELECT event_types, date, date_sorter, particulars 
     FROM finding 
@@ -844,16 +723,6 @@ select_findings_details_couple_generic = '''
             ON finding.event_type_id = event_type.event_type_id 
     WHERE finding_id = ?
 '''
-
-# select_findings_details_couple_generic = '''
-    # SELECT event_types, date, date_sorter, particulars, finding_places_id 
-    # FROM finding 
-        # JOIN finding_places 
-            # ON finding_places.finding_id = finding.finding_id 
-        # JOIN event_type 
-            # ON finding.event_type_id = event_type.event_type_id 
-    # WHERE finding_places.finding_id = ?
-# '''
 
 select_findings_details_generic = '''
     SELECT event_types, particulars, age, date, date_sorter
@@ -870,16 +739,6 @@ select_finding_details_offspring_alt_parentage = '''
         AND event_type_id IN (1, 48, 83, 95)
         AND finding_id = ?
 '''
-
-# select_findings_details_offspring_alt_parentage = '''
-    # SELECT date, date_sorter, particulars, finding_places_id
-    # FROM finding
-    # JOIN finding_places
-        # ON finding_places.finding_id = finding.finding_id
-    # WHERE person_id = ?
-        # AND event_type_id IN (1, 48, 83, 95)
-        # AND finding.finding_id = ?
-# '''
 
 select_findings_for_person = '''
     SELECT event_types
@@ -902,15 +761,6 @@ select_finding_couple_person1_details = '''
     WHERE person_id1 = ? AND kin_type_id1 IN (1, 2)
 '''
 
-# select_findings_persons_and_persons1 = '''
-    # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-        # person_id2, kin_type_id2 
-    # FROM findings_persons 
-    # JOIN persons_persons
-        # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-    # WHERE person_id1 = ? AND kin_type_id1 IN (1, 2)
-# '''
-
 select_finding_couple_person2_details = '''
     SELECT finding_id, person_id1, kin_type_id1, 
         person_id2, kin_type_id2 
@@ -918,30 +768,12 @@ select_finding_couple_person2_details = '''
     WHERE person_id2 = ? AND kin_type_id2 IN (1, 2)
 '''
 
-# select_findings_persons_and_persons2 = '''
-    # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-        # person_id2, kin_type_id2 
-    # FROM findings_persons 
-    # JOIN persons_persons
-        # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-    # WHERE person_id2 = ? AND kin_type_id2 IN (1, 2)
-# '''
-
 select_finding_couple_details = '''
     SELECT finding_id, person_id1, kin_type_id1, 
         person_id2, kin_type_id2 
     FROM finding
     WHERE finding_id = ?
 '''
-
-# select_findings_persons_details = '''
-    # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-        # person_id2, kin_type_id2 
-    # FROM findings_persons 
-    # JOIN persons_persons
-        # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-    # WHERE finding_id = ?
-# '''
 
 select_finding_couple_details_alt_parent1 = '''
     SELECT finding_id, person_id1, kin_type_id1, 
@@ -951,17 +783,6 @@ select_finding_couple_details_alt_parent1 = '''
         110, 111, 112, 120, 121, 122, 130, 131)
 '''
 
-# select_findings_persons_details_alt_parent1 = '''
-    # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-        # person_id2, kin_type_id2 
-    # FROM findings_persons 
-    # JOIN persons_persons
-        # ON persons_persons.persons_persons_id = 
-            # findings_persons.persons_persons_id
-    # WHERE person_id1 = ? AND kin_type_id1 IN (
-        # 110, 111, 112, 120, 121, 122, 130, 131)
-# '''
-
 select_finding_couple_details_alt_parent2 = '''
     SELECT finding_id, person_id1, kin_type_id1, 
         person_id2, kin_type_id2 
@@ -969,47 +790,6 @@ select_finding_couple_details_alt_parent2 = '''
     WHERE person_id2 = ? AND kin_type_id1 IN (
         110, 111, 112, 120, 121, 122, 130, 131)
 '''
-
-# select_findings_persons_details_alt_parent2 = '''
-    # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-        # person_id2, kin_type_id2 
-    # FROM findings_persons 
-    # JOIN persons_persons
-        # ON persons_persons.persons_persons_id = 
-            # findings_persons.persons_persons_id
-    # WHERE person_id2 = ? AND kin_type_id1 IN (
-        # 110, 111, 112, 120, 121, 122, 130, 131)
-# '''
-
-# select_findings_persons_id = '''
-    # SELECT findings_persons_id
-    # FROM findings_persons
-    # WHERE finding_id = ?
-# '''
-
-# select_finding_person1_person2 = '''
-    # SELECT person_id1, person_id2
-    # FROM finding
-    # WHERE finding_id = ?
-# '''
-
-# select_findings_persons_person_id = '''
-    # SELECT person_id1, person_id2
-    # FROM persons_persons
-    # JOIN person q
-        # ON persons_persons.person_id1 = q.person_id
-    # JOIN person r 
-        # ON persons_persons.person_id2 = r.person_id
-    # JOIN findings_persons
-        # ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
-    # WHERE finding_id = ?
-# '''
-
-# select_findings_persons_ppid = '''
-    # SELECT persons_persons_id 
-    # FROM findings_persons
-    # WHERE findings_persons_id = ?
-# '''
 
 select_findings_roles_generic = '''
     SELECT 
@@ -1360,30 +1140,6 @@ select_finding_couple_details_by_finding = '''
     WHERE finding_id = ?
 '''
 
-# select_person_ids_kin_types = '''
-    # SELECT person_id1, a.kin_types, person_id2, b.kin_types
-    # FROM findings_persons
-    # JOIN persons_persons
-        # ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
-    # JOIN kin_type as a
-        # ON a.kin_type_id = findings_persons.kin_type_id1
-    # JOIN kin_type as b
-        # ON b.kin_type_id = findings_persons.kin_type_id2
-    # WHERE finding_id = ?
-# '''
-
-# select_person_ids_kin_types_include_nulls = '''
-    # SELECT person_id1, a.kin_types, person_id2, b.kin_types
-    # FROM findings_persons
-    # LEFT JOIN persons_persons
-        # ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
-    # LEFT JOIN kin_type as a
-        # ON a.kin_type_id = findings_persons.kin_type_id1
-    # LEFT JOIN kin_type as b
-        # ON b.kin_type_id = findings_persons.kin_type_id2
-    # WHERE finding_id = ?
-# '''
-
 select_finding_couple_details_include_nulls = '''
     SELECT person_id1, a.kin_types, person_id2, b.kin_types
     FROM finding
@@ -1406,30 +1162,6 @@ select_finding_kin_types = '''
     WHERE finding_id = ?
 '''
 
-# select_persons_persons_kin_types_fpid = '''
-    # SELECT persons_persons_id, kin_type_id1, kin_type_id2, findings_persons_id
-    # FROM findings_persons
-    # WHERE finding_id = ?
-# '''
-
-# select_finding_ma_id1 = '''   
-    # SELECT person_id1
-    # FROM person
-    # WHERE kin_type_id1 = 2
-        # AND finding_id = ?
-# '''
-
-# select_persons_persons_ma_id1 = '''   
-    # SELECT person_id1
-    # FROM person
-    # JOIN persons_persons
-        # ON persons_persons.person_id1 = person.person_id    
-    # JOIN findings_persons
-        # ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
-    # WHERE kin_type_id1 = 1
-        # AND finding_id = ?
-# '''
-
 select_finding_mother = '''   
     SELECT person_id2
     FROM finding
@@ -1437,45 +1169,12 @@ select_finding_mother = '''
         AND finding_id = ?
 '''
 
-# select_persons_persons_ma_id2 = '''   
-    # SELECT person_id2
-    # FROM person
-    # JOIN persons_persons
-        # ON persons_persons.person_id1 = person.person_id    
-    # JOIN findings_persons
-        # ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
-    # WHERE kin_type_id2 = 2
-        # AND finding_id = ?
-# '''
-
 select_finding_father = '''   
     SELECT person_id1
     FROM finding
     WHERE kin_type_id1 = 1
         AND finding_id = ?
 '''
-
-# select_persons_persons_pa_id1 = '''   
-    # SELECT person_id1
-    # FROM person
-    # JOIN persons_persons
-        # ON persons_persons.person_id1 = person.person_id    
-    # JOIN findings_persons
-        # ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
-    # WHERE kin_type_id1 = 1
-        # AND finding_id = ?
-# '''
-
-# select_persons_persons_pa_id2 = '''   
-    # SELECT person_id2
-    # FROM person
-    # JOIN persons_persons
-        # ON persons_persons.person_id1 = person.person_id    
-    # JOIN findings_persons
-        # ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
-    # WHERE kin_type_id2 = 1
-        # AND finding_id = ?
-# '''
 
 select_place = '''
     SELECT places 
@@ -1604,12 +1303,6 @@ update_color_scheme_hide = '''
     WHERE color_scheme_id = ?
 '''
 
-# update_current_person = '''
-    # UPDATE current
-    # SET person_id = ?
-    
-# '''
-
 update_current_person = '''
     UPDATE current
     SET person_id = ?
@@ -1719,26 +1412,12 @@ update_finding_places = '''
     WHERE finding_id = ?
 '''.format(','.join(['?'] * 9))
 
-# update_finding_places = '''
-    # UPDATE finding_places
-    # SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
-        # = ({}) 
-    # WHERE finding_id = ?
-# '''.format(','.join(['?'] * 9))
-
 update_finding_places_null = '''
     UPDATE finding
     SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
         = (1, null, null, null, null, null, null, null, null)
     WHERE finding_id = ?    
 '''
-
-# update_finding_places_null = '''
-    # UPDATE finding_places
-    # SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
-        # = (1, null, null, null, null, null, null, null, null)
-    # WHERE finding_id = ?    
-# '''
 
 update_findings_notes = '''
     UPDATE findings_notes 
@@ -1759,12 +1438,6 @@ update_finding_age1 = '''
     WHERE finding_id = ?
 '''
 
-# update_findings_persons_age1 = '''
-    # UPDATE findings_persons
-    # SET age1 = ?
-    # WHERE finding_id = ?
-# '''
-
 update_finding_age2 = '''
     UPDATE finding
     SET age2 = ?
@@ -1782,12 +1455,6 @@ update_finding_age2_blank = '''
     SET age2 = ""
     WHERE finding_id = ?
 '''
-
-# update_findings_persons_finding = '''
-    # UPDATE findings_persons
-    # SET finding_id = ?
-    # WHERE findings_persons_id = ?
-# '''
 
 update_finding_kin_type_1 = '''
     UPDATE finding
@@ -1885,23 +1552,11 @@ update_person_gender = '''
     WHERE person_id = ?
 '''
 
-# update_persons_persons_1 = '''
-    # UPDATE finding
-    # SET person_id1 = ?
-    # WHERE finding_id = ?
-# '''
-
 update_finding_person_1_null = '''
     UPDATE finding
     SET person_id1 = null
     WHERE person_id1 = ?
 '''
-
-# update_persons_persons_2 = '''
-    # UPDATE persons_persons
-    # SET person_id2 = ?
-    # WHERE persons_persons_id = ?
-# '''
 
 update_finding_person_2_null = '''
     UPDATE finding
@@ -1915,19 +1570,10 @@ update_finding_person_1 = '''
     WHERE finding_id = ?
 '''
 
-# update_persons_persons1_by_finding = '''
-    # UPDATE persons_persons
-    # SET person_id1 = ?
-    # WHERE persons_persons_id = (
-        # SELECT persons_persons_id
-        # FROM findings_persons
-        # WHERE finding_id = ?)
-# '''
-
 update_finding_person_2 = '''
     UPDATE finding
     SET person_id2 = ?
-    WHERE finding_id = ?)
+    WHERE finding_id = ?
 '''
 update_place_hint = '''
     UPDATE place 

@@ -169,7 +169,7 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: families_table # TESTING NOT DONE TILL EACH OPTION IS xx DOUBLE CHECKED
+# TESTING NOT DONE TILL EACH OPTION IS xx DOUBLE CHECKED
 # rule: when making a change in the code, reduce any XXs to single x & test everything again
 #                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
 #   USING STRING INPUT:
@@ -195,6 +195,8 @@ if __name__ == '__main__':
 # export dbs to .sql
 
 # BRANCH: families_table_validation
+# Design deficit: If wrong John Smith is entered, and you try to enter a different John Smith, you can't because the 2 names are the same so self.final == self.original and nothing happens. Possible solution is to use a special char like "?" for example as done in add new person instead of relying on self.final to be different. FIX THIS FIRST.
+# when using dupe name dlg for foster parent there's an error in forget_cells() can't delete tcl command, seems to be no problem in bio father with dupes but in bio mother same problem can't delete. The data goes into the db anyway so all is right on reload.
 # make it impossible for a person to be their own parent, partner or child
 # Make sure it's impossible to add a name with length of 0.
 # add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f); make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner.

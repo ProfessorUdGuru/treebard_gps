@@ -103,8 +103,6 @@ class NuclearFamiliesTable(Frame):
         # There's an exact copy of this blank collection in forget_cells() in events_table.py
         #   so it has to be changed if this is changed. Initial attempt to not repeat
         #   the code didn't work.
-
-
         self.family_data = [
             [
                 [
@@ -117,21 +115,6 @@ class NuclearFamiliesTable(Frame):
             ],
             {},
         ]
-
-
-        # self.family_data = [
-            # [
-                # [
-                    # {'fpid': None, 'ppid': None, 'finding': None, 
-                        # 'sorter': [0, 0, 0]}, 
-                    # {'id': None, 'name': '', 'kin_type_id': 2, 
-                        # 'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
-                    # {'id': None, 'name': '', 'kin_type_id': 1, 
-                        # 'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
-                # ],
-            # ],
-            # {},
-        # ]
 
         self.widget = None
         self.idtip = None
@@ -236,20 +219,6 @@ class NuclearFamiliesTable(Frame):
                 WHERE (person_id1 = ? OR person_id2 = ?) 
                     AND event_type_id in ({})
             '''.format(",".join(["?"] * qlen))
-
-
-        # sql = '''
-                # SELECT findings_persons_id, person_id1, kin_type_id1,
-                    # person_id2, kin_type_id2, findings_persons.finding_id, 
-                    # date
-                # FROM findings_persons
-                # JOIN persons_persons
-                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                # JOIN finding
-                    # ON finding.finding_id = findings_persons.finding_id
-                # WHERE (person_id1 = ? OR person_id2 = ?) 
-                    # AND event_type_id in ({})
-            # '''.format(",".join(["?"] * qlen))
 
         cur.execute(sql, marital_event_types)
         marital_events_current_person = [list(i) for i in cur.fetchall()]
@@ -431,15 +400,6 @@ class NuclearFamiliesTable(Frame):
         cur.execute(select_finding_id_birth, (self.current_person,))
         birth_id = cur.fetchone()[0]
         cur.execute(select_finding_couple_details, (birth_id,))
-            # '''
-                # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-                    # person_id2, kin_type_id2 
-                # FROM findings_persons 
-                # JOIN persons_persons
-                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                # WHERE finding_id = ?
-            # ''',
-            # (birth_id,))
         parent_record = cur.fetchall()
         if len(parent_record) != 0:
             self.parent_record = parent_record[0]
@@ -454,8 +414,6 @@ class NuclearFamiliesTable(Frame):
             mom = self.parent_record[3:]
             pa_id = dad[0]
             ma_id = mom[0]
-            # ids = self.family_data[0][0][0]
-            # ids["fpid"], ids["birth_finding"] = self.parent_record[0:2]
             self.family_data[0][0][0]["birth_finding"] = self.parent_record[0]
         else:
             # This only runs when there are no parents recorded.
@@ -485,13 +443,6 @@ class NuclearFamiliesTable(Frame):
     def get_alt_parents(self, cur):
         """ Get adoptive parents, foster parents & guardians. """
         cur.execute(select_finding_details_sorter, (self.current_person,))
-        # '''
-            # SELECT finding_id, date_sorter, event_type_id 
-            # FROM finding 
-            # WHERE person_id = ? 
-                # AND event_type_id in (48, 83, 95)
-        # ''',
-        # (self.current_person,))
         alt_parent_events = cur.fetchall()
         if alt_parent_events is None:
             return
@@ -539,40 +490,21 @@ class NuclearFamiliesTable(Frame):
                 self.nukefam_containers.append(ent)
             for lab in (lab_l, lab_r):
                 lab.bind("<Double-Button-1>", self.change_kin_type)
-
+                # self.nukefam_containers.append(lab)
             self.nukefam_containers.extend([lab_l, lab_r])           
             j += 1
 
     def make_alt_parents_dict(self, alt_parent_events, cur):
      
-        for finding in alt_parent_events:    
-
-
+        for finding in alt_parent_events:
             parent_couple = [ 
-                {'finding': finding[0], 'sorter': finding[1]}, 
+                {'birth_finding': finding[0], 'sorter': finding[1]}, 
                 {'id': None, 'name': '', 'kin_type_id': None, 'kin_type': '', 
                     'labwidg': None, 'inwidg': None}, 
                 {'id': None, 'name': '', 'kin_type_id': None, 'kin_type': '', 
                     'labwidg': None, 'inwidg': None}]
-
-        
-            # parent_couple = [ 
-                # {'fpid': None, 'ppid': None, 'finding': finding[0], 
-                    # 'sorter': finding[1]}, 
-                # {'id': None, 'name': '', 'kin_type_id': None, 'kin_type': '', 
-                    # 'labwidg': None, 'inwidg': None}, 
-                # {'id': None, 'name': '', 'kin_type_id': None, 'kin_type': '', 
-                    # 'labwidg': None, 'inwidg': None}]
             common, alt_parent1, alt_parent2 = parent_couple
-            print("line", looky(seeline()).lineno, "common:", common)
-            cur.execute(select_finding_kin_types, (common["finding"],))
-            # '''
-                # SELECT persons_persons_id, kin_type_id1, kin_type_id2, findings_persons_id
-                # FROM findings_persons
-                # WHERE finding_id = ?
-            # ''',
-            # (common["birth_finding"],))
-            # common["ppid"], alt_parent1["kin_type_id"], alt_parent2["kin_type_id"], common["fpid"] = cur.fetchone()
+            cur.execute(select_finding_kin_types, (common["birth_finding"],))
             alt_parent1["kin_type_id"], alt_parent2["kin_type_id"] = cur.fetchone()
             h = 1
             for kintype in (alt_parent1["kin_type_id"], alt_parent2["kin_type_id"]):
@@ -582,7 +514,7 @@ class NuclearFamiliesTable(Frame):
             self.family_data[0].append(parent_couple)
         alt_parents = self.family_data[0][1:] 
         for lst in alt_parents:
-            finding_id = lst[0]["finding"]
+            finding_id = lst[0]["birth_finding"]
             cur.execute(select_finding_persons, (finding_id,))
             lst[1]["id"], lst[2]["id"] = cur.fetchone()
 
@@ -618,7 +550,7 @@ class NuclearFamiliesTable(Frame):
 
         self.make_parents_dict()
 
-        partners1, births = self.query_nukefams_data(conn, cur)
+        partners1, births = self.query_nukefams_data(conn, cur) # births has 128 in it instead of a person id
         alt_parentage_events = self.query_alt_nukefams_data(conn, cur)
         self.arrange_partners_progenies(partners1, births, alt_parentage_events, conn, cur)
 
@@ -645,7 +577,6 @@ class NuclearFamiliesTable(Frame):
         """
         self.person_autofill_values = update_person_autofill_values()
         births = births + alt_parentage_events
-        print("line", looky(seeline()).lineno, "births:", births)
         progenies = {}
         all_partners = [] 
         event_pards = []
@@ -666,7 +597,6 @@ class NuclearFamiliesTable(Frame):
             offspring_pards.append(pard_id)
             all_partners.append(pard_id)
             all_partners = list(set(all_partners))
-
         for pard_id in all_partners:
             if pard_id in offspring_pards and pard_id in event_pards:
                 nested = {'offspring': True, 'events': True}
@@ -678,7 +608,6 @@ class NuclearFamiliesTable(Frame):
         for pard_id in progenies:
             progeny = {
                 "sorter": [], "partner_name": "", "parent_type": None,
-                # "sorter": [], "partner_name": "", "parent_type": "",
                 "partner_kin_type": "", "inwidg": None, "children": [],
                 "marital_events": []}
             self.family_data[1][pard_id] = progeny
@@ -688,7 +617,6 @@ class NuclearFamiliesTable(Frame):
             pardner = k
             if v["offspring"] is True:
                 for tup in births:
-                    print("line", looky(seeline()).lineno, "tup:", tup)
                     order = "{}-{}".format(str(tup[2]), str(tup[4]))                
                     if tup[3] == pardner:                        
                         parent_type = tup[4]
@@ -715,26 +643,8 @@ class NuclearFamiliesTable(Frame):
 
     def query_nukefams_data(self, conn, cur):
         cur.execute(select_finding_couple_person1_details, (self.current_person,))
-            # '''
-                # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-                    # person_id2, kin_type_id2 
-                # FROM findings_persons 
-                # JOIN persons_persons
-                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                # WHERE person_id1 = ? AND kin_type_id1 IN (1, 2)
-            # ''',
-            # (self.current_person,))
         result1 = cur.fetchall()
         cur.execute(select_finding_couple_person2_details, (self.current_person,))
-            # '''
-                # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-                    # person_id2, kin_type_id2 
-                # FROM findings_persons 
-                # JOIN persons_persons
-                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                # WHERE person_id2 = ? AND kin_type_id2 IN (1, 2)
-            # ''',
-            # (self.current_person,))
         result2 = cur.fetchall()
         births = []
         births = [tup for q in (result1, result2) for tup in q]
@@ -742,53 +652,20 @@ class NuclearFamiliesTable(Frame):
         marital_event_types = get_all_marital_event_types(conn, cur)
         qlen = len(marital_event_types)
 
-
         sql = '''
                 SELECT person_id1, person_id2
                 FROM finding
                 WHERE event_type_id in ({})                    
             '''.format(",".join("?" * qlen))
         cur.execute(sql, marital_event_types)
-
-
-        # sql = '''
-                # SELECT person_id1, person_id2
-                # FROM findings_persons
-                # JOIN persons_persons
-                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                # JOIN finding
-                    # ON finding.finding_id = findings_persons.finding_id
-                # WHERE event_type_id in ({})                    
-            # '''.format(",".join("?" * qlen))
-        # cur.execute(sql, marital_event_types)
         partners1 = cur.fetchall()
-
         return partners1, births
 
     def query_alt_nukefams_data(self, conn, cur):
 
         cur.execute(
             select_finding_couple_details_alt_parent1, (self.current_person,))
-            # '''
-                # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-                    # person_id2, kin_type_id2 
-                # FROM findings_persons 
-                # JOIN persons_persons
-                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                # WHERE person_id1 = ? AND kin_type_id1 IN (110, 111, 112, 120, 121, 122, 130, 131)
-            # ''',
-            # (self.current_person,))
         result1 = cur.fetchall()
-        # cur.execute(
-            # '''
-                # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-                    # person_id2, kin_type_id2 
-                # FROM findings_persons 
-                # JOIN persons_persons
-                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                # WHERE person_id2 = ? AND kin_type_id2 IN (110, 111, 112, 120, 121, 122, 130, 131)
-            # ''',
-            # (self.current_person,))
         cur.execute(
             select_finding_couple_details_alt_parent2, (self.current_person,))
         result2 = cur.fetchall()
@@ -796,17 +673,11 @@ class NuclearFamiliesTable(Frame):
         alt_births = [tup for q in (result1, result2) for tup in q]
         alt_births = [list(i) for i in alt_births]
         for lst in alt_births:
-            cur.execute(select_finding_id_by_person_and_event, (lst[1],))
-            # cur.execute(
-                # '''
-                # SELECT finding_id
-                # FROM finding
-                # WHERE person_id = (SELECT person_id FROM finding WHERE finding_id = ?)
-                    # AND event_type_id = 1
-                # ''',
-                # (lst[1],))
+            print("line", looky(seeline()).lineno, "lst:", lst)
+            cur.execute(select_finding_id_by_person_and_event, (lst[0],))
             birth_evt_id = cur.fetchone()[0]
-            lst[1] = birth_evt_id
+            print("line", looky(seeline()).lineno, "birth_evt_id:", birth_evt_id)
+            lst[0] = birth_evt_id
         print("line", looky(seeline()).lineno, "alt_births:", alt_births)
         return alt_births
 
@@ -833,7 +704,6 @@ class NuclearFamiliesTable(Frame):
 
         self.family_data[1][pard_id]["parent_type"] = compound_parent_type
         self.family_data[1][pard_id]["partner_name"] = partner_name 
-        # compound_parent_type = "Children's"
 
     def collect_couple_events(self, cur, conn):
         marital_events = self.get_marital_event_types(conn, cur) 
@@ -870,26 +740,12 @@ class NuclearFamiliesTable(Frame):
         cur.execute(
             select_finding_person_date_by_finding_and_type, 
             (dkt["birth_id"],))
-            # '''
-                # SELECT person_id, date
-                # FROM finding
-                # WHERE finding_id = ?
-                    # AND event_type_id = 1                    
-            # ''',
-            # (dkt["birth_id"],)) 
         result = cur.fetchone()
         if result is None:
             return self.finish_alt_progeny_dict(dkt, cur)
         else:
             born_id, birth_date = result
         cur.execute(select_finding_death_date, (born_id,))
-            # '''
-                # SELECT date, finding_id
-                # FROM finding
-                # WHERE person_id = ?
-                    # AND event_type_id = 4
-            # ''',
-            # (born_id,))
         death_date = cur.fetchone()
         if death_date:
             death_date, death_id = death_date
@@ -898,12 +754,6 @@ class NuclearFamiliesTable(Frame):
             death_id = None
 
         cur.execute(select_person_gender_by_id, (born_id,))
-            # '''
-                # SELECT gender
-                # FROM person
-                # WHERE person_id = ?
-            # ''',
-            # (born_id,))
         gender = cur.fetchone()[0]
 
         sorter = self.make_sorter(birth_date)
@@ -922,24 +772,10 @@ class NuclearFamiliesTable(Frame):
         dkt["death_id"] = death_id
 
     def finish_alt_progeny_dict(self, dkt, cur):
-        cur.execute(select_finding_person_date_alt_parent_event, (dkt["birth_id"]))
-            # '''
-                # SELECT person_id, date
-                # FROM finding
-                # WHERE finding_id = ?
-                # AND event_type_id in (48, 83, 95)                   
-            # ''',
-            # (dkt["birth_id"],)) 
+        cur.execute(select_finding_person_date_alt_parent_event, (dkt["birth_id"],))
 
         born_id, birth_date = cur.fetchone()
         cur.execute(select_finding_death_by_person, (born_id,))
-            # '''
-                # SELECT date
-                # FROM finding
-                # WHERE person_id = ?
-                    # AND event_type_id = 4
-            # ''',
-            # (born_id,))
         death_date = cur.fetchone()
         if death_date:
             death_date = death_date[0]
@@ -947,12 +783,6 @@ class NuclearFamiliesTable(Frame):
             death_date = "-0000-00-00-------"
 
         cur.execute(select_person_gender_by_id, (born_id,))
-            # '''
-                # SELECT gender
-                # FROM person
-                # WHERE person_id = ?
-            # ''',
-            # (born_id,))
         gender = cur.fetchone()[0]
 
         sorter = self.make_sorter(birth_date)
@@ -1058,7 +888,6 @@ class NuclearFamiliesTable(Frame):
             opened the PersonAdd dialog when it wasn't wanted. This seems to 
             have solved the problem but the cause of the problem was not found. 
         """
-        # print("line", looky(seeline()).lineno, "binding to focus out:")
         self.temp_bind = evt.widget.bind("<FocusOut>", self.get_final, add="+")
         self.original = evt.widget.get()
 
@@ -1106,9 +935,7 @@ class NuclearFamiliesTable(Frame):
                         self.link_partners_dialog(cur, conn, inwidg)
                     else:
                         finding_id = self.family_data[0][0][0]["birth_finding"]
-                        for event in v["marital_events"]:                            
-                            # cur.execute(select_findings_persons_ppid, (event["fpid"],))
-                            # ppid = cur.fetchone()[0]
+                        for event in v["marital_events"]:   
                             cur.execute(select_finding_persons, (finding_id,))
                             both = cur.fetchone()
                             if self.current_person == both[0]:
@@ -1199,8 +1026,6 @@ class NuclearFamiliesTable(Frame):
                     # new_partner_id)
 
         def link_partner(finding_id):
-            # cur.execute(select_findings_persons_ppid, (fpid,))
-            # ppid = cur.fetchone()[0]
             cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
             currper = self.current_person
@@ -1211,8 +1036,6 @@ class NuclearFamiliesTable(Frame):
             conn.commit()
 
         def link_offspring(finding_id):
-            # cur.execute(select_findings_persons_ppid, (fpid,))
-            # ppid = cur.fetchone()[0]
             cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
             currper = self.current_person
@@ -1360,16 +1183,10 @@ class NuclearFamiliesTable(Frame):
                     unlink_offspring(finding, [1, 0])
 
         def delete_offspring(conn, cur, finding_id):
-            # cur.execute(select_findings_persons_ppid, (fpid,))
-            # ppid = cur.fetchone()[0]
             cur.execute(update_finding_ages_kintypes_null, (finding_id,))
             conn.commit()
-            # cur.execute(delete_persons_persons, (ppid,))
-            # conn.commit()
 
         def unlink_partner(finding_id, order):
-            # cur.execute(select_findings_persons_ppid, (fpid,))
-            # ppid = cur.fetchone()[0]
             cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
             currper = self.current_person
@@ -1386,8 +1203,6 @@ class NuclearFamiliesTable(Frame):
             conn.commit()
 
         def unlink_offspring(finding_id, order):
-            # cur.execute(select_findings_persons_ppid, (finding_id,))
-            # ppid = cur.fetchone()[0]
             cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
             currper = self.current_person
@@ -1493,20 +1308,15 @@ class NuclearFamiliesTable(Frame):
             new_child_id = None 
             birth_id = None
             gender = "unknown"
-            # fpid = child["fpid"]
             death_date = "-0000-00-00-------"
             birth_date = "-0000-00-00-------"
             sorter = (0,0,0)
 
             if len(self.final) == 0:
-                # cur.execute(select_findings_persons_ppid, (fpid,))
-                # ppid = cur.fetchone()[0]
                 cur.execute(select_finding_id_birth, (orig_child_id,))
                 birth_id = cur.fetchone()[0]
                 cur.execute(update_finding_ages_kintypes_null, (birth_id,))
                 conn.commit()
-                # cur.execute(delete_persons_persons, (ppid,))
-                # conn.commit()
                 return
 
             name_data = check_name(ent=widg)
@@ -1598,10 +1408,6 @@ class NuclearFamiliesTable(Frame):
                     if death_id is None:
                         cur.execute(insert_finding_death, (new_date, child["id"], sorter))
                         conn.commit()
-                        # cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
-                        # death_id = cur.fetchone()[0]
-                        # cur.execute(insert_finding_places_new, (death_id,))
-                        # conn.commit()
                     else:
                         cur.execute(update_finding_date, (new_date, sorter, death_id))
                         conn.commit()
@@ -1621,6 +1427,7 @@ class NuclearFamiliesTable(Frame):
         for lst in self.family_data[0]:
             for dkt in lst[1:]: # father is 1, mother is 2
                 if inwidg == dkt["inwidg"]:
+                    print("line", looky(seeline()).lineno, "lst:", lst)
                     finding_id = lst[0]["birth_finding"]
                     break
             z += 1
@@ -1665,7 +1472,6 @@ class NuclearFamiliesTable(Frame):
         elif column == 3:
             cur.execute(update_finding_person_2, (new_parent_id, finding_id))
         conn.commit()
-        print("line", looky(seeline()).lineno, "self.temp_bind:", self.temp_bind)
         if self.temp_bind:
             widg.unbind("<FocusOut>", self.temp_bind)
 
@@ -1744,7 +1550,6 @@ class NuclearFamiliesTable(Frame):
                     new_id = tup[1]
                     break
             finding_id = self.family_data[0][1:][row - 1][0]["birth_finding"]
-            # fpid = self.family_data[0][1:][row - 1][0]["fpid"]
             if col == 0:
                 cur.execute(update_finding_kin_type_1, (new_id, finding_id))
             elif col == 2:
