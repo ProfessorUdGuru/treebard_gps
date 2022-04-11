@@ -192,10 +192,6 @@ if __name__ == '__main__':
 # "plus" msg opens wrongly if none>existing w/id but not on first loading app. solution: refactor first.
 
 # BRANCH: combine_3_tables
-# Get rid of both findings_persons and persons_persons.
-# birth finding: person_id = child, id1/id2 = bio parents
-# fosterage event: person_id = child, id1/id2 = alt parents (same for guardians, adoptives)
-# couple event: person_id = null, id1/id2 = male/female, female/female, male/male
 # export dbs to .sql
 
 # BRANCH: families_table_validation
@@ -207,6 +203,7 @@ if __name__ == '__main__':
 # RCM: There are two ways to deal with unknown partners of the current person: unknown name labels and null persons. An unknown name label has to contain at least one character. Using letters in unknown name labels is a bad idea. For example, the label 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. The purpose of an unknown name label made with symbols (a name such as '?' or '_____') is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name labels will differentiate the current person's two families. This works since duplicate names are allowed, such as two people that are both temporarily named '_____', and each person will have a unique ID number. It's OK to not use unknown name labels, but in that case, Treebard will lump all children and marital events of the current person's whose partner is null into a single family. If you want to avoid this, use a name such as '?' or '_____' with at least one character and Treebard will give this person a unique ID instead of a null ID. If you use null partners when creating marital events, for example, all the children and marital events for the current person where the current person's partner is left blank will be lumped together into one family. This is easy to change, but most users will probably prefer to differentiate families of unknown partners by using unknown name labels. To change from a null partner to unknown name labels, type an unknown name label into an empty partner field. Empty partner fields exist when there are marital events with null partner or children with a null parent. When you tab out of the field, a dialog will open listing all the marital events and children for the current person with a null partner. You can choose which one to link to the new unnamed person you're creating. This is easier to do than it is to describe. Just try it.
 # move queries to query module, delete unused queries from module & queries module
 # Test everything on the video tour list before making the video.
+# delete commented code and edit docstrings before pushing to repo
 # export dbs to .sql
 
 # BRANCH: cleanup

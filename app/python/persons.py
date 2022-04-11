@@ -22,10 +22,10 @@ from query_strings import (
     select_all_images, select_all_name_types, insert_person_new,
     select_person_gender, select_max_name_type_id, insert_name_type_new,
     insert_image_new, select_name_with_id_any, select_birth_names_ids,
-    insert_finding_birth_new_person, insert_finding_places_new,
+    insert_finding_birth_new_person,
     select_current_person_id, delete_name_person, delete_findings_roles_person,
     select_name_id_by_person_id, delete_links_links_person, delete_links_links_name,
-    update_persons_persons_1_null, update_persons_persons_2_null,
+    update_finding_person_1_null, update_finding_person_2_null,
     delete_finding_person, delete_claims_roles_person, delete_person,
     update_claims_persons_1_null, update_claims_persons_2_null,
     delete_images_elements_person, delete_claim_person, select_name_sorter,
@@ -35,7 +35,6 @@ from query_strings import (
     )
 import dev_tools as dt
 from dev_tools import looky, seeline
-
 
 
 
@@ -183,7 +182,6 @@ def check_name(evt=None, ent=None, label=None):
     elif ent:
         ent = ent
     else:
-        print("line", looky(seeline()).lineno, "evt, ent:", evt, ent)
         return
     filled = ent.get().strip()
     if filled.startswith("#"):
@@ -262,11 +260,9 @@ def delete_person_from_tree(person_id):
     # findings_roles
     cur.execute(delete_findings_roles_person, (person_id,))
     conn.commit()
-    # findings_persons.person_id1
-    cur.execute(update_persons_persons_1_null, (person_id,))
+    cur.execute(update_finding_person_1_null, (person_id,))
     conn.commit()
-    # findings_persons.person_id2
-    cur.execute(update_persons_persons_2_null, (person_id,))
+    cur.execute(update_finding_person_2_null, (person_id,))
     conn.commit()
     # finding
     cur.execute(delete_finding_person, (person_id,))
@@ -624,10 +620,10 @@ class PersonAdd(Toplevel):
 
         cur.execute(insert_finding_birth_new_person, (self.new_person_id,))
         conn.commit()
-        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
-        birth_id = cur.fetchone()[0]
-        cur.execute(insert_finding_places_new, (birth_id,))
-        conn.commit()
+        # cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
+        # birth_id = cur.fetchone()[0]
+        # cur.execute(insert_finding_places_new, (birth_id,))
+        # conn.commit()
         new_name_string = self.full_name
         cur.close()
         conn.close()

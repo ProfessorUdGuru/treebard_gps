@@ -44,7 +44,6 @@ from query_strings import (
     select_finding_id_birth, select_person_gender_by_id,
     select_person_id_finding, select_date_finding, select_finding_event_type,
     select_finding_id_death, 
-    select_findings_persons_id_kin_type1, select_findings_persons_id_kin_type2, 
 )
 import dev_tools as dt
 from dev_tools import looky, seeline

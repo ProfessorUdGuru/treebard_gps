@@ -37,11 +37,10 @@ from messages import open_message, places_err
 from query_strings import (
     select_place_id_hint, insert_place_new, update_finding_places_null,     
     select_place_hint, select_all_places, select_all_places_places, 
-    select_finding_places_nesting, update_place_hint, select_place_id2, 
+    update_place_hint, select_place_id2, 
     select_max_place_id, select_place_id1, update_finding_places,
-    insert_places_places_new, select_all_place_ids, select_finding_places_id,
-    insert_finding_places_new_event, select_places_places_id, 
-    select_all_finding_places_findings)
+    insert_places_places_new, select_all_place_ids, 
+    select_places_places_id, select_all_finding_places_findings)
 import dev_tools as dt
 from dev_tools import looky, seeline
 import sqlite3
@@ -586,8 +585,6 @@ class ValidatePlace():
         cur.execute(update_finding_places, tuple(ids))
         conn.commit()   
         place_strings.insert(0, self.place_input)
-
-        # place_autofill_values = EntryAuto.create_lists(place_strings)
             
         cur.close()
         conn.close()

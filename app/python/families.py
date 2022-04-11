@@ -18,22 +18,27 @@ from dates import format_stored_date, get_date_formats, OK_MONTHS, validate_date
 from events_table import (
     get_current_person, delete_generic_finding, delete_couple_finding)
 from query_strings import (
-    select_finding_id_birth, delete_findings_persons, select_persons_persons,
+    select_finding_id_birth, update_finding_ages_kintypes_null, select_finding_persons,
     select_person_gender_by_id, select_finding_date, select_finding_id_birth,
     select_finding_id_death, select_finding_date_and_sorter,
-    update_findings_persons_finding, insert_persons_persons_father,
-    insert_findings_persons_new_father, select_findings_persons_birth,
-    update_persons_persons_1, update_persons_persons_2, select_kin_type_string,
-    update_persons_persons1_by_finding, update_persons_persons2_by_finding,
-    select_kin_type_alt_parent, update_findings_persons_kin_type1,
-    update_findings_persons_kin_type2, insert_persons_persons_mother,
-    insert_findings_persons_new_mother, select_findings_persons_ppid,
-    update_findings_persons_age2_blank, update_findings_persons_age1_blank,
-    update_persons_persons_1_null_by_id, update_persons_persons_2_null_by_id,
-    select_finding_details, delete_findings_persons_by_id, update_current_person,
-    delete_persons_persons, select_all_event_type_ids_marital,
-    insert_findings_persons, insert_persons_persons, update_person_gender,
-    update_finding_date, insert_finding_death, insert_finding_places_new,
+    update_finding_person_1, update_finding_person_2, select_kin_type_string,
+    update_finding_person_1, update_finding_person_2,
+    select_kin_type_alt_parent, update_finding_kin_type_1,
+    update_finding_kin_type_2, 
+    update_finding_age2_blank, update_finding_age1_blank,
+    update_finding_person_1_null_by_id, update_finding_person_2_null_by_id,
+    select_finding_details, update_current_person,
+    select_all_event_type_ids_marital,
+    insert_finding_couple, insert_finding_persons, update_person_gender,
+    update_finding_date, insert_finding_death, 
+    select_finding_couple_details, select_finding_details_sorter,
+    select_finding_kin_types, select_finding_couple_person1_details,
+    select_finding_couple_person2_details, select_kin_types,
+    select_finding_couple_details_alt_parent1, select_finding_death_by_person,
+    select_finding_couple_details_alt_parent2,
+    select_finding_id_by_person_and_event, select_finding_death_date,
+    select_finding_person_date_by_finding_and_type,
+    select_finding_person_date_alt_parent_event,
 
 )
 import dev_tools as dt
@@ -56,10 +61,6 @@ class NuclearFamiliesTable(Frame):
     """ In general, `...alt...` in this class refers to alternate parents and
         families such as relationships created by adoption, fosterage, and
         guardianship.
-
-        `fpid` refers to findings_persons_id` in the database table 
-        `findings_persons`, and `ppid` refers to persons_perons_id in the
-        database table `persons_persons`.
     """
     def __init__(
             self, master, root, treebard, current_person, findings_table, 
@@ -102,11 +103,12 @@ class NuclearFamiliesTable(Frame):
         # There's an exact copy of this blank collection in forget_cells() in events_table.py
         #   so it has to be changed if this is changed. Initial attempt to not repeat
         #   the code didn't work.
+
+
         self.family_data = [
             [
                 [
-                    {'fpid': None, 'ppid': None, 'finding': None, 
-                        'sorter': [0, 0, 0]}, 
+                    {'finding': None, 'sorter': [0, 0, 0]}, 
                     {'id': None, 'name': '', 'kin_type_id': 2, 
                         'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
                     {'id': None, 'name': '', 'kin_type_id': 1, 
@@ -115,6 +117,21 @@ class NuclearFamiliesTable(Frame):
             ],
             {},
         ]
+
+
+        # self.family_data = [
+            # [
+                # [
+                    # {'fpid': None, 'ppid': None, 'finding': None, 
+                        # 'sorter': [0, 0, 0]}, 
+                    # {'id': None, 'name': '', 'kin_type_id': 2, 
+                        # 'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
+                    # {'id': None, 'name': '', 'kin_type_id': 1, 
+                        # 'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
+                # ],
+            # ],
+            # {},
+        # ]
 
         self.widget = None
         self.idtip = None
@@ -213,17 +230,26 @@ class NuclearFamiliesTable(Frame):
         marital_event_types.insert(0, self.current_person)
 
         sql = '''
-                SELECT findings_persons_id, person_id1, kin_type_id1,
-                    person_id2, kin_type_id2, findings_persons.finding_id, 
-                    date
-                FROM findings_persons
-                JOIN persons_persons
-                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                JOIN finding
-                    ON finding.finding_id = findings_persons.finding_id
+                SELECT finding_id, person_id1, kin_type_id1,
+                    person_id2, kin_type_id2, date
+                FROM finding
                 WHERE (person_id1 = ? OR person_id2 = ?) 
                     AND event_type_id in ({})
             '''.format(",".join(["?"] * qlen))
+
+
+        # sql = '''
+                # SELECT findings_persons_id, person_id1, kin_type_id1,
+                    # person_id2, kin_type_id2, findings_persons.finding_id, 
+                    # date
+                # FROM findings_persons
+                # JOIN persons_persons
+                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                # JOIN finding
+                    # ON finding.finding_id = findings_persons.finding_id
+                # WHERE (person_id1 = ? OR person_id2 = ?) 
+                    # AND event_type_id in ({})
+            # '''.format(",".join(["?"] * qlen))
 
         cur.execute(sql, marital_event_types)
         marital_events_current_person = [list(i) for i in cur.fetchall()]
@@ -404,16 +430,16 @@ class NuclearFamiliesTable(Frame):
 
         cur.execute(select_finding_id_birth, (self.current_person,))
         birth_id = cur.fetchone()[0]
-        cur.execute(
-            '''
-                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-                    person_id2, kin_type_id2 
-                FROM findings_persons 
-                JOIN persons_persons
-                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                WHERE finding_id = ?
-            ''',
-            (birth_id,))
+        cur.execute(select_finding_couple_details, (birth_id,))
+            # '''
+                # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
+                    # person_id2, kin_type_id2 
+                # FROM findings_persons 
+                # JOIN persons_persons
+                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                # WHERE finding_id = ?
+            # ''',
+            # (birth_id,))
         parent_record = cur.fetchall()
         if len(parent_record) != 0:
             self.parent_record = parent_record[0]
@@ -424,15 +450,16 @@ class NuclearFamiliesTable(Frame):
         dad = None
         mom = None
         if self.parent_record:
-            dad = self.parent_record[2:4]
-            mom = self.parent_record[4:]
+            dad = self.parent_record[1:3]
+            mom = self.parent_record[3:]
             pa_id = dad[0]
             ma_id = mom[0]
-            ids = self.family_data[0][0][0]
-            ids["fpid"], ids["finding"] = self.parent_record[0:2]
+            # ids = self.family_data[0][0][0]
+            # ids["fpid"], ids["birth_finding"] = self.parent_record[0:2]
+            self.family_data[0][0][0]["birth_finding"] = self.parent_record[0]
         else:
             # This only runs when there are no parents recorded.
-            self.family_data[0][0][0]["finding"] = birth_id
+            self.family_data[0][0][0]["birth_finding"] = birth_id
 
         for person in self.person_autofill_values:
             if person == pa_id:
@@ -457,14 +484,14 @@ class NuclearFamiliesTable(Frame):
 
     def get_alt_parents(self, cur):
         """ Get adoptive parents, foster parents & guardians. """
-        cur.execute(
-        '''
-            SELECT finding_id, date_sorter, event_type_id 
-            FROM finding 
-            WHERE person_id = ? 
-                AND event_type_id in (48, 83, 95)
-        ''',
-        (self.current_person,))
+        cur.execute(select_finding_details_sorter, (self.current_person,))
+        # '''
+            # SELECT finding_id, date_sorter, event_type_id 
+            # FROM finding 
+            # WHERE person_id = ? 
+                # AND event_type_id in (48, 83, 95)
+        # ''',
+        # (self.current_person,))
         alt_parent_events = cur.fetchall()
         if alt_parent_events is None:
             return
@@ -518,23 +545,35 @@ class NuclearFamiliesTable(Frame):
 
     def make_alt_parents_dict(self, alt_parent_events, cur):
      
-        for finding in alt_parent_events:            
+        for finding in alt_parent_events:    
+
+
             parent_couple = [ 
-                {'fpid': None, 'ppid': None, 'finding': finding[0], 
-                    'sorter': finding[1]}, 
+                {'finding': finding[0], 'sorter': finding[1]}, 
                 {'id': None, 'name': '', 'kin_type_id': None, 'kin_type': '', 
                     'labwidg': None, 'inwidg': None}, 
                 {'id': None, 'name': '', 'kin_type_id': None, 'kin_type': '', 
                     'labwidg': None, 'inwidg': None}]
-            ids, alt_parent1, alt_parent2 = parent_couple
-            cur.execute(
-            '''
-                SELECT persons_persons_id, kin_type_id1, kin_type_id2, findings_persons_id
-                FROM findings_persons
-                WHERE finding_id = ?
-            ''',
-            (ids["finding"],))
-            ids["ppid"], alt_parent1["kin_type_id"], alt_parent2["kin_type_id"], ids["fpid"] = cur.fetchone()
+
+        
+            # parent_couple = [ 
+                # {'fpid': None, 'ppid': None, 'finding': finding[0], 
+                    # 'sorter': finding[1]}, 
+                # {'id': None, 'name': '', 'kin_type_id': None, 'kin_type': '', 
+                    # 'labwidg': None, 'inwidg': None}, 
+                # {'id': None, 'name': '', 'kin_type_id': None, 'kin_type': '', 
+                    # 'labwidg': None, 'inwidg': None}]
+            common, alt_parent1, alt_parent2 = parent_couple
+            print("line", looky(seeline()).lineno, "common:", common)
+            cur.execute(select_finding_kin_types, (common["finding"],))
+            # '''
+                # SELECT persons_persons_id, kin_type_id1, kin_type_id2, findings_persons_id
+                # FROM findings_persons
+                # WHERE finding_id = ?
+            # ''',
+            # (common["birth_finding"],))
+            # common["ppid"], alt_parent1["kin_type_id"], alt_parent2["kin_type_id"], common["fpid"] = cur.fetchone()
+            alt_parent1["kin_type_id"], alt_parent2["kin_type_id"] = cur.fetchone()
             h = 1
             for kintype in (alt_parent1["kin_type_id"], alt_parent2["kin_type_id"]):
                 cur.execute(select_kin_type_string, (kintype,))
@@ -543,14 +582,8 @@ class NuclearFamiliesTable(Frame):
             self.family_data[0].append(parent_couple)
         alt_parents = self.family_data[0][1:] 
         for lst in alt_parents:
-            ppid = lst[0]["ppid"]
-            cur.execute(
-            '''
-                SELECT person_id1, person_id2
-                FROM persons_persons
-                WHERE persons_persons_id = ?
-            ''',
-            (ppid,))
+            finding_id = lst[0]["finding"]
+            cur.execute(select_finding_persons, (finding_id,))
             lst[1]["id"], lst[2]["id"] = cur.fetchone()
 
         w = 0
@@ -612,6 +645,7 @@ class NuclearFamiliesTable(Frame):
         """
         self.person_autofill_values = update_person_autofill_values()
         births = births + alt_parentage_events
+        print("line", looky(seeline()).lineno, "births:", births)
         progenies = {}
         all_partners = [] 
         event_pards = []
@@ -625,10 +659,10 @@ class NuclearFamiliesTable(Frame):
                         all_partners.append(num)
             event_pards = list(set(event_pards))
         for tup in births:
-            if tup[2] != self.current_person:
-                pard_id = tup[2]              
-            elif tup[4] != self.current_person:
-                pard_id = tup[4]
+            if tup[1] != self.current_person:
+                pard_id = tup[1]              
+            elif tup[3] != self.current_person:
+                pard_id = tup[3]
             offspring_pards.append(pard_id)
             all_partners.append(pard_id)
             all_partners = list(set(all_partners))
@@ -654,21 +688,22 @@ class NuclearFamiliesTable(Frame):
             pardner = k
             if v["offspring"] is True:
                 for tup in births:
-                    order = "{}-{}".format(str(tup[3]), str(tup[5]))                
-                    if tup[4] == pardner:                        
-                        parent_type = tup[5]
-                        pard_id = tup[4]
+                    print("line", looky(seeline()).lineno, "tup:", tup)
+                    order = "{}-{}".format(str(tup[2]), str(tup[4]))                
+                    if tup[3] == pardner:                        
+                        parent_type = tup[4]
+                        pard_id = tup[3]
                         self.make_pard_dict(pard_id, parent_type, cur)
                         if pard_id == pardner:
                             self.family_data[1][pardner]["children"].append(
-                                {"fpid": tup[0], "birth_id": tup[1], "order": order})
-                    elif tup[2] == pardner:
-                        parent_type = tup[3]
-                        pard_id = tup[2]
+                                {"birth_id": tup[0], "order": order})
+                    elif tup[1] == pardner:
+                        parent_type = tup[2]
+                        pard_id = tup[1]
                         self.make_pard_dict(pard_id, parent_type, cur) 
                         if pard_id == pardner:
                             self.family_data[1][pardner]["children"].append(
-                                {"fpid": tup[0], "birth_id": tup[1], "order": order})      
+                                {"birth_id": tup[0], "order": order})      
 
             if v["events"] is True and v["offspring"] is False:
                 self.make_pard_dict(pardner, "", cur)
@@ -679,43 +714,53 @@ class NuclearFamiliesTable(Frame):
                         self.finish_progeny_dict(dkt, cur)
 
     def query_nukefams_data(self, conn, cur):
-        cur.execute(
-            '''
-                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-                    person_id2, kin_type_id2 
-                FROM findings_persons 
-                JOIN persons_persons
-                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                WHERE person_id1 = ? AND kin_type_id1 IN (1, 2)
-            ''',
-            (self.current_person,))
+        cur.execute(select_finding_couple_person1_details, (self.current_person,))
+            # '''
+                # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
+                    # person_id2, kin_type_id2 
+                # FROM findings_persons 
+                # JOIN persons_persons
+                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                # WHERE person_id1 = ? AND kin_type_id1 IN (1, 2)
+            # ''',
+            # (self.current_person,))
         result1 = cur.fetchall()
-        cur.execute(
-            '''
-                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-                    person_id2, kin_type_id2 
-                FROM findings_persons 
-                JOIN persons_persons
-                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                WHERE person_id2 = ? AND kin_type_id2 IN (1, 2)
-            ''',
-            (self.current_person,))
+        cur.execute(select_finding_couple_person2_details, (self.current_person,))
+            # '''
+                # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
+                    # person_id2, kin_type_id2 
+                # FROM findings_persons 
+                # JOIN persons_persons
+                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                # WHERE person_id2 = ? AND kin_type_id2 IN (1, 2)
+            # ''',
+            # (self.current_person,))
         result2 = cur.fetchall()
         births = []
         births = [tup for q in (result1, result2) for tup in q]
 
         marital_event_types = get_all_marital_event_types(conn, cur)
         qlen = len(marital_event_types)
+
+
         sql = '''
                 SELECT person_id1, person_id2
-                FROM findings_persons
-                JOIN persons_persons
-                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                JOIN finding
-                    ON finding.finding_id = findings_persons.finding_id
+                FROM finding
                 WHERE event_type_id in ({})                    
             '''.format(",".join("?" * qlen))
         cur.execute(sql, marital_event_types)
+
+
+        # sql = '''
+                # SELECT person_id1, person_id2
+                # FROM findings_persons
+                # JOIN persons_persons
+                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                # JOIN finding
+                    # ON finding.finding_id = findings_persons.finding_id
+                # WHERE event_type_id in ({})                    
+            # '''.format(",".join("?" * qlen))
+        # cur.execute(sql, marital_event_types)
         partners1 = cur.fetchall()
 
         return partners1, births
@@ -723,42 +768,46 @@ class NuclearFamiliesTable(Frame):
     def query_alt_nukefams_data(self, conn, cur):
 
         cur.execute(
-            '''
-                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-                    person_id2, kin_type_id2 
-                FROM findings_persons 
-                JOIN persons_persons
-                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                WHERE person_id1 = ? AND kin_type_id1 IN (110, 111, 112, 120, 121, 122, 130, 131)
-            ''',
-            (self.current_person,))
+            select_finding_couple_details_alt_parent1, (self.current_person,))
+            # '''
+                # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
+                    # person_id2, kin_type_id2 
+                # FROM findings_persons 
+                # JOIN persons_persons
+                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                # WHERE person_id1 = ? AND kin_type_id1 IN (110, 111, 112, 120, 121, 122, 130, 131)
+            # ''',
+            # (self.current_person,))
         result1 = cur.fetchall()
+        # cur.execute(
+            # '''
+                # SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
+                    # person_id2, kin_type_id2 
+                # FROM findings_persons 
+                # JOIN persons_persons
+                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                # WHERE person_id2 = ? AND kin_type_id2 IN (110, 111, 112, 120, 121, 122, 130, 131)
+            # ''',
+            # (self.current_person,))
         cur.execute(
-            '''
-                SELECT findings_persons_id, finding_id, person_id1, kin_type_id1, 
-                    person_id2, kin_type_id2 
-                FROM findings_persons 
-                JOIN persons_persons
-                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
-                WHERE person_id2 = ? AND kin_type_id2 IN (110, 111, 112, 120, 121, 122, 130, 131)
-            ''',
-            (self.current_person,))
+            select_finding_couple_details_alt_parent2, (self.current_person,))
         result2 = cur.fetchall()
         alt_births = []
         alt_births = [tup for q in (result1, result2) for tup in q]
         alt_births = [list(i) for i in alt_births]
         for lst in alt_births:
-            cur.execute(
-                '''
-                SELECT finding_id
-                FROM finding
-                WHERE person_id = (SELECT person_id FROM finding WHERE finding_id = ?)
-                    AND event_type_id = 1
-                ''',
-                (lst[1],))
+            cur.execute(select_finding_id_by_person_and_event, (lst[1],))
+            # cur.execute(
+                # '''
+                # SELECT finding_id
+                # FROM finding
+                # WHERE person_id = (SELECT person_id FROM finding WHERE finding_id = ?)
+                    # AND event_type_id = 1
+                # ''',
+                # (lst[1],))
             birth_evt_id = cur.fetchone()[0]
             lst[1] = birth_evt_id
-
+        print("line", looky(seeline()).lineno, "alt_births:", alt_births)
         return alt_births
 
     def make_pard_dict(self, pard_id, parent_type, cur):        
@@ -808,44 +857,39 @@ class NuclearFamiliesTable(Frame):
         partner_id = lst[1]
         for k,v in self.family_data[1].items():
             if partner_id == k:
-                cur.execute(
-                    '''
-                        SELECT kin_types
-                        FROM kin_type
-                        WHERE kin_type_id = ?
-                    ''',
-                    (lst[2],))
+                cur.execute(select_kin_types, (lst[2],))
                 kin_type = cur.fetchone()[0]
-                sorter = self.make_sorter(lst[4])
+                sorter = self.make_sorter(lst[3])
                 self.sorters.append((k, sorter))
                 if kin_type in ("generic_partner1", "generic_partner2"):
                     kin_type = "Partner"
                 v["partner_kin_type"] = kin_type
-                v["marital_events"].append(
-                    {"fpid": lst[0], "finding": lst[3]})
+                v["marital_events"].append({"finding": lst[0]})
 
     def finish_progeny_dict(self, dkt, cur):
         cur.execute(
-            '''
-                SELECT person_id, date
-                FROM finding
-                WHERE finding_id = ?
-                    AND event_type_id = 1                    
-            ''',
-            (dkt["birth_id"],)) 
+            select_finding_person_date_by_finding_and_type, 
+            (dkt["birth_id"],))
+            # '''
+                # SELECT person_id, date
+                # FROM finding
+                # WHERE finding_id = ?
+                    # AND event_type_id = 1                    
+            # ''',
+            # (dkt["birth_id"],)) 
         result = cur.fetchone()
         if result is None:
             return self.finish_alt_progeny_dict(dkt, cur)
         else:
             born_id, birth_date = result
-        cur.execute(
-            '''
-                SELECT date, finding_id
-                FROM finding
-                WHERE person_id = ?
-                    AND event_type_id = 4
-            ''',
-            (born_id,))
+        cur.execute(select_finding_death_date, (born_id,))
+            # '''
+                # SELECT date, finding_id
+                # FROM finding
+                # WHERE person_id = ?
+                    # AND event_type_id = 4
+            # ''',
+            # (born_id,))
         death_date = cur.fetchone()
         if death_date:
             death_date, death_id = death_date
@@ -853,13 +897,13 @@ class NuclearFamiliesTable(Frame):
             death_date = "-0000-00-00-------"
             death_id = None
 
-        cur.execute(
-            '''
-                SELECT gender
-                FROM person
-                WHERE person_id = ?
-            ''',
-            (born_id,))
+        cur.execute(select_person_gender_by_id, (born_id,))
+            # '''
+                # SELECT gender
+                # FROM person
+                # WHERE person_id = ?
+            # ''',
+            # (born_id,))
         gender = cur.fetchone()[0]
 
         sorter = self.make_sorter(birth_date)
@@ -878,37 +922,37 @@ class NuclearFamiliesTable(Frame):
         dkt["death_id"] = death_id
 
     def finish_alt_progeny_dict(self, dkt, cur):
-        cur.execute(
-            '''
-                SELECT person_id, date
-                FROM finding
-                WHERE finding_id = ?
-                AND event_type_id in (48, 83, 95)                   
-            ''',
-            (dkt["birth_id"],)) 
+        cur.execute(select_finding_person_date_alt_parent_event, (dkt["birth_id"]))
+            # '''
+                # SELECT person_id, date
+                # FROM finding
+                # WHERE finding_id = ?
+                # AND event_type_id in (48, 83, 95)                   
+            # ''',
+            # (dkt["birth_id"],)) 
 
         born_id, birth_date = cur.fetchone()
-        cur.execute(
-            '''
-                SELECT date
-                FROM finding
-                WHERE person_id = ?
-                    AND event_type_id = 4
-            ''',
-            (born_id,))
+        cur.execute(select_finding_death_by_person, (born_id,))
+            # '''
+                # SELECT date
+                # FROM finding
+                # WHERE person_id = ?
+                    # AND event_type_id = 4
+            # ''',
+            # (born_id,))
         death_date = cur.fetchone()
         if death_date:
             death_date = death_date[0]
         else:
             death_date = "-0000-00-00-------"
 
-        cur.execute(
-            '''
-                SELECT gender
-                FROM person
-                WHERE person_id = ?
-            ''',
-            (born_id,))
+        cur.execute(select_person_gender_by_id, (born_id,))
+            # '''
+                # SELECT gender
+                # FROM person
+                # WHERE person_id = ?
+            # ''',
+            # (born_id,))
         gender = cur.fetchone()[0]
 
         sorter = self.make_sorter(birth_date)
@@ -992,11 +1036,14 @@ class NuclearFamiliesTable(Frame):
             pa_id = self.current_person
             ma_id = other_parent_id
 
-        cur.execute(insert_persons_persons, (pa_id, ma_id))
+        cur.execute(insert_finding_persons, (pa_id, ma_id))
         conn.commit()
-        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
-        ppid = cur.fetchone()[0]
-        cur.execute(insert_findings_persons, (birth_id, ppid))
+        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
+        birth_id = cur.fetchone()[0]
+        # cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
+        # ppid = cur.fetchone()[0]
+        # cur.execute(insert_finding_couple, (birth_id, ppid))
+        cur.execute(insert_finding_couple, (birth_id,))
         conn.commit()
 
         cur.close()
@@ -1058,15 +1105,20 @@ class NuclearFamiliesTable(Frame):
                             len(v["partner_name"]) == 0):
                         self.link_partners_dialog(cur, conn, inwidg)
                     else:
+                        finding_id = self.family_data[0][0][0]["birth_finding"]
                         for event in v["marital_events"]:                            
-                            cur.execute(select_findings_persons_ppid, (event["fpid"],))
-                            ppid = cur.fetchone()[0]
-                            cur.execute(select_persons_persons, (ppid,))
+                            # cur.execute(select_findings_persons_ppid, (event["fpid"],))
+                            # ppid = cur.fetchone()[0]
+                            cur.execute(select_finding_persons, (finding_id,))
                             both = cur.fetchone()
                             if self.current_person == both[0]:
-                                cur.execute(update_persons_persons_2, (self.new_partner_id, ppid,))
+                                cur.execute(
+                                    update_finding_person_2, 
+                                    (self.new_partner_id, finding_id))
                             elif self.current_person == both[1]:
-                                cur.execute(update_persons_persons_1, (self.new_partner_id, ppid,))
+                                cur.execute(
+                                    update_finding_person_1, 
+                                    (self.new_partner_id, finding_id))
                             conn.commit()
                 else: 
                     print("line", looky(seeline()).lineno, "case not handled:")
@@ -1093,34 +1145,34 @@ class NuclearFamiliesTable(Frame):
             self.cancel_link_partner_pressed = True
             self.null_partner_replacer.destroy()
             self.cancel_link_partner_pressed = False
-
-        def update_partners_link(inwidg, conn, cur):
-            """ Run after dialog closes. """
-            def update_partners_child(birth_fpid, order, parent_type):
-                cur.execute(select_findings_persons_ppid, (birth_fpid,))
-                ppid = cur.fetchone()[0]
-                if parent_type == "Children's Father":
-                    if order == "1-2":   
-                        cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
-                        conn.commit()
-                        cur.execute(update_persons_persons_2, (self.new_partner_id, ppid))
-                        conn.commit()
-                    elif order == "2-1":      
-                        cur.execute(update_findings_persons_age1_blank, (birth_fpid,))
-                        conn.commit()
-                        cur.execute(update_persons_persons_1, (self.new_partner_id, ppid))
-                        conn.commit()                    
-                elif parent_type == "Children's Mother":
-                    if order == "1-2":
-                        cur.execute(update_findings_persons_age1_blank, (birth_fpid,))
-                        conn.commit()
-                        cur.execute(update_persons_persons_1, (self.new_partner_id, ppid))
-                        conn.commit()
-                    elif order == "2-1":   
-                        cur.execute(update_findings_persons_age2_blank, (birth_fpid,))
-                        conn.commit()
-                        cur.execute(update_persons_persons_2, (self.new_partner_id, ppid))
-                        conn.commit()
+        # function call was deleted after 20220405, don't know why 
+        # def update_partners_link(inwidg, conn, cur):
+            # """ Run after dialog closes. """
+            # def update_partners_child(birth_fpid, order, parent_type):
+                # cur.execute(select_findings_persons_ppid, (birth_fpid,))
+                # ppid = cur.fetchone()[0]
+                # if parent_type == "Children's Father":
+                    # if order == "1-2":   
+                        # cur.execute(update_finding_age2_blank, (birth_fpid,))
+                        # conn.commit()
+                        # cur.execute(update_finding_person_2, (self.new_partner_id, ppid))
+                        # conn.commit()
+                    # elif order == "2-1":      
+                        # cur.execute(update_finding_age1_blank, (birth_fpid,))
+                        # conn.commit()
+                        # cur.execute(update_finding_person_1, (self.new_partner_id, ppid))
+                        # conn.commit()                    
+                # elif parent_type == "Children's Mother":
+                    # if order == "1-2":
+                        # cur.execute(update_finding_age1_blank, (birth_fpid,))
+                        # conn.commit()
+                        # cur.execute(update_finding_person_1, (self.new_partner_id, ppid))
+                        # conn.commit()
+                    # elif order == "2-1":   
+                        # cur.execute(update_finding_age2_blank, (birth_fpid,))
+                        # conn.commit()
+                        # cur.execute(update_finding_person_2, (self.new_partner_id, ppid))
+                        # conn.commit()
 
             if self.cancel_link_partner_pressed is True:
                 return
@@ -1129,35 +1181,45 @@ class NuclearFamiliesTable(Frame):
                 if dkt["vars"] == 0:
                     continue
                 elif dkt["vars"] == 1:
-                    link_partner(dkt["fpid"])
+                    link_partner(dkt["finding"])
             for dkt in self.link_partners["children"]:
                 if dkt["vars"] == 0:
                     continue
                 elif dkt["vars"] == 1:
-                    link_offspring(dkt["fpid"])
+                    link_offspring(dkt["finding"])
+        # deleted after 20220405
+        # for k,v in self.family_data[1].items():
+            # if inwidg != v["inwidg"]:
+                # continue
+            # for child in v["children"]:
+                # update_partners_child(
+                    # child["fpid"], 
+                    # child["order"], 
+                    # v["parent_type"], 
+                    # new_partner_id)
 
-        def link_partner(fpid):
-            cur.execute(select_findings_persons_ppid, (fpid,))
-            ppid = cur.fetchone()[0]
-            cur.execute(select_persons_persons, (ppid,))
+        def link_partner(finding_id):
+            # cur.execute(select_findings_persons_ppid, (fpid,))
+            # ppid = cur.fetchone()[0]
+            cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
             currper = self.current_person
             if currper == person_id1:
-                cur.execute(update_persons_persons_2, (self.new_partner_id, ppid))
+                cur.execute(update_finding_person_2, (self.new_partner_id, finding_id))
             elif currper == person_id2:
-                cur.execute(update_persons_persons_1, (self.new_partner_id, ppid))
+                cur.execute(update_finding_person_1, (self.new_partner_id, finding_id))
             conn.commit()
 
-        def link_offspring(fpid):
-            cur.execute(select_findings_persons_ppid, (fpid,))
-            ppid = cur.fetchone()[0]
-            cur.execute(select_persons_persons, (ppid,))
+        def link_offspring(finding_id):
+            # cur.execute(select_findings_persons_ppid, (fpid,))
+            # ppid = cur.fetchone()[0]
+            cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
             currper = self.current_person
             if currper == person_id1:
-                cur.execute(update_persons_persons_2, (self.new_partner_id, ppid))
+                cur.execute(update_finding_person_2, (self.new_partner_id, finding_id))
             elif currper == person_id2:
-                cur.execute(update_persons_persons_1, (self.new_partner_id, ppid))
+                cur.execute(update_finding_person_1, (self.new_partner_id, finding_id))
             conn.commit()
 
         partner_id = None
@@ -1213,8 +1275,7 @@ class NuclearFamiliesTable(Frame):
         buttons = Frame(self.null_partner_replacer.window)
         b1 = Button(
             buttons, text="OK", 
-            command=lambda checks=checks: ok_link_partner(
-                checks))
+            command=lambda checks=checks: ok_link_partner(checks))
         b2 = Button(
             buttons, text="CANCEL", command=cancel_link_partner) 
 
@@ -1278,66 +1339,68 @@ class NuclearFamiliesTable(Frame):
             if self.cancel_unlink_partner_pressed is True:
                 return
             for dkt in self.unlink_partners["events"]:
+                finding = dkt["finding"]
                 if dkt["vars"] == [0, 0]:
                     continue
                 elif dkt["vars"] == [1, 1]:
-                    delete_couple_finding(dkt["finding"], fpid=dkt["fpid"])
+                    delete_couple_finding(finding)
                 elif dkt["vars"] == [0, 1]:
-                    unlink_partner(dkt["fpid"], [0, 1])
+                    unlink_partner(finding, [0, 1])
                 elif dkt["vars"] == [1, 0]:
-                    unlink_partner(dkt["fpid"], [1, 0])
+                    unlink_partner(finding, [1, 0])
             for dkt in self.unlink_partners["children"]:
+                finding = dkt["finding"]
                 if dkt["vars"] == [0, 0]:
                     continue
                 elif dkt["vars"] == [1, 1]:
-                    delete_offspring(conn, cur, fpid=dkt["fpid"])
+                    delete_offspring(conn, cur, finding)
                 elif dkt["vars"] == [0, 1]:
-                    unlink_offspring(dkt["fpid"], [0, 1])
+                    unlink_offspring(finding, [0, 1])
                 elif dkt["vars"] == [1, 0]:
-                    unlink_offspring(dkt["fpid"], [1, 0])
+                    unlink_offspring(finding, [1, 0])
 
-        def delete_offspring(conn, cur, fpid):
-            cur.execute(select_findings_persons_ppid, (fpid,))
-            ppid = cur.fetchone()[0]
-            cur.execute(delete_findings_persons_by_id, (fpid,))
+        def delete_offspring(conn, cur, finding_id):
+            # cur.execute(select_findings_persons_ppid, (fpid,))
+            # ppid = cur.fetchone()[0]
+            cur.execute(update_finding_ages_kintypes_null, (finding_id,))
             conn.commit()
-            cur.execute(delete_persons_persons, (ppid,))
-            conn.commit()
+            # cur.execute(delete_persons_persons, (ppid,))
+            # conn.commit()
 
-        def unlink_partner(fpid, order):
-            cur.execute(select_findings_persons_ppid, (fpid,))
-            ppid = cur.fetchone()[0]
-            cur.execute(select_persons_persons, (ppid,))
+        def unlink_partner(finding_id, order):
+            # cur.execute(select_findings_persons_ppid, (fpid,))
+            # ppid = cur.fetchone()[0]
+            cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
             currper = self.current_person
             if currper == person_id1:
                 if order == [0, 1]:
-                    cur.execute(update_persons_persons_2_null_by_id, (ppid,))
+                    cur.execute(update_finding_person_2_null_by_id, (finding_id,))
                 elif order == [1, 0]:
-                    cur.execute(update_persons_persons_1_null_by_id, (ppid,))                
+                    cur.execute(update_finding_person_1_null_by_id, (finding_id,))                
             elif currper == person_id2:
                 if order == [0, 1]:
-                    cur.execute(update_persons_persons_1_null_by_id, (ppid,))
+                    cur.execute(update_finding_person_1_null_by_id, (finding_id,))
                 elif order == [1, 0]:
-                    cur.execute(update_persons_persons_2_null_by_id, (ppid,))
+                    cur.execute(update_finding_person_2_null_by_id, (finding_id,))
             conn.commit()
 
-        def unlink_offspring(fpid, order):
-            cur.execute(select_findings_persons_ppid, (fpid,))
-            ppid = cur.fetchone()[0]
-            cur.execute(select_persons_persons, (ppid,))
+        def unlink_offspring(finding_id, order):
+            # cur.execute(select_findings_persons_ppid, (finding_id,))
+            # ppid = cur.fetchone()[0]
+            cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
             currper = self.current_person
             if currper == person_id1:
                 if order == [0, 1]:
-                    cur.execute(update_persons_persons_2_null_by_id, (ppid,))
+                    cur.execute(update_finding_person_2_null_by_id, (finding_id,))
                 elif order == [1, 0]:
-                    cur.execute(update_persons_persons_1_null_by_id, (ppid,))                
+                    cur.execute(update_finding_person_1_null_by_id, (finding_id,))
             elif currper == person_id2:
                 if order == [0, 1]:
-                    cur.execute(update_persons_persons_1_null_by_id, (ppid,))
+                    cur.execute(update_finding_person_1_null_by_id, (finding_id,))
                 elif order == [1, 0]:
-                    cur.execute(update_persons_persons_2_null_by_id, (ppid,))
+                    cur.execute(update_finding_person_2_null_by_id, (finding_id,))
             conn.commit()
 
         partner_id = None
@@ -1430,20 +1493,20 @@ class NuclearFamiliesTable(Frame):
             new_child_id = None 
             birth_id = None
             gender = "unknown"
-            fpid = child["fpid"]
+            # fpid = child["fpid"]
             death_date = "-0000-00-00-------"
             birth_date = "-0000-00-00-------"
             sorter = (0,0,0)
 
             if len(self.final) == 0:
-                cur.execute(select_findings_persons_ppid, (fpid,))
-                ppid = cur.fetchone()[0]
+                # cur.execute(select_findings_persons_ppid, (fpid,))
+                # ppid = cur.fetchone()[0]
                 cur.execute(select_finding_id_birth, (orig_child_id,))
                 birth_id = cur.fetchone()[0]
-                cur.execute(delete_findings_persons, (birth_id,))
+                cur.execute(update_finding_ages_kintypes_null, (birth_id,))
                 conn.commit()
-                cur.execute(delete_persons_persons, (ppid,))
-                conn.commit()
+                # cur.execute(delete_persons_persons, (ppid,))
+                # conn.commit()
                 return
 
             name_data = check_name(ent=widg)
@@ -1477,8 +1540,6 @@ class NuclearFamiliesTable(Frame):
                 death_id = death_id[0]
                 cur.execute(select_finding_date, (death_id,))
                 death_date = cur.fetchone()[0] 
-            cur.execute(update_findings_persons_finding, (birth_id, fpid))
-            conn.commit()
 
         for k,v in self.family_data[1].items():
             for child in v["children"]:
@@ -1537,10 +1598,10 @@ class NuclearFamiliesTable(Frame):
                     if death_id is None:
                         cur.execute(insert_finding_death, (new_date, child["id"], sorter))
                         conn.commit()
-                        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
-                        death_id = cur.fetchone()[0]
-                        cur.execute(insert_finding_places_new, (death_id,))
-                        conn.commit()
+                        # cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
+                        # death_id = cur.fetchone()[0]
+                        # cur.execute(insert_finding_places_new, (death_id,))
+                        # conn.commit()
                     else:
                         cur.execute(update_finding_date, (new_date, sorter, death_id))
                         conn.commit()
@@ -1551,16 +1612,16 @@ class NuclearFamiliesTable(Frame):
 
         def delete_parent(column):
             if column == 1:
-                cur.execute(update_persons_persons1_by_finding, (None, finding_id))
+                cur.execute(update_finding_person_1, (None, finding_id))
             elif column == 3:
-                cur.execute(update_persons_persons2_by_finding, (None, finding_id))
+                cur.execute(update_finding_person_2, (None, finding_id))
             conn.commit()
             inwidg.focus_set()
         z = 0
         for lst in self.family_data[0]:
             for dkt in lst[1:]: # father is 1, mother is 2
                 if inwidg == dkt["inwidg"]:
-                    finding_id = lst[0]["finding"]
+                    finding_id = lst[0]["birth_finding"]
                     break
             z += 1
         if len(self.final) != 0 or len(self.original) == 0:
@@ -1600,9 +1661,9 @@ class NuclearFamiliesTable(Frame):
             new_parent_id = name_data[1]
 
         if column == 1:
-            cur.execute(update_persons_persons1_by_finding, (new_parent_id, finding_id))
+            cur.execute(update_finding_person_1, (new_parent_id, finding_id))
         elif column == 3:
-            cur.execute(update_persons_persons2_by_finding, (new_parent_id, finding_id))
+            cur.execute(update_finding_person_2, (new_parent_id, finding_id))
         conn.commit()
         print("line", looky(seeline()).lineno, "self.temp_bind:", self.temp_bind)
         if self.temp_bind:
@@ -1682,11 +1743,12 @@ class NuclearFamiliesTable(Frame):
                 if tup[0] == new_kin_type:
                     new_id = tup[1]
                     break
-            fpid = self.family_data[0][1:][row - 1][0]["fpid"]
+            finding_id = self.family_data[0][1:][row - 1][0]["birth_finding"]
+            # fpid = self.family_data[0][1:][row - 1][0]["fpid"]
             if col == 0:
-                cur.execute(update_findings_persons_kin_type1, (new_id, fpid))
+                cur.execute(update_finding_kin_type_1, (new_id, finding_id))
             elif col == 2:
-                cur.execute(update_findings_persons_kin_type2, (new_id, fpid))                
+                cur.execute(update_finding_kin_type_2, (new_id, finding_id))                
             conn.commit()
             cancel_change()
             cur.close()

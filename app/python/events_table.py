@@ -33,33 +33,32 @@ from query_strings import (
     select_all_event_types_couple, select_all_kin_type_ids_couple,
     select_all_findings_current_person, select_findings_details_generic,
     select_findings_details_couple, select_findings_details_couple_generic,
-    select_finding_id_birth, select_person_ids_kin_types,
-    select_person_id_birth, select_finding_ids_age1_parents,
-    select_finding_ids_age2_parents, select_all_findings_notes_ids,
-    select_all_findings_roles_ids_distinct, select_findings_persons_parents,      
-    select_count_finding_id_sources, select_nesting_fk_finding,
+    select_finding_id_birth, select_finding_couple_details_by_finding,
+    select_person_id_birth, select_all_findings_notes_ids,
+    select_all_findings_roles_ids_distinct,      
+    select_count_finding_id_sources, 
     update_finding_particulars, select_all_kin_ids_types_couple,
     update_finding_age, update_current_person, select_all_place_ids,
     select_all_event_types, select_event_type_id, insert_finding_new,
-    insert_finding_new_couple, insert_findings_persons_new_couple,    
-    update_findings_persons_age1, select_max_finding_id, insert_place_new,
+    insert_finding_new_couple,
+    update_finding_age1, select_max_finding_id, insert_place_new,
     select_event_type_couple_bool, insert_kin_type_new, update_event_types,    
     insert_places_places_new, insert_finding_places_new_event,
     insert_event_type_new, select_max_event_type_id, delete_finding,
-    delete_finding_places, delete_findings_persons, insert_persons_persons,
+    update_finding_ages_kintypes_null, 
     delete_findings_roles_finding, delete_findings_notes_finding,         
-    select_findings_for_person, insert_finding_places_new, delete_claims_findings, 
+    select_findings_for_person, delete_claims_findings, 
     select_event_type_after_death, select_event_type_after_death_bool,
-    insert_finding_birth, update_findings_persons_age2, select_person,
-    select_finding_event_type, select_findings_persons_ppid,
-    select_findings_persons_person_id, update_finding_date, delete_persons_persons,
-    select_findings_persons_alt_parents, select_finding_id_guardianship, 
-    insert_persons_persons_null, insert_findings_persons_null_couple,
+    insert_finding_birth, update_finding_age2, select_person,
+    select_finding_event_type, 
+    select_finding_persons, update_finding_date,
+    select_finding_id_guardianship, 
     select_finding_id_adoption, select_finding_id_fosterage,
-    select_finding_ids_age1_alt_parents, select_finding_ids_age2_alt_parents,
+    select_finding_id_age1_alt_parents, select_finding_id_age2_alt_parents,
     select_person_id_alt_parentage, select_kin_type_string, 
-    select_person_ids_kin_types_include_nulls, select_findings_persons_id,
-    select_findings_details_offspring_alt_parentage,
+    select_finding_couple_details_include_nulls, 
+    select_finding_details_offspring_alt_parentage,
+    insert_finding_new_couple_alt, 
     )
 
 import dev_tools as dt
@@ -75,28 +74,23 @@ HEADS = (
     'event', 'date', 'place', 'particulars', 'age', 
     'roles', 'notes', 'sources')
 
-def delete_generic_finding(finding_id, fpid, conn, cur):
-    ppid = None
-    cur.execute(delete_finding_places, (finding_id,))
-    conn.commit()
+def delete_generic_finding(finding_id, conn, cur):
+# def delete_generic_finding(finding_id, fpid, conn, cur):
+    # ppid = None
+    # cur.execute(delete_finding_places, (finding_id,))
+    # conn.commit()
     cur.execute(delete_findings_roles_finding, (finding_id,))
     conn.commit()
     cur.execute(delete_findings_notes_finding, (finding_id,))
     conn.commit()
     cur.execute(delete_claims_findings, (finding_id,))
     conn.commit()
-    if fpid is not None:
-        cur.execute(select_findings_persons_ppid, (fpid,))
-        ppid = cur.fetchone()
-    cur.execute(delete_findings_persons, (finding_id,))
-    conn.commit()
-    if ppid is not None:
-        cur.execute(delete_persons_persons, ppid)
-        conn.commit()
+    # cur.execute(update_finding_ages_kintypes_null, (finding_id,))
+    # conn.commit()
     cur.execute(delete_finding, (finding_id,))
     conn.commit()
 
-def delete_couple_finding(finding_id, fpid=None):
+def delete_couple_finding(finding_id):
     """ Used also in families.py. """
     current_file = get_current_file()
     if current_file is not None:
@@ -106,8 +100,8 @@ def delete_couple_finding(finding_id, fpid=None):
     conn = sqlite3.connect(current_file)
     conn.execute('PRAGMA foreign_keys = 1')
     cur = conn.cursor()
-    delete_generic_finding(finding_id, fpid, conn, cur) #1
-    cur.execute(delete_findings_persons, (finding_id,)) #2
+    delete_generic_finding(finding_id, conn, cur) #1
+    cur.execute(update_finding_ages_kintypes_null, (finding_id,)) #2
     conn.commit()
     cur.close()
     conn.close()
@@ -217,26 +211,47 @@ def get_couple_findings(
 
     couple_kin_type_ids = get_couple_kin_types()
     curr_per_kin_types = tuple([current_person] + couple_kin_type_ids)
+
+
     sql =   '''
                 SELECT finding_id 
-                FROM findings_persons 
-                JOIN persons_persons
-                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                FROM finding
                 WHERE person_id1 = ?
                     AND kin_type_id1 in ({})
             '''.format(
                 ','.join('?' * (len(curr_per_kin_types) - 1)))
+
+
+    # sql =   '''
+                # SELECT finding_id 
+                # FROM findings_persons 
+                # JOIN persons_persons
+                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                # WHERE person_id1 = ?
+                    # AND kin_type_id1 in ({})
+            # '''.format(
+                # ','.join('?' * (len(curr_per_kin_types) - 1)))
     cur.execute(sql, curr_per_kin_types)
     couple_findings1 = [i[0] for i in cur.fetchall()]
     sql =   '''
                 SELECT finding_id 
-                FROM findings_persons 
-                JOIN persons_persons
-                    ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                FROM finding
                 WHERE person_id2 = ?
                     AND kin_type_id2 in ({})
             '''.format(
                 ','.join('?' * (len(curr_per_kin_types) - 1)))
+
+
+    # sql =   '''
+                # SELECT finding_id 
+                # FROM findings_persons 
+                # JOIN persons_persons
+                    # ON persons_persons.persons_persons_id = findings_persons.persons_persons_id
+                # WHERE person_id2 = ?
+                    # AND kin_type_id2 in ({})
+            # '''.format(
+                # ','.join('?' * (len(curr_per_kin_types) - 1)))
+
     cur.execute(sql, curr_per_kin_types)
     couple_findings2 = [i[0] for i in cur.fetchall()]
     couple_findings = couple_findings1 + couple_findings2
@@ -298,7 +313,7 @@ def make_parent_kintips(dkt, current_person, cur, person_autofill_values):
     birth_id = cur.fetchone()
     parents = (None, None)
     if birth_id:
-        cur.execute(select_person_ids_kin_types_include_nulls, birth_id)
+        cur.execute(select_finding_couple_details_include_nulls, birth_id)
         parents = cur.fetchone()
     if not parents:
         pass
@@ -332,7 +347,7 @@ def make_alt_parent_kintips(
     if event_id is None:
         return
     elif finding_id in event_id:
-        cur.execute(select_person_ids_kin_types, finding_id)
+        cur.execute(select_finding_couple_details_by_finding, finding_id)
         parents = cur.fetchone()
     if not parents:
         pass
@@ -373,10 +388,10 @@ def autocreate_parent_findings(
                 event_type = v
         return event_type
 
-    cur.execute(select_finding_ids_age1_alt_parents, (current_person,))
+    cur.execute(select_finding_id_age1_alt_parents, (current_person,))
     offspring1 = [list(i) for i in cur.fetchall()]
 
-    cur.execute(select_finding_ids_age2_alt_parents, (current_person,))
+    cur.execute(select_finding_id_age2_alt_parents, (current_person,))
     offspring2 = [list(i) for i in cur.fetchall()]
 
     offspring = offspring1 + offspring2
@@ -390,7 +405,9 @@ def autocreate_parent_findings(
 
     for child in offspring:
         offspring_event_id, parent_age, child_id = child
-        cur.execute(select_findings_details_offspring_alt_parentage, (child_id, offspring_event_id))     
+        cur.execute(
+            select_finding_details_offspring_alt_parentage, 
+            (child_id, offspring_event_id))     
         offspring_details = cur.fetchone()
         event_type = get_event_type_string(offspring_event_id)
         child_name = person_autofill_values[child_id][0]["name"]
@@ -599,11 +616,9 @@ class EventsTable(Frame):
             if couple_event_old == 0:
                 cur.execute(select_finding_event_type, (finding_id,))
                 event_type = cur.fetchone()[0]
-                delete_generic_finding(finding_id, None, conn, cur)
+                delete_generic_finding(finding_id, conn, cur)
             elif couple_event_old == 1:
-                cur.execute(select_findings_persons_id, (finding_id,))
-                fpid = cur.fetchone()[0]
-                delete_couple_finding(finding_id, fpid=fpid)
+                delete_couple_finding(finding_id)
             self.redraw()
             cur.close()
             conn.close()
@@ -757,8 +772,6 @@ class EventsTable(Frame):
             self.redraw()
 
         def update_place():
-            cur.execute(select_nesting_fk_finding, (self.finding,))
-            nested_place = cur.fetchone()[0]
             self.final = ValidatePlace(
                 self.root, 
                 self.treebard,
@@ -776,15 +789,15 @@ class EventsTable(Frame):
                 cur.execute(update_finding_age, (self.final, self.finding))
                 conn.commit() 
             else:
-                cur.execute(select_findings_persons_person_id, (self.finding,))
+                cur.execute(select_finding_persons, (self.finding,))
                 right_person = cur.fetchone()
                 if right_person[0] == self.current_person:
                     cur.execute(
-                        update_findings_persons_age1, 
+                        update_finding_age1, 
                         (self.final, self.finding, right_person[2]))
                 elif right_person[1] == self.current_person:
                     cur.execute(
-                        update_findings_persons_age2, 
+                        update_finding_age2, 
                         (self.final, self.finding, right_person[2])) 
                 conn.commit()
 
@@ -1258,8 +1271,7 @@ class EventsTable(Frame):
         self.main_window.nukefam_table.family_data = [
             [
                 [
-                    {'fpid': None, 'ppid': None, 'finding': None, 
-                        'sorter': [0, 0, 0]}, 
+                    {'birth_finding': None, 'sorter': [0, 0, 0]}, 
                     {'id': None, 'name': '', 'kin_type_id': 1, 
                         'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
                     {'id': None, 'name': '', 'kin_type_id': 2, 
@@ -1268,6 +1280,20 @@ class EventsTable(Frame):
             ],
             {},
         ]
+
+        # self.main_window.nukefam_table.family_data = [
+            # [
+                # [
+                    # {'fpid': None, 'ppid': None, 'finding': None, 
+                        # 'sorter': [0, 0, 0]}, 
+                    # {'id': None, 'name': '', 'kin_type_id': 1, 
+                        # 'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
+                    # {'id': None, 'name': '', 'kin_type_id': 2, 
+                        # 'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
+                # ],
+            # ],
+            # {},
+        # ]
 
     def make_header(self):
         y = 0
@@ -1741,11 +1767,13 @@ class NewEventDialog(Toplevel):
             pass
         elif self.couple_event == 1:
             self.other_person_id = name_data[1]
+
         self.age_1 = self.age1_input.get()
         if self.couple_event == 1:
             self.age_2 = self.age2_input.get()
             if name_data:
                 self.other_person = name_data[0]["name"]
+
         if self.couple_event == 0:
             cur.execute(
                 insert_finding_new, (
@@ -1753,14 +1781,28 @@ class NewEventDialog(Toplevel):
                     self.event_type_id, self.current_person))
             conn.commit()            
         else:
-            cur.execute(
-                insert_finding_new_couple, 
-                (self.new_finding, self.event_type_id,))
+            if self.new_alt_parent_event is True:
+                if self.event_type_id == 48:
+                    unisex_alt_parent = 130
+                elif self.event_type_id == 83:
+                    unisex_alt_parent = 110
+                elif self.event_type_id == 95:
+                    unisex_alt_parent = 120 
+                cur.execute(
+                    insert_finding_new_couple_alt, 
+                    (self.new_finding, self.event_type_id,
+                        unisex_alt_parent, unisex_alt_parent))
+                self.new_alt_parent_event = False 
+            else:
+                cur.execute(
+                    insert_finding_new_couple, 
+                    (self.new_finding, self.event_type_id,))
+
             conn.commit()
             self.couple_ok(cur, conn)
 
         if len(self.place_string) == 0:
-            cur.execute(insert_finding_places_new, (self.new_finding,))
+            cur.execute(update_finding_new_places_null, (self.new_finding,))
             conn.commit()
         else:
             self.update_db_place(conn, cur)
@@ -1783,9 +1825,9 @@ class NewEventDialog(Toplevel):
         update_particulars(
             self.particulars_input.get().strip(), self.new_finding) 
 
-        if self.new_alt_parent_event is True:
-            self.make_alt_parent_event(conn, cur, self.event_type_id)
-            self.new_alt_parent_event = False         
+        # if self.new_alt_parent_event is True:
+            # self.make_alt_parent_event(conn, cur, self.event_type_id)
+            # self.new_alt_parent_event = False         
 
         cur.close()
         conn.close()
@@ -1798,12 +1840,16 @@ class NewEventDialog(Toplevel):
         else:
             other_person_id = None
 
-        cur.execute(insert_persons_persons, (self.current_person, other_person_id))
-        conn.commit()        
-        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
-        ppid = cur.fetchone()[0]
-        cur.execute(insert_findings_persons_new_couple, (
-            self.new_finding, self.age_1, self.age_2, ppid))
+        # cur.execute(insert_persons_persons, (self.current_person, other_person_id))
+        # conn.commit()        
+        # cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
+        # ppid = cur.fetchone()[0]
+        # cur.execute(insert_findings_persons_new_couple, (
+            # self.new_finding, self.age_1, self.age_2, ppid))
+        cur.execute(
+            insert_finding_new_couple_details, 
+            (self.new_finding, self.current_person, self.age1, 
+                other_person_id, self.age2))
         conn.commit()
         if self.event_type_id == 1:
             self.create_birth_event(other_person_id, cur, conn)
@@ -1813,8 +1859,8 @@ class NewEventDialog(Toplevel):
         new_finding = cur.fetchone()[0] + 1
         cur.execute(insert_finding_birth, (new_finding, child_id))
         conn.commit()
-        cur.execute(insert_finding_places_new, (new_finding,))
-        conn.commit()
+        # cur.execute(insert_finding_places_new, (new_finding,))
+        # conn.commit()
         return new_finding
 
     def focus_first_empty(self):
@@ -1890,25 +1936,23 @@ class NewEventDialog(Toplevel):
         self.grab_set()
         self.lift()
 
-    def make_alt_parent_event(self, conn, cur, event_type_id):
-        """ Auto-create the database rows needed to store alt parents. 
-            In module-level namespace for reasons maybe no longer relevant?
-            
-        """
-        if event_type_id == 48:
-            unisex_alt_parent = 130
-        elif event_type_id == 83:
-            unisex_alt_parent = 110
-        elif event_type_id == 95:
-            unisex_alt_parent = 120
-        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
-        event_id = cur.fetchone()[0]
-        cur.execute(insert_persons_persons_null)
-        conn.commit()
-        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
-        ppid = cur.fetchone()[0]
-        cur.execute(insert_findings_persons_null_couple, (event_id, unisex_alt_parent, unisex_alt_parent, ppid))
-        conn.commit() 
+    # def make_alt_parent_event(self, conn, cur, event_type_id, new_event_id):
+        # """ Auto-create the database rows needed to store alt parents. """
+        # if event_type_id == 48:
+            # unisex_alt_parent = 130
+        # elif event_type_id == 83:
+            # unisex_alt_parent = 110
+        # elif event_type_id == 95:
+            # unisex_alt_parent = 120
+        # # cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
+        # # event_id = cur.fetchone()[0]
+        # # cur.execute(insert_persons_persons_null)
+        # # conn.commit()
+        # # cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
+        # # ppid = cur.fetchone()[0]
+        # cur.execute(insert_findings_persons_null_couple, (
+            # new_event_id, unisex_alt_parent, unisex_alt_parent, ppid))
+        # conn.commit() 
 
 short_values = ['red', 'white', 'blue', 'black', 'rust', 'pink', 'steelblue']
 

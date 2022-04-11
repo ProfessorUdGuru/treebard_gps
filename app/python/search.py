@@ -17,9 +17,8 @@ from messages_context_help import search_person_help_msg
 from query_strings import (
     select_person_distinct_like, select_name_details,
     select_finding_sorter, select_name_sort_order, select_person_death_date,
-    select_person_birth_date, select_persons_persons_ma_id1, 
-    select_persons_persons_ma_id2, select_persons_persons_pa_id1,
-    select_persons_persons_pa_id2
+    select_person_birth_date,  
+    select_finding_mother, select_finding_father
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -604,17 +603,17 @@ class PersonSearch(Toplevel):
         name = None
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        cur.execute(select_persons_persons_ma_id1, (self.offspring_event,))
+        # cur.execute(select_persons_persons_ma_id1, (self.offspring_event,))
+        # mom = cur.fetchone()
+        # if mom:
+            # self.ma_id = mom[0]
+        # else:
+        cur.execute(select_finding_mother, (self.offspring_event,))
         mom = cur.fetchone()
         if mom:
             self.ma_id = mom[0]
         else:
-            cur.execute(select_persons_persons_ma_id2, (self.offspring_event,))
-            mom = cur.fetchone()
-            if mom:
-                self.ma_id = mom[0]
-            else:
-                self.ma_id = None
+            self.ma_id = None
 
         if self.ma_id is not None:
             name = self.person_autofill_values[self.ma_id][0]["name"]
@@ -633,17 +632,17 @@ class PersonSearch(Toplevel):
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
 
-        cur.execute(select_persons_persons_pa_id1, (self.offspring_event,))
+        cur.execute(select_finding_father, (self.offspring_event,))
         pop = cur.fetchone()
         if pop:
             self.pa_id = pop[0]
         else:
-            cur.execute(select_persons_persons_pa_id2, (self.offspring_event,))
-            pop = cur.fetchone()
-            if pop:
-                self.pa_id = pop[0]
-            else:
-                self.pa_id = None
+            # cur.execute(select_persons_persons_pa_id2, (self.offspring_event,))
+            # pop = cur.fetchone()
+            # if pop:
+                # self.pa_id = pop[0]
+            # else:
+            self.pa_id = None
         if self.pa_id is not None:
             name = self.person_autofill_values[self.pa_id][0]["name"]
             # name = self.person_autofill_values[self.pa_id]["birth name"]
