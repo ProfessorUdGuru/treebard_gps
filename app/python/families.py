@@ -16,19 +16,19 @@ from persons import (
 from messages import InputMessage, open_message, families_msg
 from dates import format_stored_date, get_date_formats, OK_MONTHS, validate_date
 from events_table import (
-    get_current_person, delete_generic_finding, delete_couple_finding)
+    get_current_person, delete_generic_finding, delete_couple_finding,
+    initialize_family_data_dict)
 from query_strings import (
     select_finding_id_birth, update_finding_ages_kintypes_null, select_finding_persons,
     select_person_gender_by_id, select_finding_date, select_finding_id_birth,
     select_finding_id_death, select_finding_date_and_sorter,
     update_finding_person_1, update_finding_person_2, select_kin_type_string,
     update_finding_person_1, update_finding_person_2,
-    select_kin_type_alt_parent, update_finding_kin_type_1,
-    update_finding_kin_type_2, 
+    select_kin_type_alt_parent, update_finding_kin_type_1, 
     update_finding_age2_blank, update_finding_age1_blank,
     update_finding_person_1_null_by_id, update_finding_person_2_null_by_id,
     select_finding_details, update_current_person,
-    select_all_event_type_ids_marital,
+    update_finding_kin_type_2, select_all_event_type_ids_marital,
     insert_finding_couple, insert_finding_persons, update_person_gender,
     update_finding_date, insert_finding_death, 
     select_finding_couple_details, select_finding_details_sorter,
@@ -43,6 +43,7 @@ from query_strings import (
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
+
 
 
 
@@ -66,7 +67,21 @@ class NuclearFamiliesTable(Frame):
             self, master, root, treebard, current_person, findings_table, 
             right_panel, formats, person_autofill_values=[], 
             *args, **kwargs):
-        """ self.family_data[0] is for parents and alt parents of current person.
+        """ This dict has to be recreated in events_table.py which can't import
+            from here:
+                self.family_data = [
+                    [
+                        [
+                            {'finding': None, 'sorter': [0, 0, 0]}, 
+                            {'id': None, 'name': '', 'kin_type_id': 2, 
+                                'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
+                            {'id': None, 'name': '', 'kin_type_id': 1, 
+                                'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
+                        ],
+                    ],
+                    {},
+                ]
+            self.family_data[0] is for parents and alt parents of current person.
             self.family_data[0][0] is for biological parents.
             self.family_data[0][1] is for alt parents.
             self.family_data[0][x][0] is for data that's true for both parents.
@@ -97,24 +112,7 @@ class NuclearFamiliesTable(Frame):
         self.link_partners = {"events": [], "children": []}
 
         self.parent_types = []
-
-        self.temp_bind = None
-
-        # There's an exact copy of this blank collection in forget_cells() in events_table.py
-        #   so it has to be changed if this is changed. Initial attempt to not repeat
-        #   the code didn't work.
-        self.family_data = [
-            [
-                [
-                    {'finding': None, 'sorter': [0, 0, 0]}, 
-                    {'id': None, 'name': '', 'kin_type_id': 2, 
-                        'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
-                    {'id': None, 'name': '', 'kin_type_id': 1, 
-                        'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
-                ],
-            ],
-            {},
-        ]
+        self.family_data = initialize_family_data_dict()
 
         self.widget = None
         self.idtip = None
@@ -181,7 +179,8 @@ class NuclearFamiliesTable(Frame):
         EntryAutoPerson.all_person_autofills.extend([self.ma_input, self.pa_input])
         for ent in (self.pa_input, self.ma_input):
             ent.bind("<FocusIn>", self.get_original, add="+")
-            ent.bind("<Double-Button-1>", self.change_current_person) 
+            ent.bind("<FocusOut>", self.get_final)
+            ent.bind("<Double-Button-1>", self.change_current_person)
 
     def make_new_kin_inputs(self):
         """ Get self.new_kid_frame into the correct row by ungridding it in 
@@ -203,7 +202,6 @@ class NuclearFamiliesTable(Frame):
         EntryAutoPerson.all_person_autofills.append(self.new_kid_input)
 
         self.make_idtips()
-        # self.bind_person_inputs()
 
     def get_marital_event_types(self, conn, cur):
 
@@ -240,6 +238,7 @@ class NuclearFamiliesTable(Frame):
         self.populate_nuke_tables()
         for widg in self.nukefam_inputs:
             widg.bind("<FocusIn>", self.get_original, add="+")
+            widg.bind("<FocusOut>", self.get_final)
         if on_load:
             self.make_new_kin_inputs()
         self.new_kid_frame.grid(column=0, row=self.last_row, sticky="ew")
@@ -274,10 +273,15 @@ class NuclearFamiliesTable(Frame):
         n = 0
         for i, (k,v) in enumerate(self.family_data[1].items(), start=1):
             n = (i * 2) - 1
-            pard_kin_type = ""
+            pard_kin_text = ""
             name = v["partner_name"]
-            if len(v["partner_kin_type"]) != 0:
-                pard_kin_type = "{}:".format(v["partner_kin_type"].title()) 
+            partner_kin_type = v["partner_kin_type"]
+
+            if partner_kin_type is None:
+                pard_kin_text = "Partner:"
+            elif len(partner_kin_type) != 0:
+                pard_kin_text = "{}:".format(v["partner_kin_type"].title()) 
+            
             pard_id = k
             pard = "pard_{}_{}".format(pard_id, n)
             pardframe = Frame(self.nukefam_window)
@@ -291,15 +295,16 @@ class NuclearFamiliesTable(Frame):
             if n == 1:
                 pardrad.select()
 
-            if len(v["children"]) != 0 and len(v["partner_kin_type"]) == 0:
+            if partner_kin_type is None:
+                pardlab = LabelH3(pardframe, text=pard_kin_text, anchor="w")
+            if len(v["children"]) != 0 and len(partner_kin_type) == 0:
                 ma_pa = "{}:".format(v["parent_type"])
                 pardlab = LabelH3(pardframe, text=ma_pa, anchor="w")
-            elif len(v["children"]) != 0 and len(v["partner_kin_type"]) != 0:
-                ma_pa = "{} ({}):".format(v["partner_kin_type"].title(), v["parent_type"])
+            elif len(v["children"]) != 0 and len(partner_kin_type) != 0:
+                ma_pa = "{} ({}):".format(partner_kin_type.title(), v["parent_type"])
                 pardlab = LabelH3(pardframe, text=ma_pa, anchor="w")
             else:
-                pardlab = LabelH3(
-                    pardframe, text=pard_kin_type, anchor="w")
+                pardlab = LabelH3(pardframe, text=pard_kin_text, anchor="w")
 
             self.pardlabs.append(pardlab)
             pardlab.grid(column=1, row=n)
@@ -486,6 +491,7 @@ class NuclearFamiliesTable(Frame):
             EntryAutoPerson.all_person_autofills.extend([ent_l, ent_r])
             for ent in (ent_l, ent_r):
                 ent.bind("<FocusIn>", self.get_original, add="+")
+                ent.bind("<FocusOut>", self.get_final)
                 ent.bind("<Double-Button-1>", self.change_current_person) 
                 self.nukefam_containers.append(ent)
             for lab in (lab_l, lab_r):
@@ -618,7 +624,7 @@ class NuclearFamiliesTable(Frame):
             if v["offspring"] is True:
                 for tup in births:
                     order = "{}-{}".format(str(tup[2]), str(tup[4]))                
-                    if tup[3] == pardner:                        
+                    if tup[3] == pardner:  
                         parent_type = tup[4]
                         pard_id = tup[3]
                         self.make_pard_dict(pard_id, parent_type, cur)
@@ -633,7 +639,7 @@ class NuclearFamiliesTable(Frame):
                             self.family_data[1][pardner]["children"].append(
                                 {"birth_id": tup[0], "order": order})      
 
-            if v["events"] is True and v["offspring"] is False:
+            elif v["events"] is True and v["offspring"] is False:
                 self.make_pard_dict(pardner, "", cur)
         for pard_id in progenies:
             for k,v in self.family_data[1].items():
@@ -673,15 +679,12 @@ class NuclearFamiliesTable(Frame):
         alt_births = [tup for q in (result1, result2) for tup in q]
         alt_births = [list(i) for i in alt_births]
         for lst in alt_births:
-            print("line", looky(seeline()).lineno, "lst:", lst)
             cur.execute(select_finding_id_by_person_and_event, (lst[0],))
             birth_evt_id = cur.fetchone()[0]
-            print("line", looky(seeline()).lineno, "birth_evt_id:", birth_evt_id)
             lst[0] = birth_evt_id
-        print("line", looky(seeline()).lineno, "alt_births:", alt_births)
         return alt_births
 
-    def make_pard_dict(self, pard_id, parent_type, cur):        
+    def make_pard_dict(self, pard_id, parent_type, cur): 
         if parent_type:
             self.parent_types.append(parent_type)
 
@@ -695,14 +698,13 @@ class NuclearFamiliesTable(Frame):
             p += 1
         self.parent_types = list(set(self.parent_types))
         stg = " or ".join(self.parent_types)
-        compound_parent_type = "Children's {}".format(stg)
-
+        compound_parent_text = "Children's {}".format(stg)
         if pard_id is None:
             partner_name = ""
         else:
             partner_name = self.person_autofill_values[pard_id][0]["name"]
 
-        self.family_data[1][pard_id]["parent_type"] = compound_parent_type
+        self.family_data[1][pard_id]["parent_type"] = compound_parent_text
         self.family_data[1][pard_id]["partner_name"] = partner_name 
 
     def collect_couple_events(self, cur, conn):
@@ -728,7 +730,9 @@ class NuclearFamiliesTable(Frame):
         for k,v in self.family_data[1].items():
             if partner_id == k:
                 cur.execute(select_kin_types, (lst[2],))
-                kin_type = cur.fetchone()[0]
+                kin_type = cur.fetchone()
+                if kin_type:
+                    kin_type = kin_type[0]
                 sorter = self.make_sorter(lst[3])
                 self.sorters.append((k, sorter))
                 if kin_type in ("generic_partner1", "generic_partner2"):
@@ -870,9 +874,6 @@ class NuclearFamiliesTable(Frame):
         conn.commit()
         cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
         birth_id = cur.fetchone()[0]
-        # cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "persons_persons"')
-        # ppid = cur.fetchone()[0]
-        # cur.execute(insert_finding_couple, (birth_id, ppid))
         cur.execute(insert_finding_couple, (birth_id,))
         conn.commit()
 
@@ -888,7 +889,6 @@ class NuclearFamiliesTable(Frame):
             opened the PersonAdd dialog when it wasn't wanted. This seems to 
             have solved the problem but the cause of the problem was not found. 
         """
-        self.temp_bind = evt.widget.bind("<FocusOut>", self.get_final, add="+")
         self.original = evt.widget.get()
 
     def update_partner(self, final, conn, cur, inwidg):
@@ -972,34 +972,33 @@ class NuclearFamiliesTable(Frame):
             self.cancel_link_partner_pressed = True
             self.null_partner_replacer.destroy()
             self.cancel_link_partner_pressed = False
-        # function call was deleted after 20220405, don't know why 
-        # def update_partners_link(inwidg, conn, cur):
-            # """ Run after dialog closes. """
-            # def update_partners_child(birth_fpid, order, parent_type):
-                # cur.execute(select_findings_persons_ppid, (birth_fpid,))
-                # ppid = cur.fetchone()[0]
-                # if parent_type == "Children's Father":
-                    # if order == "1-2":   
-                        # cur.execute(update_finding_age2_blank, (birth_fpid,))
-                        # conn.commit()
-                        # cur.execute(update_finding_person_2, (self.new_partner_id, ppid))
-                        # conn.commit()
-                    # elif order == "2-1":      
-                        # cur.execute(update_finding_age1_blank, (birth_fpid,))
-                        # conn.commit()
-                        # cur.execute(update_finding_person_1, (self.new_partner_id, ppid))
-                        # conn.commit()                    
-                # elif parent_type == "Children's Mother":
-                    # if order == "1-2":
-                        # cur.execute(update_finding_age1_blank, (birth_fpid,))
-                        # conn.commit()
-                        # cur.execute(update_finding_person_1, (self.new_partner_id, ppid))
-                        # conn.commit()
-                    # elif order == "2-1":   
-                        # cur.execute(update_finding_age2_blank, (birth_fpid,))
-                        # conn.commit()
-                        # cur.execute(update_finding_person_2, (self.new_partner_id, ppid))
-                        # conn.commit()
+        def update_partners_link(inwidg, conn, cur):
+            """ Run after dialog closes. """
+            def update_partners_child(birth_fpid, order, parent_type):
+                cur.execute(select_findings_persons_ppid, (birth_fpid,))
+                ppid = cur.fetchone()[0]
+                if parent_type == "Children's Father":
+                    if order == "1-2":   
+                        cur.execute(update_finding_age2_blank, (birth_fpid,))
+                        conn.commit()
+                        cur.execute(update_finding_person_2, (self.new_partner_id, ppid))
+                        conn.commit()
+                    elif order == "2-1":      
+                        cur.execute(update_finding_age1_blank, (birth_fpid,))
+                        conn.commit()
+                        cur.execute(update_finding_person_1, (self.new_partner_id, ppid))
+                        conn.commit()                    
+                elif parent_type == "Children's Mother":
+                    if order == "1-2":
+                        cur.execute(update_finding_age1_blank, (birth_fpid,))
+                        conn.commit()
+                        cur.execute(update_finding_person_1, (self.new_partner_id, ppid))
+                        conn.commit()
+                    elif order == "2-1":   
+                        cur.execute(update_finding_age2_blank, (birth_fpid,))
+                        conn.commit()
+                        cur.execute(update_finding_person_2, (self.new_partner_id, ppid))
+                        conn.commit()
 
             if self.cancel_link_partner_pressed is True:
                 return
@@ -1028,20 +1027,20 @@ class NuclearFamiliesTable(Frame):
         def link_partner(finding_id):
             cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
-            currper = self.current_person
-            if currper == person_id1:
+            # currper = self.current_person
+            if self.current_person == person_id1:
                 cur.execute(update_finding_person_2, (self.new_partner_id, finding_id))
-            elif currper == person_id2:
+            elif self.current_person == person_id2:
                 cur.execute(update_finding_person_1, (self.new_partner_id, finding_id))
             conn.commit()
 
         def link_offspring(finding_id):
             cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
-            currper = self.current_person
-            if currper == person_id1:
+            # currper = self.current_person
+            if self.current_person == person_id1:
                 cur.execute(update_finding_person_2, (self.new_partner_id, finding_id))
-            elif currper == person_id2:
+            elif self.current_person == person_id2:
                 cur.execute(update_finding_person_1, (self.new_partner_id, finding_id))
             conn.commit()
 
@@ -1162,6 +1161,7 @@ class NuclearFamiliesTable(Frame):
             if self.cancel_unlink_partner_pressed is True:
                 return
             for dkt in self.unlink_partners["events"]:
+                print("line", looky(seeline()).lineno, "dkt:", dkt)
                 finding = dkt["finding"]
                 if dkt["vars"] == [0, 0]:
                     continue
@@ -1172,7 +1172,8 @@ class NuclearFamiliesTable(Frame):
                 elif dkt["vars"] == [1, 0]:
                     unlink_partner(finding, [1, 0])
             for dkt in self.unlink_partners["children"]:
-                finding = dkt["finding"]
+                print("line", looky(seeline()).lineno, "dkt:", dkt)
+                finding = dkt["birth_id"]
                 if dkt["vars"] == [0, 0]:
                     continue
                 elif dkt["vars"] == [1, 1]:
@@ -1472,16 +1473,18 @@ class NuclearFamiliesTable(Frame):
         elif column == 3:
             cur.execute(update_finding_person_2, (new_parent_id, finding_id))
         conn.commit()
-        if self.temp_bind:
-            widg.unbind("<FocusOut>", self.temp_bind)
+        # if self.temp_bind:
+            # widg.unbind("<FocusOut>", self.temp_bind)
 
     def get_final(self, evt):
+        print("line", looky(seeline()).lineno, "self.original:", self.original)
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         widg = evt.widget
         self.final = widg.get()
+        print("line", looky(seeline()).lineno, "self.final:", self.final)
         if self.final == self.original:
             return
         gridinfo = widg.grid_info()
@@ -1507,6 +1510,7 @@ class NuclearFamiliesTable(Frame):
                 kin_type = 48                    
             self.update_parent(self.final, conn, cur, widg, column, kin_type=kin_type)
         elif widgname.startswith("pard"):
+            print("line", looky(seeline()).lineno, "widgname:", widgname)
             if column == 2:
                 self.update_partner(self.final, conn, cur, widg)                
             else:

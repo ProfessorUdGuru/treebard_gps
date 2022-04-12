@@ -51,8 +51,8 @@ from dev_tools import looky, seeline
 
 
 MAIN_TABS = (
-    ("person", "P"), ("places", "L"), ("sources", "S"), 
-    ("names", "N"), ("reports", "R"), ("charts", "A"), ("projects", "J"), 
+    ("person", "P"), ("names", "N"), ("assertions", "A"), ("places", "L"), 
+    ("sources", "S"), ("reports", "R"), ("charts", "Z"), ("projects", "J"), 
     ("graphics", "G"), ("links", "K"), ("search", "H"), ("types", "T"), 
     ("preferences", "E"))
 

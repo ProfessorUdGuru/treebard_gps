@@ -169,33 +169,30 @@ if __name__ == '__main__':
 
 # DO LIST
 
+# BRANCH: families_table_validation
+# check partner labels for all combinations such as events + children, events only, children only, None, etc.
+# how to change kin type ie get rid of generic partner 128 & 129
+# co-highlight corresponding rows in families table and events table when pointed at
+# in get_final call a new method define_input in which every one of the tests in the chart below is equally represented including a new one DUPE>SAME DUPE DIFFERENT PERSON with flags set and returned so the right code will run in get_final. In a simple and symmetrical way, run a given method depending on what define_input returns
 # TESTING NOT DONE TILL EACH OPTION IS xx DOUBLE CHECKED
 # rule: when making a change in the code, reduce any XXs to single x & test everything again
 #                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
 #   USING STRING INPUT:
-# NONE>EXISTING             xx               x             x              n/a
+# NONE>EXISTING              x               x             x              n/a
 # NONE>DUPE                  x               x             x              n/a
 # NONE>NEW                   x               x             x              n/a
-# CHANGE>EXISTING           xx               x             x               x
+# CHANGE>EXISTING            x               x             x               x
 # CHANGE>DUPE                x               x             x               x
 # CHANGE>NEW                 x               x             x               x
 # UNLINK                     x               x             x               x 
 #   USING #ID INPUT:
-# NONE>EXISTING             xx               x             x              n/a
+# NONE>EXISTING              x               x             x              n/a
 # NONE>DUPE                  x               x             x              n/a
 # NONE>NEW                   x               x             x              n/a
-# CHANGE>EXISTING           xx               x             x               x
+# CHANGE>EXISTING            x               x             x               x
 # CHANGE>DUPE                x               x             x               x
 # CHANGE>NEW                 x               x             x               x
 # UNLINK                     x               x             x               x 
-
-# "plus" msg opens wrongly if none>existing w/id but not on first loading app. solution: refactor first.
-
-# BRANCH: combine_3_tables
-# export dbs to .sql
-
-# BRANCH: families_table_validation
-# Design deficit: If wrong John Smith is entered, and you try to enter a different John Smith, you can't because the 2 names are the same so self.final == self.original and nothing happens. Possible solution is to use a special char like "?" for example as done in add new person instead of relying on self.final to be different. FIX THIS FIRST.
 # when using dupe name dlg for foster parent there's an error in forget_cells() can't delete tcl command, seems to be no problem in bio father with dupes but in bio mother same problem can't delete. The data goes into the db anyway so all is right on reload.
 # make it impossible for a person to be their own parent, partner or child
 # Make sure it's impossible to add a name with length of 0.
@@ -203,7 +200,9 @@ if __name__ == '__main__':
 # Often on ctrl+s, Jeremiah fills into whatever autofill is in focus.
 # when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here. Is this because the parent fields and alt parent fields aren't made at the same time? Does a tab order method need to be rerun when creating an alt parent field? See also gender field in child row--tab traversal works if just tabbing thru, but after changing something, focus out doesn't go to next widget because of redraw(). So the autofill needs a feature wherein it registers itself as self.current_widget on FocusIn so that redraw() can go like self.current_widget.tkFocusNext().focus_set()(
 # RCM: There are two ways to deal with unknown partners of the current person: unknown name labels and null persons. An unknown name label has to contain at least one character. Using letters in unknown name labels is a bad idea. For example, the label 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. The purpose of an unknown name label made with symbols (a name such as '?' or '_____') is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name labels will differentiate the current person's two families. This works since duplicate names are allowed, such as two people that are both temporarily named '_____', and each person will have a unique ID number. It's OK to not use unknown name labels, but in that case, Treebard will lump all children and marital events of the current person's whose partner is null into a single family. If you want to avoid this, use a name such as '?' or '_____' with at least one character and Treebard will give this person a unique ID instead of a null ID. If you use null partners when creating marital events, for example, all the children and marital events for the current person where the current person's partner is left blank will be lumped together into one family. This is easy to change, but most users will probably prefer to differentiate families of unknown partners by using unknown name labels. To change from a null partner to unknown name labels, type an unknown name label into an empty partner field. Empty partner fields exist when there are marital events with null partner or children with a null parent. When you tab out of the field, a dialog will open listing all the marital events and children for the current person with a null partner. You can choose which one to link to the new unnamed person you're creating. This is easier to do than it is to describe. Just try it.
-# move queries to query module, delete unused queries from module & queries module
+# add a feature to all autofills, if autofill is in focus and empty (i.e. you just deleted its contents but haven't changed anything or tabbed out yet), and you press ESCAPE, the old contents fill back in and it focuses out (maybe it doesn't have to be blank too?)
+# delete unused queries from module & queries module
+# delete unused imports everywhere
 # Test everything on the video tour list before making the video.
 # delete commented code and edit docstrings before pushing to repo
 # export dbs to .sql
@@ -224,6 +223,7 @@ if __name__ == '__main__':
 """ Redo all docstrings everywhere to look
     like this.
 """
+# alphabetize query strings after standardizing names
 # export dbs to .sql
 # fix redraw() so top pic changes on ctrl-s if the main pic was changed w/ radio in gallery
 

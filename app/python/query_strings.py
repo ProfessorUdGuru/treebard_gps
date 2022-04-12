@@ -111,8 +111,8 @@ insert_event_type_new = '''
 '''
 
 insert_finding_birth = '''
-    INSERT INTO finding (finding_id, age, event_type_id, person_id, nest0)
-    VALUES (?, 0, 1, ?, 1)
+    INSERT INTO finding (age, event_type_id, person_id, nest0)
+    VALUES (0, 1, ?, 1)
 '''
 
 insert_finding_couple = '''
@@ -121,8 +121,8 @@ insert_finding_couple = '''
 '''
 
 insert_finding_new = '''
-    INSERT INTO finding (finding_id, age, event_type_id, person_id)
-    VALUES (?, ?, ?, ?)
+    INSERT INTO finding (event_type_id, person_id)
+    VALUES (?, ?)
 '''
 
 insert_finding_birth_new_person = '''
@@ -136,27 +136,27 @@ insert_finding_death = '''
 '''
 
 insert_finding_new_couple = '''
-    INSERT INTO finding (finding_id, event_type_id, person_id1, person_id2)
-    VALUES (?, ?, null, null)
+    INSERT INTO finding (
+        event_type_id, person_id1, person_id2, kin_type_id1, kin_type_id2)
+    VALUES (?, ?, null, 128, 129)
 '''
 
 insert_finding_new_couple_alt = '''
     INSERT INTO finding (
-        finding_id, event_type_id, person_id1, person_id2, 
-            kin_type_id1, kin_type_id2)
-    VALUES (?, ?, null, null, ?, ?)
+        event_type_id, person_id1, person_id2, kin_type_id1, kin_type_id2)
+    VALUES (?, null, null, ?, ?)
 '''
 
 insert_findings_notes_new = '''
     INSERT INTO findings_notes 
     VALUES (null, ?, ?, 0)
 '''
-
+# null event_type_id not allowed
 insert_finding_new_couple_details = '''
     INSERT INTO finding (
         finding_id, person_id1, age1, kin_type_id1, 
-        person_id2, age2, kin_type_id2)
-    VALUES (?, ?, ?, 128, ?, ?, 129)
+        person_id2, age2, kin_type_id2, event_type_id)
+    VALUES (?, ?, ?, 128, ?, ?, 129, ?)
 '''
 
 insert_finding_null_couple = '''
@@ -876,10 +876,6 @@ select_max_event_type_id = '''
     SELECT MAX(event_type_id) FROM event_type
 '''
 
-select_max_finding_id = '''
-    SELECT MAX(finding_id) FROM finding
-'''
-
 select_max_name_type_id = '''
     SELECT MAX(name_type_id) FROM name_type
 '''
@@ -1130,6 +1126,7 @@ select_person_id_finding = '''
     FROM finding
     WHERE finding_id = ?
 '''
+
 select_finding_couple_details_by_finding = '''
     SELECT person_id1, a.kin_types, person_id2, b.kin_types
     FROM finding
@@ -1140,14 +1137,30 @@ select_finding_couple_details_by_finding = '''
     WHERE finding_id = ?
 '''
 
+
+
+# select_person_ids_kin_types_include_nulls = '''
+    # SELECT person_id1, a.kin_types, person_id2, b.kin_types
+    # FROM findings_persons
+    # LEFT JOIN persons_persons
+        # ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
+    # LEFT JOIN kin_type as a
+        # ON a.kin_type_id = findings_persons.kin_type_id1
+    # LEFT JOIN kin_type as b
+        # ON b.kin_type_id = findings_persons.kin_type_id2
+    # WHERE finding_id = ?
+# '''
+
 select_finding_couple_details_include_nulls = '''
-    SELECT person_id1, a.kin_types, person_id2, b.kin_types
-    FROM finding
-    LEFT JOIN kin_type as a
-        ON a.kin_type_id = finding.kin_type_id1
-    LEFT JOIN kin_type as b
-        ON b.kin_type_id = finding.kin_type_id2
-    WHERE finding_id = ?
+    SELECT r.person_id1, a.kin_types, q.person_id2, b.kin_types
+    FROM finding AS q
+    LEFT JOIN finding AS r
+        ON r.finding_id = q.finding_id
+    LEFT JOIN kin_type AS b
+        ON b.kin_type_id = q.kin_type_id1
+    LEFT JOIN kin_type AS a
+        ON a.kin_type_id = r.kin_type_id2
+    WHERE q.finding_id = ?
 '''
 
 select_finding_persons = '''
