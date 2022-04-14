@@ -1,14 +1,15 @@
 # autofill.py
 
 import tkinter as tk
-from widgets import EntryUnhilited
+from widgets import Entry
+from styles import make_formats_dict
 import dev_tools as dt
 from dev_tools import looky, seeline
 
 
 
 
-class EntryAuto(EntryUnhilited):
+class EntryAuto(Entry):
     '''
         To use this class, after instantiating it, you have to call 
         EntryAuto.create_lists(all_items). Other than getting all_items
@@ -32,10 +33,19 @@ class EntryAuto(EntryUnhilited):
         return final_items
 
     def __init__(self, master, autofill=False, values=None, *args, **kwargs):
-        EntryUnhilited.__init__(self, master, *args, **kwargs)
+        Entry.__init__(self, master, *args, **kwargs)
         self.master = master
         self.autofill = autofill
         self.values = values
+
+        self.formats = make_formats_dict()
+
+        self.config(
+            bd=0,
+            bg=self.formats['bg'], 
+            fg=self.formats['fg'], 
+            font=self.formats['input_font'], 
+            insertbackground=self.formats['fg'])
 
         # self.pos = 0 # added 20220407 to prevent error which couldn't be replicated
 

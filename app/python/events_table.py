@@ -298,7 +298,6 @@ def get_couple_findings(
 def make_parent_kintips(dkt, current_person, cur, person_autofill_values):
     cur.execute(select_finding_id_birth, (current_person,))
     birth_id = cur.fetchone()
-    print("line", looky(seeline()).lineno, "birth_id:", birth_id)
     parents = (None, None)
     if birth_id:
         cur.execute(select_finding_couple_details_include_nulls, birth_id)
@@ -531,6 +530,7 @@ class EventsTable(Frame):
         self.kintip_text = None
         self.kin_widths = [0, 0, 0, 0, 0, 0]
         self.kintip_bindings = {"on_enter": [], "on_leave": []}
+        self.hovered_kin_widg = None
 
         self.screen_height = self.winfo_screenheight()
         self.column_padding = 2
@@ -1028,6 +1028,7 @@ class EventsTable(Frame):
                         offspring_in = widg.bind(
                             "<Enter>", lambda evt, 
                             kin="child", name=name: self.handle_enter(kin, name))
+                            # kin="child", name=name: self.handle_enter(evt, kin, name))
                         offspring_out = widg.bind("<Leave>", self.on_leave)
                         self.widget = widg
                         self.kintip_bindings["on_enter"].append([widg, offspring_in])
@@ -1043,19 +1044,21 @@ class EventsTable(Frame):
                             "<Enter>", lambda evt, 
                             kin=kin, 
                             name=name: self.handle_enter(kin, name))
+                            # name=name: self.handle_enter(evt, kin, name))
                         couple_out = widg.bind("<Leave>", self.on_leave)
                         self.widget = widg
                         self.kintip_bindings["on_enter"].append([widg, couple_in])
                         self.kintip_bindings["on_leave"].append([widg, couple_out])
                     elif evtype in ("birth", "adoption", "guardianship", "fosterage"):
-                        print("line", looky(seeline()).lineno, "dkt:", dkt)
                         if evtype == "birth":
                             name1 = dkt.get("father_name")
                             name2 = dkt.get("mother_name")
                             names = "{}, {}".format(name1, name2)
                             parents_in = widg.bind(
                                 "<Enter>", lambda evt, 
-                                kin="parent(s)", names=names: self.handle_enter(kin, names))
+                                kin="parent(s)", names=names: self.handle_enter(
+                                    kin, names))
+                                    # evt, kin, names))
                             parents_out = widg.bind("<Leave>", self.on_leave)
                             self.widget = widg
                             self.kintip_bindings["on_enter"].append([widg, parents_in])
@@ -1078,7 +1081,9 @@ class EventsTable(Frame):
                             names = "{}, {}".format(name1, name2)
                             adoptive_parents_in = widg.bind(
                                 "<Enter>", lambda evt, 
-                                kin="adoptive parent(s)", names=names: self.handle_enter(kin, names))
+                                kin="adoptive parent(s)", names=names: self.handle_enter(
+                                    kin, names))
+                                    # evt, kin, names))
                             adoptive_parents_out = widg.bind("<Leave>", self.on_leave)
                             self.widget = widg
                             self.kintip_bindings["on_enter"].append([widg, adoptive_parents_in])
@@ -1097,7 +1102,9 @@ class EventsTable(Frame):
                             names = "{}, {}".format(name1, name2)
                             foster_parents_in = widg.bind(
                                 "<Enter>", lambda evt, 
-                                kin="foster parent(s)", names=names: self.handle_enter(kin, names))
+                                kin="foster parent(s)", names=names: self.handle_enter(
+                                    kin, names))                            
+                                    # evt, kin, names))
                             foster_parents_out = widg.bind("<Leave>", self.on_leave)
                             self.widget = widg
                             self.kintip_bindings["on_enter"].append([widg, foster_parents_in])
@@ -1116,7 +1123,9 @@ class EventsTable(Frame):
                             names = "{}, {}".format(name1, name2)
                             guardians_in = widg.bind(
                                 "<Enter>", lambda evt, 
-                                kin="guardian(s)", names=names: self.handle_enter(kin, names))
+                                kin="guardian(s)", names=names: self.handle_enter(
+                                    kin, names))
+                                    # evt, kin, names))
                             guardians_out = widg.bind("<Leave>", self.on_leave)
                             self.widget = widg
                             self.kintip_bindings["on_enter"].append([widg, guardians_in])
@@ -1192,8 +1201,33 @@ class EventsTable(Frame):
         if self.kintip_text:
             self.show_kintip(kin_type, name)
 
+        # self.cohighlight(evt)
+
     def on_leave(self, evt):
         self.off()
+
+    # def cohighlight(self, evt):
+        # pass
+
+        # def inner_loop(lst):
+            # for widg in lst[1]:
+                # if widg == self.hovered_kin_widg[0]:
+                    # print("line", looky(seeline()).lineno, "widg:", widg)
+                    # return lst[0]            
+
+        # self.hovered_kin_widg = [evt.widget]
+        # for lst in self.cell_pool: 
+            # finding_id = inner_loop(lst)
+            # if finding_id is None:
+                # continue
+            # else:
+                # print("line", looky(seeline()).lineno, "finding_id:", finding_id)
+                # self.hovered_kin_widg.append(finding_id)
+                # break
+ 
+        # print("line", looky(seeline()).lineno, "self.hovered_kin_widg:", self.hovered_kin_widg)
+        # self.hovered_kin_widg[0].config(bg=self.formats["highlight_bg"])
+        
 
     def redraw(self, evt=None, current_person=None):
         self.formats = make_formats_dict()
@@ -1355,7 +1389,6 @@ class EventsTable(Frame):
         new_event = self.event_input.get().strip().lower()
         if new_event in ("birth", "death"):
             too_many = self.count_birth_death_events(new_event)
-        print("line", looky(seeline()).lineno, "too_many:", too_many)
         if too_many is True: 
             msg = open_message(
                 self, 
@@ -1370,7 +1403,6 @@ class EventsTable(Frame):
 
         self.get_new_event_data()
         if self.unknown_event_type is False:
-            print("line", looky(seeline()).lineno, "self.is_couple_event:", self.is_couple_event)
             if self.is_couple_event is False:
                 if self.new_event == "offspring":
                     msg = open_message(

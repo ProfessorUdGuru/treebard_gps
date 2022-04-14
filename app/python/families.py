@@ -120,6 +120,8 @@ class NuclearFamiliesTable(Frame):
         self.idtip_bindings = {"on_enter": [], "on_leave": []}
         self.person_inputs = []
 
+        self.cohighlights = {}
+
         self.original = ""
 
         self.nukefam_containers = []
@@ -130,7 +132,6 @@ class NuclearFamiliesTable(Frame):
         self.newkidvar = tk.IntVar()
 
         self.current_person_name = ""
-
         self.make_widgets()
 
     def make_widgets(self):
@@ -223,10 +224,9 @@ class NuclearFamiliesTable(Frame):
         return marital_events_current_person
 
     def make_nukefam_inputs(self, current_person=None, on_load=False):
-        '''
-            Run in main.py on_load=True and in events_table.redraw() 
+        """ Run in main.py on_load=True and in events_table.redraw() 
             on_load=False.
-        '''
+        """
         self.nukefam_inputs = []
         if current_person:
             self.current_person = current_person
@@ -250,8 +250,130 @@ class NuclearFamiliesTable(Frame):
         ht = self.right_panel.winfo_reqheight()
         self.nukefam_canvas.config(width=wd, height=ht)        
         self.nukefam_canvas.config(scrollregion=self.nukefam_canvas.bbox('all'))
-
         self.make_idtips()
+
+        self.make_cohighlights_dict()
+
+        copy = self.cohighlights
+        for k,v in copy.items():
+            for row in self.findings_table.cell_pool:
+                if v == row[0]:
+                    self.cohighlights[k] = row[1][0]
+
+    def make_cohighlights_dict(self):
+        # test with color change to see if color changes, if not fix it in styles.py
+        # parameterize repeated sections of code
+
+        # parents and alt parents
+        for parent_couple in self.family_data[0]:
+            family_widgets = []
+            event_widgets = []
+            h = 0
+            for dkt in parent_couple:
+                if h == 0:
+                    birth_finding = dkt["birth_finding"]
+                    event_widgets.append(birth_finding)
+                elif h == 1:
+                    parent1_widg = dkt["inwidg"]
+                    family_widgets.append(parent1_widg)
+                elif h == 2:
+                    parent2_widg = dkt["inwidg"]
+                    family_widgets.append(parent2_widg)
+                z = 0
+                for finding_id in event_widgets:
+                    for row in self.findings_table.cell_pool:
+                        if finding_id == row[0]:
+                            event_widgets[z] = row[1][0]
+                    z += 1
+                h += 1
+
+            p = 0
+            for i in (family_widgets, event_widgets):
+                if p == 0:
+                    other = event_widgets
+                elif p == 1:
+                    other = family_widgets
+                for widg in i:
+                    widg.bind(
+                        "<Enter>", 
+                        lambda evt, other=other: self.highlight_both(evt, other), 
+                        add="+")
+                    widg.bind(
+                        "<Leave>", 
+                        lambda evt, other=other: self.unhighlight_both(evt, other), 
+                        add="+")
+                p += 1
+            self.cohighlights[tuple(family_widgets)] = tuple([event_widgets])
+
+        for v in self.family_data[1].values():
+            for child in v["children"]:
+                for row in self.findings_table.cell_pool:
+                    if row[0] == child["birth_id"]:
+                        offspring_event_widg = (row[1][0],)
+                        break
+
+                family_widgets = (child['name_widg'],)
+                event_widgets = offspring_event_widg
+
+                c = 0
+                for i in (family_widgets, event_widgets):
+                    if c == 0:
+                        other = event_widgets
+                    elif c == 1:
+                        other = family_widgets
+                    for widg in i:
+                        widg.bind(
+                            "<Enter>", 
+                            lambda evt, other=other: self.highlight_both(evt, other), 
+                            add="+")
+                        widg.bind(
+                            "<Leave>", 
+                            lambda evt, other=other: self.unhighlight_both(evt, other), 
+                            add="+")
+                    c += 1
+                self.cohighlights[(child["name_widg"],)] = offspring_event_widg
+
+        # partners based on marital events
+        # parent of child highlights with no corresponding event to highlight
+        for v in self.family_data[1].values():
+            family_widgets = []
+            event_widgets = []
+            family_widgets.append(v["inwidg"])
+            for event in v["marital_events"]:
+                event_widgets.append(event["finding"])
+            b = 0
+            for event_id in event_widgets:
+                for row in self.findings_table.cell_pool:
+                    if event_id == row[0]:
+                        event_widgets[b] = row[1][0]
+                b += 1
+            a = 0
+            for i in (family_widgets, event_widgets):
+                if a == 0:
+                    other = event_widgets
+                elif a == 1:
+                    other = family_widgets
+                for widg in i:
+                    widg.bind(
+                        "<Enter>", 
+                        lambda evt, other=other: self.highlight_both(evt, other), 
+                        add="+")
+                    widg.bind(
+                        "<Leave>", 
+                        lambda evt, other=other: self.unhighlight_both(evt, other), 
+                        add="+")
+                a += 1
+            self.cohighlights[tuple(family_widgets)] = tuple([event_widgets])        
+
+    def highlight_both(self, evt, other):
+        evt.widget.config(bg=self.formats["highlight_bg"])
+        for widg in other:
+            widg.config(bg=self.formats["highlight_bg"])
+
+    def unhighlight_both(self, evt, other):
+        evt.widget.config(bg=self.formats["bg"])
+        for widg in other:
+            widg.config(bg=self.formats["bg"])
 
     def populate_nuke_tables(self):
         lst = [            
@@ -421,7 +543,6 @@ class NuclearFamiliesTable(Frame):
             ma_id = mom[0]
             self.family_data[0][0][0]["birth_finding"] = self.parent_record[0]
         else:
-            # This only runs when there are no parents recorded.
             self.family_data[0][0][0]["birth_finding"] = birth_id
 
         for person in self.person_autofill_values:
@@ -442,6 +563,9 @@ class NuclearFamiliesTable(Frame):
         self.get_alt_parents(cur)
         self.grid_alt_parents()
 
+        # self.cohighlights[self.pa_input] = birth_id
+        # self.cohighlights[self.ma_input] = birth_id
+
         cur.close()
         conn.close()
 
@@ -458,10 +582,11 @@ class NuclearFamiliesTable(Frame):
             event[1] = [int(i) for i in event[1].split(",")]
             alt_parent_events[r] = event
             r += 1
-        alt_parent_events = sorted(alt_parent_events, key=lambda i: i[1])
+        self.alt_parent_events = sorted(alt_parent_events, key=lambda i: i[1])
 
-        self.make_alt_parents_dict(alt_parent_events, cur)
+        self.make_alt_parents_dict(cur)
         alt_parent_details = self.family_data[0][1:]
+
         j = 0
         for lst in alt_parent_details:
             lab_l = Label(self.parentslab, anchor="e")
@@ -496,13 +621,23 @@ class NuclearFamiliesTable(Frame):
                 self.nukefam_containers.append(ent)
             for lab in (lab_l, lab_r):
                 lab.bind("<Double-Button-1>", self.change_kin_type)
-                # self.nukefam_containers.append(lab)
-            self.nukefam_containers.extend([lab_l, lab_r])           
+            self.nukefam_containers.extend([lab_l, lab_r])          
             j += 1
 
-    def make_alt_parents_dict(self, alt_parent_events, cur):
-     
-        for finding in alt_parent_events:
+        x = 1
+        for finding in self.alt_parent_events:
+            alt_parentage_id = finding[0]
+            for event in self.family_data[0][1:]:
+                if event[0]["birth_finding"] == alt_parentage_id:
+                    parent1_widg = event[1]["inwidg"]
+                    parent2_widg = event[2]["inwidg"]
+                    self.cohighlights[parent1_widg] = alt_parentage_id
+                    self.cohighlights[parent2_widg] = alt_parentage_id
+                    break
+            x += 1
+
+    def make_alt_parents_dict(self, cur):
+        for finding in self.alt_parent_events:
             parent_couple = [ 
                 {'birth_finding': finding[0], 'sorter': finding[1]}, 
                 {'id': None, 'name': '', 'kin_type_id': None, 'kin_type': '', 
@@ -532,7 +667,7 @@ class NuclearFamiliesTable(Frame):
                 lst[1]["name"] = self.person_autofill_values[id1][0]["name"]
             if id2:
                 lst[2]["name"] = self.person_autofill_values[id2][0]["name"]
-            w += 1      
+            w += 1
 
     def grid_alt_parents(self):
         """ Grid widgets as children of self.parentslab. """
@@ -556,7 +691,7 @@ class NuclearFamiliesTable(Frame):
 
         self.make_parents_dict()
 
-        partners1, births = self.query_nukefams_data(conn, cur) # births has 128 in it instead of a person id
+        partners1, births = self.query_nukefams_data(conn, cur)
         alt_parentage_events = self.query_alt_nukefams_data(conn, cur)
         self.arrange_partners_progenies(partners1, births, alt_parentage_events, conn, cur)
 
@@ -583,6 +718,7 @@ class NuclearFamiliesTable(Frame):
         """
         self.person_autofill_values = update_person_autofill_values()
         births = births + alt_parentage_events
+        print("line", looky(seeline()).lineno, "births:", births)
         progenies = {}
         all_partners = [] 
         event_pards = []
@@ -617,7 +753,6 @@ class NuclearFamiliesTable(Frame):
                 "partner_kin_type": "", "inwidg": None, "children": [],
                 "marital_events": []}
             self.family_data[1][pard_id] = progeny
-
         self.collect_couple_events(cur, conn)
         for k,v in progenies.items():
             pardner = k
@@ -1161,7 +1296,6 @@ class NuclearFamiliesTable(Frame):
             if self.cancel_unlink_partner_pressed is True:
                 return
             for dkt in self.unlink_partners["events"]:
-                print("line", looky(seeline()).lineno, "dkt:", dkt)
                 finding = dkt["finding"]
                 if dkt["vars"] == [0, 0]:
                     continue
@@ -1172,7 +1306,6 @@ class NuclearFamiliesTable(Frame):
                 elif dkt["vars"] == [1, 0]:
                     unlink_partner(finding, [1, 0])
             for dkt in self.unlink_partners["children"]:
-                print("line", looky(seeline()).lineno, "dkt:", dkt)
                 finding = dkt["birth_id"]
                 if dkt["vars"] == [0, 0]:
                     continue
@@ -1415,7 +1548,9 @@ class NuclearFamiliesTable(Frame):
                     break
                 s += 1
 
-    def update_parent(self, final, conn, cur, inwidg, column=None, kin_type=None, alt_parent=None):
+    def update_parent(
+            self, final, conn, cur, inwidg, 
+            column=None, kin_type=None, alt_parent=None):
 
         def delete_parent(column):
             if column == 1:
@@ -1428,7 +1563,6 @@ class NuclearFamiliesTable(Frame):
         for lst in self.family_data[0]:
             for dkt in lst[1:]: # father is 1, mother is 2
                 if inwidg == dkt["inwidg"]:
-                    print("line", looky(seeline()).lineno, "lst:", lst)
                     finding_id = lst[0]["birth_finding"]
                     break
             z += 1
@@ -1473,18 +1607,14 @@ class NuclearFamiliesTable(Frame):
         elif column == 3:
             cur.execute(update_finding_person_2, (new_parent_id, finding_id))
         conn.commit()
-        # if self.temp_bind:
-            # widg.unbind("<FocusOut>", self.temp_bind)
 
     def get_final(self, evt):
-        print("line", looky(seeline()).lineno, "self.original:", self.original)
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         widg = evt.widget
         self.final = widg.get()
-        print("line", looky(seeline()).lineno, "self.final:", self.final)
         if self.final == self.original:
             return
         gridinfo = widg.grid_info()
@@ -1510,7 +1640,6 @@ class NuclearFamiliesTable(Frame):
                 kin_type = 48                    
             self.update_parent(self.final, conn, cur, widg, column, kin_type=kin_type)
         elif widgname.startswith("pard"):
-            print("line", looky(seeline()).lineno, "widgname:", widgname)
             if column == 2:
                 self.update_partner(self.final, conn, cur, widg)                
             else:
@@ -1554,6 +1683,7 @@ class NuclearFamiliesTable(Frame):
                     new_id = tup[1]
                     break
             finding_id = self.family_data[0][1:][row - 1][0]["birth_finding"]
+            print("line", looky(seeline()).lineno, "finding_id:", finding_id)
             if col == 0:
                 cur.execute(update_finding_kin_type_1, (new_id, finding_id))
             elif col == 2:
@@ -1637,7 +1767,7 @@ class NuclearFamiliesTable(Frame):
             self.show_idtip(iD, name_type)
 
     def on_leave(self, evt):
-        self.off()
+        self.off()        
 
     def make_idtips(self):
         self.person_inputs = []
@@ -1672,16 +1802,17 @@ class NuclearFamiliesTable(Frame):
                     kid_name_type = self.person_autofill_values[kid_id][0]["name type"]
                 kid_widg = dkt["name_widg"]
                 self.person_inputs.append((kid_widg, kid_id, kid_name_type))
-
         for tup in self.person_inputs:
             widg, iD, name_type = tup
+            
             name_in = widg.bind(
                 "<Enter>", lambda evt, 
                 iD=iD, name_type=name_type: self.handle_enter(iD, name_type))
+                # iD=iD, name_type=name_type: self.handle_enter(evt, iD, name_type))
             name_out = widg.bind("<Leave>", self.on_leave)
             self.widget = widg
             self.idtip_bindings["on_enter"].append([widg, name_in])
-            self.idtip_bindings["on_leave"].append([widg, name_out])
+            self.idtip_bindings["on_leave"].append([widg, name_out])        
 
     def change_current_person(self, evt): 
         name = evt.widget.get()

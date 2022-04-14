@@ -441,6 +441,12 @@ def config_generic(parent):
         widg.config(bg=formats['head_bg'], fg=formats['fg'])
         widg.colorize_border()
 
+    def config_entryauto(ent):
+        ent.formats = formats
+        ent.config(
+            bg=formats['bg'], fg=formats['fg'],
+            font=formats['input_font'], insertbackground=formats['fg'])
+
     # *****************end of special event widgets******************
 
     formats = make_formats_dict()
@@ -545,6 +551,9 @@ def config_generic(parent):
 
             elif widg.winfo_subclass() == 'EntryHilited2':
                 config_entryhilited2(widg)
+
+            elif widg.winfo_subclass() == 'EntryAuto':
+                config_entryauto(widg)
 
         elif widg.winfo_class() == 'Button':
 
