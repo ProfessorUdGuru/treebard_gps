@@ -23,7 +23,6 @@ class LabelTab(Labelx):
         Labelx.__init__(self, master, *args, **kwargs)
     
         self.formats = make_formats_dict()
-        # self.formats = formats
         self.config(font=self.formats['tab_font'])
 
         self.chosen = False        

@@ -134,7 +134,6 @@ class Sizer(Label):
         self.tk_img = ImageTk.PhotoImage(img, master=self.master)
 
         self.config(
-            # bg=formats['bg'], 
             bd=0, 
             cursor='size_nw_se',
             image=self.tk_img)
@@ -163,8 +162,7 @@ class Sizer(Label):
         click_y = evt.y_root
 
         self.bind('<B1-Motion>', resize_se)
-# from styles import make_formats_dict
-# formats = make_formats_dict()
+
 class Separator(Framex):
     ''' 
         Horizontal separator like ttk.Separator but 
@@ -172,18 +170,9 @@ class Separator(Framex):
     '''
 
     def __init__(
-        self, master, height=3, 
-        # color1=formats['head_bg'], 
-        # color2=formats['highlight_bg'], 
-        # color3=formats['bg'], 
-        *args, **kwargs):
-        # self, master, height=3, 
-        # color1=formats['head_bg'], 
-        # color2=formats['highlight_bg'], 
-        # color3=formats['bg'], *args, **kwargs):
+        self, master, height=3, *args, **kwargs):
         Framex.__init__(self, master, *args, **kwargs)
 
-        # self.formats = formats
         self.formats = make_formats_dict()
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=0)
@@ -193,9 +182,6 @@ class Separator(Framex):
         self.color2=self.formats['highlight_bg'], 
         self.color3=self.formats['bg'],
 
-        # self.color1 = color1
-        # self.color2 = color2
-        # self.color3 = color3
         self.height = int(height/5)
 
         self.make_widgets()

@@ -6,7 +6,7 @@ from files import get_current_file
 from styles import config_generic
 from widgets import (
     Frame, Label, Button, LabelMovable, LabelH3, Entry, Toplevel, 
-    EntryUnhilited, Radiobutton, LabelHeader)
+    Entryx, Radiobutton, LabelHeader, EntryUnhilited)
 from window_border import Border, Dialogue
 from custom_combobox_widget import Combobox  
 from scrolling import MousewheelScrolling, Scrollbar, resize_scrolled_content 
@@ -758,6 +758,13 @@ class EntryAutoPerson(EntryUnhilited):
         self.current_id = None
         self.filled_name = None
         self.hits = None
+
+        # self.config(
+            # bd=0,
+            # bg=formats['bg'], 
+            # fg=formats['fg'], 
+            # font=formats['input_font'], 
+            # insertbackground=formats['fg'])
 
         if autofill is True:
             self.bind("<KeyPress>", self.detect_pressed)

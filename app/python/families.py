@@ -13,7 +13,7 @@ from persons import (
     open_new_person_dialog, make_all_names_dict_for_person_select, check_name,
     delete_person_from_tree, update_person_autofill_values, EntryAutoPerson, 
     EntryAutoPersonHilited)
-from messages import InputMessage, open_message, families_msg
+from messages import open_message, families_msg
 from dates import format_stored_date, get_date_formats, OK_MONTHS, validate_date
 from events_table import (
     get_current_person, delete_generic_finding, delete_couple_finding,

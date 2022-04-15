@@ -3,7 +3,7 @@
 import tkinter as tk
 from styles import config_generic
 from messages import InputMessage
-from widgets import LabelStylable, Button
+from widgets import Button
 import dev_tools as dt
 from dev_tools import looky, seeline
 

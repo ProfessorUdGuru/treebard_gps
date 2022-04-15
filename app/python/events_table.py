@@ -8,7 +8,7 @@ from files import get_current_file
 from window_border import Border, Dialogue 
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
-    LabelH3, Button, Entry, EntryHilited1, LabelHeader, LabelHilited,
+    LabelH3, Button, Entry, LabelHeader,
     LabelNegative)
 from autofill import EntryAuto, EntryAutoHilited
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats

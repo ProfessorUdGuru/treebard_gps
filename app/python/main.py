@@ -21,7 +21,7 @@ from files import current_drive, get_current_file
 from styles import make_formats_dict
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
-    LabelBoilerplate, LabelEntry, Radiobutton, LabelFrame)
+    Radiobutton, LabelFrame)
 from window_border import Border
 from custom_tabbed_widget import TabBook
 from scrolling import Scrollbar    

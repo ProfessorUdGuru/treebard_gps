@@ -85,17 +85,6 @@ class FrameHilited(Framex):
         Framex.__init__(self, master, *args, **kwargs)
         self.config(bg=formats['highlight_bg'], bd=3, relief='groove')
 
-class FrameHilited1(Framex):
-    ''' 
-        Used for narrow resizing sash on left edge of
-        attributes table. Could be used as vertical 
-        separator.
-    '''
-
-    def __init__(self, master, *args, **kwargs):
-        Framex.__init__(self, master, *args, **kwargs)
-        self.config(bg=formats['highlight_bg'], bd=6, relief='ridge')
-
 class FrameHilited2(Framex):
     ''' 
         Frame hilited by border and a different background color.
@@ -122,15 +111,6 @@ class FrameHilited4(Framex):
     def __init__(self, master, *args, **kwargs):
         Framex.__init__(self, master, *args, **kwargs)
         self.config(bg=formats['highlight_bg'], bd=2, relief='sunken')
-
-class FrameHilited5(Framex):
-    ''' 
-        Frame hilited by sunken border and background color.
-    '''
-
-    def __init__(self, master, *args, **kwargs):
-        Framex.__init__(self, master, *args, **kwargs)
-        self.config(bg=formats['highlight_bg'], bd=1, relief='solid')
 
 class FrameHilited6(Framex):
     ''' 
@@ -199,18 +179,6 @@ class LabelTest(Labelx):
             fg=formats['fg'],
             font=formats['output_font'])
  
-class LabelItalic(Labelx):
-    ''' 
-        Uses input font and italics to display errors & such. 
-    '''
-
-    def __init__(self, master, *args, **kwargs):
-        Labelx.__init__(self, master, *args, **kwargs)
-        self.config(
-            bg=formats['bg'],
-            fg=formats['fg'],
-            font=formats['show_font'])
-
 class LabelHeader(Labelx):
     def __init__(self, master, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
@@ -242,18 +210,6 @@ class LabelHilited(Labelx):
     def unhighlight(self, evt):
         self.config(bg=self.formats['highlight_bg'])
 
-class LabelHilited2(Labelx):
-    ''' 
-        Like Label with a different background. 
-    '''
-    def __init__(self, master, *args, **kwargs):
-        Labelx.__init__(self, master, *args, **kwargs)
-
-        self.config(
-            bg=formats['head_bg'], 
-            fg=formats['fg'],
-            font=formats['output_font'])
-
 class LabelHilited3(Labelx):
     ''' 
         Like Label with a different background and a monospaced sans-serif font. 
@@ -284,29 +240,17 @@ class LabelEntry(Labelx):
             font=formats['input_font']
 )
 
-class LabelTip(LabelHilited):
+class LabelTip2(Labelx):
     ''' 
         Like Label with a different background. For tooltips. 
     '''
     def __init__(self, master, *args, **kwargs):
-        LabelHilited.__init__(self, master, *args, **kwargs)
-        self.config(font=formats['status'], bd=0, relief='solid')
+        Labelx.__init__(self, master, *args, **kwargs)
 
-class LabelTip2(LabelHilited2):
-    ''' 
-        Like Label with a different background. For tooltips. 
-    '''
-    def __init__(self, master, *args, **kwargs):
-        LabelHilited2.__init__(self, master, *args, **kwargs)
-        self.config(font=formats['status'], bd=1, relief='solid')
-
-class LabelTipBold(LabelHilited):
-    ''' 
-        Like Label with a different background. 
-    '''
-    def __init__(self, master, *args, **kwargs):
-        LabelTip.__init__(self, master, *args, **kwargs)
-        self.config(font=formats['titlebar_1'])
+        self.config(
+            bg=formats['head_bg'], 
+            fg=formats['fg'],
+            font=formats['status'], bd=1, relief='solid') 
 
 class LabelNegative(Labelx):
     ''' 
@@ -319,42 +263,27 @@ class LabelNegative(Labelx):
             fg=formats['bg'],
             font=formats['output_font'])
 
-class LabelH1(Label):
-    ''' 
-        For largest subheadings. 
-    '''
-    def __init__(self, master, *args, **kwargs):
-        Label.__init__(self, master, *args, **kwargs)
-
-        self.config(font=formats['heading1'])
-
-
-class LabelH2(Label):
+class LabelH2(Labelx):
     ''' 
         For large subheadings. 
     '''
     def __init__(self, master, *args, **kwargs):
-        Label.__init__(self, master, *args, **kwargs)
+        Labelx.__init__(self, master, *args, **kwargs)
+        self.config(
+            bg=formats['bg'], 
+            fg=formats['fg'],
+            font=formats['heading2'])
 
-        self.config(font=formats['heading2'])
-
-class LabelH3(Label):
+class LabelH3(Labelx):
     ''' 
         For small subheadings. 
     '''
     def __init__(self, master, *args, **kwargs):
-        Label.__init__(self, master, *args, **kwargs)
-
-        self.config(font=formats['heading3'])
-
-class LabelH4(Label):
-    ''' 
-        For tiny subheadings. 
-    '''
-    def __init__(self, master, *args, **kwargs):
-        Label.__init__(self, master, *args, **kwargs)
-
-        self.config(font=formats['heading4'])
+        Labelx.__init__(self, master, *args, **kwargs)
+        self.config(
+            bg=formats['bg'], 
+            fg=formats['fg'],
+            font=formats['heading3'])
 
 class LabelButtonImage(Labelx):
     ''' 
@@ -456,19 +385,6 @@ class LabelDots(LabelButtonText):
             pressed=evt.widget,
             person_autofill_values=self.person_autofill_values)
 
-class LabelBoilerplate(Labelx):
-    ''' 
-        Like Label for fine print.  
-    '''
-
-    def __init__(self, master, *args, **kwargs):
-        Labelx.__init__(self, master, *args, **kwargs)
-
-        self.config(
-            bg=formats['bg'], 
-            fg=formats['fg'], 
-            font=formats['boilerplate'])
-
 class LabelTitleBar(Labelx):
     ''' 
         Like Label for fine print. Can be sized independently
@@ -526,46 +442,6 @@ class LabelMenuBarTest(LabelTitleBar):
 
     def sink(self, evt):
         evt.widget.config(relief='sunken')
-
-class LabelMenuBar(Labelx):
-    '''
-        Like LabelTitleBar but normal font weight.
-    '''
-
-    def __init__(self, master, size='tiny', *args, **kwargs):
-        Labelx.__init__(self, master, *args, **kwargs)
-
-        self.config(bg=formats['head_bg'])
-
-        if size == 'tiny':
-            self.config(font=formats['titlebar_hilited_0'])
-        elif size == 'small':
-            self.config(font=formats['titlebar_hilited_1'])
-        elif size == 'medium':
-            self.config(font=formats['titlebar_hilited_2'])
-        elif size == 'large':
-            self.config(font=formats['titlebar_hilited_3'])
-
-class LabelTitleBarHilited(Labelx):
-    '''
-        Like LabelTitleBar but instead of using a highlight
-        color as its normal background, it uses the normal
-        background color so it will be highlighted.
-    '''
-
-    def __init__(self, master, size='tiny', *args, **kwargs):
-        Labelx.__init__(self, master, *args, **kwargs)
-
-        self.config(bg=formats['highlight_bg'])
- 
-        if size == 'tiny':
-            self.config(font=formats['titlebar_hilited_0'])
-        elif size == 'small':
-            self.config(font=formats['titlebar_hilited_1'])
-        elif size == 'medium':
-            self.config(font=formats['titlebar_hilited_2'])
-        elif size == 'large':
-            self.config(font=formats['titlebar_hilited_3'])
        
 class LabelStay(Labelx):
     ''' 
@@ -847,7 +723,7 @@ class ButtonBigPic(Buttonx):
 
 class ButtonFlatHilited(Buttonx):
     '''
-        A button with no relief or border. Used for the Combobox dropdown.
+        A button with no relief or border.
     '''
     def __init__(self, master, *args, **kwargs):
         Buttonx.__init__(self, master, *args, **kwargs)
@@ -924,7 +800,7 @@ class Entry(Entryx):
             bg=formats['highlight_bg'], 
             fg=formats['fg'], 
             font=formats['input_font'], 
-            insertbackground=formats['fg'])
+            insertbackground=formats['fg']) 
 
 class EntryUnhilited(Entryx):
     '''
@@ -939,248 +815,6 @@ class EntryUnhilited(Entryx):
             fg=formats['fg'], 
             font=formats['input_font'], 
             insertbackground=formats['fg'])
-
-class EntryHilited1(Entryx):
-    '''
-        Looks like a Label but different background color.
-    '''
-    def __init__(self, master, *args, **kwargs):
-        Entryx.__init__(self, master, *args, **kwargs)
-        
-        self.config(
-            bd=0,
-            bg=formats['highlight_bg'], 
-            fg=formats['fg'], 
-            font=formats['input_font'], 
-            insertbackground=formats['fg'])
-
-
-class EntryHilited2(Entryx):
-    '''
-        Looks like a Label but different background color.
-    '''
-    def __init__(self, master, *args, **kwargs):
-        Entryx.__init__(self, master, *args, **kwargs)
-        
-        self.config(
-            bd=0,
-            bg=formats['head_bg'], 
-            fg=formats['fg'], 
-            font=formats['output_font'], 
-            insertbackground=formats['fg'])
-
-# class EntryAutofill(EntryUnhilited):
-    # ''' 
-        # SUPERCEDED BY EntryAutofill
-        # Simple case-insensitive autofill entry with no dropdown 
-        # list, lets you type as fast as you want. Values option 
-        # is not a real tkinter option, so you can't use
-        # instance.config(values=new_values). Change values list 
-        # like this: instance.values = [5, 15, 19, 42]. Autofills 
-        # nothing till you type up to the first unique character. 
-        # Example: If the list has "Bill" and "Bilbo", nothing 
-        # will autofill till you type the second b or the l. You can 
-        # backspace and keep typing a different word with no extra 
-        # key strokes or controls and it still fills correctly. 
-        # Width is set to fit the longest item in the values list.
-        # instance.config(textvariable=instance.var) is required 
-        # in the instance to turn on the autofill functionality.
-    # '''
-
-    # def __init__(self, master, *args, **kwargs):
-        # EntryUnhilited.__init__(self, master, *args, **kwargs)
-
-        # self.config(width=1)
-
-        # self.values = ['red', 'rust', 'black', 'blue', 'Bill', 'Bilbo', 'billboard']
-        # self.autofill = False
-
-        # self.var = tk.StringVar()
-        # self.bind('<KeyRelease>', self.get_typed)
-        # self.bind('<Key>', self.detect_pressed)
-
-    # def match_string(self):
-        # hits = []
-        # got = self.var.get()
-        # for item in self.values:
-            # if item.lower().startswith(got.lower()):
-                # hits.append(item)
-        # return hits    
-
-    # def get_typed(self, event):
-        # if self.autofill is False:
-            # return
-        # if len(event.keysym) == 1:
-            # hits = self.match_string()
-            # self.show_hit(hits)
-
-    # def detect_pressed(self, event):
-        # if self.autofill is False:
-            # return
-        # key = event.keysym
-        # pos = self.index('insert')
-        # self.delete(pos, 'end') 
-
-    # def show_hit(self, lst):
-        # if len(lst) == 1:
-            # self.var.set(lst[0])
-
-# class EntryAutofillHilited(EntryAutofill):
-    # ''' 
-        # Same as EntryAutofill but has a highlighted background
-        # like a typical Entry.
-    # '''
-    # def __init__(self, master, *args, **kwargs): 
-        # EntryAutofill.__init__(self, master, *args, **kwargs)
-
-        # self.config(bg=formats['highlight_bg'])
-
-class EntryDefaultText(Entry):
-    def __init__(self, master, default_text, *args, **kwargs):
-        Entry.__init__(self, master, *args, **kwargs)
-        ''' 
-            For entries that need to have instructions/default text.
-            Can't use this with a widget that automatically
-            comes into focus since the default text would be cleared.
-        '''
-        self.default_text = default_text
-        self.formats = make_formats_dict()
-        var = tk.StringVar()
-        var.set(self.default_text)
-        self.config(
-            fg=self.formats['head_bg'],
-            bg=self.formats['highlight_bg'], 
-            font=self.formats['show_font'], 
-            textvariable=var)
-        self.textvariable = var
-
-        self.bind('<Button-1>', self.clear_default_text)
-        self.bind('<FocusIn>', self.clear_default_text)
-        self.bind('<FocusOut>', self.clear_selection)
-
-    def clear_default_text(self, evt=None):
-        if self.cget('state') == 'disabled':
-            print('disabled')
-            return
-        if self.get() == self.default_text:
-            self.delete(0, 'end')
-            self.config(
-                bg=self.formats['highlight_bg'], 
-                font=self.formats['input_font'])            
-        else:
-            self.config(
-                bg=self.formats['highlight_bg'], 
-                font=self.formats['input_font'],
-                fg=self.formats['fg'])
-
-    def clear_selection(self, evt):
-        if len(self.get()) == 0:
-            self.insert(0, self.default_text)
-            self.config(
-                font=self.formats['show_font'], 
-                fg=formats['head_bg'])
-        self.select_clear()
-
-    def replace_default_text(self):
-        self.insert(0, self.default_text) 
-        self.config(fg=formats['head_bg'], font=self.formats['show_font'])        
-
-class LabelCopiable(Entryx):
-    ''' 
-        To use as a Label whose text can be selected 
-        with mouse, set the state to disabled after 
-        constructing the widget and giving it text. 
-        Enable temporarily to change color or text, for example.
-    '''
-
-    def __init__(self, master, *args, **kwargs):
-        Entryx.__init__(self, master, *args, **kwargs)
-
-        self.config(
-            readonlybackground=self.cget('background'), 
-            justify='center', 
-            bd=0, 
-            takefocus=0)
-
-class LabelGoTo(Labelx):
-    '''          
-        Ctrl+click runs code relevant to the entity named in 
-        the clicked Label. For example, if label says John 
-        Doe, Ctrl+click label can be used to make John Doe the 
-        current person. The subject_id parameter can be used for
-        any entity with an ID such as person, place, citation.
-
-        The EntryLabel/LabelGoTo in dialogs can't be used with Ctrl+click to
-        change the current person. Probably could be done once but
-        not twice because the findings table that existed when the
-        dialog was made would be destroyed upon making a new table
-        for a new current person. So trying to change the current
-        person wouldn't work a 2nd time, so I'm not going to allow
-        it at all. 
-    '''
-
-    def __init__(
-            self, 
-            master,  
-            table=None,
-            change_person=None,
-            subject_id=None,
-            place_id=None,
-            source_id=None,
-            citation_id=None,
-            *args, **kwargs):
-
-        Labelx.__init__(self, master, *args, **kwargs)
-
-        self.formats = make_formats_dict()
-
-        self.table = table
-        self.change_person = change_person
-        self.subject_id = subject_id
-
-        self.bind('<Enter>', self.highlight_on_enter)
-        self.bind('<Leave>', self.unhighlight_on_leave)
-        self.bind('<Button-1>', self.set_focus, add='+')
-
-        self.bind('<Control-Button-1>', self.go_to_entity)
-
-        self.config(
-            takefocus=1, 
-            anchor='w', 
-            bg=self.formats['bg'], 
-            fg=self.formats['fg'], 
-            font=self.formats['input_font'])
-        self.grid_configure(sticky='ew')
-
-    def go_to_entity(self, evt):
-        '''
-            self.change_person is for the name of the function passed
-            to this widget when it's made which changes the current
-            person displayed on the persons tab.
-        '''
-
-        if self.table is None:
-            return
-
-        self.change_person(
-            self.table.master,
-            self.table.main.persons.attributes_content,
-            self.table.main.new_person_fill,
-            self.table.main.persons.top_pic_button,
-            self.table.main,
-            self.table.main.tabs.store['person'],
-            self.subject_id)
-
-    def set_focus(self, evt):
-        self.focus_set()
-
-    def highlight_on_enter(self, evt):
-        self.config(bg=self.formats['highlight_bg'])
-
-    def unhighlight_on_leave(self, evt):
-        self.config(bg=self.formats['bg'])
-
-# for demo of LabelCopiable see label_with_selectable_text.py
 
 class Textx(tk.Text):
     def __init__(self, master, *args, **kwargs):
@@ -1214,28 +848,6 @@ class Text(Textx):
     def focus_prev_window(self, evt):
         evt.widget.tk_focusPrev().focus()
         return('break')
-
-class LabelStylable(Textx):
-    def __init__(self, master, *args, **kwargs):
-        Textx.__init__(self, master, *args, **kwargs)
-
-        self.master = master
-        self.bind('<Map>', lambda event: self.set_height())
-        self.tag_config('bold', font="courier 12 bold")
-        self.tag_config('italic', font="courier 12 italic")
-        self.config(wrap='word', padx=12, pady=12, bd=0)
-
-    def set_height(self):
-
-        height = self.count(1.0, 'end', 'displaylines')
-        self.config(height=height)
-        self.configure(state="disabled")
-
-# # to use LabelStylable:
-# stylin = LabelStylable(root, width=75)
-# stylin.insert("end", "Hello, ") 
-# stylin.insert("end", "silly ", "italic") 
-# stylin.insert("end", "world", "bold")
 
 class MessageCopiable(Textx):
     ''' 
@@ -1341,20 +953,6 @@ class RadiobuttonBig(Radiobutton):
             use standard text size.
         '''
         self.config(font=formats['output_font'])
-
-class RadiobuttonHilited(Radiobuttonx):
-    def __init__(self, master, *args, **kwargs):
-        Radiobuttonx.__init__(self, master, *args, **kwargs)
-
-        self.config(
-            bg=formats['highlight_bg'], 
-            activebackground=formats['bg'],
-            highlightthickness=3,
-            overrelief='sunken',
-            font=formats['output_font'],
-            fg=formats['fg'],
-            selectcolor=formats['highlight_bg'], 
-            padx=6, pady=6) 
 
 class Toplevelx(tk.Toplevel):
     '''

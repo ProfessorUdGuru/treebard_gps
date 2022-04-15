@@ -207,6 +207,7 @@ if __name__ == '__main__':
 # Test everything on the video tour list before making the video.
 # delete commented code and edit docstrings before pushing to repo
 # export dbs to .sql
+# backup app to external hd
 
 # BRANCH: cleanup
 # When autofilling a new place, the width of the whole table flashes back and forth. Better to have an edit mode so that when you start typing in a place autofill ?or any autofill if autofill is True, it expands to a fixed size and doesn't change at all till you tab out, then it fits its content.
@@ -232,6 +233,7 @@ if __name__ == '__main__':
 # clarify_year might not working in dates.py, there is a chain of error messages, sometimes it has to be OK'd twice, and make sure it doesn't run on CANCEL and original value is returned to the input (InputMessage works now in notes.py and families.py for a model). Currently cancel seems to be deleting the date which moves the event to the attributes table. The second time it sort of works but deletes the number that's not a year. It also doesn't display AD on years less than 4 digits long.
 # when changing date format, then go to events table and ctrl_s, the dates in the events table reformat to the new format but the dates in the families table don't.
 # export dbs to .sql
+# backup app to external hd
 
 # BRANCH: names_tab
 # Redo names tab so it's about names, not making a new person. Two menus should be able to open the new person dialog to create a new person. The names tab should have the table of names but maybe not all the new person stuff.
@@ -255,6 +257,7 @@ if __name__ == '__main__':
 # types tab: have a combobox to change content from one type to another. Start with color schemes. Have a button to delete all hidden schemes (if not built-in).
 # drop table format from default.db, etc., copy to untouched.db, make a treebard_untouched.db to keep in app/default also
 # export dbs to .sql
+# backup app to external hd
 
 # BRANCH: dialogs
 # add another label in each row of roles dialog to show id of role person in case of dupe names
@@ -278,10 +281,12 @@ if __name__ == '__main__':
 # Can't open an empty notes dlg, division by zero error.
 # person search table is messed up. Same person shows for both mother and father. Sorting only works right for ID. Clicking a name to make the person current works but the nukefams table is not redrawn.
 # export dbs to .sql
+# backup app to external hd
 
 # BRANCH: conclusions
 # change events_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, it is now time to start sticking to Treebard's core philosophy and differentiate between conclusions and assertions at all times. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs events table > conclusions table. And the first step is to change the name of the module from events_table.py to conclusions_table.py. Remember that conclusions are called findings in the code; "events" are cases where something like an event_type refers equally to assertions and conclusions (claims & findings) and never use "event" where "finding" should be used.
 # export dbs to .sql
+# backup app to external hd
 
 # BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain because you sometimes don't remember what's in a clipboard till you try pasting it. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, like a plus sign, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing individual citations on nearly empty dialogs that you have to sift through looking for the right one, and seeing them all together might be useful for the sake of comparison.
@@ -290,6 +295,7 @@ if __name__ == '__main__':
 # Get rid of the quote marks in the rcm messages, just use one long line per message.
 # Post new screenshots and announce next phase (export GEDCOM?).
 # export dbs to .sql
+# backup app to external hd
 
 # BRANCH: after_refactor
 # delete extraneous backups and rollbacks from hard drive, keep the backups only
@@ -306,6 +312,7 @@ if __name__ == '__main__':
 # Links tab: start with making a way to link any note to any element.
 # Files: when new empty tree is made, "name unknown" is a person in the db autofill list should not include this, search should not include this.
 # export dbs to .sql
+# backup app to external hd
 
 # ADD TO MAIN DO LIST:
 # nukefam area on Person Tab: remove scrollbars & canvas & window if the hideable ones never appear, it seems they might not be necessary.

@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from widgets import (Canvas, FrameHilited3, Entry, ToplevelHilited, Text,
-    LabelHilited, ButtonFlatHilited, LabelTip2, CanvasHilited, Framex, Frame)
+    ButtonFlatHilited, LabelTip2, CanvasHilited, Framex, Frame)
 from styles import make_formats_dict, config_generic
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -182,8 +182,6 @@ from dev_tools import looky, seeline
     the Border class which is in window_border.py.
 
 '''
-
-# formats = make_formats_dict()
 
 def resize_scrolled_content(toplevel, canvas, window): 
     '''
