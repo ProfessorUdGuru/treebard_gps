@@ -17,7 +17,7 @@ print("line", looky(seeline()).lineno, "formats['status']:", formats['status'])
 
 class LabelStatusbar(Labelx):
     """ Statusbar messages on focus-in to individual widgets,
-        non-obtrusive tooltips, and replacement for ttk.Sizegrip.
+        tooltips in statusbars, and replacement for ttk.Sizegrip.
     """
     def __init__(self, master, formats, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
@@ -105,7 +105,6 @@ class StatusbarTooltips(Frame):
         frm = Frame(self, bd=0)
         frm.grid(column=0, row=0, sticky='news')
         frm.grid_columnconfigure(0, weight=1)
-
         self.status_label = LabelStatusbar(
             frm, formats, cursor='arrow', anchor='w')
         self.tooltip_label = LabelStatusbar(

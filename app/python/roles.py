@@ -5,7 +5,7 @@ import sqlite3
 from files import get_current_file
 from window_border import Border 
 from widgets import (
-    Frame, Toplevel, Label, LabelButtonText, ButtonQuiet,
+    Frame, Toplevel, Label, ButtonQuiet,
     LabelH3, Button, LabelHeader, LabelNegative)
 from custom_combobox_widget import Combobox 
 from right_click_menu import RightClickMenu, make_rc_menus

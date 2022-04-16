@@ -351,24 +351,6 @@ def config_generic(parent):
         '''
         sep.colorize() 
 
-    def config_labelcopiable(widg):
-        widg.config(state='normal')
-        widg.config(
-            bg=formats['bg'], 
-            fg=formats['fg'])
-        widg.config(state='readonly')
-        widg.config(readonlybackground=widg.cget('background'))
-
-    def config_entryhilited2(widg):
-        widg.config(state='normal')
-        widg.config(
-            bg=formats['head_bg'], 
-            fg=formats['fg'],
-            insertbackground=formats['fg'],
-            font=formats['output_font'])
-        widg.config(state='readonly')
-        widg.config(readonlybackground=widg.cget('background'))
-
     def config_scale(widg):
         widg.config(
             bg=formats['bg'], 
@@ -425,12 +407,6 @@ def config_generic(parent):
             bg=formats['highlight_bg'], 
             fg=formats['fg'],
             font=formats['output_font'])
-
-    def config_entrydefaulttext(ent):
-        ent.formats = formats
-        ent.config(
-            background=formats['highlight_bg'],
-            font=formats['show_font'])
 
     def config_button_bigpic(widg):
         widg.formats = formats
@@ -503,9 +479,6 @@ def config_generic(parent):
             elif widg.winfo_subclass() == 'Separator':
                 config_separator(widg)
 
-            elif widg.winfo_subclass() == 'EntryDefaultText':
-                config_entrydefaulttext(widg)
-
         elif widg.winfo_class() == 'Label': 
 
             if widg.winfo_subclass() == 'LabelStatusbar':
@@ -546,13 +519,7 @@ def config_generic(parent):
 
         elif widg.winfo_class() == 'Entry':
 
-            if widg.winfo_subclass() == 'LabelCopiable':
-                config_labelcopiable(widg)
-
-            elif widg.winfo_subclass() == 'EntryHilited2':
-                config_entryhilited2(widg)
-
-            elif widg.winfo_subclass() == 'EntryAuto':
+            if widg.winfo_subclass() == 'EntryAuto':
                 config_entryauto(widg)
 
         elif widg.winfo_class() == 'Button':
@@ -613,16 +580,6 @@ def get_opening_settings():
     cur.close()
     conn.close()
     return user_formats
-
-def get_opening_settings_default():
-
-    conn = sqlite3.connect(global_db_path)
-    cur = conn.cursor()
-    cur.execute(select_opening_settings_on_load)
-    default_formats = cur.fetchone()
-    cur.close()
-    conn.close()            
-    return default_formats
   
 def make_formats_dict():
     """ To add a style, add a string to the end of keys list

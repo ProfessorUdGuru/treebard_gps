@@ -191,24 +191,25 @@ class LabelHeader(Labelx):
             relief='raised')
 
 class LabelHilited(Labelx):
-    ''' 
-        Like Label with a different background.  
-    '''
+    """ Used in Combobox for arrow. """
+    formats = formats
+    head_bg = formats["head_bg"]
+    fg = formats["fg"]
+    output_font = formats["output_font"]
+    highlight_bg = formats["highlight_bg"]
+
     def __init__(self, master, *args, **kwargs):
-        Labelx.__init__(self, master, *args, **kwargs)
-
-        self.formats = make_formats_dict()
-
+        Labelx.__init__(self, master, *args, **kwargs) 
         self.config(
-            bg=self.formats['highlight_bg'], 
-            fg=self.formats['fg'],
-            font=self.formats['output_font'])
+            bg=LabelHilited.highlight_bg, 
+            fg=LabelHilited.fg,
+            font=LabelHilited.output_font)
 
     def highlight(self, evt):
-        self.config(bg=self.formats['head_bg'])
+        self.config(bg=LabelHilited.head_bg)
 
     def unhighlight(self, evt):
-        self.config(bg=self.formats['highlight_bg'])
+        self.config(bg=LabelHilited.highlight_bg)
 
 class LabelHilited3(Labelx):
     ''' 
@@ -286,12 +287,15 @@ class LabelH3(Labelx):
             font=formats['heading3'])
 
 class LabelButtonImage(Labelx):
-    ''' 
-        A label that looks and works like a button. Good for
+    """ A label that looks and works like a button. Good for
         images since it sizes itself to its contents, so don't
         add width and height to this class or change its color.
-    '''
-
+        The class-level variables are used by the child class that
+        inherits from it.
+    """
+    formats = formats
+    bg = formats["bg"]
+    head_bg = formats["head_bg"]
     def __init__(self, master, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
 
@@ -310,11 +314,13 @@ class LabelButtonImage(Labelx):
 
     def on_press(self, evt):
         formats = make_formats_dict()
-        self.config(relief='sunken', bg=formats['head_bg'])
+        self.config(relief='sunken', bg=LabelButtonImage.head_bg)
+        # self.config(relief='sunken', bg=formats['head_bg'])
 
     def on_release(self, evt):
         formats = make_formats_dict()
-        self.config(relief='raised', bg=formats['bg'])
+        self.config(relief='raised', bg=LabelButtonImage.bg)
+        # self.config(relief='raised', bg=formats['bg'])
 
     def on_hover(self, evt):
         self.config(relief='groove')
@@ -323,10 +329,9 @@ class LabelButtonImage(Labelx):
         self.config(relief='raised')
 
 class LabelButtonText(LabelButtonImage):
-    ''' 
-        A label that looks and works like a button. Displays Text.
-    '''
-
+    """ A label that looks and works like a button. Displays text. See its
+        parent class for class variables used by colorizer.
+    """
     def __init__(self, master, width=8, *args, **kwargs):
         LabelButtonImage.__init__(self, master, *args, **kwargs)
 
@@ -519,11 +524,12 @@ class LabelMovable(LabelHilited):
         could be set too but as is the spans should be left at
         their default values which is 1.
     '''
+    formats = formats
+    head_bg = formats["head_bg"]
+    highlight_bg = formats["highlight_bg"]
 
     def __init__(self, master, first_column=0, first_row=0, *args, **kwargs):
         LabelHilited.__init__(self, master, *args, **kwargs)
-
-        self.formats = make_formats_dict()
 
         self.master = master
         self.first_column = first_column
@@ -531,8 +537,8 @@ class LabelMovable(LabelHilited):
 
         self.config(
             takefocus=1, 
-            bg=formats['highlight_bg'], 
-            fg=formats['fg'], 
+            bg=LabelMovable.highlight_bg, 
+            fg=LabelMovable.fg, 
             font=formats['output_font'])
         self.bind('<FocusIn>', self.highlight_on_focus)
         self.bind('<FocusOut>', self.unhighlight_on_unfocus)
@@ -664,10 +670,10 @@ class LabelMovable(LabelHilited):
             widg.lift()        
 
     def highlight_on_focus(self, evt):        
-        evt.widget.config(bg=self.formats['head_bg'])
+        evt.widget.config(bg=LabelMovable.head_bg)
 
     def unhighlight_on_unfocus(self, evt):        
-        evt.widget.config(bg=self.formats['highlight_bg'])
+        evt.widget.config(bg=LabelMovable.highlight_bg)
 
 class Buttonx(tk.Button):
     def __init__(self, master, *args, **kwargs):

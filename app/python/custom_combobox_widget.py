@@ -37,9 +37,14 @@ from dev_tools import looky, seeline
 
 
 
+formats = make_formats_dict()
 class Combobox(FrameHilited3):
     hive = []
-
+    formats = formats
+    highlight_bg = formats["highlight_bg"]
+    bg = formats["bg"]
+    fg = formats["fg"]
+    # output_font = formats["output_font"]
     def __init__(
             self, 
             master, 
@@ -49,11 +54,8 @@ class Combobox(FrameHilited3):
             values=[], 
             scrollbar_size=24, 
             *args, **kwargs):
+        """ Replace ttk.Combobox. """
         FrameHilited3.__init__(self, master, *args, **kwargs)
-        '''
-            This is a replacement for ttk.Combobox.
-        '''
-
         self.master = master
         self.callback = callback
         self.root = root
@@ -61,7 +63,7 @@ class Combobox(FrameHilited3):
         self.values = values
         self.scrollbar_size = scrollbar_size
     
-        self.formats = make_formats_dict()
+        # self.formats = make_formats_dict()
 
         self.buttons = []
         self.selected = None
@@ -187,7 +189,8 @@ class Combobox(FrameHilited3):
             this, the button width can be changed when the scrollbar
             appears and disappears.
         '''
-        if len(values) == 0: return
+        if len(values) == 0: 
+            return
         # RE: above return line; NOT SURE WHY THIS WAS NEEDED alert:
         #   had to add this line after adding `if self.fit_height <= self.height:`
         #   at bottom of this method, which had to be added so dropdowns
@@ -197,6 +200,7 @@ class Combobox(FrameHilited3):
         #   early (before there are any values) and if that happens, the new 
         #   line below sets height to 0. Seems to be working now that this 
         #   method is not allowed to run twice.
+
         # a sample button is made to get its height, then destroyed
         b = ButtonFlatHilited(self.content, text='Sample')
         one_height = b.winfo_reqheight()
@@ -400,9 +404,11 @@ class Combobox(FrameHilited3):
 
     def highlight(self, evt):
         for widg in self.buttons:
-            widg.config(bg=self.formats['highlight_bg'])
+            widg.config(bg=Combobox.highlight_bg)
+            # widg.config(bg=self.formats['highlight_bg'])
         widget = evt.widget
-        widget.config(bg=self.formats['bg'])
+        widget.config(bg=Combobox.bg)
+        # widget.config(bg=self.formats['bg'])
         self.selected = widget
         widget.focus_set()
 
@@ -492,12 +498,9 @@ class Combobox(FrameHilited3):
         widg = evt.widget
         sym = evt.keysym
         self.widg_height = int(self.fit_height / self.lenval)
-        # self.trigger_down = self.height - self.widg_height * 3
-        # self.trigger_up = self.height - self.widg_height * 2
         self.update_idletasks()
         next_item = widg.tk_focusNext()
         prev_item = widg.tk_focusPrev()
-        # rel_ht = widg.winfo_y()
 
         if sym == 'Down':
             if next_item in self.buttons:
@@ -518,10 +521,14 @@ class Combobox(FrameHilited3):
                 self.canvas.yview_moveto(1.0)
 
     def colorize(self):
-        self.config(bg=self.formats['bg'])
-        self.entry.config(bg=self.formats['highlight_bg'])
-        self.drop.config(bg=self.formats['highlight_bg'])
-        self.content.config(bg=self.formats['highlight_bg'])
+        # self.config(bg=self.formats['bg'])
+        # self.entry.config(bg=self.formats['highlight_bg'])
+        # self.drop.config(bg=self.formats['highlight_bg'])
+        # self.content.config(bg=self.formats['highlight_bg'])
+        self.config(bg=Combobox.bg)
+        self.entry.config(bg=Combobox.highlight_bg, fg=Combobox.fg)
+        self.drop.config(bg=Combobox.highlight_bg)
+        self.content.config(bg=Combobox.highlight_bg)
         # The dropdown buttons respond to so many events that it might be
         #   a sort of minor miracle to make them colorize instantly. For
         #   now it's enough that they colorize on reload and they are not

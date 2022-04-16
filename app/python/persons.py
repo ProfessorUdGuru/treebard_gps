@@ -4,6 +4,7 @@ import tkinter as tk
 import sqlite3
 from files import get_current_file
 from styles import config_generic
+from styles import config_generic, make_formats_dict
 from widgets import (
     Frame, Label, Button, LabelMovable, LabelH3, Entry, Toplevel, 
     Entryx, Radiobutton, LabelHeader, EntryUnhilited)
@@ -39,6 +40,7 @@ from dev_tools import looky, seeline
 
 
 
+formats = make_formats_dict()
 
 GENDER_TYPES = ('unknown', 'female', 'male', 'other')
 
@@ -620,10 +622,6 @@ class PersonAdd(Toplevel):
 
         cur.execute(insert_finding_birth_new_person, (self.new_person_id,))
         conn.commit()
-        # cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
-        # birth_id = cur.fetchone()[0]
-        # cur.execute(insert_finding_places_new, (birth_id,))
-        # conn.commit()
         new_name_string = self.full_name
         cur.close()
         conn.close()
@@ -713,6 +711,25 @@ class PersonAdd(Toplevel):
 
 """ These two autofill inputs are based on simpler code in autofill.py. """
 
+# class X(EntryAutoPerson):
+    # formats = formats
+    # highlight_bg = formats["highlight_bg"]
+    # bg = formats["bg"]
+    # def __init__(self, master, *args, **kwargs):
+        # EntryAutoPerson.__init__(self, master, *args, **kwargs)
+
+        # self.config(bg=X.formats["bg"], fg=X.formats["fg"], 
+            # insertbackground=X.formats["fg"], selectbackground=X.formats["head_bg"], 
+            # font=(X.formats["input_font"], X.formats["font_size"]))            
+        # self.bind("<Enter>", self.highlight)
+        # self.bind("<Leave>", self.unhighlight)
+
+    # def highlight(self, evt):
+        # self.config(bg=X.highlight_bg)
+
+    # def unhighlight(self, evt):
+        # self.config(bg=X.bg)
+
 class EntryAutoPerson(EntryUnhilited):
     """ To use this class, each person autofill input has to be given the 
         ability to use its newest values with a line like this: 
@@ -723,6 +740,9 @@ class EntryAutoPerson(EntryUnhilited):
     """
 
     all_person_autofills = []
+    formats = formats
+    highlight_bg = formats["highlight_bg"]
+    bg = formats["bg"]
 
     def create_lists(all_items):
         """ Keeps a temporary list during one app session which will 
@@ -759,18 +779,26 @@ class EntryAutoPerson(EntryUnhilited):
         self.filled_name = None
         self.hits = None
 
-        # self.config(
-            # bd=0,
-            # bg=formats['bg'], 
-            # fg=formats['fg'], 
-            # font=formats['input_font'], 
-            # insertbackground=formats['fg'])
-
         if autofill is True:
             self.bind("<KeyPress>", self.detect_pressed)
             self.bind("<KeyRelease>", self.get_typed)
             self.bind("<FocusOut>", self.prepend_match, add="+")
             self.bind("<FocusIn>", self.deselect, add="+")
+
+        self.config(
+            bg=EntryAutoPerson.formats["bg"], 
+            fg=EntryAutoPerson.formats["fg"], 
+            insertbackground=EntryAutoPerson.formats["fg"], 
+            selectbackground=EntryAutoPerson.formats["head_bg"], 
+            font=EntryAutoPerson.formats["input_font"])            
+        self.bind("<Enter>", self.highlight)
+        self.bind("<Leave>", self.unhighlight)
+
+    def highlight(self, evt):
+        self.config(bg=EntryAutoPerson.highlight_bg)
+
+    def unhighlight(self, evt):
+        self.config(bg=EntryAutoPerson.bg)
 
     def detect_pressed(self, evt):
         """ Run on every key press.
@@ -951,6 +979,213 @@ if __name__ == "__main__":
     addbutt.grid()
 
     root.mainloop()
+
+# class EntryAutoPerson(EntryUnhilited):
+    # """ To use this class, each person autofill input has to be given the 
+        # ability to use its newest values with a line like this: 
+            # `EntryAutoPerson.all_person_autofills.append(person_entry)`.
+        # Then, after instantiating a class that uses autofills, you have to call 
+        # `EntryAuto.create_lists(all_items)`. After values change, run something 
+        # like `update_person_autofill_values()`.        
+    # """
+
+    # all_person_autofills = []
+
+    # def create_lists(all_items):
+        # """ Keeps a temporary list during one app session which will 
+            # prioritize the autofill values with the most recently used values
+            # given priority over the alphabetical list of the values not used in
+            # the current session.
+
+            # The `prepend_match()` method is used in conjunction with this 
+            # to add the most recently used value to the very front of the list.
+
+            # Since this function and the list `all_person_autofills` comprise a 
+            # class-level procedure, values used and moved to the front of the 
+            # list by one input will become available as first match to all the 
+            # other inputs too, until the app is closed. Next time the app opens,
+            # a fresh list of recently-used autofill values will be started.
+        # """
+        # key_list = list(all_items.items())
+        # recent_items = []
+        # all_items_unique = []
+
+        # for item in key_list:
+            # if item not in recent_items:
+                # all_items_unique.append(item)
+        # final_items = dict(recent_items + all_items_unique)
+        # return final_items
+
+    # def __init__(self, master, autofill=False, values=None, *args, **kwargs):
+        # EntryUnhilited.__init__(self, master, *args, **kwargs)
+        # self.master = master
+        # self.autofill = autofill
+        # self.values = values
+        # self.pos = 0
+        # self.current_id = None
+        # self.filled_name = None
+        # self.hits = None
+
+        # if autofill is True:
+            # self.bind("<KeyPress>", self.detect_pressed)
+            # self.bind("<KeyRelease>", self.get_typed)
+            # self.bind("<FocusOut>", self.prepend_match, add="+")
+            # self.bind("<FocusIn>", self.deselect, add="+")
+
+    # def detect_pressed(self, evt):
+        # """ Run on every key press.
+        # """
+        # if self.autofill is False:
+            # return
+        # key = evt.keysym
+        # if len(key) == 1:
+            # self.pos = self.index('insert')
+            # keep = self.get()[0:self.pos].strip("+")
+            # self.delete(0, 'end')
+            # self.insert(0, keep)
+
+    # def get_typed(self, evt):
+        # """ Run on every key release. Filter out most non-alpha-numeric 
+            # keys. Run the functions not triggered by events.
+        # """
+        # def do_it():
+            # hits = self.match_string()
+            # self.show_hits(hits, self.pos)
+
+        # self.current_id = None
+        # if self.autofill is False:
+            # return
+        # key = evt.keysym
+        # # Allow alphanumeric characters.
+        # if len(key) == 1:
+            # do_it()
+        # # Allow number signs, hyphens and apostrophes (#, -, ').
+        # elif key in ('numbersign', 'minus', 'quoteright'):
+            # do_it()
+        # # Open the PersonAdd dialog with the "+" stripped off the input.
+        # elif key == "plus":
+            # content = self.get()
+            # idx = content.index("+")
+            # fixed = content.replace("+", "")
+            # self.delete(0, "end")
+            # self.insert(0, "{}+".format(fixed))
+
+    # def match_string(self):
+        # """ Match typed input to names already stored in hierarchical order. """
+
+        # hits = []
+        # got = self.get()
+
+        # for k, v in self.values.items():
+            # for dkt in v:
+                # if dkt["name"].lower().startswith(got.lower()):
+                    # if (dkt, k) not in hits:
+                        
+                        # hits.append((dkt, k))
+        # return hits
+
+    # def show_hits(self, hits, pos):
+        # cursor = pos + 1
+        # if len(hits) != 0:
+            # self.current_id = hits[0][1]
+            # self.filled_name = hits[0][0]["name"]
+            # self.delete(0, 'end')
+            # self.insert(0, self.filled_name)
+        # self.icursor(cursor)
+        # self.hits = hits
+
+    # def open_dupe_dialog(self, hits):
+
+        # def ok_dupe_name():
+            # self.delete(0, "end")
+            # dupe_name_dlg.destroy()
+    
+        # def search_dupe_name():
+            # self.delete(0, "end")
+            # dupe_name_dlg.destroy()
+
+        # def cancel_dupe_name():
+            # nonlocal dupe_name_dlg_cancelled
+            # dupe_name_dlg_cancelled = True
+            # self.delete(0, "end")
+            # dupe_name_dlg.destroy()
+
+        # dupe_name_dlg_cancelled = False
+        # self.right_id = tk.IntVar()
+        # dupe_name_dlg = Dialogue(self)
+
+        # lab = LabelHeader(
+            # dupe_name_dlg.window, justify='left', wraplength=450)
+        # lab.grid(column=0, row=0, padx=12, pady=12, ipadx=6, ipady=6)
+
+        # radfrm = Frame(dupe_name_dlg.window)
+        # radfrm.grid(column=0, row=1)
+        # r = 0
+        # for hit in hits:
+            # dkt, iD = hit
+            # name, name_type, used_by, dupe_name = (
+                # dkt["name"], dkt["name type"], dkt["used by"], dkt["dupe name"])
+            # if len(used_by) != 0:
+                # used_by = ", name used by {}".format(used_by)
+            # rdo = Radiobutton(
+                # radfrm, text="person #{} {} ({}){} ".format(iD, name, name_type, used_by), 
+                # variable=self.right_id, value=r, anchor="w")
+            # rdo.grid(column=0, row=r, sticky="ew")
+            # if r == 0:
+                # rdo.select()
+                # rdo.focus_set()
+                # lab.config(text="Which {}?".format(name))
+            # r += 1
+     
+        # buttons = Frame(dupe_name_dlg.window)
+        # buttons.grid(column=0, row=2, pady=12, padx=12)
+        # dupe_name_ok = Button(buttons, text="OK", command=ok_dupe_name, width=7)
+        # dupe_name_ok.grid(column=0, row=0, sticky="e", padx=(0,12))
+        # search_name = Button(buttons, text="SEARCH DUPE NAME", command=search_dupe_name)
+        # search_name.grid(column=1, row=0, sticky="e", padx=(0,12))
+        # dupe_name_cancel = Button(buttons, text="CANCEL", command=cancel_dupe_name, width=7)
+        # dupe_name_cancel.grid(column=2, row=0, sticky="e", padx=0)
+
+        # dupe_name_dlg.canvas.title_1.config(text="Duplicate Stored Names")
+        # dupe_name_dlg.canvas.title_2.config(text="")
+
+        # dupe_name_dlg.resize_window()
+        # self.wait_window(dupe_name_dlg)
+        # if dupe_name_dlg_cancelled is False:
+            # selected = self.right_id.get()
+            # return hits[selected]
+
+    # def prepend_match(self, evt):
+        # """ Determine which ID was used to fill in a value. Move the autofill
+            # value corresponding with that ID to the front of the valus list.
+        # """
+        # content = self.get()
+        # if self.current_id in self.values:
+            # key_list = list(self.values.items())
+            # u = 0
+            # for tup in key_list:
+                # if tup[0] == self.current_id:
+                    # idx = u
+                    # break
+                # u += 1
+            # used = key_list.pop(idx)
+            # key_list.insert(0, used)
+            # self.values = dict(key_list)
+
+    # def deselect(self, evt):
+        # '''
+            # This callback was added because something in the code for this 
+            # widget caused the built-in replacement of selected text with 
+            # typed text to stop working. So if you tabbed into an autofill entry
+            # that already had text in it, the text was all selected as expected 
+            # but if you typed, the typing was added to the end of the existing 
+            # text instead of replacing it, which is unexpected. Instead of 
+            # finding out why this is happening, I added this callback so that 
+            # tabbing into a filled-out autofill will not select its text. This 
+            # might be better since the value in the field is not often changed 
+            # and should not be easy to change by mistake.
+        # '''
+        # self.select_clear()
 
 
 
