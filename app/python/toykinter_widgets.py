@@ -1,7 +1,6 @@
 # toykinter_widgets.py
 
-from styles import make_formats_dict
-from widgets import Framex, FrameStay, Labelx, Frame, Label
+from widgets import Framex, FrameStay, Labelx, Frame, Label, make_formats_dict
 from files import app_path
 from PIL import Image, ImageTk
 import dev_tools as dt
@@ -11,20 +10,23 @@ from dev_tools import looky, seeline
 
 
 formats = make_formats_dict()
-print("line", looky(seeline()).lineno, "formats['status']:", formats['status'])
 
 # ************** statusbar tooltips sizegrip **************
 
 class LabelStatusbar(Labelx):
+    formats = formats
+    bg = formats["bg"]
+    fg = formats["fg"]
+    status = formats["status"]
     """ Statusbar messages on focus-in to individual widgets,
         tooltips in statusbars, and replacement for ttk.Sizegrip.
     """
-    def __init__(self, master, formats, *args, **kwargs):
+    def __init__(self, master, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
         self.config(
-            bg=formats['bg'], 
-            fg=formats['fg'],
-            font=formats['status'])
+            bg=LabelStatusbar.bg, 
+            fg=LabelStatusbar.fg,
+            font=LabelStatusbar.status)
 
 def run_statusbar_tooltips(visited, status_label, tooltip_label):
     '''
@@ -47,7 +49,7 @@ def run_statusbar_tooltips(visited, status_label, tooltip_label):
                         text=tup[2],
                         bg='black',
                         fg='white',
-                        font=formats['status'])
+                        font=LabelStatusbar.formats["status"])
                 elif event.type == '8': # Leave
                     tooltip_label.grid_remove()
                     tooltip_label.config(
@@ -90,7 +92,7 @@ class StatusbarTooltips(Frame):
 
     '''
 
-    def __init__(self, master, formats, resizer=True, *args, **kwargs):
+    def __init__(self, master, resizer=True, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master # root or toplevel
@@ -106,9 +108,9 @@ class StatusbarTooltips(Frame):
         frm.grid(column=0, row=0, sticky='news')
         frm.grid_columnconfigure(0, weight=1)
         self.status_label = LabelStatusbar(
-            frm, formats, cursor='arrow', anchor='w')
+            frm, cursor='arrow', anchor='w')
         self.tooltip_label = LabelStatusbar(
-            frm, formats, bd=2, relief='sunken', anchor='e')
+            frm, bd=2, relief='sunken', anchor='e')
 
         if resizer is True:
             self.sizer.place(relx=1.0, x=-3, rely=1.0, anchor='se')
@@ -163,23 +165,25 @@ class Sizer(Label):
         self.bind('<B1-Motion>', resize_se)
 
 class Separator(Framex):
-    ''' 
-        Horizontal separator like ttk.Separator but 
+    """ Horizontal separator like ttk.Separator but 
         can be sized and utilize the user-selected colors.
-    '''
+    """
+    formats = formats
+    color1=formats['head_bg'], 
+    color2=formats['highlight_bg'], 
+    color3=formats['bg']
 
     def __init__(
         self, master, height=3, *args, **kwargs):
         Framex.__init__(self, master, *args, **kwargs)
 
-        self.formats = make_formats_dict()
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(1, weight=0)
         self.grid_rowconfigure(2, weight=0)
 
-        self.color1=self.formats['head_bg'], 
-        self.color2=self.formats['highlight_bg'], 
-        self.color3=self.formats['bg'],
+        Separator.color1=Separator.formats['head_bg'], 
+        Separator.color2=Separator.formats['highlight_bg'], 
+        Separator.color3=Separator.formats['bg'],
 
         self.height = int(height/5)
 
@@ -189,55 +193,50 @@ class Separator(Framex):
 
         if self.height > 0:
             self.line1 = FrameStay(
-                self, bg=self.color1, height=self.height)
+                self, bg=Separator.color1, height=self.height)
             self.line1.grid(column=0, row=0, sticky='ew')
 
             self.line2 = FrameStay(
-                self, bg=self.color2, height=self.height)
+                self, bg=Separator.color2, height=self.height)
             self.line2.grid(column=0, row=1, sticky='ew')
 
             self.line3 = FrameStay(
-                self, bg=self.color3, height=self.height)
+                self, bg=Separator.color3, height=self.height)
             self.line3.grid(column=0, row=2, sticky='ew')
 
             self.line4 = FrameStay(
-                self, bg=self.color2, height=self.height)
+                self, bg=Separator.color2, height=self.height)
             self.line4.grid(column=0, row=4, sticky='ew')
 
             self.line5 = FrameStay(
-                self, bg=self.color1, height=self.height)
+                self, bg=Separator.color1, height=self.height)
             self.line5.grid(column=0, row=5, sticky='ew')
         else:
             self.line1 = FrameStay(
-                self, bg=self.color1, height=self.height)
+                self, bg=Separator.color1, height=self.height)
             self.line1.grid(column=0, row=0, sticky='ew')
 
             self.line2 = FrameStay(
-                self, bg=self.color2, height=self.height)
+                self, bg=Separator.color2, height=self.height)
             self.line2.grid(column=0, row=1, sticky='ew')
 
             self.line3 = FrameStay(
-                self, bg=self.color3, height=self.height)
+                self, bg=Separator.color3, height=self.height)
             self.line3.grid(column=0, row=2, sticky='ew')
-
 
         self.colorize()
 
     def colorize(self):
-        self.formats = make_formats_dict()
-        self.color1=self.formats['head_bg'], 
-        self.color2=self.formats['highlight_bg'], 
-        self.color3=self.formats['bg']
         if self.height > 0:
-            self.line1.config(bg=self.color1)
-            self.line2.config(bg=self.color2)
-            self.line3.config(bg=self.color3)
-            self.line4.config(bg=self.color2)
-            self.line5.config(bg=self.color1)
+            self.line1.config(bg=Separator.color1)
+            self.line2.config(bg=Separator.color2)
+            self.line3.config(bg=Separator.color3)
+            self.line4.config(bg=Separator.color2)
+            self.line5.config(bg=Separator.color1)
         else:
-            self.line1.config(bg=self.color1)
-            self.line2.config(bg=self.color2)
-            self.line3.config(bg=self.color3)
+            self.line1.config(bg=Separator.color1)
+            self.line2.config(bg=Separator.color2)
+            self.line3.config(bg=Separator.color3)
 
 
 

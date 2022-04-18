@@ -3,21 +3,18 @@
 import tkinter as tk
 import sqlite3
 from files import get_current_file
-from window_border import Border 
 from widgets import (
-    Frame, Toplevel, Label, ButtonQuiet,
-    LabelH3, Button, LabelHeader, LabelNegative)
-from custom_combobox_widget import Combobox 
-from right_click_menu import RightClickMenu, make_rc_menus
-from messages import open_message, roles_msg
+    Frame, Toplevel, Label, ButtonQuiet, Border,
+    LabelH3, Button, LabelHeader, LabelNegative, configall, Combobox,
+    RightClickMenu, make_rc_menus, open_message, EntryAutoPerson, 
+    EntryAutoPersonHilited, Scrollbar, resize_scrolled_content,
+    run_statusbar_tooltips,
+    )
+from messages import roles_msg
 from messages_context_help import roles_dlg_help_msg, role_edit_help_msg
-from styles import config_generic
 from persons import ( 
     make_all_names_dict_for_person_select, check_name, get_original,
-    update_person_autofill_values, open_new_person_dialog, EntryAutoPerson, 
-    EntryAutoPersonHilited)
-from scrolling import Scrollbar, resize_scrolled_content
-from toykinter_widgets import run_statusbar_tooltips
+    update_person_autofill_values, open_new_person_dialog)
 from query_strings import (
     select_roles, select_role_types, select_role_type_id,
     update_findings_roles_role_type, update_findings_roles_person,
@@ -168,7 +165,8 @@ class RolesDialog(Toplevel):
             self.rc_menu,
             roles_dlg_help_msg)
 
-        config_generic(self) 
+        # config_generic(self)
+        configall(self, self.formats)
 
         resize_scrolled_content(self, self.canvas, self.window)
 

@@ -1,6 +1,5 @@
 # messages_context_help.py
 
-from widgets import LabelH3
 import dev_tools as dt
 
 '''

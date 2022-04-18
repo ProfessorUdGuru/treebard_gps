@@ -154,7 +154,7 @@ def config_generic(parent):
                     widg.config(bg=formats['bg'])
                     widg.colorize_border()
     '''
-
+    print("line", looky(seeline()).lineno, "running:")
     def config_bgStay_fgStay(widg):
         pass
 
@@ -555,12 +555,12 @@ def config_generic(parent):
 
         elif widg.winfo_class() == 'Canvas':
 
-            if widg.winfo_subclass() == 'Scrollbar':
+            # if widg.winfo_subclass() == 'Scrollbar':
                 # to figure out where all the scrollbars are:
                 # print("line", looky(seeline()).lineno, "widg:", widg)
-                widg.colorize()
+                # widg.colorize()
 
-            elif widg.winfo_subclass() == 'Border':
+            if widg.winfo_subclass() == 'Border':
                 config_border(widg)
 
     config_bgStd(parent)

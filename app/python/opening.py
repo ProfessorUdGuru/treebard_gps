@@ -4,17 +4,16 @@ import tkinter as tk
 import sqlite3
 from os import listdir, path
 from os.path import isfile, join
-from window_border import Border
-from widgets import Toplevel, Canvas, Button, Frame, ButtonBigPic
-from toykinter_widgets import run_statusbar_tooltips
-from right_click_menu import RightClickMenu, make_rc_menus
+from widgets import (
+    Toplevel, Canvas, Button, Frame, ButtonBigPic, configall, Border,
+    run_statusbar_tooltips, RightClickMenu, make_rc_menus, open_message, 
+    open_input_message2)
 from messages_context_help import opening_dlg_help_msg
 from PIL import Image, ImageTk
 from files import (
     open_tree, make_tree, import_gedcom, open_sample, app_path, global_db_path,
     get_current_file, set_closing, change_tree_title, filter_tree_title)
-from styles import config_generic
-from messages import open_message, opening_msg, open_input_message2
+from messages import opening_msg
 from utes import center_dialog, titlize
 from query_strings import (
     select_app_setting_openpic_dir, select_closing_state_openpic,
@@ -163,7 +162,8 @@ class SplashScreen(Toplevel):
             self.opening_dialog.rc_menu,
             opening_dlg_help_msg)
 
-        config_generic(self.opening_dialog)
+        # config_generic(self.opening_dialog)
+        configall(self.opening_dialog, self.treebard.formats)
         self.master.wait_window(self.opening_dialog)
         self.store_last_openpic()
 

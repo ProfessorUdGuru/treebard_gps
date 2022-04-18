@@ -21,19 +21,15 @@ Validation and input to database has been tested for these cases:
 import tkinter as tk
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, LabelHeader, 
-    Entry, ButtonQuiet)
+    Entry, ButtonQuiet, configall, Border, Scrollbar, resize_scrolled_content,
+    EntryAuto, Separator, run_statusbar_tooltips, RightClickMenu, make_rc_menus, 
+    open_message, )
 from files import get_current_file
-from styles import config_generic
-from window_border import Border
-from scrolling import Scrollbar, resize_scrolled_content
-from autofill import EntryAuto
-from toykinter_widgets import Separator, run_statusbar_tooltips
-from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import (
     places_dialog_label_help_msg, places_dlg_help_msg, 
     places_dialog_radio_help_msg, places_dialog_hint_help_msg)
 from nested_place_strings import make_all_nestings, ManyManyRecursiveQuery
-from messages import open_message, places_err
+from messages import places_err
 from query_strings import (
     select_place_id_hint, insert_place_new, update_finding_places_null,     
     select_place_hint, select_all_places, select_all_places_places, 
@@ -189,7 +185,7 @@ class NewPlaceDialog():
         self.frm.grid(column=1, row=2, sticky='news', pady=12)
         show_message()
         self.lay_out_radios()
-        config_generic(self.new_places_dialog)
+        configall(self.new_places_dialog, self.formats)
         resize_scrolled_content(self.new_places_dialog, self.canvas, window)
 
         self.new_places_dialog.focus_set()
@@ -591,7 +587,7 @@ class ValidatePlace():
 
 if __name__ == "__main__":
     
-    from styles import make_formats_dict
+    from widgets import make_formats_dict
 
     trials = {
         'a' : "114 Main Street, Paris, Precinct 5, Lamar County, Texas, USA",

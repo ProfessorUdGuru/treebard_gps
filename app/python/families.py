@@ -4,16 +4,13 @@ import tkinter as tk
 import sqlite3
 from widgets import (
     Frame, LabelH3, Label, Button, Canvas, LabelEntry, Radiobutton, LabelFrame,
-    FrameHilited, LabelHeader, Checkbutton, LabelNegative)
-from window_border import Dialogue
-from custom_combobox_widget import Combobox
+    FrameHilited, LabelHeader, Checkbutton, LabelNegative, Dialogue, Combobox,
+    Scrollbar, EntryAutoPerson, EntryAutoPersonHilited, open_message)
 from files import get_current_file
-from scrolling import Scrollbar
 from persons import (
     open_new_person_dialog, make_all_names_dict_for_person_select, check_name,
-    delete_person_from_tree, update_person_autofill_values, EntryAutoPerson, 
-    EntryAutoPersonHilited)
-from messages import open_message, families_msg
+    delete_person_from_tree, update_person_autofill_values)
+from messages import families_msg
 from dates import format_stored_date, get_date_formats, OK_MONTHS, validate_date
 from events_table import (
     get_current_person, delete_generic_finding, delete_couple_finding,

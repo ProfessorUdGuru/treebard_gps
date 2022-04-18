@@ -7,16 +7,16 @@ import sqlite3
 from PIL import Image, ImageTk
 from files import app_path, global_db_path, current_drive, open_tree
 from dropdown import DropdownMenu, placeholder
-from window_border import Border
 from opening import SplashScreen
-from scrolling import MousewheelScrolling
-from styles import config_generic, make_formats_dict
 from main import Main
-from widgets import Button, Frame, ButtonPlain
+from widgets import (
+    Button, Frame, ButtonPlain, configall, make_formats_dict, Border,
+    MousewheelScrolling)
 from dates import get_date_formats   
 from utes import create_tooltip
 from query_strings import (
-    update_closing_state_tree_is_open, select_date_format)
+    update_closing_state_tree_is_open, select_date_format, 
+    )
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -104,7 +104,7 @@ class Treebard():
         self.canvas = Border(
             self.root,
             self.root,
-            self.formats,
+            # self.formats,
             menubar=True, 
             ribbon_menu=True,
 )
@@ -139,6 +139,7 @@ class Treebard():
         self.scroll_mouse.configure_mousewheel_scrolling(in_root=True)
 
 def start():
+    formats = make_formats_dict()
     root = tk.Tk()
     root.geometry('+75+10')
     root.iconbitmap(default='{}favicon.ico'.format(app_path))
@@ -160,7 +161,8 @@ def start():
     except AttributeError:
         pass
  
-    config_generic(root)
+    # config_generic(root)
+    configall(root, formats)
     root.mainloop()
 
 if __name__ == '__main__':
@@ -168,6 +170,14 @@ if __name__ == '__main__':
 
 
 # DO LIST
+
+# possibly some of the end-point widgets such as independent dialogs have been moved to widgets.py for no reason
+# delete unused modules
+# get rid of as many formats = make_formats_dict() runs as possible and see if it's better to stop passing formats around or leave it like it is (prob leave it, unless a global formats is needed to jump start the class-level version)
+# finish all config_ functions, then break big ones up so instead of one function with a long name and a lot of stuff in it, a widg with lots of options will run two or three small functions and the repetition as well as the number of functions will be cut way back
+# change curr per input wrong color and shd not highlight when pointed at
+# move query strings to other module
+
 
 # BRANCH: families_table_validation
 # APPARENTLY the user columns in formats table aren't being used anymore since the inception of using a color_scheme_id as FK in table current. if this is true get rid of the columns.

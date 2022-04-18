@@ -7,11 +7,9 @@ from re import search
 import sqlite3
 from widgets import (
     Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay, Entry,
-    FrameHilited2,)
-from scrolling import Scrollbar
-from styles import get_all_descends, config_generic
+    FrameHilited2, get_all_descends, configall, Scrollbar, open_message)
 from files import get_current_file
-from messages import colorizer_msg, open_message
+from messages import colorizer_msg
 from messages_context_help import color_preferences_swatches_help_msg
 from query_strings import (
     update_current_color_scheme, delete_color_scheme, insert_color_scheme,
@@ -595,7 +593,8 @@ class Colorizer(Frame):
             text="Currently applied color scheme is id# {}".format(
                 self.currently_applied_color_scheme))
 
-        config_generic(self.root)
+        # config_generic(self.root)
+        configall(self.root, self.formats)
         self.root.config(bg=color_scheme[0])
 
     def validate_hex_colors(self, evt=None, chooser=False):
@@ -712,7 +711,8 @@ class Colorizer(Frame):
             cur.execute(update_current_color_scheme_default)
             conn.commit()
             self.currently_applied_color_scheme = 1
-            config_generic(self.root)
+            # config_generic(self.root)
+            configall(self.root, self.formats)
 
         self.redraw_swatches()
 

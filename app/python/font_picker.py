@@ -5,17 +5,16 @@ from tkinter import font
 import sqlite3
 from files import get_current_file
 from query_strings import update_format_font, select_format_font_scheme
-from widgets import Label, Frame, Scale, Button
-from styles import config_generic
-from messages import open_message, fonts_msg
-from scrolling import resize_scrolled_content    
-from custom_combobox_widget import Combobox
+from widgets import (
+    Label, Frame, Scale, Button, configall, make_formats_dict, open_message,
+    resize_scrolled_content, Combobox)
+from messages import fonts_msg
 import dev_tools as dt
 from dev_tools import looky, seeline
 
 
 
-
+formats = make_formats_dict()
 
 class FontPicker(Frame):
     def __init__(self, master, root, main, *args, **kwargs):
@@ -101,7 +100,8 @@ class FontPicker(Frame):
         cur.close()
         conn.close()
 
-        config_generic(self.root)
+        # config_generic(self.root)
+        configall(self.root, formats)
         resize_scrolled_content(self.root, self.main.master, self.main)
 
         msg0 = open_message(
@@ -125,6 +125,7 @@ if __name__ == "__main__":
         "font picker.\n It changes when you click the APPLY button.")
     q.grid(padx=24, pady=48)
 
-    config_generic(root)
+    # config_generic(root)
+    configall(root, formats)
 
     root.mainloop()

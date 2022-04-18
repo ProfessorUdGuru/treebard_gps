@@ -6,10 +6,10 @@ from files import (
     handle_new_tree_event, handle_open_event, save_as, save_copy_as, 
     rename_tree, close_tree, exit_app, global_db_path, get_recent_files,
     new_file_path, change_tree_title, set_current_file, save_recent_tree)  
-from widgets import Frame, FrameHilited2, LabelHilited3, ToplevelHilited
-from scrolling import Scrollbar
-from messages import open_input_message2, opening_msg
-from styles import config_generic, make_formats_dict
+from widgets import (
+    Frame, FrameHilited2, LabelHilited3, ToplevelHilited, configall, 
+    make_formats_dict, Scrollbar, open_input_message2)
+from messages import opening_msg
 from query_strings import (
     select_closing_state_recent_files, update_closing_state_recent_files)
 import dev_tools as dt
@@ -512,8 +512,8 @@ class DropdownMenu(FrameHilited2):
 if __name__ == "__main__":
 
     from window_border import Border
-    from widgets import Button, Label
-    from styles import make_formats_dict
+    from widgets import Button, Label, make_formats_dict
+    # from styles import 
 
     formats = make_formats_dict()
 
@@ -591,7 +591,8 @@ if __name__ == "__main__":
 
     make_widgets()
 
-    config_generic(root)
+    # config_generic(root)
+    configall(root, formats)
 
     root.mainloop()
 

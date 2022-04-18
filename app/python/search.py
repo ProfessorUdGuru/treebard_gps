@@ -3,16 +3,13 @@
 import tkinter as tk
 import sqlite3
 from files import app_path, get_current_file
-from window_border import Border
-from scrolling import MousewheelScrolling, Scrollbar, resize_scrolled_content
-from styles import config_generic
 from widgets import (
     Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3,
-    LabelNegative)
+    LabelNegative, configall, Border, MousewheelScrolling, Scrollbar, 
+    resize_scrolled_content, run_statusbar_tooltips, RightClickMenu, 
+    make_rc_menus)
 from persons import open_new_person_dialog, update_person_autofill_values
 from dates import OK_PREFIXES, format_stored_date
-from toykinter_widgets import run_statusbar_tooltips
-from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import search_person_help_msg
 from query_strings import (
     select_person_distinct_like, select_name_details,
@@ -226,7 +223,8 @@ class PersonSearch(Toplevel):
             search_person_help_msg) 
 
         self.make_header_row()
-        config_generic(self)
+        # config_generic(self)
+        configall(self, formats)
         resize_scrolled_content(self, self.canvas, self.window)
 
     def make_new_person(self, master, inwidg, root, treebard, formats, 
@@ -331,7 +329,8 @@ class PersonSearch(Toplevel):
                 child.bind('<Key-Down>', self.go_down)
                 if child.grid_info()['column'] == 0:
                     child.config(takefocus=1)
-        config_generic(self)
+        # config_generic(self)
+        configall(self, formats)
         resize_scrolled_content(self, self.canvas, self.window)
         self.maxsize(
             int(self.winfo_screenwidth() * 0.90),

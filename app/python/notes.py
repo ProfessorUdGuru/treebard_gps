@@ -2,20 +2,15 @@
 
 import tkinter as tk
 import sqlite3
-from scrolling import Scrollbar, ScrolledText, resize_scrolled_content
-from window_border import Border, Dialogue
 from widgets import (
     Label, Button, Entry, Canvas, LabelFrame, LabelH3, FrameHilited6,
-    LabelMovable, Toplevel, LabelHeader, Radiobutton, Frame)
-from custom_combobox_widget import Combobox
-from autofill import EntryAutoHilited
-from toykinter_widgets import run_statusbar_tooltips
-from right_click_menu import RightClickMenu, make_rc_menus
+    LabelMovable, Toplevel, LabelHeader, Radiobutton, Frame, Border, Dialogue,
+    Combobox, EntryAutoHilited, run_statusbar_tooltips, RightClickMenu, 
+    make_rc_menus, open_yes_no_message, open_message, InputMessage, 
+    Scrollbar, ScrolledText, resize_scrolled_content, configall)
 from messages_context_help import notes_dlg_help_msg, links_dlg_help_msg
-from styles import config_generic
 from places import make_all_nestings    
-from messages import (
-    open_yes_no_message, notes_msg, open_message, InputMessage)
+from messages import notes_msg
 from utes import center_dialog, create_tooltip, OK_PRINT_KEYS
 from files import get_current_file
 from links import ELEMENTS
@@ -24,7 +19,7 @@ from query_strings import (
     update_note_edit, update_findings_notes, insert_findings_notes_new,
     update_findings_notes_order, select_findings_notes_order, 
     select_notes_per_finding, select_notes_linked, select_all_place_ids,
-    delete_findings_notes_linked, update_note_topic,
+    delete_findings_notes_linked, update_note_topic
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -75,7 +70,8 @@ class NotesDialog(Toplevel):
         self.size_toc() 
 
 
-        config_generic(self)
+        # config_generic(self)
+        configall(self, self.formats)
         resize_scrolled_content(self, self.canvas, self.window)
         center_dialog(self, frame=self.window)
 
@@ -340,7 +336,8 @@ class NotesDialog(Toplevel):
         self.order_dlg_canvas.title_2.config(text="")
         self.make_widgets_reorder_dlg()
         self.make_inputs_reorder_dlg()
-        config_generic(self.order_dlg)
+        # config_generic(self.order_dlg)
+        configall(self.order_dlg)
         resize_scrolled_content(
             self.order_dlg, self.order_dlg_canvas, self.order_dlg_window) 
         self.order_dlg.maxsize(
@@ -818,7 +815,8 @@ if __name__ == "__main__":
     b = Button(root, text=" ... ", command=open_note)
     b.grid()
     b.focus_set()
-    config_generic(root)
+    # config_generic(root)
+    configall(root, formats)
     root.mainloop()
 
 

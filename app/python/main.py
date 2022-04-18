@@ -18,25 +18,23 @@ import tkinter as tk
 import sqlite3
 from PIL import Image, ImageTk
 from files import current_drive, get_current_file
-from styles import make_formats_dict
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
-    Radiobutton, LabelFrame)
-from window_border import Border
-from custom_tabbed_widget import TabBook
-from scrolling import Scrollbar    
+    Radiobutton, LabelFrame, make_formats_dict, Border, TabBook, Scrollbar,
+    run_statusbar_tooltips, RightClickMenu, make_rc_menus, EntryAutoPerson,
+    EntryAutoPersonHilited,
+)
+   
 from families import NuclearFamiliesTable
 from events_table import EventsTable
 from dates import DatePreferences, OK_MONTHS, get_date_formats
 from gallery import Gallery
 from colorizer import Colorizer
-from toykinter_widgets import run_statusbar_tooltips
-from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import main_help_msg
 from font_picker import FontPicker
 from persons import (
     make_all_names_dict_for_person_select, check_name, get_original,
-    update_person_autofill_values, EntryAutoPerson, EntryAutoPersonHilited,
+    update_person_autofill_values, 
     open_new_person_dialog)
 from search import PersonSearch
 from query_strings import (

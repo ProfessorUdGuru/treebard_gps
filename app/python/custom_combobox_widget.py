@@ -29,527 +29,526 @@
 
 import tkinter as tk
 from widgets import (FrameHilited3, Entry, ToplevelHilited, Frame,
-    LabelHilited, ButtonFlatHilited, LabelTip2, CanvasHilited)
-from scrolling import Scrollbar
-from styles import config_generic, make_formats_dict
+    Labelx, ButtonFlatHilited, LabelTip2, CanvasHilited, configall, 
+    make_formats_dict, Scrollbar)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
 
 
 formats = make_formats_dict()
-class Combobox(FrameHilited3):
-    hive = []
-    formats = formats
-    highlight_bg = formats["highlight_bg"]
-    bg = formats["bg"]
-    fg = formats["fg"]
+# class Combobox(FrameHilited3):
+    # hive = []
+    # formats = formats
+    # highlight_bg = formats["highlight_bg"]
+    # head_bg = formats["head_bg"]
+    # bg = formats["bg"]
+
+    # def __init__(
+            # self, 
+            # master, 
+            # root, 
+            # callback=None,
+            # height=480, 
+            # values=[], 
+            # scrollbar_size=24, 
+            # *args, **kwargs):
+        # FrameHilited3.__init__(self, master, *args, **kwargs)
+        # '''
+            # This is a replacement for ttk.Combobox.
+        # '''
+
+        # self.master = master
+        # self.callback = callback
+        # self.root = root
+        # self.height = height
+        # self.values = values
+        # self.scrollbar_size = scrollbar_size
+
+        # self.buttons = []
+        # self.selected = None
+        # self.result_string = ''
+
+        # self.entered = None
+        # self.lenval = len(self.values)
+        # self.owt = None
+        # self.scrollbar_clicked = False
+        # self.typed = None
+
+        # self.screen_height = self.winfo_screenheight()
+        # self.config(bd=0)
+
+        # # simulate <<ComboboxSelected>>:
+        # self.var = tk.StringVar()
+        # self.var.trace_add('write', lambda *args, **kwargs: self.combobox_selected()) 
+
+        # # simulate ttk.Combobox.current()
+        # self.current = 0
+
+        # self.make_widgets()
+        # self.master.bind_all('<ButtonRelease-1>', self.close_dropdown, add='+')
+
+        # # self.root.bind('<Configure>', self.hide_all_drops) # DO NOT DELETE
+        # # Above binding closes dropdown if Windows title bar is clicked, it
+        # #   has no other purpose. But it causes minor glitches e.g. if a
+        # #   dropdown button is highlighted and focused, the Entry has to be
+        # #   clicked twice to put it back into the alternating drop/undrop
+        # #   cycle as expected. Without this binding, the click on the title
+        # #   bar lowers the dropdown below the root window which is good 
+        # #   enough for now. To get around it, use the Border class in 
+        # #   window_border.py instead of the built-in Windows title bar that
+        # #   comes with Tkinter.
+
+        # # expose only unique methods of Entry e.g. not self.config (self is a
+        # #   Frame and the Entry, Toplevel, Canvas, and window have to be 
+        # #   configured together) so to size the entry use 
+        # #   instance.config_drop_width(72)
+        # self.insert = self.entry.insert
+        # self.delete = self.entry.delete
+        # self.get = self.entry.get
+
+    # def make_widgets(self):
+        # self.entry = Entry(self, textvariable=self.var)
+        # self.arrow = ComboArrow(self, text='\u25BC', width=2)
+
+        # self.entry.grid(column=0, row=0)
+        # self.arrow.grid(column=1, row=0)
+
+        # self.update_idletasks()
+        # self.width = self.winfo_reqwidth()
+
+        # self.drop = ToplevelHilited(
+            # self,
+            # bd=0)
+        # self.drop.bind('<Destroy>', self.clear_reference_to_dropdown)
+        # self.drop.withdraw()
+        # Combobox.hive.append(self.drop)
+        # for widg in (self.master, self.drop):
+            # widg.bind('<Escape>', self.hide_all_drops, add='+')
+
+        # self.drop.grid_columnconfigure(0, weight=1)
+        # self.drop.grid_rowconfigure(0, weight=1)
+
+        # self.canvas = CanvasHilited(self.drop)
+        # self.canvas.grid(column=0, row=0, sticky='news')
+
+        # self.scrollv_combo = Scrollbar(
+            # self.drop, hideable=True, command=self.canvas.yview)
+        # self.canvas.config(yscrollcommand=self.scrollv_combo.set)
+        # self.content = Frame(self.canvas)
+
+        # self.content.grid_columnconfigure(0, weight=1)
+        # self.content.grid_rowconfigure('all', weight=1)
+
+        # self.scrollv_combo.grid(column=1, row=0, sticky='ns') 
+
+        # self.entry.bind('<KeyPress>', self.open_or_close_dropdown)
+        # self.entry.bind('<Tab>', self.open_or_close_dropdown)
+
+        # for widg in (self.entry, self.arrow):
+            # widg.bind('<Button-1>', self.open_or_close_dropdown, add='+')
+    
+        # self.arrow.bind('<Button-1>', self.focus_entry_on_arrow_click, add='+')
+       
+        # for frm in (self, self.content):
+            # """ Bind arrow events to frames to make arrow label highlight on
+                # click or focus in. I don't remember why it had to be done this
+                # way, but changing it to run a local callback breaks the 
+                # highlighting.
+            # """
+            # frm.bind('<FocusIn>', self.arrow.highlight_arrow)
+            # frm.bind('<FocusOut>', self.arrow.unhighlight_arrow)
+
+        # self.drop.bind('<FocusIn>', self.focus_dropdown)
+        # self.drop.bind('<Unmap>', self.unhighlight_all_drop_items)
+
+        # self.current_combo_parts = [self, self.entry, self.arrow, self.scrollv_combo]
+        # for part in self.current_combo_parts:
+            # part.bind('<Enter>', self.unbind_combo_parts, add="+")
+            # part.bind('<Leave>', self.rebind_combo_parts, add="+")
+        # self.config_values(self.values)
+
+        # configall(self.drop, Combobox.formats)
+        # # config_generic(self.drop)
+
+    # def unbind_combo_parts(self, evt):
+        # self.master.unbind_all('<ButtonRelease-1>')
+
+    # def rebind_combo_parts(self, evt):
+        # self.master.bind_all('<ButtonRelease-1>', self.close_dropdown, add='+')
+
+    # def unhighlight_all_drop_items(self, evt):
+        # for child in self.content.winfo_children():
+            # child.config(bg=Combobox.highlight_bg)
+
+    # def clear_reference_to_dropdown(self, evt):
+        # dropdown = evt.widget
+        # if dropdown in Combobox.hive:
+            # idx = Combobox.hive.index(dropdown)
+            # del Combobox.hive[idx]  
+            # dropdown = None
+
+    # def config_values(self, values):
+        # '''
+            # The vertical scrollbar, when there is one, overlaps the 
+            # dropdown button highlight but both still work. To change
+            # this, the button width can be changed when the scrollbar
+            # appears and disappears.
+        # '''
+        # if len(values) == 0: return
+        # # RE: above return line; NOT SURE WHY THIS WAS NEEDED alert:
+        # #   had to add this line after adding `if self.fit_height <= self.height:`
+        # #   at bottom of this method, which had to be added so dropdowns
+        # #   could be less than default height. Possibly this has to do with the
+        # #   difference between running a Combobox in a dialog vs. in a tab on the
+        # #   root window. I say this because this method seems to be running too
+        # #   early (before there are any values) and if that happens, the new 
+        # #   line below sets height to 0. Seems to be working now that this 
+        # #   method is not allowed to run twice.
+        # # a sample button is made to get its height, then destroyed
+        # b = ButtonFlatHilited(self.content, text='Sample')
+        # one_height = b.winfo_reqheight()
+        # self.fit_height = one_height * len(values)
+
+        # self.values = values
+        # self.lenval = len(self.values)
+
+        # for button in self.buttons:
+            # button.destroy()
+        # self.buttons = []
+
+        # host_width = self.winfo_reqwidth()
+        # self.window = self.canvas.create_window(
+            # 0, 0, anchor='nw', window=self.content, width=host_width)
+        # self.canvas.config(scrollregion=(0, 0, host_width, self.fit_height))
+        # c = 0
+        # for item in values:
+            # bt = ButtonFlatHilited(self.content, text=item, anchor='w')
+            # bt.grid(column=0, row=c, sticky='ew')  
+            # for event in ('<Button-1>', '<Return>', '<space>'):
+                # bt.bind(event, self.get_clicked, add='+')
+            # bt.bind('<Enter>', self.highlight_button)
+            # bt.bind('<Leave>', self.unhighlight_button)
+            # bt.bind('<Tab>', self.tab_out_of_dropdown_fwd)
+            # bt.bind('<Shift-Tab>', self.tab_out_of_dropdown_back)
+            # bt.bind('<KeyPress>', self.traverse_on_arrow)
+            # bt.bind('<FocusOut>', self.unhighlight_button)
+            # bt.bind('<FocusOut>', self.get_tip_widg, add='+')
+            # bt.bind('<FocusIn>', self.get_tip_widg)
+            # bt.bind('<Enter>', self.get_tip_widg, add='+')
+            # bt.bind('<Leave>', self.get_tip_widg, add='+')
+            # self.buttons.append(bt)
+            # c += 1
+        # for b in self.buttons:
+            # b.config(command=self.callback)
+        # if self.fit_height <= self.height:
+            # self.height = self.fit_height
+
+    # def get_tip_widg(self, evt):
+        # '''
+            # '10' is FocusOut, '9' is FocusIn
+        # '''
+        # if self.winfo_reqwidth() <= evt.widget.winfo_reqwidth():
+            # widg = evt.widget
+            # evt_type = evt.type
+            # if evt_type in ('7', '9'):
+                # self.show_overwidth_tip(widg)
+            # elif evt_type in ('8', '10'):
+                # self.hide_overwidth_tip()
+
+    # def show_overwidth_tip(self, widg):
+        # '''
+            # Instead of a horizontal scrollbar, if a dropdown item doesn't all
+            # show in the space allotted, the full text will appear in a tooltip
+            # on highlight. Most of this code is borrowed from Michael Foord.
+        # '''
+        # text=widg.cget('text')
+        # if self.owt:
+            # return
+        # x, y, cx, cy = widg.bbox()
+        # x = x + widg.winfo_rootx() + 32
+        # y = y + cy + widg.winfo_rooty() + 32
+        # self.owt = ToplevelHilited(self)
+        # self.owt.wm_overrideredirect(1)
+        # l = LabelTip2(self.owt, text=text) 
+        # l.pack(ipadx=6, ipady=3)
+        # self.owt.wm_geometry('+{}+{}'.format(x, y))
+
+    # def hide_overwidth_tip(self):    
+        # tip = self.owt
+        # self.owt = None
+        # if tip:
+            # tip.destroy() 
+
+    # def focus_entry_on_arrow_click(self, evt):
+        # self.focus_set()
+        # self.entry.select_range(0, 'end')  
+
+    # def hide_other_drops(self):
+        # for dropdown in Combobox.hive:
+            # if dropdown != self.drop:
+                # dropdown.withdraw()
+
+    # def hide_all_drops(self, evt=None):
+        # for dropdown in Combobox.hive:
+            # dropdown.withdraw()
+
+    # def close_dropdown(self, evt):
+        # '''
+            # Runs only on ButtonRelease-1.
+
+            # In the case of a destroyable combobox in a dialog, after the
+            # combobox is destroyed, this event will cause an error because
+            # the dropdown no longer exists. I think this is harmless so I
+            # added the try/except to pass on it instead of figuring out how
+            # to prevent the error.
+        # '''
+        # widg = evt.widget
+        # if widg == self.scrollv_combo:
+            # self.scrollbar_clicked = True
+        # try:
+            # self.drop.withdraw()
+        # except tk.TclError:
+            # pass
+
+    # def config_drop_width(self, new_width):
+        # self.entry.config(width=new_width)
+        # self.update_idletasks()
+        # self.width = self.winfo_reqwidth()
+        # self.drop.geometry('{}x{}'.format(self.width, self.height)) 
+        # self.scrollregion_width = new_width
+        # self.canvas.itemconfigure(self.window, width=self.width)
+        # self.canvas.configure(scrollregion=(0, 0, new_width, self.fit_height))
+
+    # def open_or_close_dropdown(self, evt=None):
+        # if evt is None:
+            # # dropdown item clicked--no evt because of Button command option
+            # if self.callback:
+                # self.callback(self.selected)
+            # self.drop.withdraw()
+            # return
+        # if len(self.buttons) == 0:
+            # return
+        # evt_type = evt.type
+        # evt_sym = evt.keysym
+        # if evt_sym == 'Tab':
+            # self.drop.withdraw()
+            # return
+        # elif evt_sym == 'Escape':
+            # self.hide_all_drops()
+            # return
+        # first = None
+        # last = None
+        # if len(self.buttons) != 0:
+            # first = self.buttons[0]
+            # last = self.buttons[len(self.buttons) - 1]
+        # # self.drop.winfo_ismapped() gets the wrong value
+        # #   if the scrollbar was the last thing clicked
+        # #   so drop_is_open has to be used also.
+        # if evt_type == '4':
+            # if self.drop.winfo_ismapped() == 1:
+                # drop_is_open = True
+            # elif self.drop.winfo_ismapped() == 0:
+                # drop_is_open = False
+            # if self.scrollbar_clicked is True:
+                # drop_is_open = True
+                # self.scrollbar_clicked = False
+            # if drop_is_open is True:
+                # self.drop.withdraw() 
+                # drop_is_open = False
+                # return
+            # elif drop_is_open is False:
+                # pass
+        # elif evt_type == '2':
+            # if evt_sym not in ('Up', 'Down'):
+                # return
+            # elif first is None or last is None:
+                # pass
+            # elif evt_sym == 'Down':
+                # first.config(bg=Combobox.bg)
+                # first.focus_set()
+                # self.canvas.yview_moveto(0.0)
+            # elif evt_sym == 'Up':
+                # last.config(bg=Combobox.bg)
+                # last.focus_set()
+                # self.canvas.yview_moveto(1.0)
+
+        # self.update_idletasks()
+        # x = self.winfo_rootx()
+        # y = self.winfo_rooty()
+        # combo_height = self.winfo_reqheight()
+
+        # self.fit_height = self.content.winfo_reqheight()
+        # self.drop.wm_overrideredirect(1)
+        # fly_up = self.get_vertical_pos(combo_height, evt)
+        # if fly_up[0] is False:            
+            # y = y + combo_height
+        # else:
+            # y = fly_up[1]
+       
+        # self.drop.geometry('{}x{}+{}+{}'.format(
+            # self.width, self.height, x, y)) 
+        # self.drop.deiconify() 
+        # self.hide_other_drops()
+
+    # def get_vertical_pos(self, combo_height, evt):
+        # fly_up = False
+        # vert_pos = evt.y_root - evt.y
+        # clearance = self.screen_height - (vert_pos + combo_height)
+        # if clearance < self.height:
+            # fly_up = True
+
+        # return (fly_up, vert_pos - self.height)
+
+    # def highlight_button(self, evt):
+        # for widg in self.buttons:
+            # widg.config(bg=Combobox.highlight_bg)
+        # widget = evt.widget
+        # widget.config(bg=Combobox.bg)
+        # self.selected = widget
+        # widget.focus_set()
+
+    # def unhighlight_button(self, evt):
+        # x, y = self.winfo_pointerxy()
+        # hovered = self.winfo_containing(x,y)
+        # if hovered in self.buttons:
+            # evt.widget.config(bg=Combobox.highlight_bg)
+
+    # def hide_drops_on_title_bar_click(self, evt):
+        # x, y = self.winfo_pointerxy()
+        # hovered = self.winfo_containing(x,y)
+
+    # def focus_dropdown(self, evt):
+        # for widg in self.buttons:
+            # widg.config(takefocus=1)
+
+    # def handle_tab_out_of_dropdown(self, go):
+
+        # for widg in self.buttons:
+            # widg.config(takefocus=0)
+
+        # self.entry.delete(0, 'end')
+        # self.entry.insert(0, self.selected.cget('text'))
+        # self.drop.withdraw()
+        # self.entry.focus_set()
+        # if go == 'fwd':
+            # goto = self.entry.tk_focusNext()
+        # elif go == 'back':
+            # goto = self.entry.tk_focusPrev()
+        # goto.focus_set()
+
+    # def tab_out_of_dropdown_fwd(self, evt):
+        # self.selected = evt.widget
+        # self.handle_tab_out_of_dropdown('fwd')
+
+    # def tab_out_of_dropdown_back(self, evt):
+        # self.selected = evt.widget
+        # self.handle_tab_out_of_dropdown('back')
+
+    # def get_clicked(self, evt):
+
+        # self.selected = evt.widget
+        # self.current = self.selected.grid_info()['row']
+        # self.entry.delete(0, 'end')
+        # self.entry.insert(0, self.selected.cget('text')) 
+        # self.entry.select_range(0, 'end')
+        # self.open_or_close_dropdown()  
+
+    # def get_typed(self):
+        # self.typed = self.var.get()    
+
+    # def highlight_on_traverse(self, evt, next_item=None, prev_item=None):
+
+        # evt_type = evt.type
+        # evt_sym = evt.keysym # 2 is key press, 4 is button press
+
+        # for widg in self.buttons:
+            # widg.config(bg=Combobox.highlight_bg)
+        # if evt_type == '4':
+            # self.selected = evt.widget
+        # elif evt_type == '2' and evt_sym == 'Down':
+            # self.selected = next_item
+        # elif evt_type == '2' and evt_sym == 'Up':
+            # self.selected = prev_item
+
+        # self.selected.config(bg=Combobox.bg)
+        # self.widg_height = int(self.fit_height / self.lenval)
+        # widg_screenpos = self.selected.winfo_rooty()
+        # widg_listpos = self.selected.winfo_y()
+        # win_top = self.drop.winfo_rooty()
+        # win_bottom = win_top + self.height
+        # win_ratio = self.height / self.fit_height
+        # list_ratio = widg_listpos / self.fit_height
+        # widg_ratio = self.widg_height / self.fit_height
+        # up_ratio = list_ratio - win_ratio + widg_ratio
+
+        # if widg_screenpos > win_bottom - 0.75 * self.widg_height:
+            # self.canvas.yview_moveto(float(list_ratio))
+        # elif widg_screenpos < win_top:
+            # self.canvas.yview_moveto(float(up_ratio))
+        # self.selected.focus_set()
+
+    # def traverse_on_arrow(self, evt):
+        # if evt.keysym not in ('Up', 'Down'):
+            # return
+        # widg = evt.widget
+        # sym = evt.keysym
+        # self.widg_height = int(self.fit_height / self.lenval)
+        # self.update_idletasks()
+        # next_item = widg.tk_focusNext()
+        # prev_item = widg.tk_focusPrev()
+
+        # if sym == 'Down':
+            # if next_item in self.buttons:
+                # self.highlight_on_traverse(evt, next_item=next_item)
+            # else:
+                # next_item = self.buttons[0]
+                # next_item.focus_set()
+                # next_item.config(bg=Combobox.bg)
+                # self.canvas.yview_moveto(0.0)
+
+        # elif sym == 'Up':
+            # if prev_item in self.buttons:
+                # self.highlight_on_traverse(evt, prev_item=prev_item)
+            # else:
+                # prev_item = self.buttons[self.lenval-1]
+                # prev_item.focus_set()
+                # prev_item.config(bg=Combobox.bg)
+                # self.canvas.yview_moveto(1.0)        
+
+    # def callback(self):
+        # '''
+            # A function specified on instantiation.
+        # '''
+        # # print('this will not print if overridden (callback)')
+        # pass
+
+    # def combobox_selected(self):
+        # '''
+            # A function specified on instantiation will run when
+            # the selection is made. Similar to ttk's <<ComboboxSelected>>
+            # but instead of binding to a virtual event.
+        # '''
+        # # print('this will not print if overridden (combobox_selected)')
+        # pass
+
+# class ComboArrow(Labelx):
+    # head_bg = formats["head_bg"]
+    # fg = formats["fg"]
     # output_font = formats["output_font"]
-    def __init__(
-            self, 
-            master, 
-            root, 
-            callback=None,
-            height=480, 
-            values=[], 
-            scrollbar_size=24, 
-            *args, **kwargs):
-        """ Replace ttk.Combobox. """
-        FrameHilited3.__init__(self, master, *args, **kwargs)
-        self.master = master
-        self.callback = callback
-        self.root = root
-        self.height = height
-        self.values = values
-        self.scrollbar_size = scrollbar_size
-    
-        # self.formats = make_formats_dict()
-
-        self.buttons = []
-        self.selected = None
-        self.result_string = ''
-
-        self.entered = None
-        self.lenval = len(self.values)
-        self.owt = None
-        self.scrollbar_clicked = False
-        self.typed = None
-
-        self.screen_height = self.winfo_screenheight()
-        self.config(bd=0)
-
-        # simulate <<ComboboxSelected>>:
-        self.var = tk.StringVar()
-        self.var.trace_add('write', lambda *args, **kwargs: self.combobox_selected()) 
-
-        # simulate ttk.Combobox.current()
-        self.current = 0
-
-        self.make_widgets()
-        self.master.bind_all('<ButtonRelease-1>', self.close_dropdown, add='+')
-
-        # self.root.bind('<Configure>', self.hide_all_drops) # DO NOT DELETE
-        # Above binding closes dropdown if Windows title bar is clicked, it
-        #   has no other purpose. But it causes minor glitches e.g. if a
-        #   dropdown button is highlighted and focused, the Entry has to be
-        #   clicked twice to put it back into the alternating drop/undrop
-        #   cycle as expected. Without this binding, the click on the title
-        #   bar lowers the dropdown below the root window which is good 
-        #   enough for now. To get around it, use the Border class in 
-        #   window_border.py instead of the built-in Windows title bar that
-        #   comes with Tkinter.
-
-        # expose only unique methods of Entry e.g. not self.config (self is a
-        #   Frame and the Entry, Toplevel, Canvas, and window have to be 
-        #   configured together) so to size the entry use 
-        #   instance.config_drop_width(72)
-        self.insert = self.entry.insert
-        self.delete = self.entry.delete
-        self.get = self.entry.get
-
-    def make_widgets(self):
-        self.entry = Entry(self, textvariable=self.var)
-        self.arrow = LabelHilited(self, text='\u25BC', width=2)
-
-        self.entry.grid(column=0, row=0)
-        self.arrow.grid(column=1, row=0)
-
-        self.update_idletasks()
-        self.width = self.winfo_reqwidth()
-
-        self.drop = ToplevelHilited(
-            self,
-            bd=0)
-        self.drop.bind('<Destroy>', self.clear_reference_to_dropdown)
-        self.drop.withdraw()
-        Combobox.hive.append(self.drop)
-        for widg in (self.master, self.drop):
-            widg.bind('<Escape>', self.hide_all_drops, add='+')
-
-        self.drop.grid_columnconfigure(0, weight=1)
-        self.drop.grid_rowconfigure(0, weight=1)
-
-        self.canvas = CanvasHilited(self.drop)
-        self.canvas.grid(column=0, row=0, sticky='news')
-
-        self.scrollv_combo = Scrollbar(
-            self.drop, hideable=True, command=self.canvas.yview)
-        self.canvas.config(yscrollcommand=self.scrollv_combo.set)
-        self.content = Frame(self.canvas)
-
-        self.content.grid_columnconfigure(0, weight=1)
-        self.content.grid_rowconfigure('all', weight=1)
-
-        self.scrollv_combo.grid(column=1, row=0, sticky='ns') 
-
-        self.entry.bind('<KeyPress>', self.open_or_close_dropdown)
-        self.entry.bind('<Tab>', self.open_or_close_dropdown)
-
-        for widg in (self.entry, self.arrow):
-            widg.bind('<Button-1>', self.open_or_close_dropdown, add='+')
-    
-        self.arrow.bind('<Button-1>', self.focus_entry_on_arrow_click, add='+')
-       
-        for frm in (self, self.content):
-            frm.bind('<FocusIn>', self.arrow.highlight)
-            frm.bind('<FocusOut>', self.arrow.unhighlight)
-
-        self.drop.bind('<FocusIn>', self.focus_dropdown)
-        self.drop.bind('<Unmap>', self.unhighlight_all_drop_items)
-
-        self.current_combo_parts = [self, self.entry, self.arrow, self.scrollv_combo]
-        for part in self.current_combo_parts:
-            part.bind('<Enter>', self.unbind_combo_parts)
-            part.bind('<Leave>', self.rebind_combo_parts)
-        self.config_values(self.values)
-
-        config_generic(self.drop)
-
-    def unbind_combo_parts(self, evt):
-        self.master.unbind_all('<ButtonRelease-1>')
-
-    def rebind_combo_parts(self, evt):
-        self.master.bind_all('<ButtonRelease-1>', self.close_dropdown, add='+')
-
-    def unhighlight_all_drop_items(self, evt):
-        for child in self.content.winfo_children():
-            child.config(bg=self.formats['highlight_bg'])
-
-    def clear_reference_to_dropdown(self, evt):
-        dropdown = evt.widget
-        if dropdown in Combobox.hive:
-            idx = Combobox.hive.index(dropdown)
-            del Combobox.hive[idx]  
-            dropdown = None
-
-    def config_values(self, values):
-        '''
-            The vertical scrollbar, when there is one, overlaps the 
-            dropdown button highlight but both still work. To change
-            this, the button width can be changed when the scrollbar
-            appears and disappears.
-        '''
-        if len(values) == 0: 
-            return
-        # RE: above return line; NOT SURE WHY THIS WAS NEEDED alert:
-        #   had to add this line after adding `if self.fit_height <= self.height:`
-        #   at bottom of this method, which had to be added so dropdowns
-        #   could be less than default height. Possibly this has to do with the
-        #   difference between running a Combobox in a dialog vs. in a tab on the
-        #   root window. I say this because this method seems to be running too
-        #   early (before there are any values) and if that happens, the new 
-        #   line below sets height to 0. Seems to be working now that this 
-        #   method is not allowed to run twice.
-
-        # a sample button is made to get its height, then destroyed
-        b = ButtonFlatHilited(self.content, text='Sample')
-        one_height = b.winfo_reqheight()
-        self.fit_height = one_height * len(values)
-
-        self.values = values
-        self.lenval = len(self.values)
-
-        for button in self.buttons:
-            button.destroy()
-        self.buttons = []
-
-        host_width = self.winfo_reqwidth()
-        self.window = self.canvas.create_window(
-            0, 0, anchor='nw', window=self.content, width=host_width)
-        self.canvas.config(scrollregion=(0, 0, host_width, self.fit_height))
-        c = 0
-        for item in values:
-            bt = ButtonFlatHilited(self.content, text=item, anchor='w')
-            bt.grid(column=0, row=c, sticky='ew')  
-            for event in ('<Button-1>', '<Return>', '<space>'):
-                bt.bind(event, self.get_clicked, add='+')
-            bt.bind('<Enter>', self.highlight)
-            bt.bind('<Leave>', self.unhighlight)
-            bt.bind('<Tab>', self.tab_out_of_dropdown_fwd)
-            bt.bind('<Shift-Tab>', self.tab_out_of_dropdown_back)
-            bt.bind('<KeyPress>', self.traverse_on_arrow)
-            bt.bind('<FocusOut>', self.unhighlight)
-            bt.bind('<FocusOut>', self.get_tip_widg, add='+')
-            bt.bind('<FocusIn>', self.get_tip_widg)
-            bt.bind('<Enter>', self.get_tip_widg, add='+')
-            bt.bind('<Leave>', self.get_tip_widg, add='+')
-            self.buttons.append(bt)
-            c += 1
-        for b in self.buttons:
-            b.config(command=self.callback)
-        if self.fit_height <= self.height:
-            self.height = self.fit_height
-
-    def get_tip_widg(self, evt):
-        '''
-            '10' is FocusOut, '9' is FocusIn
-        '''
-        if self.winfo_reqwidth() <= evt.widget.winfo_reqwidth():
-            widg = evt.widget
-            evt_type = evt.type
-            if evt_type in ('7', '9'):
-                self.show_overwidth_tip(widg)
-            elif evt_type in ('8', '10'):
-                self.hide_overwidth_tip()
-
-    def show_overwidth_tip(self, widg):
-        '''
-            Instead of a horizontal scrollbar, if a dropdown item doesn't all
-            show in the space allotted, the full text will appear in a tooltip
-            on highlight. Most of this code is borrowed from Michael Foord.
-        '''
-        text=widg.cget('text')
-        if self.owt:
-            return
-        x, y, cx, cy = widg.bbox()
-        x = x + widg.winfo_rootx() + 32
-        y = y + cy + widg.winfo_rooty() + 32
-        self.owt = ToplevelHilited(self)
-        self.owt.wm_overrideredirect(1)
-        l = LabelTip2(self.owt, text=text) 
-        l.pack(ipadx=6, ipady=3)
-        self.owt.wm_geometry('+{}+{}'.format(x, y))
-
-    def hide_overwidth_tip(self):    
-        tip = self.owt
-        self.owt = None
-        if tip:
-            tip.destroy() 
-
-    def highlight_arrow(self, evt):
-        self.arrow.config(bg=self.formats['head_bg'])
-
-    def unhighlight_arrow(self, evt):
-        self.arrow.config(bg=self.formats['highlight_bg'])
-
-    def focus_entry_on_arrow_click(self, evt):
-        self.focus_set()
-        self.entry.select_range(0, 'end')  
-
-    def hide_other_drops(self):
-        for dropdown in Combobox.hive:
-            if dropdown != self.drop:
-                dropdown.withdraw()
-
-    def hide_all_drops(self, evt=None):
-        for dropdown in Combobox.hive:
-            dropdown.withdraw()
-
-    def close_dropdown(self, evt):
-        '''
-            Runs only on ButtonRelease-1.
-
-            In the case of a destroyable combobox in a dialog, after the
-            combobox is destroyed, this event will cause an error because
-            the dropdown no longer exists. I think this is harmless so I
-            added the try/except to pass on it instead of figuring out how
-            to prevent the error.
-        '''
-        widg = evt.widget
-        if widg == self.scrollv_combo:
-            self.scrollbar_clicked = True
-        try:
-            self.drop.withdraw()
-        except tk.TclError:
-            pass
-
-    def config_drop_width(self, new_width):
-        self.entry.config(width=new_width)
-        self.update_idletasks()
-        self.width = self.winfo_reqwidth()
-        self.drop.geometry('{}x{}'.format(self.width, self.height)) 
-        self.scrollregion_width = new_width
-        self.canvas.itemconfigure(self.window, width=self.width)
-        self.canvas.configure(scrollregion=(0, 0, new_width, self.fit_height))
-
-    def open_or_close_dropdown(self, evt=None):
-        if evt is None:
-            # dropdown item clicked--no evt because of Button command option
-            if self.callback:
-                self.callback(self.selected)
-            self.drop.withdraw()
-            return
-        if len(self.buttons) == 0:
-            return
-        evt_type = evt.type
-        evt_sym = evt.keysym
-        if evt_sym == 'Tab':
-            self.drop.withdraw()
-            return
-        elif evt_sym == 'Escape':
-            self.hide_all_drops()
-            return
-        first = None
-        last = None
-        if len(self.buttons) != 0:
-            first = self.buttons[0]
-            last = self.buttons[len(self.buttons) - 1]
-        # self.drop.winfo_ismapped() gets the wrong value
-        #   if the scrollbar was the last thing clicked
-        #   so drop_is_open has to be used also.
-        if evt_type == '4':
-            if self.drop.winfo_ismapped() == 1:
-                drop_is_open = True
-            elif self.drop.winfo_ismapped() == 0:
-                drop_is_open = False
-            if self.scrollbar_clicked is True:
-                drop_is_open = True
-                self.scrollbar_clicked = False
-            if drop_is_open is True:
-                self.drop.withdraw() 
-                drop_is_open = False
-                return
-            elif drop_is_open is False:
-                pass
-        elif evt_type == '2':
-            if evt_sym not in ('Up', 'Down'):
-                return
-            elif first is None or last is None:
-                pass
-            elif evt_sym == 'Down':
-                first.config(bg=self.formats['bg'])
-                first.focus_set()
-                self.canvas.yview_moveto(0.0)
-            elif evt_sym == 'Up':
-                last.config(bg=self.formats['bg'])
-                last.focus_set()
-                self.canvas.yview_moveto(1.0)
-
-        self.update_idletasks()
-        x = self.winfo_rootx()
-        y = self.winfo_rooty()
-        combo_height = self.winfo_reqheight()
-
-        self.fit_height = self.content.winfo_reqheight()
-        self.drop.wm_overrideredirect(1)
-        fly_up = self.get_vertical_pos(combo_height, evt)
-        if fly_up[0] is False:            
-            y = y + combo_height
-        else:
-            y = fly_up[1]
-       
-        self.drop.geometry('{}x{}+{}+{}'.format(
-            self.width, self.height, x, y)) 
-        self.drop.deiconify() 
-        self.hide_other_drops()
-
-    def get_vertical_pos(self, combo_height, evt):
-        fly_up = False
-        vert_pos = evt.y_root - evt.y
-        clearance = self.screen_height - (vert_pos + combo_height)
-        if clearance < self.height:
-            fly_up = True
-
-        return (fly_up, vert_pos - self.height)
-
-    def highlight(self, evt):
-        for widg in self.buttons:
-            widg.config(bg=Combobox.highlight_bg)
-            # widg.config(bg=self.formats['highlight_bg'])
-        widget = evt.widget
-        widget.config(bg=Combobox.bg)
-        # widget.config(bg=self.formats['bg'])
-        self.selected = widget
-        widget.focus_set()
-
-    def unhighlight(self, evt):
-        x, y = self.winfo_pointerxy()
-        hovered = self.winfo_containing(x,y)
-        if hovered in self.buttons:
-            evt.widget.config(bg=self.formats['highlight_bg'])
-
-    def hide_drops_on_title_bar_click(self, evt):
-        x, y = self.winfo_pointerxy()
-        hovered = self.winfo_containing(x,y)
-
-    def focus_dropdown(self, evt):
-        for widg in self.buttons:
-            widg.config(takefocus=1)
-
-    def handle_tab_out_of_dropdown(self, go):
-
-        for widg in self.buttons:
-            widg.config(takefocus=0)
-
-        self.entry.delete(0, 'end')
-        self.entry.insert(0, self.selected.cget('text'))
-        self.drop.withdraw()
-        self.entry.focus_set()
-        if go == 'fwd':
-            goto = self.entry.tk_focusNext()
-        elif go == 'back':
-            goto = self.entry.tk_focusPrev()
-        goto.focus_set()
-
-    def tab_out_of_dropdown_fwd(self, evt):
-        self.selected = evt.widget
-        self.handle_tab_out_of_dropdown('fwd')
-
-    def tab_out_of_dropdown_back(self, evt):
-        self.selected = evt.widget
-        self.handle_tab_out_of_dropdown('back')
-
-    def get_clicked(self, evt):
-
-        self.selected = evt.widget
-        self.current = self.selected.grid_info()['row']
-        self.entry.delete(0, 'end')
-        self.entry.insert(0, self.selected.cget('text')) 
-        self.entry.select_range(0, 'end')
-        self.open_or_close_dropdown()  
-
-    def get_typed(self):
-        self.typed = self.var.get()    
-
-    def highlight_on_traverse(self, evt, next_item=None, prev_item=None):
-
-        evt_type = evt.type
-        evt_sym = evt.keysym # 2 is key press, 4 is button press
-
-        for widg in self.buttons:
-            widg.config(bg=self.formats['highlight_bg'])
-        if evt_type == '4':
-            self.selected = evt.widget
-        elif evt_type == '2' and evt_sym == 'Down':
-            self.selected = next_item
-        elif evt_type == '2' and evt_sym == 'Up':
-            self.selected = prev_item
-
-        self.selected.config(bg=self.formats['bg'])
-        self.widg_height = int(self.fit_height / self.lenval)
-        widg_screenpos = self.selected.winfo_rooty()
-        widg_listpos = self.selected.winfo_y()
-        win_top = self.drop.winfo_rooty()
-        win_bottom = win_top + self.height
-        win_ratio = self.height / self.fit_height
-        list_ratio = widg_listpos / self.fit_height
-        widg_ratio = self.widg_height / self.fit_height
-        up_ratio = list_ratio - win_ratio + widg_ratio
-
-        if widg_screenpos > win_bottom - 0.75 * self.widg_height:
-            self.canvas.yview_moveto(float(list_ratio))
-        elif widg_screenpos < win_top:
-            self.canvas.yview_moveto(float(up_ratio))
-        self.selected.focus_set()
-
-    def traverse_on_arrow(self, evt):
-        if evt.keysym not in ('Up', 'Down'):
-            return
-        widg = evt.widget
-        sym = evt.keysym
-        self.widg_height = int(self.fit_height / self.lenval)
-        self.update_idletasks()
-        next_item = widg.tk_focusNext()
-        prev_item = widg.tk_focusPrev()
-
-        if sym == 'Down':
-            if next_item in self.buttons:
-                self.highlight_on_traverse(evt, next_item=next_item)
-            else:
-                next_item = self.buttons[0]
-                next_item.focus_set()
-                next_item.config(bg=self.formats['bg'])
-                self.canvas.yview_moveto(0.0)
-
-        elif sym == 'Up':
-            if prev_item in self.buttons:
-                self.highlight_on_traverse(evt, prev_item=prev_item)
-            else:
-                prev_item = self.buttons[self.lenval-1]
-                prev_item.focus_set()
-                prev_item.config(bg=self.formats['bg'])
-                self.canvas.yview_moveto(1.0)
-
-    def colorize(self):
-        # self.config(bg=self.formats['bg'])
-        # self.entry.config(bg=self.formats['highlight_bg'])
-        # self.drop.config(bg=self.formats['highlight_bg'])
-        # self.content.config(bg=self.formats['highlight_bg'])
-        self.config(bg=Combobox.bg)
-        self.entry.config(bg=Combobox.highlight_bg, fg=Combobox.fg)
-        self.drop.config(bg=Combobox.highlight_bg)
-        self.content.config(bg=Combobox.highlight_bg)
-        # The dropdown buttons respond to so many events that it might be
-        #   a sort of minor miracle to make them colorize instantly. For
-        #   now it's enough that they colorize on reload and they are not
-        #   on top, they're only seen on dropdown.
-        
-
-    def callback(self):
-        '''
-            A function specified on instantiation.
-        '''
-        # print('this will not print if overridden (callback)')
-        pass
-
-    def combobox_selected(self):
-        '''
-            A function specified on instantiation will run when
-            the selection is made. Similar to ttk's <<ComboboxSelected>>
-            but instead of binding to a virtual event.
-        '''
-        # print('this will not print if overridden (combobox_selected)')
-        pass
+    # highlight_bg = formats["highlight_bg"]
+    # def __init__(self, master, *args, **kwargs):
+        # Labelx.__init__(self, master, *args, **kwargs) 
+        # self.config(
+            # bg=ComboArrow.highlight_bg, 
+            # fg=ComboArrow.fg,
+            # font=ComboArrow.output_font)
+
+    # def highlight_arrow(self, evt):
+        # self.config(bg=ComboArrow.head_bg)
+
+    # def unhighlight_arrow(self, evt):
+        # self.config(bg=ComboArrow.highlight_bg)
 
 if __name__ == '__main__':
 

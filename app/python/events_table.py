@@ -5,27 +5,25 @@
 import tkinter as tk
 import sqlite3
 from files import get_current_file
-from window_border import Border, Dialogue 
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
-    LabelH3, Button, Entry, LabelHeader,
-    LabelNegative)
-from autofill import EntryAuto, EntryAutoHilited
+    LabelH3, Button, Entry, LabelHeader, Border, Dialogue ,
+    LabelNegative,  make_formats_dict, EntryAuto, EntryAutoHilited,
+    Separator, run_statusbar_tooltips, RightClickMenu, make_rc_menus,
+    EntryAutoPerson, Scrollbar, resize_scrolled_content, open_message,
+    open_yes_no_message, EntryAutoPersonHilited
+)
+
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
 from nested_place_strings import make_all_nestings
-from toykinter_widgets import Separator, run_statusbar_tooltips
-from right_click_menu import RightClickMenu, make_rc_menus
 from messages_context_help import new_event_dlg_help_msg
-from styles import config_generic, make_formats_dict
 from persons import (
-    make_all_names_dict_for_person_select, EntryAutoPersonHilited, check_name, 
-    get_original, open_new_person_dialog, update_person_autofill_values,
-    EntryAutoPerson)
+    make_all_names_dict_for_person_select, check_name, 
+    get_original, open_new_person_dialog, update_person_autofill_values)
 from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places
-from scrolling import Scrollbar, resize_scrolled_content
-from messages import open_message, events_msg, open_yes_no_message
+from messages import events_msg
 from utes import split_sorter
     
 from query_strings import (

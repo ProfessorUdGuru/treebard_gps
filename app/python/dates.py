@@ -3,11 +3,11 @@
 import tkinter as tk
 import sqlite3
 from files import get_current_file, global_db_path
-from widgets import Frame, LabelH3, Label, LabelH2, Button
-from custom_combobox_widget import Combobox 
-from autofill import EntryAutoHilited
-# from styles import make_formats_dict
-from messages import open_message, dates_msg, InputMessage
+from widgets import (
+    Frame, LabelH3, Label, LabelH2, Button, Combobox, EntryAutoHilited,
+    open_message, InputMessage
+)
+from messages import dates_msg 
 from query_strings import (
     select_date_format, select_default_date_format, delete_date_format_all,
     insert_date_format_default, update_date_format_date_formats, 

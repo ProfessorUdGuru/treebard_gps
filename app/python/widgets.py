@@ -1,20 +1,381 @@
 # widgets.py
 
 import tkinter as tk
-from tkinter import ttk
 import sqlite3
-from tkinter import messagebox
-from styles import make_formats_dict, NEUTRAL_COLOR
-from utes import create_tooltip  
+from files import get_current_file, app_path, global_db_path, set_closing
+from utes import create_tooltip, center_dialog
+from query_strings import ( 
+    select_color_scheme_current_id, select_color_scheme_by_id,
+    select_format_font_scheme, select_format_font_size,
+    select_current_person, select_name_with_id, select_all_names_ids,
+    select_all_person_ids, select_image_id, select_max_person_id,    
+    insert_images_elements, select_name_type_id, insert_name, 
+    select_all_images, select_all_name_types, insert_person_new,
+    select_person_gender, select_max_name_type_id, insert_name_type_new,
+    insert_image_new, select_name_with_id_any, select_birth_names_ids,
+    insert_finding_birth_new_person,
+    select_current_person_id, delete_name_person, delete_findings_roles_person,
+    select_name_id_by_person_id, delete_links_links_person, delete_links_links_name,
+    update_finding_person_1_null, update_finding_person_2_null,
+    delete_finding_person, delete_claims_roles_person, delete_person,
+    update_claims_persons_1_null, update_claims_persons_2_null,
+    delete_images_elements_person, delete_claim_person, select_name_sorter,
+    select_name_type_sorter_with_id, select_all_names, 
+    select_name_type_hierarchy, select_all_names_all_details_order_hierarchy,
+
+) 
+
+
+from PIL import Image, ImageTk
+from messages_context_help import person_add_help_msg
+from messages import persons_msg
+from images import get_all_pics 
 import dev_tools as dt
-from dev_tools import looky, seeline
+from dev_tools import looky, seeline 
 
 
 
-formats = make_formats_dict()
 
+
+
+
+# formerly in styles.py
 # print('formats is', formats)
 # formats is {'bg': '#34615f', 'highlight_bg': '#4a8a87', 'head_bg': '#486a8c', 'fg': '#b9ddd9', 'output_font': ('courier', 16), 'input_font': ('tahoma', 16), 'heading1': ('courier', 32, 'bold'), 'heading2': ('courier', 24, 'bold'), 'heading3': ('courier', 17, 'bold'), 'heading4': ('courier', 13, 'bold'), 'status': ('tahoma', 13), 'boilerplate': ('tahoma', 10), 'show_font': ('tahoma', 16, 'italic'), 'titlebar_0': ('tahoma', 10, 'bold'), 'titlebar_1': ('tahoma', 14, 'bold'), 'titlebar_2': ('tahoma', 16, 'bold'), 'titlebar_3': ('tahoma', 20, 'bold'), 'titlebar_hilited_0': ('tahoma', 10), 'titlebar_hilited_1': ('tahoma', 14), 'titlebar_hilited_2': ('tahoma', 16), 'titlebar_hilited_3': ('tahoma', 20), 'unshow_font': ('tahoma', 14, 'italic')}
+
+NEUTRAL_COLOR = '#878787'
+
+def get_all_descends (ancestor, deep_list):
+    ''' 
+        So all widgets can be configured at once, this lists every widget in 
+        the app by running recursively.
+    '''
+    lst = ancestor.winfo_children()        
+    for item in lst:
+        deep_list.append(item)
+        get_all_descends(item, deep_list)
+    return deep_list
+
+def get_opening_settings():
+           
+    current_file = get_current_file()[0]
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    cur.execute(select_color_scheme_current_id)
+    color_scheme_id = cur.fetchone()
+    if color_scheme_id is None:
+        cur.execute(select_opening_settings)
+        user_formats = cur.fetchone()
+    else:
+        user_formats = get_current_formats(color_scheme_id[0])
+    cur.close()
+    conn.close()
+    return user_formats
+
+# get rid of this when working on types branch
+def get_current_formats(color_scheme_id):   
+    current_file = get_current_file()[0]
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    cur.execute(select_color_scheme_by_id, (color_scheme_id,))
+    color_scheme = list(cur.fetchone())
+    cur.execute(select_format_font_scheme)
+    font_scheme = list(cur.fetchone()[0:2])
+    user_formats = color_scheme + font_scheme
+    cur.close()
+    conn.close()
+    return user_formats
+  
+def make_formats_dict():
+    """ To add a style, add a string to the end of keys list
+        and a line below values.append...
+    """
+    prefs_to_use = list(get_opening_settings())
+    prefs_to_use.insert(5, 'dejavu sans mono')
+    keys = [
+        # background, foreground
+        'bg', 'highlight_bg', 'head_bg', 'fg', 
+        # standard fonts
+        'output_font', 'input_font',
+        # heading fonts
+        'heading1', 'heading2', 'heading3', 'heading4', 
+        # other fonts
+        'status', 'boilerplate', 'show_font', 'titlebar_0',
+        'titlebar_1', 'titlebar_2', 'titlebar_3',
+        'titlebar_hilited_0', 'titlebar_hilited_1', 
+        'titlebar_hilited_2', 'titlebar_hilited_3',
+        'unshow_font', 'tab_font']
+
+
+    values = []
+
+    values.append(prefs_to_use[0])
+    values.append(prefs_to_use[1])
+    values.append(prefs_to_use[2])
+    values.append(prefs_to_use[3])
+    values.append((prefs_to_use[4], prefs_to_use[6]))
+    values.append((prefs_to_use[5], prefs_to_use[6]))
+    values.append((prefs_to_use[4], prefs_to_use[6] * 2, 'bold'))
+    values.append((prefs_to_use[4], int(prefs_to_use[6] * 1.5), 'bold'))
+    values.append((prefs_to_use[4], int(prefs_to_use[6] * 1.125), 'bold'))
+    values.append((prefs_to_use[4], int(prefs_to_use[6] * 0.75), 'bold'))
+    values.append((prefs_to_use[5], int(prefs_to_use[6] * 0.83)))
+    values.append((prefs_to_use[5], int(prefs_to_use[6] * 0.66)))
+    values.append((prefs_to_use[5], prefs_to_use[6], 'italic'))
+    values.append((prefs_to_use[5], int(prefs_to_use[6] * 0.66), 'bold'))
+    values.append((prefs_to_use[5], int(prefs_to_use[6] * 0.75), 'bold'))
+    values.append((prefs_to_use[5], int(prefs_to_use[6] * 1.00), 'bold'))
+    values.append((prefs_to_use[5], int(prefs_to_use[6] * 1.25), 'bold'))
+    values.append((prefs_to_use[5], int(prefs_to_use[6] * 0.66)))
+    values.append((prefs_to_use[5], int(prefs_to_use[6] * 0.75)))
+    values.append((prefs_to_use[5], int(prefs_to_use[6] * 1.00)))
+    values.append((prefs_to_use[5], int(prefs_to_use[6] * 1.25)))
+    values.append((prefs_to_use[5], int(prefs_to_use[6] * .75), 'italic'))
+    values.append((prefs_to_use[4], int(prefs_to_use[6] * 0.75)))
+
+    formats = dict(zip(keys, values))
+    # print("line", looky(seeline()).lineno, "formats['highlight_bg']:", formats['highlight_bg'])
+    # print("line", looky(seeline()).lineno, "formats['head_bg']:", formats['head_bg'])
+    return formats
+formats = make_formats_dict()
+
+def configall(master, formats):
+    # print("line", looky(seeline()).lineno, "formats['highlight_bg']:", formats['highlight_bg'])
+    # print("line", looky(seeline()).lineno, "formats['head_bg']:", formats['head_bg'])
+    def config_bg_fg(widg):
+        widg.config(bg=formats["bg"], fg=formats["fg"])
+    def config_bg_fg_activeBgHilite_activeFg_selectColorBg(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"], 
+            activebackground=formats["highlight_bg"],
+            activeforeground=formats["fg"], selectcolor=formats["bg"])
+    def config_bg_fg_activeBgHilite_activeFg_selectColorHilite(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"], 
+            activebackground=formats["highlight_bg"],
+            activeforeground=formats["fg"], selectcolor=formats["highlight_bg"])
+    def config_bg_fg_fontBoilerplate_activeBgHead(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"],
+            font=formats["boilerplate"], activebackground=formats["head_bg"])
+    def config_bg_fg_fontH2(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"], font=formats["heading2"])
+    def config_bg_fg_fontH3(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"], font=formats["heading3"])
+    def config_bg_fg_fontIn(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"], font=formats["input_font"])
+    def config_bg_fg_fontIn_activeBgHead(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"], font=formats["input_font"],
+            activebackground=formats["head_bg"])
+    def config_bg_fg_fontOut(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"], 
+            font=formats["output_font"])
+    def config_bg_fg_fontOut_activeBgHead_activeFg(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"],
+            font=formats["output_font"],
+            activebackground=formats["head_bg"],
+            activeforeground=formats["fg"])
+    def config_bg_fg_fontOut_activeBgHead_troughColorHilite(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"],
+            font=formats["output_font"],
+            activebackground=formats["head_bg"],
+            troughcolor=formats["highlight_bg"])
+    def config_bg_fg_fontOut_activeBgHilite_activeFg_selectColorHilite(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"],
+            font=formats["output_font"],
+            activebackground=formats["highlight_bg"],
+            activeforeground=formats["fg"],
+            selectcolor=formats["highlight_bg"])
+    def config_bg_fg_fontStatus(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"], font=formats["status"])
+    def config_bg_fg_selectBgHead_selectFg_insertBgFg(widg):
+        widg.config(
+            bg=formats["bg"], fg=formats["fg"],
+            font=formats["input_font"],
+            selectbackground=formats["head_bg"],
+            selectforeground=formats["fg"],
+            insertbackground=formats["fg"])
+    def config_bg_fgHilite(widg):
+        widg.config(bg=formats["bg"], fg=formats["highlight_bg"])
+    def config_bgFg_fgBg_fontOut(widg):
+        widg.config(
+            bg=formats["fg"], fg=formats["bg"], font=formats["output_font"])
+    def config_bgHead(widg):
+        widg.config(bg=formats["head_bg"])
+    def config_bgHead_fg_fontStatus(widg):
+        widg.config(
+            bg=formats["head_bg"], fg=formats["fg"],
+            font=formats["status"])
+    def config_bgHilite(widg):
+        widg.config(bg=formats["highlight_bg"])
+    def config_bgHilite_fg_activeBgFg_activeFgBg(widg):
+        widg.config(
+            bg=formats["highlight_bg"], fg=formats["fg"],
+            activebackground=formats["fg"],
+            activeforeground=formats["bg"])
+    def config_bgHilite_fg_fontH3(widg):
+        widg.config(
+            bg=formats["highlight_bg"], fg=formats["fg"],
+            font=formats["heading3"])
+    def config_bgHilite_fg_fontIn(widg):
+        widg.config(
+            bg=formats["highlight_bg"], fg=formats["fg"],
+            font=formats["input_font"])
+    def config_bgHilite_fg_fontOut(widg):        
+        widg.config(
+            bg=formats["highlight_bg"], fg=formats["fg"],
+            font=formats["output_font"]) 
+    def config_bgHilite_fg_fontIn_selectBgHead_selectFg_insertBgFg(widg):
+        widg.config(
+            bg=formats["highlight_bg"], fg=formats["fg"],
+            font=formats["input_font"], selectbackground=formats["head_bg"],
+            selectforeground=formats["fg"], insertbackground=formats["fg"])
+    def config_bgOnly(widg):
+        widg.config(bg=formats["bg"])
+
+    def config_separator(sep):
+        """ Has 3 frames with 3 different colors
+            so needs its own reconfigure method.
+        """
+        sep.colorize()
+
+    def config_scrollbar(widg):
+        widg.config(bg=formats["head_bg"])
+        widg.itemconfig(
+            widg.thumb, fill=formats["bg"], outline=formats["highlight_bg"])
+            
+    def config_labelstatusbar(widg):
+        widg.config(
+            bg=formats['bg'],
+            fg=formats['fg'],
+            font=formats['status'])
+
+    def config_labeltab(lab):
+        lab.formats = formats
+        if lab.chosen is False:
+            lab.config(
+                bg=formats['highlight_bg'],
+                fg=formats['fg'],
+                font=formats['tab_font'])
+        else:
+            lab.config(
+                bg=formats['bg'],
+                fg=formats['fg'],
+                font=formats['tab_font'])
+
+    # print("line", looky(seeline()).lineno, "master.winfo_name():", master.winfo_name())
+    root = None
+    if master.winfo_name() in (".", "tk"):
+        root = master
+
+    for klass in ALL_WIDGET_CLASSES:
+        klass.formats = formats # key to everything
+    ancestor_list = []
+    all_widgets_in_root = get_all_descends(master, ancestor_list)
+    for widg in (all_widgets_in_root):
+        subclass = widg.winfo_subclass()
+
+        if subclass in bg_fg:
+            config_bg_fg(widg)            
+        elif subclass in bg_fg_activeBgHilite_activeFg_selectColorBg:
+            config_bg_fg_activeBgHilite_activeFg_selectColorBg(widg)
+        elif subclass in bg_fg_activeBgHilite_activeFg_selectColorHilite:
+            config_bg_fg_activeBgHilite_activeFg_selectColorHilite(widg)
+        elif subclass in bg_fg_fontBoilerplate_activeBgHead:
+            config_bg_fg_fontBoilerplate_activeBgHead(widg)
+        elif subclass in bg_fg_fontH2:
+            config_bg_fg_fontH2(widg)
+        elif subclass in bg_fg_fontH3:
+            config_bg_fg_fontH3(widg)
+        elif subclass in bg_fg_fontIn:
+            config_bg_fg_fontIn(widg)
+        elif subclass in bg_fg_fontIn_activeBgHead:
+            config_bg_fg_fontIn_activeBgHead(widg)
+        elif subclass in bg_fg_fontOut:
+            config_bg_fg_fontOut(widg)
+        elif subclass in bg_fg_fontOut_activeBgHead_activeFg:
+            config_bg_fg_fontOut_activeBgHead_activeFg(widg)
+        elif subclass in bg_fg_fontOut_activeBgHead_troughColorHilite:
+            config_bg_fg_fontOut_activeBgHead_troughColorHilite(widg)
+        elif subclass in bg_fg_fontOut_activeBgHilite_activeFg_selectColorHilite:
+            config_bg_fg_fontOut_activeBgHilite_activeFg_selectColorHilite(widg)
+        elif subclass in bg_fg_fontStatus:
+            if subclass == "LabelStatusbar":
+                LabelStatusbar.bg = formats["bg"]
+                LabelStatusbar.fg = formats["fg"]
+                LabelStatusbar.status = formats["status"]
+            config_bg_fg_fontStatus(widg)
+        elif subclass in bg_fg_selectBgHead_selectFg_insertBgFg:
+            config_bg_fg_selectBgHead_selectFg_insertBgFg(widg)
+            if subclass == "EntryAutoPerson": # key to everything
+                EntryAutoPerson.highlight_bg = formats["highlight_bg"]
+                EntryAutoPerson.bg = formats["bg"]
+        elif subclass in bg_fgHilite:
+            config_bg_fgHilite(widg)
+        elif subclass in bgFg_fgBg_fontOut:
+            config_bgFg_fgBg_fontOut(widg)
+        elif subclass in bgHead_fg_fontStatus:
+            config_bgHead_fg_fontStatus(widg)
+        elif subclass in bgHilite:
+            config_bgHilite(widg)
+        elif subclass in bgHilite_fg_activeBgFg_activeFgBg:
+            config_bgHilite_fg_activeBgFg_activeFgBg(widg)
+        elif subclass in bgHilite_fg_fontH3:
+            config_bgHilite_fg_fontH3(widg)
+        elif subclass in bgHilite_fg_fontIn:
+            config_bgHilite_fg_fontIn(widg)
+        elif subclass in bgHilite_fg_fontOut:
+            config_bgHilite_fg_fontOut(widg)
+            if subclass == "ComboArrow": # key to everything
+                ComboArrow.highlight_bg = formats["highlight_bg"]
+                ComboArrow.fg = formats["fg"]
+                ComboArrow.output_font = formats["output_font"] 
+                ComboArrow.head_bg = formats["head_bg"]
+
+        elif subclass in bgHilite_fg_fontIn_selectBgHead_selectFg_insertBgFg:
+            config_bgHilite_fg_fontIn_selectBgHead_selectFg_insertBgFg(widg)
+        elif subclass in bgOnly:
+            config_bgOnly(widg)
+
+        elif subclass in separator: 
+            Separator.color1=formats['head_bg'], 
+            Separator.color2=formats['highlight_bg'], 
+            Separator.color3=formats['bg']           
+            config_separator(widg)
+
+        elif subclass in combobox:
+            Combobox.highlight_bg = formats["highlight_bg"]
+            Combobox.head_bg = formats["head_bg"]
+            Combobox.bg = formats["bg"]
+
+        elif subclass in scrollbar:
+            Scrollbar.slidercolor = formats["bg"]
+            Scrollbar.troughcolor = formats["head_bg"]
+            Scrollbar.bordercolor = formats["highlight_bg"]
+            config_scrollbar(widg)
+
+        elif subclass in labelMovable:
+            LabelMovable.highlight_bg = formats["highlight_bg"]
+            LabelMovable.head_bg = formats["head_bg"]
+
+        # elif widg.winfo_class() == 'Label':
+            # if subclass == 'LabelTab':
+                # config_labeltab(widg)
+            # elif subclass in ('LabelButtonText', 'LabelDots'):
+                # config_labelbuttontext(widg)
+    if root:
+        root.config(bg=formats["bg"])
+
+# formerly in widgets.py
 
 class Framex(tk.Frame):
     def __init__(self, master, *args, **kwargs):
@@ -191,25 +552,12 @@ class LabelHeader(Labelx):
             relief='raised')
 
 class LabelHilited(Labelx):
-    """ Used in Combobox for arrow. """
-    formats = formats
-    head_bg = formats["head_bg"]
-    fg = formats["fg"]
-    output_font = formats["output_font"]
-    highlight_bg = formats["highlight_bg"]
-
     def __init__(self, master, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs) 
         self.config(
-            bg=LabelHilited.highlight_bg, 
-            fg=LabelHilited.fg,
-            font=LabelHilited.output_font)
-
-    def highlight(self, evt):
-        self.config(bg=LabelHilited.head_bg)
-
-    def unhighlight(self, evt):
-        self.config(bg=LabelHilited.highlight_bg)
+            bg=formats["highlight_bg"], 
+            fg=formats["fg"],
+            font=formats["output_font"])
 
 class LabelHilited3(Labelx):
     ''' 
@@ -221,12 +569,10 @@ class LabelHilited3(Labelx):
     def __init__(self, master, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
 
-        self.formats = make_formats_dict()
-
         self.config(
-            bg=self.formats['highlight_bg'], 
-            fg=self.formats['fg'],
-            font=self.formats['input_font'])
+            bg=formats['highlight_bg'], 
+            fg=formats['fg'],
+            font=formats['input_font'])
 
 class LabelEntry(Labelx):
     ''' 
@@ -313,14 +659,10 @@ class LabelButtonImage(Labelx):
         self.config(borderwidth=1)
 
     def on_press(self, evt):
-        formats = make_formats_dict()
         self.config(relief='sunken', bg=LabelButtonImage.head_bg)
-        # self.config(relief='sunken', bg=formats['head_bg'])
 
     def on_release(self, evt):
-        formats = make_formats_dict()
         self.config(relief='raised', bg=LabelButtonImage.bg)
-        # self.config(relief='raised', bg=formats['bg'])
 
     def on_hover(self, evt):
         self.config(relief='groove')
@@ -335,17 +677,15 @@ class LabelButtonText(LabelButtonImage):
     def __init__(self, master, width=8, *args, **kwargs):
         LabelButtonImage.__init__(self, master, *args, **kwargs)
 
-        self.formats = make_formats_dict()
-
         self.config(
             anchor='center',
             borderwidth=1, 
             relief='raised', 
             takefocus=1,
-            bg=self.formats['bg'],
+            bg=formats['bg'],
             width=width,
-            font=self.formats['input_font'],
-            fg=self.formats['fg'])
+            font=formats['input_font'],
+            fg=formats['fg'])
 
 class LabelDots(LabelButtonText):
     ''' 
@@ -482,11 +822,9 @@ class LabelButtonImage(Labelx):
         self.config(borderwidth=1)
 
     def on_press(self, evt):
-        formats = make_formats_dict()
         self.config(relief='sunken', bg=formats['head_bg'])
 
     def on_release(self, evt):
-        formats = make_formats_dict()
         self.config(relief='raised', bg=formats['bg'])
 
     def on_hover(self, evt):
@@ -527,6 +865,7 @@ class LabelMovable(LabelHilited):
     formats = formats
     head_bg = formats["head_bg"]
     highlight_bg = formats["highlight_bg"]
+    fg = formats["fg"]
 
     def __init__(self, master, first_column=0, first_row=0, *args, **kwargs):
         LabelHilited.__init__(self, master, *args, **kwargs)
@@ -711,21 +1050,20 @@ class ButtonBigPic(Buttonx):
     def __init__(self, master, *args, **kwargs):
         Buttonx.__init__(self, master, *args, **kwargs)
 
-        self.formats = make_formats_dict()
         self.config(
             bd=0, 
             relief="flat",
-            bg=self.formats['bg'],  
-            fg=self.formats['highlight_bg'],
+            bg=formats['bg'],  
+            fg=formats['highlight_bg'],
             cursor='hand2')
         self.bind('<FocusIn>', self.highlight)
         self.bind('<FocusOut>', self.unhighlight)
 
     def highlight(self, evt):
-        self.config(bg=self.formats['fg'])
+        self.config(bg=formats['fg'])
 
     def unhighlight(self, evt):
-        self.config(bg=self.formats['bg'])
+        self.config(bg=formats['bg'])
 
 class ButtonFlatHilited(Buttonx):
     '''
@@ -1030,5 +1368,3430 @@ class CanvasHilited(Canvasx):
 
         self.config(bg=formats['highlight_bg'], bd=0, highlightthickness=0)
 
+# from window_border.py
 
+def close(evt):
+    dlg = evt.widget.winfo_toplevel()
+    if dlg.winfo_name() == 'tk':
+        set_closing()
+        dlg.quit()
+    else:
+        dlg.grab_release()
+        dlg.destroy()
+
+class Border(Canvas):
+
+    pool = []
+
+    def __init__(
+            self, master, root, menubar=False, 
+            ribbon_menu=False, *args, **kwargs):
+        Canvas.__init__(self, master, *args, **kwargs)
+
+        '''
+            This class replaces root and dialog borders with custom borders. 
+
+            Since this custom "Toykinter" border is part of the app instead 
+            of being controlled by Windows, its use allows clicks on the title 
+            bar to be responded to with standard Tkinter configuration methods 
+            and other Python code. 
+
+            This class can't use Treebard as a master since Treebard is the 
+            whole app and is only instantiated once, so this class has to use 
+            its host toplevel as parent. Setting font size should change the 
+            size of fonts, title bar, and max/min/quit buttons. The settings 
+            are 3, 4, 7, or 11 pixels. The size shown is linked to changes in 
+            font size (in progress--user still has to switch to person tab and
+            redraw() to see change).
+
+            The hard part to remember when using this is that the parts of the
+            border including the canvas itself (`self` in the class) are gridded
+            in this class. This causes confusion because I'm always trying to
+            figure out where to grid the canvas and how to set columnconfigure()
+            and rowconfigure() but it's already done here since it has to be
+            the same wherever it's used. Also the dropdown menu and icon menu
+            occupy rows 2 and 3 whether they're used or not, and they're only
+            used in the root window.
+        '''
+
+        self.master = master # toplevel
+        self.root = root
+        self.menubar = menubar
+        self.ribbon_menu = ribbon_menu
+
+        self.set_title_bar_size()
+
+        self.changing_values = None
+        self.maxxed = False
+
+        self.make_widgets()
+
+        self.BORDER_PARTS = (
+            self.title_bar, self.title_frame, self.logo, self.title_1, 
+            self.title_1b, self.title_2, self.txt_frm, self.buttonbox, 
+            self.border_top, self.border_left, self.border_right, 
+            self.border_bottom)
+
+        Border.pool.append(self)
+        if self.master.winfo_name() != "tk":
+            self.master.bind("<Destroy>", self.clean_pool)
+        self.colorize_border()
+
+    def clean_pool(self, evt):
+        '''
+            Delete destroyed toplevel from list and highlight the title bar
+            of the toplevel that's uppermost in the window stacking order.
+        '''
+        widg = evt.widget
+        if (widg.winfo_class() == "Canvas" and 
+                widg.winfo_subclass() == "Border"):
+            idx = Border.pool.index(widg)
+            del Border.pool[idx]
+        if len(Border.pool) != 0: # hack to use Dialogue class in misc test module
+            Border.pool[0].colorize_border()
+
+    def set_title_bar_size(self):
+        sizes = { 
+            3 : ['tiny', 20, 0.25], 
+            4 : ['small', 25, 0.75], 
+            7 : ['medium', 31, 0.25], 
+            11 : ['large', 45, 1.0]}
+
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.execute(select_format_font_size)
+        font_size = cur.fetchone()
+        cur.close()
+        conn.close()
+        if font_size[0] is None:
+            font_size = font_size[1]
+        else:
+            font_size = font_size[0]
+        if font_size < 11:
+            self.size = 3
+        elif font_size < 14:
+            self.size = 4
+        elif font_size < 20:
+            self.size = 7
+        elif font_size < 31:
+            self.size = 11         
+
+        for k,v in sizes.items():
+            if self.size == k:
+                self.icon_size = v[0]
+                self.offset_x = v[1]
+                self.rel_y = v[2]
+
+    def make_widgets(self):
+
+        self.border_top = FrameTitleBar(
+            self.master, height=3, name='top')
+        self.title_bar = FrameTitleBar(self.master)
+
+        self.menu_frame = FrameHilited3(self.master)
+        self.ribbon_frame = FrameHilited3(self.master)
+
+        self.border_left = FrameTitleBar(self.master, width=3, name='left')
+        self.border_right = FrameTitleBar(self.master, width=3, name='right')
+
+        self.statusbar = StatusbarTooltips(self.master)
+
+        self.border_bottom = FrameTitleBar(
+            self.master, height=3, name='bottom')
+
+        self.border_top.config(cursor='sb_v_double_arrow')
+        self.border_left.config(cursor='sb_h_double_arrow')
+        self.border_right.config(cursor='sb_h_double_arrow')
+        self.border_bottom.config(cursor='sb_v_double_arrow')
+
+        # children of toplevel i.e. self.master
+        self.master.columnconfigure(1, weight=1)
+        self.master.rowconfigure(4, weight=1)
+        self.border_top.grid(column=0, row=0, columnspan=4, sticky='ew')
+        self.title_bar.grid(column=1, row=1, columnspan=2, sticky='ew')
+        if self.menubar is True:
+            self.menu_frame.grid(column=1, row=2, columnspan=2, sticky='ew')
+        if self.ribbon_menu is True:
+            self.ribbon_frame.grid(column=1, row=3, columnspan=2, sticky='w')
+        self.grid(column=1, row=4, sticky='news')
+        self.border_left.grid(column=0, row=1, rowspan=6, sticky='ns')
+        self.border_right.grid(column=3, row=1, rowspan=6, sticky='ns')
+        self.statusbar.grid(column=1, row=6, columnspan=2, sticky='ew')
+        self.border_bottom.grid(column=0, row=7, columnspan=4, sticky='ew')
+
+        self.config(cursor='arrow')
+
+        # children of self.title_bar
+        self.title_bar.columnconfigure(0, weight=1)
+        self.title_bar.columnconfigure(1, weight=0)
+        self.title_frame = FrameTitleBar(self.title_bar)
+        self.buttonbox = FrameTitleBar(self.title_bar)
+
+        self.title_frame.pack(side='left')
+        self.buttonbox.place(relx=1.0, x=-100, rely=0.125, y=-2)
+
+        # children of self.title_frame
+        self.logo = TitleBarButtonSolidBG(
+            self.title_frame,
+            icon='logo',
+            icon_size=self.icon_size)
+
+        self.txt_frm = FrameTitleBar(self.title_frame)
+        self.logo.pack(side='left', pady=(0,3), padx=(0,12))
+        self.txt_frm.pack(side='left')
+
+        # children of text_frm
+        self.title_1 = LabelTitleBar(
+            self.txt_frm, 
+            size=self.icon_size,
+            text='Toykinter Demo')
+        self.title_1b = FrameTitleBar(self.txt_frm, width=36)
+        self.title_2 = LabelTitleBar(
+            self.txt_frm,
+            size=self.icon_size, 
+            text='for all ages')
+
+        self.title_1.grid(column=0, row=0)
+        self.title_1b.grid(column=1, row=0, sticky='ew')
+        self.title_2.grid(column=2, row=0)
+
+        # children of self.buttonbox
+        self.minn = TitleBarButton(
+            self.buttonbox, icon='min', icon_size=self.icon_size)
+        self.maxx = TitleBarButton(
+            self.buttonbox, icon='max', icon_size=self.icon_size)
+        self.restore = TitleBarButton(
+            self.buttonbox, icon='restore', icon_size=self.icon_size)
+        self.quitt = TitleBarButton(
+            self.buttonbox, icon='quit', icon_size=self.icon_size)
+
+        self.minn.grid(column=0, row=0, sticky='w')
+        self.maxx.grid(
+            column=1, row=0, sticky='w', padx=(0,3))
+        self.restore.grid(
+            column=1, row=0, sticky='w', padx=(0,3))
+        self.restore.grid_remove()
+        self.quitt.grid(
+            column=2, row=0, sticky='e', 
+            padx=(0, self.size))
+
+        self.master.update_idletasks()
+        to_the_left = self.buttonbox.winfo_reqwidth()
+        self.buttonbox.place(relx=1.0, x=-to_the_left, rely=0.125, y=-2 * self.rel_y)
+
+        self.master.bind('<Map>', self.hide_windows_titlebar)
+        self.minn.bind('<Button-1>', self.minimize)
+        self.maxx.bind('<Button-1>', self.toggle_max_restore)
+        self.restore.bind('<Button-1>', self.toggle_max_restore)
+        self.quitt.bind('<Button-1>', close)
+        x = [i.bind(
+            '<Map>', 
+            self.recolorize_on_restore) for i in (self.minn, self.quitt)]
+
+        for widg in (
+                self.title_bar, self.title_frame, self.logo, self.title_1, 
+                self.title_1b, self.title_2, self.txt_frm, self.buttonbox):
+            widg.bind('<B1-Motion>', self.move_window)
+            widg.bind('<Button-1>', self.get_pos)
+            widg.bind('<Double-Button-1>', self.toggle_max_restore) 
+
+        for widg in (
+                self.border_top, self.border_left, 
+                self.border_right, self.border_bottom):
+            widg.bind('<Button-1>', self.start_edge_sizer)
+            widg.bind('<B1-Motion>', self.stop_edge_sizer)
+            widg.bind('<ButtonRelease-1>', self.stop_edge_sizer)
+
+    def recolorize_on_restore(self, evt):
+        evt.widget.config(bg=NEUTRAL_COLOR)
+
+    def move_window(self, evt):
+        ''' Drag the window by the title frame
+        '''
+        self.master.update_idletasks()
+        x_mouse_move_screen = evt.x_root
+        y_mouse_move_screen = evt.y_root
+        new_x = x_mouse_move_screen + self.adjust_x
+        new_y = y_mouse_move_screen + self.adjust_y
+
+        evt.widget.winfo_toplevel().geometry('+{}+{}'.format(new_x, new_y))
+
+    def get_pos(self, evt):
+        ''' Prepare to drag the window by the title frame. '''
+        evt.widget.winfo_toplevel().lift()
+        self.colorize_border()
+        
+        left_edge = self.master.winfo_rootx()
+        top_edge = self.master.winfo_rooty()
+        x_click_screen = evt.x_root
+        y_click_screen = evt.y_root
+
+        self.adjust_x = left_edge - x_click_screen
+        self.adjust_y = top_edge - y_click_screen
+
+    def toggle_max_restore(self, evt):
+        '''
+            When window is maximized, change window border button
+            to restore down and vice versa. Have to return the
+            Windows title bar first or Tkinter won't let it be
+            maximized.
+        '''
+
+        if self.maxxed is False:
+            self.maxxed = True
+            self.init_geometry = evt.widget.winfo_toplevel().geometry()
+            self.maxx.grid_remove()
+            self.restore.grid()
+            self.restore.config(bg=NEUTRAL_COLOR)
+            self.maximize(evt)
+        elif self.maxxed is True:
+            self.maxxed = False
+            self.restore.grid_remove()
+            self.maxx.grid()
+            self.maxx.config(bg=NEUTRAL_COLOR)
+            self.restore_down(evt)
+
+    def minimize(self, evt):
+        '''
+            Withdraw so return of Windows titlebar isn't visible.
+            Return Windows titlebar so window can be iconified.
+        '''        
+        dlg = evt.widget.winfo_toplevel()
+        dlg.withdraw()
+        self.master.update_idletasks()
+        dlg.overrideredirect(0)
+        dlg.iconify()
+
+    def hide_windows_titlebar(self, evt):
+        self.update_idletasks()
+        self.master.overrideredirect(1)
+
+    def split_geometry_string(self, window):
+        xy = window.geometry().split('+')
+        wh = xy.pop(0).split('x')
+        return int(wh[0]), int(wh[1]), int(xy[0]), int(xy[1])
+       
+    def maximize(self, evt):
+        dlg = evt.widget.winfo_toplevel()
+        self.master.update_idletasks()
+        dlg.overrideredirect(0)
+        dlg.attributes('-fullscreen', True)
+
+    def restore_down(self, evt):
+        dlg = evt.widget.winfo_toplevel()
+        dlg.attributes('-fullscreen', False)
+        dlg.geometry(self.init_geometry)
+
+    def start_edge_sizer(self, evt):
+
+        def pass_values():
+            values =  (
+                resizee, init_geometry, click_down_x, click_down_y, 
+                orig_pos_x, orig_pos_y)
+            return values
+
+        resizee = evt.widget.winfo_toplevel()
+        init_geometry = resizee.geometry()
+        
+        (click_down_x, click_down_y) = resizee.winfo_pointerxy()
+
+        orig_pos_x = resizee.winfo_rootx()
+        orig_pos_y = resizee.winfo_rooty()
+
+        self.changing_values = pass_values()
+
+    def stop_edge_sizer(self, evt):
+
+        values = self.changing_values
+        resizee = values[0]
+        init_geometry = values[1]
+        click_down_x = values[2]
+        click_down_y = values[3]
+        orig_pos_x = values[4]
+        orig_pos_y = values[5]
+
+        click_up_x = click_down_x  
+        click_up_y = click_down_y
+        new_pos_x = orig_pos_x
+        new_pos_y = orig_pos_y
+
+        klikt = evt.widget 
+
+        xy = init_geometry.split('+')
+        wh = xy.pop(0).split('x')
+
+        new_w = orig_wd = int(wh[0])
+        new_h = orig_ht = int(wh[1])  
+
+        click_up_x = resizee.winfo_pointerx() 
+        click_up_y = resizee.winfo_pointery()
+
+        dx = click_down_x - click_up_x
+        dy = click_down_y - click_up_y
+        if klikt.winfo_name() == 'left':
+            new_w = orig_wd + dx
+            new_pos_x = orig_pos_x - dx
+        elif klikt.winfo_name() == 'right':
+            new_w = orig_wd - dx
+        elif klikt.winfo_name() == 'top':
+            new_h = orig_ht + dy
+            new_pos_y = orig_pos_y - dy
+        elif klikt.winfo_name() == 'bottom':
+            new_h = orig_ht - dy
+
+        if new_w < 10:
+            new_w = 10
+        if new_h < 10:
+            new_h = 10
+        resizee.geometry('{}x{}+{}+{}'.format(
+            new_w, new_h, new_pos_x, new_pos_y))
+
+    def colorize_border(self):
+        '''
+            Runs whenever title bar is clicked, called in get_pos().
+        '''
+
+        formats = make_formats_dict()
+        for widg in self.BORDER_PARTS:
+            widg.config(bg=formats['head_bg'])
+        for widg in (self.title_1, self.title_2):
+            widg.config(fg=formats['fg'])
+        for border in Border.pool:
+            if border != self:
+                for widg in border.BORDER_PARTS:
+                    widg.config(bg=NEUTRAL_COLOR)                    
+            else:
+                # Move active toplevel to the top of the list so it will be 
+                #   highlighted by clean_pool() when a toplevel is destroyed.
+                idx = Border.pool.index(border)
+                Border.pool.insert(0, Border.pool.pop(idx))
+
+class TitleBarButton(LabelButtonImage):
+    def __init__(self, master, icon='', icon_size='tiny', *args, **kwargs):
+        LabelButtonImage.__init__(self, master, *args, **kwargs)
+        '''
+            The icons are 32x32 but they can be set to any integer size
+            between 12 and 32 and a thumbnail will be displayed if less 
+            than 32. But sizes between 22 and 30 make a bad X for some
+            reason. Sizes 12, 16, 21, and 32 look best so I've hard-coded
+            it with those four size options only. (Using Pillow...)
+
+            This class is for buttons with transparent backgrounds so it
+            uses my standard neutral color #878787 which doesn't change.
+            For buttons with darker colors filling the whole button, 
+            #a8afc4 might show as a bright border contrasting too much
+            with the image on the button, so a class has been inherited
+            from this one which has a darker background color.
+        '''
+
+        font_icon_file = {
+            'tiny' : (
+                10, '{}images/icons/{}_{}.png'.format(app_path, icon, 12)), 
+            'small' : (
+                12, '{}images/icons/{}_{}.png'.format(app_path, icon, 17)), 
+            'medium' : (
+                14, '{}images/icons/{}_{}.png'.format(app_path, icon, 21)), 
+            'large' : (
+                18, '{}images/icons/{}_{}.png'.format(app_path, icon, 32))}
+
+        for k,v in font_icon_file.items():
+            if icon_size == k:
+                icon_size = v[0]
+                file = v[1]
+        img = Image.open(file)
+        self.tk_img = ImageTk.PhotoImage(img, master=master)
+
+        self.config(
+            font=('arial', icon_size, 'bold'), 
+            bd=2, 
+            relief='raised',
+            bg=NEUTRAL_COLOR,
+            image=self.tk_img)
+
+class TitleBarButtonSolidBG(TitleBarButton):
+    def __init__(self, master, *args, **kwargs):
+        TitleBarButton.__init__(self, master, *args, **kwargs)
+        '''
+            For buttons with a solid image and darker color
+            backgrounds so a bright border doesn't show through
+            around the edge of the image.
+        '''
+        self.config(bg=formats['highlight_bg'])
+
+class Dialogue(Toplevel):
+    '''
+        Generic unscrolled dialogue with Toykinter border. Border class is a
+        Canvas which is gridded in its home class. Rows are reserved for the
+        menu bar and icon ribbon menu although usually not used so they are
+        False by default, but their unused rows have to be taken into account
+        (ignored) here. This is used for error messages and small dialogs which
+        don't change size and will never need to scroll.
+    '''
+
+    def __init__(self, master, *args, **kwargs):
+        Toplevel.__init__(self, master, *args, **kwargs)
+
+        formats = make_formats_dict()
+        self.withdraw()
+        self.columnconfigure(1, weight=1)
+        self.canvas = Border(self, master)
+        self.window = Frame(self.canvas)
+        self.canvas.create_window(0, 0, anchor='nw', window=self.window)
+
+    def resize_window(self):
+        """ Call this to show the dialog. Added to requested width and height 
+            are allowances for widgets not in self.window such as borders, 
+            title bar, and status bar.
+        """
+        self.update_idletasks()    
+        width = self.window.winfo_reqwidth() + 6
+        height = self.window.winfo_reqheight() + 42
+        self.geometry("{}x{}".format(width, height))
+        center_dialog(self)
+        self.deiconify()
+
+
+
+# from persons.py
+
+
+class PersonAdd(Toplevel):
+    def __init__(
+            self, master, inwidg, root, treebard, inwidg2, 
+            formats, person_autofill_values, *args, **kwargs):
+        Toplevel.__init__(self, master, *args, **kwargs)
+        self.master = master
+        self.inwidg = inwidg
+        self.root = root
+        self.inwidg2 = inwidg2
+        self.formats = formats
+        self.person_autofill_values = person_autofill_values
+
+        self.xfr = self.inwidg.get()
+        if "+" in self.xfr:
+            self.xfr = self.xfr.strip().strip("+").strip()
+        self.role_person_edited = False
+        self.rc_menu = RightClickMenu(self.root, treebard=treebard)
+
+        self.new_person_id = None
+        self.full_name = ""
+        self.name_type_id = None
+
+        self.make_dupe = False
+
+        self.make_widgets()
+
+    def make_widgets(self):
+
+        self.geometry('+100+20')
+
+        self.columnconfigure(1, weight=1)
+        self.canvas = Border(self, self.root, self.formats)
+        self.canvas.title_1.config(text="Add Person Dialog")
+        self.canvas.title_2.config(text="")
+
+        self.window = Frame(self.canvas)
+        self.canvas.create_window(0, 0, anchor='nw', window=self.window)
+        scridth = 16
+        scridth_n = Frame(self.window, height=scridth)
+        scridth_w = Frame(self.window, width=scridth)
+        scridth_n.grid(column=0, row=0, sticky='ew')
+        scridth_w.grid(column=0, row=1, sticky='ns')
+
+        self.window.vsb = Scrollbar(
+            self, 
+            hideable=True, 
+            command=self.canvas.yview,
+            width=scridth)
+        self.window.hsb = Scrollbar(
+            self, 
+            hideable=True, 
+            width=scridth, 
+            orient='horizontal',
+            command=self.canvas.xview)
+        self.canvas.config(
+            xscrollcommand=self.window.hsb.set, 
+            yscrollcommand=self.window.vsb.set)
+        self.window.vsb.grid(column=2, row=4, sticky='ns')
+        self.window.hsb.grid(column=1, row=5, sticky='ew')
+
+        buttonbox = Frame(self.window)
+        self.b1 = Button(
+            buttonbox, text="OK", width=8, command=self.prepare_to_add_person)
+        b2 = Button(
+            buttonbox, text="CANCEL", width=8, command=self.close_new_person)
+
+        scridth_n.grid(column=0, row=0, sticky='ew')
+        scridth_w.grid(column=0, row=1, sticky='ns')
+        self.window.columnconfigure(2, weight=1)
+        self.window.rowconfigure(1, weight=1)
+        buttonbox.grid(column=3, row=9, sticky='e', pady=6)
+
+        self.b1.grid(column=0, row=0, padx=(0,12))
+        b2.grid(column=1, row=0, padx=(2,0))
+
+        self.make_inputs()
+        self.maxsize(
+            int(self.winfo_screenwidth() * 0.90),
+            int(self.winfo_screenheight() * 0.90))
+        self.grab_set()
+
+    def make_inputs(self):
+
+        all_pics = get_all_pics()
+
+        lab1 = Label(self.window, text='Gender:')
+        self.gender_input = Combobox(
+            self.window, self.master, values=GENDER_TYPES)
+
+        lab2 = Label(self.window, text='Main Image:')
+        self.image_input = Combobox(self.window, self.master, values=all_pics)
+
+        lab3 = Label(self.window, text='Name Type:')
+        self.name_type_input = Combobox(
+            self.window, self.master, values=get_name_types())
+
+        lab4 = Label(self.window, text='Full Name:')
+        self.name_input = Entry(self.window, width=65)
+        self.name_input.bind("<FocusOut>", self.show_sort_order)
+
+        self.how = LabelH3(
+            self.window, 
+            justify="left",
+            text="Alphabetize name: with AUTOSORT or OK button in focus...\n"
+                "...use arrow keys to enter auto-filled name fields to modify "
+                "sort order or...\n...in case sort order is already "
+                "correct, TAB goes directly to OK button.")
+        autosort = Button(
+            self.window, text='AUTOSORT', command=self.show_sort_order)
+        autosort.bind("<Right>", self.go_to_movables)
+        self.b1.bind("<Left>", self.go_to_movables)
+
+        self.order_frm = Frame(self.window)
+
+        s = 0
+        for stg in range(20):
+            mov = LabelMovable(self.order_frm)
+            mov.grid(column=s, row=0, padx=3)
+            s += 1 
+        for child in self.order_frm.winfo_children():
+            child.config(takefocus=0)
+        lab1.grid(column=0, row=3)
+        self.gender_input.grid(
+            column=1, row=3, padx=12, pady=12, sticky='e')
+        lab2.grid(column=2, row=3)
+        self.image_input.grid(column=3, row=3, padx=12, pady=12, sticky='w')
+        lab3.grid(column=0, row=4, padx=(18,0))
+        self.name_type_input.grid(
+            column=1, row=4,  padx=12, pady=12, sticky='e')
+        lab4.grid(column=2, row=4)
+        self.name_input.grid(column=3, row=4, padx=12, pady=12)
+
+        self.how.grid(column=1, row=5, padx=6, pady=6, columnspan=4, sticky='w')
+        autosort.grid(column=1, row=6, padx=6, pady=6, sticky='w')
+        self.order_frm.grid(column=2, row=6, columnspan=4, pady=24, sticky='w')
+
+        visited = (
+            (self.gender_input, 
+                "Gender Input", 
+                "'Unknown' used if left blank."),
+            (self.image_input, 
+                "Image Input", 
+                "Use an old photo of person's home town if no photo available."),
+            (self.name_type_input, 
+                "Name Type Input", 
+                "Choose the name type."),
+            (self.name_input, 
+                "Name Input", 
+                "Autofills but you can change it."),
+            (autosort, 
+                "Autosort Button", 
+                "Click to auto-create a sortable name."),
+            (self.order_frm, 
+                "", 
+                "Tab to focus name element. Arrow to change order.")
+)        
+        run_statusbar_tooltips(
+            visited, 
+            self.canvas.statusbar.status_label, 
+            self.canvas.statusbar.tooltip_label)
+
+        self.preset()
+
+        rcm_widgets = (
+            self.name_input, self.name_type_input.entry, self.gender_input.entry,
+            self.image_input.entry, autosort, self.order_frm)
+        make_rc_menus(
+            rcm_widgets, 
+            self.rc_menu, 
+            person_add_help_msg)
+
+        # config_generic(self)
+        configall(self, formats)
+        resize_scrolled_content(self, self.canvas, self.window)
+        self.gender_input.entry.focus_set()
+
+    def show_sort_order(self, evt=None):
+
+        if evt is not None and evt.type == "10":
+            for child in self.order_frm.winfo_children():
+                child.config(text='')
+
+        self.got = self.name_input.get().split()
+        if len(self.got) == 0:
+            return
+        else:
+            length = len(self.got)-1
+        word = self.got[length].lower()
+        
+        self.got.insert(0, ',')
+        length += 1
+        if word not in NAME_SUFFIXES:
+            self.got.insert(0, self.got.pop())
+        elif word in NAME_SUFFIXES and self.got[length].lower() == word:
+            self.got.insert(0, self.got.pop())
+            self.got.insert(0, self.got.pop())
+
+        for child in self.order_frm.winfo_children():
+            child.config(text='')
+
+        v = 0
+        for name in self.got:
+            self.order_frm.winfo_children()[v].config(text=name)
+            v += 1
+
+    def go_to_movables(self, evt):
+        labels = self.order_frm.winfo_children()
+        for child in labels:
+            child.config(takefocus=1)
+        sym = evt.keysym
+        if sym == "Right":
+            labels[0].focus_set()
+        elif sym == "Left":
+            labels[19].focus_set()
+
+    def preset(self):
+        self.gender_input.entry.delete(0, 'end')
+        self.gender_input.entry.insert(0, 'unknown')
+        self.image_input.entry.delete(0, 'end')
+        self.image_input.entry.insert(0, '0_default_image_unisex.jpg')
+        self.name_type_input.entry.config(state='normal')
+        self.name_type_input.entry.delete(0, 'end')
+        self.name_type_input.entry.insert(0, 'birth name')
+        self.name_input.delete(0, 'end')
+        get2 = self.inwidg2
+        if get2 and len(get2.get()) != 0:
+            self.name_input.insert(0, get2.get())
+        elif get2 and len(get2.get()) == 0:
+            self.name_input.insert(0, self.xfr)
+        elif get2 is None:
+            self.name_input.insert(0, self.xfr)
+
+    def make_sort_order_to_store(self): 
+        self.order = []
+
+        for child in self.order_frm.winfo_children():
+            text = child['text']
+            self.order.append(text)
+
+        self.order = ' '.join(self.order)
+        self.order = self.order.replace(' , ', ', ')
+        self.order = self.order.strip(', ')
+        if len(self.order) == 0:
+            order = self.full_name.split()
+            order.insert(0, order.pop())
+            order[0] = order[0] + ","
+            self.order = " ".join(order)
+
+    def prepare_to_add_person(self, findings_roles_id=None):
+
+        def err_done():
+            self.name_type_input.delete(0, 'end')
+            msg[0].grab_release()
+            msg[0].destroy()
+            self.name_type_input.entry.focus_set()
+
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        self.get_entered_values(cur, conn)
+        self.findings_roles_id = findings_roles_id
+        cur.execute(select_image_id, (self.selected_image,))
+        self.img_id = cur.fetchone()[0]
+        cur.execute(select_name_type_id, (self.name_type,))
+        name_type_id = cur.fetchone()
+        if name_type_id:
+            self.name_type_id = name_type_id[0]            
+            self.check_for_dupes()
+        else:
+            msg = open_message(
+                self, 
+                persons_msg[1], 
+                "Unknown Name Type", 
+                "OK")
+            msg[0].grab_set()
+            msg[2].config(command=err_done)
+            return
+        cur.close()
+        conn.close()
+
+    def ok_new_person(self):
+        self.save_new_person()
+        self.close_new_person() 
+
+    def close_new_person(self):
+        self.grab_release()
+        self.inwidg.focus_set()
+        self.destroy()        
+
+    def get_entered_values(self, cur, conn):
+        self.full_name = self.name_input.get()
+        selected_image = self.image_input.entry.get()
+        self.name_type = self.name_type_input.entry.get()
+        gender = self.gender_input.get()
+        if gender in GENDER_TYPES:
+            self.gender = gender
+        else:
+            self.gender = 'unknown'
+        all_images = [i[0] for i in get_all_pics()]
+        if selected_image in all_images:
+            self.selected_image = selected_image
+        else:
+            cur.execute(insert_image_new, (selected_image,))
+            conn.commit()
+            self.selected_image = selected_image 
+
+    def save_new_person(self):
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur.execute(insert_person_new, (self.new_person_id, self.gender))
+        conn.commit()
+        cur.execute(
+            insert_name, 
+            (self.new_person_id, self.full_name, self.name_type_id, self.order))
+        conn.commit()
+
+        cur.execute(insert_images_elements, (self.img_id, self.new_person_id))
+        conn.commit()
+
+        cur.execute(insert_finding_birth_new_person, (self.new_person_id,))
+        conn.commit()
+        new_name_string = self.full_name
+        cur.close()
+        conn.close()
+
+        self.inwidg.delete(0, 'end')
+        self.inwidg.insert(0, new_name_string)
+
+        self.image_input.delete(0, 'end')
+        self.image_input.insert(0, '0_default_image_unisex.jpg')
+
+        for widg in (self.name_type_input, self.name_input):
+            widg.delete(0, 'end')
+
+        for child in self.order_frm.winfo_children():
+            child.config(text='')
+        self.gender_input.delete(0, 'end')
+
+    def show(self):
+        return self.new_person_id
+
+    def make_temp_person_id(self):
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_max_person_id)
+        self.new_person_id = cur.fetchone()[0] + 1
+        if self.role_person_edited is True:
+            cur.execute(
+                update_findings_roles_person, 
+                (self.new_person_id, self.findings_roles_id))
+            conn.commit()
+            self.role_person_edited = False 
+        
+        cur.close()
+        conn.close()
+
+    def check_for_dupes(self):
+
+        def ok_new_name():
+            self.make_dupe = True
+            msg[0].destroy()
+            self.name_input.insert(0, self.full_name)
+            self.make_temp_person_id()
+            self.make_sort_order_to_store()
+            self.ok_new_person()
+
+        def cancel_new_name():
+            msg[0].destroy()
+            self.reset()
+            self.name_input.focus_set()
+ 
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+
+        cur.execute(select_all_names)
+        names_only = [i[0] for i in cur.fetchall()]
+
+        if self.full_name not in names_only:
+            self.make_temp_person_id()
+            self.make_sort_order_to_store()
+            self.ok_new_person()
+        else:
+            msg = open_yes_no_message(
+                self, 
+                persons_msg[0], 
+                "Duplicate Name in Tree", 
+                "OK", "CANCEL")
+            msg[0].grab_set()
+            msg[2].config(command=ok_new_name)
+            msg[3].config(command=cancel_new_name)
+            if self.make_dupe is True:  
+                self.make_temp_person_id() 
+                self.reset()
+            else:
+                self.reset() 
+        cur.close()
+        conn.close()
+
+    def reset(self):
+        self.preset()
+        self.name_input.delete(0, 'end')
+        for child in self.order_frm.winfo_children():
+            child['text'] = ''
+        self.make_dupe = True 
+
+# from autofill.py
+
+class EntryAuto(Entry):
+    '''
+        To use this class, after instantiating it, you have to call 
+        EntryAuto.create_lists(all_items). Other than getting all_items
+        (e.g. from a database query), the class is self-contained. 
+
+        To extend this class, rule number 1 is don't try doing logic on a
+        string being autofilled until the typing/autofilling is done and
+        focus is out of the widget. See EntryAutoPerson in persons.py.
+    '''
+
+    all_person_autofills = []
+
+    def create_lists(all_items):
+        recent_items = []
+        all_items_unique = []
+
+        for item in all_items:
+            if item not in recent_items:
+                all_items_unique.append(item)
+        final_items = recent_items + all_items_unique
+        return final_items
+
+    def __init__(self, master, autofill=False, values=None, *args, **kwargs):
+        Entry.__init__(self, master, *args, **kwargs)
+        self.master = master
+        self.autofill = autofill
+        self.values = values
+
+        self.config(
+            bd=0,
+            bg=formats['bg'], 
+            fg=formats['fg'], 
+            font=formats['input_font'], 
+            insertbackground=formats['fg'])
+
+        if autofill is True:
+            self.bind("<KeyPress>", self.detect_pressed)
+            self.bind("<KeyRelease>", self.get_typed)
+            self.bind("<FocusOut>", self.prepend_match, add="+")
+            self.bind("<FocusIn>", self.deselect, add="+")
+
+    def detect_pressed(self, evt):
+        '''
+            runs on every key press
+        '''
+        if self.autofill is False:
+            return
+        key = evt.keysym
+        if len(key) == 1:
+            self.pos = self.index('insert')
+            keep = self.get()[0:self.pos]
+            self.delete(0, 'end')
+            self.insert(0, keep)
+
+    def get_typed(self, evt):
+        '''
+            Run on every key release; filters out most non-alpha-numeric 
+            keys; runs the functions not triggered by events.
+        '''
+        def do_it():
+            hits = self.match_string()
+            self.show_hits(hits, self.pos)
+
+        if self.autofill is False:
+            return
+        key = evt.keysym
+        # allow alphanumeric characters
+        if len(key) == 1:
+            do_it()
+        # allow hyphens and apostrophes
+        elif key in ('minus', 'quoteright'):
+            do_it()
+        # look for other chars that should be allowed in nested names
+        else:
+            pass
+
+    def match_string(self):
+        hits = []
+        got = self.get()
+        use_list = self.values
+        for item in use_list:
+            if item.lower().startswith(got.lower()):
+                hits.append(item)
+        return hits
+
+    def show_hits(self, hits, pos):
+        cursor = pos + 1
+        if len(hits) != 0:
+            self.delete(0, 'end')
+            self.insert(0, hits[0])
+            self.icursor(cursor)
+
+    def prepend_match(self, evt):
+        content = self.get()
+        if content in self.values:
+            idx = self.values.index(content)
+            del self.values[idx]
+            self.values.insert(0, content)
+
+    def deselect(self, evt):
+        '''
+            This callback was added because something in the code for this 
+            widget caused the built-in replacement of selected text with 
+            typed text to stop working. So if you tabbed into an autofill entry
+            that already had text in it, the text was all selected as expected 
+            but if you typed, the typing was added to the end of the existing 
+            text instead of replacing it, which is unexpected. Instead of 
+            finding out why this is happening, I added this callback so that 
+            tabbing into a filled-out autofill will not select its text. This 
+            might be better since the value in the field is not often changed 
+            and should not be easy to change by mistake.
+        '''
+        self.select_clear()
+
+class EntryAutoHilited(EntryAuto):
+    def __init__(self, master, formats, *args, **kwargs):
+        EntryAuto.__init__(self, master, *args, **kwargs)
+
+        self.config(bg=formats["highlight_bg"])
+
+
+""" These two autofill inputs are based on simpler code in autofill.py. """
+class EntryAutoPerson(EntryUnhilited):
+    """ To use this class, each person autofill input has to be given the 
+        ability to use its newest values with a line like this: 
+            `EntryAutoPerson.all_person_autofills.append(person_entry)`.
+        Then, after instantiating a class that uses autofills, you have to call 
+        `EntryAuto.create_lists(all_items)`. After values change, run something 
+        like `update_person_autofill_values()`.        
+    """
+
+    all_person_autofills = []
+    formats = formats
+    highlight_bg = formats["highlight_bg"]
+    bg = formats["bg"]
+
+    def create_lists(all_items):
+        """ Keeps a temporary list during one app session which will 
+            prioritize the autofill values with the most recently used values
+            given priority over the alphabetical list of the values not used in
+            the current session.
+
+            The `prepend_match()` method is used in conjunction with this 
+            to add the most recently used value to the very front of the list.
+
+            Since this function and the list `all_person_autofills` comprise a 
+            class-level procedure, values used and moved to the front of the 
+            list by one input will become available as first match to all the 
+            other inputs too, until the app is closed. Next time the app opens,
+            a fresh list of recently-used autofill values will be started.
+        """
+        key_list = list(all_items.items())
+        recent_items = []
+        all_items_unique = []
+
+        for item in key_list:
+            if item not in recent_items:
+                all_items_unique.append(item)
+        final_items = dict(recent_items + all_items_unique)
+        return final_items
+
+    def __init__(self, master, autofill=False, values=None, *args, **kwargs):
+        EntryUnhilited.__init__(self, master, *args, **kwargs)
+        self.master = master
+        self.autofill = autofill
+        self.values = values
+        self.pos = 0
+        self.current_id = None
+        self.filled_name = None
+        self.hits = None
+
+        if autofill is True:
+            self.bind("<KeyPress>", self.detect_pressed)
+            self.bind("<KeyRelease>", self.get_typed)
+            self.bind("<FocusOut>", self.prepend_match, add="+")
+            self.bind("<FocusIn>", self.deselect, add="+")
+
+        self.config(
+            bg=EntryAutoPerson.formats["bg"], 
+            fg=EntryAutoPerson.formats["fg"], 
+            insertbackground=EntryAutoPerson.formats["fg"], 
+            selectbackground=EntryAutoPerson.formats["head_bg"], 
+            font=EntryAutoPerson.formats["input_font"])            
+        self.bind("<Enter>", self.highlight)
+        self.bind("<Leave>", self.unhighlight)
+
+    def highlight(self, evt):
+        self.config(bg=EntryAutoPerson.highlight_bg)
+
+    def unhighlight(self, evt):
+        self.config(bg=EntryAutoPerson.bg)
+
+    def detect_pressed(self, evt):
+        """ Run on every key press.
+        """
+        if self.autofill is False:
+            return
+        key = evt.keysym
+        if len(key) == 1:
+            self.pos = self.index('insert')
+            keep = self.get()[0:self.pos].strip("+")
+            self.delete(0, 'end')
+            self.insert(0, keep)
+
+    def get_typed(self, evt):
+        """ Run on every key release. Filter out most non-alpha-numeric 
+            keys. Run the functions not triggered by events.
+        """
+        def do_it():
+            hits = self.match_string()
+            self.show_hits(hits, self.pos)
+
+        self.current_id = None
+        if self.autofill is False:
+            return
+        key = evt.keysym
+        # Allow alphanumeric characters.
+        if len(key) == 1:
+            do_it()
+        # Allow number signs, hyphens and apostrophes (#, -, ').
+        elif key in ('numbersign', 'minus', 'quoteright'):
+            do_it()
+        # Open the PersonAdd dialog with the "+" stripped off the input.
+        elif key == "plus":
+            content = self.get()
+            idx = content.index("+")
+            fixed = content.replace("+", "")
+            self.delete(0, "end")
+            self.insert(0, "{}+".format(fixed))
+
+    def match_string(self):
+        """ Match typed input to names already stored in hierarchical order. """
+
+        hits = []
+        got = self.get()
+
+        for k, v in self.values.items():
+            for dkt in v:
+                if dkt["name"].lower().startswith(got.lower()):
+                    if (dkt, k) not in hits:
+                        
+                        hits.append((dkt, k))
+        return hits
+
+    def show_hits(self, hits, pos):
+        cursor = pos + 1
+        if len(hits) != 0:
+            self.current_id = hits[0][1]
+            self.filled_name = hits[0][0]["name"]
+            self.delete(0, 'end')
+            self.insert(0, self.filled_name)
+        self.icursor(cursor)
+        self.hits = hits
+
+    def open_dupe_dialog(self, hits):
+
+        def ok_dupe_name():
+            self.delete(0, "end")
+            dupe_name_dlg.destroy()
+    
+        def search_dupe_name():
+            self.delete(0, "end")
+            dupe_name_dlg.destroy()
+
+        def cancel_dupe_name():
+            nonlocal dupe_name_dlg_cancelled
+            dupe_name_dlg_cancelled = True
+            self.delete(0, "end")
+            dupe_name_dlg.destroy()
+
+        dupe_name_dlg_cancelled = False
+        self.right_id = tk.IntVar()
+        dupe_name_dlg = Dialogue(self)
+
+        lab = LabelHeader(
+            dupe_name_dlg.window, justify='left', wraplength=450)
+        lab.grid(column=0, row=0, padx=12, pady=12, ipadx=6, ipady=6)
+
+        radfrm = Frame(dupe_name_dlg.window)
+        radfrm.grid(column=0, row=1)
+        r = 0
+        for hit in hits:
+            dkt, iD = hit
+            name, name_type, used_by, dupe_name = (
+                dkt["name"], dkt["name type"], dkt["used by"], dkt["dupe name"])
+            if len(used_by) != 0:
+                used_by = ", name used by {}".format(used_by)
+            rdo = Radiobutton(
+                radfrm, text="person #{} {} ({}){} ".format(iD, name, name_type, used_by), 
+                variable=self.right_id, value=r, anchor="w")
+            rdo.grid(column=0, row=r, sticky="ew")
+            if r == 0:
+                rdo.select()
+                rdo.focus_set()
+                lab.config(text="Which {}?".format(name))
+            r += 1
+     
+        buttons = Frame(dupe_name_dlg.window)
+        buttons.grid(column=0, row=2, pady=12, padx=12)
+        dupe_name_ok = Button(buttons, text="OK", command=ok_dupe_name, width=7)
+        dupe_name_ok.grid(column=0, row=0, sticky="e", padx=(0,12))
+        search_name = Button(buttons, text="SEARCH DUPE NAME", command=search_dupe_name)
+        search_name.grid(column=1, row=0, sticky="e", padx=(0,12))
+        dupe_name_cancel = Button(buttons, text="CANCEL", command=cancel_dupe_name, width=7)
+        dupe_name_cancel.grid(column=2, row=0, sticky="e", padx=0)
+
+        dupe_name_dlg.canvas.title_1.config(text="Duplicate Stored Names")
+        dupe_name_dlg.canvas.title_2.config(text="")
+
+        dupe_name_dlg.resize_window()
+        self.wait_window(dupe_name_dlg)
+        if dupe_name_dlg_cancelled is False:
+            selected = self.right_id.get()
+            return hits[selected]
+
+    def prepend_match(self, evt):
+        """ Determine which ID was used to fill in a value. Move the autofill
+            value corresponding with that ID to the front of the valus list.
+        """
+        content = self.get()
+        if self.current_id in self.values:
+            key_list = list(self.values.items())
+            u = 0
+            for tup in key_list:
+                if tup[0] == self.current_id:
+                    idx = u
+                    break
+                u += 1
+            used = key_list.pop(idx)
+            key_list.insert(0, used)
+            self.values = dict(key_list)
+
+    def deselect(self, evt):
+        '''
+            This callback was added because something in the code for this 
+            widget caused the built-in replacement of selected text with 
+            typed text to stop working. So if you tabbed into an autofill entry
+            that already had text in it, the text was all selected as expected 
+            but if you typed, the typing was added to the end of the existing 
+            text instead of replacing it, which is unexpected. Instead of 
+            finding out why this is happening, I added this callback so that 
+            tabbing into a filled-out autofill will not select its text. This 
+            might be better since the value in the field is not often changed 
+            and should not be easy to change by mistake.
+        '''
+        self.select_clear()
+
+class EntryAutoPersonHilited(EntryAutoPerson):
+    def __init__(self, master, formats, *args, **kwargs):
+        EntryAutoPerson.__init__(self, master, *args, **kwargs)
+
+        self.config(bg=formats["highlight_bg"])
+
+# from custom_combobox_widget.py
+
+class Combobox(FrameHilited3):
+    hive = []
+    formats = formats
+    highlight_bg = formats["highlight_bg"]
+    head_bg = formats["head_bg"]
+    bg = formats["bg"]
+
+    def __init__(
+            self, 
+            master, 
+            root, 
+            callback=None,
+            height=480, 
+            values=[], 
+            scrollbar_size=24, 
+            *args, **kwargs):
+        FrameHilited3.__init__(self, master, *args, **kwargs)
+        '''
+            This is a replacement for ttk.Combobox.
+        '''
+
+        self.master = master
+        self.callback = callback
+        self.root = root
+        self.height = height
+        self.values = values
+        self.scrollbar_size = scrollbar_size
+
+        self.buttons = []
+        self.selected = None
+        self.result_string = ''
+
+        self.entered = None
+        self.lenval = len(self.values)
+        self.owt = None
+        self.scrollbar_clicked = False
+        self.typed = None
+
+        self.screen_height = self.winfo_screenheight()
+        self.config(bd=0)
+
+        # simulate <<ComboboxSelected>>:
+        self.var = tk.StringVar()
+        self.var.trace_add('write', lambda *args, **kwargs: self.combobox_selected()) 
+
+        # simulate ttk.Combobox.current()
+        self.current = 0
+
+        self.make_widgets()
+        self.master.bind_all('<ButtonRelease-1>', self.close_dropdown, add='+')
+
+        # self.root.bind('<Configure>', self.hide_all_drops) # DO NOT DELETE
+        # Above binding closes dropdown if Windows title bar is clicked, it
+        #   has no other purpose. But it causes minor glitches e.g. if a
+        #   dropdown button is highlighted and focused, the Entry has to be
+        #   clicked twice to put it back into the alternating drop/undrop
+        #   cycle as expected. Without this binding, the click on the title
+        #   bar lowers the dropdown below the root window which is good 
+        #   enough for now. To get around it, use the Border class in 
+        #   window_border.py instead of the built-in Windows title bar that
+        #   comes with Tkinter.
+
+        # expose only unique methods of Entry e.g. not self.config (self is a
+        #   Frame and the Entry, Toplevel, Canvas, and window have to be 
+        #   configured together) so to size the entry use 
+        #   instance.config_drop_width(72)
+        self.insert = self.entry.insert
+        self.delete = self.entry.delete
+        self.get = self.entry.get
+
+    def make_widgets(self):
+        self.entry = Entry(self, textvariable=self.var)
+        self.arrow = ComboArrow(self, text='\u25BC', width=2)
+
+        self.entry.grid(column=0, row=0)
+        self.arrow.grid(column=1, row=0)
+
+        self.update_idletasks()
+        self.width = self.winfo_reqwidth()
+
+        self.drop = ToplevelHilited(
+            self,
+            bd=0)
+        self.drop.bind('<Destroy>', self.clear_reference_to_dropdown)
+        self.drop.withdraw()
+        Combobox.hive.append(self.drop)
+        for widg in (self.master, self.drop):
+            widg.bind('<Escape>', self.hide_all_drops, add='+')
+
+        self.drop.grid_columnconfigure(0, weight=1)
+        self.drop.grid_rowconfigure(0, weight=1)
+
+        self.canvas = CanvasHilited(self.drop)
+        self.canvas.grid(column=0, row=0, sticky='news')
+
+        self.scrollv_combo = Scrollbar(
+            self.drop, hideable=True, command=self.canvas.yview)
+        self.canvas.config(yscrollcommand=self.scrollv_combo.set)
+        self.content = Frame(self.canvas)
+
+        self.content.grid_columnconfigure(0, weight=1)
+        self.content.grid_rowconfigure('all', weight=1)
+
+        self.scrollv_combo.grid(column=1, row=0, sticky='ns') 
+
+        self.entry.bind('<KeyPress>', self.open_or_close_dropdown)
+        self.entry.bind('<Tab>', self.open_or_close_dropdown)
+
+        for widg in (self.entry, self.arrow):
+            widg.bind('<Button-1>', self.open_or_close_dropdown, add='+')
+    
+        self.arrow.bind('<Button-1>', self.focus_entry_on_arrow_click, add='+')
+       
+        for frm in (self, self.content):
+            """ Bind arrow events to frames to make arrow label highlight on
+                click or focus in. I don't remember why it had to be done this
+                way, but changing it to run a local callback breaks the 
+                highlighting.
+            """
+            frm.bind('<FocusIn>', self.arrow.highlight_arrow)
+            frm.bind('<FocusOut>', self.arrow.unhighlight_arrow)
+
+        self.drop.bind('<FocusIn>', self.focus_dropdown)
+        self.drop.bind('<Unmap>', self.unhighlight_all_drop_items)
+
+        self.current_combo_parts = [self, self.entry, self.arrow, self.scrollv_combo]
+        for part in self.current_combo_parts:
+            part.bind('<Enter>', self.unbind_combo_parts, add="+")
+            part.bind('<Leave>', self.rebind_combo_parts, add="+")
+        self.config_values(self.values)
+
+        configall(self.drop, Combobox.formats)
+        # config_generic(self.drop)
+
+    def unbind_combo_parts(self, evt):
+        self.master.unbind_all('<ButtonRelease-1>')
+
+    def rebind_combo_parts(self, evt):
+        self.master.bind_all('<ButtonRelease-1>', self.close_dropdown, add='+')
+
+    def unhighlight_all_drop_items(self, evt):
+        for child in self.content.winfo_children():
+            child.config(bg=Combobox.highlight_bg)
+
+    def clear_reference_to_dropdown(self, evt):
+        dropdown = evt.widget
+        if dropdown in Combobox.hive:
+            idx = Combobox.hive.index(dropdown)
+            del Combobox.hive[idx]  
+            dropdown = None
+
+    def config_values(self, values):
+        '''
+            The vertical scrollbar, when there is one, overlaps the 
+            dropdown button highlight but both still work. To change
+            this, the button width can be changed when the scrollbar
+            appears and disappears.
+        '''
+        if len(values) == 0: return
+        # RE: above return line; NOT SURE WHY THIS WAS NEEDED alert:
+        #   had to add this line after adding `if self.fit_height <= self.height:`
+        #   at bottom of this method, which had to be added so dropdowns
+        #   could be less than default height. Possibly this has to do with the
+        #   difference between running a Combobox in a dialog vs. in a tab on the
+        #   root window. I say this because this method seems to be running too
+        #   early (before there are any values) and if that happens, the new 
+        #   line below sets height to 0. Seems to be working now that this 
+        #   method is not allowed to run twice.
+        # a sample button is made to get its height, then destroyed
+        b = ButtonFlatHilited(self.content, text='Sample')
+        one_height = b.winfo_reqheight()
+        self.fit_height = one_height * len(values)
+
+        self.values = values
+        self.lenval = len(self.values)
+
+        for button in self.buttons:
+            button.destroy()
+        self.buttons = []
+
+        host_width = self.winfo_reqwidth()
+        self.window = self.canvas.create_window(
+            0, 0, anchor='nw', window=self.content, width=host_width)
+        self.canvas.config(scrollregion=(0, 0, host_width, self.fit_height))
+        c = 0
+        for item in values:
+            bt = ButtonFlatHilited(self.content, text=item, anchor='w')
+            bt.grid(column=0, row=c, sticky='ew')  
+            for event in ('<Button-1>', '<Return>', '<space>'):
+                bt.bind(event, self.get_clicked, add='+')
+            bt.bind('<Enter>', self.highlight_button)
+            bt.bind('<Leave>', self.unhighlight_button)
+            bt.bind('<Tab>', self.tab_out_of_dropdown_fwd)
+            bt.bind('<Shift-Tab>', self.tab_out_of_dropdown_back)
+            bt.bind('<KeyPress>', self.traverse_on_arrow)
+            bt.bind('<FocusOut>', self.unhighlight_button)
+            bt.bind('<FocusOut>', self.get_tip_widg, add='+')
+            bt.bind('<FocusIn>', self.get_tip_widg)
+            bt.bind('<Enter>', self.get_tip_widg, add='+')
+            bt.bind('<Leave>', self.get_tip_widg, add='+')
+            self.buttons.append(bt)
+            c += 1
+        for b in self.buttons:
+            b.config(command=self.callback)
+        if self.fit_height <= self.height:
+            self.height = self.fit_height
+
+    def get_tip_widg(self, evt):
+        '''
+            '10' is FocusOut, '9' is FocusIn
+        '''
+        if self.winfo_reqwidth() <= evt.widget.winfo_reqwidth():
+            widg = evt.widget
+            evt_type = evt.type
+            if evt_type in ('7', '9'):
+                self.show_overwidth_tip(widg)
+            elif evt_type in ('8', '10'):
+                self.hide_overwidth_tip()
+
+    def show_overwidth_tip(self, widg):
+        '''
+            Instead of a horizontal scrollbar, if a dropdown item doesn't all
+            show in the space allotted, the full text will appear in a tooltip
+            on highlight. Most of this code is borrowed from Michael Foord.
+        '''
+        text=widg.cget('text')
+        if self.owt:
+            return
+        x, y, cx, cy = widg.bbox()
+        x = x + widg.winfo_rootx() + 32
+        y = y + cy + widg.winfo_rooty() + 32
+        self.owt = ToplevelHilited(self)
+        self.owt.wm_overrideredirect(1)
+        l = LabelTip2(self.owt, text=text) 
+        l.pack(ipadx=6, ipady=3)
+        self.owt.wm_geometry('+{}+{}'.format(x, y))
+
+    def hide_overwidth_tip(self):    
+        tip = self.owt
+        self.owt = None
+        if tip:
+            tip.destroy() 
+
+    def focus_entry_on_arrow_click(self, evt):
+        self.focus_set()
+        self.entry.select_range(0, 'end')  
+
+    def hide_other_drops(self):
+        for dropdown in Combobox.hive:
+            if dropdown != self.drop:
+                dropdown.withdraw()
+
+    def hide_all_drops(self, evt=None):
+        for dropdown in Combobox.hive:
+            dropdown.withdraw()
+
+    def close_dropdown(self, evt):
+        '''
+            Runs only on ButtonRelease-1.
+
+            In the case of a destroyable combobox in a dialog, after the
+            combobox is destroyed, this event will cause an error because
+            the dropdown no longer exists. I think this is harmless so I
+            added the try/except to pass on it instead of figuring out how
+            to prevent the error.
+        '''
+        widg = evt.widget
+        if widg == self.scrollv_combo:
+            self.scrollbar_clicked = True
+        try:
+            self.drop.withdraw()
+        except tk.TclError:
+            pass
+
+    def config_drop_width(self, new_width):
+        self.entry.config(width=new_width)
+        self.update_idletasks()
+        self.width = self.winfo_reqwidth()
+        self.drop.geometry('{}x{}'.format(self.width, self.height)) 
+        self.scrollregion_width = new_width
+        self.canvas.itemconfigure(self.window, width=self.width)
+        self.canvas.configure(scrollregion=(0, 0, new_width, self.fit_height))
+
+    def open_or_close_dropdown(self, evt=None):
+        if evt is None:
+            # dropdown item clicked--no evt because of Button command option
+            if self.callback:
+                self.callback(self.selected)
+            self.drop.withdraw()
+            return
+        if len(self.buttons) == 0:
+            return
+        evt_type = evt.type
+        evt_sym = evt.keysym
+        if evt_sym == 'Tab':
+            self.drop.withdraw()
+            return
+        elif evt_sym == 'Escape':
+            self.hide_all_drops()
+            return
+        first = None
+        last = None
+        if len(self.buttons) != 0:
+            first = self.buttons[0]
+            last = self.buttons[len(self.buttons) - 1]
+        # self.drop.winfo_ismapped() gets the wrong value
+        #   if the scrollbar was the last thing clicked
+        #   so drop_is_open has to be used also.
+        if evt_type == '4':
+            if self.drop.winfo_ismapped() == 1:
+                drop_is_open = True
+            elif self.drop.winfo_ismapped() == 0:
+                drop_is_open = False
+            if self.scrollbar_clicked is True:
+                drop_is_open = True
+                self.scrollbar_clicked = False
+            if drop_is_open is True:
+                self.drop.withdraw() 
+                drop_is_open = False
+                return
+            elif drop_is_open is False:
+                pass
+        elif evt_type == '2':
+            if evt_sym not in ('Up', 'Down'):
+                return
+            elif first is None or last is None:
+                pass
+            elif evt_sym == 'Down':
+                first.config(bg=Combobox.bg)
+                first.focus_set()
+                self.canvas.yview_moveto(0.0)
+            elif evt_sym == 'Up':
+                last.config(bg=Combobox.bg)
+                last.focus_set()
+                self.canvas.yview_moveto(1.0)
+
+        self.update_idletasks()
+        x = self.winfo_rootx()
+        y = self.winfo_rooty()
+        combo_height = self.winfo_reqheight()
+
+        self.fit_height = self.content.winfo_reqheight()
+        self.drop.wm_overrideredirect(1)
+        fly_up = self.get_vertical_pos(combo_height, evt)
+        if fly_up[0] is False:            
+            y = y + combo_height
+        else:
+            y = fly_up[1]
+       
+        self.drop.geometry('{}x{}+{}+{}'.format(
+            self.width, self.height, x, y)) 
+        self.drop.deiconify() 
+        self.hide_other_drops()
+
+    def get_vertical_pos(self, combo_height, evt):
+        fly_up = False
+        vert_pos = evt.y_root - evt.y
+        clearance = self.screen_height - (vert_pos + combo_height)
+        if clearance < self.height:
+            fly_up = True
+
+        return (fly_up, vert_pos - self.height)
+
+    def highlight_button(self, evt):
+        for widg in self.buttons:
+            widg.config(bg=Combobox.highlight_bg)
+        widget = evt.widget
+        widget.config(bg=Combobox.bg)
+        self.selected = widget
+        widget.focus_set()
+
+    def unhighlight_button(self, evt):
+        x, y = self.winfo_pointerxy()
+        hovered = self.winfo_containing(x,y)
+        if hovered in self.buttons:
+            evt.widget.config(bg=Combobox.highlight_bg)
+
+    def hide_drops_on_title_bar_click(self, evt):
+        x, y = self.winfo_pointerxy()
+        hovered = self.winfo_containing(x,y)
+
+    def focus_dropdown(self, evt):
+        for widg in self.buttons:
+            widg.config(takefocus=1)
+
+    def handle_tab_out_of_dropdown(self, go):
+
+        for widg in self.buttons:
+            widg.config(takefocus=0)
+
+        self.entry.delete(0, 'end')
+        self.entry.insert(0, self.selected.cget('text'))
+        self.drop.withdraw()
+        self.entry.focus_set()
+        if go == 'fwd':
+            goto = self.entry.tk_focusNext()
+        elif go == 'back':
+            goto = self.entry.tk_focusPrev()
+        goto.focus_set()
+
+    def tab_out_of_dropdown_fwd(self, evt):
+        self.selected = evt.widget
+        self.handle_tab_out_of_dropdown('fwd')
+
+    def tab_out_of_dropdown_back(self, evt):
+        self.selected = evt.widget
+        self.handle_tab_out_of_dropdown('back')
+
+    def get_clicked(self, evt):
+
+        self.selected = evt.widget
+        self.current = self.selected.grid_info()['row']
+        self.entry.delete(0, 'end')
+        self.entry.insert(0, self.selected.cget('text')) 
+        self.entry.select_range(0, 'end')
+        self.open_or_close_dropdown()  
+
+    def get_typed(self):
+        self.typed = self.var.get()    
+
+    def highlight_on_traverse(self, evt, next_item=None, prev_item=None):
+
+        evt_type = evt.type
+        evt_sym = evt.keysym # 2 is key press, 4 is button press
+
+        for widg in self.buttons:
+            widg.config(bg=Combobox.highlight_bg)
+        if evt_type == '4':
+            self.selected = evt.widget
+        elif evt_type == '2' and evt_sym == 'Down':
+            self.selected = next_item
+        elif evt_type == '2' and evt_sym == 'Up':
+            self.selected = prev_item
+
+        self.selected.config(bg=Combobox.bg)
+        self.widg_height = int(self.fit_height / self.lenval)
+        widg_screenpos = self.selected.winfo_rooty()
+        widg_listpos = self.selected.winfo_y()
+        win_top = self.drop.winfo_rooty()
+        win_bottom = win_top + self.height
+        win_ratio = self.height / self.fit_height
+        list_ratio = widg_listpos / self.fit_height
+        widg_ratio = self.widg_height / self.fit_height
+        up_ratio = list_ratio - win_ratio + widg_ratio
+
+        if widg_screenpos > win_bottom - 0.75 * self.widg_height:
+            self.canvas.yview_moveto(float(list_ratio))
+        elif widg_screenpos < win_top:
+            self.canvas.yview_moveto(float(up_ratio))
+        self.selected.focus_set()
+
+    def traverse_on_arrow(self, evt):
+        if evt.keysym not in ('Up', 'Down'):
+            return
+        widg = evt.widget
+        sym = evt.keysym
+        self.widg_height = int(self.fit_height / self.lenval)
+        self.update_idletasks()
+        next_item = widg.tk_focusNext()
+        prev_item = widg.tk_focusPrev()
+
+        if sym == 'Down':
+            if next_item in self.buttons:
+                self.highlight_on_traverse(evt, next_item=next_item)
+            else:
+                next_item = self.buttons[0]
+                next_item.focus_set()
+                next_item.config(bg=Combobox.bg)
+                self.canvas.yview_moveto(0.0)
+
+        elif sym == 'Up':
+            if prev_item in self.buttons:
+                self.highlight_on_traverse(evt, prev_item=prev_item)
+            else:
+                prev_item = self.buttons[self.lenval-1]
+                prev_item.focus_set()
+                prev_item.config(bg=Combobox.bg)
+                self.canvas.yview_moveto(1.0)        
+
+    def callback(self):
+        '''
+            A function specified on instantiation.
+        '''
+        # print('this will not print if overridden (callback)')
+        pass
+
+    def combobox_selected(self):
+        '''
+            A function specified on instantiation will run when
+            the selection is made. Similar to ttk's <<ComboboxSelected>>
+            but instead of binding to a virtual event.
+        '''
+        # print('this will not print if overridden (combobox_selected)')
+        pass
+
+class ComboArrow(Labelx):
+    head_bg = formats["head_bg"]
+    fg = formats["fg"]
+    output_font = formats["output_font"]
+    highlight_bg = formats["highlight_bg"]
+    def __init__(self, master, *args, **kwargs):
+        Labelx.__init__(self, master, *args, **kwargs) 
+        self.config(
+            bg=ComboArrow.highlight_bg, 
+            fg=ComboArrow.fg,
+            font=ComboArrow.output_font)
+
+    def highlight_arrow(self, evt):
+        self.config(bg=ComboArrow.head_bg)
+
+    def unhighlight_arrow(self, evt):
+        self.config(bg=ComboArrow.highlight_bg)
+
+# from custom_tabbed_widget.py
+
+
+'''
+    Replaces ttk.Notebook. Tabs can be displayed on the bottom of the main
+    frame, instead of the top. 
+
+    This is a Frame that can be gridded anywhere. No scrollbar needed, because
+    tabbed widgets are meant to retain a fixed size and the space they are in
+    has a scrollbar of its own. The space they are in should not resize, so set
+    `minx` and `miny` to accommodate the tab with the biggest content.
+'''
+
+class LabelTab(Labelx):
+    def __init__(self, master, *args, **kwargs):
+        Labelx.__init__(self, master, *args, **kwargs)
+    
+        self.formats = make_formats_dict()
+        self.config(font=self.formats['tab_font'])
+
+        self.chosen = False        
+
+        if self.chosen is False:
+            self.config(bg=self.formats['bg'], fg=self.formats['fg'])
+        else: 
+            self.config(bg=self.formats['highlight_bg']) 
+
+class TabBook(Framex):
+
+    def __init__(
+            self, master, root=None, side='nw', bd=0, tabwidth=12, 
+            selected='', tabs=[],  minx=0.90, miny=0.85, case='title', 
+            takefocus=1, *args, **kwargs):
+        Framex.__init__(self, master, *args, **kwargs)
+        '''
+            The tab is the part that sticks out with the title 
+            you click to activate the page which holds that 
+            tab's content. To add widgets grid them with 
+            instance.store[page] as the master. For example: 
+            inst.store['place'] where 'place' is a string from 
+            the original tabs parameter (list of tuples containing
+            tab title and accelerator e.g.:
+            `[('images', 'I'), ('attributes', 'A')]`). The default
+            value of `selected` should not be an empty string since
+            a string here is not optional, it has to be the title
+            of one of the tabs, the one that is to be open by default. 
+            `minx` and `miny` are minimum sizes as proportions of the
+            screen size.
+        '''
+
+        self.master = master
+        self.side = side
+        self.bd = bd
+        self.tabwidth = tabwidth
+        self.selected = selected
+        self.minx = self.master.winfo_screenwidth() * minx
+        self.miny = self.master.winfo_screenheight() * miny
+        self.case = case
+        self.takefocus = takefocus
+
+        self.formats = make_formats_dict()
+        
+        self.tabdict = {}
+        for tab in tabs:
+            self.tabdict[tab[0]] = [tab[1]]
+
+        self.store = {}
+        
+        self.active = None
+        self.make_widgets() 
+        self.open_tab_alt(root)
+
+    def make_widgets(self):
+
+        self.tab_base = Frame(self)
+        self.border_base = FrameHilited2(self)
+        self.notebook = Frame(self.border_base)
+        self.tab_frame = FrameHilited2(self.tab_base)
+        self.tabless = Frame(self.tab_base)
+        self.spacer = Frame(self.tabless)
+        self.top_border = FrameHilited2(self.tabless, height=1)
+
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=1)
+
+        self.notebook.columnconfigure(0, weight=1, minsize=self.minx)
+        self.notebook.rowconfigure(0, weight=1, minsize=self.miny)
+
+        self.grid_tabs()  
+
+        c = 0
+        for tab in self.tabdict:
+            lab = LabelTab(
+                self.tab_frame,
+                width=int(self.tabwidth),
+                takefocus=self.takefocus)  
+            if c == 0:
+                lab.chosen = True
+            if self.case == 'title':
+                lab.config(text=tab.title())   
+            elif self.case == 'lower':
+                lab.config(text=tab.lower())    
+            elif self.case == 'upper':
+                lab.config(text=tab.upper())     
+            self.tabdict[tab].append(lab)
+
+            if self.side in ('ne', 'nw'):
+                lab.grid(column=c, row=0, padx=1, pady=(1, 0))
+            elif self.side in ('se', 'sw'):
+                lab.grid(column=c, row=0, padx=1, pady=(0, 1))
+
+            lab.bind('<Button-1>', self.make_active)
+            lab.bind('<FocusIn>', self.highlight_tab)
+            lab.bind('<FocusOut>', self.unhighlight_tab)
+            lab.bind('<Key-space>', self.make_active)
+            lab.bind('<Key-Return>', self.make_active)
+            lab.bind('<ButtonRelease-1>', self.unhighlight_tab)
+            create_tooltip(lab, 'Alt + {}'.format(self.tabdict[tab][0]))
+            page = Frame(self.notebook)
+            page.grid(column=0, row=0, sticky='news')
+            page.grid_remove()
+            self.tabdict[tab].append(page)
+            self.store[tab] = page
+            c += 1
+
+        selected_page = self.tabdict[self.selected][2] # page
+        selected_page.grid()
+
+        self.active = self.tabdict[self.selected][1] # tab
+        self.make_active()
+
+    def grid_tabs(self):
+
+        if self.side in ('nw', 'ne'):
+            pady = (0, 1)
+            tab_row = 0
+            body_row = 1
+            spacer_row = 0
+            border_row = 1
+
+        elif self.side in ('sw', 'se'):
+            pady=(1, 0)
+            tab_row = 1
+            body_row = 0
+            spacer_row = 1
+            border_row = 0
+
+        if self.side in ('nw', 'sw'):
+            tab_col = 0
+            tabless_col = 1                
+
+        elif self.side in ('ne', 'se'):
+            tab_col = 1
+            tabless_col = 0                
+
+        # self.notebook switches pady
+        self.notebook.grid(column=0, row=0, padx=1, pady=pady, sticky='news')
+        # self.tab_base and borderbase switch rows
+        self.tab_base.grid(column=0, row=tab_row, sticky='news')
+        self.tab_base.grid_columnconfigure(tabless_col, weight=1)
+        self.tab_base.grid_rowconfigure(0, weight=1)
+        self.border_base.grid(column=0, row=body_row, sticky='news')
+        # self.tab_frame and self.tabless switch cols
+        self.tab_frame.grid(column=tab_col, row=0, sticky='ew')
+        self.tabless.grid(column=tabless_col, row=0, sticky='news')
+        self.tabless.grid_columnconfigure(0, weight=1)
+        self.tabless.grid_rowconfigure(spacer_row, weight=1)
+        # self.spacer and self.top_border switch rows
+        self.spacer.grid(column=0, row=tab_row, sticky='ns')
+        self.top_border.grid(column=0, row=border_row, sticky='ew') 
+
+    def highlight_tab(self, evt):
+        # accelerators don't work if notebook not visible
+        if evt.widget in self.store.values():
+            evt.widget.config(fg='yellow')
+
+    def unhighlight_tab(self, evt):
+        # accelerators don't work if notebook not visible
+        if evt.widget in self.store.values():
+            evt.widget.config(fg=self.formats['fg'])
+
+    def make_active(self, evt=None):
+        ''' Open the selected tab & reconfigure it to look open. '''
+
+        self.formats = make_formats_dict()
+
+        # position attributes are needed in the instance
+        self.posx = self.winfo_rootx()
+        self.posy = self.winfo_rooty()    
+
+        # if this method is not running on load
+        if evt:
+            self.active = evt.widget
+            self.active.focus_set()
+
+            # if evt was alt key accelerator
+            if (evt.widget is self.master or 
+                    evt.keysym not in ('space', 'Return')):
+
+                for k,v in self.tabdict.items():
+                    if evt.keysym in (v[0], v[0].lower()):
+                        self.active = v[1]
+                        self.active.focus_set()
+                        
+            # if evt was spacebar, return key, or mouse button
+            elif evt.type in ('2', '4'):
+                self.active.config(fg=self.formats['fg'])
+
+            # remove all pages and regrid the right one
+            for k,v in self.tabdict.items():
+                if self.active == v[1]:
+                    for widg in self.tabdict.values():
+                        widg[2].grid_remove()
+                    v[2].grid()
+        
+        # unhighlight all tabs
+        for tab in self.tabdict.values():
+            tab[1].config(
+                bg=self.formats['highlight_bg'],
+                font=self.formats['tab_font'])
+
+        # detect which tab is active and set its tab.chosen attribute to True
+        #   so config_generic will give it the right background color when
+        #   color_scheme is changed
+        for tab in self.tabdict.values():    
+            if tab[1] == self.active:
+                tab[1].chosen = True
+            else:
+                tab[1].chosen = False
+
+        # highlight active tab; doesn't work on load due to config_generic()
+        #   but does work on user-initiated events
+        self.active.config(
+            bg=self.formats['bg'],
+            font=self.formats['tab_font'])
+        # remove all pages and regrid the right one
+        for v in self.tabdict.values():
+            if self.active == v[1]:
+                for widg in self.tabdict.values():
+                    widg[2].grid_remove()
+                v[2].grid()
+
+    def open_tab_alt(self, root_window):
+        ''' Bindings for notebook tab accelerators. '''
+
+        for k,v in self.tabdict.items():
+            key_combo_upper = '<Alt-Key-{}>'.format(v[0])  
+            root_window.bind(key_combo_upper, self.make_active)
+            key_combo_lower = '<Alt-Key-{}>'.format(v[0].lower()) 
+            root_window.bind(key_combo_lower, self.make_active)
+
+            unkey_combo_upper = '<Alt-KeyRelease-{}>'.format(v[0])            
+            root_window.bind_all(unkey_combo_upper, self.unhighlight_tab)
+            unkey_combo_lower = '<Alt-KeyRelease-{}>'.format(v[0].lower()) 
+            root_window.bind_all(unkey_combo_lower, self.unhighlight_tab)
+
+# from toykinter_widgets.py
+
+class LabelStatusbar(Labelx):
+    formats = formats
+    bg = formats["bg"]
+    fg = formats["fg"]
+    status = formats["status"]
+    """ Statusbar messages on focus-in to individual widgets,
+        tooltips in statusbars, and replacement for ttk.Sizegrip.
+    """
+    def __init__(self, master, *args, **kwargs):
+        Labelx.__init__(self, master, *args, **kwargs)
+        self.config(
+            bg=LabelStatusbar.bg, 
+            fg=LabelStatusbar.fg,
+            font=LabelStatusbar.status)
+
+def run_statusbar_tooltips(visited, status_label, tooltip_label):
+    '''
+        Uses lambda to add args to event
+        since tkinter expects only one arg in a callback.
+    '''
+
+    def handle_statusbar_tooltips(event):
+        for tup in visited:
+            if tup[0] is event.widget:
+                if event.type == '9': # FocusIn
+                    status_label.config(text=tup[1])
+                elif event.type == '10': # FocusOut
+                    status_label.config(text='')
+                elif event.type == '7': # Enter
+                    tooltip_label.grid(
+                        column=1, row=0, 
+                        sticky='e', padx=(6,24))
+                    tooltip_label.config(
+                        text=tup[2],
+                        bg='black',
+                        fg='white',
+                        font=LabelStatusbar.formats["status"])
+                elif event.type == '8': # Leave
+                    tooltip_label.grid_remove()
+                    tooltip_label.config(
+                        bg=formats['bg'], text='', fg=formats['bg'])
+
+    statusbar_events = ['<FocusIn>', '<FocusOut>', '<Enter>', '<Leave>']
+
+    for tup in visited:
+        widg = tup[0]
+        status = tup[1]
+        tooltip = tup[2]
+        for event_pattern in statusbar_events:
+            # error if tup[0] has been destroyed 
+            #   so don't use these with destroyable widgets
+            # different tooltips are available in utes.py
+            widg.bind(event_pattern, handle_statusbar_tooltips, add='+')
+
+        status_label.config(font=formats['status'])
+
+class StatusbarTooltips(Frame):
+    '''
+        To use this:
+        In self.make_widgets()...
+            some_statusbar = StatusbarTooltips(self)
+            some_statusbar.grid(column=0, row=2, sticky='ew') # use last row in toplevel
+            visited = (
+                (self.widget1, 
+                    'status bar message on focus in', 
+                    'tooltip message on mouse hover.'),
+                (self.widget2, 
+                    'status bar message on focus in', 
+                    'tooltip message on mouse hover.'))        
+            run_statusbar_tooltips(
+                visited, 
+                some_statusbar.status_label, 
+                some_statusbar.tooltip_label)
+        If parent is a Toplevel and you don't want the Toplevel to be resizable,
+        use resizer=False when instantiating the Statusbar and add this:
+            dialog.resizable(False, False) --that's width and height in that order.
+
+    '''
+
+    def __init__(self, master, resizer=True, *args, **kwargs):
+        Frame.__init__(self, master, *args, **kwargs)
+
+        self.master = master # root or toplevel
+        self.sizer = Sizer(self.master)
+
+        self.grid_columnconfigure(0, weight=1)
+        # With custom window border, you can't use the otherwise 
+        #   desirable option bd=2, relief='sunken' for a border on statusbar
+        #   because edge grabber for resizing is below statusbar 
+        #   so border looks wrong there. Instead put a Separator 
+        #   above the statusbar frame.
+        frm = Frame(self, bd=0)
+        frm.grid(column=0, row=0, sticky='news')
+        frm.grid_columnconfigure(0, weight=1)
+        self.status_label = LabelStatusbar(
+            frm, cursor='arrow', anchor='w')
+        self.tooltip_label = LabelStatusbar(
+            frm, bd=2, relief='sunken', anchor='e')
+
+        if resizer is True:
+            self.sizer.place(relx=1.0, x=-3, rely=1.0, anchor='se')
+            self.sizer.bind('<Button-1>', self.sizer.get_pos)
+        self.status_label.grid(column=0, row=0, sticky='w')
+
+class Sizer(Label):
+    def __init__(self, master, icon='sizer_15_dark', *args, **kwargs):
+        Label.__init__(self, master, *args, **kwargs)
+        ''' 
+            SE corner gripper/resizer. Replaces ttk.Sizegrip. The master has to 
+            be the toplevel window being resized. Since it's placed, not    
+            gridded, it will overlap so the statusbar tooltips had to be moved 
+            to the left with padding. This has been built into the toykinter
+            statusbar.
+        '''
+        self.master = master
+        self.click_x = 0
+        self.click_y = 0
+        file = '{}images/icons/{}.png'.format(app_path, icon)
+        img = Image.open(file)
+        self.tk_img = ImageTk.PhotoImage(img, master=self.master)
+
+        self.config(
+            bd=0, 
+            cursor='size_nw_se',
+            image=self.tk_img)
+
+    def get_pos(self, evt):
+
+        def resize_se(event):
+            x_on_move = event.x_root
+            y_on_move = event.y_root
+            dx = x_on_move - click_x
+            dy = y_on_move - click_y
+            new_w = orig_w + dx
+            new_h = orig_h + dy
+
+            if new_w < 10:
+                new_w = 10
+            if new_h < 10:
+                new_h = 10
+            self.master.geometry('{}x{}'.format(new_w, new_h))
+
+        orig_geom = self.master.geometry()
+        orig_geom = orig_geom.split('+')[0].split('x')
+        orig_w = int(orig_geom[0])
+        orig_h = int(orig_geom[1])
+        click_x = evt.x_root
+        click_y = evt.y_root
+
+        self.bind('<B1-Motion>', resize_se)
+
+class Separator(Framex):
+    """ Horizontal separator like ttk.Separator but 
+        can be sized and utilize the user-selected colors.
+    """
+    formats = formats
+    color1=formats['head_bg'], 
+    color2=formats['highlight_bg'], 
+    color3=formats['bg']
+
+    def __init__(
+        self, master, height=3, *args, **kwargs):
+        Framex.__init__(self, master, *args, **kwargs)
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=0)
+        self.grid_rowconfigure(2, weight=0)
+
+        Separator.color1=Separator.formats['head_bg'], 
+        Separator.color2=Separator.formats['highlight_bg'], 
+        Separator.color3=Separator.formats['bg'],
+
+        self.height = int(height/5)
+
+        self.make_widgets()
+
+    def make_widgets(self):
+
+        if self.height > 0:
+            self.line1 = FrameStay(
+                self, bg=Separator.color1, height=self.height)
+            self.line1.grid(column=0, row=0, sticky='ew')
+
+            self.line2 = FrameStay(
+                self, bg=Separator.color2, height=self.height)
+            self.line2.grid(column=0, row=1, sticky='ew')
+
+            self.line3 = FrameStay(
+                self, bg=Separator.color3, height=self.height)
+            self.line3.grid(column=0, row=2, sticky='ew')
+
+            self.line4 = FrameStay(
+                self, bg=Separator.color2, height=self.height)
+            self.line4.grid(column=0, row=4, sticky='ew')
+
+            self.line5 = FrameStay(
+                self, bg=Separator.color1, height=self.height)
+            self.line5.grid(column=0, row=5, sticky='ew')
+        else:
+            self.line1 = FrameStay(
+                self, bg=Separator.color1, height=self.height)
+            self.line1.grid(column=0, row=0, sticky='ew')
+
+            self.line2 = FrameStay(
+                self, bg=Separator.color2, height=self.height)
+            self.line2.grid(column=0, row=1, sticky='ew')
+
+            self.line3 = FrameStay(
+                self, bg=Separator.color3, height=self.height)
+            self.line3.grid(column=0, row=2, sticky='ew')
+
+        self.colorize()
+
+    def colorize(self):
+        if self.height > 0:
+            self.line1.config(bg=Separator.color1)
+            self.line2.config(bg=Separator.color2)
+            self.line3.config(bg=Separator.color3)
+            self.line4.config(bg=Separator.color2)
+            self.line5.config(bg=Separator.color1)
+        else:
+            self.line1.config(bg=Separator.color1)
+            self.line2.config(bg=Separator.color2)
+            self.line3.config(bg=Separator.color3)
+
+# from scrolling.py
+
+
+
+'''
+	One purpose of this module is to tell right here how to make a canvas and 
+    scrollbar do different things under a variety of circumstances.
+ 
+    I wrote this because I needed a cheat sheet, not because I'm an expert.
+
+    I. MAKE SCROLLBARS:
+
+        sbv = Scrollbar(
+            toplevel, 
+            command=canvas.yview,
+            hideable=True)
+        canvas.config(yscrollcommand=sbv.set)
+
+        sbh = Scrollbar(
+            toplevel, 
+            orient='horizontal', 
+            command=canvas.xview, 
+            hideable=True)
+        canvas.config(xscrollcommand=sbh.set)
+
+    A scrollbar and its canvas are always siblings, e.g. in the above example, 
+    the parent of the canvas would also be `toplevel`.
+
+    The class is a custom "Toykinter" widget based on the Tkinter API so using 
+    it is almost identical to using the Tkinter scrollbar except that it can be 
+    easily configured like any Tkinter widget instead of using Windows system 
+    colors. Also it is optionally hideable; default for that option is False. 
+    The complication with the hideable scrollbar is that it needs a place to be
+    when it appears, so an offset--a blank space the same size as the hidden 
+    scrollbar--was added to the required size of the window. Then a spacer 
+    was added to the north and west edges of the window to balance this out. 
+    These procedures increase the size of the window to prevent the scrollbar 
+    from appearing before it's needed. The offset spacer or scrollbar width is 
+    "scridth".
+
+    II. CANVAS, SCROLLBAR AND WINDOW SIZING:
+
+    There are several things that can have dimensions so I think of them as a stack
+    with the toplevel (root or dialog) on bottom:
+
+        toplevel
+        scrollregion
+        canvas
+        window (content frame)
+
+    The canvas is a widget, gridded, packed or placed like any other widget.
+
+    What I'm calling a "content frame" is a single frame covering the whole 
+    canvas, so that
+    when the canvas is scrolled, the effect is that the content and all its 
+    widgets are being scrolled. Since this frame is not gridded but created 
+    by canvas.create_window(), in my code where it says 'window' this should be
+    a reference to a content frame in a canvas. If there will be objects drawn 
+    on the canvas instead of widgets in a content frame, give the canvas a size 
+    with its width and height options. But if there will be a content frame, 
+    ignore the canvas width and height options.
+
+    The scrollregion can be visualized as an area behind the canvas, at least 
+    as large as the canvas, which can be slid around with only part of it 
+    visible at one time. The scrollregion can be panned by dragging with the 
+    mouse or arrow keys, or scrolled with scrollbars or the mousewheel. 
+
+    A. RESIZABLE CANVAS
+
+    The root window and some toplevel windows need to have dynamically varying 
+    contents. The scrollregion is set to autosize to all the canvas' contents 
+    (bounding box or bbox), which is just the content frame in this case.
+
+        root.columnconfigure(0, weight=1)
+        root.rowconfigure(0, weight=1)
+        canvas = Canvas(root)
+        content = Frame(canvas) # don't grid
+        canvas.grid(column=0, row=0, sticky='news')
+        content_window = canvas.create_window(0, 0, anchor='nw', window=content)
+        canvas.config(scrollregion=canvas.bbox('all')) 
+
+        def resize_canvas(event):
+            root.update_idletasks()
+            if event.width > content.winfo_reqwidth():
+                canvas.itemconfigure(content_window, width=event.width)
+
+        canvas.bind('<Configure>', resize_canvas)
+
+    The toplevel could also be resized this way when its contents change. This way
+    instead of resizing automatically when contents change, you have to know when
+    contents will change and call the function at that time:
+
+        def resize_scrolled_content(toplevel, canvas):
+            toplevel.update_idletasks()
+            canvas.config(scrollregion=canvas.bbox('all'))
+            page_x = canvas.content.winfo_reqwidth()
+            page_y = canvas.content.winfo_reqheight()
+            toplevel.geometry('{}x{}'.format(page_x, page_y))
+
+    B. NESTED CANVAS WITH A FIXED SIZE
+
+    Within a toplevel whether it's got its own full-size scrolled area or not, 
+    a smaller scrolled area of a fixed size could be contained. In this case, 
+    the scrollregion doesn't get set to bbox('all') but to a fized size at 
+    least the size of the canvas. The resizing methods are not needed here.
+
+        canvas = Canvas(root, width=500, height=750)
+        content = Frame(canvas) # don't grid
+        canvas.create_window(0, 0, anchor='nw', window=content)
+        canvas.config(scrollregion=(0, 0, 900, 1000)) 
+
+    Instead of hard-coding the width and height of the scrollregion, the 
+    required width and height of the canvas contents can be detected so 
+    the size of the scrollregion is the exact size it needs to be. The 
+    canvas width and height should be set to any size smaller than the 
+    scrollregion but won't go below a minimum size that's built into Tkinter.
+
+    C. DROPDOWN WINDOW WITH A FIXED WIDTH   
+
+    A toplevel without a border can be used as a dropdown window, for example 
+    in a custom-made combobox, and provided with a vertical scrollbar. Its 
+    width will be fixed to that of a host, for example the entry widget in a 
+    combobox. The scrollregion height will be calculated to fit the vertical 
+    contents. The window height is left to resize to its contents.
+
+    In this example, self is the combobox, i.e. a frame that holds the combobox
+    entry and arrow.
+
+        host = self.Entry(self)
+        host.grid()
+        host_width = self.winfo_reqwidth()
+        self.window = self.canvas.create_window(
+            0, 0, anchor='nw', window=self.content, width=host_width)
+        self.canvas.config(scrollregion=(0, 0, host_width, self.fit_height))
+
+    D. SCROLLING WITH THE MOUSEWHEEL
+
+    Another purpose of this module is to provide a class that coordinates the 
+    various scrolled canvases so the right one is scrolled with the mousewheel.
+
+    Each canvas should scroll when the mouse is over that canvas, so a 
+    collection of canvases is kept and the mousewheel callback is bound to 
+    each canvas. The class is self-contained so all you have to do is 1) 
+    instantiate it ahead of any reference to any function that will open a 
+    participating toplevel, 2) for root and each participating toplevel, run a 
+    method to list the canvases, and 3) for root and each participating 
+    toplevel, run a method to configure canvas and window. For 2) above, if 
+    the toplevel is resizable, it's listed in a sublist of [canvas, window]. 
+    For non-resizable canvases, only the canvas is listed and resizable=False.
+    For 3) above, if the root canvas is being configured, in_root=True. This
+    effort not only takes care of mousewheel scrolling among a variety of dialogs,
+    but also automatically removes references to destroyed toplevels from the 
+    list to prevent errors. Besides that, it takes care of resizing window and
+    scrollbar in case a dialog changes size for some reason.
+
+        scroll_mouse = MousewheelScrolling(root, canvas)
+
+        scroll_mouse.append_to_list([canvas, canvas.content])
+        scroll_mouse.append_to_list(canvas3, resizable=False)
+        scroll_mouse.configure_mousewheel_scrolling(in_root=True)
+
+        scroll_mouse.append_to_list([canvas2, canvas2.content])
+        scroll_mouse.configure_mousewheel_scrolling()
+
+    E. WHAT ABOUT A SCROLLED CANVAS CLASS?
+
+    I tried making a scrolled canvas class but it was a bag of worms because 
+    it abstracted the creation of scrollbars away from the overall design of
+    the GUI, becoming an annoyance rather than a tool. It made it seem 
+    unnecessary to understand how to make scrollbars, and yet to ever extend 
+    the code, the opposite is true. It required extra lines of code which were 
+    not Tkinterish, and the end result was more work, not less. But the Scrollbar,
+    MousewheelScrolling, and Combobox classes below are the bee's knees, as well as 
+    the Border class which is in window_border.py.
+
+'''
+
+def resize_scrolled_content(toplevel, canvas, window): 
+    '''
+        Besides configuring the scrollbar when the content changes, this 
+        gives a hideable scrollbar a place to grid (scridth) so the 
+        scrollbar doesn't appear before it's needed due to its own
+        width. Extra space or `scridth` is added where the hidden scrollbars
+        will appear. Extra spacer frames (such as `scridth_n` and `scridth_w` 
+        in main.py) are added to balance this out (don't do any of this with
+        padding). The end result is a hideable scrollbar without a lop-sided 
+        border around the canvas.
+    '''
+
+    def resize_scrollbar():
+        toplevel.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox('all'))
+
+    def resize_window():
+        '''
+            Don't try to DETECT scrollbar width (`scridth`) in this function.
+            For some reason it causes certain combinations of values
+            below to freeze the app. Hard-coded is good enough since there
+            are only a few sizes of scrollbar. Add 10 to the scrollbar width 
+            and that gives it wiggle room (makes it work right--not sure why).
+        '''
+
+        toplevel.update_idletasks()
+        if toplevel.winfo_name() == 'tk':
+            bar_height = 96 # menubar + ribbon + statusbar
+            scridth = 30
+        else:
+            bar_height = 27 # statusbar
+            scridth = 26
+        page_x = window.winfo_reqwidth() + scridth
+        page_y = window.winfo_reqheight() + scridth + bar_height
+        toplevel.geometry('{}x{}'.format(page_x, page_y))
+
+    resize_scrollbar()
+    resize_window()
+
+class MousewheelScrolling():
+    def __init__(self, root, main_canvas):
+
+        self.root = root
+        self.scroll_this = self.main_canvas = main_canvas
+
+        self.resizable_canvases = []
+        self.nested_canvases = []
+
+    def scroller(self, event):
+        '''
+            The error is when the mousewheel is used over a toplevel 
+            with no canvas, which happens because there are Comboboxes 
+            in dialogs that have a fixed size and don't need to scroll.
+            Saving this for later when mousewheel functionality is 
+            added to the Combobox dropdown.
+        '''
+
+        # DO NOT DELETE
+        try:
+            self.scroll_this.yview_scroll(
+                int(-1*(event.delta/120)), 'units')
+        except AttributeError:
+            pass
+        
+    def look_under_mouse(self, evt):
+        self.root.bind_all('<MouseWheel>', self.scroller)
+        evt.widget.bind('<Enter>', self.look_under_mouse)
+        self.scroll_this = evt.widget
+        evt.widget.bind('<Leave>', self.forget_canvas) 
+
+    def forget_canvas(self, evt):
+        canvas_left = evt.widget
+        if canvas_left is self.main_canvas:
+            canvas_left.unbind_all('<MouseWheel>') 
+        elif canvas_left in self.nested_canvases:
+            self.scroll_this = self.main_canvas 
+        else:
+            canvas_left.unbind_all('<MouseWheel>') 
+
+    def remove_from_list(self, evt):
+        canvas = evt.widget
+        resizers = [i[0] for i in self.resizable_canvases]
+        nesteds = self.nested_canvases
+        if canvas in resizers:
+            idx = resizers.index(canvas)
+            del self.resizable_canvases[idx]
+        elif canvas in nesteds:
+            idx = nesteds.index(canvas)
+            del self.nested_canvases[idx]
+
+    def append_to_list(self, appendee, resizable=True):
+        if resizable is True:
+            self.resizable_canvases.append(appendee)
+            appendee = appendee[0]
+        else:
+            self.nested_canvases.append(appendee)
+        appendee.bind('<Destroy>', self.remove_from_list)
+
+    def configure_mousewheel_scrolling(self, in_root=False):
+
+        if in_root is True:
+            self.root.bind_all('<MouseWheel>', self.scroller)
+        self.root.update_idletasks()
+
+        for canvas in self.resizable_canvases:
+            canvas[0].bind('<Enter>', self.look_under_mouse)
+        for canvas in self.nested_canvases:
+            canvas.bind('<Enter>', self.look_under_mouse)
+        for canvas in self.resizable_canvases:
+            canvas, window = canvas[0], canvas[1]
+            resize_scrolled_content(canvas.master, canvas, window)
+
+class Scrollbar(Canvas):
+    '''
+        A scrollbar is gridded as a sibling of what it's scrolling. Set the 
+        command attribute during construction; it's a python keyword argument 
+        but not a Tkinter option so vscroll.config(command=self.yview) won't 
+        work. This scrollbar works well and can be made any size or color. It's
+        lacking the little arrows at the ends of the trough.
+
+        The `get()` method for this class isn't finished but has been started in
+        colorizer.py. It should be moved here instead of making it as an
+        instance attribute.
+    '''
+    formats = formats
+    slidercolor = formats['bg']
+    troughcolor = formats['head_bg']
+    bordercolor = formats['highlight_bg']
+    
+    def __init__(
+        self, master, width=16, orient='vertical', 
+            hideable=False, **kwargs):
+
+        self.command = kwargs.pop('command', None)
+        Canvas.__init__(self, master, **kwargs)
+
+        self.width = width
+        self.orient = orient
+        self.hideable = hideable
+
+        self.x0 = 0
+        self.y0 = 0
+        self.x1 = 0
+        self.y1 = 0
+
+        self.new_start_y = 0
+        self.new_start_x = 0
+        self.first_y = 0
+        self.first_x = 0
+
+        if orient == 'vertical':
+            self.config(width=width)
+        elif orient == 'horizontal':
+            self.config(height=width)
+
+        self.config(bg=Scrollbar.troughcolor, bd=0, highlightthickness=0)
+
+        self.thumb = self.create_rectangle(
+            0, 0, 1, 1, 
+            fill=Scrollbar.slidercolor, 
+            width=1,    # this is border width
+            outline=Scrollbar.bordercolor, 
+            tags=('slider',))
+        self.bind('<ButtonPress-1>', self.move_on_click)
+
+        self.bind('<ButtonPress-1>', self.start_scroll, add='+')
+        self.bind('<B1-Motion>', self.move_on_scroll)
+        self.bind('<ButtonRelease-1>', self.end_scroll)
+
+    def set(self, lo, hi):
+        '''
+            For resizing & repositioning the slider. The hideable
+            scrollbar portion is by Fredrik Lundh, one of Tkinter's authors.
+        '''
+
+        lo = float(lo)
+        hi = float(hi)
+
+        if self.hideable is True:
+            if lo <= 0.0 and hi >= 1.0:
+                self.grid_remove()
+                return
+            else:
+                self.grid()
+
+        self.height = self.winfo_height()
+        width = self.winfo_width()
+
+        if self.orient == 'vertical':
+            x0 = 0
+            y0 = max(int(self.height * lo), 0)
+            x1 = width - 1
+            y1 = min(int(self.height * hi), self.height)
+        elif self.orient == 'horizontal':
+            x0 = max(int(width * lo), 0)
+            y0 = 0
+            x1 = min(int(width * hi), width)
+            y1 = self.height -1
+
+        self.coords('slider', x0, y0, x1, y1)
+        self.x0 = x0
+        self.y0 = y0
+        self.x1 = x1
+        self.y1 = y1
+
+    def move_on_click(self, event):
+        if self.orient == 'vertical':
+            y = event.y / self.winfo_height()
+            if event.y < self.y0 or event.y > self.y1:
+                self.command('moveto', y)
+            else:
+                self.first_y = event.y
+        elif self.orient == 'horizontal':
+            x = event.x / self.winfo_width()
+            if event.x < self.x0 or event.x > self.x1:
+                self.command('moveto', x)
+            else:
+                self.first_x = event.x
+
+    def start_scroll(self, event):
+        if self.orient == 'vertical':
+            self.last_y = event.y 
+            self.y_move_on_click = int(event.y - self.coords('slider')[1])
+        elif self.orient == 'horizontal':
+            self.last_x = event.x 
+            self.x_move_on_click = int(event.x - self.coords('slider')[0])
+
+    def end_scroll(self, event):
+        if self.orient == 'vertical':
+            self.new_start_y = event.y
+        elif self.orient == 'horizontal':
+            self.new_start_x = event.x
+
+    def move_on_scroll(self, event):
+
+        jerkiness = 3
+
+        if self.orient == 'vertical':
+            if abs(event.y - self.last_y) < jerkiness:
+                return
+            delta = 1 if event.y > self.last_y else -1
+            self.last_y = event.y
+            self.command('scroll', delta, 'units')
+            mouse_pos = event.y - self.first_y
+            if self.new_start_y != 0:
+                mouse_pos = event.y - self.y_move_on_click
+            self.command('moveto', mouse_pos/self.winfo_height()) 
+        elif self.orient == 'horizontal':
+            if abs(event.x - self.last_x) < jerkiness:
+                return
+            delta = 1 if event.x > self.last_x else -1
+            self.last_x = event.x
+            self.command('scroll', delta, 'units')
+            mouse_pos = event.x - self.first_x
+            if self.new_start_x != 0:
+                mouse_pos = event.x - self.x_move_on_click
+            self.command('moveto', mouse_pos/self.winfo_width()) 
+
+class ScrolledText(Framex):
+    def __init__(self, master, *args, **kwargs):
+        Framex.__init__(self, master, *args, **kwargs)
+
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.text = Text(self)
+        self.text.grid(column=0, row=0)
+        self.ysb = Scrollbar(
+            self, 
+            width=16,
+            orient='vertical', 
+            hideable=True,
+            command=self.text.yview)
+        self.text.configure(yscrollcommand=self.ysb.set)
+        self.ysb.grid(column=1, row=0, sticky='ns')
+
+# from messages.py
+
+def open_message(master, message, title, buttlab, inwidg=None):
+
+    def close():
+        '''
+            Override this is more needs to be done on close.
+        '''
+        msg.destroy()
+
+    msg = Dialogue(master)
+    msg.canvas.title_1.config(text=title)
+    msg.canvas.title_2.config(text="")
+    lab = LabelHeader(
+        msg.window, text=message, justify='left', wraplength=600)
+    lab.grid(column=0, row=0, sticky='news', padx=12, pady=12, ipadx=6, ipady=3)
+    button = Button(msg.window, text=buttlab, command=close, width=6)
+    button.grid(column=0, row=1, padx=6, pady=(0,12))
+    button.focus_set()
+    configall(msg, formats)
+    msg.resize_window()
+
+    return msg, lab, button
+
+def open_yes_no_message(master, message, title, ok_lab, cancel_lab):
+
+    def ok():
+        cancel()
+
+    def cancel():
+        msg.destroy()
+
+    msg = Dialogue(master)
+    msg.canvas.title_1.config(text=title)
+    msg.canvas.title_2.config(text="")
+    lab = LabelHeader(
+        msg.window, text=message, justify='left', wraplength=600)
+    lab.grid(
+        column=0, row=0, sticky='news', padx=12, pady=12, 
+        columnspan=2, ipadx=6, ipady=3)
+    buttonbox = Frame(msg.window)
+    buttonbox.grid(column=0, row=1, sticky='e', padx=(0,12), pady=12)
+    ok_butt = Button(buttonbox, text=ok_lab, command=cancel, width=6)
+    ok_butt.grid(column=0, row=0, padx=6)
+    cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
+    cancel_butt.grid(column=1, row=0, padx=6)
+    ok_butt.focus_set()
+
+    # config_generic(msg)
+    configall(msg, facebook)
+    msg.resize_window()
+
+    return msg, lab, ok_butt, cancel_butt, buttonbox
+
+class InputMessage(Dialogue):
+    def __init__(
+            self, master, return_focus_to=None, root=None, title="", 
+            ok_txt="", cancel_txt="", head1="", head2="", wraplength=450, 
+            radtext=[], radfocal=0, entry=False, radio=False, 
+            check=False, chktext=[], chkfocal=0,
+            scrolled=False, grab=False, treebard=None, ok_button=True, *args, **kwargs):
+        Dialogue.__init__(self, master, *args, **kwargs)
+
+        self.master = master
+        self.return_focus_to = return_focus_to
+        self.root = root
+        self.title = title
+        self.head1 = head1
+        self.head2 = head2
+        self.ok_txt = ok_txt
+        self.cancel_txt = cancel_txt
+        self.wraplength = wraplength
+        self.radtext = radtext
+        self.radfocal = radfocal
+        self.entry = entry
+        self.radio = radio
+        self.check = check
+        self.chktext = chktext
+        self.chkfocal = chkfocal
+        self.scrolled = scrolled
+        self.grab = grab
+        self.treebard = treebard
+        self.ok_button = ok_button
+
+        self.canvas.title_1.config(text=title)
+        self.canvas.title_2.config(text="")
+
+        self.got = StringVar()
+        self.radvar = IntVar(None, 0)
+        self.chkvar = IntVar(None, 0)
+        if scrolled is True:
+            self.make_scrollbars()
+        self.make_containers()
+        self.make_widgets()
+        self.make_inputs()
+
+        self.ok_was_pressed = False
+
+        self.bind("<Return>", self.input_message_ok)
+        self.bind("<Escape>", self.cancel)
+
+        if scrolled is True:
+            good_height = int(self.winfo_screenheight() * 0.9)
+            self.maxsize(800, good_height)        
+            resize_scrolled_content(self, self.canvas, self.window)
+            self.center_dialog(self, win_height=good_height)
+        else:
+            self.resize_window()
+
+        if self.grab is True: 
+            self.grab_set()
+            
+        self.deiconify()
+        self.master.wait_window(self)
+        self.run_post_op()
+
+    def center_dialog(self, frame=None, win_height=None):
+        '''
+            If frame is True, it works but not if the window has more content
+            that what will fit in the screen vertically. In this case I had
+            to use win_height which is a minimum height based on the screen
+            height. This is based on center_dialog() function in utes.py
+            which didn't work here. Possibly the `frame` parameter should be 
+            removed.
+        '''
+        if win_height:
+            self.update_idletasks()
+            win_width = frame.winfo_reqwidth()
+            win_height = win_height
+            right_pos = int(self.winfo_screenwidth()/2 - win_width/2)
+            down_pos = int(self.winfo_screenheight()/2 - win_height/2)
+        elif frame:
+            self.update_idletasks()
+            win_width = frame.winfo_reqwidth()
+            win_height = frame.winfo_reqheight()
+            right_pos = int(self.winfo_screenwidth()/2 - win_width/2)
+            down_pos = int(self.winfo_screenheight()/2 - win_height/2)
+        else:
+            self.update_idletasks()
+            win_width = self.winfo_reqwidth()
+            win_height = self.winfo_reqheight()
+            right_pos = int(self.winfo_screenwidth()/2 - win_width/2)
+            down_pos = int(self.winfo_screenheight()/2 - win_height/2)
+        self.geometry("+{}+{}".format(right_pos, down_pos))
+
+    def make_scrollbars(self):
+
+        scridth = 16
+        scridth_n = Frame(self.window, height=scridth)
+        scridth_w = Frame(self.window, width=scridth)
+        scridth_n.grid(column=0, row=0, sticky='ew')
+        scridth_w.grid(column=0, row=1, sticky='ns')
+
+        if self.treebard:
+            self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
+            self.treebard.scroll_mouse.configure_mousewheel_scrolling()
+
+        self.window.vsb = Scrollbar(
+            self, 
+            hideable=True, 
+            command=self.canvas.yview,
+            width=scridth)
+        self.window.hsb = Scrollbar(
+            self, 
+            hideable=True, 
+            width=scridth, 
+            orient='horizontal',
+            command=self.canvas.xview)
+        self.canvas.config(
+            xscrollcommand=self.window.hsb.set, 
+            yscrollcommand=self.window.vsb.set)
+        self.window.vsb.grid(column=2, row=4, sticky='ns')
+        self.window.hsb.grid(column=1, row=5, sticky='ew')
+
+        scridth_n.grid(column=0, row=0, sticky='ew')
+        scridth_w.grid(column=0, row=1, sticky='ns')
+
+    def make_containers(self):
+
+        self.header = Frame(self.window)
+        self.inputs = Frame(self.window)
+        self.buttons = Frame(self.window)
+
+        self.header.grid(column=1, row=1, sticky="news", pady=(12,0))
+        self.inputs.grid(column=1, row=2, sticky="news")
+        self.buttons.grid(
+            column=1, row=3, sticky="e", padx=12, pady=(0,12), columnspan=2)
+
+    def make_widgets(self):
+        self.head = LabelHeader(
+            self.header, text=self.head1, justify='left', 
+            wraplength=self.wraplength)
+        self.head.grid(
+            column=0, row=0, sticky='news', padx=12,  
+            columnspan=2, ipadx=6, ipady=3)
+        self.info = Label(self.header, text=self.head2)
+        self.info.grid(column=0, row=1, padx=12, pady=12)        
+        maxx = max(len(self.ok_txt), len(self.cancel_txt))
+        if self.ok_button is True:
+            self.b1 = Button(
+                self.buttons, text=self.ok_txt, command=self.input_message_ok, width=maxx)
+            self.b1.grid(column=0, row=0, sticky='e', ipadx=3)
+        self.b2 = Button(
+            self.buttons, text=self.cancel_txt, command=self.cancel, width=maxx)
+        self.b2.grid(column=1, row=0, padx=(6,0), sticky='e', ipadx=3)
+
+    # def config_text(self, text):
+        # self.info.config(text=text)
+
+    def make_inputs(self):
+
+        if self.entry is True:
+            self.inPut = Entry(self.inputs, textvariable=self.got)
+            self.inPut.grid(column=1, row=1, padx=12)
+            self.inPut.focus_set()
+        elif self.radio is True:
+            self.radframe = Frame(self.inputs)
+            self.radframe.grid()
+            radios = []
+            for i in range(len(self.radtext)):
+                rad = Radiobutton(
+                    self.radframe,  
+                    text=self.radtext[i],
+                    value=i,
+                    variable=self.radvar,
+                    anchor='w')
+                rad.grid(column=0, row=i, sticky='ew')
+                radios.append(rad)    
+            radios[self.radfocal].focus_set()
+        elif self.check is True:
+            self.chkframe = Frame(self.inputs)
+            self.chkframe.grid()
+            checks = []
+            print("line", looky(seeline()).lineno, "self.chktext:", self.chktext)
+# line 245 self.chktext: [{'fpid': 183, 'finding': 1157}, {'fpid': 184, 'finding': 1158}]
+            a = 0
+            for i in self.chktext:
+                chk = Checkbutton(
+                    self.chkframe,  
+                    text=self.chktext[a],
+                    variable=self.chkvar,
+                    anchor='w')
+                chk.grid(column=0, row=a, sticky='ew')
+                checks.append(chk) 
+                a += 1
+            checks[self.chkfocal].focus_set()
+        if self.ok_button is False:
+            self.b2.focus_set()
+        
+    def run_post_op(self):
+        if self.grab is True: 
+            self.grab_release()
+
+        if self.return_focus_to:
+            self.return_focus_to.focus_set()
+
+        if self.root:
+            self.root.lift()
+
+    def input_message_ok(self, evt=None):
+        self.ok_was_pressed = True
+        self.cancel()
+
+    def cancel(self, evt=None):
+        print("line", looky(seeline()).lineno, "self.ok_was_pressed:", self.ok_was_pressed)
+        self.ok_was_pressed = False
+        self.destroy()
+
+    def show(self):
+        if self.entry:
+            gotten = self.got.get()
+            return gotten
+        elif self.radio:
+            chosen = self.radvar.get()
+            return chosen
+        elif self.check:
+            chosen = self.chkvar.get()
+            return chosen
+
+def open_input_message(master, message, title, ok_lab, cancel_lab, user_input):
+
+    def ok():
+        cancel()
+
+    def cancel():
+        msg.destroy()
+
+    def show():
+        gotten = got.get()
+        return gotten
+
+    got = StringVar()
+
+    msg = Dialogue(master)
+    msg.canvas.title_1.config(text=title)
+    msg.canvas.title_2.config(text="")
+    lab = LabelHeader(
+        msg.window, text=message, justify='left', wraplength=300)
+    lab.grid(
+        column=0, row=0, sticky='news', padx=12, pady=12, 
+        columnspan=2, ipadx=6, ipady=3)
+    lab2 = Label(msg.window, text="{} or {}?".format(
+        user_input[0], user_input[1]))
+    lab2.grid(column=0, row=1)
+    inPut = Entry(msg.window, textvariable=got)
+    inPut.grid(column=1, row=1, padx=(0,12))
+    buttonbox = Frame(msg.window)
+
+    buttonbox.grid(
+        column=0, row=2, sticky='e', padx=(0,12), pady=12, columnspan=2)
+    ok_butt = Button(buttonbox, text=ok_lab, command=ok, width=6)
+    ok_butt.grid(column=0, row=0, sticky='e')
+    cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
+    cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
+    inPut.focus_set()
+    
+    config_generic(msg)
+    msg.resize_window()
+
+    master.wait_window(msg)
+    got = show()
+    return user_input, got
+
+def open_input_message2(master, message, title, ok_lab, cancel_lab):
+    '''
+        For more primary-level input vs. error-level input.
+    '''
+
+    def ok():
+        cancel()
+
+    def cancel():
+        msg.destroy()
+        master.grab_set()
+
+    def show():
+        gotten = got.get()
+        return gotten
+
+    got = StringVar()
+
+    msg = Dialogue(master)
+    msg.grab_set()
+    msg.canvas.title_1.config(text=title)
+    msg.canvas.title_2.config(text="")
+    lab = LabelHeader(
+        msg.window, text=message, justify='left', 
+        font=("courier", 14, "bold"), wraplength=450)
+    lab.grid(
+        column=0, row=0, sticky='news', padx=12, pady=12, 
+        columnspan=2, ipadx=6, ipady=3)
+    inPut = Entry(
+        msg.window, textvariable=got, width=48, 
+        font=("dejavu sans mono", 14))
+    inPut.grid(column=0, row=1, padx=12)
+    buttonbox = Frame(msg.window)
+    buttonbox.grid(column=0, row=2, sticky='e', padx=(0,12), pady=12)
+    ok_butt = Button(
+        buttonbox, text=ok_lab, command=cancel, width=7)
+    ok_butt.grid(column=0, row=0, padx=6, sticky='e')
+    cancel_butt = Button(
+        buttonbox, text=cancel_lab, command=cancel, width=7)
+    cancel_butt.grid(column=1, row=0, padx=6, sticky='e')
+    inPut.focus_set()
+
+    config_generic(msg)
+    msg.resize_window()
+    master.wait_window(msg)
+    gotten = show()
+    return gotten
+
+# from right_click_menu
+
+def make_rc_menus(rcm_widgets, rc_menu, rcm_msg):
+    '''
+        To include a widget in the right-click context help, list the widget
+        in rcm_widgets in the instance and store each widget's message and 
+        title in messages_context_help.py. Example of usage from notes.py: 
+        near bottom of make_widgets() i.e. after making all widgets, do this...
+            `rcm_widgets = (self.subtopic_input.ent, self.note_input.text)`
+            `make_rc_menus(
+                rcm_widgets, 
+                self.rc_menu, 
+                note_dlg_help_msg)`
+        ...and in `__init__` before calling `make_widgets()` do this...
+            `self.rc_menu = RightClickMenu(self.root)`
+        ... and import to the module where rcm widgets are accessible:
+            `from right_click_menu import RightClickMenu, make_rc_menus`
+
+        Use this if the widgets were made in a loop and should all have the 
+        same right-click message:
+
+        In the loop where the widgets such as `editx` are made:
+            `self.rc_menu.loop_made[editx] = role_edit_help_msg`
+
+        At the bottom of messages_context_help.py, store the message and
+        dialog title, e.g.:
+            `role_edit_help_msg = (
+                'Clicking the Edit button will open a row of edit inputs... ', 
+                'Roles Dialog: Edit Existing Role Button')`
+
+        Import the message & title text to the module where it will be used:
+            `from messages_context_help import role_edit_help_msg`
+
+        The normal procedure described above this loopy one still needs to be
+        done even if there are no normal widgets in the module (widgets made
+        one-at-a-time instead of in a loop. In this case `rcm_widgets` and
+        `note_dlg_help_msg` can both = `()` but they have to exist.
+    '''
+    rc_menu.help_per_context = dict(zip(rcm_widgets, rcm_msg))
+    
+    for widg in rcm_widgets:
+        widg.bind("<Button-3>", rc_menu.attach_rt_clk_menu)
+
+    for k,v in rc_menu.loop_made.items():
+        k.bind("<Button-3>", rc_menu.attach_rt_clk_menu)
+        rc_menu.help_per_context[k] = v
+
+class Menux(tk.Menu):
+    def __init__(self, master, *args, **kwargs):
+        tk.Menu.__init__(self, master, *args, **kwargs)
+        pass
+
+    def winfo_subclass(self):
+        ''' 
+            Like built-in tkinter method
+            w.winfo_class() except it gets subclass names.
+        '''
+        subclass = type(self).__name__
+        return subclass
+
+class RightClickMenu(Menux):
+    '''
+        This is how you config() the menu items post-constructor, or do it in 
+        the instance, see below:
+            self.entryconfigure('Copy', state='disabled')
+    '''
+
+    def __init__(self, master, treebard=None, *args, **kwargs):
+        Menux.__init__(self, master, *args, **kwargs)
+
+        self.master = master
+        self.treebard = treebard
+
+        self.message = ''
+        self.help_title = ''
+        self.widg = None
+        self.config(tearoff=0)
+
+        self.help_per_context = {}
+        self.loop_made = {}
+
+        self.add_command(label='Copy', command=self.copy)
+        self.add_command(label='Paste', command=self.paste)
+        self.add_separator()
+        self.add_command(label='Context Help', command=self.context_help)
+
+    def copy(self):
+        print('Copied')
+
+    def paste(self):
+        print('Pasted')
+
+    def context_help(self):
+        msg = InputMessage(
+            self.master, 
+            head1=self.message, 
+            title=self.help_title, 
+            cancel_txt="DONE",
+            scrolled=True,
+            ok_button=False,
+            treebard=self.treebard)
+
+    def attach_rt_clk_menu(self, evt):
+        self.widg = evt.widget
+        self.post(evt.x_root, evt.y_root)
+        for k,v in self.help_per_context.items():
+            if k == self.widg:
+                self.message = v[0]
+                self.help_title = v[1]
+
+        self.widg.update_idletasks()
+
+    def detect_text(self, evt):
+        ''' 
+            When the dropdown menu overlaps a second widget
+            that also responds to this evt, it can take an extra 
+            brain clearing click to get this to work right. 
+        '''
+
+        clikt = evt.widget
+        if (len(self.help_per_context[clikt][0]) == 0 and 
+                len(self.help_per_context[clikt][1]) == 0):
+            self.disable_context_help()
+        else:
+            self.enable_context_help()
+
+    def disable_context_help(self):
+        self.entryconfigure('Context Help', state='disabled')
+
+    def enable_context_help(self):
+        self.entryconfigure('Context Help', state='normal')
+
+# from styles.py
+
+""" Some special case widgets exist which require special attention to get them
+    to change colors immediately upon changing the color scheme. These widgets
+    include those which respond to hover events by changing color, those which
+    have dropdown elements, and those 
+    which have color schemes of their own. The technique for making this happen
+    is simple and involves giving these widget classes a class-level variable
+    for each of its changable colors. See comments "key to everything" below.
+"""
+
+
+
+ALL_WIDGET_CLASSES = (
+    Label, Button, LabelHilited3, LabelButtonText, LabelMovable, LabelStay,
+    ButtonBigPic, Entry, Frame, EntryAuto, EntryAutoPerson, Border, Combobox, 
+    Separator, LabelTab, Combobox, LabelHilited, ComboArrow, Scrollbar,
+    LabelStatusbar)
+bg_fg = ("LabelFrame", "Sizer")
+bg_fg_activeBgHilite_activeFg_selectColorBg = ("Checkbutton", )
+bg_fg_activeBgHilite_activeFg_selectColorHilite = ("Radiobutton", )
+bg_fg_fontBoilerplate_activeBgHead = ("ButtonQuiet", )
+bg_fg_fontH2 = ("LabelH2", )
+bg_fg_fontH3 = ("LabelH3", )
+bg_fg_fontIn = ("LabelEntry", "LabelButtonText", "LabelButtonText", )
+bg_fg_fontIn_activeBgHead = ("ButtonPlain", )
+bg_fg_fontOut = ("Label", "MessageCopiable", )
+bg_fg_fontOut_activeBgHead_activeFg = ("Button",)
+bg_fg_fontOut_activeBgHead_troughColorHilite = ("Scale",)
+bg_fg_fontOut_activeBgHilite_activeFg_selectColorHilite = ("RadiobuttonBig", )
+bg_fg_fontStatus = ("LabelStatusbar",)
+bg_fg_selectBgHead_selectFg_insertBgFg = ("EntryAutoPerson", "EntryAuto", )
+bg_fgHilite = ("ButtonBigPic", )
+bgFg_fgBg_fontOut = ("LabelNegative",)
+bgHead = ("FrameHilited2", "DropdownMenu", )
+bgHead_fg_fontStatus = ("LabelTip2",)
+bgHilite = (
+    "FrameHilited", "FrameHilited3", "FrameHilited4", 
+    "ToplevelHilited", "CanvasHilited", "TitleBarButtonSolidBG", )
+bgHilite_fg_activeBgFg_activeFgBg = ("ButtonFlatHilited",)
+bgHilite_fg_fontH3 = ("LabelHeader",)
+bgHilite_fg_fontIn = ("LabelHilited3",)
+bgHilite_fg_fontOut = ("LabelHilited", "ComboArrow")
+bgHilite_fg_fontIn_selectBgHead_selectFg_insertBgFg = (
+    "Entry", "Text", "EntryAutoHilited", )
+bgOnly = (
+    "Frame", "Canvas", "Toplevel", "FrameHilited6", "Border", "NotesDialog", 
+    "Dialogue", "TabBook", "PersonSearch", "RolesDialog", "EditRow",
+    "InputMessage", "Gallery", "StatusbarTooltips")
+
+separator = ("Separator", )
+combobox = ("Combobox", )
+labelMovable = ("LabelMovable", )
+scrollbar = ("Scrollbar", )
+
+# print("line", looky(seeline()).lineno, "formats['highlight_bg']:", formats['highlight_bg'])
+# print("line", looky(seeline()).lineno, "formats['head_bg']:", formats['head_bg'])
+def recolorize():
+    new_scheme = int(ent_colors.get())
+    new_font = ent_font.get()
+    new_font_size = ent_font_size.get()
+    current_file = get_current_file()[0]
+    conn = sqlite3.connect(current_file)
+    conn.execute('PRAGMA foreign_keys = 1')
+    cur = conn.cursor()
+    cur.execute(
+        '''
+            UPDATE format 
+            SET (output_font, font_size) = 
+                (?, ?)
+            WHERE format_id = 1
+        ''',
+        (new_font, new_font_size))
+    conn.commit()
+    cur.execute(
+        '''
+            UPDATE current
+            SET color_scheme_id = ?
+            WHERE current_id = 1
+        ''',
+        (new_scheme,))
+    conn.commit()
+    cur.close()
+    conn.close()
+    formats = make_formats_dict()
+    # print("line", looky(seeline()).lineno, "formats['highlight_bg']:", formats['highlight_bg'])
+    # print("line", looky(seeline()).lineno, "formats['head_bg']:", formats['head_bg'])
+    for klass in ALL_WIDGET_CLASSES:
+        klass.formats = formats 
+
+    configall(root, formats)
+    resize_scrolled_content(root, canvas, window)
+
+
+if __name__ == "__main__":
+
+    formats = make_formats_dict()
+    # print("line", looky(seeline()).lineno, "formats['highlight_bg']:", formats['highlight_bg'])
+    # print("line", looky(seeline()).lineno, "formats['head_bg']:", formats['head_bg'])
+    def make_scrollbars():
+
+        vsb = Scrollbar(
+            root, 
+            hideable=True, 
+            command=canvas.yview,
+            width=20)
+        hsb = Scrollbar(
+            root, 
+            hideable=True, 
+            width=20, 
+            orient='horizontal',
+            command=canvas.xview)
+        canvas.config(
+            xscrollcommand=hsb.set, 
+            yscrollcommand=vsb.set)
+        vsb.grid(column=2, row=4, sticky='ns')
+        hsb.grid(column=1, row=5, sticky='ew')
+
+    def make_widgets():
+
+        make_scrollbars()
+
+        scridth = 20
+        scridth_n = Frame(window, height=scridth)
+        scridth_w = Frame(window, width=scridth)
+
+    root = tk.Tk()
+
+    canvas = Border(root, root)
+    window = Frame(canvas)
+    canvas.create_window(0, 0, anchor='nw', window=window)
+    make_widgets()
+
+    l1 = Label(window, text="enter color scheme ID")
+
+    sep0 = Separator(window)
+    ent_colors = Entry(window)
+    l5 = Label(window, text="enter font")
+    l6 = Label(window, text="enter font size")
+
+    ent_font = EntryAuto(window)
+    ent_font_size = EntryAuto(window)
+
+    sep1 = Separator(window, height=5)
+
+    button = Button(window, text="RECOLORIZE", command=recolorize)
+    ent2 = EntryAutoPerson(window, width=60)
+    ent2.insert(0, "It's important to not be blinded by your computer screen.")
+
+    ent3 = EntryAutoPerson(window, width=60)
+    ent3.insert(0, "It's convenient to be able to read the words on the screen.")
+
+    lh3_1 = LabelHilited3(window, text="These two labels are used in dropdown menu...")
+    lh3_2 = LabelHilited3(window, text="...so they have to respond to events.")
+    values = ["red", "green", "yellow", "blue"]
+    combo1 = Combobox(window, root, values=values)
+    combo2 = Combobox(window, root, values=values)
+    lt1 = LabelTab(window, text="Used for notebook tabs")
+    lt2 = LabelTab(window, text="Used for notebook tabs")
+    fm = Frame(window)
+    mv1 = LabelMovable(fm, text="movable1")
+    mv2 = LabelMovable(fm, text="movable2")
+    mv3 = LabelMovable(fm, text="movable3")
+    mv4 = LabelMovable(fm, text="movable4")
+    mv5 = LabelMovable(fm, text="movable5")
+    bp1 = ButtonBigPic(window, text="should have a picture in it")
+    bp2 = ButtonBigPic(window, text="should have a picture in it")
+    lbt1 = LabelButtonText(window, text="button made from label", width=24)
+    lbt2 = LabelButtonText(window, text="button made from label", width=24)
+    stay = LabelStay(window, bg="hotpink", text="this should never change color")
+
+    l1.grid(column=0, row=0, pady=6)
+    ent_colors.grid(column=1, row=0, pady=6)
+    sep0.grid(column=0, row=1, pady=6, columnspan=2, sticky="ew")
+    l5.grid(column=0, row=2, pady=6)
+    l6.grid(column=0, row=3, pady=6)
+    ent_font.grid(column=1, row=2, pady=6)
+    ent_font_size.grid(column=1, row=3, pady=6)
+    sep1.grid(pady=6, columnspan=2, sticky="ew")
+    button.grid(pady=6)
+    ent2.grid(pady=6, columnspan=2)
+    ent3.grid(pady=6, columnspan=2)
+    lh3_1.grid(pady=6)
+    lh3_2.grid(pady=6)
+    combo1.grid(pady=6)
+    combo2.grid(pady=6)
+    lt1.grid(pady=6)
+    lt2.grid(pady=6)
+    fm.grid(pady=6)
+    mv1.grid(column=0, row=0, padx=3)
+    mv2.grid(column=1, row=0, padx=3)
+    mv3.grid(column=2, row=0, padx=3)
+    mv4.grid(column=3, row=0, padx=3)
+    mv5.grid(column=4, row=0, padx=3)
+    bp1.grid(pady=6)
+    bp2.grid(pady=6)
+    lbt1.grid(pady=6)
+    lbt2.grid(pady=6)
+    stay.grid(pady=6) 
+
+    configall(root, formats)
+    resize_scrolled_content(root, canvas, window)
+
+    visited = (
+        (ent_colors,
+            "Color Scheme Input",
+            "Input an official Treebard color_scheme_id."),
+        (ent_font,
+            "Font Family Input",
+            "Input a font family that's on your computer."),
+        (ent_font_size,
+            "Font Size Input",
+            "Input your preferred font size."))
+    run_statusbar_tooltips(
+        visited, 
+        canvas.statusbar.status_label, 
+        canvas.statusbar.tooltip_label)
+
+    root.mainloop()
 
