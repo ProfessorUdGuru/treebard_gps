@@ -5,9 +5,11 @@ import sqlite3
 from files import app_path, get_current_file
 from widgets import (
     Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3,
-    LabelNegative, configall, Border, MousewheelScrolling, Scrollbar, 
-    resize_scrolled_content, run_statusbar_tooltips, RightClickMenu, 
+    LabelNegative, configall, Border, Scrollbar, 
+    RightClickMenu, 
     make_rc_menus)
+from scrolling import MousewheelScrolling, resize_scrolled_content
+from toykinter_widgets import run_statusbar_tooltips
 from persons import open_new_person_dialog, update_person_autofill_values
 from dates import OK_PREFIXES, format_stored_date
 from messages_context_help import search_person_help_msg

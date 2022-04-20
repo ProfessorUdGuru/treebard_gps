@@ -6,10 +6,13 @@ from files import get_current_file
 from widgets import (
     Frame, Toplevel, Label, ButtonQuiet, Border,
     LabelH3, Button, LabelHeader, LabelNegative, configall, Combobox,
-    RightClickMenu, make_rc_menus, open_message, EntryAutoPerson, 
-    EntryAutoPersonHilited, Scrollbar, resize_scrolled_content,
-    run_statusbar_tooltips,
+    RightClickMenu, make_rc_menus, EntryAutoPerson, 
+    EntryAutoPersonHilited, Scrollbar, 
+    
     )
+from scrolling import resize_scrolled_content
+from toykinter_widgets import run_statusbar_tooltips
+from error_messages import open_message 
 from messages import roles_msg
 from messages_context_help import roles_dlg_help_msg, role_edit_help_msg
 from persons import ( 

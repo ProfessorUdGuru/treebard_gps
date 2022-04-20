@@ -5,9 +5,12 @@ import sqlite3
 from widgets import (
     Label, Button, Entry, Canvas, LabelFrame, LabelH3, FrameHilited6,
     LabelMovable, Toplevel, LabelHeader, Radiobutton, Frame, Border, Dialogue,
-    Combobox, EntryAutoHilited, run_statusbar_tooltips, RightClickMenu, 
-    make_rc_menus, open_yes_no_message, open_message, InputMessage, 
-    Scrollbar, ScrolledText, resize_scrolled_content, configall)
+    Combobox, EntryAutoHilited, RightClickMenu, 
+    make_rc_menus, InputMessage, 
+    Scrollbar, ScrolledText, configall)
+from toykinter_widgets import run_statusbar_tooltips
+from scrolling import resize_scrolled_content
+from error_messages import open_yes_no_message
 from messages_context_help import notes_dlg_help_msg, links_dlg_help_msg
 from places import make_all_nestings    
 from messages import notes_msg

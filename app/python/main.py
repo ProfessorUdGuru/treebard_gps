@@ -21,9 +21,10 @@ from files import current_drive, get_current_file
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
     Radiobutton, LabelFrame, make_formats_dict, Border, TabBook, Scrollbar,
-    run_statusbar_tooltips, RightClickMenu, make_rc_menus, EntryAutoPerson,
-    EntryAutoPersonHilited,
+    RightClickMenu, make_rc_menus, EntryAutoPerson,
+    EntryAutoPersonHilited, FontPicker
 )
+from toykinter_widgets import run_statusbar_tooltips
    
 from families import NuclearFamiliesTable
 from events_table import EventsTable
@@ -31,7 +32,6 @@ from dates import DatePreferences, OK_MONTHS, get_date_formats
 from gallery import Gallery
 from colorizer import Colorizer
 from messages_context_help import main_help_msg
-from font_picker import FontPicker
 from persons import (
     make_all_names_dict_for_person_select, check_name, get_original,
     update_person_autofill_values, 

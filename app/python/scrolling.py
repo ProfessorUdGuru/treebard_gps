@@ -1,8 +1,6 @@
 # scrolling.py
 
 import tkinter as tk
-from widgets import (Canvas, FrameHilited3, Entry, ToplevelHilited, Text,
-    ButtonFlatHilited, LabelTip2, CanvasHilited, Framex, Frame, make_formats_dict, configall)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -181,117 +179,117 @@ from dev_tools import looky, seeline
 
 # '''
 
-# def resize_scrolled_content(toplevel, canvas, window): 
-    # '''
-        # Besides configuring the scrollbar when the content changes, this 
-        # gives a hideable scrollbar a place to grid (scridth) so the 
-        # scrollbar doesn't appear before it's needed due to its own
-        # width. Extra space or `scridth` is added where the hidden scrollbars
-        # will appear. Extra spacer frames (such as `scridth_n` and `scridth_w` 
-        # in main.py) are added to balance this out (don't do any of this with
-        # padding). The end result is a hideable scrollbar without a lop-sided 
-        # border around the canvas.
-    # '''
+def resize_scrolled_content(toplevel, canvas, window): 
+    '''
+        Besides configuring the scrollbar when the content changes, this 
+        gives a hideable scrollbar a place to grid (scridth) so the 
+        scrollbar doesn't appear before it's needed due to its own
+        width. Extra space or `scridth` is added where the hidden scrollbars
+        will appear. Extra spacer frames (such as `scridth_n` and `scridth_w` 
+        in main.py) are added to balance this out (don't do any of this with
+        padding). The end result is a hideable scrollbar without a lop-sided 
+        border around the canvas.
+    '''
 
-    # def resize_scrollbar():
-        # toplevel.update_idletasks()
-        # canvas.config(scrollregion=canvas.bbox('all'))
+    def resize_scrollbar():
+        toplevel.update_idletasks()
+        canvas.config(scrollregion=canvas.bbox('all'))
 
-    # def resize_window():
-        # '''
-            # Don't try to DETECT scrollbar width (`scridth`) in this function.
-            # For some reason it causes certain combinations of values
-            # below to freeze the app. Hard-coded is good enough since there
-            # are only a few sizes of scrollbar. Add 10 to the scrollbar width 
-            # and that gives it wiggle room (makes it work right--not sure why).
-        # '''
+    def resize_window():
+        '''
+            Don't try to DETECT scrollbar width (`scridth`) in this function.
+            For some reason it causes certain combinations of values
+            below to freeze the app. Hard-coded is good enough since there
+            are only a few sizes of scrollbar. Add 10 to the scrollbar width 
+            and that gives it wiggle room (makes it work right--not sure why).
+        '''
 
-        # toplevel.update_idletasks()
-        # if toplevel.winfo_name() == 'tk':
-            # bar_height = 96 # menubar + ribbon + statusbar
-            # scridth = 30
-        # else:
-            # bar_height = 27 # statusbar
-            # scridth = 26
-        # page_x = window.winfo_reqwidth() + scridth
-        # page_y = window.winfo_reqheight() + scridth + bar_height
-        # toplevel.geometry('{}x{}'.format(page_x, page_y))
+        toplevel.update_idletasks()
+        if toplevel.winfo_name() == 'tk':
+            bar_height = 96 # menubar + ribbon + statusbar
+            scridth = 30
+        else:
+            bar_height = 27 # statusbar
+            scridth = 26
+        page_x = window.winfo_reqwidth() + scridth
+        page_y = window.winfo_reqheight() + scridth + bar_height
+        toplevel.geometry('{}x{}'.format(page_x, page_y))
 
-    # resize_scrollbar()
-    # resize_window()
+    resize_scrollbar()
+    resize_window()
 
-# class MousewheelScrolling():
-    # def __init__(self, root, main_canvas):
+class MousewheelScrolling():
+    def __init__(self, root, main_canvas):
 
-        # self.root = root
-        # self.scroll_this = self.main_canvas = main_canvas
+        self.root = root
+        self.scroll_this = self.main_canvas = main_canvas
 
-        # self.resizable_canvases = []
-        # self.nested_canvases = []
+        self.resizable_canvases = []
+        self.nested_canvases = []
 
-    # def scroller(self, event):
-        # '''
-            # The error is when the mousewheel is used over a toplevel 
-            # with no canvas, which happens because there are Comboboxes 
-            # in dialogs that have a fixed size and don't need to scroll.
-            # Saving this for later when mousewheel functionality is 
-            # added to the Combobox dropdown.
-        # '''
+    def scroller(self, event):
+        '''
+            The error is when the mousewheel is used over a toplevel 
+            with no canvas, which happens because there are Comboboxes 
+            in dialogs that have a fixed size and don't need to scroll.
+            Saving this for later when mousewheel functionality is 
+            added to the Combobox dropdown.
+        '''
 
-        # # DO NOT DELETE
-        # try:
-            # self.scroll_this.yview_scroll(
-                # int(-1*(event.delta/120)), 'units')
-        # except AttributeError:
-            # pass
+        # DO NOT DELETE
+        try:
+            self.scroll_this.yview_scroll(
+                int(-1*(event.delta/120)), 'units')
+        except AttributeError:
+            pass
         
-    # def look_under_mouse(self, evt):
-        # self.root.bind_all('<MouseWheel>', self.scroller)
-        # evt.widget.bind('<Enter>', self.look_under_mouse)
-        # self.scroll_this = evt.widget
-        # evt.widget.bind('<Leave>', self.forget_canvas) 
+    def look_under_mouse(self, evt):
+        self.root.bind_all('<MouseWheel>', self.scroller)
+        evt.widget.bind('<Enter>', self.look_under_mouse)
+        self.scroll_this = evt.widget
+        evt.widget.bind('<Leave>', self.forget_canvas) 
 
-    # def forget_canvas(self, evt):
-        # canvas_left = evt.widget
-        # if canvas_left is self.main_canvas:
-            # canvas_left.unbind_all('<MouseWheel>') 
-        # elif canvas_left in self.nested_canvases:
-            # self.scroll_this = self.main_canvas 
-        # else:
-            # canvas_left.unbind_all('<MouseWheel>') 
+    def forget_canvas(self, evt):
+        canvas_left = evt.widget
+        if canvas_left is self.main_canvas:
+            canvas_left.unbind_all('<MouseWheel>') 
+        elif canvas_left in self.nested_canvases:
+            self.scroll_this = self.main_canvas 
+        else:
+            canvas_left.unbind_all('<MouseWheel>') 
 
-    # def remove_from_list(self, evt):
-        # canvas = evt.widget
-        # resizers = [i[0] for i in self.resizable_canvases]
-        # nesteds = self.nested_canvases
-        # if canvas in resizers:
-            # idx = resizers.index(canvas)
-            # del self.resizable_canvases[idx]
-        # elif canvas in nesteds:
-            # idx = nesteds.index(canvas)
-            # del self.nested_canvases[idx]
+    def remove_from_list(self, evt):
+        canvas = evt.widget
+        resizers = [i[0] for i in self.resizable_canvases]
+        nesteds = self.nested_canvases
+        if canvas in resizers:
+            idx = resizers.index(canvas)
+            del self.resizable_canvases[idx]
+        elif canvas in nesteds:
+            idx = nesteds.index(canvas)
+            del self.nested_canvases[idx]
 
-    # def append_to_list(self, appendee, resizable=True):
-        # if resizable is True:
-            # self.resizable_canvases.append(appendee)
-            # appendee = appendee[0]
-        # else:
-            # self.nested_canvases.append(appendee)
-        # appendee.bind('<Destroy>', self.remove_from_list)
+    def append_to_list(self, appendee, resizable=True):
+        if resizable is True:
+            self.resizable_canvases.append(appendee)
+            appendee = appendee[0]
+        else:
+            self.nested_canvases.append(appendee)
+        appendee.bind('<Destroy>', self.remove_from_list)
 
-    # def configure_mousewheel_scrolling(self, in_root=False):
+    def configure_mousewheel_scrolling(self, in_root=False):
 
-        # if in_root is True:
-            # self.root.bind_all('<MouseWheel>', self.scroller)
-        # self.root.update_idletasks()
+        if in_root is True:
+            self.root.bind_all('<MouseWheel>', self.scroller)
+        self.root.update_idletasks()
 
-        # for canvas in self.resizable_canvases:
-            # canvas[0].bind('<Enter>', self.look_under_mouse)
-        # for canvas in self.nested_canvases:
-            # canvas.bind('<Enter>', self.look_under_mouse)
-        # for canvas in self.resizable_canvases:
-            # canvas, window = canvas[0], canvas[1]
-            # resize_scrolled_content(canvas.master, canvas, window)
+        for canvas in self.resizable_canvases:
+            canvas[0].bind('<Enter>', self.look_under_mouse)
+        for canvas in self.nested_canvases:
+            canvas.bind('<Enter>', self.look_under_mouse)
+        for canvas in self.resizable_canvases:
+            canvas, window = canvas[0], canvas[1]
+            resize_scrolled_content(canvas.master, canvas, window)
 
 # formats = make_formats_dict()
 # class Scrollbar(Canvas):
@@ -459,7 +457,7 @@ from dev_tools import looky, seeline
 
 if __name__ == '__main__':
 
-    from widgets import (Frame, Toplevel, LabelStay, Button)
+    from widgets import (Frame, Toplevel, LabelStay, Button, Canvas, configall)
     from custom_combobox_widget import Combobox
 
     root = tk.Tk()

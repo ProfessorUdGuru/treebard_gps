@@ -5,9 +5,10 @@ import sqlite3
 from os import listdir, path
 from os.path import isfile, join
 from widgets import (
-    Toplevel, Canvas, Button, Frame, ButtonBigPic, configall, Border,
-    run_statusbar_tooltips, RightClickMenu, make_rc_menus, open_message, 
-    open_input_message2)
+    Toplevel, Canvas, Button, Frame, ButtonBigPic, Border, configall,
+    RightClickMenu, make_rc_menus, open_input_message2,)
+from toykinter_widgets import run_statusbar_tooltips
+from error_messages import open_message
 from messages_context_help import opening_dlg_help_msg
 from PIL import Image, ImageTk
 from files import (

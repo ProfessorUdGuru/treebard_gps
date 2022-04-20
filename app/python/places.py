@@ -21,10 +21,13 @@ Validation and input to database has been tested for these cases:
 import tkinter as tk
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, LabelHeader, 
-    Entry, ButtonQuiet, configall, Border, Scrollbar, resize_scrolled_content,
-    EntryAuto, Separator, run_statusbar_tooltips, RightClickMenu, make_rc_menus, 
-    open_message, )
+    Entry, ButtonQuiet, configall, Border, Scrollbar, 
+    EntryAuto, Separator, RightClickMenu, make_rc_menus, 
+    )
+from toykinter_widgets import run_statusbar_tooltips
+from scrolling import resize_scrolled_content
 from files import get_current_file
+from error_messages import open_message
 from messages_context_help import (
     places_dialog_label_help_msg, places_dlg_help_msg, 
     places_dialog_radio_help_msg, places_dialog_hint_help_msg)

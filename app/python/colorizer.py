@@ -1,4 +1,4 @@
-# colorizer
+# colorizer.py
 
 import tkinter as tk
 from tkinter import colorchooser
@@ -7,8 +7,10 @@ from re import search
 import sqlite3
 from widgets import (
     Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay, Entry,
-    FrameHilited2, get_all_descends, configall, Scrollbar, open_message)
+    FrameHilited2, get_all_descends, configall, Scrollbar,
+    make_formats_dict, ALL_WIDGET_CLASSES)
 from files import get_current_file
+from error_messages import  open_message
 from messages import colorizer_msg
 from messages_context_help import color_preferences_swatches_help_msg
 from query_strings import (
@@ -22,7 +24,7 @@ from dev_tools import looky, seeline
 
 
 current_file = get_current_file()[0]
-
+formats = make_formats_dict()
 class Colorizer(Frame):
     '''
         The main organization of this class revolves around 
@@ -37,7 +39,6 @@ class Colorizer(Frame):
         self.master = master
         self.root = root
         self.rc_menu = rc_menu
-        self.formats = formats
         self.tabbook = tabbook
 
         self.current_swatch = {
@@ -54,8 +55,8 @@ class Colorizer(Frame):
         self.pad = 2
 
         self.current_color_scheme = [
-            self.formats["bg"], self.formats["highlight_bg"], 
-            self.formats["head_bg"], self.formats["fg"]]
+            formats["bg"], formats["highlight_bg"], 
+            formats["head_bg"], formats["fg"]]
 
         self.get_current_scheme_id()
 
@@ -131,7 +132,7 @@ class Colorizer(Frame):
             justify="left")
 
         new_swatch_frame = FrameHilited2(
-            self.inputs_frame, bg=self.formats["highlight_bg"])
+            self.inputs_frame, bg=formats["highlight_bg"])
         spacer1 = Frame(new_swatch_frame)
         self.bg1 = Entry(new_swatch_frame, width=9, cursor="hand2")
         self.bg2 = Entry(new_swatch_frame, width=9, cursor="hand2")
@@ -147,10 +148,10 @@ class Colorizer(Frame):
             t += 1
         self.copy_button = Button(
             self.inputs_frame, text="COPY COLOR SCHEME", 
-            command=self.fill_entries, width=18)
+            command=self.fill_entries, width=19)
         self.add_button = Button(
             self.inputs_frame, text="ADD COLOR SCHEME", 
-            command=self.add_color_scheme, width=18)
+            command=self.add_color_scheme, width=19)
         self.apply_button = Button(
             self.inputs_frame, text="APPLY", command=self.apply, width=6)
 
@@ -236,7 +237,7 @@ class Colorizer(Frame):
         r = 0
         for dkt in self.color_scheme_dicts:
             frm = FrameStay(
-                self.swatch_window, bg=self.formats["highlight_bg"], takefocus=1)
+                self.swatch_window, bg=formats["highlight_bg"], takefocus=1)
             frm.grid(column=c-1, row=r, padx=self.pad, pady=self.pad)
             frm.bind("<FocusIn>", self.highlight)
             frm.bind("<FocusOut>", self.unhighlight)
@@ -351,7 +352,7 @@ class Colorizer(Frame):
 
     def unhighlight(self, evt):
         widg = evt.widget
-        widg.config(bg=self.formats["highlight_bg"], bd=0)
+        widg.config(bg=formats["highlight_bg"], bd=0)
         widg.grid_configure(padx=self.pad, pady=self.pad)
 
     def highlight_current_scheme(self, evt):
@@ -367,6 +368,8 @@ class Colorizer(Frame):
             if dkt["id"] == iD:
                 idx = q
                 break
+            else:
+                pass
             q += 1
         return idx
 
@@ -575,7 +578,7 @@ class Colorizer(Frame):
             self.current_swatch["scheme"]["fg"])
         idx = self.get_applied_swatch_index(self.currently_applied_color_scheme)
         self.applied_swatch = self.swatch_window.winfo_children()[idx] 
-        self.applied_swatch.config(bg=self.formats["highlight_bg"], bd=0)
+        self.applied_swatch.config(bg=formats["highlight_bg"], bd=0)
         self.applied_swatch.grid_configure(padx=self.pad, pady=self.pad)
 
         # get id for above selected color_scheme and change self.currently_applied_color_scheme to that id
@@ -593,8 +596,12 @@ class Colorizer(Frame):
             text="Currently applied color scheme is id# {}".format(
                 self.currently_applied_color_scheme))
 
-        # config_generic(self.root)
-        configall(self.root, self.formats)
+        new_formats = make_formats_dict()
+
+        for klass in ALL_WIDGET_CLASSES:
+            klass.formats = new_formats 
+
+        configall(self.root, new_formats)
         self.root.config(bg=color_scheme[0])
 
     def validate_hex_colors(self, evt=None, chooser=False):
@@ -712,7 +719,7 @@ class Colorizer(Frame):
             conn.commit()
             self.currently_applied_color_scheme = 1
             # config_generic(self.root)
-            configall(self.root, self.formats)
+            configall(self.root, formats)
 
         self.redraw_swatches()
 

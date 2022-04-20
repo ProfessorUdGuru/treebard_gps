@@ -15,8 +15,10 @@ from files import get_current_file, current_drive, app_path
 from persons import get_current_person
 from widgets import (
     Frame, Canvas, Button, Label, Radiobutton, FrameHilited4, 
-    LabelH3, MessageCopiable, LabelStay, Scrollbar, resize_scrolled_content,
-    run_statusbar_tooltips, RightClickMenu, make_rc_menus)
+    LabelH3, MessageCopiable, LabelStay, Scrollbar, 
+    RightClickMenu, make_rc_menus, configall)
+from toykinter_widgets import run_statusbar_tooltips
+from scrolling import resize_scrolled_content
 from messages_context_help import gallery_help_msg, gallery_thumbnail_help_msg
 from utes import create_tooltip
 from query_strings import (
@@ -302,8 +304,7 @@ class Gallery(Frame):
                 visited, 
                 self.master.statusbar.status_label, 
                 self.master.statusbar.tooltip_label)
-            # config_generic(self.dialog)
-            configall(self.dialog, formats)
+            configall(self.dialog, self.formats)
 
         rcm_widgets = (
             self.pic_canvas, self.prevbutt, self.nextbutt, self.editbutt)

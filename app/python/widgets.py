@@ -2,7 +2,15 @@
 
 import tkinter as tk
 import sqlite3
-from files import get_current_file, app_path, global_db_path, set_closing
+from PIL import Image, ImageTk
+from tkinter import font, IntVar, StringVar
+from files import (
+    get_current_file, app_path, global_db_path, set_closing,
+    handle_new_tree_event, handle_open_event, save_as, save_copy_as, 
+    rename_tree, close_tree, exit_app, get_recent_files,
+    new_file_path, change_tree_title, set_current_file, save_recent_tree)
+from dropdown import IMPORT_TYPES, EXPORT_TYPES, MOD_KEYS, placeholder
+from scrolling import resize_scrolled_content
 from utes import create_tooltip, center_dialog
 from query_strings import ( 
     select_color_scheme_current_id, select_color_scheme_by_id,
@@ -22,13 +30,11 @@ from query_strings import (
     delete_images_elements_person, delete_claim_person, select_name_sorter,
     select_name_type_sorter_with_id, select_all_names, 
     select_name_type_hierarchy, select_all_names_all_details_order_hierarchy,
+    select_closing_state_recent_files, update_closing_state_recent_files
 
 ) 
-
-
-from PIL import Image, ImageTk
 from messages_context_help import person_add_help_msg
-from messages import persons_msg
+from messages import persons_msg, opening_msg
 from images import get_all_pics 
 import dev_tools as dt
 from dev_tools import looky, seeline 
@@ -42,8 +48,6 @@ from dev_tools import looky, seeline
 # formerly in styles.py
 # print('formats is', formats)
 # formats is {'bg': '#34615f', 'highlight_bg': '#4a8a87', 'head_bg': '#486a8c', 'fg': '#b9ddd9', 'output_font': ('courier', 16), 'input_font': ('tahoma', 16), 'heading1': ('courier', 32, 'bold'), 'heading2': ('courier', 24, 'bold'), 'heading3': ('courier', 17, 'bold'), 'heading4': ('courier', 13, 'bold'), 'status': ('tahoma', 13), 'boilerplate': ('tahoma', 10), 'show_font': ('tahoma', 16, 'italic'), 'titlebar_0': ('tahoma', 10, 'bold'), 'titlebar_1': ('tahoma', 14, 'bold'), 'titlebar_2': ('tahoma', 16, 'bold'), 'titlebar_3': ('tahoma', 20, 'bold'), 'titlebar_hilited_0': ('tahoma', 10), 'titlebar_hilited_1': ('tahoma', 14), 'titlebar_hilited_2': ('tahoma', 16), 'titlebar_hilited_3': ('tahoma', 20), 'unshow_font': ('tahoma', 14, 'italic')}
-
-NEUTRAL_COLOR = '#878787'
 
 def get_all_descends (ancestor, deep_list):
     ''' 
@@ -106,9 +110,7 @@ def make_formats_dict():
         'titlebar_hilited_2', 'titlebar_hilited_3',
         'unshow_font', 'tab_font']
 
-
     values = []
-
     values.append(prefs_to_use[0])
     values.append(prefs_to_use[1])
     values.append(prefs_to_use[2])
@@ -134,117 +136,73 @@ def make_formats_dict():
     values.append((prefs_to_use[4], int(prefs_to_use[6] * 0.75)))
 
     formats = dict(zip(keys, values))
-    # print("line", looky(seeline()).lineno, "formats['highlight_bg']:", formats['highlight_bg'])
-    # print("line", looky(seeline()).lineno, "formats['head_bg']:", formats['head_bg'])
     return formats
 formats = make_formats_dict()
 
 def configall(master, formats):
-    # print("line", looky(seeline()).lineno, "formats['highlight_bg']:", formats['highlight_bg'])
-    # print("line", looky(seeline()).lineno, "formats['head_bg']:", formats['head_bg'])
     def config_bg_fg(widg):
         widg.config(bg=formats["bg"], fg=formats["fg"])
-    def config_bg_fg_activeBgHilite_activeFg_selectColorBg(widg):
+    def config_activeBgHilite(widg):
+        widg.config(activebackground=formats["highlight_bg"])
+    def config_activeFg(widg):
+        widg.config(activeforeground=formats["fg"])
+    def config_selectColorBg(widg):
+        widg.config(selectcolor=formats["bg"])
+    def config_selectColorHilite(widg):
+        widg.config(selectcolor=formats["highlight_bg"])
+    def config_fontBoilerplate(widg):
+        widg.config(font=formats["boilerplate"])
+    def config_activeBgHead(widg):
+        widg.config(activebackground=formats["head_bg"])
+    def config_fontH2(widg):
+        widg.config(font=formats["heading2"])
+    def config_fontH3(widg):
+        widg.config(font=formats["heading3"])
+    def config_fontIn(widg):
+        widg.config(font=formats["input_font"])
+    def config_fontOut(widg):
+        widg.config(font=formats["output_font"])
+    def config_fg(widg):
+        widg.config(fg=formats["fg"])
+    def config_troughColorHilite(widg):
+        widg.config(troughcolor=formats["highlight_bg"])
+    def config_bgHead(widg):
+        widg.config(bg=formats["head_bg"])
+    def config_bgHilite(widg):
+        widg.config(bg=formats["highlight_bg"])
+    def config_selectBgHead(widg):
+        widg.config(selectbackground=formats["head_bg"])
+    def config_selectFg(widg):
+        widg.config(selectforeground=formats["fg"])
+    def config_insertBgFg(widg):
+        widg.config(insertbackground=formats["fg"])
+    def config_bgOnly(widg):
+        widg.config(bg=formats["bg"])
+
+    def config_buttonflathilited(widg):
         widg.config(
-            bg=formats["bg"], fg=formats["fg"], 
-            activebackground=formats["highlight_bg"],
-            activeforeground=formats["fg"], selectcolor=formats["bg"])
-    def config_bg_fg_activeBgHilite_activeFg_selectColorHilite(widg):
-        widg.config(
-            bg=formats["bg"], fg=formats["fg"], 
-            activebackground=formats["highlight_bg"],
-            activeforeground=formats["fg"], selectcolor=formats["highlight_bg"])
-    def config_bg_fg_fontBoilerplate_activeBgHead(widg):
-        widg.config(
-            bg=formats["bg"], fg=formats["fg"],
-            font=formats["boilerplate"], activebackground=formats["head_bg"])
-    def config_bg_fg_fontH2(widg):
-        widg.config(
-            bg=formats["bg"], fg=formats["fg"], font=formats["heading2"])
-    def config_bg_fg_fontH3(widg):
-        widg.config(
-            bg=formats["bg"], fg=formats["fg"], font=formats["heading3"])
-    def config_bg_fg_fontIn(widg):
-        widg.config(
-            bg=formats["bg"], fg=formats["fg"], font=formats["input_font"])
-    def config_bg_fg_fontIn_activeBgHead(widg):
-        widg.config(
-            bg=formats["bg"], fg=formats["fg"], font=formats["input_font"],
-            activebackground=formats["head_bg"])
-    def config_bg_fg_fontOut(widg):
-        widg.config(
-            bg=formats["bg"], fg=formats["fg"], 
-            font=formats["output_font"])
-    def config_bg_fg_fontOut_activeBgHead_activeFg(widg):
-        widg.config(
-            bg=formats["bg"], fg=formats["fg"],
-            font=formats["output_font"],
-            activebackground=formats["head_bg"],
-            activeforeground=formats["fg"])
-    def config_bg_fg_fontOut_activeBgHead_troughColorHilite(widg):
-        widg.config(
-            bg=formats["bg"], fg=formats["fg"],
-            font=formats["output_font"],
-            activebackground=formats["head_bg"],
-            troughcolor=formats["highlight_bg"])
-    def config_bg_fg_fontOut_activeBgHilite_activeFg_selectColorHilite(widg):
-        widg.config(
-            bg=formats["bg"], fg=formats["fg"],
-            font=formats["output_font"],
-            activebackground=formats["highlight_bg"],
-            activeforeground=formats["fg"],
-            selectcolor=formats["highlight_bg"])
-    def config_bg_fg_fontStatus(widg):
-        widg.config(
-            bg=formats["bg"], fg=formats["fg"], font=formats["status"])
-    def config_bg_fg_selectBgHead_selectFg_insertBgFg(widg):
+            bg=formats["highlight_bg"], fg=formats["fg"],
+            activebackground=formats["fg"],
+            activeforeground=formats["bg"])
+
+    def config_bg_fgHilite(widg):
+        widg.config(bg=formats["bg"], fg=formats["highlight_bg"])
+
+    def config_entryautoperson(widg):
         widg.config(
             bg=formats["bg"], fg=formats["fg"],
             font=formats["input_font"],
             selectbackground=formats["head_bg"],
             selectforeground=formats["fg"],
             insertbackground=formats["fg"])
-    def config_bg_fgHilite(widg):
-        widg.config(bg=formats["bg"], fg=formats["highlight_bg"])
-    def config_bgFg_fgBg_fontOut(widg):
+
+    def config_bg_fg_fontStatus(widg):
         widg.config(
-            bg=formats["fg"], fg=formats["bg"], font=formats["output_font"])
-    def config_bgHead(widg):
-        widg.config(bg=formats["head_bg"])
-    def config_bgHead_fg_fontStatus(widg):
-        widg.config(
-            bg=formats["head_bg"], fg=formats["fg"],
-            font=formats["status"])
-    def config_bgHilite(widg):
-        widg.config(bg=formats["highlight_bg"])
-    def config_bgHilite_fg_activeBgFg_activeFgBg(widg):
-        widg.config(
-            bg=formats["highlight_bg"], fg=formats["fg"],
-            activebackground=formats["fg"],
-            activeforeground=formats["bg"])
-    def config_bgHilite_fg_fontH3(widg):
-        widg.config(
-            bg=formats["highlight_bg"], fg=formats["fg"],
-            font=formats["heading3"])
-    def config_bgHilite_fg_fontIn(widg):
-        widg.config(
-            bg=formats["highlight_bg"], fg=formats["fg"],
-            font=formats["input_font"])
-    def config_bgHilite_fg_fontOut(widg):        
-        widg.config(
-            bg=formats["highlight_bg"], fg=formats["fg"],
-            font=formats["output_font"]) 
-    def config_bgHilite_fg_fontIn_selectBgHead_selectFg_insertBgFg(widg):
-        widg.config(
-            bg=formats["highlight_bg"], fg=formats["fg"],
-            font=formats["input_font"], selectbackground=formats["head_bg"],
-            selectforeground=formats["fg"], insertbackground=formats["fg"])
-    def config_bgOnly(widg):
-        widg.config(bg=formats["bg"])
+            bg=formats["bg"], fg=formats["fg"], font=formats["status"])
 
     def config_separator(sep):
         """ Has 3 frames with 3 different colors
-            so needs its own reconfigure method.
+            so uses its own reconfigure method.
         """
         sep.colorize()
 
@@ -255,127 +213,175 @@ def configall(master, formats):
             
     def config_labelstatusbar(widg):
         widg.config(
-            bg=formats['bg'],
-            fg=formats['fg'],
-            font=formats['status'])
+            bg=formats["bg"],
+            fg=formats["fg"],
+            font=formats["status"])
 
-    def config_labeltab(lab):
-        lab.formats = formats
-        if lab.chosen is False:
-            lab.config(
-                bg=formats['highlight_bg'],
-                fg=formats['fg'],
-                font=formats['tab_font'])
+    def config_labeltab(widg):
+        if widg.chosen is False:
+            widg.config(
+                bg=LabelTab.highlight_bg,
+                fg=LabelTab.fg,
+                font=LabelTab.tab_font)
         else:
-            lab.config(
-                bg=formats['bg'],
-                fg=formats['fg'],
-                font=formats['tab_font'])
+            widg.config(
+                bg=LabelTab.bg,
+                fg=LabelTab.fg,
+                font=LabelTab.tab_font)
 
-    # print("line", looky(seeline()).lineno, "master.winfo_name():", master.winfo_name())
+    def config_labelmovable(widg):
+        widg.config( 
+            bg=LabelMovable.highlight_bg, 
+            fg=LabelMovable.fg, 
+            font=LabelMovable.output_font)
+
+    def config_labelbuttontext(widg):
+        widg.config(
+            bg=LabelButtonText.bg,
+            fg=LabelButtonText.fg,
+            font=LabelButtonText.input_font)
+
+    def config_labelhilited3(widg):
+        widg.config(
+            bg=LabelHilited3.highlight_bg,
+            fg=LabelHilited3.fg,
+            font=LabelHilited3.input_font)
+
     root = None
     if master.winfo_name() in (".", "tk"):
         root = master
-
+    
     for klass in ALL_WIDGET_CLASSES:
-        klass.formats = formats # key to everything
+        klass.formats = formats
     ancestor_list = []
     all_widgets_in_root = get_all_descends(master, ancestor_list)
     for widg in (all_widgets_in_root):
         subclass = widg.winfo_subclass()
-
         if subclass in bg_fg:
-            config_bg_fg(widg)            
-        elif subclass in bg_fg_activeBgHilite_activeFg_selectColorBg:
-            config_bg_fg_activeBgHilite_activeFg_selectColorBg(widg)
-        elif subclass in bg_fg_activeBgHilite_activeFg_selectColorHilite:
-            config_bg_fg_activeBgHilite_activeFg_selectColorHilite(widg)
-        elif subclass in bg_fg_fontBoilerplate_activeBgHead:
-            config_bg_fg_fontBoilerplate_activeBgHead(widg)
-        elif subclass in bg_fg_fontH2:
-            config_bg_fg_fontH2(widg)
-        elif subclass in bg_fg_fontH3:
-            config_bg_fg_fontH3(widg)
-        elif subclass in bg_fg_fontIn:
-            config_bg_fg_fontIn(widg)
-        elif subclass in bg_fg_fontIn_activeBgHead:
-            config_bg_fg_fontIn_activeBgHead(widg)
-        elif subclass in bg_fg_fontOut:
-            config_bg_fg_fontOut(widg)
-        elif subclass in bg_fg_fontOut_activeBgHead_activeFg:
-            config_bg_fg_fontOut_activeBgHead_activeFg(widg)
-        elif subclass in bg_fg_fontOut_activeBgHead_troughColorHilite:
-            config_bg_fg_fontOut_activeBgHead_troughColorHilite(widg)
-        elif subclass in bg_fg_fontOut_activeBgHilite_activeFg_selectColorHilite:
-            config_bg_fg_fontOut_activeBgHilite_activeFg_selectColorHilite(widg)
-        elif subclass in bg_fg_fontStatus:
+            config_bg_fg(widg)  
+        if subclass in activeBgHilite:
+            config_activeBgHilite(widg)
+        if subclass in activeFg:
+            config_activeFg(widg)
+        if subclass in selectColorBg:
+            config_selectColorBg(widg)
+        if subclass in selectColorHilite:
+            config_selectColorHilite(widg)
+        if subclass in fontBoilerplate:
+            config_fontBoilerplate(widg)
+        if subclass in activeBgHead:
+            config_activeBgHead(widg)
+        if subclass in fontH2:
+            config_fontH2(widg)
+        if subclass in fontH3:
+            config_fontH3(widg)
+        if subclass in fontIn:
+            config_fontIn(widg)
+        if subclass in fG:
+            config_fg(widg)
+        if subclass in fontOut:
+            config_fontOut(widg)
+        if subclass in troughColorHilite:
+            config_troughColorHilite(widg)
+        if subclass in bgHead:
+            config_bgHead(widg)
+        if subclass in bgHilite:
+            config_bgHilite(widg)
+        if subclass in selectBgHead:
+            config_selectBgHead(widg)
+        if subclass in selectFg:
+            config_selectFg(widg)
+        if subclass in insertBgFg:
+            config_insertBgFg(widg)
+        if subclass in bgOnly:
+            config_bgOnly(widg)
+
+        if subclass == "TabBook":
+            TabBook.fg = formats["fg"]
+            TabBook.bg = formats["bg"]
+        elif subclass == "ButtonBigPic":
+            config_bg_fgHilite(widg)
+            ButtonBigPic.bg = formats["bg"]
+            ButtonBigPic.fg = formats["highlight_bg"]
+        elif subclass == "ButtonFlatHilited":
+            config_buttonflathilited(widg)
+        elif subclass in bg_fg and subclass in fontStatus:
             if subclass == "LabelStatusbar":
                 LabelStatusbar.bg = formats["bg"]
                 LabelStatusbar.fg = formats["fg"]
                 LabelStatusbar.status = formats["status"]
             config_bg_fg_fontStatus(widg)
-        elif subclass in bg_fg_selectBgHead_selectFg_insertBgFg:
-            config_bg_fg_selectBgHead_selectFg_insertBgFg(widg)
-            if subclass == "EntryAutoPerson": # key to everything
-                EntryAutoPerson.highlight_bg = formats["highlight_bg"]
-                EntryAutoPerson.bg = formats["bg"]
-        elif subclass in bg_fgHilite:
-            config_bg_fgHilite(widg)
-        elif subclass in bgFg_fgBg_fontOut:
-            config_bgFg_fgBg_fontOut(widg)
-        elif subclass in bgHead_fg_fontStatus:
-            config_bgHead_fg_fontStatus(widg)
-        elif subclass in bgHilite:
-            config_bgHilite(widg)
-        elif subclass in bgHilite_fg_activeBgFg_activeFgBg:
-            config_bgHilite_fg_activeBgFg_activeFgBg(widg)
-        elif subclass in bgHilite_fg_fontH3:
-            config_bgHilite_fg_fontH3(widg)
-        elif subclass in bgHilite_fg_fontIn:
-            config_bgHilite_fg_fontIn(widg)
-        elif subclass in bgHilite_fg_fontOut:
-            config_bgHilite_fg_fontOut(widg)
-            if subclass == "ComboArrow": # key to everything
-                ComboArrow.highlight_bg = formats["highlight_bg"]
-                ComboArrow.fg = formats["fg"]
-                ComboArrow.output_font = formats["output_font"] 
-                ComboArrow.head_bg = formats["head_bg"]
+        elif subclass == "EntryAutoPerson":
+            EntryAutoPerson.highlight_bg = formats["highlight_bg"]
+            EntryAutoPerson.bg = formats["bg"]
+            config_entryautoperson(widg)
+        elif subclass == "ComboArrow":
+            ComboArrow.highlight_bg = formats["highlight_bg"]
+            ComboArrow.fg = formats["fg"]
+            ComboArrow.output_font = formats["output_font"] 
+            ComboArrow.head_bg = formats["head_bg"]
+        
+        elif subclass == "DropdownMenu":
+            DropdownMenu.bg = formats["bg"]
+            DropdownMenu.highlight_bg = formats["highlight_bg"]
+            DropdownMenu.head_bg = formats["head_bg"]
 
-        elif subclass in bgHilite_fg_fontIn_selectBgHead_selectFg_insertBgFg:
-            config_bgHilite_fg_fontIn_selectBgHead_selectFg_insertBgFg(widg)
-        elif subclass in bgOnly:
-            config_bgOnly(widg)
+        elif subclass == "LabelHilited3":
+            LabelHilited3.bg = formats["bg"]
+            LabelHilited3.highlight_bg = formats["highlight_bg"]
+            LabelHilited3.fg = formats["fg"]
+            LabelHilited3.input_font = formats["input_font"]
+            config_labelhilited3(widg)
 
-        elif subclass in separator: 
+        elif subclass == "Separator": 
             Separator.color1=formats['head_bg'], 
             Separator.color2=formats['highlight_bg'], 
             Separator.color3=formats['bg']           
             config_separator(widg)
 
-        elif subclass in combobox:
+        elif subclass == "Combobox":
             Combobox.highlight_bg = formats["highlight_bg"]
             Combobox.head_bg = formats["head_bg"]
             Combobox.bg = formats["bg"]
+            config_bgHilite(widg)
 
-        elif subclass in scrollbar:
+        elif subclass == "Scrollbar":
             Scrollbar.slidercolor = formats["bg"]
             Scrollbar.troughcolor = formats["head_bg"]
             Scrollbar.bordercolor = formats["highlight_bg"]
             config_scrollbar(widg)
 
-        elif subclass in labelMovable:
+        elif subclass == "LabelTab":
+            LabelTab.bg = formats["bg"]
+            LabelTab.fg = formats["fg"]
+            LabelTab.highlight_bg = formats["highlight_bg"]
+            config_labeltab(widg)
+
+        elif subclass == "LabelMovable":
             LabelMovable.highlight_bg = formats["highlight_bg"]
             LabelMovable.head_bg = formats["head_bg"]
+            LabelMovable.output_font = formats["output_font"]
+            config_labelmovable(widg)
 
-        # elif widg.winfo_class() == 'Label':
-            # if subclass == 'LabelTab':
-                # config_labeltab(widg)
-            # elif subclass in ('LabelButtonText', 'LabelDots'):
-                # config_labelbuttontext(widg)
+        elif subclass in ("LabelButtonText", "LabelDots", ):
+            LabelButtonText.bg = formats["bg"]
+            LabelButtonText.fg = formats["fg"]
+            LabelButtonText.head_bg = formats["head_bg"]
+            LabelButtonText.input_font = formats["input_font"]
+            config_labelbuttontext(widg)
+            if subclass == "LabelDots":
+                LabelDots.heading3 = formats["heading3"]
+
+        elif subclass == "Border":
+            Border.head_bg = formats["head_bg"]
+            Border.fg = formats["fg"]
+
     if root:
         root.config(bg=formats["bg"])
 
 # formerly in widgets.py
+
+NEUTRAL_COLOR = '#878787'
 
 class Framex(tk.Frame):
     def __init__(self, master, *args, **kwargs):
@@ -551,14 +557,6 @@ class LabelHeader(Labelx):
             bd=1,
             relief='raised')
 
-class LabelHilited(Labelx):
-    def __init__(self, master, *args, **kwargs):
-        Labelx.__init__(self, master, *args, **kwargs) 
-        self.config(
-            bg=formats["highlight_bg"], 
-            fg=formats["fg"],
-            font=formats["output_font"])
-
 class LabelHilited3(Labelx):
     ''' 
         Like Label with a different background and a monospaced sans-serif font. 
@@ -566,13 +564,17 @@ class LabelHilited3(Labelx):
         menus where a single label needs to have both flush left and flush right
         text with variable space in the middle keeping both strings flush. 
     '''
+    formats = formats
+    fg = formats["fg"]
+    highlight_bg = formats["highlight_bg"]
+    bg = formats["bg"]
+    input_font = formats["input_font"]
     def __init__(self, master, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
-
         self.config(
-            bg=formats['highlight_bg'], 
-            fg=formats['fg'],
-            font=formats['input_font'])
+            bg=LabelHilited3.highlight_bg, 
+            fg=LabelHilited3.fg,
+            font=LabelHilited3.input_font)
 
 class LabelEntry(Labelx):
     ''' 
@@ -632,18 +634,26 @@ class LabelH3(Labelx):
             fg=formats['fg'],
             font=formats['heading3'])
 
-class LabelButtonImage(Labelx):
-    """ A label that looks and works like a button. Good for
-        images since it sizes itself to its contents, so don't
-        add width and height to this class or change its color.
-        The class-level variables are used by the child class that
-        inherits from it.
+class LabelButtonText(Labelx):
+    """ A label that looks and works like a button. Displays text.
     """
     formats = formats
-    bg = formats["bg"]
+    bg = formats["bg"] 
     head_bg = formats["head_bg"]
-    def __init__(self, master, *args, **kwargs):
+    input_font = formats["input_font"]
+    fg = formats["fg"]    
+    def __init__(self, master, width=8, *args, **kwargs):
         Labelx.__init__(self, master, *args, **kwargs)
+
+        self.config(
+            anchor='center',
+            borderwidth=1, 
+            relief='raised', 
+            takefocus=1,
+            bg=formats['bg'],
+            width=width,
+            font=formats['input_font'],
+            fg=formats['fg'])
 
         self.bind('<FocusIn>', self.show_focus)
         self.bind('<FocusOut>', self.unshow_focus)
@@ -659,10 +669,10 @@ class LabelButtonImage(Labelx):
         self.config(borderwidth=1)
 
     def on_press(self, evt):
-        self.config(relief='sunken', bg=LabelButtonImage.head_bg)
+        self.config(relief='sunken', bg=LabelButtonText.head_bg)
 
     def on_release(self, evt):
-        self.config(relief='raised', bg=LabelButtonImage.bg)
+        self.config(relief='raised', bg=LabelButtonText.bg)
 
     def on_hover(self, evt):
         self.config(relief='groove')
@@ -670,34 +680,19 @@ class LabelButtonImage(Labelx):
     def on_unhover(self, evt):
         self.config(relief='raised')
 
-class LabelButtonText(LabelButtonImage):
-    """ A label that looks and works like a button. Displays text. See its
-        parent class for class variables used by colorizer.
-    """
-    def __init__(self, master, width=8, *args, **kwargs):
-        LabelButtonImage.__init__(self, master, *args, **kwargs)
-
-        self.config(
-            anchor='center',
-            borderwidth=1, 
-            relief='raised', 
-            takefocus=1,
-            bg=formats['bg'],
-            width=width,
-            font=formats['input_font'],
-            fg=formats['fg'])
-
 class LabelDots(LabelButtonText):
-    ''' 
-        Display clickable dots if more info, no dots 
-        if no more info. 
-    '''
+    """ Display clickable dots if there's more info, no dots if none. 
+    """
+    formats = formats
+    bg = formats["bg"] 
+    head_bg = formats["head_bg"]
+    heading3 = formats["heading3"]
+    fg = formats["fg"]
     def __init__(
             self, 
             master,
             dialog_class,
             treebard,
-            formats,
             person_autofill_values=None,
             *args, **kwargs):
         LabelButtonText.__init__(self, master, *args, **kwargs)
@@ -705,19 +700,52 @@ class LabelDots(LabelButtonText):
         self.master = master
         self.dialog_class = dialog_class
         self.treebard = treebard
-        self.formats = formats
         self.person_autofill_values = person_autofill_values
 
-        self.current_person = None
-        
+        self.current_person = None        
         self.root = master.master
 
         self.finding_id = None
         self.header = []
-        self.config(width=5, font=self.formats['heading3'])
+
+        self.config(
+            anchor='center',
+            borderwidth=1, 
+            relief='raised', 
+            takefocus=1,
+            bg=formats['bg'],
+            width=5,
+            font=formats['heading3'],
+            fg=formats['fg'])
+
         self.bind('<Button-1>', self.open_dialog)
         self.bind('<Return>', self.open_dialog)
         self.bind('<space>', self.open_dialog)
+
+        self.bind('<FocusIn>', self.show_focus)
+        self.bind('<FocusOut>', self.unshow_focus)
+        self.bind('<Button-1>', self.on_press, add="+")
+        self.bind('<ButtonRelease-1>', self.on_release)
+        self.bind('<Enter>', self.on_hover)
+        self.bind('<Leave>', self.on_unhover)
+
+    def show_focus(self, evt):
+        self.config(borderwidth=2)
+
+    def unshow_focus(self, evt):
+        self.config(borderwidth=1)
+
+    def on_press(self, evt):
+        self.config(relief='sunken', bg=LabelDots.head_bg)
+
+    def on_release(self, evt):
+        self.config(relief='raised', bg=LabelDots.bg)
+
+    def on_hover(self, evt):
+        self.config(relief='groove')
+
+    def on_unhover(self, evt):
+        self.config(relief='raised')
 
     def open_dialog(self, evt):
         dlg = self.dialog_class(
@@ -726,7 +754,7 @@ class LabelDots(LabelButtonText):
             self.header, 
             self.current_person,
             self.treebard,
-            self.formats,
+            LabelDots.formats,
             pressed=evt.widget,
             person_autofill_values=self.person_autofill_values)
 
@@ -798,60 +826,7 @@ class LabelStay(Labelx):
 
         pass
 
-class LabelButtonImage(Labelx):
-    ''' 
-        A label that looks and works like a button. Good for
-        images since it sizes itself to its contents, so don't
-        add width and height to this class or change its color.
-    '''
-
-    def __init__(self, master, *args, **kwargs):
-        Labelx.__init__(self, master, *args, **kwargs)
-
-        self.bind('<FocusIn>', self.show_focus)
-        self.bind('<FocusOut>', self.unshow_focus)
-        self.bind('<Button-1>', self.on_press)
-        self.bind('<ButtonRelease-1>', self.on_release)
-        self.bind('<Enter>', self.on_hover)
-        self.bind('<Leave>', self.on_unhover)
-
-    def show_focus(self, evt):
-        self.config(borderwidth=2)
-
-    def unshow_focus(self, evt):
-        self.config(borderwidth=1)
-
-    def on_press(self, evt):
-        self.config(relief='sunken', bg=formats['head_bg'])
-
-    def on_release(self, evt):
-        self.config(relief='raised', bg=formats['bg'])
-
-    def on_hover(self, evt):
-        self.config(relief='groove')
-
-    def on_unhover(self, evt):
-        self.config(relief='raised')
-
-class LabelButtonText(LabelButtonImage):
-    ''' 
-        A label that looks and works like a button. Displays Text.
-    '''
-
-    def __init__(self, master, width=8, *args, **kwargs):
-        LabelButtonImage.__init__(self, master, *args, **kwargs)
-
-        self.config(
-            bg=formats['bg'],
-            fg=formats['fg'],
-            font=formats['input_font'],
-            anchor='center',
-            borderwidth=1, 
-            relief='raised', 
-            takefocus=1,
-            width=width)
-
-class LabelMovable(LabelHilited):
+class LabelMovable(Labelx):
     ''' 
         A label that can be moved to a different grid position
         by trading places with another widget on press of an
@@ -863,22 +838,19 @@ class LabelMovable(LabelHilited):
         their default values which is 1.
     '''
     formats = formats
-    head_bg = formats["head_bg"]
+    output_font = formats["output_font"]
     highlight_bg = formats["highlight_bg"]
     fg = formats["fg"]
-
     def __init__(self, master, first_column=0, first_row=0, *args, **kwargs):
-        LabelHilited.__init__(self, master, *args, **kwargs)
-
+        Labelx.__init__(self, master, *args, **kwargs)
         self.master = master
         self.first_column = first_column
         self.first_row = first_row
-
         self.config(
             takefocus=1, 
-            bg=LabelMovable.highlight_bg, 
-            fg=LabelMovable.fg, 
-            font=formats['output_font'])
+            bg=formats["highlight_bg"], 
+            fg=formats["fg"], 
+            font=formats["output_font"])
         self.bind('<FocusIn>', self.highlight_on_focus)
         self.bind('<FocusOut>', self.unhighlight_on_unfocus)
         self.bind('<Key>', self.locate)
@@ -1046,7 +1018,9 @@ class ButtonBigPic(Buttonx):
     ''' 
         Used for top_pic on person tab and tree decoration on opening_dialog.
     '''
-
+    formats = formats
+    bg = formats["bg"]
+    fg = formats["highlight_bg"]
     def __init__(self, master, *args, **kwargs):
         Buttonx.__init__(self, master, *args, **kwargs)
 
@@ -1060,10 +1034,10 @@ class ButtonBigPic(Buttonx):
         self.bind('<FocusOut>', self.unhighlight)
 
     def highlight(self, evt):
-        self.config(bg=formats['fg'])
+        self.config(bg=ButtonBigPic.fg)
 
     def unhighlight(self, evt):
-        self.config(bg=formats['bg'])
+        self.config(bg=ButtonBigPic.bg)
 
 class ButtonFlatHilited(Buttonx):
     '''
@@ -1320,9 +1294,11 @@ class Toplevel(Toplevelx):
         self.config(bg=formats['bg'])
 
 class ToplevelHilited(Toplevelx):
+    formats = formats
+    highlight_bg = formats["highlight_bg"]
+    bg = formats["bg"]
     def __init__(self, *args, **kwargs):
         Toplevelx.__init__(self, *args, **kwargs)
-
         self.config(bg=formats['highlight_bg'])
 
 class Scalex(tk.Scale):
@@ -1380,9 +1356,10 @@ def close(evt):
         dlg.destroy()
 
 class Border(Canvas):
-
     pool = []
-
+    formats = formats
+    head_bg = formats["head_bg"]
+    fg = formats["fg"]
     def __init__(
             self, master, root, menubar=False, 
             ribbon_menu=False, *args, **kwargs):
@@ -1750,12 +1727,10 @@ class Border(Canvas):
         '''
             Runs whenever title bar is clicked, called in get_pos().
         '''
-
-        formats = make_formats_dict()
         for widg in self.BORDER_PARTS:
-            widg.config(bg=formats['head_bg'])
+            widg.config(bg=Border.head_bg)
         for widg in (self.title_1, self.title_2):
-            widg.config(fg=formats['fg'])
+            widg.config(fg=Border.fg)
         for border in Border.pool:
             if border != self:
                 for widg in border.BORDER_PARTS:
@@ -1766,9 +1741,13 @@ class Border(Canvas):
                 idx = Border.pool.index(border)
                 Border.pool.insert(0, Border.pool.pop(idx))
 
-class TitleBarButton(LabelButtonImage):
+class TitleBarButton(Labelx):
+    formats = formats
+    bg = formats["bg"] 
+    head_bg = formats["head_bg"]
+
     def __init__(self, master, icon='', icon_size='tiny', *args, **kwargs):
-        LabelButtonImage.__init__(self, master, *args, **kwargs)
+        Labelx.__init__(self, master, *args, **kwargs)
         '''
             The icons are 32x32 but they can be set to any integer size
             between 12 and 32 and a thumbnail will be displayed if less 
@@ -1808,6 +1787,31 @@ class TitleBarButton(LabelButtonImage):
             bg=NEUTRAL_COLOR,
             image=self.tk_img)
 
+        self.bind('<FocusIn>', self.show_focus)
+        self.bind('<FocusOut>', self.unshow_focus)
+        self.bind('<Button-1>', self.on_press)
+        self.bind('<ButtonRelease-1>', self.on_release)
+        self.bind('<Enter>', self.on_hover)
+        self.bind('<Leave>', self.on_unhover)
+
+    def show_focus(self, evt):
+        self.config(borderwidth=2)
+
+    def unshow_focus(self, evt):
+        self.config(borderwidth=1)
+
+    def on_press(self, evt):
+        self.config(relief='sunken', bg=TitleBarButton.head_bg)
+
+    def on_release(self, evt):
+        self.config(relief='raised', bg=TitleBarButton.bg)
+
+    def on_hover(self, evt):
+        self.config(relief='groove')
+
+    def on_unhover(self, evt):
+        self.config(relief='raised')
+
 class TitleBarButtonSolidBG(TitleBarButton):
     def __init__(self, master, *args, **kwargs):
         TitleBarButton.__init__(self, master, *args, **kwargs)
@@ -1827,11 +1831,8 @@ class Dialogue(Toplevel):
         (ignored) here. This is used for error messages and small dialogs which
         don't change size and will never need to scroll.
     '''
-
     def __init__(self, master, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
-
-        formats = make_formats_dict()
         self.withdraw()
         self.columnconfigure(1, weight=1)
         self.canvas = Border(self, master)
@@ -1849,423 +1850,6 @@ class Dialogue(Toplevel):
         self.geometry("{}x{}".format(width, height))
         center_dialog(self)
         self.deiconify()
-
-
-
-# from persons.py
-
-
-class PersonAdd(Toplevel):
-    def __init__(
-            self, master, inwidg, root, treebard, inwidg2, 
-            formats, person_autofill_values, *args, **kwargs):
-        Toplevel.__init__(self, master, *args, **kwargs)
-        self.master = master
-        self.inwidg = inwidg
-        self.root = root
-        self.inwidg2 = inwidg2
-        self.formats = formats
-        self.person_autofill_values = person_autofill_values
-
-        self.xfr = self.inwidg.get()
-        if "+" in self.xfr:
-            self.xfr = self.xfr.strip().strip("+").strip()
-        self.role_person_edited = False
-        self.rc_menu = RightClickMenu(self.root, treebard=treebard)
-
-        self.new_person_id = None
-        self.full_name = ""
-        self.name_type_id = None
-
-        self.make_dupe = False
-
-        self.make_widgets()
-
-    def make_widgets(self):
-
-        self.geometry('+100+20')
-
-        self.columnconfigure(1, weight=1)
-        self.canvas = Border(self, self.root, self.formats)
-        self.canvas.title_1.config(text="Add Person Dialog")
-        self.canvas.title_2.config(text="")
-
-        self.window = Frame(self.canvas)
-        self.canvas.create_window(0, 0, anchor='nw', window=self.window)
-        scridth = 16
-        scridth_n = Frame(self.window, height=scridth)
-        scridth_w = Frame(self.window, width=scridth)
-        scridth_n.grid(column=0, row=0, sticky='ew')
-        scridth_w.grid(column=0, row=1, sticky='ns')
-
-        self.window.vsb = Scrollbar(
-            self, 
-            hideable=True, 
-            command=self.canvas.yview,
-            width=scridth)
-        self.window.hsb = Scrollbar(
-            self, 
-            hideable=True, 
-            width=scridth, 
-            orient='horizontal',
-            command=self.canvas.xview)
-        self.canvas.config(
-            xscrollcommand=self.window.hsb.set, 
-            yscrollcommand=self.window.vsb.set)
-        self.window.vsb.grid(column=2, row=4, sticky='ns')
-        self.window.hsb.grid(column=1, row=5, sticky='ew')
-
-        buttonbox = Frame(self.window)
-        self.b1 = Button(
-            buttonbox, text="OK", width=8, command=self.prepare_to_add_person)
-        b2 = Button(
-            buttonbox, text="CANCEL", width=8, command=self.close_new_person)
-
-        scridth_n.grid(column=0, row=0, sticky='ew')
-        scridth_w.grid(column=0, row=1, sticky='ns')
-        self.window.columnconfigure(2, weight=1)
-        self.window.rowconfigure(1, weight=1)
-        buttonbox.grid(column=3, row=9, sticky='e', pady=6)
-
-        self.b1.grid(column=0, row=0, padx=(0,12))
-        b2.grid(column=1, row=0, padx=(2,0))
-
-        self.make_inputs()
-        self.maxsize(
-            int(self.winfo_screenwidth() * 0.90),
-            int(self.winfo_screenheight() * 0.90))
-        self.grab_set()
-
-    def make_inputs(self):
-
-        all_pics = get_all_pics()
-
-        lab1 = Label(self.window, text='Gender:')
-        self.gender_input = Combobox(
-            self.window, self.master, values=GENDER_TYPES)
-
-        lab2 = Label(self.window, text='Main Image:')
-        self.image_input = Combobox(self.window, self.master, values=all_pics)
-
-        lab3 = Label(self.window, text='Name Type:')
-        self.name_type_input = Combobox(
-            self.window, self.master, values=get_name_types())
-
-        lab4 = Label(self.window, text='Full Name:')
-        self.name_input = Entry(self.window, width=65)
-        self.name_input.bind("<FocusOut>", self.show_sort_order)
-
-        self.how = LabelH3(
-            self.window, 
-            justify="left",
-            text="Alphabetize name: with AUTOSORT or OK button in focus...\n"
-                "...use arrow keys to enter auto-filled name fields to modify "
-                "sort order or...\n...in case sort order is already "
-                "correct, TAB goes directly to OK button.")
-        autosort = Button(
-            self.window, text='AUTOSORT', command=self.show_sort_order)
-        autosort.bind("<Right>", self.go_to_movables)
-        self.b1.bind("<Left>", self.go_to_movables)
-
-        self.order_frm = Frame(self.window)
-
-        s = 0
-        for stg in range(20):
-            mov = LabelMovable(self.order_frm)
-            mov.grid(column=s, row=0, padx=3)
-            s += 1 
-        for child in self.order_frm.winfo_children():
-            child.config(takefocus=0)
-        lab1.grid(column=0, row=3)
-        self.gender_input.grid(
-            column=1, row=3, padx=12, pady=12, sticky='e')
-        lab2.grid(column=2, row=3)
-        self.image_input.grid(column=3, row=3, padx=12, pady=12, sticky='w')
-        lab3.grid(column=0, row=4, padx=(18,0))
-        self.name_type_input.grid(
-            column=1, row=4,  padx=12, pady=12, sticky='e')
-        lab4.grid(column=2, row=4)
-        self.name_input.grid(column=3, row=4, padx=12, pady=12)
-
-        self.how.grid(column=1, row=5, padx=6, pady=6, columnspan=4, sticky='w')
-        autosort.grid(column=1, row=6, padx=6, pady=6, sticky='w')
-        self.order_frm.grid(column=2, row=6, columnspan=4, pady=24, sticky='w')
-
-        visited = (
-            (self.gender_input, 
-                "Gender Input", 
-                "'Unknown' used if left blank."),
-            (self.image_input, 
-                "Image Input", 
-                "Use an old photo of person's home town if no photo available."),
-            (self.name_type_input, 
-                "Name Type Input", 
-                "Choose the name type."),
-            (self.name_input, 
-                "Name Input", 
-                "Autofills but you can change it."),
-            (autosort, 
-                "Autosort Button", 
-                "Click to auto-create a sortable name."),
-            (self.order_frm, 
-                "", 
-                "Tab to focus name element. Arrow to change order.")
-)        
-        run_statusbar_tooltips(
-            visited, 
-            self.canvas.statusbar.status_label, 
-            self.canvas.statusbar.tooltip_label)
-
-        self.preset()
-
-        rcm_widgets = (
-            self.name_input, self.name_type_input.entry, self.gender_input.entry,
-            self.image_input.entry, autosort, self.order_frm)
-        make_rc_menus(
-            rcm_widgets, 
-            self.rc_menu, 
-            person_add_help_msg)
-
-        # config_generic(self)
-        configall(self, formats)
-        resize_scrolled_content(self, self.canvas, self.window)
-        self.gender_input.entry.focus_set()
-
-    def show_sort_order(self, evt=None):
-
-        if evt is not None and evt.type == "10":
-            for child in self.order_frm.winfo_children():
-                child.config(text='')
-
-        self.got = self.name_input.get().split()
-        if len(self.got) == 0:
-            return
-        else:
-            length = len(self.got)-1
-        word = self.got[length].lower()
-        
-        self.got.insert(0, ',')
-        length += 1
-        if word not in NAME_SUFFIXES:
-            self.got.insert(0, self.got.pop())
-        elif word in NAME_SUFFIXES and self.got[length].lower() == word:
-            self.got.insert(0, self.got.pop())
-            self.got.insert(0, self.got.pop())
-
-        for child in self.order_frm.winfo_children():
-            child.config(text='')
-
-        v = 0
-        for name in self.got:
-            self.order_frm.winfo_children()[v].config(text=name)
-            v += 1
-
-    def go_to_movables(self, evt):
-        labels = self.order_frm.winfo_children()
-        for child in labels:
-            child.config(takefocus=1)
-        sym = evt.keysym
-        if sym == "Right":
-            labels[0].focus_set()
-        elif sym == "Left":
-            labels[19].focus_set()
-
-    def preset(self):
-        self.gender_input.entry.delete(0, 'end')
-        self.gender_input.entry.insert(0, 'unknown')
-        self.image_input.entry.delete(0, 'end')
-        self.image_input.entry.insert(0, '0_default_image_unisex.jpg')
-        self.name_type_input.entry.config(state='normal')
-        self.name_type_input.entry.delete(0, 'end')
-        self.name_type_input.entry.insert(0, 'birth name')
-        self.name_input.delete(0, 'end')
-        get2 = self.inwidg2
-        if get2 and len(get2.get()) != 0:
-            self.name_input.insert(0, get2.get())
-        elif get2 and len(get2.get()) == 0:
-            self.name_input.insert(0, self.xfr)
-        elif get2 is None:
-            self.name_input.insert(0, self.xfr)
-
-    def make_sort_order_to_store(self): 
-        self.order = []
-
-        for child in self.order_frm.winfo_children():
-            text = child['text']
-            self.order.append(text)
-
-        self.order = ' '.join(self.order)
-        self.order = self.order.replace(' , ', ', ')
-        self.order = self.order.strip(', ')
-        if len(self.order) == 0:
-            order = self.full_name.split()
-            order.insert(0, order.pop())
-            order[0] = order[0] + ","
-            self.order = " ".join(order)
-
-    def prepare_to_add_person(self, findings_roles_id=None):
-
-        def err_done():
-            self.name_type_input.delete(0, 'end')
-            msg[0].grab_release()
-            msg[0].destroy()
-            self.name_type_input.entry.focus_set()
-
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
-        self.get_entered_values(cur, conn)
-        self.findings_roles_id = findings_roles_id
-        cur.execute(select_image_id, (self.selected_image,))
-        self.img_id = cur.fetchone()[0]
-        cur.execute(select_name_type_id, (self.name_type,))
-        name_type_id = cur.fetchone()
-        if name_type_id:
-            self.name_type_id = name_type_id[0]            
-            self.check_for_dupes()
-        else:
-            msg = open_message(
-                self, 
-                persons_msg[1], 
-                "Unknown Name Type", 
-                "OK")
-            msg[0].grab_set()
-            msg[2].config(command=err_done)
-            return
-        cur.close()
-        conn.close()
-
-    def ok_new_person(self):
-        self.save_new_person()
-        self.close_new_person() 
-
-    def close_new_person(self):
-        self.grab_release()
-        self.inwidg.focus_set()
-        self.destroy()        
-
-    def get_entered_values(self, cur, conn):
-        self.full_name = self.name_input.get()
-        selected_image = self.image_input.entry.get()
-        self.name_type = self.name_type_input.entry.get()
-        gender = self.gender_input.get()
-        if gender in GENDER_TYPES:
-            self.gender = gender
-        else:
-            self.gender = 'unknown'
-        all_images = [i[0] for i in get_all_pics()]
-        if selected_image in all_images:
-            self.selected_image = selected_image
-        else:
-            cur.execute(insert_image_new, (selected_image,))
-            conn.commit()
-            self.selected_image = selected_image 
-
-    def save_new_person(self):
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur.execute(insert_person_new, (self.new_person_id, self.gender))
-        conn.commit()
-        cur.execute(
-            insert_name, 
-            (self.new_person_id, self.full_name, self.name_type_id, self.order))
-        conn.commit()
-
-        cur.execute(insert_images_elements, (self.img_id, self.new_person_id))
-        conn.commit()
-
-        cur.execute(insert_finding_birth_new_person, (self.new_person_id,))
-        conn.commit()
-        new_name_string = self.full_name
-        cur.close()
-        conn.close()
-
-        self.inwidg.delete(0, 'end')
-        self.inwidg.insert(0, new_name_string)
-
-        self.image_input.delete(0, 'end')
-        self.image_input.insert(0, '0_default_image_unisex.jpg')
-
-        for widg in (self.name_type_input, self.name_input):
-            widg.delete(0, 'end')
-
-        for child in self.order_frm.winfo_children():
-            child.config(text='')
-        self.gender_input.delete(0, 'end')
-
-    def show(self):
-        return self.new_person_id
-
-    def make_temp_person_id(self):
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-        cur.execute(select_max_person_id)
-        self.new_person_id = cur.fetchone()[0] + 1
-        if self.role_person_edited is True:
-            cur.execute(
-                update_findings_roles_person, 
-                (self.new_person_id, self.findings_roles_id))
-            conn.commit()
-            self.role_person_edited = False 
-        
-        cur.close()
-        conn.close()
-
-    def check_for_dupes(self):
-
-        def ok_new_name():
-            self.make_dupe = True
-            msg[0].destroy()
-            self.name_input.insert(0, self.full_name)
-            self.make_temp_person_id()
-            self.make_sort_order_to_store()
-            self.ok_new_person()
-
-        def cancel_new_name():
-            msg[0].destroy()
-            self.reset()
-            self.name_input.focus_set()
- 
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-
-        cur.execute(select_all_names)
-        names_only = [i[0] for i in cur.fetchall()]
-
-        if self.full_name not in names_only:
-            self.make_temp_person_id()
-            self.make_sort_order_to_store()
-            self.ok_new_person()
-        else:
-            msg = open_yes_no_message(
-                self, 
-                persons_msg[0], 
-                "Duplicate Name in Tree", 
-                "OK", "CANCEL")
-            msg[0].grab_set()
-            msg[2].config(command=ok_new_name)
-            msg[3].config(command=cancel_new_name)
-            if self.make_dupe is True:  
-                self.make_temp_person_id() 
-                self.reset()
-            else:
-                self.reset() 
-        cur.close()
-        conn.close()
-
-    def reset(self):
-        self.preset()
-        self.name_input.delete(0, 'end')
-        for child in self.order_frm.winfo_children():
-            child['text'] = ''
-        self.make_dupe = True 
-
-# from autofill.py
 
 class EntryAuto(Entry):
     '''
@@ -2385,9 +1969,7 @@ class EntryAuto(Entry):
 class EntryAutoHilited(EntryAuto):
     def __init__(self, master, formats, *args, **kwargs):
         EntryAuto.__init__(self, master, *args, **kwargs)
-
         self.config(bg=formats["highlight_bg"])
-
 
 """ These two autofill inputs are based on simpler code in autofill.py. """
 class EntryAutoPerson(EntryUnhilited):
@@ -2398,12 +1980,10 @@ class EntryAutoPerson(EntryUnhilited):
         `EntryAuto.create_lists(all_items)`. After values change, run something 
         like `update_person_autofill_values()`.        
     """
-
     all_person_autofills = []
     formats = formats
     highlight_bg = formats["highlight_bg"]
     bg = formats["bg"]
-
     def create_lists(all_items):
         """ Keeps a temporary list during one app session which will 
             prioritize the autofill values with the most recently used values
@@ -2616,13 +2196,16 @@ class EntryAutoPerson(EntryUnhilited):
         self.select_clear()
 
 class EntryAutoPersonHilited(EntryAutoPerson):
+    """ Override event handling from parent class. """
     def __init__(self, master, formats, *args, **kwargs):
         EntryAutoPerson.__init__(self, master, *args, **kwargs)
-
         self.config(bg=formats["highlight_bg"])
+    def highlight(self, evt):
+        pass
+    def unhighlight(self, evt):
+        pass
 
 # from custom_combobox_widget.py
-
 class Combobox(FrameHilited3):
     hive = []
     formats = formats
@@ -2703,9 +2286,7 @@ class Combobox(FrameHilited3):
         self.update_idletasks()
         self.width = self.winfo_reqwidth()
 
-        self.drop = ToplevelHilited(
-            self,
-            bd=0)
+        self.drop = ToplevelHilited(self, bd=0)
         self.drop.bind('<Destroy>', self.clear_reference_to_dropdown)
         self.drop.withdraw()
         Combobox.hive.append(self.drop)
@@ -3138,7 +2719,6 @@ class ComboArrow(Labelx):
 
 # from custom_tabbed_widget.py
 
-
 '''
     Replaces ttk.Notebook. Tabs can be displayed on the bottom of the main
     frame, instead of the top. 
@@ -3150,23 +2730,28 @@ class ComboArrow(Labelx):
 '''
 
 class LabelTab(Labelx):
+    formats = formats
+    bg = formats["bg"]
+    fg = formats["fg"]
+    highlight_bg = formats["highlight_bg"]
+    tab_font = formats["tab_font"]
     def __init__(self, master, *args, **kwargs):
-        Labelx.__init__(self, master, *args, **kwargs)
-    
-        self.formats = make_formats_dict()
-        self.config(font=self.formats['tab_font'])
-
-        self.chosen = False        
-
+        Labelx.__init__(self, master, *args, **kwargs)    
+        self.config(font=formats['tab_font'])
+        self.chosen = False
         if self.chosen is False:
-            self.config(bg=self.formats['bg'], fg=self.formats['fg'])
+            self.config(bg=formats['bg'], fg=formats['fg'])
         else: 
-            self.config(bg=self.formats['highlight_bg']) 
+            self.config(bg=formats['highlight_bg']) 
 
 class TabBook(Framex):
-
+    formats = formats
+    fg = formats["fg"]
+    bg = formats["bg"]
+    highlight_bg = formats["highlight_bg"]
+    tab_font = formats["tab_font"]
     def __init__(
-            self, master, root=None, side='nw', bd=0, tabwidth=12, 
+            self, master, root=None, side='nw', bd=0, tabwidth=13, 
             selected='', tabs=[],  minx=0.90, miny=0.85, case='title', 
             takefocus=1, *args, **kwargs):
         Framex.__init__(self, master, *args, **kwargs)
@@ -3195,8 +2780,6 @@ class TabBook(Framex):
         self.miny = self.master.winfo_screenheight() * miny
         self.case = case
         self.takefocus = takefocus
-
-        self.formats = make_formats_dict()
         
         self.tabdict = {}
         for tab in tabs:
@@ -3316,12 +2899,10 @@ class TabBook(Framex):
     def unhighlight_tab(self, evt):
         # accelerators don't work if notebook not visible
         if evt.widget in self.store.values():
-            evt.widget.config(fg=self.formats['fg'])
+            evt.widget.config(fg=LabelTab.fg)
 
     def make_active(self, evt=None):
         ''' Open the selected tab & reconfigure it to look open. '''
-
-        self.formats = make_formats_dict()
 
         # position attributes are needed in the instance
         self.posx = self.winfo_rootx()
@@ -3343,7 +2924,7 @@ class TabBook(Framex):
                         
             # if evt was spacebar, return key, or mouse button
             elif evt.type in ('2', '4'):
-                self.active.config(fg=self.formats['fg'])
+                self.active.config(fg=LabelTab.fg)
 
             # remove all pages and regrid the right one
             for k,v in self.tabdict.items():
@@ -3355,8 +2936,8 @@ class TabBook(Framex):
         # unhighlight all tabs
         for tab in self.tabdict.values():
             tab[1].config(
-                bg=self.formats['highlight_bg'],
-                font=self.formats['tab_font'])
+                bg=LabelTab.highlight_bg,
+                font=LabelTab.tab_font)
 
         # detect which tab is active and set its tab.chosen attribute to True
         #   so config_generic will give it the right background color when
@@ -3370,8 +2951,8 @@ class TabBook(Framex):
         # highlight active tab; doesn't work on load due to config_generic()
         #   but does work on user-initiated events
         self.active.config(
-            bg=self.formats['bg'],
-            font=self.formats['tab_font'])
+            bg=LabelTab.bg,
+            font=LabelTab.tab_font)
         # remove all pages and regrid the right one
         for v in self.tabdict.values():
             if self.active == v[1]:
@@ -3410,46 +2991,46 @@ class LabelStatusbar(Labelx):
             fg=LabelStatusbar.fg,
             font=LabelStatusbar.status)
 
-def run_statusbar_tooltips(visited, status_label, tooltip_label):
-    '''
-        Uses lambda to add args to event
-        since tkinter expects only one arg in a callback.
-    '''
+# def run_statusbar_tooltips(visited, status_label, tooltip_label):
+    # '''
+        # Uses lambda to add args to event
+        # since tkinter expects only one arg in a callback.
+    # '''
 
-    def handle_statusbar_tooltips(event):
-        for tup in visited:
-            if tup[0] is event.widget:
-                if event.type == '9': # FocusIn
-                    status_label.config(text=tup[1])
-                elif event.type == '10': # FocusOut
-                    status_label.config(text='')
-                elif event.type == '7': # Enter
-                    tooltip_label.grid(
-                        column=1, row=0, 
-                        sticky='e', padx=(6,24))
-                    tooltip_label.config(
-                        text=tup[2],
-                        bg='black',
-                        fg='white',
-                        font=LabelStatusbar.formats["status"])
-                elif event.type == '8': # Leave
-                    tooltip_label.grid_remove()
-                    tooltip_label.config(
-                        bg=formats['bg'], text='', fg=formats['bg'])
+    # def handle_statusbar_tooltips(event):
+        # for tup in visited:
+            # if tup[0] is event.widget:
+                # if event.type == '9': # FocusIn
+                    # status_label.config(text=tup[1])
+                # elif event.type == '10': # FocusOut
+                    # status_label.config(text='')
+                # elif event.type == '7': # Enter
+                    # tooltip_label.grid(
+                        # column=1, row=0, 
+                        # sticky='e', padx=(6,24))
+                    # tooltip_label.config(
+                        # text=tup[2],
+                        # bg='black',
+                        # fg='white',
+                        # font=LabelStatusbar.formats["status"])
+                # elif event.type == '8': # Leave
+                    # tooltip_label.grid_remove()
+                    # tooltip_label.config(
+                        # bg=formats['bg'], text='', fg=formats['bg'])
 
-    statusbar_events = ['<FocusIn>', '<FocusOut>', '<Enter>', '<Leave>']
+    # statusbar_events = ['<FocusIn>', '<FocusOut>', '<Enter>', '<Leave>']
 
-    for tup in visited:
-        widg = tup[0]
-        status = tup[1]
-        tooltip = tup[2]
-        for event_pattern in statusbar_events:
-            # error if tup[0] has been destroyed 
-            #   so don't use these with destroyable widgets
-            # different tooltips are available in utes.py
-            widg.bind(event_pattern, handle_statusbar_tooltips, add='+')
+    # for tup in visited:
+        # widg = tup[0]
+        # status = tup[1]
+        # tooltip = tup[2]
+        # for event_pattern in statusbar_events:
+            # # error if tup[0] has been destroyed 
+            # #   so don't use these with destroyable widgets
+            # # different tooltips are available in utes.py
+            # widg.bind(event_pattern, handle_statusbar_tooltips, add='+')
 
-        status_label.config(font=formats['status'])
+        # status_label.config(font=formats['status'])
 
 class StatusbarTooltips(Frame):
     '''
@@ -3621,8 +3202,6 @@ class Separator(Framex):
             self.line3.config(bg=Separator.color3)
 
 # from scrolling.py
-
-
 
 '''
 	One purpose of this module is to tell right here how to make a canvas and 
@@ -3796,119 +3375,6 @@ class Separator(Framex):
     the Border class which is in window_border.py.
 
 '''
-
-def resize_scrolled_content(toplevel, canvas, window): 
-    '''
-        Besides configuring the scrollbar when the content changes, this 
-        gives a hideable scrollbar a place to grid (scridth) so the 
-        scrollbar doesn't appear before it's needed due to its own
-        width. Extra space or `scridth` is added where the hidden scrollbars
-        will appear. Extra spacer frames (such as `scridth_n` and `scridth_w` 
-        in main.py) are added to balance this out (don't do any of this with
-        padding). The end result is a hideable scrollbar without a lop-sided 
-        border around the canvas.
-    '''
-
-    def resize_scrollbar():
-        toplevel.update_idletasks()
-        canvas.config(scrollregion=canvas.bbox('all'))
-
-    def resize_window():
-        '''
-            Don't try to DETECT scrollbar width (`scridth`) in this function.
-            For some reason it causes certain combinations of values
-            below to freeze the app. Hard-coded is good enough since there
-            are only a few sizes of scrollbar. Add 10 to the scrollbar width 
-            and that gives it wiggle room (makes it work right--not sure why).
-        '''
-
-        toplevel.update_idletasks()
-        if toplevel.winfo_name() == 'tk':
-            bar_height = 96 # menubar + ribbon + statusbar
-            scridth = 30
-        else:
-            bar_height = 27 # statusbar
-            scridth = 26
-        page_x = window.winfo_reqwidth() + scridth
-        page_y = window.winfo_reqheight() + scridth + bar_height
-        toplevel.geometry('{}x{}'.format(page_x, page_y))
-
-    resize_scrollbar()
-    resize_window()
-
-class MousewheelScrolling():
-    def __init__(self, root, main_canvas):
-
-        self.root = root
-        self.scroll_this = self.main_canvas = main_canvas
-
-        self.resizable_canvases = []
-        self.nested_canvases = []
-
-    def scroller(self, event):
-        '''
-            The error is when the mousewheel is used over a toplevel 
-            with no canvas, which happens because there are Comboboxes 
-            in dialogs that have a fixed size and don't need to scroll.
-            Saving this for later when mousewheel functionality is 
-            added to the Combobox dropdown.
-        '''
-
-        # DO NOT DELETE
-        try:
-            self.scroll_this.yview_scroll(
-                int(-1*(event.delta/120)), 'units')
-        except AttributeError:
-            pass
-        
-    def look_under_mouse(self, evt):
-        self.root.bind_all('<MouseWheel>', self.scroller)
-        evt.widget.bind('<Enter>', self.look_under_mouse)
-        self.scroll_this = evt.widget
-        evt.widget.bind('<Leave>', self.forget_canvas) 
-
-    def forget_canvas(self, evt):
-        canvas_left = evt.widget
-        if canvas_left is self.main_canvas:
-            canvas_left.unbind_all('<MouseWheel>') 
-        elif canvas_left in self.nested_canvases:
-            self.scroll_this = self.main_canvas 
-        else:
-            canvas_left.unbind_all('<MouseWheel>') 
-
-    def remove_from_list(self, evt):
-        canvas = evt.widget
-        resizers = [i[0] for i in self.resizable_canvases]
-        nesteds = self.nested_canvases
-        if canvas in resizers:
-            idx = resizers.index(canvas)
-            del self.resizable_canvases[idx]
-        elif canvas in nesteds:
-            idx = nesteds.index(canvas)
-            del self.nested_canvases[idx]
-
-    def append_to_list(self, appendee, resizable=True):
-        if resizable is True:
-            self.resizable_canvases.append(appendee)
-            appendee = appendee[0]
-        else:
-            self.nested_canvases.append(appendee)
-        appendee.bind('<Destroy>', self.remove_from_list)
-
-    def configure_mousewheel_scrolling(self, in_root=False):
-
-        if in_root is True:
-            self.root.bind_all('<MouseWheel>', self.scroller)
-        self.root.update_idletasks()
-
-        for canvas in self.resizable_canvases:
-            canvas[0].bind('<Enter>', self.look_under_mouse)
-        for canvas in self.nested_canvases:
-            canvas.bind('<Enter>', self.look_under_mouse)
-        for canvas in self.resizable_canvases:
-            canvas, window = canvas[0], canvas[1]
-            resize_scrolled_content(canvas.master, canvas, window)
-
 class Scrollbar(Canvas):
     '''
         A scrollbar is gridded as a sibling of what it's scrolling. Set the 
@@ -4072,59 +3538,537 @@ class ScrolledText(Framex):
         self.text.configure(yscrollcommand=self.ysb.set)
         self.ysb.grid(column=1, row=0, sticky='ns')
 
-# from messages.py
+# from dropdown.py
 
-def open_message(master, message, title, buttlab, inwidg=None):
+'''
+    Replaces Tkinter Menu. Unlike Tkinter's dropdown menu, this widget
+        --is used and configured like other Tkinter widgets.
+        --doesn't use Windows colors.
 
-    def close():
+    Currently this dropdown menu only uses the mouse, but it could be 
+    improved to use keyboard navigation also.
+
+    I just found out, long after creating a replacement for the Windows border
+    and putting it on all my main dialogs and the root window, that the 
+    Tkinter dropdown menu doesn't even work with my "Toykinter" border. Not
+    that I wanted to use tkinter.Menu anyway since its colors can't be changed 
+    (maybe depending on the Windows theme in use). Tkinter's dropdown menu 
+    doesn't use any of Tkinter's geometry managers (`grid`, `pack` or `place`),
+    since it's assumed that the menu is always going to be right below the
+    Windows title bar. Since the Toykinter title bar is gridded like any other
+    widget, the Tkinter menu bar attaches above the Toykinter title bar and I 
+    doubt there's anything that can be done about it, but it doesn't matter, I 
+    just had to write a little code, like everyone does in HTML anyway when 
+    they need a dropdown menu for a web app.
+
+    At this time I'm keeping it as simple as possible by making the dropdown
+    menu respond only to mouse events. To me this seems like the right way
+    to use a dropdown menu since I want to tab through GUI functionalities
+    quickly to get to the right one, without having to first tab through a 
+    bunch of icons and text menu items. Normally I'd rather type than
+    click, but prior efforts to make a dropdown menu that works with both mouse
+    and keyboard got bogged down in conflicting events and focus handling.
+
+    This widget is hard-coded to handle three levels of menu items: 1) The 
+    Labels permanently gridded horizontally across the menu bar; 2) the first
+    dropdown that pops open or closed on click and hover events; 3) the second 
+    dropdown which flies out to the right of its parent.
+
+    Since there will never be more than one set of `drop0`, `drop1`, and `drop2`
+    open at a time, only one set exists. Each of the three drops is a permanent 
+    widget which is withdrawn, deiconified and populated with destroyable labels 
+    as needed.
+
+    The dropdown is a Toplevel window since it's the only Tkinter widget that
+    is made to overlap other widgets without pushing them to the side.
+    The Toplevel also doesn't rely on `grid`, `pack` or `place`. Instead, the 
+    Toplevel dropdown uses the geometry() method to appear next to its host 
+    widget. If the window moves, the dropdown is withdrawn.
+'''
+
+class DropdownMenu(FrameHilited2):
+    formats = formats
+    bg = formats["bg"]
+    highlight_bg = formats["highlight_bg"]
+    head_bg = formats["head_bg"]
+    def __init__(
+            self, master, root, treebard, callback=None, *args, **kwargs):
+        Frame.__init__(self, master, *args, **kwargs)
+
+        self.master = master 
+        self.root = root
+        self.treebard = treebard
+        self.callback = callback
+
+        self.recent_trees = []
+
+        self.drop1_is_open = False
+        self.drop2_is_open = False
+        self.expand = False 
+
+        self.clicked = None
+
+        self.host1 = None
+        self.drop_delay = 250
+        self.ipady = 3
+        self.screen_height = self.winfo_screenheight()
+
+        self.drop1 = ToplevelHilited(self, bd=1, relief="raised")
+        self.drop2 = ToplevelHilited(self, bd=1, relief="raised")
+        self.current_file = ""
+
+        self.drop_items = {
+            "file": (
+                ("new", lambda evt, root=self.root, tbard=self.treebard, 
+                    openfunx=open_input_message2, 
+                    msg=opening_msg: handle_new_tree_event(
+                        evt, root, tbard, openfunx, msg),
+                    "n"),
+                ("open", lambda evt, tbard=self.treebard: handle_open_event(
+                    evt, tbard), "..."),
+                ("save", lambda evt, name="save (redraw)": placeholder(evt, name), "s"),
+                ("save as", lambda evt, root=self.root: save_as(evt, root), "CAs"),
+                ("save copy as", lambda evt: save_copy_as(), "t"),
+                ("rename", lambda evt, root=self.root: rename_tree(evt, root), "h"),
+                ("recent trees", lambda evt: self.show_recent_trees(evt), 
+                    ">", self.recent_trees),
+                ("import tree", self.show_list, ">", IMPORT_TYPES),
+                ("export tree", self.show_list, ">", EXPORT_TYPES),
+                ("close", lambda evt, tbard=self.treebard: close_tree(evt, tbard), ""),
+                ("exit", lambda evt, root=self.root: exit_app(evt, root), "")),
+
+            "edit": (
+                ("cut", lambda evt, name="cut": placeholder(evt, name), "x"), 
+                ("copy", lambda evt, name="copy": placeholder(evt, name), "c"), 
+                ("paste", lambda evt, name="paste": placeholder(evt, name), "v")),
+
+            "elements": (
+                ("add person", 
+                    lambda evt, name="add person": placeholder(evt, name), ""),
+                ("add place", 
+                    lambda evt, name="add place": placeholder(evt, name), ""),
+                ("add event",
+                    lambda evt, name="add event": placeholder(evt, name), ""),
+                ("add assertion", 
+                    lambda evt, name="add assertion": placeholder(evt, name), ""),
+                ("add source",  
+                    lambda evt, name="add source": placeholder(evt, name), ""),
+                ("add image",  
+                    lambda evt, name="add image": placeholder(evt, name), ""),),
+
+            "output": (
+                ("charts", 
+                    lambda evt, name="charts": placeholder(evt, name), ""),
+                ("reports", 
+                    lambda evt, name="reports": placeholder(evt, name), ""),),
+
+            "research": (
+                ("do list", 
+                    lambda evt, name="do list": placeholder(evt, name), ""),
+                ("add research goals", 
+                    lambda evt, name="research goals": placeholder(evt, name), ""),
+                ("contacts",
+                    lambda evt, name="contacts": placeholder(evt, name), ""),
+                ("correspondence",  
+                    lambda evt, name="correspondence": placeholder(evt, name), ""),),
+
+            "tools": (
+                ("relationship calculator", 
+                    lambda evt, name="relationship calculator": placeholder(evt, name), ""), 
+                ("date calculator",  
+                    lambda evt, name="date calculator": placeholder(evt, name), ""), 
+                ("dupes & matches detector",  
+                    lambda evt, name="dupes & matches detector": placeholder(evt, name), ""), 
+                ("unlikelihood detector",  
+                    lambda evt, name="unlikelihood detector": placeholder(evt, name), ""), 
+                ("certainty calculator",  
+                    lambda evt, name="certainty calculator": placeholder(evt, name), "")),  
+
+            "help": (
+                ("about treebard", 
+                    lambda evt, name="about treebard": placeholder(
+                        evt, name), ""),
+                ("users' manual",  
+                    lambda evt, name="users' manual": placeholder(
+                        evt, name), ""),
+                ("genealogy tips & tricks", 
+                    lambda evt, name="genealogy tips & tricks": placeholder(
+                        evt, name), ""),
+                ("treebard website",
+                    lambda evt, name="treebard website": placeholder(
+                        evt, name), ""),
+                ("forum & blog", 
+                    lambda evt, name="forum & blog": placeholder(
+                        evt, name), ""),
+                ("help search",  
+                    lambda evt, name="help search": placeholder(
+                        evt, name), ""),
+                ("contact",
+                    lambda evt, name="contact": placeholder(
+                        evt, name), ""),
+                ("feature requests", 
+                    lambda evt, name="feature requests": placeholder(
+                    evt, name), ""),
+                ("source code",  
+                    lambda evt, name="source code": placeholder(
+                        evt, name), ""),
+                ("donations",  
+                    lambda evt, name="donations": placeholder(
+                        evt, name), ""),)}
+
+        self.make_drop0()
+
+        for drop in (self.drop1, self.drop2):
+            drop.wm_overrideredirect(1)
+            drop.withdraw()
+        
+        self.root.bind("<Button-1>", self.close_drop_on_click, add="+")
+
+    def make_drop0(self):
+        d = 0
+        for key in self.drop_items:
+            lab = LabelHilited3(self, text=key.title(), bd=1)
+            lab.grid(column=d, row=0, ipadx=6, ipady=self.ipady)
+            lab.bind('<Button-1>', self.open_drop1_on_click)
+            lab.bind('<Enter>', self.make_border)
+            lab.bind('<Leave>', self.flatten_border)
+            lab.bind('<Enter>', self.open_drop1_on_hover, add="+")
+            lab.bind('<Leave>', self.open_drop1_on_hover, add="+")
+            d += 1
+
+    def make_drop1(self, evt):
+        for child in self.drop1.winfo_children():
+            child.destroy()
+        self.host1 = widg = evt.widget
+        cmd = widg.cget("text").lower()
+        for k,v in self.drop_items.items():
+            if cmd == k:
+                format_strings = []
+                text = ""
+                lengths = []
+                widgets = []
+                row = 0
+                for lst in self.drop_items[cmd]:
+                    lab = LabelHilited3(self.drop1, text=lst[0].title())
+                    symval = lst[2]
+                    if symval == ">":
+                        text = "{}    >".format(lst[0].title())
+                    elif symval == "...":
+                        text = "{}...    {}".format(lst[0].title(), " ")
+                    elif len(symval) != 0:
+                        if symval.startswith("CA"):
+                            symval = symval[2]
+                            mod_key = MOD_KEYS[3]
+                        else:
+                            mod_key = MOD_KEYS[0]
+                        text = "{}    {}+{}".format(lst[0].title(), mod_key, symval.upper())
+                    elif len(symval) == 0:
+                        text = "{}    ".format(lst[0].title())
+                    else:
+                        print("line", looky(seeline()).lineno, "case not handled:")
+
+                    lab.grid(column=0, row=row, sticky='ew')
+                    self.bind_command(lab, text, v[row])
+                    format_strings.append(text)
+                    lengths.append(len(text))
+                    widgets.append(lab)
+                    row += 1
+                self.fix_strings(
+                    lengths, self.drop_items[cmd], format_strings, widgets)
+     
+        self.position_drop1()
+        self.drop1.deiconify()
+
+    def fix_strings(self, lengths, stringslist, format_strings, widgets):
+        maxx = max(lengths)
+        j = 0
+        for lst in stringslist:
+            rightsym = False
+            if len(lst[2]) != 0:
+                rightsym = True
+            if rightsym:
+                diff = maxx - lengths[j] + 4
+            else:
+                diff = maxx - lengths[j]
+            stgs = format_strings[j].split("    ")
+            new_string = "{}{}{}".format(stgs[0], " " * (diff), stgs[1])
+
+            if not rightsym:
+                new_string = "{}    ".format(new_string)
+            widgets[j].config(text=new_string, width=maxx + 4)
+            j += 1
+
+    def bind_command(self, lab, text, v_row): 
+        lab.bind('<Enter>', self.highlight)
+        lab.bind('<Leave>', self.unhighlight)
+        lab.bind("<Enter>", self.detect_drop2, add="+")
+        lab.bind("<Leave>", self.close_drop2, add="+")
+        lab.bind("<ButtonRelease-1>", self.close_drop_on_click, add="+")
+        if ">" in text:
+            return
+        lab.bind("<Button-1>", v_row[1], add="+")
+
+    def highlight(self, evt):
+        evt.widget.config(bg=LabelHilited3.bg)
+
+    def unhighlight(self, evt):
+        evt.widget.config(bg=LabelHilited3.highlight_bg)
+
+    def detect_drop2(self, evt):    
+
+        def run_drop_delay(delay):
+            self.after(delay, self.make_drop2, evt, row, sym, text)            
+
+        widg = evt.widget
+        row = widg.grid_info()['row']
+        text = widg.cget('text').lower()
+        for k,v in self.drop_items.items():
+            if k != self.clicked:
+                break
+            if ">" in text:
+                if v[row][0] == text.rstrip(">").rstrip():
+                    sym = ">"
+                    run_drop_delay(self.drop_delay)
+                    break
+            else:
+                self.expand = False
+                self.close_drop2()
+
+    def show_recent_trees(self, evt):
+        def populate_drop2_recent_files():
+            x = 0
+            for i in range(20):
+                lab = LabelHilited3(self.drop2, anchor="w")
+                if len(recent_files) >= x + 1:
+                    lab.config(text=recent_files[x])
+                    lab.grid(sticky='ew')
+                    lab.bind("<ButtonRelease-1>", use_recent_tree, add="+")
+                    lab.bind('<Enter>', self.highlight)
+                    lab.bind('<Leave>', self.unhighlight)
+                else:
+                    break
+                x += 1   
+
+        def use_recent_tree(event):
+            nonlocal recent_files
+            close_tree(treebard=self.treebard)
+            tree_title = event.widget.cget("text")
+            current_file = "{}.tbd".format(tree_title.replace(" ", "_").lower())
+            set_current_file(current_file)            
+            save_recent_tree(tree_title, recent_files)
+            for child in self.drop2.winfo_children():
+                child.destroy()
+            populate_drop2_recent_files()
+            change_tree_title(self.treebard)
+            self.treebard.make_main_window()                
+
+        recent_files = get_recent_files() 
+        populate_drop2_recent_files()
+
+    def show_list(self, list_to_use):
+        format_strings = []
+        text = ""
+        lengths = []
+        widgets = []
+        row = 0
+        for lst in list_to_use:
+            lab = LabelHilited3(self.drop2, text=lst[0].title())
+            symval = lst[2]
+            if symval == ">":
+                text = "{}    >".format(lst[0].title())
+            elif symval == "...":
+                text = "{}...    {}".format(lst[0].title(), " ")
+            elif len(symval) != 0:                
+                if symval.startswith("AA"):
+                    symval = symval[2]
+                    mod_key = MOD_KEYS[0]
+                elif symval.startswith("SS"):
+                    symval = symval[2]
+                    mod_key = MOD_KEYS[1]
+                elif symval.startswith("CA"):
+                    symval = symval[2]
+                    mod_key = MOD_KEYS[2]
+                elif symval.startswith("CS"):
+                    symval = symval[2]
+                    mod_key = MOD_KEYS[3]
+                elif symval.startswith("AS"):
+                    symval = symval[2]
+                    mod_key = MOD_KEYS[4]
+                else:
+                    mod_key = MOD_KEYS[5]
+                text = "{}    {}+{}".format(lst[0].title(), mod_key, symval.upper())
+            elif len(symval) == 0:
+                text = "{}    {}".format(lst[0].title(), " ")
+            else:
+                print("line", looky(seeline()).lineno, "case not handled:")
+
+            lab.grid(column=0, row=row, sticky='w')
+            lab.bind('<Enter>', self.highlight)
+            lab.bind('<Leave>', self.unhighlight)
+            lab.bind("<Button-1>", self.close_drop_on_click, add="+")
+            format_strings.append(text)
+            lengths.append(len(text))
+            widgets.append(lab)
+            row += 1
+
+        self.fix_strings(
+            lengths, list_to_use, format_strings, widgets)
+
+    def make_drop2(self, evt, row, sym, text):
+        for child in self.drop2.winfo_children():
+            child.destroy()
+        self.host2 = evt.widget
+        for k,v in self.drop_items.items():
+            row = 0
+            for lst in v:
+                text = text.split("    ")[0]
+                if text == v[row][0]:
+                    v[row][1](v[row][3])
+                row += 1
+        self.position_drop2()
+        self.drop2.deiconify()
+        self.drop2_is_open = True
+        self.expand = True
+
+    def position_drop2(self):
+        self.drop2.geometry("+{}+{}".format(
+            self.drop1.winfo_rootx() - 3 + self.drop1.winfo_reqwidth(), 
+            self.host2.winfo_rooty())) 
+
+    def close_drop2(self, evt=None):
+        if self.drop1_is_open is True and self.expand is True:
+            return
+
+        def withdraw_drop2():
+            self.drop2.withdraw()
+            for child in self.drop2.winfo_children():
+                child.destroy()
+
+        def run_drop_delay(delay):
+            self.after(delay, withdraw_drop2)
+
+        run_drop_delay(self.drop_delay)
+        self.drop2_is_open = False
+        self.expand = False
+
+    def position_drop1(self):
+        app_west = self.root.winfo_rootx()
+        app_north = self.root.winfo_rooty()
+        west = self.host1.winfo_rootx()
+        north = (
+            self.host1.winfo_rooty() + self.host1.winfo_reqheight() + 
+                (self.ipady * 2))
+        self.drop1.geometry("+{}+{}".format(west, north))
+
+    def open_drop1_on_click(self, evt):
+        if self.drop1_is_open is True:
+            if self.drop1_is_open is False:
+                return
+            if self.drop2_is_open is True and self.expand is False:
+                return
+            for child in self.drop1.winfo_children():
+                child.destroy()
+            self.drop1_is_open = False
+            self.expand = False
+            self.make_border(evt) 
+            self.drop1.withdraw()
+            return
+        self.make_drop1(evt)
+        self.clicked = evt.widget.cget("text").lower()
+        self.drop1_is_open = True
+        self.make_border(evt)  
+
+    def open_drop1_on_hover(self, evt):
+        if self.drop1_is_open is False:
+            return
+        self.make_drop1(evt)
+        self.clicked = evt.widget.cget("text").lower() 
+
+    def make_border(self, evt):
+        if self.drop1_is_open is True:
+            evt.widget.config(relief="sunken")
+        elif self.drop1_is_open is False:
+            evt.widget.config(relief="raised")
+
+    def flatten_border(self, evt):
+        evt.widget.config(relief="flat")
+
+    def close_drop_on_click(self, evt):
         '''
-            Override this is more needs to be done on close.
-        '''
-        msg.destroy()
+            Handle miscellaneous clicks that should or should not close 
+            the dropdown.
+        '''        
+        def close_it():
+            self.drop1.withdraw()
+            self.drop2.withdraw()
+            self.drop1_is_open = False
+            self.drop2_is_open = False
+            self.expand = False
 
-    msg = Dialogue(master)
-    msg.canvas.title_1.config(text=title)
-    msg.canvas.title_2.config(text="")
-    lab = LabelHeader(
-        msg.window, text=message, justify='left', wraplength=600)
-    lab.grid(column=0, row=0, sticky='news', padx=12, pady=12, ipadx=6, ipady=3)
-    button = Button(msg.window, text=buttlab, command=close, width=6)
-    button.grid(column=0, row=1, padx=6, pady=(0,12))
-    button.focus_set()
-    configall(msg, formats)
-    msg.resize_window()
+        if self.drop1_is_open is False:
+            return
 
-    return msg, lab, button
+        if evt.widget.master != self:
+            widg = evt.widget
+            if widg.winfo_class() == "Label":
+                text = widg.cget("text")
+                if ">" not in text:
+                    close_it()               
+            else:
+                close_it()
 
-def open_yes_no_message(master, message, title, ok_lab, cancel_lab):
+# # from messages.py
 
-    def ok():
-        cancel()
+# def open_message(master, message, title, buttlab, inwidg=None):
 
-    def cancel():
-        msg.destroy()
+    # def close():
+        # '''
+            # Override this is more needs to be done on close.
+        # '''
+        # msg.destroy()
 
-    msg = Dialogue(master)
-    msg.canvas.title_1.config(text=title)
-    msg.canvas.title_2.config(text="")
-    lab = LabelHeader(
-        msg.window, text=message, justify='left', wraplength=600)
-    lab.grid(
-        column=0, row=0, sticky='news', padx=12, pady=12, 
-        columnspan=2, ipadx=6, ipady=3)
-    buttonbox = Frame(msg.window)
-    buttonbox.grid(column=0, row=1, sticky='e', padx=(0,12), pady=12)
-    ok_butt = Button(buttonbox, text=ok_lab, command=cancel, width=6)
-    ok_butt.grid(column=0, row=0, padx=6)
-    cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
-    cancel_butt.grid(column=1, row=0, padx=6)
-    ok_butt.focus_set()
+    # msg = Dialogue(master)
+    # msg.canvas.title_1.config(text=title)
+    # msg.canvas.title_2.config(text="")
+    # lab = LabelHeader(
+        # msg.window, text=message, justify='left', wraplength=600)
+    # lab.grid(column=0, row=0, sticky='news', padx=12, pady=12, ipadx=6, ipady=3)
+    # button = Button(msg.window, text=buttlab, command=close, width=6)
+    # button.grid(column=0, row=1, padx=6, pady=(0,12))
+    # button.focus_set()
+    # configall(msg, formats)
+    # msg.resize_window()
 
-    # config_generic(msg)
-    configall(msg, facebook)
-    msg.resize_window()
+    # return msg, lab, button
 
-    return msg, lab, ok_butt, cancel_butt, buttonbox
+# def open_yes_no_message(master, message, title, ok_lab, cancel_lab):
+
+    # def ok():
+        # cancel()
+
+    # def cancel():
+        # msg.destroy()
+
+    # msg = Dialogue(master)
+    # msg.canvas.title_1.config(text=title)
+    # msg.canvas.title_2.config(text="")
+    # lab = LabelHeader(
+        # msg.window, text=message, justify='left', wraplength=600)
+    # lab.grid(
+        # column=0, row=0, sticky='news', padx=12, pady=12, 
+        # columnspan=2, ipadx=6, ipady=3)
+    # buttonbox = Frame(msg.window)
+    # buttonbox.grid(column=0, row=1, sticky='e', padx=(0,12), pady=12)
+    # ok_butt = Button(buttonbox, text=ok_lab, command=cancel, width=6)
+    # ok_butt.grid(column=0, row=0, padx=6)
+    # cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
+    # cancel_butt.grid(column=1, row=0, padx=6)
+    # ok_butt.focus_set()
+
+    # configall(msg, facebook)
+    # msg.resize_window()
+
+    # return msg, lab, ok_butt, cancel_butt, buttonbox
 
 class InputMessage(Dialogue):
     def __init__(
@@ -4278,9 +4222,6 @@ class InputMessage(Dialogue):
             self.buttons, text=self.cancel_txt, command=self.cancel, width=maxx)
         self.b2.grid(column=1, row=0, padx=(6,0), sticky='e', ipadx=3)
 
-    # def config_text(self, text):
-        # self.info.config(text=text)
-
     def make_inputs(self):
 
         if self.entry is True:
@@ -4351,49 +4292,49 @@ class InputMessage(Dialogue):
             chosen = self.chkvar.get()
             return chosen
 
-def open_input_message(master, message, title, ok_lab, cancel_lab, user_input):
+# def open_input_message(master, message, title, ok_lab, cancel_lab, user_input):
 
-    def ok():
-        cancel()
+    # def ok():
+        # cancel()
 
-    def cancel():
-        msg.destroy()
+    # def cancel():
+        # msg.destroy()
 
-    def show():
-        gotten = got.get()
-        return gotten
+    # def show():
+        # gotten = got.get()
+        # return gotten
 
-    got = StringVar()
+    # got = StringVar()
 
-    msg = Dialogue(master)
-    msg.canvas.title_1.config(text=title)
-    msg.canvas.title_2.config(text="")
-    lab = LabelHeader(
-        msg.window, text=message, justify='left', wraplength=300)
-    lab.grid(
-        column=0, row=0, sticky='news', padx=12, pady=12, 
-        columnspan=2, ipadx=6, ipady=3)
-    lab2 = Label(msg.window, text="{} or {}?".format(
-        user_input[0], user_input[1]))
-    lab2.grid(column=0, row=1)
-    inPut = Entry(msg.window, textvariable=got)
-    inPut.grid(column=1, row=1, padx=(0,12))
-    buttonbox = Frame(msg.window)
+    # msg = Dialogue(master)
+    # msg.canvas.title_1.config(text=title)
+    # msg.canvas.title_2.config(text="")
+    # lab = LabelHeader(
+        # msg.window, text=message, justify='left', wraplength=300)
+    # lab.grid(
+        # column=0, row=0, sticky='news', padx=12, pady=12, 
+        # columnspan=2, ipadx=6, ipady=3)
+    # lab2 = Label(msg.window, text="{} or {}?".format(
+        # user_input[0], user_input[1]))
+    # lab2.grid(column=0, row=1)
+    # inPut = Entry(msg.window, textvariable=got)
+    # inPut.grid(column=1, row=1, padx=(0,12))
+    # buttonbox = Frame(msg.window)
 
-    buttonbox.grid(
-        column=0, row=2, sticky='e', padx=(0,12), pady=12, columnspan=2)
-    ok_butt = Button(buttonbox, text=ok_lab, command=ok, width=6)
-    ok_butt.grid(column=0, row=0, sticky='e')
-    cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
-    cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
-    inPut.focus_set()
+    # buttonbox.grid(
+        # column=0, row=2, sticky='e', padx=(0,12), pady=12, columnspan=2)
+    # ok_butt = Button(buttonbox, text=ok_lab, command=ok, width=6)
+    # ok_butt.grid(column=0, row=0, sticky='e')
+    # cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
+    # cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
+    # inPut.focus_set()
     
-    config_generic(msg)
-    msg.resize_window()
+    # config_generic(msg)
+    # msg.resize_window()
 
-    master.wait_window(msg)
-    got = show()
-    return user_input, got
+    # master.wait_window(msg)
+    # got = show()
+    # return user_input, got
 
 def open_input_message2(master, message, title, ok_lab, cancel_lab):
     '''
@@ -4575,6 +4516,103 @@ class RightClickMenu(Menux):
     def enable_context_help(self):
         self.entryconfigure('Context Help', state='normal')
 
+class FontPicker(Frame):
+    def __init__(self, master, root, main, *args, **kwargs):
+        Frame.__init__(self, master, *args, **kwargs)
+        self.master = master
+        self.root = root
+        self.main = main
+        self.all_fonts = sorted(font.families())
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_format_font_scheme)
+        font_scheme = list(cur.fetchone())
+        cur.close()
+        conn.close()
+        copy = []
+        z = 0
+        for i in font_scheme[0:2]:
+            if i is None:
+                copy.append(font_scheme[z + 2])
+            else:
+                copy.append(font_scheme[z])
+            z += 1
+        self.font_scheme = copy
+        self.make_widgets()
+
+    def make_widgets(self):
+
+        def combobox_selected(combo):
+            self.output_sample.config(font=(self.all_fonts[combo.current], self.fontSize))
+            self.update_idletasks()  
+
+        sample = Frame(self)
+
+        self.output_sample = Label(
+            sample,
+            text="Sample Output Text ABCDEFGHxyz 0123456789 iIl1 o0O")
+
+        self.fontSizeVar = tk.IntVar()
+        self.fontSize = self.font_scheme[1]
+
+        self.font_size = Scale(
+            self,
+            from_=8.0,
+            to=26.0,
+            tickinterval=6.0,
+            label="Text Size",
+            orient="horizontal",
+            length=200,
+            variable=self.fontSizeVar,
+            command=self.show_font_size)
+        self.font_size.set(self.fontSize)
+ 
+        lab = Label(self, text="Select Output Font")
+        self.cbo = Combobox(
+            self, self.root, values=self.all_fonts, 
+            height=500, scrollbar_size=12)
+        lab.grid(column=0, row=2, pady=(24,6))
+        self.cbo.grid(column=0, row=3, pady=(6, 20))
+
+        self.apply_button = Button(
+            self,
+            text="APPLY",
+            command=self.apply)
+
+        sample.grid(column=0, row=0)
+        self.output_sample.grid(padx=24, pady=20)
+        self.font_size.grid(column=0, row=1, pady=24)
+        self.apply_button.grid(column=0, row=4, sticky="e", padx=(0,24), pady=(0,24))
+
+        Combobox.combobox_selected = combobox_selected
+
+    def apply(self):
+        self.font_scheme[1] = self.fontSizeVar.get()
+        if len(self.cbo.get()) != 0:
+            self.font_scheme[0] = self.cbo.get()
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(update_format_font, tuple(self.font_scheme))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        configall(self.root, formats)
+        resize_scrolled_content(self.root, self.main.master, self.main)
+
+        msg0 = open_message(
+            self, 
+            fonts_msg[0], 
+            "Redraw-on-Font-Change Bug", 
+            "OK")
+        msg0[0].grab_set()
+
+    def show_font_size(self, evt):
+        self.fontSize = self.fontSizeVar.get()
+
 # from styles.py
 
 """ Some special case widgets exist which require special attention to get them
@@ -4583,97 +4621,62 @@ class RightClickMenu(Menux):
     have dropdown elements, and those 
     which have color schemes of their own. The technique for making this happen
     is simple and involves giving these widget classes a class-level variable
-    for each of its changable colors. See comments "key to everything" below.
+    for each of its changable colors.
 """
-
-
-
 ALL_WIDGET_CLASSES = (
     Label, Button, LabelHilited3, LabelButtonText, LabelMovable, LabelStay,
     ButtonBigPic, Entry, Frame, EntryAuto, EntryAutoPerson, Border, Combobox, 
-    Separator, LabelTab, Combobox, LabelHilited, ComboArrow, Scrollbar,
-    LabelStatusbar)
-bg_fg = ("LabelFrame", "Sizer")
-bg_fg_activeBgHilite_activeFg_selectColorBg = ("Checkbutton", )
-bg_fg_activeBgHilite_activeFg_selectColorHilite = ("Radiobutton", )
-bg_fg_fontBoilerplate_activeBgHead = ("ButtonQuiet", )
-bg_fg_fontH2 = ("LabelH2", )
-bg_fg_fontH3 = ("LabelH3", )
-bg_fg_fontIn = ("LabelEntry", "LabelButtonText", "LabelButtonText", )
-bg_fg_fontIn_activeBgHead = ("ButtonPlain", )
-bg_fg_fontOut = ("Label", "MessageCopiable", )
-bg_fg_fontOut_activeBgHead_activeFg = ("Button",)
-bg_fg_fontOut_activeBgHead_troughColorHilite = ("Scale",)
-bg_fg_fontOut_activeBgHilite_activeFg_selectColorHilite = ("RadiobuttonBig", )
-bg_fg_fontStatus = ("LabelStatusbar",)
-bg_fg_selectBgHead_selectFg_insertBgFg = ("EntryAutoPerson", "EntryAuto", )
-bg_fgHilite = ("ButtonBigPic", )
-bgFg_fgBg_fontOut = ("LabelNegative",)
-bgHead = ("FrameHilited2", "DropdownMenu", )
-bgHead_fg_fontStatus = ("LabelTip2",)
+    Separator, LabelTab, ComboArrow, Scrollbar, FontPicker,
+    LabelStatusbar, TabBook, DropdownMenu, ToplevelHilited)
+
+activeBgFg_activeFgBg = ("ButtonFlatHilited",)
+activeBgHead = ("ButtonQuiet", "ButtonPlain", "Button", "Scale")
+activeBgHilite = ("Checkbutton", "Radiobutton", "RadiobuttonBig", )
+activeFg = ("Checkbutton", "Radiobutton", "RadiobuttonBig", "Button")
+bg_fg = (
+    "LabelFrame", "Sizer", "Checkbutton", "Radiobutton", "ButtonQuiet", 
+    "LabelH2", "LabelH3", "LabelEntry", "ButtonPlain", "Label", 
+    "MessageCopiable", "Button", "Scale", "RadiobuttonBig", "LabelStatusbar", 
+    "EntryAuto")
+bg_fgHilite = ("ButtonBigPic",)
+bgFg_fgBg = ("LabelNegative", )
+bgHead = ("FrameHilited2", "LabelHilited", "LabelTip2")
 bgHilite = (
-    "FrameHilited", "FrameHilited3", "FrameHilited4", 
-    "ToplevelHilited", "CanvasHilited", "TitleBarButtonSolidBG", )
-bgHilite_fg_activeBgFg_activeFgBg = ("ButtonFlatHilited",)
-bgHilite_fg_fontH3 = ("LabelHeader",)
-bgHilite_fg_fontIn = ("LabelHilited3",)
-bgHilite_fg_fontOut = ("LabelHilited", "ComboArrow")
-bgHilite_fg_fontIn_selectBgHead_selectFg_insertBgFg = (
-    "Entry", "Text", "EntryAutoHilited", )
+    "FrameHilited", "FrameHilited3", "FrameHilited4","CanvasHilited", 
+    "TitleBarButtonSolidBG", "Entry", "Text", "ComboArrow",  
+    "ButtonFlatHilited", "LabelHeader", "LabelHilited3", "EntryAutoHilited", 
+    "EntryAutoPersonHilited") 
+fG = (
+    "LabelTip2", "ButtonFlatHilited", "LabelHeader", 
+    "ComboArrow", "EntryAutoPersonHilited", "EntryAuto")
+fontH2 = ("LabelH2", )
+fontH3 = ("LabelH3", "LabelHeader", )
+fontBoilerplate = ("ButtonQuiet", )
+fontIn = (
+    "LabelEntry", "ButtonPlain", "Entry", "Text", "EntryAutoHilited", )
+fontOut = (
+    "Label", "MessageCopiable", "Button", "Scale", "RadiobuttonBig", 
+    "LabelNegative", "ComboArrow")
+fontStatus = ("LabelStatusbar", "LabelTip2")
+insertBgFg = (
+    "EntryAuto", "Entry", "Text", "EntryAutoHilited", 
+    "EntryAutoPersonHilited")
+selectBgHead = ("EntryAuto", "Entry", "Text", "EntryAutoHilited", )
+selectColorBg = ("Checkbutton", )
+selectColorHilite = ("Radiobutton", "RadiobuttonBig")
+selectFg = ("EntryAutoPerson", "EntryAuto", "Entry", "Text", "EntryAutoHilited", )
+troughColorHilite = ("Scale", )
 bgOnly = (
     "Frame", "Canvas", "Toplevel", "FrameHilited6", "Border", "NotesDialog", 
     "Dialogue", "TabBook", "PersonSearch", "RolesDialog", "EditRow",
-    "InputMessage", "Gallery", "StatusbarTooltips")
-
-separator = ("Separator", )
-combobox = ("Combobox", )
-labelMovable = ("LabelMovable", )
-scrollbar = ("Scrollbar", )
-
-# print("line", looky(seeline()).lineno, "formats['highlight_bg']:", formats['highlight_bg'])
-# print("line", looky(seeline()).lineno, "formats['head_bg']:", formats['head_bg'])
-def recolorize():
-    new_scheme = int(ent_colors.get())
-    new_font = ent_font.get()
-    new_font_size = ent_font_size.get()
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    conn.execute('PRAGMA foreign_keys = 1')
-    cur = conn.cursor()
-    cur.execute(
-        '''
-            UPDATE format 
-            SET (output_font, font_size) = 
-                (?, ?)
-            WHERE format_id = 1
-        ''',
-        (new_font, new_font_size))
-    conn.commit()
-    cur.execute(
-        '''
-            UPDATE current
-            SET color_scheme_id = ?
-            WHERE current_id = 1
-        ''',
-        (new_scheme,))
-    conn.commit()
-    cur.close()
-    conn.close()
-    formats = make_formats_dict()
-    # print("line", looky(seeline()).lineno, "formats['highlight_bg']:", formats['highlight_bg'])
-    # print("line", looky(seeline()).lineno, "formats['head_bg']:", formats['head_bg'])
-    for klass in ALL_WIDGET_CLASSES:
-        klass.formats = formats 
-
-    configall(root, formats)
-    resize_scrolled_content(root, canvas, window)
-
+    "InputMessage", "Gallery", "StatusbarTooltips", "EventsTable",
+    "Main", "FontPicker", "DatePreferences")
 
 if __name__ == "__main__":
 
+    from styles import make_formats_dict
+
     formats = make_formats_dict()
-    # print("line", looky(seeline()).lineno, "formats['highlight_bg']:", formats['highlight_bg'])
-    # print("line", looky(seeline()).lineno, "formats['head_bg']:", formats['head_bg'])
     def make_scrollbars():
 
         vsb = Scrollbar(
@@ -4700,6 +4703,33 @@ if __name__ == "__main__":
         scridth = 20
         scridth_n = Frame(window, height=scridth)
         scridth_w = Frame(window, width=scridth)
+
+
+    def recolorize():
+        new_scheme = int(ent_colors.get())
+        new_font = ent_font.get()
+        new_font_size = ent_font_size.get()
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(
+            '''
+                UPDATE current
+                SET color_scheme_id = ?
+                WHERE current_id = 1
+            ''',
+            (new_scheme,))
+        conn.commit()
+        cur.close()
+        conn.close()
+        formats = make_formats_dict()
+
+        for klass in ALL_WIDGET_CLASSES:
+            klass.formats = formats 
+
+        configall(root, formats)
+        resize_scrolled_content(root, canvas, window)
 
     root = tk.Tk()
 

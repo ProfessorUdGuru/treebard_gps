@@ -5,11 +5,12 @@ import sqlite3
 from widgets import (
     Frame, LabelH3, Label, Button, Canvas, LabelEntry, Radiobutton, LabelFrame,
     FrameHilited, LabelHeader, Checkbutton, LabelNegative, Dialogue, Combobox,
-    Scrollbar, EntryAutoPerson, EntryAutoPersonHilited, open_message)
+    Scrollbar, EntryAutoPerson, EntryAutoPersonHilited, )
 from files import get_current_file
 from persons import (
     open_new_person_dialog, make_all_names_dict_for_person_select, check_name,
     delete_person_from_tree, update_person_autofill_values)
+from error_messages import open_message
 from messages import families_msg
 from dates import format_stored_date, get_date_formats, OK_MONTHS, validate_date
 from events_table import (
@@ -258,9 +259,6 @@ class NuclearFamiliesTable(Frame):
                     self.cohighlights[k] = row[1][0]
 
     def make_cohighlights_dict(self):
-        # test with color change to see if color changes, if not fix it in styles.py
-        # parameterize repeated sections of code
-
         # parents and alt parents
         for parent_couple in self.family_data[0]:
             family_widgets = []
@@ -363,14 +361,14 @@ class NuclearFamiliesTable(Frame):
             self.cohighlights[tuple(family_widgets)] = tuple([event_widgets])        
 
     def highlight_both(self, evt, other):
-        evt.widget.config(bg=self.formats["highlight_bg"])
+        evt.widget.config(bg=EntryAutoPerson.highlight_bg)
         for widg in other:
-            widg.config(bg=self.formats["highlight_bg"])
+            widg.config(bg=EntryAutoPerson.highlight_bg)
 
     def unhighlight_both(self, evt, other):
-        evt.widget.config(bg=self.formats["bg"])
+        evt.widget.config(bg=EntryAutoPerson.bg)
         for widg in other:
-            widg.config(bg=self.formats["bg"])
+            widg.config(bg=EntryAutoPerson.bg)
 
     def populate_nuke_tables(self):
         lst = [            

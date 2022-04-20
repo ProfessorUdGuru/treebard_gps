@@ -1,10 +1,10 @@
 # error_messages.py
 
 from tkinter import StringVar, IntVar
-# from scrolling import Scrollbar, resize_scrolled_content
+# from scrolling import resize_scrolled_content
 # from widgets import (
     # Label, Button, Frame, LabelHeader, Entry, Radiobutton, Checkbutton,
-    # configall, make_formats_dict, Dialogue)
+    # configall, make_formats_dict, Dialogue, Scrollbar)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -216,9 +216,6 @@ from dev_tools import looky, seeline
         # self.b2 = Button(
             # self.buttons, text=self.cancel_txt, command=self.cancel, width=maxx)
         # self.b2.grid(column=1, row=0, padx=(6,0), sticky='e', ipadx=3)
-
-    # # def config_text(self, text):
-        # # self.info.config(text=text)
 
     # def make_inputs(self):
 

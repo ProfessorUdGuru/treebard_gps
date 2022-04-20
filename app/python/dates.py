@@ -5,8 +5,9 @@ import sqlite3
 from files import get_current_file, global_db_path
 from widgets import (
     Frame, LabelH3, Label, LabelH2, Button, Combobox, EntryAutoHilited,
-    open_message, InputMessage
+    InputMessage
 )
+from error_messages import open_message
 from messages import dates_msg 
 from query_strings import (
     select_date_format, select_default_date_format, delete_date_format_all,
@@ -1171,13 +1172,10 @@ class DatePreferences(Frame):
 
 if __name__ == "__main__":
 
-    # this doesn't do anything yet
+    # this doesn't do anything 
 
     from autofill import EntryAuto
     from widgets import Entry
-    # from styles import make_formats_dict
-
-    # formats = make_formats_dict()
 
     root = tk.Tk()
 

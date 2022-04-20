@@ -6,13 +6,12 @@ import tkinter as tk
 import sqlite3    
 from PIL import Image, ImageTk
 from files import app_path, global_db_path, current_drive, open_tree
-from dropdown import DropdownMenu, placeholder
 from opening import SplashScreen
 from main import Main
 from widgets import (
-    Button, Frame, ButtonPlain, configall, make_formats_dict, Border,
-    MousewheelScrolling)
-from dates import get_date_formats   
+    Button, Frame, ButtonPlain, configall, make_formats_dict, Border,DropdownMenu, placeholder)
+from scrolling import MousewheelScrolling 
+from dates import get_date_formats
 from utes import create_tooltip
 from query_strings import (
     update_closing_state_tree_is_open, select_date_format, 
@@ -161,7 +160,6 @@ def start():
     except AttributeError:
         pass
  
-    # config_generic(root)
     configall(root, formats)
     root.mainloop()
 
@@ -170,16 +168,19 @@ if __name__ == '__main__':
 
 
 # DO LIST
-
-# possibly some of the end-point widgets such as independent dialogs have been moved to widgets.py for no reason
-# delete unused modules
+# WHY DOES ROLES DIALOG RECOLORIZE??? It doesn't--except unless it's open when you change color scheme. Does this mean the roles & notes & places etc will also have to be moved to widgets.py?
+# changing title bar size when font size changes
+# Replace long switch with two tuples zip them into a dict which only python ever sees
+# possibly some of the end-point widgets such as independent dialogs have been moved to widgets.py for no reason. There's no reason why an already-open dlg shd recolorize while it's open, as long as it will be the new color next time it's opened, w/out having to restart the app.
 # get rid of as many formats = make_formats_dict() runs as possible and see if it's better to stop passing formats around or leave it like it is (prob leave it, unless a global formats is needed to jump start the class-level version)
-# finish all config_ functions, then break big ones up so instead of one function with a long name and a lot of stuff in it, a widg with lots of options will run two or three small functions and the repetition as well as the number of functions will be cut way back
-# change curr per input wrong color and shd not highlight when pointed at
+# delete unused modules
 # move query strings to other module
 
 
+
 # BRANCH: families_table_validation
+# rcm dlg doesn't recolorize
+# parameterize repeated sections of code in make_cohighlights_dict(
 # APPARENTLY the user columns in formats table aren't being used anymore since the inception of using a color_scheme_id as FK in table current. if this is true get rid of the columns.
 # The current systems for getting all widgets to change color works well except in the case of self.formats in so-called special event widgets in styles.py. It works there too but due to running make_formats_dict() in every single widget it now causes a big delay in loading the app, since I've had to add this to the autofill entries and there are so many of them. But obviously when you restart the whole app--close the program completely and restart it--all the colors are right, even for special event widgets. So I have to eliminate the special event widget solution which is often hard to get working for some reason, maybe it's just hard to remember all the things I'm supposed to do, anyway get rid of special event widgets and instead figure out what's the difference between recolorizing and restarting the app and basically restart the app when APPLYing a new color scheme. Either that or figure out why/when the app has to be restarted to get special event apps to recolorize in regards to their highlighting events, and fix that instead. For example, maybe the fact that make_formats_dict() is run in init is the clue I'm looking for. Maybe in config_generic instead of the special widgets' current method, make_formats_dict() has to be run for each class that has a highlighting event. Or maybe a dedicated reconfig_highlighting function could be created in styles.py that could be called from colorizer.py on APPLY. Another thought is that something is happening with imports that causes a global value of formats to be recreated and reimported only when the app is restarted. FIX IT FOR ENTRY AUTO AND WHEN THE NEW SYSTEM WORKS, DELETE THE SPECIAL EVENT SECTION ONE CLASS AT A TIME AND TEST TO SEE THAT THE NEW SYSTEM WORKS FOR EACH CLASS THAT DOES HIGHLIGHTING. Also seems like fg is working right but bg isn't.
 # self.family_data (see alverta) has two keys for finding_id: "finding" and "birth_finding"; get rid of "finding"; LOOKS LIKE THE DIFF IS THAT BOTH EXIST IN PARENTS BUT ONLY THE 2ND EXISTS IN ALT PARENTS
@@ -380,7 +381,7 @@ Just type a plus sign in any person input, followed by the new name which can be
     Treebard doesn't care about sexual preferences or whether a mother
     and father of children are married or not. Unlike other programs,
     Treebard doesn't automatically use words like 'spouse' when two
-    people have children together. The user has a choice of kin_types
+    people have children together. The user has a choice of kin type
     and we refer to members of a couple according to the user's wishes.
 '''
 
@@ -463,7 +464,6 @@ Just type a plus sign in any person input, followed by the new name which can be
 '''
 Treebard uses an original-vs.-final-content test to eliminate validating and responding to inputs that haven't changed as the user tabs through them. It also eliminates superfluous dialogs. This works fine in the case where the input empties after use, and in the case where content is programatically inserted and not always changed. But in the case where there's always content inserted programatically and content is generally always going to change, an extra test is needed to detect duplicate names. For example, in the roles dialog, role names can be changed, but if John Smith is changed to a different John Smith, the usual test isn't enough. So in edit autofills, we have to test not only for whether the content has changed, but also if the content hasn't changed, we have to test for whether the final content has duplicates. A change might have been intended. That way, tabbing out of John Smith's edit input will always open a dupe checking dialog. There is a simple workaround, but the user would have to know the ID of the new John Smith and input it like "#5927" instead of inputting "John Smith". Users who happen to remember IDs for duplicate names might be able to use this sometimes, and looking up an ID is easy, but generally the inconvenience of having to look at a simple dialog to clarify which John Smith was meant, each time a role person named John Smith is edited, would be no big deal and would happen rarely.
 '''
-'''
 
 
 
@@ -474,17 +474,7 @@ Treebard uses an original-vs.-final-content test to eliminate validating and res
 
 
 
-'''
-''' USE THIS TO TEST FAMILIES TABLE NAME INPUTS
-#                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
-# NONE>EXISTING              x               x             x              n/a
-# NONE>DUPE                  x               x             x              n/a
-# NONE>NEW                   x               x             x              n/a
-# CHANGE>EXISTING            x               x             x               x
-# CHANGE>DUPE                x               x             x               x
-# CHANGE>NEW                 x               x             x               x
-# UNLINK                     x               x             x               x 
-'''
+
 
 
 
