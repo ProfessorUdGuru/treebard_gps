@@ -3,7 +3,8 @@
 import tkinter as tk
 import sqlite3
 from PIL import Image, ImageTk
-from tkinter import font, IntVar, StringVar
+from tkinter import font
+# from tkinter import font, IntVar, StringVar
 from files import (
     get_current_file, app_path, global_db_path, set_closing,
     handle_new_tree_event, handle_open_event, save_as, save_copy_as, 
@@ -374,7 +375,7 @@ def configall(master, formats):
 
         elif subclass == "Border":
             Border.head_bg = formats["head_bg"]
-            Border.fg = formats["fg"]
+            Border.fg = formats["fg"]            
 
     if root:
         root.config(bg=formats["bg"])
@@ -754,7 +755,7 @@ class LabelDots(LabelButtonText):
             self.header, 
             self.current_person,
             self.treebard,
-            LabelDots.formats,
+            # LabelDots.formats,
             pressed=evt.widget,
             person_autofill_values=self.person_autofill_values)
 
@@ -1346,7 +1347,7 @@ class CanvasHilited(Canvasx):
 
 # from window_border.py
 
-def close(evt):
+def close_custom_dialog(evt):
     dlg = evt.widget.winfo_toplevel()
     if dlg.winfo_name() == 'tk':
         set_closing()
@@ -1560,7 +1561,7 @@ class Border(Canvas):
         self.minn.bind('<Button-1>', self.minimize)
         self.maxx.bind('<Button-1>', self.toggle_max_restore)
         self.restore.bind('<Button-1>', self.toggle_max_restore)
-        self.quitt.bind('<Button-1>', close)
+        self.quitt.bind('<Button-1>', close_custom_dialog)
         x = [i.bind(
             '<Map>', 
             self.recolorize_on_restore) for i in (self.minn, self.quitt)]
@@ -2336,7 +2337,6 @@ class Combobox(FrameHilited3):
         self.config_values(self.values)
 
         configall(self.drop, Combobox.formats)
-        # config_generic(self.drop)
 
     def unbind_combo_parts(self, evt):
         self.master.unbind_all('<ButtonRelease-1>')
@@ -2975,7 +2975,6 @@ class TabBook(Framex):
             root_window.bind_all(unkey_combo_lower, self.unhighlight_tab)
 
 # from toykinter_widgets.py
-
 class LabelStatusbar(Labelx):
     formats = formats
     bg = formats["bg"]
@@ -2990,47 +2989,6 @@ class LabelStatusbar(Labelx):
             bg=LabelStatusbar.bg, 
             fg=LabelStatusbar.fg,
             font=LabelStatusbar.status)
-
-# def run_statusbar_tooltips(visited, status_label, tooltip_label):
-    # '''
-        # Uses lambda to add args to event
-        # since tkinter expects only one arg in a callback.
-    # '''
-
-    # def handle_statusbar_tooltips(event):
-        # for tup in visited:
-            # if tup[0] is event.widget:
-                # if event.type == '9': # FocusIn
-                    # status_label.config(text=tup[1])
-                # elif event.type == '10': # FocusOut
-                    # status_label.config(text='')
-                # elif event.type == '7': # Enter
-                    # tooltip_label.grid(
-                        # column=1, row=0, 
-                        # sticky='e', padx=(6,24))
-                    # tooltip_label.config(
-                        # text=tup[2],
-                        # bg='black',
-                        # fg='white',
-                        # font=LabelStatusbar.formats["status"])
-                # elif event.type == '8': # Leave
-                    # tooltip_label.grid_remove()
-                    # tooltip_label.config(
-                        # bg=formats['bg'], text='', fg=formats['bg'])
-
-    # statusbar_events = ['<FocusIn>', '<FocusOut>', '<Enter>', '<Leave>']
-
-    # for tup in visited:
-        # widg = tup[0]
-        # status = tup[1]
-        # tooltip = tup[2]
-        # for event_pattern in statusbar_events:
-            # # error if tup[0] has been destroyed 
-            # #   so don't use these with destroyable widgets
-            # # different tooltips are available in utes.py
-            # widg.bind(event_pattern, handle_statusbar_tooltips, add='+')
-
-        # status_label.config(font=formats['status'])
 
 class StatusbarTooltips(Frame):
     '''
@@ -4016,326 +3974,6 @@ class DropdownMenu(FrameHilited2):
                     close_it()               
             else:
                 close_it()
-
-# # from messages.py
-
-# def open_message(master, message, title, buttlab, inwidg=None):
-
-    # def close():
-        # '''
-            # Override this is more needs to be done on close.
-        # '''
-        # msg.destroy()
-
-    # msg = Dialogue(master)
-    # msg.canvas.title_1.config(text=title)
-    # msg.canvas.title_2.config(text="")
-    # lab = LabelHeader(
-        # msg.window, text=message, justify='left', wraplength=600)
-    # lab.grid(column=0, row=0, sticky='news', padx=12, pady=12, ipadx=6, ipady=3)
-    # button = Button(msg.window, text=buttlab, command=close, width=6)
-    # button.grid(column=0, row=1, padx=6, pady=(0,12))
-    # button.focus_set()
-    # configall(msg, formats)
-    # msg.resize_window()
-
-    # return msg, lab, button
-
-# def open_yes_no_message(master, message, title, ok_lab, cancel_lab):
-
-    # def ok():
-        # cancel()
-
-    # def cancel():
-        # msg.destroy()
-
-    # msg = Dialogue(master)
-    # msg.canvas.title_1.config(text=title)
-    # msg.canvas.title_2.config(text="")
-    # lab = LabelHeader(
-        # msg.window, text=message, justify='left', wraplength=600)
-    # lab.grid(
-        # column=0, row=0, sticky='news', padx=12, pady=12, 
-        # columnspan=2, ipadx=6, ipady=3)
-    # buttonbox = Frame(msg.window)
-    # buttonbox.grid(column=0, row=1, sticky='e', padx=(0,12), pady=12)
-    # ok_butt = Button(buttonbox, text=ok_lab, command=cancel, width=6)
-    # ok_butt.grid(column=0, row=0, padx=6)
-    # cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
-    # cancel_butt.grid(column=1, row=0, padx=6)
-    # ok_butt.focus_set()
-
-    # configall(msg, facebook)
-    # msg.resize_window()
-
-    # return msg, lab, ok_butt, cancel_butt, buttonbox
-
-class InputMessage(Dialogue):
-    def __init__(
-            self, master, return_focus_to=None, root=None, title="", 
-            ok_txt="", cancel_txt="", head1="", head2="", wraplength=450, 
-            radtext=[], radfocal=0, entry=False, radio=False, 
-            check=False, chktext=[], chkfocal=0,
-            scrolled=False, grab=False, treebard=None, ok_button=True, *args, **kwargs):
-        Dialogue.__init__(self, master, *args, **kwargs)
-
-        self.master = master
-        self.return_focus_to = return_focus_to
-        self.root = root
-        self.title = title
-        self.head1 = head1
-        self.head2 = head2
-        self.ok_txt = ok_txt
-        self.cancel_txt = cancel_txt
-        self.wraplength = wraplength
-        self.radtext = radtext
-        self.radfocal = radfocal
-        self.entry = entry
-        self.radio = radio
-        self.check = check
-        self.chktext = chktext
-        self.chkfocal = chkfocal
-        self.scrolled = scrolled
-        self.grab = grab
-        self.treebard = treebard
-        self.ok_button = ok_button
-
-        self.canvas.title_1.config(text=title)
-        self.canvas.title_2.config(text="")
-
-        self.got = StringVar()
-        self.radvar = IntVar(None, 0)
-        self.chkvar = IntVar(None, 0)
-        if scrolled is True:
-            self.make_scrollbars()
-        self.make_containers()
-        self.make_widgets()
-        self.make_inputs()
-
-        self.ok_was_pressed = False
-
-        self.bind("<Return>", self.input_message_ok)
-        self.bind("<Escape>", self.cancel)
-
-        if scrolled is True:
-            good_height = int(self.winfo_screenheight() * 0.9)
-            self.maxsize(800, good_height)        
-            resize_scrolled_content(self, self.canvas, self.window)
-            self.center_dialog(self, win_height=good_height)
-        else:
-            self.resize_window()
-
-        if self.grab is True: 
-            self.grab_set()
-            
-        self.deiconify()
-        self.master.wait_window(self)
-        self.run_post_op()
-
-    def center_dialog(self, frame=None, win_height=None):
-        '''
-            If frame is True, it works but not if the window has more content
-            that what will fit in the screen vertically. In this case I had
-            to use win_height which is a minimum height based on the screen
-            height. This is based on center_dialog() function in utes.py
-            which didn't work here. Possibly the `frame` parameter should be 
-            removed.
-        '''
-        if win_height:
-            self.update_idletasks()
-            win_width = frame.winfo_reqwidth()
-            win_height = win_height
-            right_pos = int(self.winfo_screenwidth()/2 - win_width/2)
-            down_pos = int(self.winfo_screenheight()/2 - win_height/2)
-        elif frame:
-            self.update_idletasks()
-            win_width = frame.winfo_reqwidth()
-            win_height = frame.winfo_reqheight()
-            right_pos = int(self.winfo_screenwidth()/2 - win_width/2)
-            down_pos = int(self.winfo_screenheight()/2 - win_height/2)
-        else:
-            self.update_idletasks()
-            win_width = self.winfo_reqwidth()
-            win_height = self.winfo_reqheight()
-            right_pos = int(self.winfo_screenwidth()/2 - win_width/2)
-            down_pos = int(self.winfo_screenheight()/2 - win_height/2)
-        self.geometry("+{}+{}".format(right_pos, down_pos))
-
-    def make_scrollbars(self):
-
-        scridth = 16
-        scridth_n = Frame(self.window, height=scridth)
-        scridth_w = Frame(self.window, width=scridth)
-        scridth_n.grid(column=0, row=0, sticky='ew')
-        scridth_w.grid(column=0, row=1, sticky='ns')
-
-        if self.treebard:
-            self.treebard.scroll_mouse.append_to_list([self.canvas, self.window])
-            self.treebard.scroll_mouse.configure_mousewheel_scrolling()
-
-        self.window.vsb = Scrollbar(
-            self, 
-            hideable=True, 
-            command=self.canvas.yview,
-            width=scridth)
-        self.window.hsb = Scrollbar(
-            self, 
-            hideable=True, 
-            width=scridth, 
-            orient='horizontal',
-            command=self.canvas.xview)
-        self.canvas.config(
-            xscrollcommand=self.window.hsb.set, 
-            yscrollcommand=self.window.vsb.set)
-        self.window.vsb.grid(column=2, row=4, sticky='ns')
-        self.window.hsb.grid(column=1, row=5, sticky='ew')
-
-        scridth_n.grid(column=0, row=0, sticky='ew')
-        scridth_w.grid(column=0, row=1, sticky='ns')
-
-    def make_containers(self):
-
-        self.header = Frame(self.window)
-        self.inputs = Frame(self.window)
-        self.buttons = Frame(self.window)
-
-        self.header.grid(column=1, row=1, sticky="news", pady=(12,0))
-        self.inputs.grid(column=1, row=2, sticky="news")
-        self.buttons.grid(
-            column=1, row=3, sticky="e", padx=12, pady=(0,12), columnspan=2)
-
-    def make_widgets(self):
-        self.head = LabelHeader(
-            self.header, text=self.head1, justify='left', 
-            wraplength=self.wraplength)
-        self.head.grid(
-            column=0, row=0, sticky='news', padx=12,  
-            columnspan=2, ipadx=6, ipady=3)
-        self.info = Label(self.header, text=self.head2)
-        self.info.grid(column=0, row=1, padx=12, pady=12)        
-        maxx = max(len(self.ok_txt), len(self.cancel_txt))
-        if self.ok_button is True:
-            self.b1 = Button(
-                self.buttons, text=self.ok_txt, command=self.input_message_ok, width=maxx)
-            self.b1.grid(column=0, row=0, sticky='e', ipadx=3)
-        self.b2 = Button(
-            self.buttons, text=self.cancel_txt, command=self.cancel, width=maxx)
-        self.b2.grid(column=1, row=0, padx=(6,0), sticky='e', ipadx=3)
-
-    def make_inputs(self):
-
-        if self.entry is True:
-            self.inPut = Entry(self.inputs, textvariable=self.got)
-            self.inPut.grid(column=1, row=1, padx=12)
-            self.inPut.focus_set()
-        elif self.radio is True:
-            self.radframe = Frame(self.inputs)
-            self.radframe.grid()
-            radios = []
-            for i in range(len(self.radtext)):
-                rad = Radiobutton(
-                    self.radframe,  
-                    text=self.radtext[i],
-                    value=i,
-                    variable=self.radvar,
-                    anchor='w')
-                rad.grid(column=0, row=i, sticky='ew')
-                radios.append(rad)    
-            radios[self.radfocal].focus_set()
-        elif self.check is True:
-            self.chkframe = Frame(self.inputs)
-            self.chkframe.grid()
-            checks = []
-            print("line", looky(seeline()).lineno, "self.chktext:", self.chktext)
-# line 245 self.chktext: [{'fpid': 183, 'finding': 1157}, {'fpid': 184, 'finding': 1158}]
-            a = 0
-            for i in self.chktext:
-                chk = Checkbutton(
-                    self.chkframe,  
-                    text=self.chktext[a],
-                    variable=self.chkvar,
-                    anchor='w')
-                chk.grid(column=0, row=a, sticky='ew')
-                checks.append(chk) 
-                a += 1
-            checks[self.chkfocal].focus_set()
-        if self.ok_button is False:
-            self.b2.focus_set()
-        
-    def run_post_op(self):
-        if self.grab is True: 
-            self.grab_release()
-
-        if self.return_focus_to:
-            self.return_focus_to.focus_set()
-
-        if self.root:
-            self.root.lift()
-
-    def input_message_ok(self, evt=None):
-        self.ok_was_pressed = True
-        self.cancel()
-
-    def cancel(self, evt=None):
-        print("line", looky(seeline()).lineno, "self.ok_was_pressed:", self.ok_was_pressed)
-        self.ok_was_pressed = False
-        self.destroy()
-
-    def show(self):
-        if self.entry:
-            gotten = self.got.get()
-            return gotten
-        elif self.radio:
-            chosen = self.radvar.get()
-            return chosen
-        elif self.check:
-            chosen = self.chkvar.get()
-            return chosen
-
-# def open_input_message(master, message, title, ok_lab, cancel_lab, user_input):
-
-    # def ok():
-        # cancel()
-
-    # def cancel():
-        # msg.destroy()
-
-    # def show():
-        # gotten = got.get()
-        # return gotten
-
-    # got = StringVar()
-
-    # msg = Dialogue(master)
-    # msg.canvas.title_1.config(text=title)
-    # msg.canvas.title_2.config(text="")
-    # lab = LabelHeader(
-        # msg.window, text=message, justify='left', wraplength=300)
-    # lab.grid(
-        # column=0, row=0, sticky='news', padx=12, pady=12, 
-        # columnspan=2, ipadx=6, ipady=3)
-    # lab2 = Label(msg.window, text="{} or {}?".format(
-        # user_input[0], user_input[1]))
-    # lab2.grid(column=0, row=1)
-    # inPut = Entry(msg.window, textvariable=got)
-    # inPut.grid(column=1, row=1, padx=(0,12))
-    # buttonbox = Frame(msg.window)
-
-    # buttonbox.grid(
-        # column=0, row=2, sticky='e', padx=(0,12), pady=12, columnspan=2)
-    # ok_butt = Button(buttonbox, text=ok_lab, command=ok, width=6)
-    # ok_butt.grid(column=0, row=0, sticky='e')
-    # cancel_butt = Button(buttonbox, text=cancel_lab, command=cancel, width=6)
-    # cancel_butt.grid(column=1, row=0, padx=(6,0), sticky='e')
-    # inPut.focus_set()
-    
-    # config_generic(msg)
-    # msg.resize_window()
-
-    # master.wait_window(msg)
-    # got = show()
-    # return user_input, got
-
 def open_input_message2(master, message, title, ok_lab, cancel_lab):
     '''
         For more primary-level input vs. error-level input.
@@ -4383,138 +4021,6 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
     master.wait_window(msg)
     gotten = show()
     return gotten
-
-# from right_click_menu
-
-def make_rc_menus(rcm_widgets, rc_menu, rcm_msg):
-    '''
-        To include a widget in the right-click context help, list the widget
-        in rcm_widgets in the instance and store each widget's message and 
-        title in messages_context_help.py. Example of usage from notes.py: 
-        near bottom of make_widgets() i.e. after making all widgets, do this...
-            `rcm_widgets = (self.subtopic_input.ent, self.note_input.text)`
-            `make_rc_menus(
-                rcm_widgets, 
-                self.rc_menu, 
-                note_dlg_help_msg)`
-        ...and in `__init__` before calling `make_widgets()` do this...
-            `self.rc_menu = RightClickMenu(self.root)`
-        ... and import to the module where rcm widgets are accessible:
-            `from right_click_menu import RightClickMenu, make_rc_menus`
-
-        Use this if the widgets were made in a loop and should all have the 
-        same right-click message:
-
-        In the loop where the widgets such as `editx` are made:
-            `self.rc_menu.loop_made[editx] = role_edit_help_msg`
-
-        At the bottom of messages_context_help.py, store the message and
-        dialog title, e.g.:
-            `role_edit_help_msg = (
-                'Clicking the Edit button will open a row of edit inputs... ', 
-                'Roles Dialog: Edit Existing Role Button')`
-
-        Import the message & title text to the module where it will be used:
-            `from messages_context_help import role_edit_help_msg`
-
-        The normal procedure described above this loopy one still needs to be
-        done even if there are no normal widgets in the module (widgets made
-        one-at-a-time instead of in a loop. In this case `rcm_widgets` and
-        `note_dlg_help_msg` can both = `()` but they have to exist.
-    '''
-    rc_menu.help_per_context = dict(zip(rcm_widgets, rcm_msg))
-    
-    for widg in rcm_widgets:
-        widg.bind("<Button-3>", rc_menu.attach_rt_clk_menu)
-
-    for k,v in rc_menu.loop_made.items():
-        k.bind("<Button-3>", rc_menu.attach_rt_clk_menu)
-        rc_menu.help_per_context[k] = v
-
-class Menux(tk.Menu):
-    def __init__(self, master, *args, **kwargs):
-        tk.Menu.__init__(self, master, *args, **kwargs)
-        pass
-
-    def winfo_subclass(self):
-        ''' 
-            Like built-in tkinter method
-            w.winfo_class() except it gets subclass names.
-        '''
-        subclass = type(self).__name__
-        return subclass
-
-class RightClickMenu(Menux):
-    '''
-        This is how you config() the menu items post-constructor, or do it in 
-        the instance, see below:
-            self.entryconfigure('Copy', state='disabled')
-    '''
-
-    def __init__(self, master, treebard=None, *args, **kwargs):
-        Menux.__init__(self, master, *args, **kwargs)
-
-        self.master = master
-        self.treebard = treebard
-
-        self.message = ''
-        self.help_title = ''
-        self.widg = None
-        self.config(tearoff=0)
-
-        self.help_per_context = {}
-        self.loop_made = {}
-
-        self.add_command(label='Copy', command=self.copy)
-        self.add_command(label='Paste', command=self.paste)
-        self.add_separator()
-        self.add_command(label='Context Help', command=self.context_help)
-
-    def copy(self):
-        print('Copied')
-
-    def paste(self):
-        print('Pasted')
-
-    def context_help(self):
-        msg = InputMessage(
-            self.master, 
-            head1=self.message, 
-            title=self.help_title, 
-            cancel_txt="DONE",
-            scrolled=True,
-            ok_button=False,
-            treebard=self.treebard)
-
-    def attach_rt_clk_menu(self, evt):
-        self.widg = evt.widget
-        self.post(evt.x_root, evt.y_root)
-        for k,v in self.help_per_context.items():
-            if k == self.widg:
-                self.message = v[0]
-                self.help_title = v[1]
-
-        self.widg.update_idletasks()
-
-    def detect_text(self, evt):
-        ''' 
-            When the dropdown menu overlaps a second widget
-            that also responds to this evt, it can take an extra 
-            brain clearing click to get this to work right. 
-        '''
-
-        clikt = evt.widget
-        if (len(self.help_per_context[clikt][0]) == 0 and 
-                len(self.help_per_context[clikt][1]) == 0):
-            self.disable_context_help()
-        else:
-            self.enable_context_help()
-
-    def disable_context_help(self):
-        self.entryconfigure('Context Help', state='disabled')
-
-    def enable_context_help(self):
-        self.entryconfigure('Context Help', state='normal')
 
 class FontPicker(Frame):
     def __init__(self, master, root, main, *args, **kwargs):
@@ -4667,14 +4173,14 @@ selectColorHilite = ("Radiobutton", "RadiobuttonBig")
 selectFg = ("EntryAutoPerson", "EntryAuto", "Entry", "Text", "EntryAutoHilited", )
 troughColorHilite = ("Scale", )
 bgOnly = (
-    "Frame", "Canvas", "Toplevel", "FrameHilited6", "Border", "NotesDialog", 
-    "Dialogue", "TabBook", "PersonSearch", "RolesDialog", "EditRow",
-    "InputMessage", "Gallery", "StatusbarTooltips", "EventsTable",
+    "Frame", "Canvas", "FrameHilited6", "Border", 
+    "TabBook", "EditRow",
+    "Gallery", "StatusbarTooltips", "EventsTable",
     "Main", "FontPicker", "DatePreferences")
-
+# remove Gallery from above list when the galleries have all been moved to dialogs
 if __name__ == "__main__":
 
-    from styles import make_formats_dict
+    from toykinter_widgets import run_statusbar_tooltips
 
     formats = make_formats_dict()
     def make_scrollbars():

@@ -21,11 +21,9 @@ from files import current_drive, get_current_file
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
     Radiobutton, LabelFrame, make_formats_dict, Border, TabBook, Scrollbar,
-    RightClickMenu, make_rc_menus, EntryAutoPerson,
-    EntryAutoPersonHilited, FontPicker
-)
-from toykinter_widgets import run_statusbar_tooltips
-   
+    EntryAutoPerson, EntryAutoPersonHilited, FontPicker)
+from right_click_menu import RightClickMenu, make_rc_menus
+from toykinter_widgets import run_statusbar_tooltips   
 from families import NuclearFamiliesTable
 from events_table import EventsTable
 from dates import DatePreferences, OK_MONTHS, get_date_formats
@@ -182,7 +180,7 @@ class Main(Frame):
             places_tab, 
             self.main_tabs, 
             self.main_tabs.store['graphics'],
-            self.formats,
+            # self.formats,
             self.root, 
             self.treebard,
             self.SCREEN_SIZE,
@@ -192,7 +190,7 @@ class Main(Frame):
             sources_tab, 
             self.main_tabs, 
             self.main_tabs.store['graphics'],
-            self.formats,
+            # self.formats,
             self.root, 
             self.treebard,
             self.SCREEN_SIZE,
@@ -468,7 +466,7 @@ class Main(Frame):
             self.person_entry, 
             self.findings_table,
             self.show_top_pic,
-            self.formats,
+            # self.formats,
             self.person_autofill_values)    
 
     def change_person(self):
@@ -506,7 +504,7 @@ class Main(Frame):
             gallery_canvas, 
             self.main_tabs, 
             self.main_tabs.store['graphics'],
-            self.formats,
+            # self.formats,
             self.root, 
             self.treebard,
             self.SCREEN_SIZE,

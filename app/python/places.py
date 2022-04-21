@@ -22,8 +22,8 @@ import tkinter as tk
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, LabelHeader, 
     Entry, ButtonQuiet, configall, Border, Scrollbar, 
-    EntryAuto, Separator, RightClickMenu, make_rc_menus, 
-    )
+    EntryAuto, Separator, make_formats_dict)
+from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from scrolling import resize_scrolled_content
 from files import get_current_file
@@ -84,7 +84,7 @@ class NewPlaceDialog():
             initial,
             place_input,
             treebard,
-            formats,
+            # formats,
             do_on_ok=None,
             selection=None):
 
@@ -97,8 +97,10 @@ class NewPlaceDialog():
         self.initial = initial
         self.place_input = place_input
         self.treebard = treebard
-        self.formats = formats
+        # self.formats = formats
         self.do_on_ok = do_on_ok
+
+        self.formats = make_formats_dict()
 
         self.got_row = 0
         self.got_nest = None
@@ -473,7 +475,7 @@ class ValidatePlace():
                 self.initial,
                 self.place_input,
                 self.treebard,
-                self.formats,
+                # self.formats,
                 do_on_ok=self.collect_place_ids)
         else:
             for dkt in self.place_dicts:
@@ -590,7 +592,7 @@ class ValidatePlace():
 
 if __name__ == "__main__":
     
-    from widgets import make_formats_dict
+    # from widgets import make_formats_dict
 
     trials = {
         'a' : "114 Main Street, Paris, Precinct 5, Lamar County, Texas, USA",

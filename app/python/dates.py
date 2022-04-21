@@ -4,10 +4,9 @@ import tkinter as tk
 import sqlite3
 from files import get_current_file, global_db_path
 from widgets import (
-    Frame, LabelH3, Label, LabelH2, Button, Combobox, EntryAutoHilited,
-    InputMessage
+    Frame, LabelH3, Label, LabelH2, Button, Combobox, EntryAutoHilited
 )
-from error_messages import open_message
+from error_messages import open_message, InputMessage
 from messages import dates_msg 
 from query_strings import (
     select_date_format, select_default_date_format, delete_date_format_all,

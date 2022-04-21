@@ -6,10 +6,10 @@ from files import get_current_file
 from widgets import (
     Frame, Toplevel, Label, ButtonQuiet, Border,
     LabelH3, Button, LabelHeader, LabelNegative, configall, Combobox,
-    RightClickMenu, make_rc_menus, EntryAutoPerson, 
-    EntryAutoPersonHilited, Scrollbar, 
-    
-    )
+    EntryAutoPerson, 
+    # RightClickMenu, make_rc_menus, EntryAutoPerson, 
+    EntryAutoPersonHilited, Scrollbar, make_formats_dict, configall)
+from right_click_menu import RightClickMenu, make_rc_menus
 from scrolling import resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from error_messages import open_message 
@@ -35,7 +35,8 @@ from dev_tools import looky, seeline
 class RolesDialog(Toplevel):
     def __init__(
             self, master, finding_id, header, current_person, treebard,
-            formats, pressed=None, person_autofill_values=None, *args, **kwargs):
+            pressed=None, person_autofill_values=None, *args, **kwargs):
+            # formats, pressed=None, person_autofill_values=None, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.root = master
@@ -43,9 +44,11 @@ class RolesDialog(Toplevel):
         self.header = header
         self.current_person = current_person
         self.treebard = treebard
-        self.formats = formats
+        # self.formats = formats
         self.pressed = pressed
         self.person_autofill_values = person_autofill_values
+
+        self.formats = make_formats_dict()
 
         self.role_types = []
         
@@ -62,7 +65,10 @@ class RolesDialog(Toplevel):
         self.person_autofill_values = EntryAutoPerson.create_lists(people)
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
+
         self.make_widgets()
+        configall(self, self.formats)
+        resize_scrolled_content(self, self.canvas, self.window)
 
     def make_widgets(self):
 
@@ -167,11 +173,6 @@ class RolesDialog(Toplevel):
             rcm_widgets, 
             self.rc_menu,
             roles_dlg_help_msg)
-
-        # config_generic(self)
-        configall(self, self.formats)
-
-        resize_scrolled_content(self, self.canvas, self.window)
 
     def make_inputs(self):
 

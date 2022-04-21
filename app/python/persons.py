@@ -7,7 +7,9 @@ from widgets import (
     Frame, Label, Button, LabelMovable, LabelH3, Entry, Toplevel, Border, 
     Dialogue, Entryx, Radiobutton, LabelHeader, configall, 
     make_formats_dict, EntryAutoPerson, Combobox, Scrollbar, 
-    RightClickMenu, make_rc_menus,)
+    )
+    # RightClickMenu, make_rc_menus,)
+from right_click_menu import RightClickMenu, make_rc_menus
 from scrolling import resize_scrolled_content, MousewheelScrolling
 from toykinter_widgets import run_statusbar_tooltips
 from error_messages import open_message, open_yes_no_message 

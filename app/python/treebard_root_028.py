@@ -168,7 +168,8 @@ if __name__ == '__main__':
 
 
 # DO LIST
-# WHY DOES ROLES DIALOG RECOLORIZE??? It doesn't--except unless it's open when you change color scheme. Does this mean the roles & notes & places etc will also have to be moved to widgets.py?
+# git commit 
+# families table uncolorizes on ctrl+s
 # changing title bar size when font size changes
 # Replace long switch with two tuples zip them into a dict which only python ever sees
 # possibly some of the end-point widgets such as independent dialogs have been moved to widgets.py for no reason. There's no reason why an already-open dlg shd recolorize while it's open, as long as it will be the new color next time it's opened, w/out having to restart the app.
@@ -179,7 +180,6 @@ if __name__ == '__main__':
 
 
 # BRANCH: families_table_validation
-# rcm dlg doesn't recolorize
 # parameterize repeated sections of code in make_cohighlights_dict(
 # APPARENTLY the user columns in formats table aren't being used anymore since the inception of using a color_scheme_id as FK in table current. if this is true get rid of the columns.
 # The current systems for getting all widgets to change color works well except in the case of self.formats in so-called special event widgets in styles.py. It works there too but due to running make_formats_dict() in every single widget it now causes a big delay in loading the app, since I've had to add this to the autofill entries and there are so many of them. But obviously when you restart the whole app--close the program completely and restart it--all the colors are right, even for special event widgets. So I have to eliminate the special event widget solution which is often hard to get working for some reason, maybe it's just hard to remember all the things I'm supposed to do, anyway get rid of special event widgets and instead figure out what's the difference between recolorizing and restarting the app and basically restart the app when APPLYing a new color scheme. Either that or figure out why/when the app has to be restarted to get special event apps to recolorize in regards to their highlighting events, and fix that instead. For example, maybe the fact that make_formats_dict() is run in init is the clue I'm looking for. Maybe in config_generic instead of the special widgets' current method, make_formats_dict() has to be run for each class that has a highlighting event. Or maybe a dedicated reconfig_highlighting function could be created in styles.py that could be called from colorizer.py on APPLY. Another thought is that something is happening with imports that causes a global value of formats to be recreated and reimported only when the app is restarted. FIX IT FOR ENTRY AUTO AND WHEN THE NEW SYSTEM WORKS, DELETE THE SPECIAL EVENT SECTION ONE CLASS AT A TIME AND TEST TO SEE THAT THE NEW SYSTEM WORKS FOR EACH CLASS THAT DOES HIGHLIGHTING. Also seems like fg is working right but bg isn't.
@@ -272,6 +272,7 @@ if __name__ == '__main__':
 # backup app to external hd
 
 # BRANCH: dialogs
+# when X to close places dialog, the place input to the evts table input shd be deleted
 # add another label in each row of roles dialog to show id of role person in case of dupe names
 # put a separator btwn events and attributes
 # in each tab of each tabbook, use Map event to focus one of the widgets on that tab when that tab is switched to, see colorizer arrow_in_first() as an example
@@ -463,6 +464,11 @@ Just type a plus sign in any person input, followed by the new name which can be
 '''
 '''
 Treebard uses an original-vs.-final-content test to eliminate validating and responding to inputs that haven't changed as the user tabs through them. It also eliminates superfluous dialogs. This works fine in the case where the input empties after use, and in the case where content is programatically inserted and not always changed. But in the case where there's always content inserted programatically and content is generally always going to change, an extra test is needed to detect duplicate names. For example, in the roles dialog, role names can be changed, but if John Smith is changed to a different John Smith, the usual test isn't enough. So in edit autofills, we have to test not only for whether the content has changed, but also if the content hasn't changed, we have to test for whether the final content has duplicates. A change might have been intended. That way, tabbing out of John Smith's edit input will always open a dupe checking dialog. There is a simple workaround, but the user would have to know the ID of the new John Smith and input it like "#5927" instead of inputting "John Smith". Users who happen to remember IDs for duplicate names might be able to use this sometimes, and looking up an ID is easy, but generally the inconvenience of having to look at a simple dialog to clarify which John Smith was meant, each time a role person named John Smith is edited, would be no big deal and would happen rarely.
+'''
+
+# DEV DOCS NEW COLORIZER APRIL 2022
+'''
+The old system used multiple calls to `make_formats_dict()` anytime a current set of color scheme values might be needed. This worked OK for widgets that don't respond to an event by changing font or color, and it worked fine for those widgets too, but required an instance variable for each instance of such a widget to get its values by running `formats = make_formats_dict()`. When I gave too many table cells some events to respond to, the load time for the app doubled and I decided to refactor the colorizing procedure. This involved giving each widget class its own class-level `formats` variable which gets initial values by running `make_formats_dict()` once on load, providing the values globally. The class-level variables get their values from the global one, but the global one is never changed. Instead, the class-level variables are changed when the user selects a new color scheme. This works efficiently for normal widgets as well as those that respond to events by changing colors or font. But it doesn't seem to work for dialogs, because the dialog generally doesn't exist when configall() runs so is not included in the reconfiguration. Therefore each dialog needs to run configall() for itself after getting current values i.e. `self.formats = make_formats_dict()`. This is the old system being used for dialogs only, which is not a problem since dialogs are made one at a time as needed. The exception is dropdowns which are instances of Toplevel. The new system works for them because they are permanent, created when their host widget is created, and withdrawn when not seen, instead of destroyed. Since they exist, they change when everything else changes. The above discussion explains why dialogs can have their own module, since they're not included in the new system, and it's because of the new system that I had to put the configuration of the widgets and the widgets together in the same module, so there would not be circular imports.
 '''
 
 

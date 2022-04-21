@@ -15,8 +15,9 @@ from files import get_current_file, current_drive, app_path
 from persons import get_current_person
 from widgets import (
     Frame, Canvas, Button, Label, Radiobutton, FrameHilited4, 
-    LabelH3, MessageCopiable, LabelStay, Scrollbar, 
-    RightClickMenu, make_rc_menus, configall)
+    LabelH3, MessageCopiable, LabelStay, Scrollbar, make_formats_dict,
+    configall)
+from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from scrolling import resize_scrolled_content
 from messages_context_help import gallery_help_msg, gallery_thumbnail_help_msg
@@ -38,7 +39,8 @@ class Gallery(Frame):
 
     def __init__(
             self, master, tabbook, 
-            graphics_tab, formats, 
+            graphics_tab, 
+            # graphics_tab, formats, 
             root, treebard, SCREEN_SIZE, dialog=None,
             current_person_name=None, current_place_name=None, 
             current_source_name=None, *args, **kwargs):
@@ -47,11 +49,13 @@ class Gallery(Frame):
         self.master = master # canvas
         self.tabbook = tabbook
         self.graphics_tab = graphics_tab
-        self.formats = formats
+        # self.formats = formats
         self.root = root
         self.treebard = treebard
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = SCREEN_SIZE
         self.dialog = dialog
+
+        self.formats = make_formats_dict()
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
@@ -87,6 +91,7 @@ class Gallery(Frame):
         else:
             self.filter_pix_data(pix_data)
             self.make_gallery()
+        configall(self, self.formats)
 
     def cancel(self):
         self.dialog.grab_release()

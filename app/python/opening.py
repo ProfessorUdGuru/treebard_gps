@@ -6,7 +6,9 @@ from os import listdir, path
 from os.path import isfile, join
 from widgets import (
     Toplevel, Canvas, Button, Frame, ButtonBigPic, Border, configall,
-    RightClickMenu, make_rc_menus, open_input_message2,)
+    open_input_message2,)
+    # RightClickMenu, make_rc_menus, open_input_message2,)
+from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from error_messages import open_message
 from messages_context_help import opening_dlg_help_msg

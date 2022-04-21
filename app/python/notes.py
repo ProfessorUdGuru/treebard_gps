@@ -5,12 +5,12 @@ import sqlite3
 from widgets import (
     Label, Button, Entry, Canvas, LabelFrame, LabelH3, FrameHilited6,
     LabelMovable, Toplevel, LabelHeader, Radiobutton, Frame, Border, Dialogue,
-    Combobox, EntryAutoHilited, RightClickMenu, 
-    make_rc_menus, InputMessage, 
+    Combobox, EntryAutoHilited, make_formats_dict,
     Scrollbar, ScrolledText, configall)
+from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from scrolling import resize_scrolled_content
-from error_messages import open_yes_no_message
+from error_messages import open_yes_no_message, InputMessage
 from messages_context_help import notes_dlg_help_msg, links_dlg_help_msg
 from places import make_all_nestings    
 from messages import notes_msg
@@ -36,7 +36,8 @@ class NotesDialog(Toplevel):
 
     def __init__(
             self, master, finding, header, current_person, treebard, 
-            formats, pressed=None, person_autofill_values=None, *args, **kwargs):
+            pressed=None, person_autofill_values=None, *args, **kwargs):
+            # formats, pressed=None, person_autofill_values=None, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.root = master
@@ -44,9 +45,11 @@ class NotesDialog(Toplevel):
         self.header = header
         self.current_person = current_person
         self.treebard = treebard
-        self.formats = formats
+        # self.formats = formats
         self.pressed = pressed
         self.person_autofill_values = person_autofill_values
+
+        self.formats = make_formats_dict()
 
         self.current_file = get_current_file()[0]
         self.selected = None
@@ -72,8 +75,6 @@ class NotesDialog(Toplevel):
         self.make_table_of_contents() 
         self.size_toc() 
 
-
-        # config_generic(self)
         configall(self, self.formats)
         resize_scrolled_content(self, self.canvas, self.window)
         center_dialog(self, frame=self.window)

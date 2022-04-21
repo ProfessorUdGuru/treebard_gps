@@ -5,9 +5,8 @@ import sqlite3
 from files import app_path, get_current_file
 from widgets import (
     Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3,
-    LabelNegative, configall, Border, Scrollbar, 
-    RightClickMenu, 
-    make_rc_menus)
+    LabelNegative, Border, Scrollbar, configall, make_formats_dict)
+from right_click_menu import RightClickMenu, make_rc_menus
 from scrolling import MousewheelScrolling, resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from persons import open_new_person_dialog, update_person_autofill_values
@@ -67,7 +66,8 @@ def get_matches(search_input):
 class PersonSearch(Toplevel):
     def __init__(
             self, master, root, treebard, entry, findings_table, 
-            show_top_pic, formats, person_autofill_values, *args, **kwargs):
+            show_top_pic, person_autofill_values, *args, **kwargs): 
+            # show_top_pic, formats, person_autofill_values, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.master = master # Main
@@ -76,8 +76,10 @@ class PersonSearch(Toplevel):
         self.entry = entry
         self.findings_table = findings_table
         self.show_top_pic = show_top_pic
-        self.formats = formats
+        # self.formats = formats
         self.person_autofill_values = person_autofill_values
+
+        self.formats = make_formats_dict()
 
         self.result_rows = []
         self.hilit_row = None
@@ -106,6 +108,8 @@ class PersonSearch(Toplevel):
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
         self.make_widgets()
+        configall(self, self.formats)
+        resize_scrolled_content(self, self.canvas, self.window)
 
     def make_widgets(self):
 
@@ -225,9 +229,7 @@ class PersonSearch(Toplevel):
             search_person_help_msg) 
 
         self.make_header_row()
-        # config_generic(self)
-        configall(self, formats)
-        resize_scrolled_content(self, self.canvas, self.window)
+
 
     def make_new_person(self, master, inwidg, root, treebard, formats, 
         inwidg2, person_autofill_values=None):

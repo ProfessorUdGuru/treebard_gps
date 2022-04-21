@@ -9,9 +9,11 @@ from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
     LabelH3, Button, Entry, LabelHeader, Border, Dialogue ,
     LabelNegative,  make_formats_dict, EntryAuto, EntryAutoHilited,
-    Separator, RightClickMenu, make_rc_menus,
+    Separator,
+    # Separator, RightClickMenu, make_rc_menus,
     Scrollbar,
 )
+from right_click_menu import RightClickMenu, make_rc_menus
 from scrolling import resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
@@ -866,13 +868,11 @@ class EventsTable(Frame):
                 elif j == 5:
                     cell = LabelDots(
                         self, RolesDialog, self.treebard, 
-                        person_autofill_values=self.person_autofill_values
-)
+                        person_autofill_values=self.person_autofill_values)
                 elif j == 6:
                     cell = LabelDots(
                         self, NotesDialog, self.treebard, 
-                        person_autofill_values=self.person_autofill_values
-)
+                        person_autofill_values=self.person_autofill_values)
                 elif j == 7:
                     cell = LabelButtonText(
                         self,
