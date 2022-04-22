@@ -8,9 +8,8 @@ import sqlite3
 from widgets import (
     Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay, Entry,
     FrameHilited2, get_all_descends, configall, Scrollbar,
-    make_formats_dict, ALL_WIDGET_CLASSES)
+    make_formats_dict, ALL_WIDGET_CLASSES, open_message)
 from files import get_current_file
-from error_messages import  open_message
 from messages import colorizer_msg
 from messages_context_help import color_preferences_swatches_help_msg
 from query_strings import (

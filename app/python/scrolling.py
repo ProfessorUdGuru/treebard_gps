@@ -6,178 +6,178 @@ from dev_tools import looky, seeline
 
 
 
-# '''
-	# One purpose of this module is to tell right here how to make a canvas and 
-    # scrollbar do different things under a variety of circumstances.
+'''
+	One purpose of this module is to tell right here how to make a canvas and 
+    scrollbar do different things under a variety of circumstances.
  
-    # I wrote this because I needed a cheat sheet, not because I'm an expert.
+    I wrote this because I needed a cheat sheet, not because I'm an expert.
 
-    # I. MAKE SCROLLBARS:
+    I. MAKE SCROLLBARS:
 
-        # sbv = Scrollbar(
-            # toplevel, 
-            # command=canvas.yview,
-            # hideable=True)
-        # canvas.config(yscrollcommand=sbv.set)
+        sbv = Scrollbar(
+            toplevel, 
+            command=canvas.yview,
+            hideable=True)
+        canvas.config(yscrollcommand=sbv.set)
 
-        # sbh = Scrollbar(
-            # toplevel, 
-            # orient='horizontal', 
-            # command=canvas.xview, 
-            # hideable=True)
-        # canvas.config(xscrollcommand=sbh.set)
+        sbh = Scrollbar(
+            toplevel, 
+            orient='horizontal', 
+            command=canvas.xview, 
+            hideable=True)
+        canvas.config(xscrollcommand=sbh.set)
 
-    # A scrollbar and its canvas are always siblings, e.g. in the above example, 
-    # the parent of the canvas would also be `toplevel`.
+    A scrollbar and its canvas are always siblings, e.g. in the above example, 
+    the parent of the canvas would also be `toplevel`.
 
-    # The class is a custom "Toykinter" widget based on the Tkinter API so using 
-    # it is almost identical to using the Tkinter scrollbar except that it can be 
-    # easily configured like any Tkinter widget instead of using Windows system 
-    # colors. Also it is optionally hideable; default for that option is False. 
-    # The complication with the hideable scrollbar is that it needs a place to be
-    # when it appears, so an offset--a blank space the same size as the hidden 
-    # scrollbar--was added to the required size of the window. Then a spacer 
-    # was added to the north and west edges of the window to balance this out. 
-    # These procedures increase the size of the window to prevent the scrollbar 
-    # from appearing before it's needed. The offset spacer or scrollbar width is 
-    # "scridth".
+    The class is a custom "Toykinter" widget based on the Tkinter API so using 
+    it is almost identical to using the Tkinter scrollbar except that it can be 
+    easily configured like any Tkinter widget instead of using Windows system 
+    colors. Also it is optionally hideable; default for that option is False. 
+    The complication with the hideable scrollbar is that it needs a place to be
+    when it appears, so an offset--a blank space the same size as the hidden 
+    scrollbar--was added to the required size of the window. Then a spacer 
+    was added to the north and west edges of the window to balance this out. 
+    These procedures increase the size of the window to prevent the scrollbar 
+    from appearing before it's needed. The offset spacer or scrollbar width is 
+    "scridth".
 
-    # II. CANVAS, SCROLLBAR AND WINDOW SIZING:
+    II. CANVAS, SCROLLBAR AND WINDOW SIZING:
 
-    # There are several things that can have dimensions so I think of them as a stack
-    # with the toplevel (root or dialog) on bottom:
+    There are several things that can have dimensions so I think of them as a stack
+    with the toplevel (root or dialog) on bottom:
 
-        # toplevel
-        # scrollregion
-        # canvas
-        # window (content frame)
+        toplevel
+        scrollregion
+        canvas
+        window (content frame)
 
-    # The canvas is a widget, gridded, packed or placed like any other widget.
+    The canvas is a widget, gridded, packed or placed like any other widget.
 
-    # What I'm calling a "content frame" is a single frame covering the whole 
-    # canvas, so that
-    # when the canvas is scrolled, the effect is that the content and all its 
-    # widgets are being scrolled. Since this frame is not gridded but created 
-    # by canvas.create_window(), in my code where it says 'window' this should be
-    # a reference to a content frame in a canvas. If there will be objects drawn 
-    # on the canvas instead of widgets in a content frame, give the canvas a size 
-    # with its width and height options. But if there will be a content frame, 
-    # ignore the canvas width and height options.
+    What I'm calling a "content frame" is a single frame covering the whole 
+    canvas, so that
+    when the canvas is scrolled, the effect is that the content and all its 
+    widgets are being scrolled. Since this frame is not gridded but created 
+    by canvas.create_window(), in my code where it says 'window' this should be
+    a reference to a content frame in a canvas. If there will be objects drawn 
+    on the canvas instead of widgets in a content frame, give the canvas a size 
+    with its width and height options. But if there will be a content frame, 
+    ignore the canvas width and height options.
 
-    # The scrollregion can be visualized as an area behind the canvas, at least 
-    # as large as the canvas, which can be slid around with only part of it 
-    # visible at one time. The scrollregion can be panned by dragging with the 
-    # mouse or arrow keys, or scrolled with scrollbars or the mousewheel. 
+    The scrollregion can be visualized as an area behind the canvas, at least 
+    as large as the canvas, which can be slid around with only part of it 
+    visible at one time. The scrollregion can be panned by dragging with the 
+    mouse or arrow keys, or scrolled with scrollbars or the mousewheel. 
 
-    # A. RESIZABLE CANVAS
+    A. RESIZABLE CANVAS
 
-    # The root window and some toplevel windows need to have dynamically varying 
-    # contents. The scrollregion is set to autosize to all the canvas' contents 
-    # (bounding box or bbox), which is just the content frame in this case.
+    The root window and some toplevel windows need to have dynamically varying 
+    contents. The scrollregion is set to autosize to all the canvas' contents 
+    (bounding box or bbox), which is just the content frame in this case.
 
-        # root.columnconfigure(0, weight=1)
-        # root.rowconfigure(0, weight=1)
-        # canvas = Canvas(root)
-        # content = Frame(canvas) # don't grid
-        # canvas.grid(column=0, row=0, sticky='news')
-        # content_window = canvas.create_window(0, 0, anchor='nw', window=content)
-        # canvas.config(scrollregion=canvas.bbox('all')) 
+        root.columnconfigure(0, weight=1)
+        root.rowconfigure(0, weight=1)
+        canvas = Canvas(root)
+        content = Frame(canvas) # don't grid
+        canvas.grid(column=0, row=0, sticky='news')
+        content_window = canvas.create_window(0, 0, anchor='nw', window=content)
+        canvas.config(scrollregion=canvas.bbox('all')) 
 
-        # def resize_canvas(event):
-            # root.update_idletasks()
-            # if event.width > content.winfo_reqwidth():
-                # canvas.itemconfigure(content_window, width=event.width)
+        def resize_canvas(event):
+            root.update_idletasks()
+            if event.width > content.winfo_reqwidth():
+                canvas.itemconfigure(content_window, width=event.width)
 
-        # canvas.bind('<Configure>', resize_canvas)
+        canvas.bind('<Configure>', resize_canvas)
 
-    # The toplevel could also be resized this way when its contents change. This way
-    # instead of resizing automatically when contents change, you have to know when
-    # contents will change and call the function at that time:
+    The toplevel could also be resized this way when its contents change. This way
+    instead of resizing automatically when contents change, you have to know when
+    contents will change and call the function at that time:
 
-        # def resize_scrolled_content(toplevel, canvas):
-            # toplevel.update_idletasks()
-            # canvas.config(scrollregion=canvas.bbox('all'))
-            # page_x = canvas.content.winfo_reqwidth()
-            # page_y = canvas.content.winfo_reqheight()
-            # toplevel.geometry('{}x{}'.format(page_x, page_y))
+        def resize_scrolled_content(toplevel, canvas):
+            toplevel.update_idletasks()
+            canvas.config(scrollregion=canvas.bbox('all'))
+            page_x = canvas.content.winfo_reqwidth()
+            page_y = canvas.content.winfo_reqheight()
+            toplevel.geometry('{}x{}'.format(page_x, page_y))
 
-    # B. NESTED CANVAS WITH A FIXED SIZE
+    B. NESTED CANVAS WITH A FIXED SIZE
 
-    # Within a toplevel whether it's got its own full-size scrolled area or not, 
-    # a smaller scrolled area of a fixed size could be contained. In this case, 
-    # the scrollregion doesn't get set to bbox('all') but to a fized size at 
-    # least the size of the canvas. The resizing methods are not needed here.
+    Within a toplevel whether it's got its own full-size scrolled area or not, 
+    a smaller scrolled area of a fixed size could be contained. In this case, 
+    the scrollregion doesn't get set to bbox('all') but to a fized size at 
+    least the size of the canvas. The resizing methods are not needed here.
 
-        # canvas = Canvas(root, width=500, height=750)
-        # content = Frame(canvas) # don't grid
-        # canvas.create_window(0, 0, anchor='nw', window=content)
-        # canvas.config(scrollregion=(0, 0, 900, 1000)) 
+        canvas = Canvas(root, width=500, height=750)
+        content = Frame(canvas) # don't grid
+        canvas.create_window(0, 0, anchor='nw', window=content)
+        canvas.config(scrollregion=(0, 0, 900, 1000)) 
 
-    # Instead of hard-coding the width and height of the scrollregion, the 
-    # required width and height of the canvas contents can be detected so 
-    # the size of the scrollregion is the exact size it needs to be. The 
-    # canvas width and height should be set to any size smaller than the 
-    # scrollregion but won't go below a minimum size that's built into Tkinter.
+    Instead of hard-coding the width and height of the scrollregion, the 
+    required width and height of the canvas contents can be detected so 
+    the size of the scrollregion is the exact size it needs to be. The 
+    canvas width and height should be set to any size smaller than the 
+    scrollregion but won't go below a minimum size that's built into Tkinter.
 
-    # C. DROPDOWN WINDOW WITH A FIXED WIDTH   
+    C. DROPDOWN WINDOW WITH A FIXED WIDTH   
 
-    # A toplevel without a border can be used as a dropdown window, for example 
-    # in a custom-made combobox, and provided with a vertical scrollbar. Its 
-    # width will be fixed to that of a host, for example the entry widget in a 
-    # combobox. The scrollregion height will be calculated to fit the vertical 
-    # contents. The window height is left to resize to its contents.
+    A toplevel without a border can be used as a dropdown window, for example 
+    in a custom-made combobox, and provided with a vertical scrollbar. Its 
+    width will be fixed to that of a host, for example the entry widget in a 
+    combobox. The scrollregion height will be calculated to fit the vertical 
+    contents. The window height is left to resize to its contents.
 
-    # In this example, self is the combobox, i.e. a frame that holds the combobox
-    # entry and arrow.
+    In this example, self is the combobox, i.e. a frame that holds the combobox
+    entry and arrow.
 
-        # host = self.Entry(self)
-        # host.grid()
-        # host_width = self.winfo_reqwidth()
-        # self.window = self.canvas.create_window(
-            # 0, 0, anchor='nw', window=self.content, width=host_width)
-        # self.canvas.config(scrollregion=(0, 0, host_width, self.fit_height))
+        host = self.Entry(self)
+        host.grid()
+        host_width = self.winfo_reqwidth()
+        self.window = self.canvas.create_window(
+            0, 0, anchor='nw', window=self.content, width=host_width)
+        self.canvas.config(scrollregion=(0, 0, host_width, self.fit_height))
 
-    # D. SCROLLING WITH THE MOUSEWHEEL
+    D. SCROLLING WITH THE MOUSEWHEEL
 
-    # Another purpose of this module is to provide a class that coordinates the 
-    # various scrolled canvases so the right one is scrolled with the mousewheel.
+    Another purpose of this module is to provide a class that coordinates the 
+    various scrolled canvases so the right one is scrolled with the mousewheel.
 
-    # Each canvas should scroll when the mouse is over that canvas, so a 
-    # collection of canvases is kept and the mousewheel callback is bound to 
-    # each canvas. The class is self-contained so all you have to do is 1) 
-    # instantiate it ahead of any reference to any function that will open a 
-    # participating toplevel, 2) for root and each participating toplevel, run a 
-    # method to list the canvases, and 3) for root and each participating 
-    # toplevel, run a method to configure canvas and window. For 2) above, if 
-    # the toplevel is resizable, it's listed in a sublist of [canvas, window]. 
-    # For non-resizable canvases, only the canvas is listed and resizable=False.
-    # For 3) above, if the root canvas is being configured, in_root=True. This
-    # effort not only takes care of mousewheel scrolling among a variety of dialogs,
-    # but also automatically removes references to destroyed toplevels from the 
-    # list to prevent errors. Besides that, it takes care of resizing window and
-    # scrollbar in case a dialog changes size for some reason.
+    Each canvas should scroll when the mouse is over that canvas, so a 
+    collection of canvases is kept and the mousewheel callback is bound to 
+    each canvas. The class is self-contained so all you have to do is 1) 
+    instantiate it ahead of any reference to any function that will open a 
+    participating toplevel, 2) for root and each participating toplevel, run a 
+    method to list the canvases, and 3) for root and each participating 
+    toplevel, run a method to configure canvas and window. For 2) above, if 
+    the toplevel is resizable, it's listed in a sublist of [canvas, window]. 
+    For non-resizable canvases, only the canvas is listed and resizable=False.
+    For 3) above, if the root canvas is being configured, in_root=True. This
+    effort not only takes care of mousewheel scrolling among a variety of dialogs,
+    but also automatically removes references to destroyed toplevels from the 
+    list to prevent errors. Besides that, it takes care of resizing window and
+    scrollbar in case a dialog changes size for some reason.
 
-        # scroll_mouse = MousewheelScrolling(root, canvas)
+        scroll_mouse = MousewheelScrolling(root, canvas)
 
-        # scroll_mouse.append_to_list([canvas, canvas.content])
-        # scroll_mouse.append_to_list(canvas3, resizable=False)
-        # scroll_mouse.configure_mousewheel_scrolling(in_root=True)
+        scroll_mouse.append_to_list([canvas, canvas.content])
+        scroll_mouse.append_to_list(canvas3, resizable=False)
+        scroll_mouse.configure_mousewheel_scrolling(in_root=True)
 
-        # scroll_mouse.append_to_list([canvas2, canvas2.content])
-        # scroll_mouse.configure_mousewheel_scrolling()
+        scroll_mouse.append_to_list([canvas2, canvas2.content])
+        scroll_mouse.configure_mousewheel_scrolling()
 
-    # E. WHAT ABOUT A SCROLLED CANVAS CLASS?
+    E. WHAT ABOUT A SCROLLED CANVAS CLASS?
 
-    # I tried making a scrolled canvas class but it was a bag of worms because 
-    # it abstracted the creation of scrollbars away from the overall design of
-    # the GUI, becoming an annoyance rather than a tool. It made it seem 
-    # unnecessary to understand how to make scrollbars, and yet to ever extend 
-    # the code, the opposite is true. It required extra lines of code which were 
-    # not Tkinterish, and the end result was more work, not less. But the Scrollbar,
-    # MousewheelScrolling, and Combobox classes below are the bee's knees, as well as 
-    # the Border class which is in window_border.py.
+    I tried making a scrolled canvas class but it was a bag of worms because 
+    it abstracted the creation of scrollbars away from the overall design of
+    the GUI, becoming an annoyance rather than a tool. It made it seem 
+    unnecessary to understand how to make scrollbars, and yet to ever extend 
+    the code, the opposite is true. It required extra lines of code which were 
+    not Tkinterish, and the end result was more work, not less. But the Scrollbar,
+    MousewheelScrolling, and Combobox classes below are the bee's knees, as well as 
+    the Border class which is in window_border.py.
 
-# '''
+'''
 
 def resize_scrolled_content(toplevel, canvas, window): 
     '''
@@ -291,169 +291,6 @@ class MousewheelScrolling():
             canvas, window = canvas[0], canvas[1]
             resize_scrolled_content(canvas.master, canvas, window)
 
-# formats = make_formats_dict()
-# class Scrollbar(Canvas):
-    # '''
-        # A scrollbar is gridded as a sibling of what it's scrolling. Set the 
-        # command attribute during construction; it's a python keyword argument 
-        # but not a Tkinter option so vscroll.config(command=self.yview) won't 
-        # work. This scrollbar works well and can be made any size or color. It's
-        # lacking the little arrows at the ends of the trough.
-
-        # The `get()` method for this class isn't finished but has been started in
-        # colorizer.py. It should be moved here instead of making it as an
-        # instance attribute.
-    # '''
-    # formats = formats
-    # slidercolor = formats['bg']
-    # troughcolor = formats['head_bg']
-    # bordercolor = formats['highlight_bg']
-    
-    # def __init__(
-        # self, master, width=16, orient='vertical', 
-            # hideable=False, **kwargs):
-
-        # self.command = kwargs.pop('command', None)
-        # Canvas.__init__(self, master, **kwargs)
-
-        # self.width = width
-        # self.orient = orient
-        # self.hideable = hideable
-
-        # self.x0 = 0
-        # self.y0 = 0
-        # self.x1 = 0
-        # self.y1 = 0
-
-        # self.new_start_y = 0
-        # self.new_start_x = 0
-        # self.first_y = 0
-        # self.first_x = 0
-
-        # if orient == 'vertical':
-            # self.config(width=width)
-        # elif orient == 'horizontal':
-            # self.config(height=width)
-
-        # self.config(bg=Scrollbar.troughcolor, bd=0, highlightthickness=0)
-
-        # self.thumb = self.create_rectangle(
-            # 0, 0, 1, 1, 
-            # fill=Scrollbar.slidercolor, 
-            # width=1,    # this is border width
-            # outline=Scrollbar.bordercolor, 
-            # tags=('slider',))
-        # self.bind('<ButtonPress-1>', self.move_on_click)
-
-        # self.bind('<ButtonPress-1>', self.start_scroll, add='+')
-        # self.bind('<B1-Motion>', self.move_on_scroll)
-        # self.bind('<ButtonRelease-1>', self.end_scroll)
-
-    # def set(self, lo, hi):
-        # '''
-            # For resizing & repositioning the slider. The hideable
-            # scrollbar portion is by Fredrik Lundh, one of Tkinter's authors.
-        # '''
-
-        # lo = float(lo)
-        # hi = float(hi)
-
-        # if self.hideable is True:
-            # if lo <= 0.0 and hi >= 1.0:
-                # self.grid_remove()
-                # return
-            # else:
-                # self.grid()
-
-        # self.height = self.winfo_height()
-        # width = self.winfo_width()
-
-        # if self.orient == 'vertical':
-            # x0 = 0
-            # y0 = max(int(self.height * lo), 0)
-            # x1 = width - 1
-            # y1 = min(int(self.height * hi), self.height)
-        # elif self.orient == 'horizontal':
-            # x0 = max(int(width * lo), 0)
-            # y0 = 0
-            # x1 = min(int(width * hi), width)
-            # y1 = self.height -1
-
-        # self.coords('slider', x0, y0, x1, y1)
-        # self.x0 = x0
-        # self.y0 = y0
-        # self.x1 = x1
-        # self.y1 = y1
-
-    # def move_on_click(self, event):
-        # if self.orient == 'vertical':
-            # y = event.y / self.winfo_height()
-            # if event.y < self.y0 or event.y > self.y1:
-                # self.command('moveto', y)
-            # else:
-                # self.first_y = event.y
-        # elif self.orient == 'horizontal':
-            # x = event.x / self.winfo_width()
-            # if event.x < self.x0 or event.x > self.x1:
-                # self.command('moveto', x)
-            # else:
-                # self.first_x = event.x
-
-    # def start_scroll(self, event):
-        # if self.orient == 'vertical':
-            # self.last_y = event.y 
-            # self.y_move_on_click = int(event.y - self.coords('slider')[1])
-        # elif self.orient == 'horizontal':
-            # self.last_x = event.x 
-            # self.x_move_on_click = int(event.x - self.coords('slider')[0])
-
-    # def end_scroll(self, event):
-        # if self.orient == 'vertical':
-            # self.new_start_y = event.y
-        # elif self.orient == 'horizontal':
-            # self.new_start_x = event.x
-
-    # def move_on_scroll(self, event):
-
-        # jerkiness = 3
-
-        # if self.orient == 'vertical':
-            # if abs(event.y - self.last_y) < jerkiness:
-                # return
-            # delta = 1 if event.y > self.last_y else -1
-            # self.last_y = event.y
-            # self.command('scroll', delta, 'units')
-            # mouse_pos = event.y - self.first_y
-            # if self.new_start_y != 0:
-                # mouse_pos = event.y - self.y_move_on_click
-            # self.command('moveto', mouse_pos/self.winfo_height()) 
-        # elif self.orient == 'horizontal':
-            # if abs(event.x - self.last_x) < jerkiness:
-                # return
-            # delta = 1 if event.x > self.last_x else -1
-            # self.last_x = event.x
-            # self.command('scroll', delta, 'units')
-            # mouse_pos = event.x - self.first_x
-            # if self.new_start_x != 0:
-                # mouse_pos = event.x - self.x_move_on_click
-            # self.command('moveto', mouse_pos/self.winfo_width()) 
-
-# class ScrolledText(Framex):
-    # def __init__(self, master, *args, **kwargs):
-        # Framex.__init__(self, master, *args, **kwargs)
-
-        # self.grid_rowconfigure(0, weight=1)
-        # self.grid_columnconfigure(0, weight=1)
-        # self.text = Text(self)
-        # self.text.grid(column=0, row=0)
-        # self.ysb = Scrollbar(
-            # self, 
-            # width=16,
-            # orient='vertical', 
-            # hideable=True,
-            # command=self.text.yview)
-        # self.text.configure(yscrollcommand=self.ysb.set)
-        # self.ysb.grid(column=1, row=0, sticky='ns')
 
 if __name__ == '__main__':
 

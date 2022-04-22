@@ -4,15 +4,14 @@ import tkinter as tk
 import sqlite3
 from PIL import Image, ImageTk
 from tkinter import font
-# from tkinter import font, IntVar, StringVar
 from files import (
     get_current_file, app_path, global_db_path, set_closing,
     handle_new_tree_event, handle_open_event, save_as, save_copy_as, 
     rename_tree, close_tree, exit_app, get_recent_files,
     new_file_path, change_tree_title, set_current_file, save_recent_tree)
-from dropdown import IMPORT_TYPES, EXPORT_TYPES, MOD_KEYS, placeholder
 from scrolling import resize_scrolled_content
 from utes import create_tooltip, center_dialog
+from messages import fonts_msg
 from query_strings import ( 
     select_color_scheme_current_id, select_color_scheme_by_id,
     select_format_font_scheme, select_format_font_size,
@@ -22,7 +21,7 @@ from query_strings import (
     select_all_images, select_all_name_types, insert_person_new,
     select_person_gender, select_max_name_type_id, insert_name_type_new,
     insert_image_new, select_name_with_id_any, select_birth_names_ids,
-    insert_finding_birth_new_person,
+    insert_finding_birth_new_person, update_format_font,
     select_current_person_id, delete_name_person, delete_findings_roles_person,
     select_name_id_by_person_id, delete_links_links_person, delete_links_links_name,
     update_finding_person_1_null, update_finding_person_2_null,
@@ -375,7 +374,7 @@ def configall(master, formats):
 
         elif subclass == "Border":
             Border.head_bg = formats["head_bg"]
-            Border.fg = formats["fg"]            
+            Border.fg = formats["fg"]
 
     if root:
         root.config(bg=formats["bg"])
@@ -1347,7 +1346,7 @@ class CanvasHilited(Canvasx):
 
 # from window_border.py
 
-def close_custom_dialog(evt):
+def close(evt):
     dlg = evt.widget.winfo_toplevel()
     if dlg.winfo_name() == 'tk':
         set_closing()
@@ -1561,7 +1560,7 @@ class Border(Canvas):
         self.minn.bind('<Button-1>', self.minimize)
         self.maxx.bind('<Button-1>', self.toggle_max_restore)
         self.restore.bind('<Button-1>', self.toggle_max_restore)
-        self.quitt.bind('<Button-1>', close_custom_dialog)
+        self.quitt.bind('<Button-1>', close)
         x = [i.bind(
             '<Map>', 
             self.recolorize_on_restore) for i in (self.minn, self.quitt)]
@@ -2337,6 +2336,7 @@ class Combobox(FrameHilited3):
         self.config_values(self.values)
 
         configall(self.drop, Combobox.formats)
+        # config_generic(self.drop)
 
     def unbind_combo_parts(self, evt):
         self.master.unbind_all('<ButtonRelease-1>')
@@ -2975,6 +2975,7 @@ class TabBook(Framex):
             root_window.bind_all(unkey_combo_lower, self.unhighlight_tab)
 
 # from toykinter_widgets.py
+
 class LabelStatusbar(Labelx):
     formats = formats
     bg = formats["bg"]
@@ -2989,6 +2990,47 @@ class LabelStatusbar(Labelx):
             bg=LabelStatusbar.bg, 
             fg=LabelStatusbar.fg,
             font=LabelStatusbar.status)
+
+# def run_statusbar_tooltips(visited, status_label, tooltip_label):
+    # '''
+        # Uses lambda to add args to event
+        # since tkinter expects only one arg in a callback.
+    # '''
+
+    # def handle_statusbar_tooltips(event):
+        # for tup in visited:
+            # if tup[0] is event.widget:
+                # if event.type == '9': # FocusIn
+                    # status_label.config(text=tup[1])
+                # elif event.type == '10': # FocusOut
+                    # status_label.config(text='')
+                # elif event.type == '7': # Enter
+                    # tooltip_label.grid(
+                        # column=1, row=0, 
+                        # sticky='e', padx=(6,24))
+                    # tooltip_label.config(
+                        # text=tup[2],
+                        # bg='black',
+                        # fg='white',
+                        # font=LabelStatusbar.formats["status"])
+                # elif event.type == '8': # Leave
+                    # tooltip_label.grid_remove()
+                    # tooltip_label.config(
+                        # bg=formats['bg'], text='', fg=formats['bg'])
+
+    # statusbar_events = ['<FocusIn>', '<FocusOut>', '<Enter>', '<Leave>']
+
+    # for tup in visited:
+        # widg = tup[0]
+        # status = tup[1]
+        # tooltip = tup[2]
+        # for event_pattern in statusbar_events:
+            # # error if tup[0] has been destroyed 
+            # #   so don't use these with destroyable widgets
+            # # different tooltips are available in utes.py
+            # widg.bind(event_pattern, handle_statusbar_tooltips, add='+')
+
+        # status_label.config(font=formats['status'])
 
 class StatusbarTooltips(Frame):
     '''
@@ -3543,6 +3585,19 @@ class ScrolledText(Framex):
     Toplevel dropdown uses the geometry() method to appear next to its host 
     widget. If the window moves, the dropdown is withdrawn.
 '''
+IMPORT_TYPES = (
+    ("From Treebard", "", ""), 
+    ("From GEDCOM", "", ""))
+
+EXPORT_TYPES = (
+    ("To Treebard", "", ""), 
+    ("To GEDCOM", "", ""))
+
+MOD_KEYS = ("Ctrl", "Alt", "Shift", "Ctrl+Alt", "Ctrl+Shift", "Alt+Shift")
+
+def placeholder(evt=None, name=""):
+    print('menu test:', name.upper()) 
+    print('evt:', evt) 
 
 class DropdownMenu(FrameHilited2):
     formats = formats
@@ -3974,54 +4029,8 @@ class DropdownMenu(FrameHilited2):
                     close_it()               
             else:
                 close_it()
-def open_input_message2(master, message, title, ok_lab, cancel_lab):
-    '''
-        For more primary-level input vs. error-level input.
-    '''
 
-    def ok():
-        cancel()
-
-    def cancel():
-        msg.destroy()
-        master.grab_set()
-
-    def show():
-        gotten = got.get()
-        return gotten
-
-    got = StringVar()
-
-    msg = Dialogue(master)
-    msg.grab_set()
-    msg.canvas.title_1.config(text=title)
-    msg.canvas.title_2.config(text="")
-    lab = LabelHeader(
-        msg.window, text=message, justify='left', 
-        font=("courier", 14, "bold"), wraplength=450)
-    lab.grid(
-        column=0, row=0, sticky='news', padx=12, pady=12, 
-        columnspan=2, ipadx=6, ipady=3)
-    inPut = Entry(
-        msg.window, textvariable=got, width=48, 
-        font=("dejavu sans mono", 14))
-    inPut.grid(column=0, row=1, padx=12)
-    buttonbox = Frame(msg.window)
-    buttonbox.grid(column=0, row=2, sticky='e', padx=(0,12), pady=12)
-    ok_butt = Button(
-        buttonbox, text=ok_lab, command=cancel, width=7)
-    ok_butt.grid(column=0, row=0, padx=6, sticky='e')
-    cancel_butt = Button(
-        buttonbox, text=cancel_lab, command=cancel, width=7)
-    cancel_butt.grid(column=1, row=0, padx=6, sticky='e')
-    inPut.focus_set()
-
-    config_generic(msg)
-    msg.resize_window()
-    master.wait_window(msg)
-    gotten = show()
-    return gotten
-
+# from fontpicker.py
 class FontPicker(Frame):
     def __init__(self, master, root, main, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
@@ -4119,6 +4128,79 @@ class FontPicker(Frame):
     def show_font_size(self, evt):
         self.fontSize = self.fontSizeVar.get()
 
+# from error_messages
+def open_message(master, message, title, buttlab, inwidg=None):
+
+    def close():
+        '''
+            Override this is more needs to be done on close.
+        '''
+        msg.destroy()
+
+    msg = Dialogue(master)
+    msg.canvas.title_1.config(text=title)
+    msg.canvas.title_2.config(text="")
+    lab = LabelHeader(
+        msg.window, text=message, justify='left', wraplength=600)
+    lab.grid(column=0, row=0, sticky='news', padx=12, pady=12, ipadx=6, ipady=3)
+    button = Button(msg.window, text=buttlab, command=close, width=6)
+    button.grid(column=0, row=1, padx=6, pady=(0,12))
+    button.focus_set()
+    # configall(msg, formats)
+    msg.resize_window()
+
+    return msg, lab, button
+
+def open_input_message2(master, message, title, ok_lab, cancel_lab):
+    '''
+        For more primary-level input vs. error-level input.
+    '''
+
+    def ok():
+        cancel()
+
+    def cancel():
+        msg.destroy()
+        master.grab_set()
+
+    def show():
+        gotten = got.get()
+        return gotten
+
+    got = StringVar()
+
+    msg = Dialogue(master)
+    msg.grab_set()
+    msg.canvas.title_1.config(text=title)
+    msg.canvas.title_2.config(text="")
+    lab = LabelHeader(
+        msg.window, text=message, justify='left', 
+        font=("courier", 14, "bold"), wraplength=450)
+    lab.grid(
+        column=0, row=0, sticky='news', padx=12, pady=12, 
+        columnspan=2, ipadx=6, ipady=3)
+    inPut = Entry(
+        msg.window, textvariable=got, width=48, 
+        font=("dejavu sans mono", 14))
+    inPut.grid(column=0, row=1, padx=12)
+    buttonbox = Frame(msg.window)
+    buttonbox.grid(column=0, row=2, sticky='e', padx=(0,12), pady=12)
+    ok_butt = Button(
+        buttonbox, text=ok_lab, command=cancel, width=7)
+    ok_butt.grid(column=0, row=0, padx=6, sticky='e')
+    cancel_butt = Button(
+        buttonbox, text=cancel_lab, command=cancel, width=7)
+    cancel_butt.grid(column=1, row=0, padx=6, sticky='e')
+    inPut.focus_set()
+
+    config_generic(msg)
+    msg.resize_window()
+    master.wait_window(msg)
+    gotten = show()
+    return gotten
+
+
+
 # from styles.py
 
 """ Some special case widgets exist which require special attention to get them
@@ -4173,14 +4255,14 @@ selectColorHilite = ("Radiobutton", "RadiobuttonBig")
 selectFg = ("EntryAutoPerson", "EntryAuto", "Entry", "Text", "EntryAutoHilited", )
 troughColorHilite = ("Scale", )
 bgOnly = (
-    "Frame", "Canvas", "FrameHilited6", "Border", 
-    "TabBook", "EditRow",
-    "Gallery", "StatusbarTooltips", "EventsTable",
+    "Frame", "Canvas", "FrameHilited6", "Border",  
+    "Dialogue", "TabBook", "PersonSearch", "EditRow",
+    "InputMessage", "Gallery", "StatusbarTooltips", "EventsTable",
     "Main", "FontPicker", "DatePreferences")
-# remove Gallery from above list when the galleries have all been moved to dialogs
+# remove Gallery when moved to dialog
 if __name__ == "__main__":
 
-    from toykinter_widgets import run_statusbar_tooltips
+    from styles import make_formats_dict
 
     formats = make_formats_dict()
     def make_scrollbars():

@@ -14,9 +14,8 @@ import sqlite3
 from files import get_current_file, current_drive, app_path
 from persons import get_current_person
 from widgets import (
-    Frame, Canvas, Button, Label, Radiobutton, FrameHilited4, 
-    LabelH3, MessageCopiable, LabelStay, Scrollbar, make_formats_dict,
-    configall)
+    Frame, Canvas, Button, Label, Radiobutton, FrameHilited4, make_formats_dict, 
+    LabelH3, MessageCopiable, LabelStay, Scrollbar, configall)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from scrolling import resize_scrolled_content
@@ -39,8 +38,7 @@ class Gallery(Frame):
 
     def __init__(
             self, master, tabbook, 
-            graphics_tab, 
-            # graphics_tab, formats, 
+            graphics_tab,  
             root, treebard, SCREEN_SIZE, dialog=None,
             current_person_name=None, current_place_name=None, 
             current_source_name=None, *args, **kwargs):

@@ -6,17 +6,15 @@ from os import listdir, path
 from os.path import isfile, join
 from widgets import (
     Toplevel, Canvas, Button, Frame, ButtonBigPic, Border, configall,
-    open_input_message2,)
-    # RightClickMenu, make_rc_menus, open_input_message2,)
+    open_message, open_input_message2)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
-from error_messages import open_message
-from messages_context_help import opening_dlg_help_msg
 from PIL import Image, ImageTk
 from files import (
     open_tree, make_tree, import_gedcom, open_sample, app_path, global_db_path,
     get_current_file, set_closing, change_tree_title, filter_tree_title)
 from messages import opening_msg
+from messages_context_help import opening_dlg_help_msg
 from utes import center_dialog, titlize
 from query_strings import (
     select_app_setting_openpic_dir, select_closing_state_openpic,

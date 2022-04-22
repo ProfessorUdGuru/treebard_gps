@@ -21,7 +21,8 @@ from files import current_drive, get_current_file
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
     Radiobutton, LabelFrame, make_formats_dict, Border, TabBook, Scrollbar,
-    EntryAutoPerson, EntryAutoPersonHilited, FontPicker)
+    EntryAutoPerson, EntryAutoPersonHilited, FontPicker
+)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips   
 from families import NuclearFamiliesTable
@@ -476,7 +477,7 @@ class Main(Frame):
         if name_data == "add_new_person":
             old_current_person = self.current_person
             self.current_person = open_new_person_dialog(
-                self, self.person_entry, self.root, self.treebard, self.formats, 
+                self, self.person_entry, self.root, self.treebard, 
                 person_autofill_values=self.person_autofill_values)
             if self.current_person is None:
                 self.current_person = old_current_person 

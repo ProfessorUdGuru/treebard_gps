@@ -5,7 +5,7 @@ import sqlite3
 from files import app_path, get_current_file
 from widgets import (
     Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3,
-    LabelNegative, Border, Scrollbar, configall, make_formats_dict)
+    LabelNegative, configall, Border, Scrollbar, make_formats_dict)
 from right_click_menu import RightClickMenu, make_rc_menus
 from scrolling import MousewheelScrolling, resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
@@ -66,8 +66,7 @@ def get_matches(search_input):
 class PersonSearch(Toplevel):
     def __init__(
             self, master, root, treebard, entry, findings_table, 
-            show_top_pic, person_autofill_values, *args, **kwargs): 
-            # show_top_pic, formats, person_autofill_values, *args, **kwargs):
+            show_top_pic, person_autofill_values, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.master = master # Main
@@ -108,8 +107,6 @@ class PersonSearch(Toplevel):
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
         self.make_widgets()
-        configall(self, self.formats)
-        resize_scrolled_content(self, self.canvas, self.window)
 
     def make_widgets(self):
 
@@ -162,6 +159,7 @@ class PersonSearch(Toplevel):
         b2.grid(column=1, row=0, padx=(2,0))
 
         self.make_inputs()
+        configall(self, self.formats)
         self.maxsize(
             int(self.winfo_screenwidth() * 0.90),
             int(self.winfo_screenheight() * 0.90))
@@ -229,12 +227,12 @@ class PersonSearch(Toplevel):
             search_person_help_msg) 
 
         self.make_header_row()
-
+        resize_scrolled_content(self, self.canvas, self.window)
 
     def make_new_person(self, master, inwidg, root, treebard, formats, 
         inwidg2, person_autofill_values=None):
         open_new_person_dialog(
-            master, inwidg, root, self.treebard, self.formats, 
+            master, inwidg, root, self.treebard,  
             inwidg2, person_autofill_values=self.person_autofill_values)
         self.person_autofill_values = update_person_autofill_values()
         inwidg.delete(0, 'end')
@@ -333,8 +331,6 @@ class PersonSearch(Toplevel):
                 child.bind('<Key-Down>', self.go_down)
                 if child.grid_info()['column'] == 0:
                     child.config(takefocus=1)
-        # config_generic(self)
-        configall(self, formats)
         resize_scrolled_content(self, self.canvas, self.window)
         self.maxsize(
             int(self.winfo_screenwidth() * 0.90),

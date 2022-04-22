@@ -3,10 +3,9 @@
 import tkinter as tk
 import sqlite3
 from widgets import (
-    Label, Button, Entry, Canvas, LabelFrame, LabelH3, FrameHilited6,
-    LabelMovable, Toplevel, LabelHeader, Radiobutton, Frame, Border, Dialogue,
-    Combobox, EntryAutoHilited, make_formats_dict,
-    Scrollbar, ScrolledText, configall)
+    Label, Button, Entry, Canvas, LabelFrame, LabelH3, FrameHilited6, Dialogue,
+    LabelMovable, Toplevel, LabelHeader, Radiobutton, Frame, Border, configall,
+    Combobox, EntryAutoHilited, Scrollbar, ScrolledText, make_formats_dict)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from scrolling import resize_scrolled_content
@@ -37,7 +36,6 @@ class NotesDialog(Toplevel):
     def __init__(
             self, master, finding, header, current_person, treebard, 
             pressed=None, person_autofill_values=None, *args, **kwargs):
-            # formats, pressed=None, person_autofill_values=None, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
 
         self.root = master
@@ -45,7 +43,6 @@ class NotesDialog(Toplevel):
         self.header = header
         self.current_person = current_person
         self.treebard = treebard
-        # self.formats = formats
         self.pressed = pressed
         self.person_autofill_values = person_autofill_values
 

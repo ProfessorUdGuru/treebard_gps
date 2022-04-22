@@ -9,20 +9,16 @@ from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
     LabelH3, Button, Entry, LabelHeader, Border, Dialogue ,
     LabelNegative,  make_formats_dict, EntryAuto, EntryAutoHilited,
-    Separator,
-    # Separator, RightClickMenu, make_rc_menus,
-    Scrollbar,
-)
-from right_click_menu import RightClickMenu, make_rc_menus
+    Separator, open_message, Scrollbar)
 from scrolling import resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
 from nested_place_strings import make_all_nestings
-from error_messages import  open_message, open_yes_no_message
+from error_messages import  open_yes_no_message
 from messages_context_help import new_event_dlg_help_msg
 from persons import (
     make_all_names_dict_for_person_select, check_name, 
-    get_original, open_new_person_dialog, update_person_autofill_values)
+    get_original, update_person_autofill_values)
 from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places
@@ -868,11 +864,13 @@ class EventsTable(Frame):
                 elif j == 5:
                     cell = LabelDots(
                         self, RolesDialog, self.treebard, 
-                        person_autofill_values=self.person_autofill_values)
+                        person_autofill_values=self.person_autofill_values
+)
                 elif j == 6:
                     cell = LabelDots(
                         self, NotesDialog, self.treebard, 
-                        person_autofill_values=self.person_autofill_values)
+                        person_autofill_values=self.person_autofill_values
+)
                 elif j == 7:
                     cell = LabelButtonText(
                         self,
