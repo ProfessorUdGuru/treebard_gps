@@ -169,10 +169,22 @@ if __name__ == '__main__':
 
 # DO LIST 
 
-# BRANCH: redraw_and_fonts
+# BRANCH: redraw_fonts
+
+# to fix control-s after a scheme change, consider which widgets are not being treated right. They change right at first (on scheme change) but as soon as you go ctrl-s for whatever reason, they revert to the old color. Find out what colorizer does right that ctrl-s does wrong.
+# getting None, None for current person label text on single click in families table names sometimes, then next time it works right on double click. Is it the mouse?
+# ctrl_s doesn't work right
+# see table.lift in main.py--can this be moved to redraw?
+# find random places in events_table.py where top_pic is replaced instead of in redraw()
+# uncomment make_cohighlights_dict and make it work
+# Problem changing current person from main input.
+# Get it working the same as before as an import.
+# Get rid of passing formats into events table, see if that fixes the ctrl-s problem
+# Put redraw and forget_cells in a separate module redraw.py or persons.py and have it redraw each part of the persons tab separately with separate functions for each section. It has to work no matter what part of the app you are looking at, e.g. from font prefs tab. If persons tab has to be active in order to redraw, then make it active programmatically, then switch back to fonts tab or wherever the user was at, after the persons tab is redrawn. Look at how color schemes are changed and model that. However it's being done, CTRL-S still has to work right so figure out how the right formats values are known by colorizer and get those values to the fonts tab. redraw() is called in widgets.py, search.py, main.py, families.py, and events_table.py.
 # In the new branch first fonts will be made to work right, redraw() will be moved to widgets.py instead of events_table (or anywhere but events table). Currently CTRL+S messes up the just-created family labels, (radios, alt_parent, partner, "to", spacer, and the frame that the child inputs are in). THE GOAL IS TO HAVE ONE WAY TO RECONFIGURE EVERYTHING, figure out a way to do that wherein: 1) redraw() and forget_cells() are combined into one function in a separate module or in widgets.py, 2) fonts work like everything else and not by manually running redraw(), 3) if possible use ONE system for everything which still involves class variables instead of running make_formats_dict() and using self.formats for dialogs, 4) get everything back into its own module: why can't the value that can't be imported just be passed instead? START ANOTHER MODEL to do all of the above.
 # Replace long switch with two tuples zip them into a dict which only python ever sees
 # get rid of as many formats = make_formats_dict() runs as possible and make sure formats is not being passed into any classes
+# mARY Hilton Summer is James' adoptive father? Kattie is Forrest's adoptive father?
 # move query strings to other module
 
 # BRANCH: families_table_validation2
@@ -275,7 +287,7 @@ if __name__ == '__main__':
 # In main.py make_widgets() should be broken up into smaller funx eg make_family_table() etc. after restructing gallery into 3 dialogs.
 # Get rid of all calls to title() in dropdown.py and just give the values with caps as they should be shown, for example title() is changing GEDCOM to Gedcom in File menu.
 # In the File menu items add an item "Restore Sample Tree to Original State" and have it grayed out if the sample tree is not actually open.
-# Add to Search dlg: checkbox "Speed Up Search" with tooltip "Search will begin after three characters are typed. Don't select this for number searches." Select it by default.
+# Add to Search dlg: checkbox "Speed Up Search" with tooltip "Search will begin after three characters are typed. Don't select this for number searches." Select it by default. BETTER: use a spinner so user can say exactly how many chars he wants to type before the search begins.
 # All dialogs: run the custom dialog closing code when clicking X on title bar.
 # Add to do list for new_event dialog: add person search button.
 # In notes dialog, if a non-unique topic is entered, there should be an error message, currently there's a SQLite error which locks the database.

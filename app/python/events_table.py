@@ -1,7 +1,5 @@
 # events_table.py
 
-# rolled back to events_table202203291920.py on 202204012035; trying to instantiate an altered NewEventDialog class for editing events was wrong because the only thing that's needed is a way to alter the partner, so a custom dialog shd be made for doing that. 4 things are needed: change partner to an existing person, change partner to a dupe name, change partner to a new person, and change a None partner to a person. In the latter case, the dialog will also list the children of None so the new person isn't given all the children unless the user wants that to happen.
-
 import tkinter as tk
 import sqlite3
 from files import get_current_file
@@ -12,6 +10,7 @@ from widgets import (
     Separator, open_message, Scrollbar)
 from scrolling import resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
+from redraw import redraw_person_tab
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
 from nested_place_strings import make_all_nestings
 from error_messages import  open_yes_no_message
@@ -68,25 +67,6 @@ date_prefs = get_date_formats()
 HEADS = (
     'event', 'date', 'place', 'particulars', 'age', 
     'roles', 'notes', 'sources')
-
-def initialize_family_data_dict():
-    """ This is mainly used in families.py but also used in EventsTable class
-        for redrawing the person tab when changes are made by the user. Imports
-        go from here to families.py.
-    """
-    family_data = [
-        [
-            [
-                {'finding': None, 'sorter': [0, 0, 0]}, 
-                {'id': None, 'name': '', 'kin_type_id': 2, 
-                    'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
-                {'id': None, 'name': '', 'kin_type_id': 1, 
-                    'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
-            ],
-        ],
-        {},
-    ]
-    return family_data
 
 def delete_generic_finding(finding_id, conn, cur):
     cur.execute(delete_findings_roles_finding, (finding_id,))
@@ -506,7 +486,8 @@ def get_findings():
 class EventsTable(Frame):
 
     def __init__(
-            self, master, root, treebard, main, formats, person_autofill_values, *args, **kwargs):
+            self, master, root, treebard, main, formats, 
+            person_autofill_values, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
         self.root = root
@@ -521,6 +502,8 @@ class EventsTable(Frame):
         self.inwidg = None
         self.headers = []
         self.widths = [0, 0, 0, 0, 0]
+
+        self.initial = None # added 20220423 to prevent error @ 556
 
         self.widget = None
         self.kintip = None
@@ -542,14 +525,19 @@ class EventsTable(Frame):
             "birth", "death"] + self.after_death_events
         # without the parameter passed by lambda, running this
         #   function creates a null current person
+        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         self.root.bind(
             "<Control-S>", 
-            lambda evt, curr_per=self.current_person: self.redraw(
-                evt, curr_per))
+            lambda evt, 
+                main_window=self.main_window, 
+                curr_per=self.current_person: redraw_person_tab(
+                    evt, main_window, curr_per))
         self.root.bind(
             "<Control-s>", 
-            lambda evt, curr_per=self.current_person: self.redraw(
-                evt, curr_per))
+            lambda evt, 
+                main_window=self.main_window, 
+                curr_per=self.current_person: redraw_person_tab(
+                    evt, main_window, curr_per))
 
         self.place_strings = make_all_nestings(select_all_place_ids)
 
@@ -617,7 +605,8 @@ class EventsTable(Frame):
                 delete_generic_finding(finding_id, conn, cur)
             elif couple_event_old == 1:
                 delete_couple_finding(finding_id)
-            self.redraw()
+            print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
+            redraw_person_tab(main_window=self.main_window)
             cur.close()
             conn.close()
 
@@ -767,7 +756,8 @@ class EventsTable(Frame):
                 self.final, date_prefs=date_prefs)
             widg.delete(0, 'end')
             widg.insert(0, formatted_date)
-            self.redraw()
+            print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
+            redraw_person_tab(main_window=self.main_window)
 
         def update_place():
             self.final = ValidatePlace(
@@ -1198,108 +1188,8 @@ class EventsTable(Frame):
         if self.kintip_text:
             self.show_kintip(kin_type, name)
 
-        # self.cohighlight(evt)
-
     def on_leave(self, evt):
         self.off()
-
-    # def cohighlight(self, evt):
-        # pass
-
-        # def inner_loop(lst):
-            # for widg in lst[1]:
-                # if widg == self.hovered_kin_widg[0]:
-                    # print("line", looky(seeline()).lineno, "widg:", widg)
-                    # return lst[0]            
-
-        # self.hovered_kin_widg = [evt.widget]
-        # for lst in self.cell_pool: 
-            # finding_id = inner_loop(lst)
-            # if finding_id is None:
-                # continue
-            # else:
-                # print("line", looky(seeline()).lineno, "finding_id:", finding_id)
-                # self.hovered_kin_widg.append(finding_id)
-                # break
- 
-        # print("line", looky(seeline()).lineno, "self.hovered_kin_widg:", self.hovered_kin_widg)
-        # self.hovered_kin_widg[0].config(bg=self.formats["highlight_bg"])
-        
-
-    def redraw(self, evt=None, current_person=None):
-        self.formats = make_formats_dict()
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
-        cur.execute(update_current_person, (self.current_person,))
-        conn.commit()
-        cur.close()
-        conn.close()
-        self.forget_cells()
-        self.new_row = 0 
-        self.widths = [0, 0, 0, 0, 0]
-        self.kin_widths = [0, 0, 0, 0, 0, 0]
-        self.set_cell_content()
-        self.show_table_cells()
-        if evt: # user pressed CTRL+S for example
-            self.main_window.nukefam_table.make_nukefam_inputs(
-                current_person=self.current_person)
-        else: # user pressed OK to change current person for example  
-            self.main_window.nukefam_table.make_nukefam_inputs()
-
-        self.resize_scrollbar(self.root, self.main_canvas)
-
-    def resize_scrollbar(self, root, canvas):
-        root.update_idletasks()
-        canvas.config(scrollregion=canvas.bbox('all'))
-
-    def forget_cells(self):
-        self.update_idletasks()
-        for k,v in self.kintip_bindings.items():
-            if k == "on_enter":
-                for lst in v:
-                    lst[0].unbind("<Enter>", lst[1])                    
-            elif k == "on_leave":
-                for lst in v:
-                    lst[0].unbind("<Leave>", lst[1])
-            self.kintip_bindings = {"on_enter": [], "on_leave": []}
-
-        for k,v in self.main_window.nukefam_table.idtip_bindings.items():
-            if k == "on_enter":
-                for lst in v:
-                    lst[0].unbind("<Enter>", lst[1])                    
-            elif k == "on_leave":
-                for lst in v:
-                    lst[0].unbind("<Leave>", lst[1])
-            self.main_window.nukefam_table.idtip_bindings = {"on_enter": [], "on_leave": []}
-
-        for lst in self.cell_pool:
-            for widg in lst[1]:
-                if widg.winfo_subclass() == 'EntryAuto':
-                    widg.delete(0, 'end')
-                elif widg.winfo_subclass() == 'LabelButtonText':
-                    widg.config(text='')
-                widg.grid_forget()
-        self.event_input.grid_forget()
-        self.add_event_button.grid_forget()
-
-        self.main_window.person_entry.current_id = None
-
-        for ent in self.main_window.nukefam_table.nukefam_inputs:
-            ent.delete(0, "end")
-        self.main_window.nukefam_table.ma_input.delete(0, "end")
-        self.main_window.nukefam_table.pa_input.delete(0, "end")
-        self.main_window.nukefam_table.new_kid_input.delete(0, "end")
-        self.main_window.nukefam_table.new_kid_frame.grid_forget()
-        self.main_window.nukefam_table.current_person_alt_parents = []
-        self.main_window.nukefam_table.compound_parent_type = "Children's"        
-        for widg in self.main_window.nukefam_table.nukefam_containers: 
-            widg.destroy() 
-        self.main_window.nukefam_table.parent_types = []
-        self.main_window.nukefam_table.nukefam_containers = []
-
-        self.main_window.nukefam_table.family_data = initialize_family_data_dict()
 
     def make_header(self):
         y = 0
@@ -1453,7 +1343,8 @@ class EventsTable(Frame):
 
         cur.close()
         conn.close()
-        self.redraw()
+        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
+        redraw_person_tab(main_window=self.main_window)
 
     def get_new_event_data(self):
 

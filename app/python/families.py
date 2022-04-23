@@ -14,7 +14,8 @@ from messages import families_msg
 from dates import format_stored_date, get_date_formats, OK_MONTHS, validate_date
 from events_table import (
     get_current_person, delete_generic_finding, delete_couple_finding,
-    initialize_family_data_dict)
+    )
+from redraw import initialize_family_data_dict, redraw_person_tab
 from query_strings import (
     select_finding_id_birth, update_finding_ages_kintypes_null, select_finding_persons,
     select_person_gender_by_id, select_finding_date, select_finding_id_birth,
@@ -181,9 +182,9 @@ class NuclearFamiliesTable(Frame):
             ent.bind("<Double-Button-1>", self.change_current_person)
 
     def make_new_kin_inputs(self):
-        """ Get self.new_kid_frame into the correct row by ungridding it in 
-            self.findings_table.forget_cells() and regridding it in 
-            self.make_nukefam_inputs() which runs in self.findings_table.redraw().
+        """ Get `self.new_kid_frame` into the correct row by ungridding it in 
+            `redraw.forget_cells()` and regridding it in 
+            `self.make_nukefam_inputs()` which runs in `redraw.redraw_person_tab()`.
         """
         self.new_kid_frame = Frame(self.nukefam_window)
         self.new_kid_input = EntryAutoPersonHilited(
@@ -221,7 +222,7 @@ class NuclearFamiliesTable(Frame):
         return marital_events_current_person
 
     def make_nukefam_inputs(self, current_person=None, on_load=False):
-        """ Run in main.py on_load=True and in events_table.redraw() 
+        """ Run in main.py on_load=True and in redraw.redraw_person_tab() 
             on_load=False.
         """
         self.nukefam_inputs = []
@@ -249,7 +250,7 @@ class NuclearFamiliesTable(Frame):
         self.nukefam_canvas.config(scrollregion=self.nukefam_canvas.bbox('all'))
         self.make_idtips()
 
-        self.make_cohighlights_dict()
+        # self.make_cohighlights_dict() # DO NOT DELETE
 
         copy = self.cohighlights
         for k,v in copy.items():
@@ -288,6 +289,7 @@ class NuclearFamiliesTable(Frame):
                 elif p == 1:
                     other = family_widgets
                 for widg in i:
+                    print("line", looky(seeline()).lineno, "widg:", widg)
                     widg.bind(
                         "<Enter>", 
                         lambda evt, other=other: self.highlight_both(evt, other), 
@@ -707,7 +709,7 @@ class NuclearFamiliesTable(Frame):
     def arrange_partners_progenies(
             self, partners1, births, alt_parentage_events, conn, cur):
         """ Updating person_autofill_values is necessary since 
-            `events_table.redraw()` destroys partner and child frames
+            `redraw.redraw_person_tab()` destroys partner and child frames
             and alt parent inputs.
         """
         self.person_autofill_values = update_person_autofill_values()
@@ -1008,7 +1010,7 @@ class NuclearFamiliesTable(Frame):
 
         cur.close()
         conn.close()
-        self.treebard.main.findings_table.redraw()
+        redraw_person_tab(main_window=self.treebard.main)
 
     def get_original(self, evt):
         """ The binding to FocusOut can't be done till a FocusIn event has
@@ -1655,7 +1657,8 @@ class NuclearFamiliesTable(Frame):
 
         cur.close()
         conn.close()
-        self.treebard.main.findings_table.redraw()
+        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
+        redraw_person_tab(main_window=self.treebard.main)
 
     def change_kin_type(self, evt):
         """ Change alt parent kin type on double-click of label such as 
@@ -1809,16 +1812,15 @@ class NuclearFamiliesTable(Frame):
             self.idtip_bindings["on_leave"].append([widg, name_out])        
 
     def change_current_person(self, evt): 
-        name = evt.widget.get()
+        current_name = evt.widget.get()
         for tup in self.person_inputs:
             if evt.widget == tup[0]:
-                iD = tup[1]
+                current_person = tup[1]
                 break
-        self.current_person = self.treebard.main.findings_table.current_person = iD
+        main_window = self.treebard.main
+        self.current_person = main_window.findings_table.current_person = current_person
 
-        current_file, current_dir = get_current_file()
-        self.treebard.main.current_person_name = name
-        self.treebard.main.show_top_pic(current_file, current_dir, self.current_person)
-        self.treebard.main.findings_table.redraw(current_person=iD)        
-        self.treebard.main.current_person_label.config(
-            text="Current Person (ID): {} ({})".format(name, iD))
+        redraw_person_tab(
+            main_window=main_window,
+            current_person=current_person, 
+            current_name=current_name)

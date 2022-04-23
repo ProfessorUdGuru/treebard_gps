@@ -10,6 +10,7 @@ from right_click_menu import RightClickMenu, make_rc_menus
 from scrolling import MousewheelScrolling, resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from persons import open_new_person_dialog, update_person_autofill_values
+from redraw import redraw_person_tab
 from dates import OK_PREFIXES, format_stored_date
 from messages_context_help import search_person_help_msg
 from query_strings import (
@@ -75,7 +76,6 @@ class PersonSearch(Toplevel):
         self.entry = entry
         self.findings_table = findings_table
         self.show_top_pic = show_top_pic
-        # self.formats = formats
         self.person_autofill_values = person_autofill_values
 
         self.formats = make_formats_dict()
@@ -86,9 +86,6 @@ class PersonSearch(Toplevel):
 
         self.sent_text = '' 
  
-        self.new_current_id = None
-        self.new_current_person = None
-
         self.all_matches = [] 
         self.tkvars = {}
         self.sort_by = None 
@@ -339,6 +336,8 @@ class PersonSearch(Toplevel):
         self.search_input.focus_set()
 
     def select(self, evt):
+        current_name = None
+        current_person = None
 
         if evt.widget.grid_info()['row'] == 0:
             return
@@ -349,37 +348,39 @@ class PersonSearch(Toplevel):
                 pass            
             elif (child.grid_info()['row'] == self.hilit_row and 
                     child.grid_info()['column'] == 1):
-                self.new_current_person = child['text']
+                print("line", looky(seeline()).lineno, "child['text']:", child['text'])
+                print("line", looky(seeline()).lineno, "child.cget('text'):", child.cget('text'))
+                current_name = child['text'] # should be child.cget('text') ?
         # click name or id in table to change current person
         if evt.type == '4':
             if (evt.widget.grid_info()['column'] == 0 and 
                     evt.widget.grid_info()['row'] == self.hilit_row):
-                self.new_current_id = evt.widget['text']
+                current_person = int(evt.widget['text'])
             elif (evt.widget.grid_info()['column'] in (1,2,3,4,5) and 
                     evt.widget.grid_info()['row'] == self.hilit_row):
                 for child in self.search_table.winfo_children():
                     if (child.grid_info()['row'] == self.hilit_row and
                             child.grid_info()['column'] == 0):
-                        self.new_current_id = child['text']
+                        current_person = int(child['text'])
             
         if evt.type != '4':
-            self.new_current_id = evt.widget['text']
+            current_person = int(evt.widget['text'])
 
-        self.new_current_person = self.person_autofill_values[self.new_current_id][0]["name"]
-        # self.new_current_person = self.person_autofill_values[self.new_current_id]["birth name"]
-        # if self.new_current_person is None or len(self.new_current_person) == 0:
-            # self.new_current_person = self.person_autofill_values[self.new_current_id]["alt name"]
+        current_name = self.person_autofill_values[current_person][0]["name"]
             
         self.close_search_dialog()
-        if type(self.new_current_person) is tuple:
-            use_name = list(self.new_current_person)
-            self.new_current_person = "({}) {}".format(use_name[1], use_name[0])
-        self.findings_table.redraw(evt, current_person=self.new_current_id)
-        self.show_top_pic(current_file, current_dir, self.new_current_id)
+        # if type(current_name) is tuple: # is this the old name type routine?
+            # use_name = list(current_name)
+            # current_name = "({}) {}".format(use_name[1], use_name[0])
+        redraw_person_tab(
+            main_window=self.master,
+            current_person=current_person,
+            current_name=current_name)
+        # self.show_top_pic(current_file, current_dir, current_person)
 
-        self.master.current_person_label.config(
-            text="Current Person (ID): {} ({})".format(
-                self.new_current_person, self.new_current_id))
+        # self.master.current_person_label.config(
+            # text="Current Person (ID): {} ({})".format(
+                # current_name, current_person))
 
     def close_search_dialog(self):
         self.destroy()

@@ -27,6 +27,7 @@ from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips   
 from families import NuclearFamiliesTable
 from events_table import EventsTable
+from redraw import redraw_person_tab
 from dates import DatePreferences, OK_MONTHS, get_date_formats
 from gallery import Gallery
 from colorizer import Colorizer
@@ -173,7 +174,7 @@ class Main(Frame):
             table.lift()
 
         current_file, current_dir = get_current_file()
-        # this does not run on redraw, just on load
+        # this does not run on redraw_person_tab, just on load
         if len(current_dir) != 0:
             self.show_top_pic(current_file, current_dir, self.current_person)
 
@@ -467,7 +468,6 @@ class Main(Frame):
             self.person_entry, 
             self.findings_table,
             self.show_top_pic,
-            # self.formats,
             self.person_autofill_values)    
 
     def change_person(self):
@@ -491,11 +491,15 @@ class Main(Frame):
                     self.current_person_name, self.current_person))
 
         self.findings_table.current_person = self.current_person
-        self.findings_table.kin_widths = [0, 0, 0, 0, 0]
-        self.person_entry.delete(0, 'end')
-        current_file, current_dir = get_current_file()
-        self.show_top_pic(current_file, current_dir, self.current_person)
-        self.findings_table.redraw()
+        # self.findings_table.kin_widths = [0, 0, 0, 0, 0]
+        # self.person_entry.delete(0, 'end')
+        # current_file, current_dir = get_current_file()
+        # self.show_top_pic(current_file, current_dir, self.current_person)
+        # print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
+        redraw_person_tab(
+            main_window=self, 
+            current_person=self.current_person, 
+            current_name=self.current_person_name)
 
     def open_person_gallery(self):
         person_gallery_dlg = Toplevel(self.root)
@@ -521,7 +525,9 @@ class Main(Frame):
             uncommented, the old values had cleared and all was well. It took
             two hours to get around to trying something so weird because SQLite
             has never let me down before, however I suspect it might have been
-            Pillow that was trying to use a cached value, not SQLite.
+            Pillow that was trying to use a cached value, not SQLite. Or it
+            could be my mistake that I haven't found yet, in which don't save
+            the weird procedure/comments below.
         """
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
