@@ -2,6 +2,7 @@
 
 import sqlite3
 from files import get_current_file
+from widgets import configall, make_formats_dict
 from query_strings import update_current_person
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -28,6 +29,9 @@ def redraw_person_tab(
     redraw_events_table(findings_table)
     if current_person:
         redraw_families_table(evt, current_person, main_window)
+
+    # formats = make_formats_dict()
+    # configall(main_window, formats)
 
     resize_scrollbar(findings_table.root, findings_table.main_canvas)
 
@@ -84,7 +88,7 @@ def redraw_families_table(evt, current_person, main_window):
         main_window.nukefam_table.make_nukefam_inputs()
 
 def redraw_events_table(findings_table):
-
+    print("line", looky(seeline()).lineno, "redrawing events table:")
     for lst in findings_table.cell_pool:
         for widg in lst[1]:
             if widg.winfo_subclass() == 'EntryAuto':
@@ -104,6 +108,13 @@ def redraw_events_table(findings_table):
 def resize_scrollbar(root, canvas):
     root.update_idletasks()
     canvas.config(scrollregion=canvas.bbox('all'))
+
+def fix_tab_traversal(families_table, findings_table):
+    """ Create a tab traversal since the nukefam_table 
+        can't be made first, but should be traversed first.
+    """
+    for table in (families_table, findings_table):
+        table.lift()
 
 def initialize_family_data_dict():
     """ This is mainly used in families.py but also used here in redraw.py

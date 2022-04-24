@@ -170,22 +170,17 @@ if __name__ == '__main__':
 
 # BRANCH: redraw_fonts
 
-# random event type labels in events table are wrong color, some change back on hover, see #6 & #6042
-# id tips are not colorizing
-# Get rid of passing formats into events table, and other dialogs, see if that fixes the ctrl-s problem
-# Test color change with all dialogs incl place, add person, etc.
-# to fix control-s after a scheme change, consider which widgets are not being treated right. They change right at first (on scheme change) but as soon as you go ctrl-s for whatever reason, they revert to the old color. Find out what colorizer does right that ctrl-s does wrong.
-# getting None, None for current person label text on single click in families table names sometimes, then next time it works right on double click. Is it the mouse?
-# ctrl_s doesn't work right
-# see table.lift in main.py--can this be moved to redraw?
-# find random places in events_table.py where top_pic is replaced instead of in redraw()
-# uncomment make_cohighlights_dict and make it work
-# Problem changing current person from main input.
-# Get it working the same as before as an import.
-# Put redraw and forget_cells in a separate module redraw.py or persons.py and have it redraw each part of the persons tab separately with separate functions for each section. It has to work no matter what part of the app you are looking at, e.g. from font prefs tab. If persons tab has to be active in order to redraw, then make it active programmatically, then switch back to fonts tab or wherever the user was at, after the persons tab is redrawn. Look at how color schemes are changed and model that. However it's being done, CTRL-S still has to work right so figure out how the right formats values are known by colorizer and get those values to the fonts tab. redraw() is called in widgets.py, search.py, main.py, families.py, and events_table.py.
-# In the new branch first fonts will be made to work right, redraw() will be moved to widgets.py instead of events_table (or anywhere but events table). Currently CTRL+S messes up the just-created family labels, (radios, alt_parent, partner, "to", spacer, and the frame that the child inputs are in). THE GOAL IS TO HAVE ONE WAY TO RECONFIGURE EVERYTHING, figure out a way to do that wherein: 1) redraw() and forget_cells() are combined into one function in a separate module or in widgets.py, 2) fonts work like everything else and not by manually running redraw(), 3) if possible use ONE system for everything which still involves class variables instead of running make_formats_dict() and using self.formats for dialogs, 4) get everything back into its own module: why can't the value that can't be imported just be passed instead? START ANOTHER MODEL to do all of the above.
-# Replace long switch with two tuples zip them into a dict which only python ever sees
-# get rid of as many formats = make_formats_dict() runs as possible and make sure formats is not being passed into any classes
+# input font in families table is working so that's the model. The key is `if widg.winfo_subclass() == 'EntryAuto':` in the events table function of redraw module, because this should say EntryAutoPerson not EntryAuto but when you change it you get the right font and the wrong content. so that is the place to start.
+# scrollbar not resizing till done manually, even tho resize already being run inside redraw
+# top lable showing None, None
+# tab fonts are not changing, event rows (text cols) not resizing font, and title bar is not resizing
+# fonts: user shd not have to switch to person tab manually and manually run redraw after changing fonts, but if u don't change it, at least make the message more clear ie tell user After turning off this dialog then do this other stuff but best get rid of nuisance msg altogether
+# w/ big fonts it seems label & entry pady is different in families table
+# since configall works for frames, not just toplevels, can everything be moved back out of widgets.py?
+# .sql
+
+# BRANCH: families_table_validation2
+# see #6042 blank partner should say (Children's Parent) instead of (Children's ).
 # mARY Hilton Summer is James' adoptive father? Kattie is Forrest's adoptive father?
 # when double clicking an alt parent in the families table to make the person current, it works (except after that person is current the program will no longer load) but makes this error:
 # Exception in Tkinter callback
@@ -203,10 +198,6 @@ if __name__ == '__main__':
   # File "D:\treebard_gps\app\python\families.py", line 319, in make_cohighlights_dict
     # event_widgets = offspring_event_widg
 # UnboundLocalError: local variable 'offspring_event_widg' referenced before assignment
-# move query strings to other module
-
-# BRANCH: families_table_validation2
-# see #6042 blank partner should say (Children's Parent) instead of (Children's ).
 # parameterize repeated sections of code in make_cohighlights_dict(
 # APPARENTLY the user columns in formats table aren't being used anymore since the inception of using a color_scheme_id as FK in table current. if this is true get rid of the columns.
 # The current systems for getting all widgets to change color works well except in the case of self.formats in so-called special event widgets in styles.py. It works there too but due to running make_formats_dict() in every single widget it now causes a big delay in loading the app, since I've had to add this to the autofill entries and there are so many of them. But obviously when you restart the whole app--close the program completely and restart it--all the colors are right, even for special event widgets. So I have to eliminate the special event widget solution which is often hard to get working for some reason, maybe it's just hard to remember all the things I'm supposed to do, anyway get rid of special event widgets and instead figure out what's the difference between recolorizing and restarting the app and basically restart the app when APPLYing a new color scheme. Either that or figure out why/when the app has to be restarted to get special event apps to recolorize in regards to their highlighting events, and fix that instead. For example, maybe the fact that make_formats_dict() is run in init is the clue I'm looking for. Maybe in config_generic instead of the special widgets' current method, make_formats_dict() has to be run for each class that has a highlighting event. Or maybe a dedicated reconfig_highlighting function could be created in styles.py that could be called from colorizer.py on APPLY. Another thought is that something is happening with imports that causes a global value of formats to be recreated and reimported only when the app is restarted. FIX IT FOR ENTRY AUTO AND WHEN THE NEW SYSTEM WORKS, DELETE THE SPECIAL EVENT SECTION ONE CLASS AT A TIME AND TEST TO SEE THAT THE NEW SYSTEM WORKS FOR EACH CLASS THAT DOES HIGHLIGHTING. Also seems like fg is working right but bg isn't.
@@ -302,7 +293,7 @@ if __name__ == '__main__':
 # add another label in each row of roles dialog to show id of role person in case of dupe names
 # put a separator btwn events and attributes
 # in each tab of each tabbook, use Map event to focus one of the widgets on that tab when that tab is switched to, see colorizer arrow_in_first() as an example
-# Refactor gallery so all work the same in a dialog opened by clicking a main image in a tab. Also I found out when I deleted all the padding that there's no scridth. There should be nothing in any tab that's ever bigger than the persons tab events table. Then the tabs could be used for what they're needed for, like searching and getting details about links and stuff, instead of looking at pictures that don't fit in the tab anyway.
+# Refactor gallery so all work the same in a dialog opened by clicking a main image in a tab. Also I found out when I deleted all the padding that there's no scridth. There should be nothing in any tab that's ever bigger than the persons tab events table. Then the tabs could be used for what they're needed for, like searching and getting details about links and stuff, instead of looking at pictures that don't fit in the tab anyway. Also: # remove Gallery from tuple `widgets.bgOnly` when moved to dialog
 # In main.py make_widgets() should be broken up into smaller funx eg make_family_table() etc. after restructing gallery into 3 dialogs.
 # Get rid of all calls to title() in dropdown.py and just give the values with caps as they should be shown, for example title() is changing GEDCOM to Gedcom in File menu.
 # In the File menu items add an item "Restore Sample Tree to Original State" and have it grayed out if the sample tree is not actually open.

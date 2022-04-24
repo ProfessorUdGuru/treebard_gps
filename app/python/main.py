@@ -20,14 +20,14 @@ from PIL import Image, ImageTk
 from files import current_drive, get_current_file
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
-    Radiobutton, LabelFrame, make_formats_dict, Border, TabBook, Scrollbar,
-    EntryAutoPerson, EntryAutoPersonHilited, FontPicker
-)
+    Radiobutton, LabelFrame, Border, TabBook, Scrollbar,
+    EntryAutoPerson, EntryAutoPersonHilited)
+from font_picker import FontPicker
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips   
 from families import NuclearFamiliesTable
 from events_table import EventsTable
-from redraw import redraw_person_tab
+from redraw import redraw_person_tab, fix_tab_traversal
 from dates import DatePreferences, OK_MONTHS, get_date_formats
 from gallery import Gallery
 from colorizer import Colorizer
@@ -41,14 +41,12 @@ from query_strings import (
     select_images_elements_main_image, select_current_person_id,
     select_finding_id_birth, select_person_gender_by_id,
     select_person_id_finding, select_date_finding, select_finding_event_type,
-    select_finding_id_death, 
-)
+    select_finding_id_death)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
 
 
-formats = make_formats_dict()
 
 MAIN_TABS = (
     ("person", "P"), ("names", "N"), ("assertions", "A"), ("places", "L"), 
@@ -71,7 +69,6 @@ class Main(Frame):
         self.root = root
         self.treebard = treebard
 
-        # self.formats = make_formats_dict()
         self.current_person = None
         self.current_person_name = ""
         self.tabbook_x = 300
@@ -155,8 +152,7 @@ class Main(Frame):
             persons_tab, 
             self.root, 
             self.treebard, 
-            self, 
-            # self.formats, 
+            self,  
             self.person_autofill_values)
         self.current_person = self.findings_table.current_person
 
@@ -167,13 +163,9 @@ class Main(Frame):
             self.current_person, 
             self.findings_table, 
             self.right_panel,
-            # self.formats,
             person_autofill_values=self.person_autofill_values)
 
-        # Create a tab traversal since the nukefam_table can't be made first
-        #   but should be traversed first.
-        for table in (self.nukefam_table, self.findings_table):
-            table.lift()
+        fix_tab_traversal(self.nukefam_table, self.findings_table)
 
         current_file, current_dir = get_current_file()
         # this does not run on redraw_person_tab, just on load
@@ -184,7 +176,6 @@ class Main(Frame):
             places_tab, 
             self.main_tabs, 
             self.main_tabs.store['graphics'],
-            # self.formats,
             self.root, 
             self.treebard,
             self.SCREEN_SIZE,
@@ -194,7 +185,6 @@ class Main(Frame):
             sources_tab, 
             self.main_tabs, 
             self.main_tabs.store['graphics'],
-            # self.formats,
             self.root, 
             self.treebard,
             self.SCREEN_SIZE,
@@ -229,7 +219,6 @@ class Main(Frame):
             options_tabs.store['colors'],
             self.root,
             self.rc_menu,
-            # self.formats,
             tabbook=self.right_panel)
         colorizer.grid(column=0, row=0)
 

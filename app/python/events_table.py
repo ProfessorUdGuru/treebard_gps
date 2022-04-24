@@ -6,7 +6,7 @@ from files import get_current_file
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
     LabelH3, Button, Entry, LabelHeader, Separator, open_message, Scrollbar,
-    LabelNegative, make_formats_dict, EntryAuto, EntryAutoHilited)
+    LabelStay, make_formats_dict, EntryAuto, EntryAutoHilited, NEUTRAL_COLOR)
 from scrolling import resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from redraw import redraw_person_tab
@@ -499,6 +499,7 @@ class EventsTable(Frame):
         self.main_canvas = main.master
 
         self.current_person = get_current_person()
+        current_name = self.person_autofill_values[self.current_person][0]["name"]
         self.inwidg = None
         self.headers = []
         self.widths = [0, 0, 0, 0, 0]
@@ -523,20 +524,20 @@ class EventsTable(Frame):
             return
         self.events_only_even_without_dates = [
             "birth", "death"] + self.after_death_events
-        # without the parameter passed by lambda, running this
-        #   function creates a null current person
         self.root.bind(
             "<Control-S>", 
             lambda evt, 
                 main_window=self.main_window, 
-                curr_per=self.current_person: redraw_person_tab(
-                    evt, main_window, curr_per))
+                curr_per=self.current_person,
+                curr_name=current_name: redraw_person_tab(
+                    evt, main_window, curr_per, curr_name))
         self.root.bind(
             "<Control-s>", 
             lambda evt, 
                 main_window=self.main_window, 
-                curr_per=self.current_person: redraw_person_tab(
-                    evt, main_window, curr_per))
+                curr_per=self.current_person,
+                curr_name=current_name: redraw_person_tab(
+                    evt, main_window, curr_per, curr_name))
 
         self.place_strings = make_all_nestings(select_all_place_ids)
 
@@ -1143,13 +1144,13 @@ class EventsTable(Frame):
         x, y, cx, cy = self.widget.bbox('insert')        
 
         self.kintip = d_tip = tk.Toplevel(self.widget)
-        label = LabelNegative(
+        label = LabelStay(
             d_tip, 
             text=self.kintip_text, 
             justify='left',
             relief='solid', 
             bd=1,
-            bg=self.formats['highlight_bg'])
+            bg=NEUTRAL_COLOR, fg="white")
         label.pack(ipadx=6, ipady=3)
 
         mouse_at = self.winfo_pointerxy()

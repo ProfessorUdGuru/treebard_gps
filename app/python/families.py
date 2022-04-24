@@ -4,9 +4,9 @@ import tkinter as tk
 import sqlite3
 from widgets import (
     Frame, LabelH3, Label, Button, Canvas, LabelEntry, Radiobutton, LabelFrame,
-    FrameHilited, LabelHeader, Checkbutton, LabelNegative, Dialogue, Combobox,
+    FrameHilited, LabelHeader, Checkbutton, LabelStay, Dialogue, Combobox,
     Scrollbar, EntryAutoPerson, EntryAutoPersonHilited, open_message, 
-    make_formats_dict, Toplevel)
+    make_formats_dict, Toplevel, NEUTRAL_COLOR, configall)
 from files import get_current_file
 from persons import (
     open_new_person_dialog, make_all_names_dict_for_person_select, check_name,
@@ -46,7 +46,8 @@ from dev_tools import looky, seeline
 
 
 
-formats = make_formats_dict()
+
+
 
 PARENT_TYPES = {
     1: "Mother", 2: "Father", 110: "Adoptive Parent", 111: "Adoptive Mother", 
@@ -65,8 +66,7 @@ class NuclearFamiliesTable(Frame):
     """
     def __init__(
             self, master, root, treebard, current_person, findings_table, 
-            right_panel, person_autofill_values=[], 
-            # right_panel, formats, person_autofill_values=[], 
+            right_panel, person_autofill_values=[],
             *args, **kwargs):
         """ This dict has to be recreated in events_table.py which can't import
             from here:
@@ -105,10 +105,7 @@ class NuclearFamiliesTable(Frame):
         self.current_person = current_person
         self.findings_table = findings_table
         self.right_panel = right_panel
-        # self.formats = formats
         self.person_autofill_values = person_autofill_values
-
-        # self.formats = make_formats_dict()
 
         self.date_prefs = get_date_formats(tree_is_open=1)
         self.unlink_partners = {"events": [], "children": []}
@@ -247,7 +244,10 @@ class NuclearFamiliesTable(Frame):
         self.new_kid_frame.grid(column=0, row=self.last_row, sticky="ew")
         for row in range(self.nukefam_window.grid_size()[1]):
             self.nukefam_window.rowconfigure(row, weight=1)
-            
+        if on_load is False:
+            formats = make_formats_dict()
+            configall(self.nukefam_window, formats)
+
         self.update_idletasks()
         wd = self.nukefam_window.winfo_reqwidth()
         ht = self.right_panel.winfo_reqheight()
@@ -255,7 +255,7 @@ class NuclearFamiliesTable(Frame):
         self.nukefam_canvas.config(scrollregion=self.nukefam_canvas.bbox('all'))
         self.make_idtips()
 
-        self.make_cohighlights_dict() # DO NOT DELETE
+        self.make_cohighlights_dict()
 
         copy = self.cohighlights
         for k,v in copy.items():
@@ -1702,21 +1702,20 @@ class NuclearFamiliesTable(Frame):
         conn.close()
 
     def show_idtip(self, iD, name_type):
-        """Based on show_kintip() in events_table.py."""
+        """ Based on show_kintip() in events_table.py. """
         maxvert = self.winfo_screenheight()
-
         if self.idtip or not self.idtip_text:
             return
         x, y, cx, cy = self.widget.bbox('insert')        
 
         self.idtip = d_tip = Toplevel(self.widget)
-        label = LabelNegative(
+        label = LabelStay(
             d_tip, 
             text=self.idtip_text, 
             justify='left',
             relief='solid', 
             bd=1,
-            bg=formats['highlight_bg'])
+            bg=NEUTRAL_COLOR, fg="white")
         label.pack(ipadx=6, ipady=3)
 
         mouse_at = self.winfo_pointerxy()

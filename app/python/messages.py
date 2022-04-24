@@ -127,9 +127,9 @@ dates_msg = (
         "To return the event to the Events Table, give it a valid date.",
 )
 
-fonts_msg = (
-    "Press ALT+P then CTRL+S to resize the scrollbar after changing fonts.",
-)
+# fonts_msg = (
+    # "Press ALT+P then CTRL+S to resize the scrollbar after changing fonts.",
+# )
 
 opening_msg = (
     "The requested file has been moved, deleted or renamed outside "

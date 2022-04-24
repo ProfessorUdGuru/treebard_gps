@@ -5,7 +5,7 @@ import sqlite3
 from files import app_path, get_current_file
 from widgets import (
     Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3, LabelSearch,
-    LabelNegative, configall, Border, Scrollbar, make_formats_dict)
+    LabelStay, configall, Border, Scrollbar, make_formats_dict, NEUTRAL_COLOR)
 from right_click_menu import RightClickMenu, make_rc_menus
 from scrolling import MousewheelScrolling, resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
@@ -673,13 +673,13 @@ class PersonSearch(Toplevel):
 
         self.nametip = d_tip = tk.Toplevel(self.widget)
 
-        label = LabelNegative(
+        label = LabelStay(
             d_tip, 
             text=self.nametip_text, 
             justify='left',
             relief='solid', 
             bd=1,
-            bg=self.formats['highlight_bg'])
+            bg=NEUTRAL_COLOR, fg="white")
         label.pack(ipadx=6, ipady=3)
 
         mouse_at = self.winfo_pointerxy()

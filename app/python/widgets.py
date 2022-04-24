@@ -11,7 +11,6 @@ from files import (
     new_file_path, change_tree_title, set_current_file, save_recent_tree)
 from scrolling import resize_scrolled_content
 from utes import create_tooltip, center_dialog
-from messages import fonts_msg
 from query_strings import ( 
     select_color_scheme_current_id, select_color_scheme_by_id,
     select_format_font_scheme, select_format_font_size,
@@ -30,9 +29,7 @@ from query_strings import (
     delete_images_elements_person, delete_claim_person, select_name_sorter,
     select_name_type_sorter_with_id, select_all_names, 
     select_name_type_hierarchy, select_all_names_all_details_order_hierarchy,
-    select_closing_state_recent_files, update_closing_state_recent_files
-
-) 
+    select_closing_state_recent_files, update_closing_state_recent_files) 
 from messages_context_help import person_add_help_msg
 from messages import persons_msg, opening_msg
 from images import get_all_pics 
@@ -192,7 +189,8 @@ def configall(master, formats):
 
     def config_entryautoperson(widg):
         widg.config(
-            bg=formats["bg"], fg=formats["fg"],
+            bg=formats["bg"], 
+            fg=formats["fg"],
             font=formats["input_font"],
             selectbackground=formats["head_bg"],
             selectforeground=formats["fg"],
@@ -273,7 +271,10 @@ def configall(master, formats):
     ancestor_list = []
     all_widgets_in_root = get_all_descends(master, ancestor_list)
     for widg in (all_widgets_in_root):
-        subclass = widg.winfo_subclass()
+        if widg.winfo_class() == tk.Toplevel:
+            continue
+        else:
+            subclass = widg.winfo_subclass()
         if subclass in bg_fg:
             config_bg_fg(widg)  
         if subclass in activeBgHilite:
@@ -316,22 +317,32 @@ def configall(master, formats):
         if subclass == "TabBook":
             TabBook.fg = formats["fg"]
             TabBook.bg = formats["bg"]
+
         elif subclass == "ButtonBigPic":
             config_bg_fgHilite(widg)
             ButtonBigPic.bg = formats["bg"]
             ButtonBigPic.fg = formats["highlight_bg"]
+
         elif subclass == "ButtonFlatHilited":
             config_buttonflathilited(widg)
+
         elif subclass in bg_fg and subclass in fontStatus:
             if subclass == "LabelStatusbar":
                 LabelStatusbar.bg = formats["bg"]
                 LabelStatusbar.fg = formats["fg"]
                 LabelStatusbar.status = formats["status"]
             config_bg_fg_fontStatus(widg)
+
         elif subclass == "EntryAutoPerson":
             EntryAutoPerson.highlight_bg = formats["highlight_bg"]
             EntryAutoPerson.bg = formats["bg"]
+            EntryAutoPerson.fg=formats["fg"]
+            EntryAutoPerson.font=formats["input_font"]
+            EntryAutoPerson.selectbackground=formats["head_bg"]
+            EntryAutoPerson.selectforeground=formats["fg"]
+            EntryAutoPerson.insertbackground=formats["fg"]
             config_entryautoperson(widg)
+
         elif subclass == "ComboArrow":
             ComboArrow.highlight_bg = formats["highlight_bg"]
             ComboArrow.fg = formats["fg"]
@@ -372,6 +383,7 @@ def configall(master, formats):
             LabelTab.bg = formats["bg"]
             LabelTab.fg = formats["fg"]
             LabelTab.highlight_bg = formats["highlight_bg"]
+            LabelTab.font = formats["tab_font"]
             config_labeltab(widg)
 
         elif subclass == "LabelMovable":
@@ -1151,19 +1163,19 @@ class Entry(Entryx):
             selectbackground=formats["head_bg"]) 
             
 
-class EntryUnhilited(Entryx):
-    '''
-        Looks like a Label.
-    '''
-    def __init__(self, master, *args, **kwargs):
-        Entryx.__init__(self, master, *args, **kwargs)
+# class EntryUnhilited(Entryx):
+    # '''
+        # Looks like a Label.
+    # '''
+    # def __init__(self, master, *args, **kwargs):
+        # Entryx.__init__(self, master, *args, **kwargs)
         
-        self.config(
-            bd=0,
-            bg=formats['bg'], 
-            fg=formats['fg'], 
-            font=formats['input_font'], 
-            insertbackground=formats['fg'])
+        # self.config(
+            # bd=0,
+            # bg=formats['bg'], 
+            # fg=formats['fg'], 
+            # font=formats['input_font'], 
+            # insertbackground=formats['fg'])
 
 class Textx(tk.Text):
     def __init__(self, master, *args, **kwargs):
@@ -1947,11 +1959,17 @@ class EntryAuto(Entry):
         '''
         def do_it():
             hits = self.match_string()
+            print("line", looky(seeline()).lineno, "hits[0]:", hits[0])
+            print("line", looky(seeline()).lineno, "key:", key)
             self.show_hits(hits, self.pos)
 
         if self.autofill is False:
             return
         key = evt.keysym
+        # prevent CTRL+S from filling anything in; also keeps the first
+        #   typed character from filling anything in if it's an "s"; sorry.
+        if key in ("s", "S"):
+            return
         # allow alphanumeric characters
         if len(key) == 1:
             do_it()
@@ -2006,7 +2024,7 @@ class EntryAutoHilited(EntryAuto):
         self.config(bg=formats["highlight_bg"])
 
 """ These two autofill inputs are based on simpler code in autofill.py. """
-class EntryAutoPerson(EntryUnhilited):
+class EntryAutoPerson(Entryx):
     """ To use this class, each person autofill input has to be given the 
         ability to use its newest values with a line like this: 
             `EntryAutoPerson.all_person_autofills.append(person_entry)`.
@@ -2018,6 +2036,11 @@ class EntryAutoPerson(EntryUnhilited):
     formats = formats
     highlight_bg = formats["highlight_bg"]
     bg = formats["bg"]
+    font = formats["input_font"]
+    fg = formats["fg"]
+    insertbackground = formats["fg"]
+    selectforeground = formats["fg"]
+    selectbackground = formats["head_bg"]
     def create_lists(all_items):
         """ Keeps a temporary list during one app session which will 
             prioritize the autofill values with the most recently used values
@@ -2044,7 +2067,7 @@ class EntryAutoPerson(EntryUnhilited):
         return final_items
 
     def __init__(self, master, autofill=False, values=None, *args, **kwargs):
-        EntryUnhilited.__init__(self, master, *args, **kwargs)
+        Entryx.__init__(self, master, *args, **kwargs)
         self.master = master
         self.autofill = autofill
         self.values = values
@@ -2058,13 +2081,16 @@ class EntryAutoPerson(EntryUnhilited):
             self.bind("<KeyRelease>", self.get_typed)
             self.bind("<FocusOut>", self.prepend_match, add="+")
             self.bind("<FocusIn>", self.deselect, add="+")
-
+        
         self.config(
-            bg=EntryAutoPerson.formats["bg"], 
-            fg=EntryAutoPerson.formats["fg"], 
-            insertbackground=EntryAutoPerson.formats["fg"], 
-            selectbackground=EntryAutoPerson.formats["head_bg"], 
-            font=EntryAutoPerson.formats["input_font"])            
+            bd=0,
+            bg=formats['bg'], 
+            fg=formats['fg'], 
+            font=formats['input_font'], 
+            insertbackground=formats['fg'],
+            selectbackground=formats["head_bg"], 
+            selectforeground=formats["fg"])  
+         
         self.bind("<Enter>", self.highlight)
         self.bind("<Leave>", self.unhighlight)
 
@@ -2098,6 +2124,10 @@ class EntryAutoPerson(EntryUnhilited):
         if self.autofill is False:
             return
         key = evt.keysym
+        # prevent CTRL+S from filling anything in; also keeps the first
+        #   typed character from filling anything in if it's an "s"; sorry.
+        if key in ("s", "S"):
+            return
         # Allow alphanumeric characters.
         if len(key) == 1:
             do_it()
@@ -2232,7 +2262,6 @@ class EntryAutoPerson(EntryUnhilited):
 class EntryAutoPersonHilited(EntryAutoPerson):
     """ Override event handling from parent class. """
     def __init__(self, master, *args, **kwargs):
-    # def __init__(self, master, formats, *args, **kwargs):
         EntryAutoPerson.__init__(self, master, *args, **kwargs)
         self.config(bg=formats["highlight_bg"])
     def highlight(self, evt):
@@ -2335,7 +2364,8 @@ class Combobox(FrameHilited3):
         self.canvas.grid(column=0, row=0, sticky='news')
 
         self.scrollv_combo = Scrollbar(
-            self.drop, hideable=True, command=self.canvas.yview)
+            self.drop, hideable=True, command=self.canvas.yview, 
+            width=self.scrollbar_size)
         self.canvas.config(yscrollcommand=self.scrollv_combo.set)
         self.content = Frame(self.canvas)
 
@@ -2775,9 +2805,12 @@ class LabelTab(Labelx):
         self.config(font=formats['tab_font'])
         self.chosen = False
         if self.chosen is False:
-            self.config(bg=formats['bg'], fg=formats['fg'])
+            self.config(
+                bg=formats['bg'], fg=formats['fg'], font=formats["tab_font"])
         else: 
-            self.config(bg=formats['highlight_bg']) 
+            self.config(
+                bg=formats['highlight_bg'], fg=formats["fg"], 
+                font=formats["tab_font"]) 
 
 class TabBook(Framex):
     formats = formats
@@ -4065,104 +4098,6 @@ class DropdownMenu(FrameHilited2):
             else:
                 close_it()
 
-# from fontpicker.py
-class FontPicker(Frame):
-    def __init__(self, master, root, main, *args, **kwargs):
-        Frame.__init__(self, master, *args, **kwargs)
-        self.master = master
-        self.root = root
-        self.main = main
-        self.all_fonts = sorted(font.families())
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-        cur.execute(select_format_font_scheme)
-        font_scheme = list(cur.fetchone())
-        cur.close()
-        conn.close()
-        copy = []
-        z = 0
-        for i in font_scheme[0:2]:
-            if i is None:
-                copy.append(font_scheme[z + 2])
-            else:
-                copy.append(font_scheme[z])
-            z += 1
-        self.font_scheme = copy
-        self.make_widgets()
-
-    def make_widgets(self):
-
-        def combobox_selected(combo):
-            self.output_sample.config(font=(self.all_fonts[combo.current], self.fontSize))
-            self.update_idletasks()  
-
-        sample = Frame(self)
-
-        self.output_sample = Label(
-            sample,
-            text="Sample Output Text ABCDEFGHxyz 0123456789 iIl1 o0O")
-
-        self.fontSizeVar = tk.IntVar()
-        self.fontSize = self.font_scheme[1]
-
-        self.font_size = Scale(
-            self,
-            from_=8.0,
-            to=26.0,
-            tickinterval=6.0,
-            label="Text Size",
-            orient="horizontal",
-            length=200,
-            variable=self.fontSizeVar,
-            command=self.show_font_size)
-        self.font_size.set(self.fontSize)
- 
-        lab = Label(self, text="Select Output Font")
-        self.cbo = Combobox(
-            self, self.root, values=self.all_fonts, 
-            height=500, scrollbar_size=12)
-        lab.grid(column=0, row=2, pady=(24,6))
-        self.cbo.grid(column=0, row=3, pady=(6, 20))
-
-        self.apply_button = Button(
-            self,
-            text="APPLY",
-            command=self.apply)
-
-        sample.grid(column=0, row=0)
-        self.output_sample.grid(padx=24, pady=20)
-        self.font_size.grid(column=0, row=1, pady=24)
-        self.apply_button.grid(column=0, row=4, sticky="e", padx=(0,24), pady=(0,24))
-
-        Combobox.combobox_selected = combobox_selected
-
-    def apply(self):
-        self.font_scheme[1] = self.fontSizeVar.get()
-        if len(self.cbo.get()) != 0:
-            self.font_scheme[0] = self.cbo.get()
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
-        conn.execute('PRAGMA foreign_keys = 1')
-        cur = conn.cursor()
-        cur.execute(update_format_font, tuple(self.font_scheme))
-        conn.commit()
-        cur.close()
-        conn.close()
-
-        configall(self.root, formats)
-        resize_scrolled_content(self.root, self.main.master, self.main)
-
-        msg0 = open_message(
-            self, 
-            fonts_msg[0], 
-            "Redraw-on-Font-Change Bug", 
-            "OK")
-        msg0[0].grab_set()
-
-    def show_font_size(self, evt):
-        self.fontSize = self.fontSizeVar.get()
-
 # from error_messages
 def open_message(master, message, title, buttlab, inwidg=None):
 
@@ -4246,8 +4181,8 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
 """
 ALL_WIDGET_CLASSES = (
     Label, Button, LabelHilited3, LabelMovable, LabelStay,
-    ButtonBigPic, Entry, Frame, EntryAuto, EntryAutoPerson, Border, 
-    Separator, LabelTab, ComboArrow, Scrollbar, FontPicker,
+    ButtonBigPic, Entry, Frame, EntryAuto, Border, 
+    Separator, ComboArrow, Scrollbar, 
     LabelStatusbar, TabBook, DropdownMenu, ToplevelHilited)
 
 activeBgFg_activeFgBg = ("ButtonFlatHilited",)
@@ -4285,17 +4220,17 @@ insertBgFg = (
 selectBgHead = ("EntryAuto", "Entry", "Text", "EntryAutoHilited", )
 selectColorBg = ("Checkbutton", )
 selectColorHilite = ("Radiobutton", "RadiobuttonBig")
-selectFg = ("EntryAutoPerson", "EntryAuto", "Entry", "Text", "EntryAutoHilited", )
+selectFg = ("EntryAuto", "Entry", "Text", "EntryAutoHilited", )
 troughColorHilite = ("Scale", )
 bgOnly = (
-    "Frame", "Canvas", "FrameHilited6", "Border",  
+    "Frame", "Canvas", "FrameHilited6",   
     "Dialogue", "TabBook", "PersonSearch", "EditRow",
     "Gallery", "StatusbarTooltips", "EventsTable",
-    "Main", "FontPicker", "DatePreferences")
-# remove Gallery when moved to dialog
+    "Main", "DatePreferences")
+
 if __name__ == "__main__":
 
-    from styles import make_formats_dict
+    from toykinter_widgets import run_statusbar_tooltips
 
     formats = make_formats_dict()
     def make_scrollbars():
