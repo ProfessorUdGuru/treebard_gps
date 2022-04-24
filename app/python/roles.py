@@ -5,7 +5,7 @@ import sqlite3
 from files import get_current_file
 from widgets import (
     Frame, Toplevel, Label, ButtonQuiet, Border,
-    LabelH3, Button, LabelHeader, LabelNegative, configall, Combobox,
+    LabelH3, Button, LabelHeader, LabelNegative, Combobox,
     EntryAutoPerson, EntryAutoPersonHilited, Scrollbar, open_message,
     configall, make_formats_dict)
 from right_click_menu import RightClickMenu, make_rc_menus
@@ -24,7 +24,6 @@ from query_strings import (
 
 import dev_tools as dt
 from dev_tools import looky, seeline
-
 
 
 
@@ -78,7 +77,7 @@ class RolesDialog(Toplevel):
 
         self.columnconfigure(1, weight=1)
         self.rowconfigure(4, weight=1)
-        self.canvas = Border(self, self.root, self.formats)
+        self.canvas = Border(self, self.root)
 
         self.canvas.title_1.config(text="Roles Dialog")
         self.canvas.title_2.config(text="Current Person: {}, id #{}".format(
@@ -167,7 +166,6 @@ class RolesDialog(Toplevel):
             self.rc_menu,
             roles_dlg_help_msg)
 
-        # config_generic(self)
         configall(self, self.formats)
 
         resize_scrolled_content(self, self.canvas, self.window)
@@ -184,7 +182,7 @@ class RolesDialog(Toplevel):
             new_roles_area, self.root, values=self.role_types)
 
         self.person_input = EntryAutoPersonHilited(
-            new_roles_area, self.formats, width=32, 
+            new_roles_area, width=32, 
             autofill=True, values=self.person_autofill_values) 
         self.person_input.bind("<FocusIn>", get_original, add="+")
         
@@ -361,7 +359,7 @@ class RolesDialog(Toplevel):
             self.edit_row, self.root, values=self.role_types)
 
         self.edit_role_person_input = EntryAutoPersonHilited(
-            self.edit_row, self.formats, width=32, 
+            self.edit_row, width=32, 
             autofill=True, values=self.person_autofill_values)  
         self.edit_role_person_input.bind("<FocusIn>", get_original, add="+")
 

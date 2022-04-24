@@ -19,6 +19,7 @@ Validation and input to database has been tested for these cases:
 '''                    
 
 import tkinter as tk
+import sqlite3
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, LabelHeader, 
     Entry, ButtonQuiet, configall, Border, Scrollbar, open_message,
@@ -41,7 +42,6 @@ from query_strings import (
     select_places_places_id, select_all_finding_places_findings)
 import dev_tools as dt
 from dev_tools import looky, seeline
-import sqlite3
 
 
 
@@ -83,7 +83,6 @@ class NewPlaceDialog():
             initial,
             place_input,
             treebard,
-            # formats,
             do_on_ok=None,
             selection=None):
 
@@ -96,7 +95,6 @@ class NewPlaceDialog():
         self.initial = initial
         self.place_input = place_input
         self.treebard = treebard
-        # self.formats = formats
         self.do_on_ok = do_on_ok
 
         self.formats = make_formats_dict()
@@ -141,7 +139,7 @@ class NewPlaceDialog():
             width=int(size[0] * 0.85), height=int(size[1] * 0.95))
         self.new_places_dialog.columnconfigure(1, weight=1)
         self.new_places_dialog.rowconfigure(4, weight=1)
-        self.canvas = Border(self.new_places_dialog, self.master, self.formats)          
+        self.canvas = Border(self.new_places_dialog, self.master)            
         self.canvas.title_1.config(text=self.title)
         self.canvas.title_2.config(text="input: {}".format(self.place_input))
 
@@ -401,14 +399,13 @@ class ValidatePlace():
 
     def __init__(
             self, root, treebard, inwidg, initial, 
-            place_input, finding, formats):
+            place_input, finding): 
         self.root = root
         self.treebard = treebard
         self.inwidg = inwidg
         self.initial = initial
         self.place_input = place_input
         self.finding = finding
-        self.formats = formats
 
         self.place_list = []
         self.place_dicts = []
@@ -474,7 +471,6 @@ class ValidatePlace():
                 self.initial,
                 self.place_input,
                 self.treebard,
-                # self.formats,
                 do_on_ok=self.collect_place_ids)
         else:
             for dkt in self.place_dicts:
@@ -637,7 +633,6 @@ if __name__ == "__main__":
 
     finding = 1
     initial = ''
-    formats = make_formats_dict()
 
     def get_final(evt):
         widg = evt.widget
@@ -647,7 +642,7 @@ if __name__ == "__main__":
         final = widg.get()
         for child in frame.winfo_children():
             child.destroy()
-        final = ValidatePlace(root, treebard, initial, final, finding, formats)
+        final = ValidatePlace(root, treebard, initial, final, finding)
         j = 0
         for dkt in final.place_dicts:
             lab = Label(

@@ -45,6 +45,8 @@ from dev_tools import looky, seeline
 
 
 
+
+
 # formerly in styles.py
 # print('formats is', formats)
 # formats is {'bg': '#34615f', 'highlight_bg': '#4a8a87', 'head_bg': '#486a8c', 'fg': '#b9ddd9', 'output_font': ('courier', 16), 'input_font': ('tahoma', 16), 'heading1': ('courier', 32, 'bold'), 'heading2': ('courier', 24, 'bold'), 'heading3': ('courier', 17, 'bold'), 'heading4': ('courier', 13, 'bold'), 'status': ('tahoma', 13), 'boilerplate': ('tahoma', 10), 'show_font': ('tahoma', 16, 'italic'), 'titlebar_0': ('tahoma', 10, 'bold'), 'titlebar_1': ('tahoma', 14, 'bold'), 'titlebar_2': ('tahoma', 16, 'bold'), 'titlebar_3': ('tahoma', 20, 'bold'), 'titlebar_hilited_0': ('tahoma', 10), 'titlebar_hilited_1': ('tahoma', 14), 'titlebar_hilited_2': ('tahoma', 16), 'titlebar_hilited_3': ('tahoma', 20), 'unshow_font': ('tahoma', 14, 'italic')}
@@ -140,20 +142,24 @@ def make_formats_dict():
 formats = make_formats_dict()
 
 def configall(master, formats):
-    def config_bg_fg(widg):
-        widg.config(bg=formats["bg"], fg=formats["fg"])
+    def config_activeBgHead(widg):
+        widg.config(activebackground=formats["head_bg"])
     def config_activeBgHilite(widg):
         widg.config(activebackground=formats["highlight_bg"])
     def config_activeFg(widg):
         widg.config(activeforeground=formats["fg"])
-    def config_selectColorBg(widg):
-        widg.config(selectcolor=formats["bg"])
-    def config_selectColorHilite(widg):
-        widg.config(selectcolor=formats["highlight_bg"])
+    def config_bg_fg(widg):
+        widg.config(bg=formats["bg"], fg=formats["fg"])
+    def config_bgHead(widg):
+        widg.config(bg=formats["head_bg"])
+    def config_bgHilite(widg):
+        widg.config(bg=formats["highlight_bg"])
+    def config_bgOnly(widg):
+        widg.config(bg=formats["bg"])
+    def config_fg(widg):
+        widg.config(fg=formats["fg"])
     def config_fontBoilerplate(widg):
         widg.config(font=formats["boilerplate"])
-    def config_activeBgHead(widg):
-        widg.config(activebackground=formats["head_bg"])
     def config_fontH2(widg):
         widg.config(font=formats["heading2"])
     def config_fontH3(widg):
@@ -162,22 +168,18 @@ def configall(master, formats):
         widg.config(font=formats["input_font"])
     def config_fontOut(widg):
         widg.config(font=formats["output_font"])
-    def config_fg(widg):
-        widg.config(fg=formats["fg"])
-    def config_troughColorHilite(widg):
-        widg.config(troughcolor=formats["highlight_bg"])
-    def config_bgHead(widg):
-        widg.config(bg=formats["head_bg"])
-    def config_bgHilite(widg):
-        widg.config(bg=formats["highlight_bg"])
+    def config_insertBgFg(widg):
+        widg.config(insertbackground=formats["fg"])
     def config_selectBgHead(widg):
         widg.config(selectbackground=formats["head_bg"])
     def config_selectFg(widg):
         widg.config(selectforeground=formats["fg"])
-    def config_insertBgFg(widg):
-        widg.config(insertbackground=formats["fg"])
-    def config_bgOnly(widg):
-        widg.config(bg=formats["bg"])
+    def config_selectColorBg(widg):
+        widg.config(selectcolor=formats["bg"])
+    def config_selectColorHilite(widg):
+        widg.config(selectcolor=formats["highlight_bg"])
+    def config_troughColorHilite(widg):
+        widg.config(troughcolor=formats["highlight_bg"])
 
     def config_buttonflathilited(widg):
         widg.config(
@@ -205,6 +207,15 @@ def configall(master, formats):
             so uses its own reconfigure method.
         """
         sep.colorize()
+
+    def config_combobox(widg):
+        widg.config(bg=formats["bg"]) 
+        widg.entry.config(
+            bg=formats["bg"], fg=formats["fg"],
+            font=formats["input_font"],
+            selectbackground=formats["head_bg"],
+            selectforeground=formats["fg"],
+            insertbackground=formats["fg"])            
 
     def config_scrollbar(widg):
         widg.config(bg=formats["head_bg"])
@@ -240,6 +251,12 @@ def configall(master, formats):
             bg=LabelButtonText.bg,
             fg=LabelButtonText.fg,
             font=LabelButtonText.input_font)
+
+    def config_labeldots(widg):
+        widg.config(
+            bg=LabelDots.bg,
+            fg=LabelDots.fg,
+            font=LabelDots.heading3)
 
     def config_labelhilited3(widg):
         widg.config(
@@ -343,7 +360,7 @@ def configall(master, formats):
             Combobox.highlight_bg = formats["highlight_bg"]
             Combobox.head_bg = formats["head_bg"]
             Combobox.bg = formats["bg"]
-            config_bgHilite(widg)
+            config_combobox(widg)
 
         elif subclass == "Scrollbar":
             Scrollbar.slidercolor = formats["bg"]
@@ -363,14 +380,19 @@ def configall(master, formats):
             LabelMovable.output_font = formats["output_font"]
             config_labelmovable(widg)
 
-        elif subclass in ("LabelButtonText", "LabelDots", ):
+        elif subclass == "LabelButtonText":
             LabelButtonText.bg = formats["bg"]
             LabelButtonText.fg = formats["fg"]
             LabelButtonText.head_bg = formats["head_bg"]
             LabelButtonText.input_font = formats["input_font"]
             config_labelbuttontext(widg)
-            if subclass == "LabelDots":
-                LabelDots.heading3 = formats["heading3"]
+
+        elif subclass == "LabelDots":
+            LabelDots.bg = formats["bg"]
+            LabelDots.fg = formats["fg"]
+            LabelDots.head_bg = formats["head_bg"]
+            LabelDots.heading3 = formats["heading3"]
+            config_labeldots(widg)
 
         elif subclass == "Border":
             Border.head_bg = formats["head_bg"]
@@ -534,6 +556,13 @@ class Label(Labelx):
             fg=formats['fg'],
             font=formats['output_font'])
 
+class LabelSearch(Label): 
+    """ Label for search results column cells. """
+
+    def __init__(self, master, *args, **kwargs):
+        Label.__init__(self, master, *args, **kwargs)
+        self.config(anchor='w')
+
 class LabelTest(Labelx):
     ''' 
         Color can be changed for testing/visibility. 
@@ -680,7 +709,7 @@ class LabelButtonText(Labelx):
     def on_unhover(self, evt):
         self.config(relief='raised')
 
-class LabelDots(LabelButtonText):
+class LabelDots(Labelx):
     """ Display clickable dots if there's more info, no dots if none. 
     """
     formats = formats
@@ -695,7 +724,7 @@ class LabelDots(LabelButtonText):
             treebard,
             person_autofill_values=None,
             *args, **kwargs):
-        LabelButtonText.__init__(self, master, *args, **kwargs)
+        Labelx.__init__(self, master, *args, **kwargs)
 
         self.master = master
         self.dialog_class = dialog_class
@@ -754,7 +783,6 @@ class LabelDots(LabelButtonText):
             self.header, 
             self.current_person,
             self.treebard,
-            # LabelDots.formats,
             pressed=evt.widget,
             person_autofill_values=self.person_autofill_values)
 
@@ -1118,7 +1146,10 @@ class Entry(Entryx):
             bg=formats['highlight_bg'], 
             fg=formats['fg'], 
             font=formats['input_font'], 
-            insertbackground=formats['fg']) 
+            insertbackground=formats['fg'],
+            selectforeground=formats["fg"],
+            selectbackground=formats["head_bg"]) 
+            
 
 class EntryUnhilited(Entryx):
     '''
@@ -1828,8 +1859,8 @@ class Dialogue(Toplevel):
         Canvas which is gridded in its home class. Rows are reserved for the
         menu bar and icon ribbon menu although usually not used so they are
         False by default, but their unused rows have to be taken into account
-        (ignored) here. This is used for error messages and small dialogs which
-        don't change size and will never need to scroll.
+        when gridding their siblings in rows. This is used for error messages 
+        and one-button dialogs which don't change size and won't scroll.
     '''
     def __init__(self, master, *args, **kwargs):
         Toplevel.__init__(self, master, *args, **kwargs)
@@ -1838,6 +1869,7 @@ class Dialogue(Toplevel):
         self.canvas = Border(self, master)
         self.window = Frame(self.canvas)
         self.canvas.create_window(0, 0, anchor='nw', window=self.window)
+        self.formats = make_formats_dict()
 
     def resize_window(self):
         """ Call this to show the dialog. Added to requested width and height 
@@ -1849,6 +1881,8 @@ class Dialogue(Toplevel):
         height = self.window.winfo_reqheight() + 42
         self.geometry("{}x{}".format(width, height))
         center_dialog(self)
+
+        configall(self, self.formats)
         self.deiconify()
 
 class EntryAuto(Entry):
@@ -1967,7 +2001,7 @@ class EntryAuto(Entry):
         self.select_clear()
 
 class EntryAutoHilited(EntryAuto):
-    def __init__(self, master, formats, *args, **kwargs):
+    def __init__(self, master, *args, **kwargs):
         EntryAuto.__init__(self, master, *args, **kwargs)
         self.config(bg=formats["highlight_bg"])
 
@@ -2197,7 +2231,8 @@ class EntryAutoPerson(EntryUnhilited):
 
 class EntryAutoPersonHilited(EntryAutoPerson):
     """ Override event handling from parent class. """
-    def __init__(self, master, formats, *args, **kwargs):
+    def __init__(self, master, *args, **kwargs):
+    # def __init__(self, master, formats, *args, **kwargs):
         EntryAutoPerson.__init__(self, master, *args, **kwargs)
         self.config(bg=formats["highlight_bg"])
     def highlight(self, evt):
@@ -4132,11 +4167,9 @@ class FontPicker(Frame):
 def open_message(master, message, title, buttlab, inwidg=None):
 
     def close():
-        '''
-            Override this is more needs to be done on close.
-        '''
+        """ Override this if more needs to be done on close. """        
         msg.destroy()
-
+    # formats = make_formats_dict()
     msg = Dialogue(master)
     msg.canvas.title_1.config(text=title)
     msg.canvas.title_2.config(text="")
@@ -4212,8 +4245,8 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
     for each of its changable colors.
 """
 ALL_WIDGET_CLASSES = (
-    Label, Button, LabelHilited3, LabelButtonText, LabelMovable, LabelStay,
-    ButtonBigPic, Entry, Frame, EntryAuto, EntryAutoPerson, Border, Combobox, 
+    Label, Button, LabelHilited3, LabelMovable, LabelStay,
+    ButtonBigPic, Entry, Frame, EntryAuto, EntryAutoPerson, Border, 
     Separator, LabelTab, ComboArrow, Scrollbar, FontPicker,
     LabelStatusbar, TabBook, DropdownMenu, ToplevelHilited)
 
@@ -4225,7 +4258,7 @@ bg_fg = (
     "LabelFrame", "Sizer", "Checkbutton", "Radiobutton", "ButtonQuiet", 
     "LabelH2", "LabelH3", "LabelEntry", "ButtonPlain", "Label", 
     "MessageCopiable", "Button", "Scale", "RadiobuttonBig", "LabelStatusbar", 
-    "EntryAuto")
+    "EntryAuto", "LabelSearch")
 bg_fgHilite = ("ButtonBigPic",)
 bgFg_fgBg = ("LabelNegative", )
 bgHead = ("FrameHilited2", "LabelHilited", "LabelTip2")
@@ -4235,8 +4268,8 @@ bgHilite = (
     "ButtonFlatHilited", "LabelHeader", "LabelHilited3", "EntryAutoHilited", 
     "EntryAutoPersonHilited") 
 fG = (
-    "LabelTip2", "ButtonFlatHilited", "LabelHeader", 
-    "ComboArrow", "EntryAutoPersonHilited", "EntryAuto")
+    "LabelTip2", "ButtonFlatHilited", "LabelHeader", "Entry",
+    "ComboArrow", "EntryAutoPersonHilited", "EntryAuto", "EntryAutoHilited")
 fontH2 = ("LabelH2", )
 fontH3 = ("LabelH3", "LabelHeader", )
 fontBoilerplate = ("ButtonQuiet", )
@@ -4257,7 +4290,7 @@ troughColorHilite = ("Scale", )
 bgOnly = (
     "Frame", "Canvas", "FrameHilited6", "Border",  
     "Dialogue", "TabBook", "PersonSearch", "EditRow",
-    "InputMessage", "Gallery", "StatusbarTooltips", "EventsTable",
+    "Gallery", "StatusbarTooltips", "EventsTable",
     "Main", "FontPicker", "DatePreferences")
 # remove Gallery when moved to dialog
 if __name__ == "__main__":

@@ -30,9 +30,7 @@ from query_strings import (
     update_claims_persons_1_null, update_claims_persons_2_null,
     delete_images_elements_person, delete_claim_person, select_name_sorter,
     select_name_type_sorter_with_id, select_all_names, 
-    select_name_type_hierarchy, select_all_names_all_details_order_hierarchy,
-
-    )
+    select_name_type_hierarchy, select_all_names_all_details_order_hierarchy)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -308,7 +306,6 @@ class PersonAdd(Toplevel):
         self.inwidg = inwidg
         self.root = root
         self.inwidg2 = inwidg2
-        # self.formats = formats
         self.person_autofill_values = person_autofill_values
 
         self.formats = make_formats_dict()
@@ -473,8 +470,6 @@ class PersonAdd(Toplevel):
             self.rc_menu, 
             person_add_help_msg)
 
-        # config_generic(self)
-        configall(self, formats)
         resize_scrolled_content(self, self.canvas, self.window)
         self.gender_input.entry.focus_set()
 

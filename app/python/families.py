@@ -5,7 +5,8 @@ import sqlite3
 from widgets import (
     Frame, LabelH3, Label, Button, Canvas, LabelEntry, Radiobutton, LabelFrame,
     FrameHilited, LabelHeader, Checkbutton, LabelNegative, Dialogue, Combobox,
-    Scrollbar, EntryAutoPerson, EntryAutoPersonHilited, open_message)
+    Scrollbar, EntryAutoPerson, EntryAutoPersonHilited, open_message, 
+    make_formats_dict, Toplevel)
 from files import get_current_file
 from persons import (
     open_new_person_dialog, make_all_names_dict_for_person_select, check_name,
@@ -45,6 +46,7 @@ from dev_tools import looky, seeline
 
 
 
+formats = make_formats_dict()
 
 PARENT_TYPES = {
     1: "Mother", 2: "Father", 110: "Adoptive Parent", 111: "Adoptive Mother", 
@@ -63,7 +65,8 @@ class NuclearFamiliesTable(Frame):
     """
     def __init__(
             self, master, root, treebard, current_person, findings_table, 
-            right_panel, formats, person_autofill_values=[], 
+            right_panel, person_autofill_values=[], 
+            # right_panel, formats, person_autofill_values=[], 
             *args, **kwargs):
         """ This dict has to be recreated in events_table.py which can't import
             from here:
@@ -102,8 +105,10 @@ class NuclearFamiliesTable(Frame):
         self.current_person = current_person
         self.findings_table = findings_table
         self.right_panel = right_panel
-        self.formats = formats
+        # self.formats = formats
         self.person_autofill_values = person_autofill_values
+
+        # self.formats = make_formats_dict()
 
         self.date_prefs = get_date_formats(tree_is_open=1)
         self.unlink_partners = {"events": [], "children": []}
@@ -188,7 +193,7 @@ class NuclearFamiliesTable(Frame):
         """
         self.new_kid_frame = Frame(self.nukefam_window)
         self.new_kid_input = EntryAutoPersonHilited(
-            self.new_kid_frame, self.formats, width=48, 
+            self.new_kid_frame, width=48, 
             autofill=True, 
             values=self.person_autofill_values)
         childmaker = Button(
@@ -250,7 +255,7 @@ class NuclearFamiliesTable(Frame):
         self.nukefam_canvas.config(scrollregion=self.nukefam_canvas.bbox('all'))
         self.make_idtips()
 
-        # self.make_cohighlights_dict() # DO NOT DELETE
+        self.make_cohighlights_dict() # DO NOT DELETE
 
         copy = self.cohighlights
         for k,v in copy.items():
@@ -289,7 +294,6 @@ class NuclearFamiliesTable(Frame):
                 elif p == 1:
                     other = family_widgets
                 for widg in i:
-                    print("line", looky(seeline()).lineno, "widg:", widg)
                     widg.bind(
                         "<Enter>", 
                         lambda evt, other=other: self.highlight_both(evt, other), 
@@ -303,7 +307,10 @@ class NuclearFamiliesTable(Frame):
 
         for v in self.family_data[1].values():
             for child in v["children"]:
+                # print("line", looky(seeline()).lineno, "child:", child)
+                # offspring_event_widg = None
                 for row in self.findings_table.cell_pool:
+                    # print("line", looky(seeline()).lineno, "row[0]:", row[0])
                     if row[0] == child["birth_id"]:
                         offspring_event_widg = (row[1][0],)
                         break
@@ -559,9 +566,6 @@ class NuclearFamiliesTable(Frame):
         self.get_alt_parents(cur)
         self.grid_alt_parents()
 
-        # self.cohighlights[self.pa_input] = birth_id
-        # self.cohighlights[self.ma_input] = birth_id
-
         cur.close()
         conn.close()
 
@@ -714,7 +718,6 @@ class NuclearFamiliesTable(Frame):
         """
         self.person_autofill_values = update_person_autofill_values()
         births = births + alt_parentage_events
-        print("line", looky(seeline()).lineno, "births:", births)
         progenies = {}
         all_partners = [] 
         event_pards = []
@@ -1144,21 +1147,10 @@ class NuclearFamiliesTable(Frame):
                     continue
                 elif dkt["vars"] == 1:
                     link_offspring(dkt["finding"])
-        # deleted after 20220405
-        # for k,v in self.family_data[1].items():
-            # if inwidg != v["inwidg"]:
-                # continue
-            # for child in v["children"]:
-                # update_partners_child(
-                    # child["fpid"], 
-                    # child["order"], 
-                    # v["parent_type"], 
-                    # new_partner_id)
 
         def link_partner(finding_id):
             cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
-            # currper = self.current_person
             if self.current_person == person_id1:
                 cur.execute(update_finding_person_2, (self.new_partner_id, finding_id))
             elif self.current_person == person_id2:
@@ -1168,7 +1160,6 @@ class NuclearFamiliesTable(Frame):
         def link_offspring(finding_id):
             cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
-            # currper = self.current_person
             if self.current_person == person_id1:
                 cur.execute(update_finding_person_2, (self.new_partner_id, finding_id))
             elif self.current_person == person_id2:
@@ -1657,7 +1648,6 @@ class NuclearFamiliesTable(Frame):
 
         cur.close()
         conn.close()
-        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         redraw_person_tab(main_window=self.treebard.main)
 
     def change_kin_type(self, evt):
@@ -1680,7 +1670,6 @@ class NuclearFamiliesTable(Frame):
                     new_id = tup[1]
                     break
             finding_id = self.family_data[0][1:][row - 1][0]["birth_finding"]
-            print("line", looky(seeline()).lineno, "finding_id:", finding_id)
             if col == 0:
                 cur.execute(update_finding_kin_type_1, (new_id, finding_id))
             elif col == 2:
@@ -1720,14 +1709,14 @@ class NuclearFamiliesTable(Frame):
             return
         x, y, cx, cy = self.widget.bbox('insert')        
 
-        self.idtip = d_tip = tk.Toplevel(self.widget)
+        self.idtip = d_tip = Toplevel(self.widget)
         label = LabelNegative(
             d_tip, 
             text=self.idtip_text, 
             justify='left',
             relief='solid', 
             bd=1,
-            bg=self.formats['highlight_bg'])
+            bg=formats['highlight_bg'])
         label.pack(ipadx=6, ipady=3)
 
         mouse_at = self.winfo_pointerxy()
@@ -1805,7 +1794,6 @@ class NuclearFamiliesTable(Frame):
             name_in = widg.bind(
                 "<Enter>", lambda evt, 
                 iD=iD, name_type=name_type: self.handle_enter(iD, name_type))
-                # iD=iD, name_type=name_type: self.handle_enter(evt, iD, name_type))
             name_out = widg.bind("<Leave>", self.on_leave)
             self.widget = widg
             self.idtip_bindings["on_enter"].append([widg, name_in])

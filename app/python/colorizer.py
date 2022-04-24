@@ -32,7 +32,7 @@ class Colorizer(Frame):
             `self.current_swatch`
         which is a nested dict representing one color scheme.
     '''
-    def __init__(self, master, root, rc_menu, formats, 
+    def __init__(self, master, root, rc_menu, 
             tabbook=None, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
@@ -73,7 +73,7 @@ class Colorizer(Frame):
         self.header = LabelH3(
             self, text="Arrow keys enter & navigate swatches.", anchor="w")
         self.current_display = Label(
-            self, text="Currently applied color scheme is id# {}".format(
+            self, text="Currently applied color scheme is ID #{}".format(
                 self.currently_applied_color_scheme))
         swatch_frame = Frame(self)
         self.swatch_canvas = Canvas(swatch_frame)

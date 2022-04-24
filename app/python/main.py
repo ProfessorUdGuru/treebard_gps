@@ -48,6 +48,8 @@ from dev_tools import looky, seeline
 
 
 
+formats = make_formats_dict()
+
 MAIN_TABS = (
     ("person", "P"), ("names", "N"), ("assertions", "A"), ("places", "L"), 
     ("sources", "S"), ("reports", "R"), ("charts", "Z"), ("projects", "J"), 
@@ -69,7 +71,7 @@ class Main(Frame):
         self.root = root
         self.treebard = treebard
 
-        self.formats = make_formats_dict()
+        # self.formats = make_formats_dict()
         self.current_person = None
         self.current_person_name = ""
         self.tabbook_x = 300
@@ -126,7 +128,7 @@ class Main(Frame):
         change_current_person = LabelH3(
             current_person_area, text="Change current person to:")
         self.person_entry = EntryAutoPersonHilited(
-            current_person_area, self.formats, 
+            current_person_area, 
             width=36,
             autofill=True)
         self.person_entry.bind("<FocusIn>", get_original, add="+")
@@ -154,7 +156,7 @@ class Main(Frame):
             self.root, 
             self.treebard, 
             self, 
-            self.formats, 
+            # self.formats, 
             self.person_autofill_values)
         self.current_person = self.findings_table.current_person
 
@@ -165,7 +167,7 @@ class Main(Frame):
             self.current_person, 
             self.findings_table, 
             self.right_panel,
-            self.formats,
+            # self.formats,
             person_autofill_values=self.person_autofill_values)
 
         # Create a tab traversal since the nukefam_table can't be made first
@@ -227,14 +229,14 @@ class Main(Frame):
             options_tabs.store['colors'],
             self.root,
             self.rc_menu,
-            self.formats,
+            # self.formats,
             tabbook=self.right_panel)
         colorizer.grid(column=0, row=0)
 
         self.fontpicker = FontPicker(options_tabs.store['fonts'], self.root, self)
         self.fontpicker.grid(column=0, row=0)
         self.date_options = DatePreferences(
-            options_tabs.store['dates'], self.formats)
+            options_tabs.store['dates'])
         self.date_options.grid(column=0, row=0)
 
         # children of self.master i.e. root
@@ -491,11 +493,6 @@ class Main(Frame):
                     self.current_person_name, self.current_person))
 
         self.findings_table.current_person = self.current_person
-        # self.findings_table.kin_widths = [0, 0, 0, 0, 0]
-        # self.person_entry.delete(0, 'end')
-        # current_file, current_dir = get_current_file()
-        # self.show_top_pic(current_file, current_dir, self.current_person)
-        # print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         redraw_person_tab(
             main_window=self, 
             current_person=self.current_person, 
@@ -503,13 +500,12 @@ class Main(Frame):
 
     def open_person_gallery(self):
         person_gallery_dlg = Toplevel(self.root)
-        gallery_canvas = Border(person_gallery_dlg, self.root, self.formats)
+        gallery_canvas = Border(person_gallery_dlg, self.root)
            
         person_gallery = Gallery(
             gallery_canvas, 
             self.main_tabs, 
             self.main_tabs.store['graphics'],
-            # self.formats,
             self.root, 
             self.treebard,
             self.SCREEN_SIZE,

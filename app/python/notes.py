@@ -337,7 +337,6 @@ class NotesDialog(Toplevel):
         self.order_dlg_canvas.title_2.config(text="")
         self.make_widgets_reorder_dlg()
         self.make_inputs_reorder_dlg()
-        # config_generic(self.order_dlg)
         configall(self.order_dlg)
         resize_scrolled_content(
             self.order_dlg, self.order_dlg_canvas, self.order_dlg_window) 
@@ -816,7 +815,6 @@ if __name__ == "__main__":
     b = Button(root, text=" ... ", command=open_note)
     b.grid()
     b.focus_set()
-    # config_generic(root)
     configall(root, formats)
     root.mainloop()
 

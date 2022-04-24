@@ -43,8 +43,6 @@ class InputMessage(Dialogue):
         self.treebard = treebard
         self.ok_button = ok_button
 
-        self.formats = make_formats_dict()
-
         self.canvas.title_1.config(text=title)
         self.canvas.title_2.config(text="")
 
@@ -56,7 +54,7 @@ class InputMessage(Dialogue):
         self.make_containers()
         self.make_widgets()
         self.make_inputs()
-
+        self.formats = make_formats_dict()
         configall(self, self.formats)
 
         self.ok_was_pressed = False
@@ -73,8 +71,8 @@ class InputMessage(Dialogue):
             self.resize_window()
 
         if self.grab is True: 
-            self.grab_set()
-            
+            self.grab_set()            
+
         self.deiconify()
         self.master.wait_window(self)
         self.run_post_op()
@@ -149,7 +147,7 @@ class InputMessage(Dialogue):
         self.header.grid(column=1, row=1, sticky="news", pady=(12,0))
         self.inputs.grid(column=1, row=2, sticky="news")
         self.buttons.grid(
-            column=1, row=3, sticky="e", padx=12, pady=(0,12), columnspan=2)
+            column=1, row=3, sticky="e", padx=12, pady=12, columnspan=2)
 
     def make_widgets(self):
         self.head = LabelHeader(
@@ -193,8 +191,6 @@ class InputMessage(Dialogue):
             self.chkframe = Frame(self.inputs)
             self.chkframe.grid()
             checks = []
-            print("line", looky(seeline()).lineno, "self.chktext:", self.chktext)
-# line 245 self.chktext: [{'fpid': 183, 'finding': 1157}, {'fpid': 184, 'finding': 1158}]
             a = 0
             for i in self.chktext:
                 chk = Checkbutton(
@@ -240,13 +236,13 @@ class InputMessage(Dialogue):
             return chosen
 
 def open_yes_no_message(master, message, title, ok_lab, cancel_lab):
-
     def ok():
         cancel()
 
     def cancel():
         msg.destroy()
 
+    formats = make_formats_dict()
     msg = Dialogue(master)
     msg.canvas.title_1.config(text=title)
     msg.canvas.title_2.config(text="")
@@ -263,7 +259,7 @@ def open_yes_no_message(master, message, title, ok_lab, cancel_lab):
     cancel_butt.grid(column=1, row=0, padx=6)
     ok_butt.focus_set()
 
-    configall(msg, facebook)
+    configall(msg, formats)
     msg.resize_window()
 
     return msg, lab, ok_butt, cancel_butt, buttonbox

@@ -5,9 +5,8 @@ import sqlite3
 from files import get_current_file
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
-    LabelH3, Button, Entry, LabelHeader, Border, Dialogue ,
-    LabelNegative,  make_formats_dict, EntryAuto, EntryAutoHilited,
-    Separator, open_message, Scrollbar)
+    LabelH3, Button, Entry, LabelHeader, Separator, open_message, Scrollbar,
+    LabelNegative, make_formats_dict, EntryAuto, EntryAutoHilited)
 from scrolling import resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from redraw import redraw_person_tab
@@ -51,9 +50,7 @@ from query_strings import (
     select_finding_id_age1_alt_parents, select_finding_id_age2_alt_parents,
     select_person_id_alt_parentage, select_kin_type_string, 
     select_finding_couple_details_include_nulls, 
-    select_finding_details_offspring_alt_parentage,
-   
-    )
+    select_finding_details_offspring_alt_parentage)
 
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -486,15 +483,18 @@ def get_findings():
 class EventsTable(Frame):
 
     def __init__(
-            self, master, root, treebard, main, formats, 
+            self, master, root, treebard, main, 
+            # self, master, root, treebard, main, formats, 
             person_autofill_values, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
         self.root = root
         self.treebard = treebard
         self.main_window = main
-        self.formats = formats
+        # self.formats = formats
         self.person_autofill_values = person_autofill_values
+
+        self.formats = make_formats_dict()
 
         self.main_canvas = main.master
 
@@ -525,7 +525,6 @@ class EventsTable(Frame):
             "birth", "death"] + self.after_death_events
         # without the parameter passed by lambda, running this
         #   function creates a null current person
-        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         self.root.bind(
             "<Control-S>", 
             lambda evt, 
@@ -605,7 +604,6 @@ class EventsTable(Frame):
                 delete_generic_finding(finding_id, conn, cur)
             elif couple_event_old == 1:
                 delete_couple_finding(finding_id)
-            print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
             redraw_person_tab(main_window=self.main_window)
             cur.close()
             conn.close()
@@ -756,7 +754,6 @@ class EventsTable(Frame):
                 self.final, date_prefs=date_prefs)
             widg.delete(0, 'end')
             widg.insert(0, formatted_date)
-            print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
             redraw_person_tab(main_window=self.main_window)
 
         def update_place():
@@ -767,7 +764,8 @@ class EventsTable(Frame):
                 self.initial,
                 self.final,
                 self.finding,
-                self.formats)
+                # self.formats
+)
 
         def update_age(offspring_event, row):
             if (event_string == "birth" and 
@@ -872,7 +870,7 @@ class EventsTable(Frame):
         self.new_event_frame = Frame(self)
         self.event_input = EntryAutoHilited(
             self.new_event_frame,
-            self.formats,
+            # self.formats,
             width=32, 
             autofill=True, 
             values=self.event_autofill_values)
@@ -1015,7 +1013,6 @@ class EventsTable(Frame):
                         offspring_in = widg.bind(
                             "<Enter>", lambda evt, 
                             kin="child", name=name: self.handle_enter(kin, name))
-                            # kin="child", name=name: self.handle_enter(evt, kin, name))
                         offspring_out = widg.bind("<Leave>", self.on_leave)
                         self.widget = widg
                         self.kintip_bindings["on_enter"].append([widg, offspring_in])
@@ -1031,7 +1028,6 @@ class EventsTable(Frame):
                             "<Enter>", lambda evt, 
                             kin=kin, 
                             name=name: self.handle_enter(kin, name))
-                            # name=name: self.handle_enter(evt, kin, name))
                         couple_out = widg.bind("<Leave>", self.on_leave)
                         self.widget = widg
                         self.kintip_bindings["on_enter"].append([widg, couple_in])
@@ -1319,7 +1315,6 @@ class EventsTable(Frame):
         if self.is_couple_event is False:
             cur.execute(
                 insert_finding_new, (self.event_type_id, self.current_person))
-                    
             conn.commit()            
         else:
             if self.new_alt_parent_event is True:
@@ -1332,7 +1327,6 @@ class EventsTable(Frame):
                 cur.execute(
                     insert_finding_new_couple_alt, 
                     (self.event_type_id, unisex_alt_parent, unisex_alt_parent))
-                        
                 conn.commit()            
                 self.new_alt_parent_event = False 
             else:
@@ -1343,8 +1337,11 @@ class EventsTable(Frame):
 
         cur.close()
         conn.close()
-        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
-        redraw_person_tab(main_window=self.main_window)
+        current_name = self.person_autofill_values[self.current_person][0]["name"]
+        redraw_person_tab(
+            main_window=self.main_window, 
+            current_person=self.current_person, 
+            current_name=current_name)
 
     def get_new_event_data(self):
 

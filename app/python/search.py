@@ -4,7 +4,7 @@ import tkinter as tk
 import sqlite3
 from files import app_path, get_current_file
 from widgets import (
-    Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3,
+    Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3, LabelSearch,
     LabelNegative, configall, Border, Scrollbar, make_formats_dict)
 from right_click_menu import RightClickMenu, make_rc_menus
 from scrolling import MousewheelScrolling, resize_scrolled_content
@@ -304,8 +304,7 @@ class PersonSearch(Toplevel):
                 else:
                     break
 
-                lab = LabelSearch(
-                    self.search_table, self.formats, cursor='hand2')
+                lab = LabelSearch(self.search_table, cursor='hand2')
                 lab.grid(column=col, row=row, sticky='ew', ipadx=12)
                 lab.config(text=text)
 
@@ -332,7 +331,8 @@ class PersonSearch(Toplevel):
         self.maxsize(
             int(self.winfo_screenwidth() * 0.90),
             int(self.winfo_screenheight() * 0.90))
-
+        
+        configall(self, self.formats)
         self.search_input.focus_set()
 
     def select(self, evt):
@@ -348,9 +348,7 @@ class PersonSearch(Toplevel):
                 pass            
             elif (child.grid_info()['row'] == self.hilit_row and 
                     child.grid_info()['column'] == 1):
-                print("line", looky(seeline()).lineno, "child['text']:", child['text'])
-                print("line", looky(seeline()).lineno, "child.cget('text'):", child.cget('text'))
-                current_name = child['text'] # should be child.cget('text') ?
+                current_name = child['text'] 
         # click name or id in table to change current person
         if evt.type == '4':
             if (evt.widget.grid_info()['column'] == 0 and 
@@ -369,18 +367,10 @@ class PersonSearch(Toplevel):
         current_name = self.person_autofill_values[current_person][0]["name"]
             
         self.close_search_dialog()
-        # if type(current_name) is tuple: # is this the old name type routine?
-            # use_name = list(current_name)
-            # current_name = "({}) {}".format(use_name[1], use_name[0])
         redraw_person_tab(
             main_window=self.master,
             current_person=current_person,
             current_name=current_name)
-        # self.show_top_pic(current_file, current_dir, current_person)
-
-        # self.master.current_person_label.config(
-            # text="Current Person (ID): {} ({})".format(
-                # current_name, current_person))
 
     def close_search_dialog(self):
         self.destroy()
@@ -486,9 +476,6 @@ class PersonSearch(Toplevel):
         self.other_names = unique_match[1]
 
         self.display_name = self.person_autofill_values[self.found_person][0]["name"]
-        # self.display_name = self.person_autofill_values[self.found_person]["birth name"]
-        # if self.display_name is None or len (self.display_name) == 0:
-            # self.display_name = self.person_autofill_values[self.found_person]["alt name"]            
 
         self.row_list.append(self.display_name)
         ext = [[], [], '', '', '', '', '', [], [], []]
@@ -603,11 +590,6 @@ class PersonSearch(Toplevel):
         name = None
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        # cur.execute(select_persons_persons_ma_id1, (self.offspring_event,))
-        # mom = cur.fetchone()
-        # if mom:
-            # self.ma_id = mom[0]
-        # else:
         cur.execute(select_finding_mother, (self.offspring_event,))
         mom = cur.fetchone()
         if mom:
@@ -616,10 +598,7 @@ class PersonSearch(Toplevel):
             self.ma_id = None
 
         if self.ma_id is not None:
-            name = self.person_autofill_values[self.ma_id][0]["name"]
-            # name = self.person_autofill_values[self.ma_id]["birth name"]
-            # if name is None or len(name) == 0:
-                # name = self.person_autofill_values[self.ma_id]["alt name"]        
+            name = self.person_autofill_values[self.ma_id][0]["name"]   
         
         self.row_list[4] = name
 
@@ -637,17 +616,9 @@ class PersonSearch(Toplevel):
         if pop:
             self.pa_id = pop[0]
         else:
-            # cur.execute(select_persons_persons_pa_id2, (self.offspring_event,))
-            # pop = cur.fetchone()
-            # if pop:
-                # self.pa_id = pop[0]
-            # else:
             self.pa_id = None
         if self.pa_id is not None:
             name = self.person_autofill_values[self.pa_id][0]["name"]
-            # name = self.person_autofill_values[self.pa_id]["birth name"]
-            # if name is None or len(name) == 0:
-                # name = self.person_autofill_values[self.pa_id]["alt name"]
         
         self.row_list[5] = name
 
@@ -763,18 +734,7 @@ class PersonSearch(Toplevel):
         self.other_names = []
         self.off()
 
-class LabelSearch(Label): 
-    """ Label for search results column cells. Since this widget responds to 
-        several different events, and then still has to respond to the 
-        colorizer, somewhere along the way it made the code simpler to treat
-        this class separately from other labels. 
-    """
 
-    def __init__(self, master, formats, *args, **kwargs):
-        Label.__init__(self, master, *args, **kwargs)
-
-        self.formats = formats
-        self.config(anchor='w')
 
 
 
