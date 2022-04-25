@@ -166,14 +166,9 @@ if __name__ == '__main__':
     start()
 
 
-# DO LIST 
+# DO LIST
 
-# BRANCH: redraw_fonts
-# curr per input, tabbook tabs, OK button, FIND/ADD button, ADD CHILD button don't change font size
-# since configall works for frames, not just toplevels, can everything be moved back out of widgets.py?
-# .sql
-
-# BRANCH: families_table_validation2
+# BRANCH: families_table_finish
 # see #6042 blank partner should say (Children's Parent) instead of (Children's ).
 # mARY Hilton Summer is James' adoptive father? Kattie is Forrest's adoptive father?
 # when double clicking an alt parent in the families table to make the person current, it works (except after that person is current the program will no longer load) but makes this error:

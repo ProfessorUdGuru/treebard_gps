@@ -309,7 +309,7 @@ class Main(FrameStay):
                 "Select the font family for output text."),
             (self.fontpicker.preview_button,
                 "Font Preview Button",
-                "Apply selections to text in this tab only."),
+                "Apply selections to sample text only."),
             (self.fontpicker.apply_button,
                 "Font Apply Button",
                 "Apply selections to all output text."),

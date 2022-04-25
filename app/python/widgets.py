@@ -232,15 +232,10 @@ def configall(master, formats):
 
     def config_labeltab(widg):
         if widg.chosen is False:
-            widg.config(
-                bg=LabelTab.highlight_bg,
-                fg=LabelTab.fg,
-                font=LabelTab.tab_font)
+            widg.config(bg=formats["highlight_bg"])
         else:
-            widg.config(
-                bg=LabelTab.bg,
-                fg=LabelTab.fg,
-                font=LabelTab.tab_font)
+            widg.config(bg=formats["bg"])
+        widg.config(fg=formats["fg"], font=formats["tab_font"])
 
     def config_labelmovable(widg):
         widg.config( 
@@ -278,10 +273,11 @@ def configall(master, formats):
     ancestor_list = []
     all_widgets_in_root = get_all_descends(master, ancestor_list)
     for widg in (all_widgets_in_root):
-        if widg.winfo_class() != "Toplevel": # still using tk.Toplevel for tips 
-            subclass = widg.winfo_subclass()
-        else:
-            subclass = "Toplevel"
+        # if widg.winfo_class() != "Toplevel": # still using tk.Toplevel for tips 
+            # subclass = widg.winfo_subclass()
+        # else:
+            # subclass = "Toplevel"
+        subclass = widg.winfo_subclass()
         if subclass in bg_fg:
             config_bg_fg(widg)  
         if subclass in activeBgHilite:
@@ -4203,8 +4199,10 @@ class FontPicker(Frame):
         instrux = Label(self, text=message[0], wraplength=640, justify="left")
 
         buttons = Frame(self)
-        self.preview_button = Button(buttons, text="PREVIEW", command=self.preview_font, width=7)
-        self.apply_button = Button(buttons, text="APPLY", command=self.apply_font, width=7   )
+        self.preview_button = Button(
+            buttons, text="PREVIEW", command=self.preview_font, width=8)
+        self.apply_button = Button(
+            buttons, text="APPLY", command=self.apply_font, width=8)
 
         # children of self
         sample.grid(column=0, row=0)
@@ -4402,7 +4400,7 @@ def initialize_family_data_dict():
 """
 ALL_WIDGET_CLASSES = (
     Label, Button, LabelHilited3, LabelMovable, LabelStay,
-    ButtonBigPic, Entry, Frame, Border, 
+    ButtonBigPic, Entry, Frame, Border, EntryAutoPersonHilited,
     Separator, ComboArrow, Scrollbar, FontPicker,
     LabelStatusbar, TabBook, DropdownMenu, ToplevelHilited)
 
@@ -4430,7 +4428,7 @@ fontH2 = ("LabelH2", )
 fontH3 = ("LabelH3", "LabelHeader", )
 fontBoilerplate = ("ButtonQuiet", )
 fontIn = (
-    "LabelEntry", "ButtonPlain", "Entry", "Text", "EntryAutoHilited", )
+    "LabelEntry", "ButtonPlain", "Entry", "Text", "EntryAutoHilited", "EntryAutoPersonHilited")
 fontOut = (
     "Label", "MessageCopiable", "Button", "Scale", "RadiobuttonBig", 
     "LabelNegative", "ComboArrow")
@@ -4440,10 +4438,10 @@ highlightcolorHead = ("Scale", )
 insertBgFg = (
     "Entry", "Text", "EntryAutoHilited", 
     "EntryAutoPersonHilited")
-selectBgHead = ("Entry", "Text", "EntryAutoHilited", )
+selectBgHead = ("Entry", "Text", "EntryAutoHilited", "EntryAutoPersonHilited")
 selectColorBg = ("Checkbutton", )
 selectColorHilite = ("Radiobutton", "RadiobuttonBig")
-selectFg = ("Entry", "Text", "EntryAutoHilited", )
+selectFg = ("Entry", "Text", "EntryAutoHilited", "EntryAutoPersonHilited")
 troughColorHilite = ("Scale", )
 bgOnly = (
     "Frame", "Canvas", "FrameHilited6", "FontPicker",
