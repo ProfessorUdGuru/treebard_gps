@@ -169,13 +169,7 @@ if __name__ == '__main__':
 # DO LIST 
 
 # BRANCH: redraw_fonts
-
-# input font in families table is working so that's the model. The key is `if widg.winfo_subclass() == 'EntryAuto':` in the events table function of redraw module, because this should say EntryAutoPerson not EntryAuto but when you change it you get the right font and the wrong content. so that is the place to start.
-# scrollbar not resizing till done manually, even tho resize already being run inside redraw
-# top lable showing None, None
-# tab fonts are not changing, event rows (text cols) not resizing font, and title bar is not resizing
-# fonts: user shd not have to switch to person tab manually and manually run redraw after changing fonts, but if u don't change it, at least make the message more clear ie tell user After turning off this dialog then do this other stuff but best get rid of nuisance msg altogether
-# w/ big fonts it seems label & entry pady is different in families table
+# curr per input, tabbook tabs, OK button, FIND/ADD button, ADD CHILD button don't change font size
 # since configall works for frames, not just toplevels, can everything be moved back out of widgets.py?
 # .sql
 

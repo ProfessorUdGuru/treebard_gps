@@ -10,7 +10,6 @@ from right_click_menu import RightClickMenu, make_rc_menus
 from scrolling import MousewheelScrolling, resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from persons import open_new_person_dialog, update_person_autofill_values
-from redraw import redraw_person_tab
 from dates import OK_PREFIXES, format_stored_date
 from messages_context_help import search_person_help_msg
 from query_strings import (
@@ -671,7 +670,7 @@ class PersonSearch(Toplevel):
             return
         x, y, cx, cy = self.widget.bbox('insert')        
 
-        self.nametip = d_tip = tk.Toplevel(self.widget)
+        self.nametip = d_tip = Toplevel(self.widget)
 
         label = LabelStay(
             d_tip, 

@@ -6,7 +6,8 @@ from widgets import (
     Frame, LabelH3, Label, Button, Canvas, LabelEntry, Radiobutton, LabelFrame,
     FrameHilited, LabelHeader, Checkbutton, LabelStay, Dialogue, Combobox,
     Scrollbar, EntryAutoPerson, EntryAutoPersonHilited, open_message, 
-    make_formats_dict, Toplevel, NEUTRAL_COLOR, configall)
+    make_formats_dict, Toplevel, NEUTRAL_COLOR, configall,
+    initialize_family_data_dict, redraw_person_tab)
 from files import get_current_file
 from persons import (
     open_new_person_dialog, make_all_names_dict_for_person_select, check_name,
@@ -14,9 +15,7 @@ from persons import (
 from messages import families_msg
 from dates import format_stored_date, get_date_formats, OK_MONTHS, validate_date
 from events_table import (
-    get_current_person, delete_generic_finding, delete_couple_finding,
-    )
-from redraw import initialize_family_data_dict, redraw_person_tab
+    get_current_person, delete_generic_finding, delete_couple_finding)
 from query_strings import (
     select_finding_id_birth, update_finding_ages_kintypes_null, select_finding_persons,
     select_person_gender_by_id, select_finding_date, select_finding_id_birth,
@@ -172,9 +171,9 @@ class NuclearFamiliesTable(Frame):
         self.parentslab.grid(column=0, row=0, sticky="w")
 
         # children of self.parentslab
-        palab.grid(column=0, row=0, sticky="ew", padx=(12,12), pady=(6,12))
+        palab.grid(column=0, row=0, sticky="ew", pady=(6,12), padx=(12,12))
         self.pa_input.grid(column=1, row=0, pady=(6,12), padx=(0,0))
-        malab.grid(column=2, row=0, sticky="ew", padx=(12,12), pady=(6,12))
+        malab.grid(column=2, row=0, sticky="ew", pady=(6,12), padx=(12,12))
         self.ma_input.grid(column=3, row=0, pady=(6,12), padx=(0,0))
 
         EntryAutoPerson.all_person_autofills.extend([self.ma_input, self.pa_input])
@@ -288,12 +287,12 @@ class NuclearFamiliesTable(Frame):
                 h += 1
 
             p = 0
-            for i in (family_widgets, event_widgets):
+            for lst in (family_widgets, event_widgets):
                 if p == 0:
                     other = event_widgets
                 elif p == 1:
                     other = family_widgets
-                for widg in i:
+                for widg in lst:
                     widg.bind(
                         "<Enter>", 
                         lambda evt, other=other: self.highlight_both(evt, other), 
@@ -307,10 +306,7 @@ class NuclearFamiliesTable(Frame):
 
         for v in self.family_data[1].values():
             for child in v["children"]:
-                # print("line", looky(seeline()).lineno, "child:", child)
-                # offspring_event_widg = None
                 for row in self.findings_table.cell_pool:
-                    # print("line", looky(seeline()).lineno, "row[0]:", row[0])
                     if row[0] == child["birth_id"]:
                         offspring_event_widg = (row[1][0],)
                         break

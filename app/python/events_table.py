@@ -4,12 +4,11 @@ import tkinter as tk
 import sqlite3
 from files import get_current_file
 from widgets import (
-    Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton,
+    Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton, configall,
     LabelH3, Button, Entry, LabelHeader, Separator, open_message, Scrollbar,
     LabelStay, make_formats_dict, EntryAuto, EntryAutoHilited, NEUTRAL_COLOR)
 from scrolling import resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
-from redraw import redraw_person_tab
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
 from nested_place_strings import make_all_nestings
 from error_messages import  open_yes_no_message
@@ -478,23 +477,21 @@ def get_findings():
 
     cur.close()
     conn.close()  
-    return findings_data, non_empty_roles, non_empty_notes  
+    return findings_data, non_empty_roles, non_empty_notes 
+
+formats = make_formats_dict() 
 
 class EventsTable(Frame):
 
     def __init__(
             self, master, root, treebard, main, 
-            # self, master, root, treebard, main, formats, 
             person_autofill_values, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
         self.root = root
         self.treebard = treebard
         self.main_window = main
-        # self.formats = formats
         self.person_autofill_values = person_autofill_values
-
-        self.formats = make_formats_dict()
 
         self.main_canvas = main.master
 
@@ -504,7 +501,7 @@ class EventsTable(Frame):
         self.headers = []
         self.widths = [0, 0, 0, 0, 0]
 
-        self.initial = None # added 20220423 to prevent error @ 556
+        self.initial = None
 
         self.widget = None
         self.kintip = None
@@ -764,9 +761,7 @@ class EventsTable(Frame):
                 self.inwidg,
                 self.initial,
                 self.final,
-                self.finding,
-                # self.formats
-)
+                self.finding)
 
         def update_age(offspring_event, row):
             if (event_string == "birth" and 
@@ -865,13 +860,12 @@ class EventsTable(Frame):
                         self,
                         width=8,
                         anchor='w',
-                        font=self.formats['heading3'])
+                        font=formats['heading3'])
                 row.append(cell)
             self.table_cells.append(row)
         self.new_event_frame = Frame(self)
         self.event_input = EntryAutoHilited(
             self.new_event_frame,
-            # self.formats,
             width=32, 
             autofill=True, 
             values=self.event_autofill_values)
@@ -1124,7 +1118,7 @@ class EventsTable(Frame):
                 widg.config(width=self.widths[z] + 2)
             z += 1
 
-        self.fix_tab_traversal() # DO NOT DELETE THIS IS NEEDED
+        self.fix_tab_traversal() 
         for row_num in range(self.grid_size()[1]):
             self.grid_rowconfigure(row_num, weight=0)
         self.new_row = row_num + 1
@@ -1143,7 +1137,7 @@ class EventsTable(Frame):
             return
         x, y, cx, cy = self.widget.bbox('insert')        
 
-        self.kintip = d_tip = tk.Toplevel(self.widget)
+        self.kintip = d_tip = Toplevel(self.widget)
         label = LabelStay(
             d_tip, 
             text=self.kintip_text, 

@@ -585,7 +585,7 @@ class RolesDialog(Toplevel):
             return
         x, y, cx, cy = self.widget.bbox('insert')        
 
-        self.idtip = d_tip = tk.Toplevel(self.widget)
+        self.idtip = d_tip = Toplevel(self.widget)
         label = LabelNegative(
             d_tip, 
             text=self.idtip_text, 

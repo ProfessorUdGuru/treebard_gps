@@ -13,7 +13,7 @@ from scrolling import resize_scrolled_content
 from utes import create_tooltip, center_dialog
 from query_strings import ( 
     select_color_scheme_current_id, select_color_scheme_by_id,
-    select_format_font_scheme, select_format_font_size,
+    select_format_font_scheme, select_format_font_size, delete_links_links_name,
     select_current_person, select_name_with_id, select_all_names_ids,
     select_all_person_ids, select_image_id, select_max_person_id,    
     insert_images_elements, select_name_type_id, insert_name, 
@@ -22,12 +22,12 @@ from query_strings import (
     insert_image_new, select_name_with_id_any, select_birth_names_ids,
     insert_finding_birth_new_person, update_format_font,
     select_current_person_id, delete_name_person, delete_findings_roles_person,
-    select_name_id_by_person_id, delete_links_links_person, delete_links_links_name,
+    select_name_id_by_person_id, delete_links_links_person,
     update_finding_person_1_null, update_finding_person_2_null,
     delete_finding_person, delete_claims_roles_person, delete_person,
     update_claims_persons_1_null, update_claims_persons_2_null,
     delete_images_elements_person, delete_claim_person, select_name_sorter,
-    select_name_type_sorter_with_id, select_all_names, 
+    select_name_type_sorter_with_id, select_all_names, update_current_person,
     select_name_type_hierarchy, select_all_names_all_details_order_hierarchy,
     select_closing_state_recent_files, update_closing_state_recent_files) 
 from messages_context_help import person_add_help_msg
@@ -177,6 +177,10 @@ def configall(master, formats):
         widg.config(selectcolor=formats["highlight_bg"])
     def config_troughColorHilite(widg):
         widg.config(troughcolor=formats["highlight_bg"])
+    def config_highlightcolorHead(widg):
+        widg.config(highlightcolor=formats["head_bg"])
+    def config_highlightbackground(widg):
+        widg.config(highlightbackground=formats["bg"])
 
     def config_buttonflathilited(widg):
         widg.config(
@@ -187,7 +191,7 @@ def configall(master, formats):
     def config_bg_fgHilite(widg):
         widg.config(bg=formats["bg"], fg=formats["highlight_bg"])
 
-    def config_entryautoperson(widg):
+    def config_entryauto(widg):
         widg.config(
             bg=formats["bg"], 
             fg=formats["fg"],
@@ -262,6 +266,9 @@ def configall(master, formats):
             fg=LabelHilited3.fg,
             font=LabelHilited3.input_font)
 
+    def config_border(widg):
+        widg.config(bg=Border.bg)
+
     root = None
     if master.winfo_name() in (".", "tk"):
         root = master
@@ -271,10 +278,10 @@ def configall(master, formats):
     ancestor_list = []
     all_widgets_in_root = get_all_descends(master, ancestor_list)
     for widg in (all_widgets_in_root):
-        if widg.winfo_class() == tk.Toplevel:
-            continue
-        else:
+        if widg.winfo_class() != "Toplevel": # still using tk.Toplevel for tips 
             subclass = widg.winfo_subclass()
+        else:
+            subclass = "Toplevel"
         if subclass in bg_fg:
             config_bg_fg(widg)  
         if subclass in activeBgHilite:
@@ -313,10 +320,10 @@ def configall(master, formats):
             config_insertBgFg(widg)
         if subclass in bgOnly:
             config_bgOnly(widg)
-
-        if subclass == "TabBook":
-            TabBook.fg = formats["fg"]
-            TabBook.bg = formats["bg"]
+        if subclass in highlightcolorHead:
+            config_highlightcolorHead(widg)
+        if subclass in highlightbackground:
+            config_highlightbackground(widg)
 
         elif subclass == "ButtonBigPic":
             config_bg_fgHilite(widg)
@@ -333,7 +340,7 @@ def configall(master, formats):
                 LabelStatusbar.status = formats["status"]
             config_bg_fg_fontStatus(widg)
 
-        elif subclass == "EntryAutoPerson":
+        elif subclass in ("EntryAutoPerson", "EntryAuto"):
             EntryAutoPerson.highlight_bg = formats["highlight_bg"]
             EntryAutoPerson.bg = formats["bg"]
             EntryAutoPerson.fg=formats["fg"]
@@ -341,7 +348,7 @@ def configall(master, formats):
             EntryAutoPerson.selectbackground=formats["head_bg"]
             EntryAutoPerson.selectforeground=formats["fg"]
             EntryAutoPerson.insertbackground=formats["fg"]
-            config_entryautoperson(widg)
+            config_entryauto(widg)
 
         elif subclass == "ComboArrow":
             ComboArrow.highlight_bg = formats["highlight_bg"]
@@ -409,6 +416,8 @@ def configall(master, formats):
         elif subclass == "Border":
             Border.head_bg = formats["head_bg"]
             Border.fg = formats["fg"]
+            Border.bg = formats["bg"]
+            config_border(widg)
 
     if root:
         root.config(bg=formats["bg"])
@@ -1317,16 +1326,15 @@ class RadiobuttonBig(Radiobutton):
 
 class Toplevelx(tk.Toplevel):
     '''
-        All my toplevels have to declare a parent whether they need one or not.
+        All my toplevels have to declare a master whether they need one or not.
         This keeps the code consistent and symmetrical across all widgets,
-        even though Tkinter doesn't require a parent for its Toplevel.
+        even though Tkinter doesn't require a master for its Toplevel.
     '''
 
     def __init__(self, master, *args, **kwargs):
         tk.Toplevel.__init__(self, master, *args, **kwargs)
 
     def winfo_subclass(self):
-        '''  '''
         subclass = type(self).__name__
         return subclass
 
@@ -1363,7 +1371,9 @@ class Scale(Scalex):
             font=formats['output_font'],
             troughcolor=formats['highlight_bg'],
             activebackground=formats['head_bg'],
-            highlightthickness=0) 
+            highlightthickness=1,
+            highlightcolor=formats["head_bg"],
+            highlightbackground=formats["bg"]) 
 
 class Canvasx(tk.Canvas):
     def __init__(self, master, *args, **kwargs):
@@ -1897,7 +1907,7 @@ class Dialogue(Toplevel):
         configall(self, self.formats)
         self.deiconify()
 
-class EntryAuto(Entry):
+class EntryAuto(Entryx):
     '''
         To use this class, after instantiating it, you have to call 
         EntryAuto.create_lists(all_items). Other than getting all_items
@@ -1909,6 +1919,13 @@ class EntryAuto(Entry):
     '''
 
     all_person_autofills = []
+    formats = formats
+    bg = formats["bg"]
+    fg = formats["fg"]
+    insertbackground = formats["fg"]
+    selectbackground = formats["head_bg"]
+    selectforeground = formats["fg"]
+    font = formats["input_font"]
 
     def create_lists(all_items):
         recent_items = []
@@ -1921,7 +1938,7 @@ class EntryAuto(Entry):
         return final_items
 
     def __init__(self, master, autofill=False, values=None, *args, **kwargs):
-        Entry.__init__(self, master, *args, **kwargs)
+        Entryx.__init__(self, master, *args, **kwargs)
         self.master = master
         self.autofill = autofill
         self.values = values
@@ -1931,7 +1948,9 @@ class EntryAuto(Entry):
             bg=formats['bg'], 
             fg=formats['fg'], 
             font=formats['input_font'], 
-            insertbackground=formats['fg'])
+            insertbackground=formats['fg'],
+            selectbackground=formats["head_bg"],
+            selectforeground=formats["fg"])
 
         if autofill is True:
             self.bind("<KeyPress>", self.detect_pressed)
@@ -1959,8 +1978,6 @@ class EntryAuto(Entry):
         '''
         def do_it():
             hits = self.match_string()
-            print("line", looky(seeline()).lineno, "hits[0]:", hits[0])
-            print("line", looky(seeline()).lineno, "key:", key)
             self.show_hits(hits, self.pos)
 
         if self.autofill is False:
@@ -2813,11 +2830,6 @@ class LabelTab(Labelx):
                 font=formats["tab_font"]) 
 
 class TabBook(Framex):
-    formats = formats
-    fg = formats["fg"]
-    bg = formats["bg"]
-    highlight_bg = formats["highlight_bg"]
-    tab_font = formats["tab_font"]
     def __init__(
             self, master, root=None, side='nw', bd=0, tabwidth=13, 
             selected='', tabs=[],  minx=0.90, miny=0.85, case='title', 
@@ -2860,7 +2872,6 @@ class TabBook(Framex):
         self.open_tab_alt(root)
 
     def make_widgets(self):
-
         self.tab_base = Frame(self)
         self.border_base = FrameHilited2(self)
         self.notebook = Frame(self.border_base)
@@ -2913,9 +2924,9 @@ class TabBook(Framex):
             self.store[tab] = page
             c += 1
 
+        # The next 4 lines are copied in font_picker so make them a method.
         selected_page = self.tabdict[self.selected][2] # page
         selected_page.grid()
-
         self.active = self.tabdict[self.selected][1] # tab
         self.make_active()
 
@@ -3058,47 +3069,6 @@ class LabelStatusbar(Labelx):
             bg=LabelStatusbar.bg, 
             fg=LabelStatusbar.fg,
             font=LabelStatusbar.status)
-
-# def run_statusbar_tooltips(visited, status_label, tooltip_label):
-    # '''
-        # Uses lambda to add args to event
-        # since tkinter expects only one arg in a callback.
-    # '''
-
-    # def handle_statusbar_tooltips(event):
-        # for tup in visited:
-            # if tup[0] is event.widget:
-                # if event.type == '9': # FocusIn
-                    # status_label.config(text=tup[1])
-                # elif event.type == '10': # FocusOut
-                    # status_label.config(text='')
-                # elif event.type == '7': # Enter
-                    # tooltip_label.grid(
-                        # column=1, row=0, 
-                        # sticky='e', padx=(6,24))
-                    # tooltip_label.config(
-                        # text=tup[2],
-                        # bg='black',
-                        # fg='white',
-                        # font=LabelStatusbar.formats["status"])
-                # elif event.type == '8': # Leave
-                    # tooltip_label.grid_remove()
-                    # tooltip_label.config(
-                        # bg=formats['bg'], text='', fg=formats['bg'])
-
-    # statusbar_events = ['<FocusIn>', '<FocusOut>', '<Enter>', '<Leave>']
-
-    # for tup in visited:
-        # widg = tup[0]
-        # status = tup[1]
-        # tooltip = tup[2]
-        # for event_pattern in statusbar_events:
-            # # error if tup[0] has been destroyed 
-            # #   so don't use these with destroyable widgets
-            # # different tooltips are available in utes.py
-            # widg.bind(event_pattern, handle_statusbar_tooltips, add='+')
-
-        # status_label.config(font=formats['status'])
 
 class StatusbarTooltips(Frame):
     '''
@@ -4104,7 +4074,6 @@ def open_message(master, message, title, buttlab, inwidg=None):
     def close():
         """ Override this if more needs to be done on close. """        
         msg.destroy()
-    # formats = make_formats_dict()
     msg = Dialogue(master)
     msg.canvas.title_1.config(text=title)
     msg.canvas.title_2.config(text="")
@@ -4114,7 +4083,6 @@ def open_message(master, message, title, buttlab, inwidg=None):
     button = Button(msg.window, text=buttlab, command=close, width=6)
     button.grid(column=0, row=1, padx=6, pady=(0,12))
     button.focus_set()
-    # configall(msg, formats)
     msg.resize_window()
 
     return msg, lab, button
@@ -4167,7 +4135,260 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
     gotten = show()
     return gotten
 
+FONTS_THAT_MATCH_HEIGHT_OF_DEJAVU_SANS_MONO = ('alef', 'consolas', 'corbel light', 'courier', 'courier new', 'david clm', 'david libre', 'dejavu sans light', 'frank ruehl clm', 'frank ruhl hofshi', 'gabriola', 'gentium basic', 'gentium book basic', 'georgia', 'ink free', 'microsoft tai le', 'mingliu-extb', 'miriam clm', 'miriam mono clm', 'ms gothic', 'ms pgothic', 'ms serif', 'ms ui gothic', 'sansita', 'sansita black', 'sansita black italic', 'sansita extrabold', 'sansita light', 'sansita light italic', 'sansita medium', 'sansita medium italic', 'segoe script', 'simsun-extb', 'terminal', 'times new roman')
 
+DEFAULT_OUTPUT_FONT = "courier"
+
+class FontPicker(Frame):
+    def __init__(self, master, root, main, *args, **kwargs):
+        Frame.__init__(self, master, *args, **kwargs)
+        self.master = master
+        self.root = root
+        self.main = main
+        self.all_fonts = FONTS_THAT_MATCH_HEIGHT_OF_DEJAVU_SANS_MONO
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_format_font_scheme)
+        font_scheme = list(cur.fetchone())
+        cur.close()
+        conn.close()
+        copy = []
+        z = 0
+        for i in font_scheme[0:2]:
+            if i is None:
+                copy.append(font_scheme[z + 2])
+            else:
+                copy.append(font_scheme[z])
+            z += 1
+        self.font_scheme = copy
+        self.make_widgets()
+
+    def make_widgets(self): 
+
+        sample = Frame(self)
+
+        self.output_sample = Label(
+            sample,
+            text="Sample Output Text ABCDEFGHxyz 0123456789 iIl1 o0O")
+
+        self.label_sample = Label(sample, text="Sample Label Text")
+        self.entry_sample = EntryAutoPerson(sample)
+        self.entry_sample.insert(0, "Sample Input Text")
+
+        self.fontSizeVar = tk.IntVar()
+        self.font_size = self.font_scheme[1]
+
+        self.font_sizer = Scale(
+            self,
+            from_=8.0,
+            to=26.0,
+            tickinterval=6.0,
+            label="Text Size",
+            orient="horizontal",
+            length=200,
+            variable=self.fontSizeVar,
+            command=self.show_font_size)
+        self.font_sizer.set(self.font_size)
+ 
+        lab = Label(self, text="Select Output Font")
+        self.cbo = Combobox(
+            self, self.root, values=self.all_fonts, 
+            height=500)
+
+        message = ("Input font is dejavu sans mono. Its size can be changed. "
+            "Output or label font can be changed with the combobox selection. "
+            "The sample widgets at the top show a preview, or press APPLY to "
+            "change font family and/or size for the whole application.",)
+        instrux = Label(self, text=message[0], wraplength=640, justify="left")
+
+        buttons = Frame(self)
+        self.preview_button = Button(buttons, text="PREVIEW", command=self.preview_font, width=7)
+        self.apply_button = Button(buttons, text="APPLY", command=self.apply_font, width=7   )
+
+        # children of self
+        sample.grid(column=0, row=0)
+        self.font_sizer.grid(column=0, row=1, pady=24)
+        lab.grid(column=0, row=2, pady=(24,6))
+        self.cbo.grid(column=0, row=3, pady=(6, 20))
+        instrux.grid(column=0, row=4, padx=12)
+        buttons.grid(column=0, row=5, pady=12, sticky="e")
+
+        # children of sample
+        self.output_sample.grid(column=0, row=0, padx=24, pady=20)
+        self.label_sample.grid(column=0, row=1, sticky="e")
+        self.entry_sample.grid(column=1, row=1, sticky="w")
+
+        # children of buttons
+        self.preview_button.grid(column=0, row=0, pady=12)
+        self.apply_button.grid(column=1, row=0, pady=12) 
+
+    def apply_font(self):
+        self.font_scheme[1] = self.fontSizeVar.get()
+        if len(self.cbo.get()) != 0:
+            self.font_scheme[0] = self.cbo.get()
+        else:
+            self.font_scheme[0] = DEFAULT_OUTPUT_FONT
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(update_format_font, tuple(self.font_scheme))
+        conn.commit()
+        cur.close()
+        conn.close()
+        self.formats = make_formats_dict()
+
+        # These 5 lines are copied from TabBook class so could be 
+        #   made a method there instead. The person tab scrollbar
+        #   won't resize correctly unless it's made the active tab first.
+        main_tabbook = self.main.main_tabs
+        person_tab = main_tabbook.tabdict["person"][2] # page
+        person_tab.grid()
+        main_tabbook.active = main_tabbook.tabdict["person"][1] # tab
+        main_tabbook.make_active()
+
+        redraw_person_tab(
+            main_window=self.main, 
+            current_person=self.main.current_person, 
+            current_name=self.main.current_person_name)
+
+    def preview_font(self):
+        selected = self.cbo.get()
+        if selected not in self.all_fonts:
+            selected = DEFAULT_OUTPUT_FONT
+        for widg in (self.output_sample, self.label_sample):
+            widg.config(font=(selected, self.font_size))
+        self.entry_sample.config(font=("dejavu sans mono", self.font_size))
+
+    def show_font_size(self, evt):
+        self.font_size = self.fontSizeVar.get()
+
+# from redraw.py
+
+def redraw_person_tab(
+        evt=None, main_window=None, current_person=None, current_name=None):        
+    formats = make_formats_dict()
+    current_file, current_dir = get_current_file()
+    findings_table = main_window.findings_table
+    main_window.update_idletasks()
+    if current_person:
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(update_current_person, (current_person,))
+        conn.commit()
+        cur.close()
+        conn.close()
+    unbind_widgets(findings_table)
+    redraw_current_person_area(
+        current_person, main_window, current_name, current_file, current_dir)
+    redraw_events_table(findings_table)
+    if current_person:
+        redraw_families_table(evt, current_person, main_window)
+
+    configall(main_window.root, formats)
+    resize_scrollbar(main_window.root, main_window.master)
+
+def unbind_widgets(findings_table):
+    for k,v in findings_table.kintip_bindings.items():
+        if k == "on_enter":
+            for lst in v:
+                lst[0].unbind("<Enter>", lst[1])                    
+        elif k == "on_leave":
+            for lst in v:
+                lst[0].unbind("<Leave>", lst[1])
+        findings_table.kintip_bindings = {"on_enter": [], "on_leave": []}
+
+    for k,v in findings_table.main_window.nukefam_table.idtip_bindings.items():
+        if k == "on_enter":
+            for lst in v:
+                lst[0].unbind("<Enter>", lst[1])                    
+        elif k == "on_leave":
+            for lst in v:
+                lst[0].unbind("<Leave>", lst[1])
+        findings_table.main_window.nukefam_table.idtip_bindings = {
+            "on_enter": [], "on_leave": []}
+
+def redraw_current_person_area(
+        current_person, main_window, current_name, current_file, current_dir):
+    main_window.person_entry.delete(0, 'end')
+    main_window.show_top_pic(current_file, current_dir, current_person)
+    main_window.person_entry.current_id = None
+    main_window.current_person_name = current_name
+    main_window.current_person_label.config(
+        text="Current Person (ID): {} ({})".format(current_name, current_person))
+
+def redraw_families_table(evt, current_person, main_window):
+    main_window.findings_table.kin_widths = [0, 0, 0, 0, 0, 0]
+    for ent in main_window.nukefam_table.nukefam_inputs:
+        ent.delete(0, "end")
+    main_window.nukefam_table.ma_input.delete(0, "end")
+    main_window.nukefam_table.pa_input.delete(0, "end")
+    main_window.nukefam_table.new_kid_input.delete(0, "end")
+    main_window.nukefam_table.new_kid_frame.grid_forget()
+    main_window.nukefam_table.current_person_alt_parents = []
+    main_window.nukefam_table.compound_parent_type = "Children's"        
+    for widg in main_window.nukefam_table.nukefam_containers: 
+        widg.destroy() 
+    main_window.nukefam_table.parent_types = []
+    main_window.nukefam_table.nukefam_containers = []
+
+    main_window.nukefam_table.family_data = initialize_family_data_dict()
+
+    if evt: # user pressed CTRL+S for example
+        main_window.nukefam_table.make_nukefam_inputs(
+            current_person=main_window.findings_table.current_person)
+    else: # user pressed OK to change current person for example  
+        main_window.nukefam_table.make_nukefam_inputs()
+
+def redraw_events_table(findings_table):
+    for lst in findings_table.cell_pool:
+        for widg in lst[1]:
+            if widg.winfo_subclass() == 'EntryAuto':
+                widg.delete(0, 'end')
+                # pass
+            elif widg.winfo_subclass() == 'LabelButtonText':
+                widg.config(text='')
+            widg.grid_forget()
+    findings_table.event_input.grid_forget()
+    findings_table.add_event_button.grid_forget()
+
+    findings_table.new_row = 0 
+    findings_table.widths = [0, 0, 0, 0, 0]
+    findings_table.kin_widths = [0, 0, 0, 0, 0, 0]
+    findings_table.set_cell_content()
+    findings_table.show_table_cells()
+
+def resize_scrollbar(root, canvas):
+    root.update_idletasks()
+    canvas.config(scrollregion=canvas.bbox('all'))
+
+def fix_tab_traversal(families_table, findings_table):
+    """ Create a tab traversal since the nukefam_table 
+        can't be made first, but should be traversed first.
+    """
+    for table in (families_table, findings_table):
+        table.lift()
+
+def initialize_family_data_dict():
+    """ This is mainly used in families.py but also used here in redraw.py
+        for redrawing the person tab when changes are made by the user. Imports
+        go from here to families.py.
+    """
+    family_data = [
+        [
+            [
+                {'finding': None, 'sorter': [0, 0, 0]}, 
+                {'id': None, 'name': '', 'kin_type_id': 2, 
+                    'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
+                {'id': None, 'name': '', 'kin_type_id': 1, 
+                    'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
+            ],
+        ],
+        {},
+    ]
+    return family_data
 
 # from styles.py
 
@@ -4181,8 +4402,8 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
 """
 ALL_WIDGET_CLASSES = (
     Label, Button, LabelHilited3, LabelMovable, LabelStay,
-    ButtonBigPic, Entry, Frame, EntryAuto, Border, 
-    Separator, ComboArrow, Scrollbar, 
+    ButtonBigPic, Entry, Frame, Border, 
+    Separator, ComboArrow, Scrollbar, FontPicker,
     LabelStatusbar, TabBook, DropdownMenu, ToplevelHilited)
 
 activeBgFg_activeFgBg = ("ButtonFlatHilited",)
@@ -4193,7 +4414,7 @@ bg_fg = (
     "LabelFrame", "Sizer", "Checkbutton", "Radiobutton", "ButtonQuiet", 
     "LabelH2", "LabelH3", "LabelEntry", "ButtonPlain", "Label", 
     "MessageCopiable", "Button", "Scale", "RadiobuttonBig", "LabelStatusbar", 
-    "EntryAuto", "LabelSearch")
+    "LabelSearch")
 bg_fgHilite = ("ButtonBigPic",)
 bgFg_fgBg = ("LabelNegative", )
 bgHead = ("FrameHilited2", "LabelHilited", "LabelTip2")
@@ -4204,7 +4425,7 @@ bgHilite = (
     "EntryAutoPersonHilited") 
 fG = (
     "LabelTip2", "ButtonFlatHilited", "LabelHeader", "Entry",
-    "ComboArrow", "EntryAutoPersonHilited", "EntryAuto", "EntryAutoHilited")
+    "ComboArrow", "EntryAutoPersonHilited", "EntryAutoHilited")
 fontH2 = ("LabelH2", )
 fontH3 = ("LabelH3", "LabelHeader", )
 fontBoilerplate = ("ButtonQuiet", )
@@ -4214,16 +4435,18 @@ fontOut = (
     "Label", "MessageCopiable", "Button", "Scale", "RadiobuttonBig", 
     "LabelNegative", "ComboArrow")
 fontStatus = ("LabelStatusbar", "LabelTip2")
+highlightbackground = ("Scale", )
+highlightcolorHead = ("Scale", )
 insertBgFg = (
-    "EntryAuto", "Entry", "Text", "EntryAutoHilited", 
+    "Entry", "Text", "EntryAutoHilited", 
     "EntryAutoPersonHilited")
-selectBgHead = ("EntryAuto", "Entry", "Text", "EntryAutoHilited", )
+selectBgHead = ("Entry", "Text", "EntryAutoHilited", )
 selectColorBg = ("Checkbutton", )
 selectColorHilite = ("Radiobutton", "RadiobuttonBig")
-selectFg = ("EntryAuto", "Entry", "Text", "EntryAutoHilited", )
+selectFg = ("Entry", "Text", "EntryAutoHilited", )
 troughColorHilite = ("Scale", )
 bgOnly = (
-    "Frame", "Canvas", "FrameHilited6",   
+    "Frame", "Canvas", "FrameHilited6", "FontPicker",
     "Dialogue", "TabBook", "PersonSearch", "EditRow",
     "Gallery", "StatusbarTooltips", "EventsTable",
     "Main", "DatePreferences")

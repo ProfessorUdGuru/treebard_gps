@@ -20,14 +20,12 @@ from PIL import Image, ImageTk
 from files import current_drive, get_current_file
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
-    Radiobutton, LabelFrame, Border, TabBook, Scrollbar,
-    EntryAutoPerson, EntryAutoPersonHilited)
-from font_picker import FontPicker
+    Radiobutton, LabelFrame, Border, TabBook, Scrollbar, fix_tab_traversal,
+    EntryAutoPerson, EntryAutoPersonHilited, FontPicker, redraw_person_tab)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips   
 from families import NuclearFamiliesTable
 from events_table import EventsTable
-from redraw import redraw_person_tab, fix_tab_traversal
 from dates import DatePreferences, OK_MONTHS, get_date_formats
 from gallery import Gallery
 from colorizer import Colorizer
@@ -61,10 +59,10 @@ PREFS_TABS = (
     ("images", "M"))
 
 NUKEFAM_HEADS = ("NAME OF CHILD", "GENDER", "DATE OF BIRTH", "DATE OF DEATH")
-
-class Main(Frame):
+from widgets import FrameStay
+class Main(FrameStay):
     def __init__(self, master, root, treebard, *args, **kwargs):
-        Frame.__init__(self, master, *args, **kwargs)
+        FrameStay.__init__(self, master, *args, **kwargs)
         self.master = master # the main canvas (instance of Border class)
         self.root = root
         self.treebard = treebard
@@ -303,16 +301,18 @@ class Main(Frame):
             (self.fontpicker.output_sample,
                 "",
                 "Sample of selected font."),
-            (self.fontpicker.font_size,
+            (self.fontpicker.font_sizer,
                 "Font Size Select",
-                "Select the font size for normal text."),
+                "Arrow keys or mouse selects the default text size."),
             (self.fontpicker.cbo.entry,
                 "Font Family Select",
                 "Select the font family for output text."),
+            (self.fontpicker.preview_button,
+                "Font Preview Button",
+                "Apply selections to text in this tab only."),
             (self.fontpicker.apply_button,
-                "Apply Button",
-                "Apply selections to all output text. Input font family is "
-					"chosen by Treebard."),
+                "Font Apply Button",
+                "Apply selections to all output text."),
             (colorizer.current_display,
                 "",
                 "Click ID to highlight currently applied swatch."),
@@ -416,7 +416,7 @@ class Main(Frame):
         rcm_widgets = (
             self.person_entry, person_change, person_search, 
             self.top_pic_button, self.findings_table.event_input, 
-            self.fontpicker.font_size, self.fontpicker.cbo.entry, 
+            self.fontpicker.font_sizer, self.fontpicker.cbo.entry, 
             self.fontpicker.apply_button,            
             colorizer.header, colorizer.current_display, 
             colorizer.copy_button, colorizer.apply_button,
