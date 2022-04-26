@@ -6,7 +6,8 @@ from files import get_current_file
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton, configall,
     LabelH3, Button, Entry, LabelHeader, Separator, open_message, Scrollbar,
-    LabelStay, make_formats_dict, EntryAuto, EntryAutoHilited, NEUTRAL_COLOR)
+    LabelStay, make_formats_dict, EntryAuto, EntryAutoHilited, NEUTRAL_COLOR,
+    redraw_person_tab)
 from scrolling import resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
@@ -1016,8 +1017,10 @@ class EventsTable(Frame):
                         name = dkt.get("partner_name")
                         if name is None and dkt.get("partner_id"):
                             name = self.person_autofill_values[dkt["partner_id"]][0]["name"]
-                        kin = "Partner"
-                        if dkt.get("partner_kin_type"):
+                        kin = "partner"
+                        if (dkt.get("partner_kin_type") and 
+                                dkt["partner_kin_type"] not in (
+                                    "generic_partner1", "generic_partner2")):
                             kin = dkt["partner_kin_type"]
                         couple_in = widg.bind(
                             "<Enter>", lambda evt, 
@@ -1036,7 +1039,6 @@ class EventsTable(Frame):
                                 "<Enter>", lambda evt, 
                                 kin="parent(s)", names=names: self.handle_enter(
                                     kin, names))
-                                    # evt, kin, names))
                             parents_out = widg.bind("<Leave>", self.on_leave)
                             self.widget = widg
                             self.kintip_bindings["on_enter"].append([widg, parents_in])
@@ -1061,14 +1063,15 @@ class EventsTable(Frame):
                                 "<Enter>", lambda evt, 
                                 kin="adoptive parent(s)", names=names: self.handle_enter(
                                     kin, names))
-                                    # evt, kin, names))
                             adoptive_parents_out = widg.bind("<Leave>", self.on_leave)
                             self.widget = widg
                             self.kintip_bindings["on_enter"].append([widg, adoptive_parents_in])
                             self.kintip_bindings["on_leave"].append([widg, adoptive_parents_out])
                         elif evtype == "fosterage":
-                            alts1 = ("foster_parent_name1", "foster_father_name1", "foster_mother_name1")
-                            alts2 = ("foster_parent_name2", "foster_father_name2", "foster_mother_name2")
+                            alts1 = (
+                                "foster_parent_name1", "foster_father_name1", "foster_mother_name1")
+                            alts2 = (
+                                "foster_parent_name2", "foster_father_name2", "foster_mother_name2")
                             for key in alts1:
                                 name1 = dkt.get(key)
                                 if name1:
@@ -1081,8 +1084,7 @@ class EventsTable(Frame):
                             foster_parents_in = widg.bind(
                                 "<Enter>", lambda evt, 
                                 kin="foster parent(s)", names=names: self.handle_enter(
-                                    kin, names))                            
-                                    # evt, kin, names))
+                                    kin, names)) 
                             foster_parents_out = widg.bind("<Leave>", self.on_leave)
                             self.widget = widg
                             self.kintip_bindings["on_enter"].append([widg, foster_parents_in])
@@ -1103,7 +1105,6 @@ class EventsTable(Frame):
                                 "<Enter>", lambda evt, 
                                 kin="guardian(s)", names=names: self.handle_enter(
                                     kin, names))
-                                    # evt, kin, names))
                             guardians_out = widg.bind("<Leave>", self.on_leave)
                             self.widget = widg
                             self.kintip_bindings["on_enter"].append([widg, guardians_in])

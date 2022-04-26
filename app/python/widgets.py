@@ -10,7 +10,7 @@ from files import (
     rename_tree, close_tree, exit_app, get_recent_files,
     new_file_path, change_tree_title, set_current_file, save_recent_tree)
 from scrolling import resize_scrolled_content
-from utes import create_tooltip, center_dialog
+from utes import center_dialog
 from query_strings import ( 
     select_color_scheme_current_id, select_color_scheme_by_id,
     select_format_font_scheme, select_format_font_size, delete_links_links_name,
@@ -66,11 +66,11 @@ def get_opening_settings():
     cur = conn.cursor()
     cur.execute(select_color_scheme_current_id)
     color_scheme_id = cur.fetchone()
-    if color_scheme_id is None:
-        cur.execute(select_opening_settings)
-        user_formats = cur.fetchone()
-    else:
-        user_formats = get_current_formats(color_scheme_id[0])
+    # if color_scheme_id is None:
+        # cur.execute(select_opening_settings)
+        # user_formats = cur.fetchone()
+    # else:
+    user_formats = get_current_formats(color_scheme_id[0])
     cur.close()
     conn.close()
     return user_formats
@@ -1924,6 +1924,10 @@ class EntryAuto(Entryx):
     font = formats["input_font"]
 
     def create_lists(all_items):
+        """ Ignore this, it's made to use a simple list. Until it's customized
+            for the dict that is used for name values, this won't work for
+            person autofills. It currently works for events and places.
+        """
         recent_items = []
         all_items_unique = []
 
@@ -4387,6 +4391,80 @@ def initialize_family_data_dict():
         {},
     ]
     return family_data
+
+# from utes.py
+
+#   -   -   -   see toykinter_widgets.py for statusbar tooltips   -   -   -   #
+#       which by now are built into the Border class in window_border.py
+
+class ToolTip(object):
+    '''
+        TOOLTIPS BY MICHAEL FOORD 
+        (used for ribbon menu icons and widgets dynamically gridded). 
+        Don't use for anything that'll be destroyed by clicking because
+        tooltips are displayed by pointing w/ mouse and thus a tooltip 
+        will be displaying when destroy takes place thus leaving the 
+        tooltip on the screen since the FocusOut that is supposed to 
+        destroy the tooltip can't take place.
+    '''
+
+    def __init__(self, widget):
+        self.widget = widget
+        self.tipwindow = None
+        self.id = None
+        self.x = self.y = 0
+
+    def showtip(self, text):
+        ''' Display text in tooltip window '''
+
+        self.text = text
+        if self.tipwindow or not self.text:
+            return
+        x, y, cx, cy = self.widget.bbox("insert")
+        x = x + self.widget.winfo_rootx() + 27
+        y = y + cy + self.widget.winfo_rooty() + 27
+        self.tipwindow = tw = Toplevel(self.widget)
+        # self.tipwindow = tw = tk.Toplevel(self.widget)
+        tw.wm_overrideredirect(1)
+        tw.wm_geometry("+%d+%d" % (x, y))
+        try:
+            # For Mac OS
+            tw.tk.call("::tk::unsupported::MacWindowStyle",
+                       "style", tw._w,
+                       "help", "noActivates")
+        except tk.TclError:
+            pass
+        label = LabelStay(
+            tw, 
+            text=self.text, 
+            justify='left',
+            relief='solid', 
+            bd=1,
+            bg=NEUTRAL_COLOR, fg="white")
+        # label = tk.Label(tw, text=self.text, justify=tk.LEFT,
+                      # background="#ffffe0", relief=tk.SOLID, borderwidth=1,
+                      # font=("tahoma", 10, "normal"),
+                      # fg='black')
+        label.pack(ipadx=6)
+
+    def hidetip(self):
+        tw = self.tipwindow
+        self.tipwindow = None
+        if tw:
+            tw.destroy()    
+
+def create_tooltip(widget, text):
+    ''' Call w/ arguments to use M. Foord's ToolTip class. '''
+    def enter(event):
+        toolTip.showtip(text)
+    def leave(event):
+        toolTip.hidetip()
+
+    toolTip = ToolTip(widget)
+    widget.bind('<Enter>', enter, add="+")
+    widget.bind('<Leave>', leave, add="+")
+
+#   -   -   -   -   -   -   -   -   -   -   -   -   -   -   -   #
 
 # from styles.py
 

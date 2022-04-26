@@ -5,7 +5,8 @@ import sqlite3
 from widgets import (
     Label, Button, Entry, Canvas, LabelFrame, LabelH3, FrameHilited6, Dialogue,
     LabelMovable, Toplevel, LabelHeader, Radiobutton, Frame, Border, configall,
-    Combobox, EntryAutoHilited, Scrollbar, ScrolledText, make_formats_dict)
+    Combobox, EntryAutoHilited, Scrollbar, ScrolledText, make_formats_dict, 
+    create_tooltip)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from scrolling import resize_scrolled_content
@@ -13,7 +14,7 @@ from error_messages import open_yes_no_message, InputMessage
 from messages_context_help import notes_dlg_help_msg, links_dlg_help_msg
 from places import make_all_nestings    
 from messages import notes_msg
-from utes import center_dialog, create_tooltip, OK_PRINT_KEYS
+from utes import center_dialog, OK_PRINT_KEYS
 from files import get_current_file
 from links import ELEMENTS
 from query_strings import (

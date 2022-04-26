@@ -15,12 +15,12 @@ from files import get_current_file, current_drive, app_path
 from persons import get_current_person
 from widgets import (
     Frame, Canvas, Button, Label, Radiobutton, FrameHilited4, make_formats_dict, 
-    LabelH3, MessageCopiable, LabelStay, Scrollbar, configall)
+    LabelH3, MessageCopiable, LabelStay, Scrollbar, configall, create_tooltip)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from scrolling import resize_scrolled_content
 from messages_context_help import gallery_help_msg, gallery_thumbnail_help_msg
-from utes import create_tooltip
+# from utes import create_tooltip
 from query_strings import (
     select_all_place_images, select_all_source_images, 
     select_all_person_images, select_current_person_id, 

@@ -9,10 +9,11 @@ from files import app_path, global_db_path, current_drive, open_tree
 from opening import SplashScreen
 from main import Main
 from widgets import (
-    Button, Frame, ButtonPlain, configall, make_formats_dict, Border,DropdownMenu, placeholder)
+    Button, Frame, ButtonPlain, configall, make_formats_dict, Border,DropdownMenu, 
+    create_tooltip, placeholder)
 from scrolling import MousewheelScrolling 
 from dates import get_date_formats
-from utes import create_tooltip
+# from utes import create_tooltip
 from query_strings import (
     update_closing_state_tree_is_open, select_date_format, 
     )
@@ -169,8 +170,15 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: families_table_finish
-# see #6042 blank partner should say (Children's Parent) instead of (Children's ).
-# mARY Hilton Summer is James' adoptive father? Kattie is Forrest's adoptive father?
+# after adding a father to a blank field, the curr per doesn't appear as the new father's offspring
+# when curr per is #5 the offspring event cohighlight both the real child and the adopted, and the guardianship event cohighlights neither, is this related to the error below (cohighlight funx is commented out right now)
+# self.family_data (see alverta) has two keys for finding_id: "finding" and "birth_finding"; get rid of "finding"; LOOKS LIKE THE DIFF IS THAT BOTH EXIST IN PARENTS BUT ONLY THE 2ND EXISTS IN ALT PARENTS
+# when using dupe name dlg for foster parent there's an error in forget_cells() can't delete tcl command, seems to be no problem in bio father with dupes but in bio mother same problem can't delete. The data goes into the db anyway so all is right on reload.
+# make it impossible for a person to be their own parent, partner or child
+# Make sure it's impossible to add a name with length of 0.
+# add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f); make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner.
+# is there a reason why make_idtips() is running twice?
+# UNCOMMENT self.make_cohighlights_dict() AND FIX THIS:
 # when double clicking an alt parent in the families table to make the person current, it works (except after that person is current the program will no longer load) but makes this error:
 # Exception in Tkinter callback
 # Traceback (most recent call last):
@@ -188,11 +196,6 @@ if __name__ == '__main__':
     # event_widgets = offspring_event_widg
 # UnboundLocalError: local variable 'offspring_event_widg' referenced before assignment
 # parameterize repeated sections of code in make_cohighlights_dict(
-# APPARENTLY the user columns in formats table aren't being used anymore since the inception of using a color_scheme_id as FK in table current. if this is true get rid of the columns.
-# The current systems for getting all widgets to change color works well except in the case of self.formats in so-called special event widgets in styles.py. It works there too but due to running make_formats_dict() in every single widget it now causes a big delay in loading the app, since I've had to add this to the autofill entries and there are so many of them. But obviously when you restart the whole app--close the program completely and restart it--all the colors are right, even for special event widgets. So I have to eliminate the special event widget solution which is often hard to get working for some reason, maybe it's just hard to remember all the things I'm supposed to do, anyway get rid of special event widgets and instead figure out what's the difference between recolorizing and restarting the app and basically restart the app when APPLYing a new color scheme. Either that or figure out why/when the app has to be restarted to get special event apps to recolorize in regards to their highlighting events, and fix that instead. For example, maybe the fact that make_formats_dict() is run in init is the clue I'm looking for. Maybe in config_generic instead of the special widgets' current method, make_formats_dict() has to be run for each class that has a highlighting event. Or maybe a dedicated reconfig_highlighting function could be created in styles.py that could be called from colorizer.py on APPLY. Another thought is that something is happening with imports that causes a global value of formats to be recreated and reimported only when the app is restarted. FIX IT FOR ENTRY AUTO AND WHEN THE NEW SYSTEM WORKS, DELETE THE SPECIAL EVENT SECTION ONE CLASS AT A TIME AND TEST TO SEE THAT THE NEW SYSTEM WORKS FOR EACH CLASS THAT DOES HIGHLIGHTING. Also seems like fg is working right but bg isn't.
-# self.family_data (see alverta) has two keys for finding_id: "finding" and "birth_finding"; get rid of "finding"; LOOKS LIKE THE DIFF IS THAT BOTH EXIST IN PARENTS BUT ONLY THE 2ND EXISTS IN ALT PARENTS
-# is there a reason why make_idtips() is running twice?
-# how to change kin type ie get rid of generic partner 128 & 129; the problem is with the kin tip that opens when you point at a marital event
 # in get_final call a new method define_input in which every one of the tests in the chart below is equally represented including a new one DUPE>SAME DUPE DIFFERENT PERSON with flags set and returned so the right code will run in get_final. In a simple and symmetrical way, run a given method depending on what define_input returns
 # TESTING NOT DONE TILL EACH OPTION IS xx DOUBLE CHECKED
 # rule: when making a change in the code, reduce any XXs to single x & test everything again
@@ -213,40 +216,34 @@ if __name__ == '__main__':
 # CHANGE>DUPE                x               x             x               x
 # CHANGE>NEW                 x               x             x               x
 # UNLINK                     x               x             x               x 
-# when using dupe name dlg for foster parent there's an error in forget_cells() can't delete tcl command, seems to be no problem in bio father with dupes but in bio mother same problem can't delete. The data goes into the db anyway so all is right on reload.
-# make it impossible for a person to be their own parent, partner or child
-# Make sure it's impossible to add a name with length of 0.
-# add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f); make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner.
-# Often on ctrl+s, Jeremiah fills into whatever autofill is in focus.
 # when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here. Is this because the parent fields and alt parent fields aren't made at the same time? Does a tab order method need to be rerun when creating an alt parent field? See also gender field in child row--tab traversal works if just tabbing thru, but after changing something, focus out doesn't go to next widget because of redraw(). So the autofill needs a feature wherein it registers itself as self.current_widget on FocusIn so that redraw() can go like self.current_widget.tkFocusNext().focus_set()(
-# RCM: There are two ways to deal with unknown partners of the current person: unknown name labels and null persons. An unknown name label has to contain at least one character. Using letters in unknown name labels is a bad idea. For example, the label 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. The purpose of an unknown name label made with symbols (a name such as '?' or '_____') is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name labels will differentiate the current person's two families. This works since duplicate names are allowed, such as two people that are both temporarily named '_____', and each person will have a unique ID number. It's OK to not use unknown name labels, but in that case, Treebard will lump all children and marital events of the current person's whose partner is null into a single family. If you want to avoid this, use a name such as '?' or '_____' with at least one character and Treebard will give this person a unique ID instead of a null ID. If you use null partners when creating marital events, for example, all the children and marital events for the current person where the current person's partner is left blank will be lumped together into one family. This is easy to change, but most users will probably prefer to differentiate families of unknown partners by using unknown name labels. To change from a null partner to unknown name labels, type an unknown name label into an empty partner field. Empty partner fields exist when there are marital events with null partner or children with a null parent. When you tab out of the field, a dialog will open listing all the marital events and children for the current person with a null partner. You can choose which one to link to the new unnamed person you're creating. This is easier to do than it is to describe. Just try it.
-# add a feature to all autofills, if autofill is in focus and empty (i.e. you just deleted its contents but haven't changed anything or tabbed out yet), and you press ESCAPE, the old contents fill back in and it focuses out (maybe it doesn't have to be blank too?)
-# delete unused queries from module & queries module
-# delete unused imports everywhere
+# RCM: There are two ways to deal with unknown partners of the current person: unknown name labels and null persons. NOTE: if you don't understand or don't want to read the discussion below, here are your simple instructions: If you are creating a person but don't know the person's name, enter the name as '_____'. There can be any number of separate individuals with the same name. The details: An unknown name label has to contain at least one character. Using letters in unknown name labels is not a good idea. For example, the label 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. The purpose of an unknown name label made with symbols (a name such as '?' or '_____') is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name labels will differentiate the current person's two families. This works since duplicate names are allowed, such as two people that are both temporarily named '_____', and each person will have a unique ID number. It's OK to not use unknown name labels, but in that case, Treebard will lump all children and marital events of the current person's whose partner is null into a single family. If you want to avoid this, use a name such as '?' or '_____' with at least one character and Treebard will give this person a unique ID instead of a null ID. If you use null partners when creating marital events, for example, all the children and marital events for the current person where the current person's partner is left blank will be lumped together into one family. This is easy to change anytime, but most users will probably prefer to differentiate families of unknown partners from the start by using unknown name labels as name placeholders when creating the person. To change from a null partner to unknown name labels, type an unknown name label into an empty partner field. Empty partner fields exist when there are marital events with null partner or children with a null parent. When you tab out of the field, a dialog will open listing all the marital events and children for the current person with a null partner. You can choose which ones to link to the new unnamed person you're creating. This is easier to do than it is to describe. Just try it.
 # Test everything on the video tour list before making the video.
-# delete commented code and edit docstrings before pushing to repo
+# delete commented code and edit docstrings
 # export dbs to .sql
 # backup app to external hd
 
-# BRANCH: cleanup
+# BRANCH: autofills
+# add a feature to all autofills, if autofill is in focus and empty (i.e. you just deleted its contents but haven't tabbed out yet), and you press ESCAPE, the old contents fill back in and it focuses out.) This will let you tab out without deleting the person and you won't have to retype it back in or reautofill it back in.
+# extend the EntryAutofill create_lists() method to work for EntryAutofillPerson. Currently it doesn't work for people because the values list is a dict, not a simple list. This is the feature that first tries to autofill the last person that was used. Since dicts now retain the order in which they were created, this shouldn't be hard to extend.
 # When autofilling a new place, the width of the whole table flashes back and forth. Better to have an edit mode so that when you start typing in a place autofill ?or any autofill if autofill is True, it expands to a fixed size and doesn't change at all till you tab out, then it fits its content.
-# When a person is used they aren't being moved to the front of the list. Is this because the list is restarted after every time a new person is made? Don't worry about it if it's not easy to fix, as long as this feature works with places which are much more complicated strings to type out.
-# pressing enter in person autofill on person tab after name fills in throws an error re: colors
 # when adding a new person, the name becomes instantly available to autofills but id # doesn't till reloading app
+
+# BRANCH: cleanup
 # move queries to module and delete import strings for unused queries
 # rename queries not named acc to standard eg select_person_id_finding
-# see `if length == 2` in get_any_name_with_id() in names.py: this was just added and before that a similar process was done repeatedly in various places such as current_person display, wherever a name might need to be shown. Everything still works but this procedure should be deleted from where it's no longer needed since it's been added to get_any_name_with_id()
-# Did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thought the new class was supposed to replace all these as was done apparently already in dates.py. I thought the new class was made so these three overlapping large functions could be deleted from messages.py as well as the radio input message which hasn't even been tested.
+# Did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thought the new class was supposed to replace all these as was done apparently already in dates.py. I thought the new class was made so these three overlapping large functions could be deleted from messages.py 
 # colorizer: if click copy then immed click apply, error (pass? return?) Happens bec no scheme, so deal with if no scheme hilit, apply should do nothing
 # find all the usages of queries that have to be run twice to deal with columns that can be used either of 2 ways such as parent_id1/parent_id2 and rewrite the code so that the whole record is gotten once with select * (or as much as will be needed) and parse the record with python, assign values according to obvious correspondences
 # delete unused imports all modules
+# delete commented code and edit docstrings
 # statustips rcm also for unlinker
 """ Redo all docstrings everywhere to look
     like this.
 """
+# Get rid of the quote marks in the rcm messages, just use one long line per message.
 # alphabetize query strings after standardizing names
 # export dbs to .sql
-# fix redraw() so top pic changes on ctrl-s if the main pic was changed w/ radio in gallery
 
 # BRANCH: dates
 # clarify_year might not working in dates.py, there is a chain of error messages, sometimes it has to be OK'd twice, and make sure it doesn't run on CANCEL and original value is returned to the input (InputMessage works now in notes.py and families.py for a model). Currently cancel seems to be deleting the date which moves the event to the attributes table. The second time it sort of works but deletes the number that's not a year. It also doesn't display AD on years less than 4 digits long. Also it should not open for two same numbers input eg 12 ap 12 which has only one right answer, 12 Apr 0012.
@@ -261,6 +258,7 @@ if __name__ == '__main__':
 # If user selects his own photo as default, prepend "0_default_image_" to user's file name.
 # If no main_image has been input to db, Treebard will use no image or default image selected by user. User can make settings in images/prefs tab so that one photo is used as default for all when no pic or can select one for F and one for M, one for places, one for sources. Treebard will provide defaults which user can change. There's no reason to input a default_image_ placeholder image as anything but a main_image so make it impossible.
 # export dbs to .sql
+# backup app to external hd
 
 # BRANCH: types
 # This started when I found I'd failed to stop using the formats table for default_formats, led to the realization that the formats table needs to go away, led to a grand new structure using the fact that I now have a global db again so might as well use it. Below it says to store an fk for color scheme but to do that right, color scheme table needs to be moved to treebard.db. So will keep using formats for fonts and current color scheme only till I get to this branch, since I have no other place to put them.
@@ -271,7 +269,6 @@ if __name__ == '__main__':
 #   (update_format_color_scheme has to be changed to current see lines 17 & 583 colorizer.py); 
 #   (select_default_format_font_size in window_border.py lines 13, 112 has to be changed to the table in treebard.db); 
 #   (update_format_font has to be changed to current see font_picker.py lines 7 & 102) 
-#   (select_opening_settings has to be changed to treebard.db see styles.py lines 5 & 608);
 # Failed to consider that font is also stored in format currently so a current_font_id needs to be stored in current as an fk but there is no table for font_schemes as there is for color schemes, nor should there be. A font scheme is a size and a family. Defaults for both exist in treebard.db already, re: output font. Defaults for input font aren't user changable. So a place is needed for 2 font columns and we don't want a bunch of saved schemes. The solution is to put the 2 columns in current. This leads to another question: what's the difference between current and closing_state? They both have one record. They're both used to open things the same way they were closed. Answer: they're both needed. Closing state is global stuff that applies no matter what tree is open or closed. Current needs a row for each tree. Make a new table in treebard.db called trees and one called current. Each tree will get a pk in trees. Then in closing state, there will be a prior_tree_id fk instead of a text field for prior_tree. Delete the column tree_is_open. In current there will be a record for each tree. So things can open the same way they were closed, without first opening the tree to read its prefs. So when a tree is created or destroyed, its name is added to or deleted from the trees table. Make a new table in treebard.db called current with this schema: current_id PK, tree_id refs tree.tree_id, cols for font size & family, fk col for color_scheme_id
 # types tab: have a combobox to change content from one type to another. Start with color schemes. Have a button to delete all hidden schemes (if not built-in).
 # drop table format from default.db, etc., copy to untouched.db, make a treebard_untouched.db to keep in app/default also
@@ -284,6 +281,7 @@ if __name__ == '__main__':
 # in each tab of each tabbook, use Map event to focus one of the widgets on that tab when that tab is switched to, see colorizer arrow_in_first() as an example
 # Refactor gallery so all work the same in a dialog opened by clicking a main image in a tab. Also I found out when I deleted all the padding that there's no scridth. There should be nothing in any tab that's ever bigger than the persons tab events table. Then the tabs could be used for what they're needed for, like searching and getting details about links and stuff, instead of looking at pictures that don't fit in the tab anyway. Also: # remove Gallery from tuple `widgets.bgOnly` when moved to dialog
 # In main.py make_widgets() should be broken up into smaller funx eg make_family_table() etc. after restructing gallery into 3 dialogs.
+# fix redraw() so top pic changes on ctrl-s if the main pic was changed w/ radio in gallery
 # Get rid of all calls to title() in dropdown.py and just give the values with caps as they should be shown, for example title() is changing GEDCOM to Gedcom in File menu.
 # In the File menu items add an item "Restore Sample Tree to Original State" and have it grayed out if the sample tree is not actually open.
 # Add to Search dlg: checkbox "Speed Up Search" with tooltip "Search will begin after three characters are typed. Don't select this for number searches." Select it by default. BETTER: use a spinner so user can say exactly how many chars he wants to type before the search begins.
@@ -303,7 +301,7 @@ if __name__ == '__main__':
 # backup app to external hd
 
 # BRANCH: conclusions
-# change events_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, it is now time to start sticking to Treebard's core philosophy and differentiate between conclusions and assertions at all times. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs events table > conclusions table. And the first step is to change the name of the module from events_table.py to conclusions_table.py. Remember that conclusions are called findings in the code; "events" are cases where something like an event_type refers equally to assertions and conclusions (claims & findings) and never use "event" where "finding" should be used.
+# change events_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. In the GUI events become either "conclusions" or "events & attributes". In the code it's either "findings" or "claims". Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, stick to Treebard's core philosophy and differentiate between conclusions and assertions. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs events table > conclusions table. And the first step is to change the name of the module from events_table.py to conclusions_table.py. Remember that conclusions are called findings in the code; "events" are cases where something like an event_type refers equally to assertions and conclusions (claims & findings).
 # export dbs to .sql
 # backup app to external hd
 
@@ -311,8 +309,6 @@ if __name__ == '__main__':
 # IDEA for copy/pasting citations. This is still tedious and uncertain because you sometimes don't remember what's in a clipboard till you try pasting it. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, like a plus sign, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing individual citations on nearly empty dialogs that you have to sift through looking for the right one, and seeing them all together might be useful for the sake of comparison.
 # Edit official do list and move to directory /etc/, edit ReadMe, re-dump 2 databases to .sql files.
 # Website: change "units of genealogy" to "elements of genealogy", add FAQ to Treebard Topics.
-# Get rid of the quote marks in the rcm messages, just use one long line per message.
-# Post new screenshots and announce next phase (export GEDCOM?).
 # export dbs to .sql
 # backup app to external hd
 
@@ -322,14 +318,13 @@ if __name__ == '__main__':
 # install virtual machine and linux
 # Export GEDCOM.
 # Make sure there's a way to make new person, new name, new place, new source, citation, etc. for all elements and types.
+# work on menu commands such as Undo, Back, Forward
 # Add functionality to places, sources, names tabs for alias and edit/delete. 
-# Refactor date calculator, give it a menu command to open it. Other tools eg: old census tool like my spreadsheet with templates of all the pre-1850 US census and a way to make your own templates for other census such as state census where household members are listed roughly by age/gender but without names.
+# Refactor date calculator as a Python tool, give it a menu command to open it. Other tools eg: old census tool like my spreadsheet with templates of all the pre-1850 US census and a way to make your own templates for other census such as state census where household members are listed roughly by age/gender but without names.
 # Add widgets and storage for all the tabs.
 # Add a menu item to open treebard.com.
-# Menu: add functionality to menu choices.
 # Combobox: when scrolling if the mouse strays off the scrollbar the dropdown undrops, I've seen a way to fix that but what was it?
 # Links tab: start with making a way to link any note to any element.
-# Files: when new empty tree is made, "name unknown" is a person in the db autofill list should not include this, search should not include this.
 # export dbs to .sql
 # backup app to external hd
 
@@ -339,6 +334,7 @@ if __name__ == '__main__':
 # colorizer: swatch_canvas: adding to mousewheel scrolling doesn't work
 # website topics: add a button at bottom to view all topics on one page, then create the page and upload it, with all topics on one page, this is so search engines will find the text, otherwise it's buried in javascript and can't be searched
 # NUKEFAM TABLE on person tab: unhide kintype IDs 3, 26, 27, 28 and make them work same as 1 & 2
+# Files: when new empty tree is made, "name unknown" is a person in the db autofill list should not include this, search should not include this.
 
 # DEV DOCS:
 # Files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run.

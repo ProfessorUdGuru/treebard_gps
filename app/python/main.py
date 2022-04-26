@@ -59,6 +59,7 @@ PREFS_TABS = (
     ("images", "M"))
 
 NUKEFAM_HEADS = ("NAME OF CHILD", "GENDER", "DATE OF BIRTH", "DATE OF DEATH")
+
 from widgets import FrameStay
 class Main(FrameStay):
     def __init__(self, master, root, treebard, *args, **kwargs):

@@ -28,7 +28,7 @@ from query_strings import (
     select_finding_details, update_current_person,
     update_finding_kin_type_2, select_all_event_type_ids_marital,
     insert_finding_couple, insert_finding_persons, update_person_gender,
-    update_finding_date, insert_finding_death, 
+    update_finding_date, insert_finding_death, select_kin_types_parental,
     select_finding_couple_details, select_finding_details_sorter,
     select_finding_kin_types, select_finding_couple_person1_details,
     select_finding_couple_person2_details, select_kin_types,
@@ -44,14 +44,26 @@ from dev_tools import looky, seeline
 
 
 
+def make_parent_types_dict():
+    current_file = get_current_file()[0]
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+
+    cur.execute(select_kin_types_parental)
+    parentTypes = cur.fetchall()    
+    PARENT_TYPES = {}
+    for tup in parentTypes:
+        PARENT_TYPES[tup[0]] = tup[1]
+    cur.close()
+    conn.close()
+    return PARENT_TYPES
 
 
-
-
-PARENT_TYPES = {
-    1: "Mother", 2: "Father", 110: "Adoptive Parent", 111: "Adoptive Mother", 
-    112: "Adoptive Father", 120: "Foster Parent", 121: "Foster Mother", 
-    122: "Foster Father", 130: "Guardian", 131: "Legal Guardian"}
+PARENT_TYPES = make_parent_types_dict()
+# PARENT_TYPES = {
+    # 1: "Mother", 2: "Father", 110: "Adoptive Parent", 111: "Adoptive Mother", 
+    # 112: "Adoptive Father", 120: "Foster Parent", 121: "Foster Mother", 
+    # 122: "Foster Father", 130: "Guardian", 131: "Legal Guardian"}
 
 def get_all_marital_event_types(conn, cur):
     cur.execute(select_all_event_type_ids_marital)
@@ -109,7 +121,7 @@ class NuclearFamiliesTable(Frame):
         self.date_prefs = get_date_formats(tree_is_open=1)
         self.unlink_partners = {"events": [], "children": []}
         self.link_partners = {"events": [], "children": []}
-
+        # INSTANCE-level variable needed to get `compound_parent_text` right:
         self.parent_types = []
         self.family_data = initialize_family_data_dict()
 
@@ -171,9 +183,9 @@ class NuclearFamiliesTable(Frame):
         self.parentslab.grid(column=0, row=0, sticky="w")
 
         # children of self.parentslab
-        palab.grid(column=0, row=0, sticky="ew", pady=(6,12), padx=(12,12))
+        palab.grid(column=0, row=0, sticky="ew", pady=(6,12), padx=12)
         self.pa_input.grid(column=1, row=0, pady=(6,12), padx=(0,0))
-        malab.grid(column=2, row=0, sticky="ew", pady=(6,12), padx=(12,12))
+        malab.grid(column=2, row=0, sticky="ew", pady=(6,12), padx=12)
         self.ma_input.grid(column=3, row=0, pady=(6,12), padx=(0,0))
 
         EntryAutoPerson.all_person_autofills.extend([self.ma_input, self.pa_input])
@@ -254,7 +266,7 @@ class NuclearFamiliesTable(Frame):
         self.nukefam_canvas.config(scrollregion=self.nukefam_canvas.bbox('all'))
         self.make_idtips()
 
-        self.make_cohighlights_dict()
+        # self.make_cohighlights_dict() # DO NOT DELETE
 
         copy = self.cohighlights
         for k,v in copy.items():
@@ -306,6 +318,14 @@ class NuclearFamiliesTable(Frame):
 
         for v in self.family_data[1].values():
             for child in v["children"]:
+                print("line", looky(seeline()).lineno, "child:", child)
+# line 802 births: []
+# line 769 births: [[1, 5, 131, 4, 131]]
+# line 833 parent_type: 131
+# line 837 self.parent_types: [131]
+# line 847 self.parent_types: ['legal guardian']
+# line 848 pard_id: 4
+# line 322 child: {'birth_id': 1, 'order': '131-131', 'gender': 'male', 'birth': '7 April 1884', 'sorter': [1884, 4, 7], 'death': '4 February 1955', 'name': 'Jeremiah Laurence Grimaldo', 'id': 1, 'death_id': 4, 'name_widg': <widgets.EntryAutoPerson object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame2.!entryautoperson>, 'gender_widg': <widgets.EntryAutoPerson object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame2.!entryautoperson2>, 'birth_widg': <widgets.EntryAutoPerson object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame2.!entryautoperson3>, 'death_widg': <widgets.EntryAutoPerson object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame2.!entryautoperson4>}
                 for row in self.findings_table.cell_pool:
                     if row[0] == child["birth_id"]:
                         offspring_event_widg = (row[1][0],)
@@ -433,7 +453,7 @@ class NuclearFamiliesTable(Frame):
                 pardframe, width=48, autofill=True, cursor="hand2", 
                 values=self.person_autofill_values, name=pard)
             pardent.insert(0, name)
-            pardent.grid(column=2, row=n)
+            pardent.grid(column=2, row=n, padx=(12,0))
             EntryAutoPerson.all_person_autofills.append(pardent)
             pardent.bind("<Double-Button-1>", self.change_current_person)
 
@@ -784,7 +804,6 @@ class NuclearFamiliesTable(Frame):
         result2 = cur.fetchall()
         births = []
         births = [tup for q in (result1, result2) for tup in q]
-
         marital_event_types = get_all_marital_event_types(conn, cur)
         qlen = len(marital_event_types)
 
@@ -817,7 +836,6 @@ class NuclearFamiliesTable(Frame):
     def make_pard_dict(self, pard_id, parent_type, cur): 
         if parent_type:
             self.parent_types.append(parent_type)
-
         p = 0
         for partype in self.parent_types:
             for k,v in PARENT_TYPES.items():
@@ -828,11 +846,12 @@ class NuclearFamiliesTable(Frame):
             p += 1
         self.parent_types = list(set(self.parent_types))
         stg = " or ".join(self.parent_types)
-        compound_parent_text = "Children's {}".format(stg)
         if pard_id is None:
             partner_name = ""
+            stg = "Parent"
         else:
             partner_name = self.person_autofill_values[pard_id][0]["name"]
+        compound_parent_text = "Children's {}".format(stg)
 
         self.family_data[1][pard_id]["parent_type"] = compound_parent_text
         self.family_data[1][pard_id]["partner_name"] = partner_name 
@@ -1531,9 +1550,8 @@ class NuclearFamiliesTable(Frame):
                     break
                 s += 1
 
-    def update_parent(
-            self, final, conn, cur, inwidg, 
-            column=None, kin_type=None, alt_parent=None):
+    def update_parent(self, final, conn, cur, inwidg, column=None, 
+            kin_type=None, alt_parent=None):
 
         def delete_parent(column):
             if column == 1:
@@ -1542,6 +1560,7 @@ class NuclearFamiliesTable(Frame):
                 cur.execute(update_finding_person_2, (None, finding_id))
             conn.commit()
             inwidg.focus_set()
+
         z = 0
         for lst in self.family_data[0]:
             for dkt in lst[1:]: # father is 1, mother is 2
@@ -1644,7 +1663,12 @@ class NuclearFamiliesTable(Frame):
 
         cur.close()
         conn.close()
-        redraw_person_tab(main_window=self.treebard.main)
+
+        current_name = self.person_autofill_values[self.current_person][0]["name"]
+        redraw_person_tab(
+            main_window=self.treebard.main, 
+            current_person=self.current_person, 
+            current_name=current_name)
 
     def change_kin_type(self, evt):
         """ Change alt parent kin type on double-click of label such as 

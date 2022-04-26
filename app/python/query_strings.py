@@ -758,15 +758,29 @@ select_finding_couple_person1_details = '''
     SELECT finding_id, person_id1, kin_type_id1, 
         person_id2, kin_type_id2 
     FROM finding 
-    WHERE person_id1 = ? AND kin_type_id1 IN (1, 2)
+    WHERE person_id1 = ? AND kin_type_id1 = 1
 '''
 
 select_finding_couple_person2_details = '''
     SELECT finding_id, person_id1, kin_type_id1, 
         person_id2, kin_type_id2 
     FROM finding
-    WHERE person_id2 = ? AND kin_type_id2 IN (1, 2)
+    WHERE person_id2 = ? AND kin_type_id2 = 2
 '''
+
+# select_finding_couple_person1_details = '''
+    # SELECT finding_id, person_id1, kin_type_id1, 
+        # person_id2, kin_type_id2 
+    # FROM finding 
+    # WHERE person_id1 = ? AND kin_type_id1 IN (1, 2)
+# '''
+
+# select_finding_couple_person2_details = '''
+    # SELECT finding_id, person_id1, kin_type_id1, 
+        # person_id2, kin_type_id2 
+    # FROM finding
+    # WHERE person_id2 = ? AND kin_type_id2 IN (1, 2)
+# '''
 
 select_finding_couple_details = '''
     SELECT finding_id, person_id1, kin_type_id1, 
@@ -870,6 +884,13 @@ select_kin_types = '''
     SELECT kin_types
     FROM kin_type
     WHERE kin_type_id = ?
+'''
+
+select_kin_types_parental = '''
+    SELECT kin_type_id, kin_types
+    FROM kin_type
+    WHERE kin_code = 'B' 
+        AND hidden = 0
 '''
 
 select_max_event_type_id = '''
@@ -1020,25 +1041,25 @@ select_note_privacy = '''
     WHERE topic = ?
 '''
 
-select_opening_settings = '''
-    SELECT 
-        bg,
-        highlight_bg,
-        head_bg, 
-        fg,
-        output_font,
-        input_font, 
-        font_size,
-        default_bg,
-        default_highlight_bg,
-        default_head_bg, 
-        default_fg,
-        default_output_font,
-        default_input_font, 
-        default_font_size            
-    FROM format
-    WHERE format_id = 1
-'''
+# select_opening_settings = '''
+    # SELECT 
+        # bg,
+        # highlight_bg,
+        # head_bg, 
+        # fg,
+        # output_font,
+        # input_font, 
+        # font_size,
+        # default_bg,
+        # default_highlight_bg,
+        # default_head_bg, 
+        # default_fg,
+        # default_output_font,
+        # default_input_font, 
+        # default_font_size            
+    # FROM format
+    # WHERE format_id = 1
+# '''
 
 select_opening_settings_on_load = '''
     SELECT 
