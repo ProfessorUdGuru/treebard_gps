@@ -1,0 +1,366 @@
+# parsed la_fieleo.ged
+
+line 71 file: D:/treebard_gps/app/python/la_fieleo.ged
+line 85 number: 1
+line 86 line: 0 HEAD
+
+line 85 number: 2
+line 86 line: 1 SOUR GENBOX
+
+line 170 vlist: ['GENBOX']
+line 173 v: GENBOX
+line 85 number: 3
+line 86 line: 2 VERS 3.7.1
+
+line 170 vlist: ['3.7.1']
+line 173 v: 3.7.1
+line 85 number: 4
+line 86 line: 2 NAME Genbox Family History
+
+line 170 vlist: ['Genbox', 'Family', 'History']
+line 173 v: Genbox Family History
+line 85 number: 5
+line 86 line: 2 CORP Thoughtful Creations
+
+line 170 vlist: ['Thoughtful', 'Creations']
+line 173 v: Thoughtful Creations
+line 85 number: 6
+line 86 line: 3 ADDR PO Box 112077
+
+line 170 vlist: ['PO', 'Box', '112077']
+line 173 v: PO Box 112077
+line 85 number: 7
+line 86 line: 4 CONT Cincinnati, OH 45211
+
+line 170 vlist: ['Cincinnati,', 'OH', '45211']
+line 173 v: Cincinnati, OH 45211
+line 85 number: 8
+line 86 line: 4 CONT USA
+
+line 170 vlist: ['USA']
+line 173 v: USA
+line 85 number: 9
+line 86 line: 1 DATE 06 JAN 2010
+
+line 170 vlist: ['06', 'JAN', '2010']
+line 173 v: 06 JAN 2010
+line 85 number: 10
+line 86 line: 2 TIME 23:37:01
+
+line 170 vlist: ['23:37:01']
+line 173 v: 23:37:01
+line 85 number: 11
+line 86 line: 1 FILE C:\Users\Luther\Desktop\GENEALOGY\GEDCOM\John La Fieleo Family Tree.GED
+
+line 170 vlist: ['C:\\Users\\Luther\\Desktop\\GENEALOGY\\GEDCOM\\John', 'La', 'Fieleo', 'Family', 'Tree.GED']
+line 173 v: C:\Users\Luther\Desktop\GENEALOGY\GEDCOM\John La Fieleo Family Tree.GED
+line 85 number: 12
+line 86 line: 1 GEDC
+
+line 85 number: 13
+line 86 line: 2 VERS 5.5
+
+line 170 vlist: ['5.5']
+line 173 v: 5.5
+line 85 number: 14
+line 86 line: 2 FORM LINEAGE-LINKED
+
+line 170 vlist: ['LINEAGE-LINKED']
+line 173 v: LINEAGE-LINKED
+line 85 number: 15
+line 86 line: 1 CHAR ANSEL
+
+line 170 vlist: ['ANSEL']
+line 173 v: ANSEL
+line 85 number: 16
+line 86 line: 0 @I1@ INDI
+
+line 85 number: 17
+line 86 line: 1 NAME John La /Fieleo/
+
+line 170 vlist: ['John', 'La', '/Fieleo/']
+line 173 v: John La /Fieleo/
+line 85 number: 18
+line 86 line: 1 SEX M
+
+line 170 vlist: ['M']
+line 173 v: M
+line 85 number: 19
+line 86 line: 1 BIRT
+
+line 85 number: 20
+line 86 line: 2 DATE 1894
+
+line 170 vlist: ['1894']
+line 173 v: 1894
+line 85 number: 21
+line 86 line: 2 PLAC Louisiana, United States
+
+line 170 vlist: ['Louisiana,', 'United', 'States']
+line 173 v: Louisiana, United States
+line 85 number: 22
+line 86 line: 1 RESI
+
+line 85 number: 23
+line 86 line: 2 DATE BEF 1915
+
+line 170 vlist: ['BEF', '1915']
+line 173 v: BEF 1915
+line 85 number: 24
+line 86 line: 2 PLAC Winnipeg, Canada
+
+line 170 vlist: ['Winnipeg,', 'Canada']
+line 173 v: Winnipeg, Canada
+line 85 number: 25
+line 86 line: 1 RESI
+
+line 85 number: 26
+line 86 line: 2 DATE 1915
+
+line 170 vlist: ['1915']
+line 173 v: 1915
+line 85 number: 27
+line 86 line: 2 PLAC Pittsburg, Crawford County, Kansas, United States
+
+line 170 vlist: ['Pittsburg,', 'Crawford', 'County,', 'Kansas,', 'United', 'States']
+line 173 v: Pittsburg, Crawford County, Kansas, United States
+line 85 number: 28
+line 86 line: 1 RESI
+
+line 85 number: 29
+line 86 line: 2 DATE 1932
+
+line 170 vlist: ['1932']
+line 173 v: 1932
+line 85 number: 30
+line 86 line: 2 PLAC Wichita, Sedgwick County, Kansas, United States
+
+line 170 vlist: ['Wichita,', 'Sedgwick', 'County,', 'Kansas,', 'United', 'States']
+line 173 v: Wichita, Sedgwick County, Kansas, United States
+line 85 number: 31
+line 86 line: 1 NOTE
+
+line 85 number: 32
+line 86 line: 2 CONT
+
+line 85 number: 33
+line 86 line: 2 CONT Transcriptions at ancestry.com exist for his birth data,
+
+line 170 vlist: ['Transcriptions', 'at', 'ancestry.com', 'exist', 'for', 'his', 'birth', 'data,']
+line 173 v: Transcriptions at ancestry.com exist for his birth data,
+line 85 number: 34
+line 86 line: 2 CONC  apparently the originals aren't available for them (WWI
+
+line 170 vlist: ['apparently', 'the', 'originals', "aren't", 'available', 'for', 'them', '(WWI']
+line 173 v: apparently the originals aren't available for them (WWI
+line 85 number: 35
+line 86 line: 2 CONC  draft reg).  Two separate records give the same exact name
+
+line 170 vlist: ['draft', 'reg).', 'Two', 'separate', 'records', 'give', 'the', 'same', 'exact', 'name']
+line 173 v: draft reg). Two separate records give the same exact name
+line 85 number: 36
+line 86 line: 2 CONC  and birth date as well as "late" of Crawford County, Kansas.
+
+line 170 vlist: ['and', 'birth', 'date', 'as', 'well', 'as', '"late"', 'of', 'Crawford', 'County,', 'Kansas.']
+line 173 v: and birth date as well as "late" of Crawford County, Kansas.
+line 85 number: 37
+line 86 line: 2 CONC   That's a few miles from Joplin, Missouri where Lewis Kiser
+
+line 170 vlist: ["That's", 'a', 'few', 'miles', 'from', 'Joplin,', 'Missouri', 'where', 'Lewis', 'Kiser']
+line 173 v: That's a few miles from Joplin, Missouri where Lewis Kiser
+line 85 number: 38
+line 86 line: 2 CONC  also lived and close to where Louis Franklin Grayson lived
+
+line 170 vlist: ['also', 'lived', 'and', 'close', 'to', 'where', 'Louis', 'Franklin', 'Grayson', 'lived']
+line 173 v: also lived and close to where Louis Franklin Grayson lived
+line 85 number: 39
+line 86 line: 2 CONC  in NE Oklahoma.
+
+line 170 vlist: ['in', 'NE', 'Oklahoma.']
+line 173 v: in NE Oklahoma.
+line 85 number: 40
+line 86 line: 2 CONT
+
+line 85 number: 41
+line 86 line: 2 CONT The two records only differ on the place where John La Fieleo
+
+line 170 vlist: ['The', 'two', 'records', 'only', 'differ', 'on', 'the', 'place', 'where', 'John', 'La', 'Fieleo']
+line 173 v: The two records only differ on the place where John La Fieleo
+line 85 number: 42
+line 86 line: 2 CONC  was born.  One says he was born in Detroit, Michigan; the
+
+line 170 vlist: ['was', 'born.', 'One', 'says', 'he', 'was', 'born', 'in', 'Detroit,', 'Michigan;', 'the']
+line 173 v: was born. One says he was born in Detroit, Michigan; the
+line 85 number: 43
+line 86 line: 2 CONC  other says he was born in Oklahoma State Prison.
+
+line 170 vlist: ['other', 'says', 'he', 'was', 'born', 'in', 'Oklahoma', 'State', 'Prison.']
+line 173 v: other says he was born in Oklahoma State Prison.
+line 85 number: 44
+line 86 line: 2 CONT
+
+line 85 number: 45
+line 86 line: 2 CONT A patent received in 1917 concurs that he lived in Pittsburg,
+
+line 170 vlist: ['A', 'patent', 'received', 'in', '1917', 'concurs', 'that', 'he', 'lived', 'in', 'Pittsburg,']
+line 173 v: A patent received in 1917 concurs that he lived in Pittsburg,
+line 85 number: 46
+line 86 line: 2 CONC  Crawford County, Kansas around that time.  WWI draft
+
+line 170 vlist: ['Crawford', 'County,', 'Kansas', 'around', 'that', 'time.', 'WWI', 'draft']
+line 173 v: Crawford County, Kansas around that time. WWI draft
+line 85 number: 47
+line 86 line: 2 CONC  registration took place in 1917 and 1918.
+
+line 170 vlist: ['registration', 'took', 'place', 'in', '1917', 'and', '1918.']
+line 173 v: registration took place in 1917 and 1918.
+line 85 number: 48
+line 86 line: 2 CONT
+
+line 85 number: 49
+line 86 line: 2 CONT Newspaper articles from 1932 give his place of birth as
+
+line 170 vlist: ['Newspaper', 'articles', 'from', '1932', 'give', 'his', 'place', 'of', 'birth', 'as']
+line 173 v: Newspaper articles from 1932 give his place of birth as
+line 85 number: 50
+line 86 line: 2 CONC  Louisiana.  In 1932 he was living in Wichita, Kansas but
+
+line 170 vlist: ['Louisiana.', 'In', '1932', 'he', 'was', 'living', 'in', 'Wichita,', 'Kansas', 'but']
+line 173 v: Louisiana. In 1932 he was living in Wichita, Kansas but
+line 85 number: 51
+line 86 line: 2 CONC  building his air car at a friend's garage in Burlington,
+
+line 170 vlist: ['building', 'his', 'air', 'car', 'at', 'a', "friend's", 'garage', 'in', 'Burlington,']
+line 173 v: building his air car at a friend's garage in Burlington,
+line 85 number: 52
+line 86 line: 2 CONC  Iowa (Walter Bied).
+
+line 170 vlist: ['Iowa', '(Walter', 'Bied).']
+line 173 v: Iowa (Walter Bied).
+line 85 number: 53
+line 86 line: 2 CONT
+
+line 85 number: 54
+line 86 line: 2 CONT I'd guess he was born in OK st. prison, taken in by relatives
+
+line 170 vlist: ["I'd", 'guess', 'he', 'was', 'born', 'in', 'OK', 'st.', 'prison,', 'taken', 'in', 'by', 'relatives']
+line 173 v: I'd guess he was born in OK st. prison, taken in by relatives
+line 85 number: 55
+line 86 line: 2 CONC  in Louisiana, shipped off to an orphanage in Detroit, and
+
+line 170 vlist: ['in', 'Louisiana,', 'shipped', 'off', 'to', 'an', 'orphanage', 'in', 'Detroit,', 'and']
+line 173 v: in Louisiana, shipped off to an orphanage in Detroit, and
+line 85 number: 56
+line 86 line: 2 CONC  adopted by Canadians from Winnipeg, then moved to Kansas
+
+line 170 vlist: ['adopted', 'by', 'Canadians', 'from', 'Winnipeg,', 'then', 'moved', 'to', 'Kansas']
+line 173 v: adopted by Canadians from Winnipeg, then moved to Kansas
+line 85 number: 57
+line 86 line: 2 CONC  when he got a chance to return to his original homeland.
+
+line 170 vlist: ['when', 'he', 'got', 'a', 'chance', 'to', 'return', 'to', 'his', 'original', 'homeland.']
+line 173 v: when he got a chance to return to his original homeland.
+line 85 number: 58
+line 86 line: 2 CONC  That is the wildest of guesses.
+
+line 170 vlist: ['That', 'is', 'the', 'wildest', 'of', 'guesses.']
+line 173 v: That is the wildest of guesses.
+line 85 number: 59
+line 86 line: 2 CONT
+
+line 85 number: 60
+line 86 line: 2 CONT I wasn't able to find him in Detroit but the information
+
+line 170 vlist: ['I', "wasn't", 'able', 'to', 'find', 'him', 'in', 'Detroit', 'but', 'the', 'information']
+line 173 v: I wasn't able to find him in Detroit but the information
+line 85 number: 61
+line 86 line: 2 CONC  about Winnipeg is new.
+
+line 170 vlist: ['about', 'Winnipeg', 'is', 'new.']
+line 173 v: about Winnipeg is new.
+line 85 number: 62
+line 86 line: 2 CONT
+
+line 85 number: 63
+line 86 line: 2 CONT John La Fieleo was a black man.
+
+line 170 vlist: ['John', 'La', 'Fieleo', 'was', 'a', 'black', 'man.']
+line 173 v: John La Fieleo was a black man.
+line 85 number: 64
+line 86 line: 2 CONT
+
+line 85 number: 65
+line 86 line: 2 CONT No mention is made of a wife, family, or occupation in the
+
+line 170 vlist: ['No', 'mention', 'is', 'made', 'of', 'a', 'wife,', 'family,', 'or', 'occupation', 'in', 'the']
+line 173 v: No mention is made of a wife, family, or occupation in the
+line 85 number: 66
+line 86 line: 2 CONC  articles.  An assignee of 2/5 of his patent was J A Plley of
+
+line 170 vlist: ['articles.', 'An', 'assignee', 'of', '2/5', 'of', 'his', 'patent', 'was', 'J', 'A', 'Plley', 'of']
+line 173 v: articles. An assignee of 2/5 of his patent was J A Plley of
+line 85 number: 67
+line 86 line: 2 CONC  Nowata, OK.
+
+line 170 vlist: ['Nowata,', 'OK.']
+line 173 v: Nowata, OK.
+line 85 number: 68
+line 86 line: 1 CHAN
+
+line 85 number: 69
+line 86 line: 2 DATE 06 JAN 2010
+
+line 170 vlist: ['06', 'JAN', '2010']
+line 173 v: 06 JAN 2010
+line 85 number: 70
+line 86 line: 3 TIME 23:07:38
+
+line 170 vlist: ['23:07:38']
+line 173 v: 23:07:38
+line 85 number: 71
+line 86 line: 0 TRLR
+
+
+======================================================================
+Surname - A
+======================================================================
+
+======================================================================
+Given - Maria
+======================================================================
+
+======================================================================
+Born 1857
+======================================================================
+
+======================================================================
+Born 1850 - 1860
+======================================================================
+
+======================================================================
+Died 1857
+======================================================================
+
+======================================================================
+Died 1850 - 1860
+======================================================================
+
+======================================================================
+Married 1857
+======================================================================
+
+======================================================================
+Married 1850 - 1860
+======================================================================
+
+======================================================================
+Family of Maria Nicotra
+======================================================================
+
+======================================================================
+Criteria Matching: surname=N:birthrange=1820-1840:deathrange=1900-1910
+======================================================================
+
+======================================================================
+Missing Records
+======================================================================

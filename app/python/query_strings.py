@@ -1041,6 +1041,13 @@ select_note_privacy = '''
     WHERE topic = ?
 '''
 
+select_opening_settings = '''
+    SELECT default_bg, default_highlight_bg, default_head_bg, 
+        default_fg, default_output_font, default_input_font, default_font_size
+    FROM default_format
+    WHERE default_format_id = 1
+'''
+
 # select_opening_settings = '''
     # SELECT 
         # bg,

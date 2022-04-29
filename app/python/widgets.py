@@ -28,7 +28,7 @@ from query_strings import (
     update_claims_persons_1_null, update_claims_persons_2_null,
     delete_images_elements_person, delete_claim_person, select_name_sorter,
     select_name_type_sorter_with_id, select_all_names, update_current_person,
-    select_name_type_hierarchy, select_all_names_all_details_order_hierarchy,
+    select_name_type_hierarchy, select_opening_settings,
     select_closing_state_recent_files, update_closing_state_recent_files) 
 from messages_context_help import person_add_help_msg
 from messages import persons_msg, opening_msg
@@ -48,6 +48,8 @@ from dev_tools import looky, seeline
 # print('formats is', formats)
 # formats is {'bg': '#34615f', 'highlight_bg': '#4a8a87', 'head_bg': '#486a8c', 'fg': '#b9ddd9', 'output_font': ('courier', 16), 'input_font': ('tahoma', 16), 'heading1': ('courier', 32, 'bold'), 'heading2': ('courier', 24, 'bold'), 'heading3': ('courier', 17, 'bold'), 'heading4': ('courier', 13, 'bold'), 'status': ('tahoma', 13), 'boilerplate': ('tahoma', 10), 'show_font': ('tahoma', 16, 'italic'), 'titlebar_0': ('tahoma', 10, 'bold'), 'titlebar_1': ('tahoma', 14, 'bold'), 'titlebar_2': ('tahoma', 16, 'bold'), 'titlebar_3': ('tahoma', 20, 'bold'), 'titlebar_hilited_0': ('tahoma', 10), 'titlebar_hilited_1': ('tahoma', 14), 'titlebar_hilited_2': ('tahoma', 16), 'titlebar_hilited_3': ('tahoma', 20), 'unshow_font': ('tahoma', 14, 'italic')}
 
+INPUT_FONT = "dejavu sans mono"
+
 def get_all_descends (ancestor, deep_list):
     ''' 
         So all widgets can be configured at once, this lists every widget in 
@@ -60,41 +62,56 @@ def get_all_descends (ancestor, deep_list):
     return deep_list
 
 def get_opening_settings():
-           
+    """ If the tree is brand new, get treebard's default color scheme. """
     current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(select_color_scheme_current_id)
     color_scheme_id = cur.fetchone()
-    # if color_scheme_id is None:
-        # cur.execute(select_opening_settings)
-        # user_formats = cur.fetchone()
-    # else:
-    user_formats = get_current_formats(color_scheme_id[0])
-    cur.close()
-    conn.close()
-    return user_formats
+    print("line", looky(seeline()).lineno, "color_scheme_id:", color_scheme_id)
+    if color_scheme_id is None:
+        cur.close()
+        conn.close()
+        conn = sqlite3.connect(global_db_path)
+        cur = conn.cursor()
+        cur.execute(select_opening_settings)
+        default_formats = list(cur.fetchone())
+        cur.close()
+        conn.close()
+        return default_formats
+    else:
+        # user_formats = get_current_formats(color_scheme_id[0])
+        cur.execute(select_color_scheme_by_id, color_scheme_id)
+        color_scheme = list(cur.fetchone())
+        cur.execute(select_format_font_scheme)
+        font_scheme = list(cur.fetchone()[0:2])
+        print("line", looky(seeline()).lineno, "font_scheme:", font_scheme)
+        user_formats = color_scheme + [INPUT_FONT] + font_scheme
+        cur.close()
+        conn.close()
+        return user_formats
 
-# get rid of this when working on types branch
-def get_current_formats(color_scheme_id):   
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(select_color_scheme_by_id, (color_scheme_id,))
-    color_scheme = list(cur.fetchone())
-    cur.execute(select_format_font_scheme)
-    font_scheme = list(cur.fetchone()[0:2])
-    user_formats = color_scheme + font_scheme
-    cur.close()
-    conn.close()
-    return user_formats
+# # get rid of this when working on types branch
+# def get_current_formats(color_scheme_id):   
+    # current_file = get_current_file()[0]
+    # conn = sqlite3.connect(current_file)
+    # cur = conn.cursor()
+    # cur.execute(select_color_scheme_by_id, (color_scheme_id,))
+    # color_scheme = list(cur.fetchone())
+    # cur.execute(select_format_font_scheme)
+    # font_scheme = list(cur.fetchone()[0:2])
+    # user_formats = color_scheme + [INPUT_FONT] + font_scheme
+    # cur.close()
+    # conn.close()
+    # return user_formats
   
 def make_formats_dict():
     """ To add a style, add a string to the end of keys list
         and a line below values.append...
     """
     prefs_to_use = list(get_opening_settings())
-    prefs_to_use.insert(5, 'dejavu sans mono')
+    print("line", looky(seeline()).lineno, "prefs_to_use:", prefs_to_use)
+    # prefs_to_use.insert(5, 'dejavu sans mono')
     keys = [
         # background, foreground
         'bg', 'highlight_bg', 'head_bg', 'fg', 
@@ -1486,7 +1503,12 @@ class Border(Canvas):
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.execute(select_format_font_size)
-        font_size = cur.fetchone()
+        result = cur.fetchone()
+        if result is None:
+            font_size = (12, 12)
+        else:
+            font_size = result
+        # font_size = cur.fetchone()
         cur.close()
         conn.close()
         if font_size[0] is None:
@@ -4103,7 +4125,7 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
         gotten = got.get()
         return gotten
 
-    got = StringVar()
+    got = tk.StringVar()
 
     msg = Dialogue(master)
     msg.grab_set()
@@ -4129,7 +4151,7 @@ def open_input_message2(master, message, title, ok_lab, cancel_lab):
     cancel_butt.grid(column=1, row=0, padx=6, sticky='e')
     inPut.focus_set()
 
-    config_generic(msg)
+    configall(msg, formats)
     msg.resize_window()
     master.wait_window(msg)
     gotten = show()

@@ -13,7 +13,6 @@ from widgets import (
     create_tooltip, placeholder)
 from scrolling import MousewheelScrolling 
 from dates import get_date_formats
-# from utes import create_tooltip
 from query_strings import (
     update_closing_state_tree_is_open, select_date_format, 
     )
@@ -168,6 +167,11 @@ if __name__ == '__main__':
 
 
 # DO LIST
+
+# to open a new file:
+# delete the types tables from the default DB and copy the trees from sample,  types tables are: name_type, event_type, kin_type, role_type
+# insert name type 24, 'placeholder for name', hierarchy 23
+# add a person named "person # 1" to default DB, then add a birth event for the person and "person #1" w/ nametype placeholder in name table.  then copy the default DB to 2 places. If this gambit works so a new tree can open, then add the insert queries to files.py in the make_new() function so this doesn't have to be done manually. Also make a dev docs item for updating default and other empty DBs when making changes to data structure, include above "delete types tables" item and instrux on table dump
 
 # BRANCH: families_table_finish
 # after adding a father to a blank field, the curr per doesn't appear as the new father's offspring
@@ -467,6 +471,30 @@ Just type a plus sign in any person input, followed by the new name which can be
 '''
 Treebard uses an original-vs.-final-content test to eliminate validating and responding to inputs that haven't changed as the user tabs through them. It also eliminates superfluous dialogs. This works fine in the case where the input empties after use, and in the case where content is programatically inserted and not always changed. But in the case where there's always content inserted programatically and content is generally always going to change, an extra test is needed to detect duplicate names. For example, in the roles dialog, role names can be changed, but if John Smith is changed to a different John Smith, the usual test isn't enough. So in edit autofills, we have to test not only for whether the content has changed, but also if the content hasn't changed, we have to test for whether the final content has duplicates. A change might have been intended. That way, tabbing out of John Smith's edit input will always open a dupe checking dialog. There is a simple workaround, but the user would have to know the ID of the new John Smith and input it like "#5927" instead of inputting "John Smith". Users who happen to remember IDs for duplicate names might be able to use this sometimes, and looking up an ID is easy, but generally the inconvenience of having to look at a simple dialog to clarify which John Smith was meant, each time a role person named John Smith is edited, would be no big deal and would happen rarely.
 '''
+'''
+A tool could be made to do this by running a script but this is how to update the default empty Treebard database manually when structural changes are made to the database. First move the existing empty databases to a different folder for safekeeping (such as recycle bin). The empty databases are d:/treebard_gps/data/settings/default_new_tree.db and d:/treebard_gps/app/default/default_new_tree_untouched.db. Then make file dumps from the working database to the default databases like this: Open the sample_tree (the working database) in the sqlite console and run these commands:
+    .output d:/treebard_gps/data/sample_tree/sample_tree.sql
+    .dump
+    .exit
+Open a console (not sqlite tool) and run this:
+    sqlite3 d:/treebard_gps/data/settings/default_new_tree.db < d:/treebard_gps/data/settings/default_new_tree.sql
+This will create a blank database with empty tables. The empty types tables have to be populated, so delete them and copy the finished versions from the sample tree like this:
+Open the sample tree in the sqlite tool and run this:
+    .output table_dump.sql
+    .dump role_type
+    .dump name_type
+    .dump event_type
+    .dump kin_type
+    .dump color_scheme
+    .exit
+Open default_new_tree.db in the sqlite tool and run:
+    .read table_dump.sql
+    .tables
+Then insert to current a row with current_id = 1, person_id = 1, and color_scheme_id = 1.
+Insert to format table a row with format_id = 1, and values for the default columns of 'courier', 'dejavu sans mono', 12. Make the user values the same.
+Then copy default_new_tree.db to the app/default directory and rename the copy by appending _untouched to the name.
+'''
+
 
 
 
