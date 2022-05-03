@@ -40,7 +40,7 @@ class Test:
                                        version = "%prog 0.1")
 
         parser.add_option("-f","--file",type="string",dest="filename",
-                          default='D:/genealogy databases/gedcom files/todd_boyett_connections.ged',
+                          default='D:/genealogy databases/gedcom files/robertson_rathbun_family_tree.ged',
                           # default='test.ged',
                           help="gedcom file name")
 
