@@ -139,8 +139,8 @@ def parse_line(pk, line, z):
             add_person(pk, data)
         elif tag == "TITL":
             add_source(pk, data)
-        # elif tag in ("HUSB", "WIFE", "CHILD", "SOUR"):
-            # add_family(pk, fk)
+        elif tag in ("HUSB", "WIFE", "CHILD", "SOUR"):
+            add_family(pk, fk, tag)
         parse_next_line(pk, z)
 
 def parse_next_line(person_id, z):
@@ -148,8 +148,14 @@ def parse_next_line(person_id, z):
     # print("line", looky(seeline()).lineno, "z:", z)
     pass
 
-def add_family(pk, fk):
-    pass
+def add_family(pk, fk, tag):
+    if tag == "SOUR":
+        link_source_person(pk, fk)
+
+def link_source_person(pk, fk):
+    fk = int(sub("\D", "", fk))
+    cur.execute(insert_claims_persons, (pk, fk))
+    conn.commit()
 
 def add_source(source_id, title):
     source_id = int(sub("\D", "", source_id))
@@ -238,9 +244,8 @@ conn.close()
 
 
 # DO LIST:
-# COMMIT TO REPO AND START NEW BRANCH. 
+
 # First get FAM, INDI & SOUR level 1 creation lines into the db then the ones in INDI that I forgot, before trying to get level 2+ in, because these levels will include FK refs that won't be valid till the data is in. FAMC and FAMS have to check whether the FK has already been put in and if so they can be ignored. MAKE/POST GEDCOM VIDEO SEE DO LIST. Add a `changed` table to db and a module to the app, or put the code in utes.py. Then write input_changed(). The only right time to handle subordinate lines is nested inside the for loops that handle the level 1 tags see parse_next_line
-# the UNIQUE constraint for sources col in db is prob wrong, get rid of it everywhere
 # After it becomes possible to input subordinate lines, change to a larger db that has SUBM, NOTE etc level 0 tags
 # Replace switch statements with dicts
 # Fix the names input code to handle multiple names. Put alt names back in that I stripped out earlier (see Jimmy, Grace, Lora in unfixed .ged file). From the docs:
