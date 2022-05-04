@@ -1,8 +1,31 @@
 # query_strings_gedcom.py
 
-insert_person = '''
-    INSERT INTO person (person_id)
-    VALUES (?)
+delete_person_all = '''
+    DELETE FROM person
+    WHERE person_id != 1
+'''
+
+delete_name_all = '''
+    DELETE FROM name
+    WHERE person_id != 1
+'''
+
+delete_finding_all = '''
+    DELETE FROM finding
+'''
+
+delete_source_all = '''
+    DELETE FROM source
+'''
+
+insert_finding_birth = '''
+    INSERT INTO finding (date, date_sorter, nest0, event_type_id, person_id)
+    VALUES ('-0000-00-00-------', '0, 0, 0,', 1, 1, ?)    
+'''
+
+insert_finding_default_person = '''
+    INSERT INTO finding (finding_id, date, date_sorter, nest0, event_type_id, person_id)
+    VALUES (1, '-0000-00-00-------', '0, 0, 0,', 1, 1, 1)    
 '''
 
 insert_name = '''
@@ -10,8 +33,31 @@ insert_name = '''
     VALUES (?, ?, 1, ?)
 '''
 
+insert_person = '''
+    INSERT INTO person (person_id)
+    VALUES (?)
+'''
+
+insert_source = '''
+    INSERT INTO source 
+    VALUES (?, ?)
+'''
+
+update_gender_default_person = '''
+    UPDATE person
+    SET gender = 'unknown'
+    WHERE person_id = 1
+'''
+
 update_name = '''
     UPDATE name 
     SET (names, sort_order) = (?, ?)
+    WHERE person_id = 1
+'''
+
+update_name_default_person = '''
+    UPDATE name
+    SET (names, name_type_id, sort_order) = 
+        ('person #1', 24, 'person #1')
     WHERE person_id = 1
 '''

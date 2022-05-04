@@ -71,6 +71,6 @@ records_dict = {'HEAD': {'HEAD': [[1, 'SOUR', 'FAMILY_HISTORIAN'], [2, 'VERS', '
 
 'OBJE': {}, 'NOTE': {}, 'REPO': {}, 
 
-'SOUR': {'@S2@': [[1, 'TITL', 'Biloxi Daily Herald, Gulfport-Biloxi-Mississippi Coast'], [1, '_TYPE', 'newspaper'], [1, 'CHAN'], [2, 'DATE', '17 AUG 2015'], [3, 'TIME', '18:13:09']], '@S3@': [[1, 'TITL', 'newspaper clipping'], [1, '_TYPE', 'newspaper'], [1, 'CHAN'], [2, 'DATE', '17 AUG 2015'], [3, 'TIME', '18:41:58']], '@S4@': [[1, 'TITL', 'Daniel Thornton'], [1, '_TYPE', 'correspondent'], [1, 'CHAN'], [2, 'DATE', '17 AUG 2015'], [3, 'TIME', '20:05:22']], '@S5@': [[1, 'TITL', 'Salem Cemetery, transcriptions by Bennie and Lance White, February 1999'], [1, '_TYPE', 'cemetery transcriptions'], [1, 'CHAN'], [2, 'DATE', '17 AUG 2015'], [3, 'TIME', '20:30:34']]}, 
+'SOUR': {'@S2@': [[1, 'TITL', 'Biloxi Daily Herald, Gulfport-Biloxi-Mississippi Coast'], [1, 'CHAN'], [2, 'DATE', '17 AUG 2015'], [3, 'TIME', '18:13:09']], '@S3@': [[1, 'TITL', 'newspaper clipping'], [1, 'CHAN'], [2, 'DATE', '17 AUG 2015'], [3, 'TIME', '18:41:58']], '@S4@': [[1, 'TITL', 'Daniel Thornton'], [1, 'CHAN'], [2, 'DATE', '17 AUG 2015'], [3, 'TIME', '20:05:22']], '@S5@': [[1, 'TITL', 'Salem Cemetery, transcriptions by Bennie and Lance White, February 1999'], [1, 'CHAN'], [2, 'DATE', '17 AUG 2015'], [3, 'TIME', '20:30:34']]}, 
 
 'SUBM': {}}
