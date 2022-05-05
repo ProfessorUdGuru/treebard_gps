@@ -1,6 +1,7 @@
 # opening.py
 
 import tkinter as tk
+from tkinter import filedialog
 import sqlite3
 from os import listdir, path
 from os.path import isfile, join
@@ -10,8 +11,9 @@ from widgets import (
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from PIL import Image, ImageTk
+from gedcom_import import GedcomExceptions
 from files import (
-    open_tree, make_tree, import_gedcom, open_sample, app_path, global_db_path,
+    open_tree, make_tree, open_sample, app_path, global_db_path, current_drive,
     get_current_file, set_closing, change_tree_title, filter_tree_title)
 from messages import opening_msg
 from messages_context_help import opening_dlg_help_msg
@@ -111,8 +113,7 @@ class SplashScreen(Toplevel):
         importgedcom = Button(
             buttonbox, 
             text='IMPORT',
-            command=lambda: import_gedcom(
-                self.master, open_message, opening_msg[2]))
+            command=self.import_gedcom)   
         importgedcom.grid(column=2, row=0, padx=24, pady=24)
 
         opensample = Button(
@@ -163,7 +164,6 @@ class SplashScreen(Toplevel):
             self.opening_dialog.rc_menu,
             opening_dlg_help_msg)
 
-        # config_generic(self.opening_dialog)
         configall(self.opening_dialog, self.treebard.formats)
         self.master.wait_window(self.opening_dialog)
         self.store_last_openpic()
@@ -256,4 +256,23 @@ class SplashScreen(Toplevel):
                 break
             else:
                 p += 1
+
+    def import_gedcom(self):
+        self.close_dialog()
+
+        init_dir = "{}treebard_gps/etc".format(current_drive)
+        open_dialog = filedialog.askopenfilename(
+        initialdir = init_dir,
+        title = 'Select GEDCOM File to Open', 
+        defaultextension = ".ged", 
+        filetypes=(
+            ('GEDCOM files','*.ged'),
+            ('all files','*.*')))
+        if len(open_dialog) == 0:
+            return
+
+        self.treebard.import_file = open_dialog  
+        gedcom_import_exceptions = GedcomExceptions(self.master, self.treebard) 
+        # self.treebard.gedcom_import_exceptions = GedcomExceptions(self.master, self.treebard)
+        
 

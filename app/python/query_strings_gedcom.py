@@ -18,6 +18,11 @@ delete_source_all = '''
     DELETE FROM source
 '''
 
+insert_claims_person = '''
+    INSERT INTO claim (person_id, source_id)
+    VALUES (?, ?)
+'''
+
 insert_finding_birth = '''
     INSERT INTO finding (date, date_sorter, nest0, event_type_id, person_id)
     VALUES ('-0000-00-00-------', '0, 0, 0,', 1, 1, ?)    

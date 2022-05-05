@@ -1,0 +1,786 @@
+﻿0 HEAD
+1 SOUR FAMILY_HISTORIAN
+2 VERS 6.2.6
+2 NAME Family Historian
+2 CORP Calico Pie Limited
+1 FILE D:\genealogy databases\gedcom files\todd_boyett_connections.ged
+1 GEDC
+2 VERS 5.5
+2 FORM LINEAGE-LINKED
+2 _VAR DSR
+1 CHAR UTF-8
+1 _UID {E4A611B8-0E4F-4867-A892-5B143B0F6551}
+0 @I4@ INDI
+1 NAME David /Todd/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 SEX M
+1 RESI
+2 DATE 1962
+2 PLAC Meridian, Lauderdale County, Mississippi
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 RESI
+2 DATE 1962
+2 PLAC Gulfport, Harrison County, Mississippi
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 RESI
+2 DATE 1985
+2 PLAC Gulfport, Harrison County, Mississippi
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 FAMC @F2@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:56:36
+0 @I5@ INDI
+1 NAME Samuel F. /Todd/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 SEX M
+1 BIRT
+2 DATE 27 JAN 1882
+2 PLAC Butler, Choctaw County, Alabama
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 RESI
+2 DATE FROM 1959 TO 1962
+2 PLAC 544 Camp Avenue, Gulfport, Harrison County, Mississippi
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 OCCU retired Baptist minister
+2 DATE 1962
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 OCCU carpenter
+2 DATE 1962
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 RELI First Baptist Church of Meridian
+2 DATE 1962
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 RELI Baptist Brotherhood
+2 DATE 1962
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 DEAT
+2 DATE 9 SEP 1962
+2 PLAC Memorial Hospital, Gulfport, Harrison County, Mississippi
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+2 SOUR @S5@
+3 PAGE http://www.whitesstore.com/salem.htm
+2 NOTE funeral home marker: 80 years, 7 months, 12 days; concrete stone is unreadable except "1882"
+1 BURI
+2 DATE 10 SEP 1962
+2 PLAC Salem Methodist Church Cemetery, Quitman, Clarke County, Mississippi
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+2 SOUR @S5@
+3 PAGE http://www.whitesstore.com/salem.htm
+2 NOTE Riemann Funeral Home, Gulfport, Mississipi to Walters Funeral Home, Quitman, Mississippi
+1 FAMS @F2@
+1 FAMS @F5@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:52:03
+0 @I6@ INDI
+1 NAME Nora Naomi /Hill/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 NAME 
+2 _USED Naomi
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 SEX F
+1 RESI
+2 DATE (at time of her death)
+2 PLAC Pass Christian, Harrison County, Mississippi
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 DEAT
+2 DATE 1985
+2 PLAC Pass Christian, Harrison County, Mississippi
+2 AGE 79y
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 BURI
+2 DATE 11 FEB 1985
+2 PLAC Salem Cemetery
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+2 NOTE Since "Wright's Funeral Home", "Rev. O. F. Grisham", and "Salem Cemetery" are all given without further explanation,  and the three names are all local to Clarke County, Mississippi, the newspaper clipping of her obituary has to be from Clarke C
+3 CONC ounty or nearby. Based on this I also think she is buried in the same Salem Cemetery as her husband and daughter. Her husband was brought there all the way from Gulfport so she might have been also. There is no Salem Cemetery in Gulfport-Biloxi.
+1 FAMC @F7@
+1 FAMS @F2@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:13:56
+0 @I7@ INDI
+1 NAME James /Todd/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 NAME Jimmy /Todd/
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 SEX M
+1 EVEN
+2 TYPE Military Service
+2 DATE 1962
+2 PLAC San Diego, California
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+2 NOTE U. S. Navy
+1 RESI
+2 DATE 1985
+2 PLAC San Diego, California
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 FAMC @F2@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:57:02
+0 @I8@ INDI
+1 NAME Arthur /Todd/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 SEX M
+1 RESI
+2 DATE 1962
+2 PLAC Gulfport, Harrison County, Mississippi
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 RESI
+2 DATE 1985
+2 PLAC Gulfport, Harrison County, Mississippi
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 FAMC @F2@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:57:11
+0 @I9@ INDI
+1 NAME Curtis /Todd/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 SEX M
+1 RESI
+2 DATE 1962
+2 PLAC Gulfport, Harrison County, Mississippi
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 RESI
+2 DATE 1985
+2 PLAC Gulfport, Harrison County, Mississippi
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 FAMC @F2@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:57:20
+0 @I10@ INDI
+1 NAME Joe /Todd/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 SEX M
+1 RESI
+2 DATE 1962
+2 PLAC Gulfport, Harrison County, Mississippi
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 RESI
+2 DATE 1985
+2 PLAC Gulfport, Harrison County, Mississippi
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 FAMC @F2@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:57:26
+0 @I11@ INDI
+1 NAME Elsie /Todd/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 SEX F
+1 RESI
+2 DATE 1962
+2 PLAC Elizabeth City, Pasquotank County, North Carolina
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 RESI
+2 DATE 1985
+2 PLAC Belle Glade, Palm Beach County, Florida
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 FAMC @F2@
+1 FAMS @F3@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:59:12
+0 @I12@ INDI
+1 NAME _____ /Mixon/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 SEX M
+1 FAMS @F3@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:21:27
+0 @I13@ INDI
+1 NAME Helen /Todd/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 SEX F
+1 RESI
+2 DATE 1962
+2 PLAC Bessemer, Jefferson County, Alabama
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 RESI
+2 DATE 1985
+2 PLAC Bessemer, Jefferson County, Alabama
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 FAMC @F2@
+1 FAMS @F4@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:58:41
+0 @I14@ INDI
+1 NAME _____ /Creel/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 SEX M
+1 FAMS @F4@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:23:09
+0 @I15@ INDI
+1 NAME _____ /_____/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 SEX F
+1 FAMS @F5@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:25:01
+0 @I16@ INDI
+1 NAME Annie Mae /Todd/
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 SEX F
+1 RESI
+2 DATE 1962
+2 PLAC Bay Springs, Jasper County, Mississippi
+2 SOUR @S2@
+3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 RESI
+2 DATE 1985
+2 PLAC Moss, Jasper County, Mississippi
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 FAMC @F5@
+1 FAMS @F6@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:16:09
+0 @I17@ INDI
+1 NAME _____ /Graham/
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 SEX M
+1 FAMS @F6@
+1 SOUR @S3@
+2 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 19:52:10
+0 @I18@ INDI
+1 NAME William Milton /Hill/
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 SEX M
+1 OCCU wood dealer
+2 DATE 1917
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 DEAT
+2 DATE 1917
+2 CAUS a fellow struck him with an axe while he was walking home
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+2 NOTE A descendant has a newspaper article, "probably Demopolis, Alabama".
+1 FAMS @F7@
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:22:59
+0 @I20@ INDI
+1 NAME Lilly Ruth /Hill/
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 SEX F
+1 RESI
+2 DATE 1985
+2 PLAC Meridian, Lauderdale County, Mississippi
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 FAMC @F7@
+1 FAMS @F8@
+1 SOUR @S3@
+2 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:13:48
+0 @I21@ INDI
+1 NAME _____ /Reynolds/
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 SEX M
+1 FAMS @F8@
+1 SOUR @S3@
+2 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 19:58:28
+0 @I22@ INDI
+1 NAME Opal Lee /Hill/
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 SEX F
+1 RESI
+2 DATE 1985
+2 PLAC Quitman, Clarke County, Mississippi
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 FAMC @F7@
+1 FAMS @F9@
+1 SOUR @S3@
+2 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:13:19
+0 @I23@ INDI
+1 NAME _____ /Robinson/
+2 SOUR @S3@
+3 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 SEX M
+1 FAMS @F9@
+1 SOUR @S3@
+2 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 19:59:51
+0 @I24@ INDI
+1 NAME Lula /Hardin/
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 SEX F
+1 FAMS @F7@
+1 SOUR @S4@
+2 PAGE findagrave member no. 48611078
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:19:03
+0 @I25@ INDI
+1 NAME Willie /Hill/
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 SEX F
+1 FAMC @F7@
+1 SOUR @S4@
+2 PAGE findagrave member no. 48611078
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:19:35
+0 @I26@ INDI
+1 NAME Woodrow /Hill/
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 SEX M
+1 FAMC @F7@
+1 SOUR @S4@
+2 PAGE findagrave member no. 48611078
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:19:44
+0 @I27@ INDI
+1 NAME Anna /Hill/
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 SEX F
+1 FAMC @F7@
+1 SOUR @S4@
+2 PAGE findagrave member no. 48611078
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:20:08
+0 @I28@ INDI
+1 NAME Vera /Hill/
+2 SOUR @S4@
+3 PAGE findagrave member no. 48611078
+1 SEX F
+1 FAMC @F7@
+1 SOUR @S4@
+2 PAGE findagrave member no. 48611078
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:20:15
+0 @I29@ INDI
+1 NAME Lora Grace /Todd/
+2 _USED Grace
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 NAME Grace /Todd/
+2 SOUR @S5@
+3 PAGE http://www.whitesstore.com/salem.htm
+1 SEX F
+1 BIRT
+2 DATE 19 AUG 1932
+2 PLAC Vossburg, Jasper County, Mississippi
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 RESI
+2 DATE FROM 1960 TO 1962
+2 PLAC Gulfport, Harrison County, Mississippi
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 DEAT
+2 DATE 25 JUN 1962
+2 PLAC Gulfport, Harrison County, Mississippi
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 BURI
+2 DATE 27 JUN 1962
+2 PLAC Salem Methodist Church Cemetery, Quitman, Clarke County, Mississippi
+2 SOUR @S5@
+3 PAGE http://www.whitesstore.com/salem.htm
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+2 NOTE Lang Funeral Home; concrete stone eroded, unreadable
+1 FAMC @F2@
+1 FAMS @F10@
+1 SOUR @S5@
+2 PAGE http://www.whitesstore.com/salem.htm
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 21:02:37
+0 @I30@ INDI
+1 NAME _____ /Smith/
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 SEX M
+1 FAMS @F10@
+1 SOUR @S2@
+2 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:48:07
+0 @I31@ INDI
+1 NAME Bobbie Jean /Smith/
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 SEX F
+1 RESI
+2 DATE 1962
+2 PLAC Montrose, Jasper County, Mississippi
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 FAMC @F10@
+1 SOUR @S2@
+2 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:54:24
+0 @I32@ INDI
+1 NAME Grace Patsy /Smith/
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 SEX F
+1 RESI
+2 DATE 1962
+2 PLAC Montrose, Jasper County, Mississippi
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 FAMC @F10@
+1 SOUR @S2@
+2 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:54:36
+0 @I33@ INDI
+1 NAME Samuel F. /Todd/
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 SEX M
+1 RESI
+2 DATE 1962
+2 PLAC Detroit, Michigan
+2 SOUR @S2@
+3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 FAMC @F2@
+1 SOUR @S2@
+2 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:58:18
+0 @F2@ FAM
+1 HUSB @I5@
+1 WIFE @I6@
+1 CHIL @I4@
+1 CHIL @I7@
+1 CHIL @I8@
+1 CHIL @I9@
+1 CHIL @I10@
+1 CHIL @I11@
+1 CHIL @I13@
+1 CHIL @I29@
+1 CHIL @I33@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:57:54
+0 @F3@ FAM
+1 HUSB @I12@
+1 WIFE @I11@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:21:23
+0 @F4@ FAM
+1 HUSB @I14@
+1 WIFE @I13@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:23:03
+0 @F5@ FAM
+1 HUSB @I5@
+1 WIFE @I15@
+1 CHIL @I16@
+1 SOUR @S2@
+2 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:25:08
+0 @F6@ FAM
+1 HUSB @I17@
+1 WIFE @I16@
+1 SOUR @S3@
+2 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 19:52:03
+0 @F7@ FAM
+1 HUSB @I18@
+1 WIFE @I24@
+1 CHIL @I6@
+1 CHIL @I20@
+1 CHIL @I22@
+1 CHIL @I25@
+1 CHIL @I26@
+1 CHIL @I27@
+1 CHIL @I28@
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:20:10
+0 @F8@ FAM
+1 HUSB @I21@
+1 WIFE @I20@
+1 SOUR @S3@
+2 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 19:58:23
+0 @F9@ FAM
+1 HUSB @I23@
+1 WIFE @I22@
+1 SOUR @S3@
+2 PAGE "MRS. NORA NAOMI TODD", obituary, date and place of publication unknown
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 19:59:42
+0 @F10@ FAM
+1 HUSB @I30@
+1 WIFE @I29@
+1 CHIL @I31@
+1 CHIL @I32@
+1 SOUR @S2@
+2 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:53:15
+0 @S2@ SOUR
+1 TITL Biloxi Daily Herald, Gulfport-Biloxi-Mississippi Coast
+1 _TYPE newspaper
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:13:09
+0 @S3@ SOUR
+1 TITL newspaper clipping
+1 _TYPE newspaper
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:41:58
+0 @S4@ SOUR
+1 TITL Daniel Thornton
+1 _TYPE correspondent
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:05:22
+0 @S5@ SOUR
+1 TITL Salem Cemetery, transcriptions by Bennie and Lance White, February 1999
+1 _TYPE cemetery transcriptions
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:30:34
+0 @P1@ _PLAC Meridian, Lauderdale County, Mississippi
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:09:01
+0 @P2@ _PLAC Memorial Hospital, Gulfport, Harrison County, Mississippi
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:10:49
+0 @P3@ _PLAC 544 Camp Avenue, Gulfport, Harrison County, Mississippi
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:11:53
+0 @P4@ _PLAC Butler, Choctaw County, Alabama
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:15:37
+0 @P5@ _PLAC San Diego, California
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:17:24
+0 @P6@ _PLAC Gulfport, Harrison County, Mississippi
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:18:20
+0 @P7@ _PLAC Elizabeth City, Pasquotank County, North Carolina
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:21:53
+0 @P8@ _PLAC Bessemer, Jefferson County, Alabama
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:23:29
+0 @P9@ _PLAC Bay Springs, Jasper County, Mississippi
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 18:25:34
+0 @P11@ _PLAC Salem Methodist Church Cemetery, Quitman, Clarke County, Mississippi
+1 NOTE a.k.a. Brashier Community Methodist Church
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 21:03:30
+0 @P12@ _PLAC Salem Cemetery
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 19:37:56
+0 @P13@ _PLAC Pass Christian, Harrison County, Mississippi
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 19:39:43
+0 @P14@ _PLAC Belle Glade, Palm Beach County, Florida
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 19:47:43
+0 @P15@ _PLAC Moss, Jasper County, Mississippi
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 19:56:40
+0 @P16@ _PLAC Quitman, Clarke County, Mississippi
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:01:21
+0 @P17@ _PLAC Vossburg, Jasper County, Mississippi
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:50:59
+0 @P18@ _PLAC Montrose, Jasper County, Mississippi
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:54:24
+0 @P19@ _PLAC Detroit, Michigan
+1 CHAN
+2 DATE 17 AUG 2015
+3 TIME 20:58:18
+0 TRLR

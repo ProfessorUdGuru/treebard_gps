@@ -3,8 +3,7 @@
 from sys import argv
 from os import path, rename, mkdir, listdir
 from shutil import copy2
-from tkinter import (
-    messagebox, filedialog, Label, Entry, StringVar, Frame, Button)
+from tkinter import messagebox, filedialog
 from PIL import Image, ImageTk
 import sqlite3
 from query_strings import (
@@ -111,7 +110,7 @@ def open_tree(treebard, dialog=None):
     '''
 
     open_dialog = filedialog.askopenfilename(
-        initialdir=init_dir,
+        initialdir = init_dir,
         title = 'Select Tree to Open', 
         defaultextension = ".tbd", 
         filetypes=(

@@ -68,7 +68,6 @@ def get_opening_settings():
     cur = conn.cursor()
     cur.execute(select_color_scheme_current_id)
     color_scheme_id = cur.fetchone()
-    print("line", looky(seeline()).lineno, "color_scheme_id:", color_scheme_id)
     if color_scheme_id is None:
         cur.close()
         conn.close()
@@ -80,12 +79,10 @@ def get_opening_settings():
         conn.close()
         return default_formats
     else:
-        # user_formats = get_current_formats(color_scheme_id[0])
         cur.execute(select_color_scheme_by_id, color_scheme_id)
         color_scheme = list(cur.fetchone())
         cur.execute(select_format_font_scheme)
         font_scheme = list(cur.fetchone()[0:2])
-        print("line", looky(seeline()).lineno, "font_scheme:", font_scheme)
         user_formats = color_scheme + [INPUT_FONT] + font_scheme
         cur.close()
         conn.close()
@@ -110,8 +107,6 @@ def make_formats_dict():
         and a line below values.append...
     """
     prefs_to_use = list(get_opening_settings())
-    print("line", looky(seeline()).lineno, "prefs_to_use:", prefs_to_use)
-    # prefs_to_use.insert(5, 'dejavu sans mono')
     keys = [
         # background, foreground
         'bg', 'highlight_bg', 'head_bg', 'fg', 
@@ -3971,7 +3966,7 @@ class DropdownMenu(FrameHilited2):
                     mod_key = MOD_KEYS[5]
                 text = "{}    {}+{}".format(lst[0].title(), mod_key, symval.upper())
             elif len(symval) == 0:
-                text = "{}    {}".format(lst[0].title(), " ")
+                text = "{}    {}".format(lst[0], " ")
             else:
                 print("line", looky(seeline()).lineno, "case not handled:")
 
@@ -4520,7 +4515,7 @@ bgHilite = (
     "FrameHilited", "FrameHilited3", "FrameHilited4","CanvasHilited", 
     "TitleBarButtonSolidBG", "Entry", "Text", "ComboArrow",  
     "ButtonFlatHilited", "LabelHeader", "LabelHilited3", "EntryAutoHilited", 
-    "EntryAutoPersonHilited") 
+    "EntryAutoPersonHilited", ) 
 fG = (
     "LabelTip2", "ButtonFlatHilited", "LabelHeader", "Entry",
     "ComboArrow", "EntryAutoPersonHilited", "EntryAutoHilited")
@@ -4528,7 +4523,8 @@ fontH2 = ("LabelH2", )
 fontH3 = ("LabelH3", "LabelHeader", )
 fontBoilerplate = ("ButtonQuiet", )
 fontIn = (
-    "LabelEntry", "ButtonPlain", "Entry", "Text", "EntryAutoHilited", "EntryAutoPersonHilited")
+    "LabelEntry", "ButtonPlain", "Entry", "Text", "EntryAutoHilited", 
+    "EntryAutoPersonHilited")
 fontOut = (
     "Label", "MessageCopiable", "Button", "Scale", "RadiobuttonBig", 
     "LabelNegative", "ComboArrow")
@@ -4536,18 +4532,19 @@ fontStatus = ("LabelStatusbar", "LabelTip2")
 highlightbackground = ("Scale", )
 highlightcolorHead = ("Scale", )
 insertBgFg = (
-    "Entry", "Text", "EntryAutoHilited", 
-    "EntryAutoPersonHilited")
-selectBgHead = ("Entry", "Text", "EntryAutoHilited", "EntryAutoPersonHilited")
+    "Entry", "Text", "EntryAutoHilited", "EntryAutoPersonHilited")
+selectBgHead = (
+    "Entry", "Text", "EntryAutoHilited", "EntryAutoPersonHilited")
 selectColorBg = ("Checkbutton", )
 selectColorHilite = ("Radiobutton", "RadiobuttonBig")
-selectFg = ("Entry", "Text", "EntryAutoHilited", "EntryAutoPersonHilited")
+selectFg = (
+    "Entry", "Text", "EntryAutoHilited", "EntryAutoPersonHilited")
 troughColorHilite = ("Scale", )
 bgOnly = (
     "Frame", "Canvas", "FrameHilited6", "FontPicker",
     "Dialogue", "TabBook", "PersonSearch", "EditRow",
     "Gallery", "StatusbarTooltips", "EventsTable",
-    "Main", "DatePreferences")
+    "Main", "DatePreferences", "GedcomExceptions", "ScrolledText")
 
 if __name__ == "__main__":
 
