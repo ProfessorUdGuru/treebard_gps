@@ -171,7 +171,6 @@ def get_generic_findings(
     generic_details = [i for i in cur.fetchone()]
     date_prefs = get_date_formats(tree_is_open=1)
     dkt["date"] = format_stored_date(generic_details[3], date_prefs=date_prefs)
-
     dkt["event"], dkt["particulars"], dkt["age"] = generic_details[0:3]
     dkt["sorter"] = split_sorter(generic_details[4])
 

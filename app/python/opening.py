@@ -260,19 +260,20 @@ class SplashScreen(Toplevel):
     def import_gedcom(self):
         self.close_dialog()
 
+        make_tree(self.master, self.treebard, open_input_message2, opening_msg, self.opening_dialog)
+
         init_dir = "{}treebard_gps/etc".format(current_drive)
         open_dialog = filedialog.askopenfilename(
-        initialdir = init_dir,
-        title = 'Select GEDCOM File to Open', 
-        defaultextension = ".ged", 
-        filetypes=(
-            ('GEDCOM files','*.ged'),
-            ('all files','*.*')))
+            initialdir = init_dir,
+            title = 'Select GEDCOM File to Open', 
+            defaultextension = ".ged", 
+            filetypes=(
+                ('GEDCOM files','*.ged'),
+                ('all files','*.*')))
         if len(open_dialog) == 0:
             return
 
         self.treebard.import_file = open_dialog  
         gedcom_import_exceptions = GedcomExceptions(self.master, self.treebard) 
-        # self.treebard.gedcom_import_exceptions = GedcomExceptions(self.master, self.treebard)
         
 

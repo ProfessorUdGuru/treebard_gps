@@ -4,8 +4,10 @@ import tkinter as tk
 import dev_tools as dt
 from dev_tools import looky, seeline
 
-# should be used to create date sorters everywhere
+
+
 def split_sorter(date):
+    """ Create date sorter. """
     sorter = date.split(",")
     date = [int(i) for i in sorter]
     return date

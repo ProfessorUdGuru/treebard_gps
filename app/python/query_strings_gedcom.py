@@ -25,12 +25,12 @@ insert_claims_person = '''
 
 insert_finding_birth = '''
     INSERT INTO finding (date, date_sorter, nest0, event_type_id, person_id)
-    VALUES ('-0000-00-00-------', '0, 0, 0,', 1, 1, ?)    
+    VALUES ('-0000-00-00-------', '0, 0, 0', 1, 1, ?)    
 '''
 
 insert_finding_default_person = '''
     INSERT INTO finding (finding_id, date, date_sorter, nest0, event_type_id, person_id)
-    VALUES (1, '-0000-00-00-------', '0, 0, 0,', 1, 1, 1)    
+    VALUES (1, '-0000-00-00-------', '0, 0, 0', 1, 1, 1)    
 '''
 
 insert_name = '''

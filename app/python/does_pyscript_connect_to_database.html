@@ -1,0 +1,39 @@
+<!-- does_pyscript_connect_to_database -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+	<py-env>
+		- sqlite3
+		- random
+
+	</py-env>
+</head>
+<body>
+
+<h1>Heading</h1>
+<p>paragraph</p>
+<py-script>
+import random
+
+num = random.randint(1,100)
+
+print(f"The number is {num}")
+
+for i in range(1,11):
+	print(f"{i} * {num} = {i*num}")
+
+import sqlite3
+conn = sqlite3.connect("D:\\treebard_gps\\data\\gedcom_import_001\\gedcom_import_001.tbd")
+cur = conn.cursor()
+cur.execute("SELECT * FROM event_type")
+x = cur.fetchall()
+print(x)
+cur.close()
+conn.close()
+</py-script>
+
+</body>
+</html> 

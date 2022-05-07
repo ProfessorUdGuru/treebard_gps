@@ -21,7 +21,7 @@ from files import current_drive, get_current_file
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
     Radiobutton, LabelFrame, Border, TabBook, Scrollbar, fix_tab_traversal,
-    EntryAutoPerson, EntryAutoPersonHilited, FontPicker, redraw_person_tab)
+    EntryAutoPerson, EntryAutoPersonHilited, FontPicker, redraw_person_tab, open_message)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips   
 from families import NuclearFamiliesTable
@@ -29,6 +29,7 @@ from events_table import EventsTable
 from dates import DatePreferences, OK_MONTHS, get_date_formats
 from gallery import Gallery
 from colorizer import Colorizer
+from messages import main_msg
 from messages_context_help import main_help_msg
 from persons import (
     make_all_names_dict_for_person_select, check_name, get_original,
@@ -167,6 +168,7 @@ class Main(FrameStay):
         fix_tab_traversal(self.nukefam_table, self.findings_table)
 
         current_file, current_dir = get_current_file()
+        print("line", looky(seeline()).lineno, "current_file:", current_file)
         # this does not run on redraw_person_tab, just on load
         if len(current_dir) != 0:
             self.show_top_pic(current_file, current_dir, self.current_person)
@@ -446,6 +448,8 @@ class Main(FrameStay):
 
     def get_current_values(self):
         self.current_person_name = self.person_autofill_values[self.current_person][0]["name"]
+        print("line", looky(seeline()).lineno, "self.current_person_name:", self.current_person_name)
+       
         self.current_person_label.config(
             text="Current Person (ID): {} ({})".format(
                 self.current_person_name, self.current_person))
@@ -464,9 +468,26 @@ class Main(FrameStay):
 
     def change_person(self):
 
-        name_data = check_name(ent=self.person_entry)
+        def err_done1(entry, msg):
+            entry.delete(0, 'end')
+            msg1[0].grab_release()
+            msg1[0].destroy()
+            entry.focus_set()
 
-        if name_data == "add_new_person":
+        name_data = check_name(ent=self.person_entry)
+        print("line", looky(seeline()).lineno, "name_data:", name_data)
+        if name_data is None:
+            msg1 = open_message(
+                self, 
+                main_msg[0], 
+                "Person Name Unknown", 
+                "OK")
+            msg1[0].grab_set()
+            msg1[2].config(
+                command=lambda entry=self.person_entry, msg=msg1: err_done1(
+                    entry, msg))
+            return
+        elif name_data == "add_new_person":
             old_current_person = self.current_person
             self.current_person = open_new_person_dialog(
                 self, self.person_entry, self.root, self.treebard, 
@@ -512,8 +533,7 @@ class Main(FrameStay):
             two hours to get around to trying something so weird because SQLite
             has never let me down before, however I suspect it might have been
             Pillow that was trying to use a cached value, not SQLite. Or it
-            could be my mistake that I haven't found yet, in which don't save
-            the weird procedure/comments below.
+            could be my mistake that I haven't found yet.
         """
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()

@@ -2,6 +2,7 @@
 import tkinter as tk
 import sqlite3
 from re import sub
+from files import get_current_file
 from widgets import (
     Toplevel, Frame, Button,  LabelH2, Label, ScrolledText,
     configall, Border, Scrollbar, make_formats_dict, Text)
@@ -22,8 +23,7 @@ from dev_tools import looky, seeline
 
 
 
-conn = sqlite3.connect("d:/treebard_gps/data/gedcom_import_001/gedcom_import_001.tbd")
-cur = conn.cursor()
+
 
 # tags which can occur at level 0
 ZERO_LEVEL_TAGS = ("HEAD", "TRLR", "FAM", "INDI", "OBJE", "NOTE", "REPO", "SOUR", "SUBM")
@@ -35,167 +35,12 @@ ELEMS2 = ("HEAD", "GEDC", "PLAC")
 # tags whose lines should have only 2 elements, unless the 3rd element is "Y":
 ELEMS2Y = ("BIRT", "DEAT", "CHR", "MARR")
 
-# line_lists = []
-# def read_gedcom(file):
-    # """ The `encoding` parameter in `open()` strips `ï»¿` from the front of the 
-        # first line.
-    # """
-    # # print("line", looky(seeline()).lineno, "file:", file)
-    # f = open(file, "r", encoding='utf-8-sig')
-    # for line_text in f.readlines():
-        # lst = line_text.strip("\n").split(" ", 2)
-        # lst[0] = int(lst[0])
-        # line_lists.append(lst)
-
-# def validate_lines():
-    # """ Add a 4th element to bad lines. """
-    # for line in line_lists:
-        # length = len(line)
-        # tag = line[1]
-        # if length > 3:
-            # line.append("too_long")
-        # elif length > 2:
-            # if tag in ELEMS2Y:
-                # if line[2] != "Y":
-                    # line.append("too_long_y")
-
-# def delineate_records():
-    # tag0 = None
-    # h = 0
-    # for line in line_lists:
-        # if line[0] == 0:
-            # if line[1] in ("HEAD", "TRLR"):
-                # tag0 = line[1]
-                # h = add_subrecords(line, h, tag0)
-            # elif len(line) > 2:
-                # tag0 = line[2]
-                # h = add_subrecords(line, h, tag0)
-            # else:
-                # print("line", looky(seeline()).lineno, "case not handled:")
-        # else:
-            # pass
-    # # print("line", looky(seeline()).lineno, "records_dict:", records_dict)
-      
-# def add_subrecords(line, h, tag0):
-    # copy = records_dict
-    # pk = line[1]
-    # subrecords = []
-    # j = h + 1
-    # for lst in line_lists[j:]:
-        # if lst[0] > 0:
-            # subrecords.append(lst)
-            # j += 1
-        # else:
-            # break
-    # for k,v in copy.items():
-        # if k == tag0:
-            # records_dict[k][pk] = subrecords            
-    # return j
-
-# def input_persons():
-    # for k,v in records_dict.items():
-        # if k != "INDI":
-            # continue
-        # record = v
-        # for kk, vv in record.items():
-            # person_id = kk
-            # person_data = vv
-            # z = 0
-            # for line in person_data:
-                # parse_line(person_id, line, z)
-                # z += 1
-
-# def input_sources():
-    # for k,v in records_dict.items():
-        # if k != "SOUR":
-            # continue
-        # record = v
-        # for kk, vv in record.items():
-            # source_id = kk
-            # source_data = vv
-            # z = 0
-            # for line in source_data:
-                # parse_line(source_id, line, z)
-                # z += 1
-
-# def input_families():
-    # for k,v in records_dict.items():
-        # if k != "FAM":
-            # continue
-        # record = v
-        # for kk, vv in record.items():
-            # family_id = kk
-            # family_data = vv
-            # z = 0
-            # for line in family_data:
-                # parse_line(family_id, line, z)
-                # z += 1
-
-
-# def parse_line(pk, line, z):
-    # n = line[0]
-    # tag = line[1]
-    # if len(line) == 3:
-        # data = line[2]
-    # if n == 1:
-        # if tag == "NAME":
-            # add_person(pk, data)
-        # elif tag == "TITL":
-            # add_source(pk, data)
-        # elif tag in ("HUSB", "WIFE", "CHILD", "SOUR"):
-            # add_family(pk, data, tag)
-        # parse_next_line(pk, z)
-
-# def parse_next_line(person_id, z):
-    # # print("line", looky(seeline()).lineno, "person_id:", person_id)
-    # # print("line", looky(seeline()).lineno, "z:", z)
-    # pass
-
-# def add_family(pk, data, tag):
-    # if tag == "SOUR":
-        # link_source_famtag(pk, data)
-    # elif tag == "CHILD":
-        # pass
-    # elif tag == "HUSB":
-        # pass
-    # elif tag == "WIFE":
-        # pass
-    # else:
-        # print("line", looky(seeline()).lineno, "tag not handled:", tag)
-
-# def link_source_famtag(pk, data):
-    # fk = int(sub("\D", "", data))
-    # print("line", looky(seeline()).lineno, "pk, data:", pk, data)
-    
-
-# def add_source(source_id, title):
-    # source_id = int(sub("\D", "", source_id))
-    # cur.execute(insert_source, (source_id, title))
-    # conn.commit()    
-
-# def add_person(person_id, name):
-    # person_id = int(sub("\D", "", person_id))
-    # name_list = name.split()
-    # for i in name_list:
-        # if i.startswith("/"):
-            # idx = name_list.index(i)
-            # x = name_list.pop(idx).strip("/")
-            # sorter = list(name_list)
-            # sorter.insert(0, "{},".format(x))
-            # sorter = " ".join(sorter).strip()
-    # if person_id != 1:    
-        # cur.execute(insert_person, (person_id,))
-        # conn.commit()
-        # cur.execute(insert_name, (person_id, name, sorter))
-        # conn.commit()
-        # cur.execute(insert_finding_birth, (person_id,))
-        # conn.commit()
-    # else:
-        # cur.execute(update_name, (name, sorter))
-        # conn.commit()
 
 class GedcomImporter():
     def __init__(self, import_file):
+        current_file = get_current_file()[0]
+        self.conn = sqlite3.connect(current_file)
+        self.cur = self.conn.cursor()
         self.line_lists = []
         self.read_gedcom(import_file)
 
@@ -203,7 +48,6 @@ class GedcomImporter():
         """ The `encoding` parameter in `open()` strips `ï»¿` from the front of the 
             first line.
         """
-        # print("line", looky(seeline()).lineno, "file:", file)
         f = open(file, "r", encoding='utf-8-sig')
         for line_text in f.readlines():
             lst = line_text.strip("\n").split(" ", 2)
@@ -333,8 +177,8 @@ class GedcomImporter():
 
     def add_source(self, source_id, title):
         source_id = int(sub("\D", "", source_id))
-        cur.execute(insert_source, (source_id, title))
-        conn.commit()    
+        self.cur.execute(insert_source, (source_id, title))
+        self.conn.commit()    
 
     def add_person(self, person_id, name):
         person_id = int(sub("\D", "", person_id))
@@ -346,16 +190,18 @@ class GedcomImporter():
                 sorter = list(name_list)
                 sorter.insert(0, "{},".format(x))
                 sorter = " ".join(sorter).strip()
+        name_list.insert(idx, x)
+        name = " ".join(name_list)
         if person_id != 1:    
-            cur.execute(insert_person, (person_id,))
-            conn.commit()
-            cur.execute(insert_name, (person_id, name, sorter))
-            conn.commit()
-            cur.execute(insert_finding_birth, (person_id,))
-            conn.commit()
+            self.cur.execute(insert_person, (person_id,))
+            self.conn.commit()
+            self.cur.execute(insert_name, (person_id, name, sorter))
+            self.conn.commit()
+            self.cur.execute(insert_finding_birth, (person_id,))
+            self.conn.commit()
         else:
-            cur.execute(update_name, (name, sorter))
-            conn.commit()
+            self.cur.execute(update_name, (name, sorter))
+            self.conn.commit()
 
     def make_unique_tag_lists(self):
         for lst in self.line_lists:
@@ -398,24 +244,23 @@ def get_id_type(tag):
         element = elements_dict[tag]
     return element 
 
-def reset_tree():
-    cur.execute(update_gender_default_person)
-    conn.commit()
-    cur.execute(delete_name_all)
-    conn.commit()
-    cur.execute(update_name_default_person)
-    conn.commit()
-    cur.execute(delete_finding_all)
-    conn.commit()
-    cur.execute(insert_finding_default_person)
-    conn.commit()
-    cur.execute(delete_source_all)
-    conn.commit()
-    cur.execute(delete_person_all)
-    conn.commit()
+# # # def reset_tree():
+    # # # cur.execute(update_gender_default_person)
+    # # # conn.commit()
+    # # # cur.execute(delete_name_all)
+    # # # conn.commit()
+    # # # cur.execute(update_name_default_person)
+    # # # conn.commit()
+    # # # cur.execute(delete_finding_all)
+    # # # conn.commit()
+    # # # cur.execute(insert_finding_default_person)
+    # # # conn.commit()
+    # # # cur.execute(delete_source_all)
+    # # # conn.commit()
+    # # # cur.execute(delete_person_all)
+    # # # conn.commit()
 
-cur.close()
-conn.close()
+
 
 # from gedcom_exceptions
 
@@ -446,10 +291,13 @@ class GedcomExceptions(Toplevel):
         self.importer.read_gedcom(self.treebard.import_file)
         self.importer.validate_lines()
         self.importer.delineate_records()
-        # self.importer.input_persons() # DO NOT DELETE **********************
-        # self.importer.input_sources() # DO NOT DELETE **********************
+        self.importer.input_persons() # DO NOT DELETE **********************
+        self.importer.input_sources() # DO NOT DELETE **********************
         self.importer.input_families() # DO NOT DELETE **********************
         self.infolab.config(text="GEDCOM input file: {}".format(self.treebard.import_file))
+
+        self.importer.cur.close()
+        self.importer.conn.close()
 
     def make_widgets(self):
 
@@ -595,19 +443,3 @@ if __name__ == "__main__":
 
 
 
-# DO LIST:
-# there are now 3 things called "import_gedcom" which has to be fixed because I'm confused. 1) in SplashScreen there's a method, 2) in gedcom_import.py there WAS a module-level function which is now commented out but before I started making the new class importer which is not a widget, this worked and was run inside __init__ of the exceptions dialog class, 3) there's a instance level version of the comment function. The reason I started making a class is so that the functions in the module namespace could get access to the ScrolledText widget in the dialog by making the text an attribute of self.treebard which I had no access to in the module namespace.
-# Make the module-level functions into instance-level methods of GedomExceptions class so that adding text to the ScrolledText widget each time something needs to be added is a simple matter of accessing self.
-# When encountering a SOUR tag subordinate to a FAM tag, invoke the GedcomExceptions class which I need to create right now. This will be a dialog that opens up without the user's permission when a GEDCOM finishes loading. The gedcom_exceptions module will have messages such as this one: "The GEDCOM `FAM` tag is used during import to Treebard only to determine relationships of persons within the family. Chances are that if you linked a source to a family in the genealogy software that wrote the imported GEDCOM, you could look at the source again now and manually link it in Treebard to only those persons in the family that are actually elucidated by the source. But it's also probably that you originally linked the source to something other than a family unit when originally inputing the source, and then the software decided to add it to a family unit that was created by the software to match the expectations of GEDCOM's structure. If you know you didn't link sources to family units in the original, then there is nothing for you to do, since the software that created the GEDCOM probably did not delete your original link when creating the family unit expected by GEDCOM."
-# what does the FAM tag accomplish that I also need to accomplish? It provides foreign key references for people related to each other.
-# First get FAM, INDI & SOUR level 1 creation lines into the db then the ones in INDI that I forgot, before trying to get level 2+ in, because these levels will include FK refs that won't be valid till the data is in. FAMC and FAMS have to check whether the FK has already been put in and if so they can be ignored. MAKE/POST GEDCOM VIDEO SEE DO LIST. Add a `changed` table to db and a module to the app, or put the code in utes.py. Then write input_changed(). The only right time to handle subordinate lines is nested inside the for loops that handle the level 1 tags see parse_next_line
-# After it becomes possible to input subordinate lines, change to a larger db that has SUBM, NOTE etc level 0 tags
-# Replace switch statements with dicts
-# Fix the names input code to handle multiple names. Put alt names back in that I stripped out earlier (see Jimmy, Grace, Lora in unfixed .ged file). From the docs:
-# ! Multiple Names:
-    # GEDCOM 5.x requires listing different names in different NAME structures, with the preferred
-    # instance first, followed by less preferred names. However, Personal Ancestral File and other products
-    # that only handle one name may use only the last instance of a name from a GEDCOM transmission.
-    # This causes the preferred name to be dropped when more than one name is present. The same thing
-    # often happens with other multiple-instance tags when only one instance was expected by the receiving
-    # system.

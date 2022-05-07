@@ -168,10 +168,27 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# to open a new file:
-# delete the types tables from the default DB and copy the trees from sample,  types tables are: name_type, event_type, kin_type, role_type
-# insert name type 24, 'placeholder for name', hierarchy 23
-# add a person named "person # 1" to default DB, then add a birth event for the person and "person #1" w/ nametype placeholder in name table.  then copy the default DB to 2 places. If this gambit works so a new tree can open, then add the insert queries to files.py in the make_new() function so this doesn't have to be done manually. Also make a dev docs item for updating default and other empty DBs when making changes to data structure, include above "delete types tables" item and instrux on table dump
+# BRANCH: gedcom_import
+# mousewheel stopped working
+# make new .sql dumps for both the default dbs only
+# maybe combine the 2 classes since the dlg class is where the importer methods are called
+# first open new tree dialog see the user can create a new default blank tree for the gedcom stuff to go into. then run the gedcom import code. then open the exceptions dlg. while import is running, exception text is being appended to a list of dicts. each key is a string (the instructions which will print at top of each section) and each value is a list of strings with each string being an english translation of one line of gedcom that was rejected. Heading text (keys) will be inserted to the ScrolledText as bold text. The exceptions text file will be created before the dialog opens. Change the OK button to a MINIMIZE button and change the CANCEL button to CLOSE.
+# there are now 3 things called "import_gedcom" which has to be fixed because I'm confused. 1) in SplashScreen there's a method, 2) in gedcom_import.py there WAS a module-level function which is now commented out but before I started making the new class importer which is not a widget, this worked and was run inside __init__ of the exceptions dialog class, 3) there's a instance level version of the comment function. The reason I started making a class is so that the functions in the module namespace could get access to the ScrolledText widget in the dialog by making the text an attribute of self.treebard which I had no access to in the module namespace.
+# Make the module-level functions into instance-level methods of GedomExceptions class so that adding text to the ScrolledText widget each time something needs to be added is a simple matter of accessing self.
+# When encountering a SOUR tag subordinate to a FAM tag, invoke the GedcomExceptions class which I need to create right now. This will be a dialog that opens up without the user's permission when a GEDCOM finishes loading. The gedcom_exceptions module will have messages such as this one: "The GEDCOM `FAM` tag is used during import to Treebard only to determine relationships of persons within the family. Chances are that if you linked a source to a family in the genealogy software that wrote the imported GEDCOM, you could look at the source again now and manually link it in Treebard to only those persons in the family that are actually elucidated by the source. But it's also probably that you originally linked the source to something other than a family unit when originally inputing the source, and then the software decided to add it to a family unit that was created by the software to match the expectations of GEDCOM's structure. If you know you didn't link sources to family units in the original, then there is nothing for you to do, since the software that created the GEDCOM probably did not delete your original link when creating the family unit expected by GEDCOM."
+# what does the FAM tag accomplish that I also need to accomplish? It provides foreign key references for people related to each other.
+# First get FAM, INDI & SOUR level 1 creation lines into the db then the ones in INDI that I forgot, before trying to get level 2+ in, because these levels will include FK refs that won't be valid till the data is in. FAMC and FAMS have to check whether the FK has already been put in and if so they can be ignored. MAKE/POST GEDCOM VIDEO SEE DO LIST. Add a `changed` table to db and a module to the app, or put the code in utes.py. Then write input_changed(). The only right time to handle subordinate lines is nested inside the for loops that handle the level 1 tags see parse_next_line
+# After it becomes possible to input subordinate lines, change to a larger db that has SUBM, NOTE etc level 0 tags
+# Replace switch statements with dicts
+# Fix the names input code to handle multiple names. Put alt names back in that I stripped out earlier (see Jimmy, Grace, Lora in unfixed .ged file). From the docs:
+# ! Multiple Names:
+    # GEDCOM 5.x requires listing different names in different NAME structures, with the preferred
+    # instance first, followed by less preferred names. However, Personal Ancestral File and other products
+    # that only handle one name may use only the last instance of a name from a GEDCOM transmission.
+    # This causes the preferred name to be dropped when more than one name is present. The same thing
+    # often happens with other multiple-instance tags when only one instance was expected by the receiving
+    # system.
+
 
 # BRANCH: families_table_finish
 # after adding a father to a blank field, the curr per doesn't appear as the new father's offspring

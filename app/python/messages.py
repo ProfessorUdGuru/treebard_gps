@@ -14,9 +14,9 @@ places_err = (
 )
 
 main_msg = (
-    "When typing a duplicately-existing name into an autofill, keep typing "
-        "till the Dupe Name Selection dialog opens, or type #ID in autofill "
-        "if you know the person's unique ID.",
+    "To create a new person in a person autofill field, type a plus sign after the "
+        "name of the new person. If you type the plus sign within the name, it will "
+        "be moved automatically to the end of the name. ",
 )
 
 events_msg = (
@@ -153,9 +153,10 @@ colorizer_msg = (
 
 families_msg = (
     "",
-    "To create a new person in a person autofill field, type a plus sign after the "
-        "name of the new person. If you type the plus sign within the name, it will "
-        "be moved automatically to the end of the name. ",
+    main_msg[0],
+    # "To create a new person in a person autofill field, type a plus sign after the "
+        # "name of the new person. If you type the plus sign within the name, it will "
+        # "be moved automatically to the end of the name. ",
     # "To change an existing parent, delete the parent and tab out, then add a "
         # "parent to the blank field.",
 )

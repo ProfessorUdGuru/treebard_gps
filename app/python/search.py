@@ -473,7 +473,7 @@ class PersonSearch(Toplevel):
         self.found_person = unique_match[0]
         self.row_list.append(self.found_person)
         self.other_names = unique_match[1]
-
+        print("line", looky(seeline()).lineno, "self.person_autofill_values:", self.person_autofill_values)
         self.display_name = self.person_autofill_values[self.found_person][0]["name"]
 
         self.row_list.append(self.display_name)

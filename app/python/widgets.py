@@ -4334,6 +4334,8 @@ def redraw_current_person_area(
     main_window.person_entry.delete(0, 'end')
     main_window.show_top_pic(current_file, current_dir, current_person)
     main_window.person_entry.current_id = None
+    print("line", looky(seeline()).lineno, "current_file:", current_file)
+    print("line", looky(seeline()).lineno, "current_name:", current_name)
     main_window.current_person_name = current_name
     main_window.current_person_label.config(
         text="Current Person (ID): {} ({})".format(current_name, current_person))

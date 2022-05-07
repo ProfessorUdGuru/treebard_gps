@@ -124,7 +124,8 @@ def make_all_names_dict_for_person_select():
                 c += 1
             b += 1
         a += 1
-
+    print("line", looky(seeline()).lineno, "current_file:", current_file)
+    # print("line", looky(seeline()).lineno, "person_autofill_values:", person_autofill_values)
     return person_autofill_values
 
 person_autofill_values = make_all_names_dict_for_person_select()
@@ -618,7 +619,6 @@ class PersonAdd(Toplevel):
 
         cur.execute(insert_images_elements, (self.img_id, self.new_person_id))
         conn.commit()
-
         cur.execute(insert_finding_birth_new_person, (self.new_person_id,))
         conn.commit()
         new_name_string = self.full_name
