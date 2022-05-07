@@ -169,10 +169,9 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: gedcom_import
-# mousewheel stopped working
-# make new .sql dumps for both the default dbs only
-# maybe combine the 2 classes since the dlg class is where the importer methods are called
-# first open new tree dialog see the user can create a new default blank tree for the gedcom stuff to go into. then run the gedcom import code. then open the exceptions dlg. while import is running, exception text is being appended to a list of dicts. each key is a string (the instructions which will print at top of each section) and each value is a list of strings with each string being an english translation of one line of gedcom that was rejected. Heading text (keys) will be inserted to the ScrolledText as bold text. The exceptions text file will be created before the dialog opens. Change the OK button to a MINIMIZE button and change the CANCEL button to CLOSE.
+# first open new tree dialog so the user can create a new default blank tree for the gedcom stuff to go into. then run the gedcom import code. while import is running, exception text is being appended to a list of dicts. each key is a string (the instructions which will print at top of each section) and each value is a list of strings with each string being an english translation of one line of gedcom that was rejected. The exceptions text file will be created before the dialog opens. then open the exceptions dlg. 
+# text shd be read only
+# Change the OK button to a MINIMIZE button and change the CANCEL button to CLOSE.
 # there are now 3 things called "import_gedcom" which has to be fixed because I'm confused. 1) in SplashScreen there's a method, 2) in gedcom_import.py there WAS a module-level function which is now commented out but before I started making the new class importer which is not a widget, this worked and was run inside __init__ of the exceptions dialog class, 3) there's a instance level version of the comment function. The reason I started making a class is so that the functions in the module namespace could get access to the ScrolledText widget in the dialog by making the text an attribute of self.treebard which I had no access to in the module namespace.
 # Make the module-level functions into instance-level methods of GedomExceptions class so that adding text to the ScrolledText widget each time something needs to be added is a simple matter of accessing self.
 # When encountering a SOUR tag subordinate to a FAM tag, invoke the GedcomExceptions class which I need to create right now. This will be a dialog that opens up without the user's permission when a GEDCOM finishes loading. The gedcom_exceptions module will have messages such as this one: "The GEDCOM `FAM` tag is used during import to Treebard only to determine relationships of persons within the family. Chances are that if you linked a source to a family in the genealogy software that wrote the imported GEDCOM, you could look at the source again now and manually link it in Treebard to only those persons in the family that are actually elucidated by the source. But it's also probably that you originally linked the source to something other than a family unit when originally inputing the source, and then the software decided to add it to a family unit that was created by the software to match the expectations of GEDCOM's structure. If you know you didn't link sources to family units in the original, then there is nothing for you to do, since the software that created the GEDCOM probably did not delete your original link when creating the family unit expected by GEDCOM."
@@ -188,6 +187,9 @@ if __name__ == '__main__':
     # This causes the preferred name to be dropped when more than one name is present. The same thing
     # often happens with other multiple-instance tags when only one instance was expected by the receiving
     # system.
+# mousewheel stopped working
+# maybe combine the 2 classes since the dlg class is where the importer methods are called
+# make new .sql dumps 
 
 
 # BRANCH: families_table_finish

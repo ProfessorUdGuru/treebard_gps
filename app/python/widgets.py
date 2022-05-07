@@ -3590,7 +3590,7 @@ class ScrolledText(Framex):
             orient='vertical', 
             hideable=True,
             command=self.text.yview)
-        self.text.configure(yscrollcommand=self.ysb.set)
+        self.text.configure(yscrollcommand=self.ysb.set, wrap="word")
         self.ysb.grid(column=1, row=0, sticky='ns')
 
 # from dropdown.py

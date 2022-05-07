@@ -1,0 +1,9 @@
+The GEDCOM `FAM` tag is used during import to Treebard only to determine relationships of persons within the family. If you had linked a source only to a family, you should link it in Treebard to those family members elucidated by the source. If you didn't link the source to a family unit, then your software must have decided to add a link to a family unit that was created by the software itself to match GEDCOM's structure. If you know you didn't link sources to family units in the original, then ignore these links, since Treebard doesn't create redundant family IDs on top of the individual and relationship data which already exist in the database.
+Family ID #2 linked to Source ID #2
+Family ID #3 linked to Source ID #2
+Family ID #4 linked to Source ID #2
+Family ID #5 linked to Source ID #2
+Family ID #6 linked to Source ID #3
+Family ID #8 linked to Source ID #3
+Family ID #9 linked to Source ID #3
+Family ID #10 linked to Source ID #2

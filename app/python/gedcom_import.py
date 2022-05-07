@@ -39,6 +39,8 @@ ELEMS2Y = ("BIRT", "DEAT", "CHR", "MARR")
 class GedcomImporter():
     def __init__(self, import_file):
         current_file = get_current_file()[0]
+        # self.famtag_source = False
+        self.exceptions_dict = {}
         self.conn = sqlite3.connect(current_file)
         self.cur = self.conn.cursor()
         self.line_lists = []
@@ -81,7 +83,6 @@ class GedcomImporter():
                     print("line", looky(seeline()).lineno, "case not handled:")
             else:
                 pass
-        # print("line", looky(seeline()).lineno, "records_dict:", records_dict)
           
     def add_subrecords(self, line, h, tag0):
         copy = records_dict
@@ -135,11 +136,11 @@ class GedcomImporter():
                 family_data = vv
                 z = 0
                 for line in family_data:
-                    self.parse_line(family_id, line, z)
+                    self.parse_line(family_id, line, z, k=k)
                     z += 1
 
 
-    def parse_line(self, pk, line, z):
+    def parse_line(self, pk, line, z, k=None):
         n = line[0]
         tag = line[1]
         if len(line) == 3:
@@ -149,8 +150,9 @@ class GedcomImporter():
                 self.add_person(pk, data)
             elif tag == "TITL":
                 self.add_source(pk, data)
-            elif tag in ("HUSB", "WIFE", "CHILD", "SOUR"):
-                self.add_family(pk, data, tag)
+            elif k and k == "FAM":
+                if tag in ("HUSB", "WIFE", "CHILD", "SOUR"):
+                    self.add_family(pk, data, tag)
             self.parse_next_line(pk, z)
 
     def parse_next_line(self, person_id, z):
@@ -172,7 +174,11 @@ class GedcomImporter():
 
     def link_source_famtag(self, pk, data):
         fk = int(sub("\D", "", data))
-        print("line", looky(seeline()).lineno, "pk, data:", pk, data)
+        if self.exceptions_dict.get(no_fam_tag_sources) is None:
+            self.exceptions_dict[no_fam_tag_sources] = [(pk, data)]
+        else:
+            self.exceptions_dict[no_fam_tag_sources].append((pk, data))
+            
         
 
     def add_source(self, source_id, title):
@@ -260,17 +266,9 @@ def get_id_type(tag):
     # # # cur.execute(delete_person_all)
     # # # conn.commit()
 
-
-
-# from gedcom_exceptions
-
-
-
 MESSAGES = (
     "", 
 )
-
-
 
 class GedcomExceptions(Toplevel):
     """ Open dialog without user's prompting when GEDCOM import is complete. """
@@ -295,6 +293,18 @@ class GedcomExceptions(Toplevel):
         self.importer.input_sources() # DO NOT DELETE **********************
         self.importer.input_families() # DO NOT DELETE **********************
         self.infolab.config(text="GEDCOM input file: {}".format(self.treebard.import_file))
+        ff = open("d:/treebard_gps/etc/import_exceptions.txt", "a")
+        for k,v in self.importer.exceptions_dict.items():
+            self.textbox.text.insert("end", "{}\n".format(k))
+            ff.write("{}\n".format(k))
+            for tup in v:
+                print("line", looky(seeline()).lineno, "tup:", tup)
+
+                text = "Family ID #{} linked to Source ID #{}".format(
+                    int(sub("\D", "", tup[0])), int(sub("\D", "", tup[1])))
+                self.textbox.text.insert("end", "{}\n".format(text))
+                ff.write("{}\n".format(text))
+        ff.close()
 
         self.importer.cur.close()
         self.importer.conn.close()
@@ -378,6 +388,7 @@ class GedcomExceptions(Toplevel):
         self.infolab.grid()
 
         self.textbox = ScrolledText(self.info)
+        self.textbox.grid()
 
         # visited = (
             # (self.search_input, 
@@ -411,17 +422,10 @@ class GedcomExceptions(Toplevel):
 
 
 
-if __name__ == "__main__":
-    # # # reset_tree() # DO NOT DELETE AND DO NOT RUN ACCIDENTALLY, ALL DATA WILL BE DELETED***********
-    # `_fixed` has had custom tags manually deleted
-    read_gedcom("D:/treebard_gps/app/python/todd_boyett_connections_fixed.ged")
-    # read_gedcom("D:/treebard_gps/app/python/todd_boyett_connections.ged")
-    # read_gedcom("D:/treebard_gps/app/python/robertson_rathbun_family_tree_export_by_gb.ged")
-    validate_lines()
-    delineate_records()
-    # input_persons() # DO NOT DELETE **********************
-    # input_sources() # DO NOT DELETE **********************
-    input_families() # DO NOT DELETE **********************
+
+# # # reset_tree() # DO NOT DELETE AND DO NOT RUN ACCIDENTALLY, ALL DATA WILL BE DELETED***********
+# `_fixed` has had custom tags manually deleted
+
 
 
 

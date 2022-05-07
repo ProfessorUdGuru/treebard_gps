@@ -192,11 +192,9 @@ def make_tree(
     new_tree_name = open_input_message(
         root, opening_msg[1], "Give the Tree a Unique Title", "OK", "CANCEL")
     current_dir = new_tree_name.lower().replace(" ", "_").strip()
-    print("line", looky(seeline()).lineno, "current_dir:", current_dir)
     if len(current_dir) == 0:
         return
     new_path = new_file_path
-    print("line", looky(seeline()).lineno, "new_path:", new_path)
     current_file = "{}.tbd".format(current_dir)
     dir_path = "{}{}".format(new_path, current_dir)
     mkdir(dir_path)
