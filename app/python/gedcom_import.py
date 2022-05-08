@@ -2,7 +2,8 @@
 import tkinter as tk
 import sqlite3
 from re import sub
-from files import get_current_file
+from datetime import datetime
+from files import get_current_file, current_drive
 from widgets import (
     Toplevel, Frame, Button,  LabelH2, Label, ScrolledText,
     configall, Border, Scrollbar, make_formats_dict, Text)
@@ -23,28 +24,25 @@ from dev_tools import looky, seeline
 
 
 
-
-
-# tags which can occur at level 0
 ZERO_LEVEL_TAGS = ("HEAD", "TRLR", "FAM", "INDI", "OBJE", "NOTE", "REPO", "SOUR", "SUBM")
-records_dict = {}
-for tag0 in ZERO_LEVEL_TAGS:
-    records_dict[tag0] = {}
-# tags whose lines should always have exactly 2 elements
-ELEMS2 = ("HEAD", "GEDC", "PLAC")
-# tags whose lines should have only 2 elements, unless the 3rd element is "Y":
 ELEMS2Y = ("BIRT", "DEAT", "CHR", "MARR")
-
 
 class GedcomImporter():
     def __init__(self, import_file):
+        self.records_dict = {}
+        for tag0 in ZERO_LEVEL_TAGS:
+            self.records_dict[tag0] = {}
         current_file = get_current_file()[0]
-        # self.famtag_source = False
         self.exceptions_dict = {}
         self.conn = sqlite3.connect(current_file)
         self.cur = self.conn.cursor()
         self.line_lists = []
+        self.head = []
+        self.head_dict = {
+            'SOUR': {'NAME': '', 'VERS': '', 'CORP': ''}, 
+            'FILE': '', 'GEDC': '', 'CHAR': ''}
         self.read_gedcom(import_file)
+        self.import_file = import_file
 
     def read_gedcom(self, file):
         """ The `encoding` parameter in `open()` strips `ï»¿` from the front of the 
@@ -76,6 +74,7 @@ class GedcomImporter():
                 if line[1] in ("HEAD", "TRLR"):
                     tag0 = line[1]
                     h = self.add_subrecords(line, h, tag0)
+
                 elif len(line) > 2:
                     tag0 = line[2]
                     h = self.add_subrecords(line, h, tag0)
@@ -83,9 +82,10 @@ class GedcomImporter():
                     print("line", looky(seeline()).lineno, "case not handled:")
             else:
                 pass
-          
+        self.head = self.records_dict['HEAD']['HEAD']
+
     def add_subrecords(self, line, h, tag0):
-        copy = records_dict
+        copy = self.records_dict
         pk = line[1]
         subrecords = []
         j = h + 1
@@ -97,11 +97,11 @@ class GedcomImporter():
                 break
         for k,v in copy.items():
             if k == tag0:
-                records_dict[k][pk] = subrecords            
+                self.records_dict[k][pk] = subrecords 
         return j
 
     def input_persons(self):
-        for k,v in records_dict.items():
+        for k,v in self.records_dict.items():
             if k != "INDI":
                 continue
             record = v
@@ -114,7 +114,7 @@ class GedcomImporter():
                     z += 1
 
     def input_sources(self):
-        for k,v in records_dict.items():
+        for k,v in self.records_dict.items():
             if k != "SOUR":
                 continue
             record = v
@@ -127,7 +127,7 @@ class GedcomImporter():
                     z += 1
 
     def input_families(self):
-        for k,v in records_dict.items():
+        for k,v in self.records_dict.items():
             if k != "FAM":
                 continue
             record = v
@@ -177,9 +177,7 @@ class GedcomImporter():
         if self.exceptions_dict.get(no_fam_tag_sources) is None:
             self.exceptions_dict[no_fam_tag_sources] = [(pk, data)]
         else:
-            self.exceptions_dict[no_fam_tag_sources].append((pk, data))
-            
-        
+            self.exceptions_dict[no_fam_tag_sources].append((pk, data))  
 
     def add_source(self, source_id, title):
         source_id = int(sub("\D", "", source_id))
@@ -224,24 +222,34 @@ class GedcomImporter():
                     tags.append(lst[2].rstrip("\n"))
         tags = list(set(tags))
         custom_tags = list(set(custom_tags))
-             
-# def make_unique_tag_lists():
-    # for lst in line_lists:
-        # elem_1 = lst[1]
-        # if elem_1.startswith("@") is False:
-            # if elem_1.startswith("_"):
-                # custom_tags.append(elem_1.rstrip("\n"))
-            # else:
-                # tags.append(elem_1.rstrip("\n"))
-        # else:
-            # if lst[2].startswith("_"):
-                # custom_tags.append(lst[2].rstrip("\n"))
-            # else:
-                # tags.append(lst[2].rstrip("\n"))
-    # tags = list(set(tags))
-    # custom_tags = list(set(custom_tags))
-# line 50 tags: ['CONC', 'DATE', 'BAPM', 'NCHI', 'PLAC', 'NAME', 'STAE', 'SOUR', 'RESI', 'TIME', 'WILL', 'VERS', 'RELI', 'NATU', 'SSN', 'OCCU', 'GEDC', 'ADDR', 'BIRT', 'HUSB', 'PROB', 'CHIL', 'NMR', 'DSCR', 'MARL', 'CONF', 'CHAN', 'FAMS', 'PAGE', 'PUBL', 'TYPE', 'AUTH', 'MARR', 'HEAD', 'FILE', 'FORM', 'FAM', 'NICK', 'TRLR', 'CHAR', 'CONT', 'DEAT', 'DIV', 'BURI', 'CORP', 'NOTE', 'INDI', 'IMMI', 'CENS', 'WIFE', 'SEX', 'FAMC', 'EVEN', 'TITL']
-# line 51 custom_tags: ['_ADDR', '_FLAG', '_PREF', '_PUBLISHER', '_TYPE', '_LEVEL', '_NAME', '_QUAL', '_PUBDATE', '_DETAIL']
+
+    def get_value(self, lst, x, tag):
+        value = None
+        w = x + 1
+        for lst in self.head[w:]:
+            if lst[1] == tag:
+                value = lst[2]
+                break
+            w += 1
+        return value
+
+    def parse_head(self):
+        x = 0
+        for lst in self.head:
+            n = lst[0] 
+            if n != 1:
+                x += 1
+                continue
+            else:
+                tag = lst[1]
+                if tag == 'SOUR':
+                    for tagg in ('VERS', 'NAME', 'CORP'):
+                        self.head_dict[tag][tagg] = self.get_value(lst, x, tagg)
+                elif tag == 'GEDC':
+                    self.head_dict[tag] = self.get_value(lst, x, 'VERS')
+                elif tag in ('FILE', 'CHAR'):
+                    self.head_dict[tag] = lst[2]
+                x += 1
 
 elements_dict = {"FAM": "family_id", "INDI": "person_id", "SOUR": "source_id"}
 
@@ -265,6 +273,7 @@ def get_id_type(tag):
     # # # conn.commit()
     # # # cur.execute(delete_person_all)
     # # # conn.commit()
+    # forgot places_places and remember to leave #1 in person, name, finding, place, and places_places
 
 MESSAGES = (
     "", 
@@ -284,27 +293,60 @@ class GedcomExceptions(Toplevel):
 
         self.make_widgets()
 
-        self.make_text_file()
         self.importer = GedcomImporter(self.treebard.import_file)
         self.importer.read_gedcom(self.treebard.import_file)
         self.importer.validate_lines()
         self.importer.delineate_records()
-        self.importer.input_persons() # DO NOT DELETE **********************
-        self.importer.input_sources() # DO NOT DELETE **********************
-        self.importer.input_families() # DO NOT DELETE **********************
-        self.infolab.config(text="GEDCOM input file: {}".format(self.treebard.import_file))
-        ff = open("d:/treebard_gps/etc/import_exceptions.txt", "a")
-        for k,v in self.importer.exceptions_dict.items():
-            self.textbox.text.insert("end", "{}\n".format(k))
-            ff.write("{}\n".format(k))
-            for tup in v:
-                print("line", looky(seeline()).lineno, "tup:", tup)
+        print("line", looky(seeline()).lineno, "self.importer.head:", self.importer.head)
+        self.importer.parse_head()
+        self.importer.input_persons()
+        self.importer.input_sources()
+        self.importer.input_families()
+        self.write_exceptions_report()
+        # self.infolab.config(text="GEDCOM input file: {}".format(self.treebard.import_file))
 
-                text = "Family ID #{} linked to Source ID #{}".format(
-                    int(sub("\D", "", tup[0])), int(sub("\D", "", tup[1])))
-                self.textbox.text.insert("end", "{}\n".format(text))
-                ff.write("{}\n".format(text))
-        ff.close()
+        # now = datetime.now()
+        # stamp = now.strftime("%Y%m%d%H%M")
+        # filename = "{}treebard_gps/etc/gedcom_import_exceptions_{}.txt".format(current_drive, stamp)
+        # date, hour, minute = stamp[0:8], stamp[8:10], stamp[10:]
+
+        # ff = open(filename, "a")
+        # ff.write("Imported from <insert software> to Treebard GPS\n")
+        # ff.write("GEDCOM Source File: {}".format(self.importer.import_file))
+        # ff.write(" imported on {} at {}:{}.\n".format(date, hour, minute))
+        # ff.write("This file: {}\n\n".format(filename))
+
+
+
+        # replace = {
+            # 'SOUR': 'Source of GEDCOM File', 'FILE': 'GEDCOM File Name', 
+            # 'GEDC': 'GEDCOM Version', 'CHAR': 'Character Set Encoding'}
+        # for k,v in self.importer.head_dict.items():
+            # ff.write("\n{}: ".format(replace[k]))
+
+
+            # if k == 'SOUR':
+                # print("line", looky(seeline()).lineno, "v.values():", v.values())
+                # ware, version, vendor = v.values()
+                # # for val in v.values():
+                    # # print("line", looky(seeline()).lineno, "val:", val)
+                    # # ff.write("{}: ".format(val))
+                # ff.write("{} version {} by {}".format(ware, version, vendor))
+            # else:
+                # ff.write("\n{}\n".format(v))
+
+
+
+
+        # for k,v in self.importer.exceptions_dict.items():
+            # self.textbox.text.insert("end", "\n{}\n\n".format(k))
+            # ff.write("{}\n\n".format(k))
+            # for tup in v:
+                # text = "Family ID #{} linked to Source ID #{}".format(
+                    # int(sub("\D", "", tup[0])), int(sub("\D", "", tup[1])))
+                # self.textbox.text.insert("end", "{}\n".format(text))
+                # ff.write("{}\n".format(text))
+        # ff.close()
 
         self.importer.cur.close()
         self.importer.conn.close()
@@ -371,21 +413,21 @@ class GedcomExceptions(Toplevel):
 
         header = Frame(self.window)
         header.grid(column=0, row=0, sticky='ew')
-
-        self.search_dlg_heading = LabelH2(
+        header.columnconfigure(0, weight=1)
+        self.exceptions_dialog_heading = LabelH2(
             header, 
             text='Items Not Imported by GEDCOM')
-        self.search_dlg_heading.grid(column=0, row=0, pady=(24,0))
+        self.exceptions_dialog_heading.grid(column=0, row=0, pady=(24,0), sticky="ew")
 
-        head_msg = "Items listed below can be input manually using Treebard's interface.\nInstructions are included for each category of failed import.\nThis document has been saved as a text file with the same name as the GEDCOM file you imported."
-        instrux = Label(header, text=head_msg)
-        instrux.grid(column=0, row=1, sticky='e', padx=24, pady=12)
+        head_msg = "Items listed below can be input manually using Treebard's interface.\nInstructions are included for each category of failed import.\nThis document has been saved as a text file named\n`{drive}treebard_gps/etc/gedcom_import_exceptions_{timestamp}.txt`."
+        instrux = Label(header, text=head_msg, justify="left")
+        instrux.grid(column=0, row=1, padx=24, pady=(24,0), sticky="ew")
 
         self.info = Frame(self.window)
-        self.info.grid(column=0, row=1, sticky='news', padx=48, pady=48)
+        self.info.grid(column=0, row=1, sticky='news', padx=48, pady=(24,0))
 
         self.infolab = Label(self.info)
-        self.infolab.grid()
+        self.infolab.grid(pady=(0,12))
 
         self.textbox = ScrolledText(self.info)
         self.textbox.grid()
@@ -406,7 +448,7 @@ class GedcomExceptions(Toplevel):
             # self.canvas.statusbar.tooltip_label)
 
         # rcm_widgets = (
-            # self.search_input, self.search_dlg_heading, self.info)
+            # self.search_input, self.exceptions_dialog_heading, self.info)
         # make_rc_menus(
             # rcm_widgets, 
             # self.rc_menu, 
@@ -414,8 +456,48 @@ class GedcomExceptions(Toplevel):
 
         resize_scrolled_content(self, self.canvas, self.window)
 
-    def make_text_file(self):
-        pass
+    def write_exceptions_report(self):
+
+        self.infolab.config(text="GEDCOM input file: {}".format(self.treebard.import_file))
+
+        now = datetime.now()
+        stamp = now.strftime("%Y%m%d%H%M")
+        filename = "{}treebard_gps/etc/gedcom_import_exceptions_{}.txt".format(current_drive, stamp)
+        date, hour, minute = stamp[0:8], stamp[8:10], stamp[10:]
+        date = "{}-{}-{}".format(date[0:4], date[4:6], date[6:])
+        ff = open(filename, "a")
+        ff.write("Imported to Treebard GPS on {} at {}:{}.\n".format(date, hour, minute))
+        REPLACE = {
+            'SOUR': 'Source of GEDCOM File', 'FILE': 'GEDCOM File Name', 
+            'GEDC': 'GEDCOM Version', 'CHAR': 'Character Set Encoding'}
+        for k,v in self.importer.head_dict.items():
+            ff.write("\n{}: ".format(REPLACE[k]))
+
+            if k == 'SOUR':
+                ware, version, vendor = v.values()
+                ff.write("{} version {} by {}".format(ware, version, vendor))
+            else:
+                print("line", looky(seeline()).lineno, "v:", v)
+                ff.write("{}\n".format(v))
+
+        ff.write("\nThis file: {}\n\n".format(filename))
+
+        if self.importer.head_dict['FILE'] != self.treebard.import_file:
+            msg = "The file actually imported...\n\t{}\nhas had its name changed from the file that was originally exported...\n\t{}.\n".format(
+                self.treebard.import_file, self.importer.head_dict['FILE'])
+            ff.write("{}\n".format(msg))
+
+        ff.write("EXCEPTIONS\n\n")
+
+        for k,v in self.importer.exceptions_dict.items():
+            self.textbox.text.insert("end", "\n{}\n\n".format(k))
+            ff.write("{}\n\n".format(k))
+            for tup in v:
+                text = "Family ID #{} linked to Source ID #{}".format(
+                    int(sub("\D", "", tup[0])), int(sub("\D", "", tup[1])))
+                self.textbox.text.insert("end", "{}\n".format(text))
+                ff.write("\t{}\n".format(text))
+        ff.close()
 
     def cancel(self):
         self.destroy()
