@@ -48,6 +48,18 @@ insert_source = '''
     VALUES (?, ?)
 '''
 
+select_finding_birth = '''
+    SELECT finding_id 
+    FROM finding
+    WHERE person_id = ?
+'''
+
+update_finding_parents = '''
+    UPDATE finding 
+    SET (person_id1, person_id2) = (?, ?)
+    WHERE finding_id = ?
+'''
+
 update_gender_default_person = '''
     UPDATE person
     SET gender = 'unknown'

@@ -447,9 +447,7 @@ class Main(FrameStay):
         make_rc_menus(rcm_widgets, self.rc_menu, main_help_msg)
 
     def get_current_values(self):
-        self.current_person_name = self.person_autofill_values[self.current_person][0]["name"]
-        print("line", looky(seeline()).lineno, "self.current_person_name:", self.current_person_name)
-       
+        self.current_person_name = self.person_autofill_values[self.current_person][0]["name"]       
         self.current_person_label.config(
             text="Current Person (ID): {} ({})".format(
                 self.current_person_name, self.current_person))

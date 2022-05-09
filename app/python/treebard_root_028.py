@@ -169,7 +169,8 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: gedcom_import
-# add line breaks in long strings
+# 
+# Upon first importing a gedcom, the person names aren't immed available to autofills till ?changing the current person by id? or reloading file, fix this, prob need to call the create_lists() method or something after importing, or maybe just call the whole redraw() method?
 # first open new tree dialog so the user can create a new default blank tree for the gedcom stuff to go into. then run the gedcom import code. while import is running, exception text is being appended to a list of dicts. each key is a string (the instructions which will print at top of each section) and each value is a list of strings with each string being an english translation of one line of gedcom that was rejected. The exceptions text file will be created before the dialog opens. then open the exceptions dlg. 
 # text shd be read only
 # Change the OK button to a MINIMIZE button and change the CANCEL button to CLOSE.

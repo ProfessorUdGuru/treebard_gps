@@ -1,4 +1,5 @@
 # gedcom_import.py
+
 import tkinter as tk
 import sqlite3
 from re import sub
@@ -11,12 +12,13 @@ from right_click_menu import RightClickMenu, make_rc_menus
 from scrolling import MousewheelScrolling, resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from gedcom_tags import all_tags, no_fam_tag_sources
+from persons import update_person_autofill_values
 from query_strings_gedcom import (
     insert_person, insert_name, update_name, 
     insert_source, delete_person_all, delete_name_all, delete_finding_all, 
     delete_source_all, update_gender_default_person, update_name_default_person,
     insert_finding_default_person, insert_finding_birth, insert_claims_person,
-
+    select_finding_birth, update_finding_parents,
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -41,6 +43,7 @@ class GedcomImporter():
         self.head_dict = {
             'SOUR': {'NAME': '', 'VERS': '', 'CORP': ''}, 
             'FILE': '', 'GEDC': '', 'CHAR': ''}
+        # self.families = []
         self.read_gedcom(import_file)
         self.import_file = import_file
 
@@ -112,6 +115,7 @@ class GedcomImporter():
                 for line in person_data:
                     self.parse_line(person_id, line, z)
                     z += 1
+        update_person_autofill_values()
 
     def input_sources(self):
         for k,v in self.records_dict.items():
@@ -127,20 +131,34 @@ class GedcomImporter():
                     z += 1
 
     def input_families(self):
+        families = []
         for k,v in self.records_dict.items():
             if k != "FAM":
                 continue
-            record = v
-            for kk, vv in record.items():
+            for kk,vv in v.items():
                 family_id = kk
-                family_data = vv
-                z = 0
-                for line in family_data:
-                    self.parse_line(family_id, line, z, k=k)
-                    z += 1
+                record = vv
+                model = [[], None, None]
+                for lst in record:
+                    tag = lst[1]
+                    if tag == "SOUR":
+                        print("line", looky(seeline()).lineno, "lst:", lst)
+                        self.link_source_famtag(kk, lst[2])
+                    elif tag not in ('HUSB', 'WIFE', 'CHIL'):
+                        continue
+                    fk = int(sub("\D", "", lst[2]))
+                    if tag == 'HUSB':
+                        model[1] = fk
+                    elif tag == 'WIFE':
+                        model[2] = fk
+                    elif tag == 'CHIL':
+                        model[0].append(fk)
+                families.append(model)
+        for lst in families:
+            self.add_family(lst)
+        # print("line", looky(seeline()).lineno, "families:", families)
 
-
-    def parse_line(self, pk, line, z, k=None):
+    def parse_line(self, pk, line, z, k=None, fam=None, u=None):
         n = line[0]
         tag = line[1]
         if len(line) == 3:
@@ -150,39 +168,18 @@ class GedcomImporter():
                 self.add_person(pk, data)
             elif tag == "TITL":
                 self.add_source(pk, data)
-            elif k and k == "FAM":
-                if tag in ("HUSB", "WIFE", "CHILD", "SOUR"):
-                    self.add_family(pk, data, tag)
             self.parse_next_line(pk, z)
-
     def parse_next_line(self, person_id, z):
         # print("line", looky(seeline()).lineno, "person_id:", person_id)
         # print("line", looky(seeline()).lineno, "z:", z)
         pass
-
-    def add_family(self, pk, data, tag):
-        if tag == "SOUR":
-            self.link_source_famtag(pk, data)
-        elif tag == "CHILD":
-            pass
-        elif tag == "HUSB":
-            pass
-        elif tag == "WIFE":
-            pass
-        else:
-            print("line", looky(seeline()).lineno, "tag not handled:", tag)
 
     def link_source_famtag(self, pk, data):
         fk = int(sub("\D", "", data))
         if self.exceptions_dict.get(no_fam_tag_sources) is None:
             self.exceptions_dict[no_fam_tag_sources] = [(pk, data)]
         else:
-            self.exceptions_dict[no_fam_tag_sources].append((pk, data))  
-
-    def add_source(self, source_id, title):
-        source_id = int(sub("\D", "", source_id))
-        self.cur.execute(insert_source, (source_id, title))
-        self.conn.commit()    
+            self.exceptions_dict[no_fam_tag_sources].append((pk, data)) 
 
     def add_person(self, person_id, name):
         person_id = int(sub("\D", "", person_id))
@@ -205,6 +202,19 @@ class GedcomImporter():
             self.conn.commit()
         else:
             self.cur.execute(update_name, (name, sorter))
+            self.conn.commit() 
+
+    def add_source(self, source_id, title):
+        source_id = int(sub("\D", "", source_id))
+        self.cur.execute(insert_source, (source_id, title))
+        self.conn.commit()  
+
+    # line 150 families: [[[4, 7, 8, 9, 10, 11, 13, 29, 33], 5, 6], [[], 12, 11], [[], 14, 13], [[16], 5, 15], [[], 17, 16], [[6, 20, 22, 25, 26, 27, 28], 18, 24], [[], 21, 20], [[], 23, 22], [[31, 32], 30, 29]]
+    def add_family(self, lst):
+        for child in lst[0]:
+            self.cur.execute(select_finding_birth, (child,))
+            finding_id = self.cur.fetchone()[0]
+            self.cur.execute(update_finding_parents, (lst[1], lst[2], finding_id))
             self.conn.commit()
 
     def make_unique_tag_lists(self):
@@ -297,56 +307,11 @@ class GedcomExceptions(Toplevel):
         self.importer.read_gedcom(self.treebard.import_file)
         self.importer.validate_lines()
         self.importer.delineate_records()
-        print("line", looky(seeline()).lineno, "self.importer.head:", self.importer.head)
         self.importer.parse_head()
         self.importer.input_persons()
         self.importer.input_sources()
         self.importer.input_families()
         self.write_exceptions_report()
-        # self.infolab.config(text="GEDCOM input file: {}".format(self.treebard.import_file))
-
-        # now = datetime.now()
-        # stamp = now.strftime("%Y%m%d%H%M")
-        # filename = "{}treebard_gps/etc/gedcom_import_exceptions_{}.txt".format(current_drive, stamp)
-        # date, hour, minute = stamp[0:8], stamp[8:10], stamp[10:]
-
-        # ff = open(filename, "a")
-        # ff.write("Imported from <insert software> to Treebard GPS\n")
-        # ff.write("GEDCOM Source File: {}".format(self.importer.import_file))
-        # ff.write(" imported on {} at {}:{}.\n".format(date, hour, minute))
-        # ff.write("This file: {}\n\n".format(filename))
-
-
-
-        # replace = {
-            # 'SOUR': 'Source of GEDCOM File', 'FILE': 'GEDCOM File Name', 
-            # 'GEDC': 'GEDCOM Version', 'CHAR': 'Character Set Encoding'}
-        # for k,v in self.importer.head_dict.items():
-            # ff.write("\n{}: ".format(replace[k]))
-
-
-            # if k == 'SOUR':
-                # print("line", looky(seeline()).lineno, "v.values():", v.values())
-                # ware, version, vendor = v.values()
-                # # for val in v.values():
-                    # # print("line", looky(seeline()).lineno, "val:", val)
-                    # # ff.write("{}: ".format(val))
-                # ff.write("{} version {} by {}".format(ware, version, vendor))
-            # else:
-                # ff.write("\n{}\n".format(v))
-
-
-
-
-        # for k,v in self.importer.exceptions_dict.items():
-            # self.textbox.text.insert("end", "\n{}\n\n".format(k))
-            # ff.write("{}\n\n".format(k))
-            # for tup in v:
-                # text = "Family ID #{} linked to Source ID #{}".format(
-                    # int(sub("\D", "", tup[0])), int(sub("\D", "", tup[1])))
-                # self.textbox.text.insert("end", "{}\n".format(text))
-                # ff.write("{}\n".format(text))
-        # ff.close()
 
         self.importer.cur.close()
         self.importer.conn.close()
@@ -472,12 +437,10 @@ class GedcomExceptions(Toplevel):
             'GEDC': 'GEDCOM Version', 'CHAR': 'Character Set Encoding'}
         for k,v in self.importer.head_dict.items():
             ff.write("\n{}: ".format(REPLACE[k]))
-
             if k == 'SOUR':
                 ware, version, vendor = v.values()
                 ff.write("{} version {} by {}".format(ware, version, vendor))
             else:
-                print("line", looky(seeline()).lineno, "v:", v)
                 ff.write("{}\n".format(v))
 
         ff.write("\nThis file: {}\n\n".format(filename))
