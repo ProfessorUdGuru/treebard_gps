@@ -8,10 +8,23 @@
 2 VERS 5.5
 2 FORM LINEAGE-LINKED
 1 CHAR UTF-8
+0 @I2@ INDI
+1 NAME Jupiter /Todd/
+1 FAMC @F2@
+1 FAMS @F1@
+1 SEX M
+0 @I3@ INDI
+1 NAME Neptune /Todd/
+1 FAMC @F2@
+1 FAMS @F1@
+1 SEX F
 0 @I4@ INDI
 1 NAME David /Todd/
 2 SOUR @S2@
 3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
+1 NAME Samuel D. /Todd/
+2 SOUR @S2@
+3 PAGE S. F. Todd death notice
 1 SEX M
 1 RESI
 2 DATE 1962
@@ -586,6 +599,7 @@
 1 CHAN
 2 DATE 17 AUG 2015
 3 TIME 20:58:18
+0 @F1@ FAM
 0 @F2@ FAM
 1 HUSB @I5@
 1 WIFE @I6@

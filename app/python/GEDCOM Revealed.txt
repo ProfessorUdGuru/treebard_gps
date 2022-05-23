@@ -1,0 +1,122 @@
+GEDCOM Revealed
+
+I've mentioned before the brainstorming technique where you have a brand new idea, so what you do with that idea is to take it to the absolute furthest extreme limit, and a smidgen further, and then slowly back off toward what was considered reality yesterday till you get to something that might actually have practical application.
+
+The current bright idea is that something fascinating about those lines of GEDCOM kinda got to me right from the beginning, and I started off on the wrong foot by thinking some of this was gonna ever get hard. Taking that notion to the limit, I'm starting from scratch again, learnings intact, in hopes that none of the things I thought were important in the early days of my GEDCOM project maybe three weeks ago were important at all. I'm willing to find that some of them were, but now that I've got my feet damp, I owe it to myself to look seriously into the notion that nothing about those silly lines is any more technical than it looks. And since it's easy as pie to read by eye, none of it looks technical.
+
+Including the very first thing I keep thinking I have to do, which is to input the primary keys before the foreign keys. If not for that illusion, I'd be able to read through the lines once and call it a day, instead of looping through at least twice. The way I see it through simple eyes, the GEDCOM is being translated into a list of lines called self.export, and no one is going near the database till that is done. Essentially I'm importing GEDCOM to DATABOY. Then I'll import DATABOY to my database. Kinda like a double door of protection, so that GEDCOM's weirdness never touches my precious Treebard.
+
+Point being, the database would have reason to object if foreign keys were input before primary keys, but we're just importing GEDCOM to DATABOY. When DATABOY is done, then DATABOY will insert primary keys first, as expected, because associated data is on the same line of DATABOY as it should be.
+
+So let's try what has come to seem like an extreme notion: reading each line exactly once and not looping through the lines two or three times. Along with the revelation from earlier today that nothing more than Python's everyday instance variables are needed to keep track of values set in earlier lines which are still needed a few lines later.
+
+I'll let you know how it works out.
+
+NEXT POST
+
+Some things I had to keep straight while writing this code.
+
+This is not another attempt to convert a GEDCOM file into some fantabulous nested structure. The output, self.export, has nesting in its lines but the structure of the collection is that it contains a sublist for most lines in the GEDCOM. It is also not a parallel list with matching indexes, I mean there are somewhat fewer lines in self.export than in the .ged file because lines which only serve to declare a foreign key such as `2 SOUR @S2@` don't generate a list of values in self.export; they only set an instance variable: `self.source_id = 2`.
+
+So self.export is a list of lists, and each sublist is a collection of values in a set structure. The structure consitutes instructions on what DATABOY will do with the data to get it into the right columns of the right Treebard tables. The sublist contains of two main dictionaries. The first dict just has one key and one value to indicate a new primary key value and which table the record is to be inserted to. (I think I have to add the table name as a key, with the dict being the key's value, as I'm about to describe for the second dict.) 
+
+The second dict in the sublist is a nested dict whose outer keys are table names. The values are inner dicts whose keys are column names and whose values are to be inserted into the specified tables' specified columns.
+
+Here's a sample sublist from self.export which will be used to create a name_id as a primary key in the name table and link it to the person whose INDI record is being read in the GEDCOM:
+
+[{'name_id': 4}, {'name': {'names': 'David Todd', 'sort_order': 'Todd, David', 'person_id': 4}}]
+
+Which I should probably change to include the table name as a key in the first dict:
+
+[{'name': {'name_id': 4}}, {'name': {'names': 'David Todd', 'sort_order': 'Todd, David', 'person_id': 4}}]
+
+With citations it's not this simple. The sublist and its contents are structured the same as just outlined, but before knowing what to do with the repetitious citations in GEDCOM, self.export has to be looped over to find out whether the citation text and the linked source already exist. If so, then the existing primary key for that pairing of citation & source is just input into the links_links table along with a foreign key for the element such as name_id that is being linked to the already-existing citation. If the citation is new, then the self.export sublist will also include the text and source and the new citation_id primary key. The result of this extra work is no repetition of citations in the database, which will not only slim down the database, it will also make citations completely re-usable. 
+
+To the end user of the genieware, this means that a citation previously used doesn't have to be retyped or copy/pasted. It can be selected from a list. And if it can be selected from a list, it can be auto-selected from a list. Treebard will be able to do with citations what it easily does with long nested place names, event types, and person names. You type a few characters, the rest fills in with the most recently used values tried first. When the right citation fills in, you hit tab and keep going. I've gone to extraordinary lengths to make Treebard fast and easy to use, wherever it's practical to do so. This extra attention to how citations are imported will keep GEDCOM from spoiling the user experience. Treebard's finicky attention to displaying/entering/editing primary data is what makes Treebard GPS a showcase of genieware functionalities instead of a big, glittering, gloppy bloat of unnecessary secondary features. Such glam lists are used to sell what are basically unfinished/unusable supposed genieware products that are all dying a slow death due to the influence of the GEDCOM substandard.
+
+The short version: using GEDCOM to import good data properly is a constant struggle against the very nature of GEDCOM itself.
+
+Hopping off the soapbox for just a second, since I added table names as outer keys to the first dict, I see that the 2nd dict is sometimes no longer needed. The first dict will be for creating a new database record and whatever can go into that record. The second dict will only be needed for updating a second table. For example, when creating a new citation, the first dict will be used for adding new records to the citation table, and the second dict will be used for inserting a new record to the links_links table and linking some element such as a name_id to the new citation record.
+
+Hold on, that's not quite right.
+
+For zero-lines in the .ged like `0 @I4@ INDI`, there's nothing to input but a new record in the person table with a new primary key. The second dict will be empty. This tells DATABOY to only do an insert query. If there's also something in the second dict, an update query will be needed to the new record.
+
+Or something. I'm trying to learn how to plan ahead and define my goals better before writing code. It slows me down which is good since I often dash out a bunch of code that has to be written over.
+
+Another possibility is that there should be one transaction per sublist of self.export, so if there's more than one thing to do per line of GEDCOM, more than one sublist will be added to self.export. In that case, the sublist would be a dict, not a list.
+
+I'll let you know how it turns out. The good news is that the goals are starting to precede the writing of the code, and in the long run, that might save me some time.
+
+NEXT POST
+
+Here are some sample lines from self.export. Now that I'm tired of shooting in the dark, I'll examine these lines, examine my goals, and redesign self.export to eliminate the discrepancies.
+
+line 113 lst: [{'person': {'person_id': 4}}, {}]
+line 113 lst: [{'name': {'name_id': 4}}, {'name': {'names': 'David Todd', 'sort_order': 'Todd, David', 'person_id': 4}}]
+line 113 lst: [{'name': {'name_id': 5}}, {'name': {'names': 'Samuel D. Todd', 'sort_order': 'Todd, Samuel D.', 'person_id': 4}}]
+
+The SQL query types are DELETE, SELECT, INSERT, and UPDATE. I'll need to do mostly INSERT and UPDATE with an occasional SELECT.
+
+When data in more than one table will be changed, more than one sublist will be used. So the affected table will only be named once per sublist. This can be a string value for lst[0], and the rest of the list items can be dicts. They no longer need to be nested since the table name is stated outright and won't change within that list.
+
+I want to keep values together that are known at the same time and go into the same database record, so they can all go into the database at one time. So the dicts in the list should be specified by list index in the natural order they'd generally occur. Data needed for SELECT queries, INSERT queries, and UPDATE queries will be saved in dicts which are lst[1], lst[2] and lst[3] respectively. Two of the three dicts will be empty in every sublist.
+
+Based on those goals, the sample sublists above should then be:
+
+['person', {}, {'person_id': 4}, {}]
+['name', {}, {'name_id': 4, 'names': 'David Todd', 'sort_order': 'Todd, David', 'person_id': 4}, {}]
+['name', {}, {'name_id': 5, 'names': 'Samuel D. Todd', 'sort_order': 'Todd, Samuel D.', 'person_id': 4}, {}]
+
+There won't be any DELETE queries to worry about, but UPDATE queries would regrettably change every record to the same value if I forget to include a WHERE clause to tell the data which record to update. The fourth item in the list (index 3) is reserved for update values. To get the WHERE value in there, the value of the UPDATE dict will be a list. The first item in the list will be the data that gets stored in the table. The second item in the list will be the value that WHERE checks for. For example, the person represented by person_id 4 was created before his gender was known, so when the 'SEX' tag comes up, the sublist in self.export will read:
+
+['person', {}, {}, {'gender: ['male', 'person_id', 4]}]
+
+DATABOY will translate this to the SQL command:
+
+UPDATE person SET gender = 'male' WHERE person_id = 4
+
+On second thought, instead of having two empty dicts in every single sublist, and having to loop through them to find out which to use, there will only be one dict in each sublist, and a second string value at list[1] will tell the dict at list[2] what kind of query to build. The above output should now be:
+
+['person', 'insert', {'person_id': 4}]
+['name', 'insert', {'name_id': 4, 'names': 'David Todd', 'sort_order': 'Todd, David', 'person_id': 4}]
+['name', 'insert', {'name_id': 5, 'names': 'Samuel D. Todd', 'sort_order': 'Todd, Samuel D.', 'person_id': 4}]
+['person', 'update', {'gender: ['male', 'person_id', 4]}]
+
+Query strings will be built by the Python "".format() method. If the user had any input, there would have to be validation to prevent malicious input. (Assuming that no GEDCOM file produced by any genieware on earth will ever be used to mess up my computer, it's safe to ignore this warning now, but not for long. String validation is just a matter of rejecting input that contains illegal characters. A description of this simply solved problem is here https://stackoverflow.com/questions/3247183/variable-table-name-in-sqlite and pay attention to the comment which reminds us that underscores are acceptable in table names and column names. Also read the comment which says that an exception should be thrown if any illegal characters are found, so that nothing will actually go into the database at all. I don't actually know enough about technical programming to say why the other punctuations marks need to be stripped out of a table name. Main point being: we get our GEDCOM from someone else. That makes it "untrustworthy" for the kind of string injection being done here, if nothing is done to strip out characters that don't belong in a table name or column.)
+
+Now that the structure of the output is defined to correctly reflect the goal, those pesky citations can be cleared up.
+
+NEXT POST
+
+I first made the mistake of trying to loop over self.export each time a PAGE tag pops up to see if a citation already existed in the output. If not, add it. If so, just add a link to it with a foreign key. But this won't work, because you can't append anything to a list while you're looping over it.
+
+The right solution is probably to treat GEDCOM's SOUR and PAGE tags as if they were a virus and isolate them from the main output, self.export. Since GEDCOM's treatment of citations is to act as if having computers doesn't mean we don't have to duplicately repeat identical sets of related data, I need to prevent this backwash from the previous century from infecting good output. A new collection such as self.citations_vault will be used to store each citation's text with the citation's related foreign key source_id. Instead of creating a huge vault and then poring over each citation to find duplicates and delete them, the vault will be a set, so trying to add a duplicate will just fail. When the reading of the GEDCOM is complete, the vault will contain one set of unique citations, which can then be inserted to the database all at once, either before or after the data in self.export is input to the database. Ideally, self.export and self.citations_vault should not know of each other's existence.
+
+The items being stored or rejected by the vault set have to be changed to tuples and nested tuples since mutable types (lists and dicts) can't be stored in sets. 
+
+elif tag == "PAGE":
+	self.citations_vault.add((
+		"citation", "insert", 
+		(("citation_id", None), ("citations", data), 
+			("source_id", self.source_id))))
+
+When the set is complete, it can be converted to match the structure of the items in self.exports and appended to self.exports once it's converted into a sublist. Possibly the citation_id and the query type could be assigned to each sublist as it's being appended to self.export. For new citations, the query type will be "insert". For linking to existing citations, only the links_links query will be done.
+
+There are missing parts from that description which I'll fill in next.
+
+There's also a need to handle other elements besides names that have to be linked to citations. In the small .ged file I'm using, I think all but one of the PAGE tags is linked to a name. I have to find that one exception and work it into the code. Then I have to look at the GEDCOM specs to see what other tags, besides PAGE tags, could be in a GEDCOM citation to make it difficult and complicated to use GEDCOM to try and do genealogy. I'll start with the vault.
+
+
+
+
+
+
+
+
+
+
+
+
+
+

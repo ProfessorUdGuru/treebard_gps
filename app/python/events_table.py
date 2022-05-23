@@ -356,7 +356,6 @@ def autocreate_parent_findings(
             if event_type_id == k:
                 event_type = v
         return event_type
-
     cur.execute(select_finding_id_age1_alt_parents, (current_person,))
     offspring1 = [list(i) for i in cur.fetchall()]
 
@@ -364,7 +363,6 @@ def autocreate_parent_findings(
     offspring2 = [list(i) for i in cur.fetchall()]
 
     offspring = offspring1 + offspring2
-
     for child in offspring:
         finding = child[0]
         cur.execute(select_person, (finding,))
