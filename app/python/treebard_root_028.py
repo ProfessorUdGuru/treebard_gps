@@ -168,88 +168,6 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: gedcom_import
-# NEXT STARTOVER
-# And now for something completely different.
-# nested dict won't work bec eg if there are 3 RESI tags subordinate to the same INDI tag, then each one you add will overwrite the value of the last one bec there can only be one RESI key. The right solution is not to convert the overly clever GEDCOM structure into just another clever, rigid structure. It needs to be an easily useful storage cabinet for the data. The organization within the collection(s) should reflect the way the data is being used, not some clever idea or the shortest code etc. Don't store the lines, they'd just have to be read again. But instead of inserting data to db on the fly, insert data to the dict on the fly, but the dict has to be structured to match treebard exactly so the final transfer step is effortless... self.persons: {	
-	# '@I4@': {'NAME': [{'birth_name': 'David /Todd/', 'pseudonym': []}], 'event': [{'residence': [{'date': '', 'place': '', 'citation': [{'text': '', 'source': None}, {'text': '', 'source': None}]}, {{'date': '', 'place': '', 'citation': [{'text': '', 'source': None}, {'text': '', 'source': None}]}}, {{'date': '', 'place': '', 'citation': [{'text': '', 'source': None}, {'text': '', 'source': None}]}}]}],
-# } ...since the db uses types as keys, the dict should do the same thing. Also, don't fool around with lines at all if possible; loop thru each record, get all RESI and put them where they go. To the greatest possible degree, the structure of the master collection should reflect the way sql works, eg in stead of this...
-# 0 @I4@ INDI
-# 1 NAME David /Todd/
-# 2 SOUR @S2@
-# 3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
-# 1 SEX M
-# 1 RESI
-# 2 DATE 1962
-# 2 PLAC Meridian, Lauderdale County, Mississippi
-# 2 SOUR @S2@
-# 3 PAGE 10 September 1962, page 2, Samuel F. Todd obituary
-# 1 RESI
-# 2 DATE 1962
-# 2 PLAC Gulfport, Harrison County, Mississippi
-# 2 SOUR @S2@
-# 3 PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"
-
-# ... you have a structure that literally follows the db record with foreign keys structure:
-# 0 @I4@ INDI
-# 1 NAME David /Todd/ (SOUR @S2@ [PAGE 10 September 1962, page 2, Samuel F. Todd obituary])
-# 1 SEX M
-# 1 RESI (DATE 1962) (PLAC Meridian, Lauderdale County, Mississippi) (@S2@) [PAGE 10 September 1962, page 2, Samuel F. Todd obituary]
-# 1 RESI (DATE 1962) (PLAC Gulfport, Harrison County, Mississippi) (SOUR @S2@) [PAGE 26 June 1962, page 2, obituary, "Mrs. Lora Grace Smith"]
-
-
-# If I'm not careful I'll fall into the trap of replacing GEDCOM with better GEDCOM (another text-based structure). Also the nested structure doesn't always do the trick, eg with the name, source and citation above, I described that problem in an earlier post today. My main point above is that too much emphasis has apparently gone into making GEDCOM pretty. Human readable. If associated lines were literally all on the same line, it would save a big headache. The computer doesn't care how long a line of text is, as far as I know. I might be wrong about that. But there is a new idea blossoming, inspired by this line of thinking. Instead of reading the lines and changing them into sublists of some structure that reflects the target data structure, do this: concatenate the subordinate lines. Keep the text as text, don't change anything, just concatenate lines 1 + 2 + 3 + etc. When there are only 1 and 0 lines, THEN read the lines and put each line into the database on the fly as I was hoping to do.
-
-# In this arrangement, each line is a complete sub-record, not a fragment of a subrecord. To signal a record subordinate to the zero level, use brackets of any kind. If the next subrecord uses the same kind of brackets, it's a sibling. If it uses a different kind of bracket, it's a child. If you end up wanting to split the lines into lists, you can split them at the brackets. Splitting them on )( creates one kind of list. Splitting them on ]( creates another, and splitting them on )[ creates another.
-
-# start off with an empty string and append the first zero line to it. If the next line is a one line, give it a new line in the same record. If the next line is not a one, concatenate it to the one line. No collections will have to be made, except with something weird like a so-called bi-directional pointer where two isolated parts of the file say the same thing and you have to make sure they agree with each other. There's a whole thread on the redundant FAMS and FAMC tags.
-
-# A wise old owl lived in an oak.
-# The more he saw the less he spoke.
-# The less he spoke the more he heard.
-# Why can’t we all be like that wise old bird?
-
-# Yeah right. I'll tell you why. Because that might be smart, but it would be inhuman; downright fowl.
-
-# The records need to be isolated from each other. I'm splitting lines anyway so no reason not to store them. Still want to read the file once only. The first time I wasn't using vars like self.person_id, I was trying to index lines. Using vars, the separate record will work fine. The hard-coded approach in the current version won't work for 99 levels of n.
-# The data base updates done before I stopped to write the blog post are probably wrong, the right thing is to get the new name id and insert it to a new links_links row along with the source_id fk.
-# DATABASE CHANGES TO  sample_tree, default_new_tree, default_new_tree_untouched;:
-# DROP TABLES: date_change; claims_findings; claims_citations
-# CITATIONS TABLE: citations text shd be NOT NULL; 
-# CLAIM TABLE:  create claim_new by copying the schema of finding then [in sample_tree] adding the content of claim, and [in all] add a column citation_id for fk; this will automatically remove name_id and remove surety id
-# For each action taken in db, add a delete query or update query in reset() to return the db to virgin condition
-# Add fk or default for person_id to name, place, places_places, and finding each person made and add to reset() function
-# Can import to non-new db (filename specified by user) and if the id is being used it can create a substitution table so that ids found in ged will be input to db as diff id.
-# Don't stop to play with the data, just put it into the db. Only when the db is populated, go thru again and generate an exception report, informating the user that he can use the db while the exc report is being created.
-# Never mind dicts, it's the same as lists. The new goal is to go into the db upon first reading of each line of code. If that's impossible, then read all the zeros and put them straight in, then read all the ones and put them straight in , etc.
-# Have separate dicts for each zero level. This will eliminate a whole level of looping, no more k,v.items()
-# START OVER FROM SCRATCH. This time, keep it in text. Do not reconcile famc/fams discrepancies, just put all into the same dict and the famc/fams will overwrite existing stuff or add to it if it's unique. Step 1 is to find every FAM record and change it to a family_record dict. For each FAM tag, find the HUSB and WIFE tags and  delete their corresponding FAMS tags. For each CHIL tag, find the corresponding FAMC tag and delete it. When deleting, FAMS and FAMC tags, add their data to the dict. When everything the FAM record says about the family is in the dict, delete the record. 
-# SINCE fam tags is where the fun begins, do the check there. For each fam tag, make a dict of husb/wife/child and then search the whole main dict for famc and fams re the fam tag. If there are famc and fams not represented in the fam dict, make the exceptions and the fake marriage right there. Instead of waiting to do it last, then it's not necessary to check famc/fams tags afterward at all and the redundant junk all gets done at once.
-# change the code so that if 0 @F1@ FAM occurs with no HUSB/WIFE/CHIL tags under it, extract the identifier and search for the pointers, and use the FAMS to create the fake marriages. Make exceptions for the found FAMS tags. If there are no FAMS tags corresponding to the FAM ident, make a single exception for that with a different message.
-# baseless FAMS tags: create "marriage" event for childless couples 12/11, 14/13, 17/16, 21/20, 23/22, and then go ahead and import the couple's link to each other; add to exceptions_dict with the message baseless_fams_tags
-# when import gedcom and person #1 opens as curr per, on changing to David, his parents are not listed in the family table. After changing to a second person, the family table now works.
-# level 1 tags still to do: SEX, EVEN, RESI & other events, CHAN, SOUR, OCCU, RELI, BURI, DEAT
-# make a movie
-# when opening and closing with dropdown menu the wrong tree is sometimes accessed even though the title bar says the right thing. Has nothing to do with GEDCOM.
-# level 2 tags include: DATE (subordinate to BIRT but BIRT is autogenerated by app)
-# text shd be read only
-# Change the OK button to a MINIMIZE button and change the CANCEL button to CLOSE.
-# there are now 3 things called "import_gedcom" which has to be fixed because I'm confused. 1) in SplashScreen there's a method, 2) in gedcom_import.py there WAS a module-level function which is now commented out but before I started making the new class importer which is not a widget, this worked and was run inside __init__ of the exceptions dialog class, 3) there's a instance level version of the comment function. The reason I started making a class is so that the functions in the module namespace could get access to the ScrolledText widget in the dialog by making the text an attribute of self.treebard which I had no access to in the module namespace.
-# First get FAM, INDI & SOUR level 1 creation lines into the db then the ones in INDI that I forgot, before trying to get level 2+ in, because these levels will include FK refs that won't be valid till the data is in. FAMC and FAMS have to check whether the FK has already been put in and if so they can be ignored. MAKE/POST GEDCOM VIDEO SEE DO LIST. Add a `changed` table to db and a module to the app, or put the code in utes.py. Then write input_changed(). The only right time to handle subordinate lines is nested inside the for loops that handle the level 1 tags see parse_next_line
-# After it becomes possible to input subordinate lines, change to a larger .ged that has SUBM, NOTE etc level 0 tags
-# Replace switch statements with dicts
-# Fix the names input code to handle multiple names. Put alt names back in that I stripped out earlier (see Jimmy, Grace, Lora in unfixed .ged file). From the docs:
-# ! Multiple Names:
-    # GEDCOM 5.x requires listing different names in different NAME structures, with the preferred
-    # instance first, followed by less preferred names. However, Personal Ancestral File and other products
-    # that only handle one name may use only the last instance of a name from a GEDCOM transmission.
-    # This causes the preferred name to be dropped when more than one name is present. The same thing
-    # often happens with other multiple-instance tags when only one instance was expected by the receiving
-    # system.
-# mousewheel stopped working
-# make new .sql dumps 
-
-
 # BRANCH: families_table_finish
 # after adding a father to a blank field, the curr per doesn't appear as the new father's offspring
 # when curr per is #5 the offspring event cohighlight both the real child and the adopted, and the guardianship event cohighlights neither, is this related to the error below (cohighlight funx is commented out right now)
@@ -299,7 +217,8 @@ if __name__ == '__main__':
 # UNLINK                     x               x             x               x 
 # when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here. Is this because the parent fields and alt parent fields aren't made at the same time? Does a tab order method need to be rerun when creating an alt parent field? See also gender field in child row--tab traversal works if just tabbing thru, but after changing something, focus out doesn't go to next widget because of redraw(). So the autofill needs a feature wherein it registers itself as self.current_widget on FocusIn so that redraw() can go like self.current_widget.tkFocusNext().focus_set()(
 # RCM: There are two ways to deal with unknown partners of the current person: unknown name labels and null persons. NOTE: if you don't understand or don't want to read the discussion below, here are your simple instructions: If you are creating a person but don't know the person's name, enter the name as '_____'. There can be any number of separate individuals with the same name. The details: An unknown name label has to contain at least one character. Using letters in unknown name labels is not a good idea. For example, the label 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. The purpose of an unknown name label made with symbols (a name such as '?' or '_____') is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name labels will differentiate the current person's two families. This works since duplicate names are allowed, such as two people that are both temporarily named '_____', and each person will have a unique ID number. It's OK to not use unknown name labels, but in that case, Treebard will lump all children and marital events of the current person's whose partner is null into a single family. If you want to avoid this, use a name such as '?' or '_____' with at least one character and Treebard will give this person a unique ID instead of a null ID. If you use null partners when creating marital events, for example, all the children and marital events for the current person where the current person's partner is left blank will be lumped together into one family. This is easy to change anytime, but most users will probably prefer to differentiate families of unknown partners from the start by using unknown name labels as name placeholders when creating the person. To change from a null partner to unknown name labels, type an unknown name label into an empty partner field. Empty partner fields exist when there are marital events with null partner or children with a null parent. When you tab out of the field, a dialog will open listing all the marital events and children for the current person with a null partner. You can choose which ones to link to the new unnamed person you're creating. This is easier to do than it is to describe. Just try it.
-# Test everything on the video tour list before making the video.
+# mousewheel stopped working
+# Test everything on the video tour list before making the video. Mention joyride thru the underworld aka gedcom attempt
 # delete commented code and edit docstrings
 # export dbs to .sql
 # backup app to external hd

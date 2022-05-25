@@ -14,7 +14,7 @@ from dev_tools import looky, seeline
 
 
 
-file = "d:/treebard_gps/etc/numerology.db"
+file = "d:/treebard_gps/etc_not_in_repo/numerology.db"
 
 select_matching_names = '''
     SELECT person_id, names, note

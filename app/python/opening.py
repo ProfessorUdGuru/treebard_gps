@@ -11,7 +11,7 @@ from widgets import (
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from PIL import Image, ImageTk
-from gedcom_import import GedcomExceptions
+# from gedcom_import import GedcomExceptions
 from files import (
     open_tree, make_tree, open_sample, app_path, global_db_path, current_drive,
     get_current_file, set_closing, change_tree_title, filter_tree_title)
@@ -257,23 +257,24 @@ class SplashScreen(Toplevel):
             else:
                 p += 1
 
-    def import_gedcom(self):
-        self.close_dialog()
+    def import_gedcom(self): # DO NOT DELETE commented code in this method
+        # self.close_dialog()
 
-        make_tree(self.master, self.treebard, open_input_message2, opening_msg, self.opening_dialog)
+        # make_tree(self.master, self.treebard, open_input_message2, opening_msg, self.opening_dialog)
 
-        init_dir = "{}treebard_gps/etc".format(current_drive)
-        open_dialog = filedialog.askopenfilename(
-            initialdir = init_dir,
-            title = 'Select GEDCOM File to Open', 
-            defaultextension = ".ged", 
-            filetypes=(
-                ('GEDCOM files','*.ged'),
-                ('all files','*.*')))
-        if len(open_dialog) == 0:
-            return
+        # init_dir = "{}treebard_gps/etc".format(current_drive)
+        # open_dialog = filedialog.askopenfilename(
+            # initialdir = init_dir,
+            # title = 'Select GEDCOM File to Open', 
+            # defaultextension = ".ged", 
+            # filetypes=(
+                # ('GEDCOM files','*.ged'),
+                # ('all files','*.*')))
+        # if len(open_dialog) == 0:
+            # return
 
-        self.treebard.import_file = open_dialog  
-        gedcom_import_exceptions = GedcomExceptions(self.master, self.treebard) 
+        # self.treebard.import_file = open_dialog  
+        # gedcom_import_exceptions = GedcomExceptions(self.master, self.treebard) 
+        pass
         
 
