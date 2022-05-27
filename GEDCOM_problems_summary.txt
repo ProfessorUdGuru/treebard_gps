@@ -1,5 +1,0 @@
-It's a real problem, when figuring out how to parse GEDCOM, that the hierarchy indicated by the line numbers is symbolic of a hierarchy of references and not a real hierarchy. I can guess that the line numbers were chosen as a system because they're easy to understand visually, and they resemble a list of generations (it's something a genealogist would have thought of).
-
-Another problem is that some of the hierarchies don't reflect how a database really works. For example, PAGE is made subordinate to SOUR but in a real database, you have to use the source_id as a foreign key in the citation table, so you have to create the citation before you can do that.
-
-Another problem is that some of the elements are repeated so that values are duplicated (shown in two different places in the GEDCOM) and have to be checked for consistency and completeness.

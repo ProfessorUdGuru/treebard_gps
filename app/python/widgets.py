@@ -83,7 +83,9 @@ def get_opening_settings():
         color_scheme = list(cur.fetchone())
         cur.execute(select_format_font_scheme)
         font_scheme = list(cur.fetchone()[0:2])
-        user_formats = color_scheme + [INPUT_FONT] + font_scheme
+        user_formats = color_scheme + font_scheme
+        user_formats.insert(5, INPUT_FONT)
+        # user_formats = color_scheme + [INPUT_FONT] + font_scheme
         cur.close()
         conn.close()
         return user_formats
@@ -3928,7 +3930,8 @@ class DropdownMenu(FrameHilited2):
                 child.destroy()
             populate_drop2_recent_files()
             change_tree_title(self.treebard)
-            self.treebard.make_main_window()                
+            self.treebard.make_main_window() 
+            configall(self.root, formats)             
 
         recent_files = get_recent_files() 
         populate_drop2_recent_files()

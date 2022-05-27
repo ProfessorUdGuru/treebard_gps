@@ -111,10 +111,11 @@ class Treebard():
     def make_main_window(self):
         '''
             This is delayed till when the current file is known, so it's called 
-            in opening.py. So for example, passing a reference to the Treebard
+            in opening.py.* So for example, passing a reference to the Treebard
             instance via Main might not work before Treebard has been
             instantiated, e.g. see `treebard.scroll_mouse...` below which had
-            to be called last.
+            to be called last. *Also called in use_recent_tree() which is in
+            widgets.py.
         '''
 
         self.main = Main(self.canvas, self.root, self)        
@@ -152,6 +153,7 @@ def start():
     splash.open_treebard(treebard.make_main_window)
     # Manually closing the opening dialog throws an error re: scroll_mouse. This     
     #   error was prevented everywhere else by placing these lines of code last.
+    #   See docstring under `make_main_window()`.
     try:
         treebard.scroll_mouse.append_to_list(
             treebard.main.nukefam_table.nukefam_canvas, resizable=False)
@@ -169,6 +171,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: families_table_finish
+# eerroorr message opens when click labeldots to open role dlg? What happened before that, can't reproduce it. 
 # after adding a father to a blank field, the curr per doesn't appear as the new father's offspring
 # when curr per is #5 the offspring event cohighlight both the real child and the adopted, and the guardianship event cohighlights neither, is this related to the error below (cohighlight funx is commented out right now)
 # self.family_data (see alverta) has two keys for finding_id: "finding" and "birth_finding"; get rid of "finding"; LOOKS LIKE THE DIFF IS THAT BOTH EXIST IN PARENTS BUT ONLY THE 2ND EXISTS IN ALT PARENTS
@@ -217,7 +220,6 @@ if __name__ == '__main__':
 # UNLINK                     x               x             x               x 
 # when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here. Is this because the parent fields and alt parent fields aren't made at the same time? Does a tab order method need to be rerun when creating an alt parent field? See also gender field in child row--tab traversal works if just tabbing thru, but after changing something, focus out doesn't go to next widget because of redraw(). So the autofill needs a feature wherein it registers itself as self.current_widget on FocusIn so that redraw() can go like self.current_widget.tkFocusNext().focus_set()(
 # RCM: There are two ways to deal with unknown partners of the current person: unknown name labels and null persons. NOTE: if you don't understand or don't want to read the discussion below, here are your simple instructions: If you are creating a person but don't know the person's name, enter the name as '_____'. There can be any number of separate individuals with the same name. The details: An unknown name label has to contain at least one character. Using letters in unknown name labels is not a good idea. For example, the label 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. The purpose of an unknown name label made with symbols (a name such as '?' or '_____') is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name labels will differentiate the current person's two families. This works since duplicate names are allowed, such as two people that are both temporarily named '_____', and each person will have a unique ID number. It's OK to not use unknown name labels, but in that case, Treebard will lump all children and marital events of the current person's whose partner is null into a single family. If you want to avoid this, use a name such as '?' or '_____' with at least one character and Treebard will give this person a unique ID instead of a null ID. If you use null partners when creating marital events, for example, all the children and marital events for the current person where the current person's partner is left blank will be lumped together into one family. This is easy to change anytime, but most users will probably prefer to differentiate families of unknown partners from the start by using unknown name labels as name placeholders when creating the person. To change from a null partner to unknown name labels, type an unknown name label into an empty partner field. Empty partner fields exist when there are marital events with null partner or children with a null parent. When you tab out of the field, a dialog will open listing all the marital events and children for the current person with a null partner. You can choose which ones to link to the new unnamed person you're creating. This is easier to do than it is to describe. Just try it.
-# mousewheel stopped working
 # Test everything on the video tour list before making the video. Mention joyride thru the underworld aka gedcom attempt
 # delete commented code and edit docstrings
 # export dbs to .sql
