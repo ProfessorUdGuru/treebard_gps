@@ -61,7 +61,7 @@ def make_parent_types_dict():
 
 PARENT_TYPES = make_parent_types_dict()
 # PARENT_TYPES = {
-    # 1: "Mother", 2: "Father", 110: "Adoptive Parent", 111: "Adoptive Mother", 
+    # 1: "Father", 2: "Mother", 110: "Adoptive Parent", 111: "Adoptive Mother", 
     # 112: "Adoptive Father", 120: "Foster Parent", 121: "Foster Mother", 
     # 122: "Foster Father", 130: "Guardian", 131: "Legal Guardian"}
 
@@ -100,8 +100,8 @@ class NuclearFamiliesTable(Frame):
             self.family_data[0][x][1] is for only the father or alt parent 1.
             self.family_data[0][x][2] is for only the mother or alt parent 2.
             self.family_data[1] is for partners & children of current person.
-            self.family_data[1] has a partner's person ids as its keys.
-            For its values see: 
+            self.family_data[1] has current person's partners' person ids as 
+            its keys. For its values see: 
                 `progeny = { 
                     "sorter": [], "partner_name": "", "parent_type": None,
                     "partner_kin_type": "", "inwidg": None, "children": [],
@@ -130,8 +130,6 @@ class NuclearFamiliesTable(Frame):
         self.idtip_text = None
         self.idtip_bindings = {"on_enter": [], "on_leave": []}
         self.person_inputs = []
-
-        self.cohighlights = {}
 
         self.original = ""
 
@@ -195,9 +193,9 @@ class NuclearFamiliesTable(Frame):
             ent.bind("<Double-Button-1>", self.change_current_person)
 
     def make_new_kin_inputs(self):
-        """ Get `self.new_kid_frame` into the correct row by ungridding it in 
-            `redraw.forget_cells()` and regridding it in 
-            `self.make_nukefam_inputs()` which runs in `redraw.redraw_person_tab()`.
+        """ Get `self.new_kid_frame` into the correct row by ungridding it and 
+            regridding it in `self.make_nukefam_inputs()` which runs in 
+            `redraw_person_tab()`.
         """
         self.new_kid_frame = Frame(self.nukefam_window)
         self.new_kid_input = EntryAutoPersonHilited(
@@ -265,134 +263,6 @@ class NuclearFamiliesTable(Frame):
         self.nukefam_canvas.config(width=wd, height=ht)        
         self.nukefam_canvas.config(scrollregion=self.nukefam_canvas.bbox('all'))
         self.make_idtips()
-
-        # self.make_cohighlights_dict() # DO NOT DELETE
-
-        copy = self.cohighlights
-        for k,v in copy.items():
-            for row in self.findings_table.cell_pool:
-                if v == row[0]:
-                    self.cohighlights[k] = row[1][0]
-
-    def make_cohighlights_dict(self):
-        # parents and alt parents
-        for parent_couple in self.family_data[0]:
-            family_widgets = []
-            event_widgets = []
-            h = 0
-            for dkt in parent_couple:
-                if h == 0:
-                    birth_finding = dkt["birth_finding"]
-                    event_widgets.append(birth_finding)
-                elif h == 1:
-                    parent1_widg = dkt["inwidg"]
-                    family_widgets.append(parent1_widg)
-                elif h == 2:
-                    parent2_widg = dkt["inwidg"]
-                    family_widgets.append(parent2_widg)
-                z = 0
-                for finding_id in event_widgets:
-                    for row in self.findings_table.cell_pool:
-                        if finding_id == row[0]:
-                            event_widgets[z] = row[1][0]
-                    z += 1
-                h += 1
-
-            p = 0
-            for lst in (family_widgets, event_widgets):
-                if p == 0:
-                    other = event_widgets
-                elif p == 1:
-                    other = family_widgets
-                for widg in lst:
-                    widg.bind(
-                        "<Enter>", 
-                        lambda evt, other=other: self.highlight_both(evt, other), 
-                        add="+")
-                    widg.bind(
-                        "<Leave>", 
-                        lambda evt, other=other: self.unhighlight_both(evt, other), 
-                        add="+")
-                p += 1
-            self.cohighlights[tuple(family_widgets)] = tuple([event_widgets])
-
-        for v in self.family_data[1].values():
-            for child in v["children"]:
-                print("line", looky(seeline()).lineno, "child:", child)
-# line 802 births: []
-# line 769 births: [[1, 5, 131, 4, 131]]
-# line 833 parent_type: 131
-# line 837 self.parent_types: [131]
-# line 847 self.parent_types: ['legal guardian']
-# line 848 pard_id: 4
-# line 322 child: {'birth_id': 1, 'order': '131-131', 'gender': 'male', 'birth': '7 April 1884', 'sorter': [1884, 4, 7], 'death': '4 February 1955', 'name': 'Jeremiah Laurence Grimaldo', 'id': 1, 'death_id': 4, 'name_widg': <widgets.EntryAutoPerson object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame2.!entryautoperson>, 'gender_widg': <widgets.EntryAutoPerson object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame2.!entryautoperson2>, 'birth_widg': <widgets.EntryAutoPerson object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame2.!entryautoperson3>, 'death_widg': <widgets.EntryAutoPerson object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame2.!entryautoperson4>}
-                for row in self.findings_table.cell_pool:
-                    if row[0] == child["birth_id"]:
-                        offspring_event_widg = (row[1][0],)
-                        break
-
-                family_widgets = (child['name_widg'],)
-                event_widgets = offspring_event_widg
-
-                c = 0
-                for i in (family_widgets, event_widgets):
-                    if c == 0:
-                        other = event_widgets
-                    elif c == 1:
-                        other = family_widgets
-                    for widg in i:
-                        widg.bind(
-                            "<Enter>", 
-                            lambda evt, other=other: self.highlight_both(evt, other), 
-                            add="+")
-                        widg.bind(
-                            "<Leave>", 
-                            lambda evt, other=other: self.unhighlight_both(evt, other), 
-                            add="+")
-                    c += 1
-                self.cohighlights[(child["name_widg"],)] = offspring_event_widg
-
-        # partners based on marital events
-        # parent of child highlights with no corresponding event to highlight
-        for v in self.family_data[1].values():
-            family_widgets = []
-            event_widgets = []
-            family_widgets.append(v["inwidg"])
-            for event in v["marital_events"]:
-                event_widgets.append(event["finding"])
-            b = 0
-            for event_id in event_widgets:
-                for row in self.findings_table.cell_pool:
-                    if event_id == row[0]:
-                        event_widgets[b] = row[1][0]
-                b += 1
-            a = 0
-            for i in (family_widgets, event_widgets):
-                if a == 0:
-                    other = event_widgets
-                elif a == 1:
-                    other = family_widgets
-                for widg in i:
-                    widg.bind(
-                        "<Enter>", 
-                        lambda evt, other=other: self.highlight_both(evt, other), 
-                        add="+")
-                    widg.bind(
-                        "<Leave>", 
-                        lambda evt, other=other: self.unhighlight_both(evt, other), 
-                        add="+")
-                a += 1
-            self.cohighlights[tuple(family_widgets)] = tuple([event_widgets])        
-
-    def highlight_both(self, evt, other):
-        evt.widget.config(bg=EntryAutoPerson.highlight_bg)
-        for widg in other:
-            widg.config(bg=EntryAutoPerson.highlight_bg)
-
-    def unhighlight_both(self, evt, other):
-        evt.widget.config(bg=EntryAutoPerson.bg)
-        for widg in other:
-            widg.config(bg=EntryAutoPerson.bg)
 
     def populate_nuke_tables(self):
         lst = [            
@@ -639,18 +509,6 @@ class NuclearFamiliesTable(Frame):
                 lab.bind("<Double-Button-1>", self.change_kin_type)
             self.nukefam_containers.extend([lab_l, lab_r])          
             j += 1
-
-        x = 1
-        for finding in self.alt_parent_events:
-            alt_parentage_id = finding[0]
-            for event in self.family_data[0][1:]:
-                if event[0]["birth_finding"] == alt_parentage_id:
-                    parent1_widg = event[1]["inwidg"]
-                    parent2_widg = event[2]["inwidg"]
-                    self.cohighlights[parent1_widg] = alt_parentage_id
-                    self.cohighlights[parent2_widg] = alt_parentage_id
-                    break
-            x += 1
 
     def make_alt_parents_dict(self, cur):
         for finding in self.alt_parent_events:

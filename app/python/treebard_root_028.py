@@ -171,15 +171,16 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: families_table_finish
-# eerroorr message opens when click labeldots to open role dlg? What happened before that, can't reproduce it. 
-# after adding a father to a blank field, the curr per doesn't appear as the new father's offspring
-# when curr per is #5 the offspring event cohighlight both the real child and the adopted, and the guardianship event cohighlights neither, is this related to the error below (cohighlight funx is commented out right now)
+
 # self.family_data (see alverta) has two keys for finding_id: "finding" and "birth_finding"; get rid of "finding"; LOOKS LIKE THE DIFF IS THAT BOTH EXIST IN PARENTS BUT ONLY THE 2ND EXISTS IN ALT PARENTS
 # when using dupe name dlg for foster parent there's an error in forget_cells() can't delete tcl command, seems to be no problem in bio father with dupes but in bio mother same problem can't delete. The data goes into the db anyway so all is right on reload.
+# after autofilling a person name in curr per entry or parents area of families table or ?, the most recently used person does not go to the front of the hits list as its supposed to do
+# fix places display/edit in places col of events table
 # make it impossible for a person to be their own parent, partner or child
 # Make sure it's impossible to add a name with length of 0.
 # add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f); make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner.
 # is there a reason why make_idtips() is running twice?
+# eerroorr message opens when click labeldots to open role dlg? What happened before that, can't reproduce it. 
 # UNCOMMENT self.make_cohighlights_dict() AND FIX THIS:
 # when double clicking an alt parent in the families table to make the person current, it works (except after that person is current the program will no longer load) but makes this error:
 # Exception in Tkinter callback

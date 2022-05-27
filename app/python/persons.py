@@ -124,8 +124,6 @@ def make_all_names_dict_for_person_select():
                 c += 1
             b += 1
         a += 1
-    print("line", looky(seeline()).lineno, "current_file:", current_file)
-    # print("line", looky(seeline()).lineno, "person_autofill_values:", person_autofill_values)
     return person_autofill_values
 
 person_autofill_values = make_all_names_dict_for_person_select()

@@ -666,7 +666,7 @@ select_finding_id_age2_alt_parents = '''
     SELECT finding_id, age2
     FROM finding
     WHERE person_id2 = ?
-        AND kin_type_id1 in (1, 2, 110, 111, 112, 120, 121, 122, 130, 131)
+        AND kin_type_id2 in (1, 2, 110, 111, 112, 120, 121, 122, 130, 131)
 '''
 
 select_finding_person_date_alt_parent_event = '''
@@ -1607,15 +1607,28 @@ update_finding_person_2_null = '''
 
 update_finding_person_1 = '''
     UPDATE finding
-    SET person_id1 = ?
+    SET (person_id1, kin_type_id1) = (?, 1)
     WHERE finding_id = ?
 '''
 
 update_finding_person_2 = '''
     UPDATE finding
-    SET person_id2 = ?
+    SET (person_id2, kin_type_id2) = (?, 2)
     WHERE finding_id = ?
 '''
+
+# update_finding_person_1 = '''
+    # UPDATE finding
+    # SET person_id1 = ?
+    # WHERE finding_id = ?
+# '''
+
+# update_finding_person_2 = '''
+    # UPDATE finding
+    # SET person_id2 = ?
+    # WHERE finding_id = ?
+# '''
+
 update_place_hint = '''
     UPDATE place 
     SET hint = ?

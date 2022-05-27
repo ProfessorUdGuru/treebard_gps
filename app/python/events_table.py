@@ -356,6 +356,7 @@ def autocreate_parent_findings(
             if event_type_id == k:
                 event_type = v
         return event_type
+
     cur.execute(select_finding_id_age1_alt_parents, (current_person,))
     offspring1 = [list(i) for i in cur.fetchall()]
 
@@ -363,6 +364,7 @@ def autocreate_parent_findings(
     offspring2 = [list(i) for i in cur.fetchall()]
 
     offspring = offspring1 + offspring2
+
     for child in offspring:
         finding = child[0]
         cur.execute(select_person, (finding,))
@@ -377,6 +379,7 @@ def autocreate_parent_findings(
             (child_id, offspring_event_id))     
         offspring_details = cur.fetchone()
         event_type = get_event_type_string(offspring_event_id)
+
         child_name = person_autofill_values[child_id][0]["name"]
 
         sorter = split_sorter(offspring_details[1])
@@ -398,6 +401,7 @@ def autocreate_parent_findings(
         findings_data[offspring_event_id]["child_id"] = child_id
         findings_data[offspring_event_id]["child_name"] = child_name
         findings_data[offspring_event_id]["sorter"] = sorter
+
     event_type = dkt["event"]
     if event_type == "birth":
         make_parent_kintips(dkt, current_person, cur, person_autofill_values)
