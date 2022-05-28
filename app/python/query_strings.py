@@ -1607,25 +1607,25 @@ update_finding_person_2_null = '''
 
 update_finding_person_1 = '''
     UPDATE finding
-    SET (person_id1, kin_type_id1) = (?, 1)
+    SET (person_id1, kin_type_id1) = (?, ?)
     WHERE finding_id = ?
 '''
 
 update_finding_person_2 = '''
     UPDATE finding
-    SET (person_id2, kin_type_id2) = (?, 2)
+    SET (person_id2, kin_type_id2) = (?, ?)
     WHERE finding_id = ?
 '''
 
 # update_finding_person_1 = '''
     # UPDATE finding
-    # SET person_id1 = ?
+    # SET (person_id1, kin_type_id1) = (?, 1)
     # WHERE finding_id = ?
 # '''
 
 # update_finding_person_2 = '''
     # UPDATE finding
-    # SET person_id2 = ?
+    # SET (person_id2, kin_type_id2) = (?, 2)
     # WHERE finding_id = ?
 # '''
 

@@ -172,14 +172,13 @@ if __name__ == '__main__':
 
 # BRANCH: families_table_finish
 
-# self.family_data (see alverta) has two keys for finding_id: "finding" and "birth_finding"; get rid of "finding"; LOOKS LIKE THE DIFF IS THAT BOTH EXIST IN PARENTS BUT ONLY THE 2ND EXISTS IN ALT PARENTS
-# when using dupe name dlg for foster parent there's an error in forget_cells() can't delete tcl command, seems to be no problem in bio father with dupes but in bio mother same problem can't delete. The data goes into the db anyway so all is right on reload.
-# after autofilling a person name in curr per entry or parents area of families table or ?, the most recently used person does not go to the front of the hits list as its supposed to do
+# dbl click to change curr per from donald to ronnie error   File "D:\treebard_gps\app\python\families.py", line 715, in make_pard_dict
+    # for partype in parent_types:
+# UnboundLocalError: local variable 'parent_types' referenced before assignment
 # fix places display/edit in places col of events table
 # make it impossible for a person to be their own parent, partner or child
 # Make sure it's impossible to add a name with length of 0.
 # add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f); make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner.
-# is there a reason why make_idtips() is running twice?
 # eerroorr message opens when click labeldots to open role dlg? What happened before that, can't reproduce it. 
 # UNCOMMENT self.make_cohighlights_dict() AND FIX THIS:
 # when double clicking an alt parent in the families table to make the person current, it works (except after that person is current the program will no longer load) but makes this error:
@@ -227,8 +226,9 @@ if __name__ == '__main__':
 # backup app to external hd
 
 # BRANCH: autofills
+# after autofilling a person name in parents area of families table or ?, the most recently used person does not go to the front of the hits list as its supposed to do if it's been used ie if you've focused out too after autofilling in. It does work in the curr per entry and one diff is that the latter is EntryAutoPersonHilited and the former is EntryAutoPerson. But the self.prepend() method is in the latter. So it might have to do with how the entry was used. Also, unlike the partner and child entries, the parent entries are not destroyed and replaced so that can't be its alibi. PROBLEM HAS SOMETHING TO DO WITH self.current_id always being None in the fam table unlike main person_entry which gets the ID of the person filling in ?because of the OK button instead of FocusOut event? Maybe best to shelve this problem and make a mini-app to redevelop the autofill right. It has gotten messy, with person and non-person classes growing separately and liable to get more sloppy every time something is changed. If possible more class-level variables should be used where possible. I seem to recall the self.current_id variable being a slippery fix even when it was first created.
 # add a feature to all autofills, if autofill is in focus and empty (i.e. you just deleted its contents but haven't tabbed out yet), and you press ESCAPE, the old contents fill back in and it focuses out.) This will let you tab out without deleting the person and you won't have to retype it back in or reautofill it back in.
-# extend the EntryAutofill create_lists() method to work for EntryAutofillPerson. Currently it doesn't work for people because the values list is a dict, not a simple list. This is the feature that first tries to autofill the last person that was used. Since dicts now retain the order in which they were created, this shouldn't be hard to extend.
+# extend the EntryAutofill create_lists() method to work for EntryAutofillPerson. Currently it ?doesn't work for people? because the values list is a dict, not a simple list. This is the feature that first tries to autofill the last person that was used. Since dicts now retain the order in which they were created, this shouldn't be hard to extend. (I think this was already done but doesn't work perfectly yet?)
 # When autofilling a new place, the width of the whole table flashes back and forth. Better to have an edit mode so that when you start typing in a place autofill ?or any autofill if autofill is True, it expands to a fixed size and doesn't change at all till you tab out, then it fits its content.
 # when adding a new person, the name becomes instantly available to autofills but id # doesn't till reloading app
 

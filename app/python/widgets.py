@@ -1930,7 +1930,7 @@ class EntryAuto(Entryx):
 
         To extend this class, rule number 1 is don't try doing logic on a
         string being autofilled until the typing/autofilling is done and
-        focus is out of the widget. See EntryAutoPerson in persons.py.
+        focus is out of the widget. See EntryAutoPerson.
     '''
 
     all_person_autofills = []
@@ -1943,8 +1943,7 @@ class EntryAuto(Entryx):
     font = formats["input_font"]
 
     def create_lists(all_items):
-        """ Ignore this, it's made to use a simple list. Until it's customized
-            for the dict that is used for name values, this won't work for
+        """ This is made to use a simple list, it won't work for
             person autofills. It currently works for events and places.
         """
         recent_items = []
@@ -2059,7 +2058,7 @@ class EntryAutoHilited(EntryAuto):
         EntryAuto.__init__(self, master, *args, **kwargs)
         self.config(bg=formats["highlight_bg"])
 
-""" These two autofill inputs are based on simpler code in autofill.py. """
+""" Based on (but not inherited from) EntryAuto. """
 class EntryAutoPerson(Entryx):
     """ To use this class, each person autofill input has to be given the 
         ability to use its newest values with a line like this: 
@@ -2077,6 +2076,7 @@ class EntryAutoPerson(Entryx):
     insertbackground = formats["fg"]
     selectforeground = formats["fg"]
     selectbackground = formats["head_bg"]
+
     def create_lists(all_items):
         """ Keeps a temporary list during one app session which will 
             prioritize the autofill values with the most recently used values
@@ -2267,10 +2267,13 @@ class EntryAutoPerson(Entryx):
         """ Determine which ID was used to fill in a value. Move the autofill
             value corresponding with that ID to the front of the valus list.
         """
-        content = self.get()
+        # content = self.get()
+        print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
+        # print("line", looky(seeline()).lineno, "self.values:", self.values)
         if self.current_id in self.values:
             key_list = list(self.values.items())
-            u = 0
+            print("line", looky(seeline()).lineno, "key_list[0]:", key_list[0])
+            u = 0 # CHANGE TO enumerate()
             for tup in key_list:
                 if tup[0] == self.current_id:
                     idx = u
@@ -2279,6 +2282,7 @@ class EntryAutoPerson(Entryx):
             used = key_list.pop(idx)
             key_list.insert(0, used)
             self.values = dict(key_list)
+            # print("line", looky(seeline()).lineno, "self.values:", self.values)
 
     def deselect(self, evt):
         '''
@@ -4286,7 +4290,7 @@ class FontPicker(Frame):
     def show_font_size(self, evt):
         self.font_size = self.fontSizeVar.get()
 
-# from redraw.py
+# from events_table.py
 
 def redraw_person_tab(
         evt=None, main_window=None, current_person=None, current_name=None):        
