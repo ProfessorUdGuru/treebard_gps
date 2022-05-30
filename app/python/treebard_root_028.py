@@ -171,34 +171,12 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: families_table_finish
-
-# dbl click to change curr per from donald to ronnie error   File "D:\treebard_gps\app\python\families.py", line 715, in make_pard_dict
-    # for partype in parent_types:
-# UnboundLocalError: local variable 'parent_types' referenced before assignment
-# fix places display/edit in places col of events table
-# make it impossible for a person to be their own parent, partner or child
-# Make sure it's impossible to add a name with length of 0.
-# add error messages for these cases: mother and father same person, mother & father same gender (msg: Anyone can marry anyone but biological parents are usually M or F, for exceptional cases use other or unknown instead of m or f); make it impossible to add a child who is already a child or a partner who is already a partner, but it is possible to add a partner who is already a child or to add a child who is already a partner.
-# eerroorr message opens when click labeldots to open role dlg? What happened before that, can't reproduce it. 
-# UNCOMMENT self.make_cohighlights_dict() AND FIX THIS:
-# when double clicking an alt parent in the families table to make the person current, it works (except after that person is current the program will no longer load) but makes this error:
-# Exception in Tkinter callback
-# Traceback (most recent call last):
-  # File "C:\Users\Lutherman\AppData\Local\Programs\Python\Python39\lib\tkinter\__init__.py", line 1884, in __call__
-    # return self.func(*args)
-  # File "D:\treebard_gps\app\python\families.py", line 1811, in change_current_person
-    # redraw_person_tab(
-  # File "D:\treebard_gps\app\python\redraw.py", line 30, in redraw_person_tab
-    # redraw_families_table(evt, current_person, main_window)
-  # File "D:\treebard_gps\app\python\redraw.py", line 85, in redraw_families_table
-    # main_window.nukefam_table.make_nukefam_inputs()
-  # File "D:\treebard_gps\app\python\families.py", line 258, in make_nukefam_inputs
-    # self.make_cohighlights_dict() # DO NOT DELETE
-  # File "D:\treebard_gps\app\python\families.py", line 319, in make_cohighlights_dict
-    # event_widgets = offspring_event_widg
-# UnboundLocalError: local variable 'offspring_event_widg' referenced before assignment
-# parameterize repeated sections of code in make_cohighlights_dict(
-# in get_final call a new method define_input in which every one of the tests in the chart below is equally represented including a new one DUPE>SAME DUPE DIFFERENT PERSON with flags set and returned so the right code will run in get_final. In a simple and symmetrical way, run a given method depending on what define_input returns
+# change the value of partner_kin_type to a list so mother/foster mother/wife is easy to do in label , see doctring make_pard_dict(), see self.parent_types
+# put a border or Separator under the families table so you can see where it ends, with no y padding
+# ctrl-s (or something) in roles dlg causes jeremiah to fill in to edit person field
+# test that update_values still works (make new person)
+# Add Child input
+# in get_final call a new method define_input in which the tests in the chart below are represented including a new one DUPE>SAME DUPE DIFFERENT PERSON with flags set and returned so the right code will run in get_final. In a simple way, run a method depending on what define_input returns
 # TESTING NOT DONE TILL EACH OPTION IS xx DOUBLE CHECKED
 # rule: when making a change in the code, reduce any XXs to single x & test everything again
 #                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
@@ -218,6 +196,7 @@ if __name__ == '__main__':
 # CHANGE>DUPE                x               x             x               x
 # CHANGE>NEW                 x               x             x               x
 # UNLINK                     x               x             x               x 
+
 # when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here. Is this because the parent fields and alt parent fields aren't made at the same time? Does a tab order method need to be rerun when creating an alt parent field? See also gender field in child row--tab traversal works if just tabbing thru, but after changing something, focus out doesn't go to next widget because of redraw(). So the autofill needs a feature wherein it registers itself as self.current_widget on FocusIn so that redraw() can go like self.current_widget.tkFocusNext().focus_set()(
 # RCM: There are two ways to deal with unknown partners of the current person: unknown name labels and null persons. NOTE: if you don't understand or don't want to read the discussion below, here are your simple instructions: If you are creating a person but don't know the person's name, enter the name as '_____'. There can be any number of separate individuals with the same name. The details: An unknown name label has to contain at least one character. Using letters in unknown name labels is not a good idea. For example, the label 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. The purpose of an unknown name label made with symbols (a name such as '?' or '_____') is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name labels will differentiate the current person's two families. This works since duplicate names are allowed, such as two people that are both temporarily named '_____', and each person will have a unique ID number. It's OK to not use unknown name labels, but in that case, Treebard will lump all children and marital events of the current person's whose partner is null into a single family. If you want to avoid this, use a name such as '?' or '_____' with at least one character and Treebard will give this person a unique ID instead of a null ID. If you use null partners when creating marital events, for example, all the children and marital events for the current person where the current person's partner is left blank will be lumped together into one family. This is easy to change anytime, but most users will probably prefer to differentiate families of unknown partners from the start by using unknown name labels as name placeholders when creating the person. To change from a null partner to unknown name labels, type an unknown name label into an empty partner field. Empty partner fields exist when there are marital events with null partner or children with a null parent. When you tab out of the field, a dialog will open listing all the marital events and children for the current person with a null partner. You can choose which ones to link to the new unnamed person you're creating. This is easier to do than it is to describe. Just try it.
 # Test everything on the video tour list before making the video. Mention joyride thru the underworld aka gedcom attempt

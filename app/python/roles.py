@@ -56,8 +56,8 @@ class RolesDialog(Toplevel):
         self.person_inputs = []
 
         self.current_name = self.person_autofill_values[self.current_person][0]["name"]
-        people = make_all_names_dict_for_person_select()       
-        self.person_autofill_values = EntryAutoPerson.create_lists(people)
+        # people = make_all_names_dict_for_person_select()       
+        # self.person_autofill_values = EntryAutoPerson.create_lists(people)
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
         self.make_widgets()
@@ -115,7 +115,7 @@ class RolesDialog(Toplevel):
         self.window.rowconfigure(1, minsize=60)
         show_message()
         self.make_inputs()
-        EntryAutoPerson.all_person_autofills.extend(
+        EntryAutoPerson.person_autofills.extend(
             [self.person_input, self.edit_role_person_input])
 
         visited = (

@@ -129,7 +129,7 @@ class Main(FrameStay):
             width=36,
             autofill=True)
         self.person_entry.bind("<FocusIn>", get_original, add="+")
-        EntryAutoPerson.all_person_autofills.append(self.person_entry)
+        EntryAutoPerson.person_autofills.append(self.person_entry)
         person_change = Button(
             current_person_area, text="OK", command=self.change_person)
         person_search = Button(
@@ -163,9 +163,9 @@ class Main(FrameStay):
             self.current_person, 
             self.findings_table, 
             self.right_panel,
-            person_autofill_values=self.person_autofill_values)
+            self.person_autofill_values)
 
-        fix_tab_traversal(self.nukefam_table, self.findings_table)
+        fix_tab_traversal(self.nukefam_table, self.findings_table) 
 
         current_file, current_dir = get_current_file()
         print("line", looky(seeline()).lineno, "current_file:", current_file)

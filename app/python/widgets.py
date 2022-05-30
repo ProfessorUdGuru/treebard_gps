@@ -1933,7 +1933,6 @@ class EntryAuto(Entryx):
         focus is out of the widget. See EntryAutoPerson.
     '''
 
-    all_person_autofills = []
     formats = formats
     bg = formats["bg"]
     fg = formats["fg"]
@@ -1944,7 +1943,8 @@ class EntryAuto(Entryx):
 
     def create_lists(all_items):
         """ This is made to use a simple list, it won't work for
-            person autofills. It currently works for events and places.
+            person autofills. It works for events and places. It works in 
+            conjunction with self.prepend_match().
         """
         recent_items = []
         all_items_unique = []
@@ -2060,14 +2060,13 @@ class EntryAutoHilited(EntryAuto):
 
 """ Based on (but not inherited from) EntryAuto. """
 class EntryAutoPerson(Entryx):
-    """ To use this class, each person autofill input has to be given the 
-        ability to use its newest values with a line like this: 
-            `EntryAutoPerson.all_person_autofills.append(person_entry)`.
-        Then, after instantiating a class that uses autofills, you have to call 
-        `EntryAuto.create_lists(all_items)`. After values change, run something 
-        like `update_person_autofill_values()`.        
+    """ Unlike the EntryAuto class, this one does not prepend the last-used 
+        value to the values list. A lot of time was wasted trying to make this 
+        work with a dict, but really the same person name won't be used over 
+        and over enough to warrant the effort. After values change, run 
+        `update_person_autofill_values()`.        
     """
-    all_person_autofills = []
+    person_autofills = []
     formats = formats
     highlight_bg = formats["highlight_bg"]
     bg = formats["bg"]
@@ -2076,31 +2075,32 @@ class EntryAutoPerson(Entryx):
     insertbackground = formats["fg"]
     selectforeground = formats["fg"]
     selectbackground = formats["head_bg"]
+    
 
-    def create_lists(all_items):
-        """ Keeps a temporary list during one app session which will 
-            prioritize the autofill values with the most recently used values
-            given priority over the alphabetical list of the values not used in
-            the current session.
+    # def create_lists(all_items):
+        # """ Keeps a temporary list during one app session which will 
+            # prioritize the autofill values with the most recently used values
+            # given priority over the alphabetical list of the values not used in
+            # the current session.
 
-            The `prepend_match()` method is used in conjunction with this 
-            to add the most recently used value to the very front of the list.
+            # The `prepend_match()` method is used in conjunction with this 
+            # to add the most recently used value to the very front of the list.
 
-            Since this function and the list `all_person_autofills` comprise a 
-            class-level procedure, values used and moved to the front of the 
-            list by one input will become available as first match to all the 
-            other inputs too, until the app is closed. Next time the app opens,
-            a fresh list of recently-used autofill values will be started.
-        """
-        key_list = list(all_items.items())
-        recent_items = []
-        all_items_unique = []
+            # Since this function and the list `all_person_autofills` comprise a 
+            # class-level procedure, values used and moved to the front of the 
+            # list by one input will become available as first match to all the 
+            # other inputs too, until the app is closed. Next time the app opens,
+            # a fresh list of recently-used autofill values will be started.
+        # """
+        # key_list = list(all_items.items())
+        # recent_items = []
+        # all_items_unique = []
 
-        for item in key_list:
-            if item not in recent_items:
-                all_items_unique.append(item)
-        final_items = dict(recent_items + all_items_unique)
-        return final_items
+        # for item in key_list:
+            # if item not in recent_items:
+                # all_items_unique.append(item)
+        # final_items = dict(recent_items + all_items_unique)
+        # return final_items
 
     def __init__(self, master, autofill=False, values=None, *args, **kwargs):
         Entryx.__init__(self, master, *args, **kwargs)
@@ -2115,7 +2115,7 @@ class EntryAutoPerson(Entryx):
         if autofill is True:
             self.bind("<KeyPress>", self.detect_pressed)
             self.bind("<KeyRelease>", self.get_typed)
-            self.bind("<FocusOut>", self.prepend_match, add="+")
+            # self.bind("<FocusOut>", self.prepend_match, add="+")
             self.bind("<FocusIn>", self.deselect, add="+")
         
         self.config(
@@ -2263,26 +2263,34 @@ class EntryAutoPerson(Entryx):
             selected = self.right_id.get()
             return hits[selected]
 
-    def prepend_match(self, evt):
-        """ Determine which ID was used to fill in a value. Move the autofill
-            value corresponding with that ID to the front of the valus list.
-        """
-        # content = self.get()
-        print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
-        # print("line", looky(seeline()).lineno, "self.values:", self.values)
-        if self.current_id in self.values:
-            key_list = list(self.values.items())
-            print("line", looky(seeline()).lineno, "key_list[0]:", key_list[0])
-            u = 0 # CHANGE TO enumerate()
-            for tup in key_list:
-                if tup[0] == self.current_id:
-                    idx = u
-                    break
-                u += 1
-            used = key_list.pop(idx)
-            key_list.insert(0, used)
-            self.values = dict(key_list)
-            # print("line", looky(seeline()).lineno, "self.values:", self.values)
+    # def prepend_match(self, evt):
+        # """ Determine which ID was used to fill in a value. Move the autofill
+            # value corresponding with that ID to the front of the valus list.
+        # """
+        # # content = self.get()
+        # # print("line", looky(seeline()).lineno, "content:", content)
+        # # print("line", looky(seeline()).lineno, "self.values:", self.values)
+        # print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
+        # if self.current_id in self.values:
+            # key_list = list(self.values.items())
+            # u = 0 
+            # for tup in key_list:
+                # if tup[0] == self.current_id:
+                    # idx = u
+                    # break
+                # u += 1
+            # used = key_list.pop(idx)
+            # key_list.insert(0, used)
+            # EntryAutoPerson.values = dict(key_list)
+# the above line works in event autofill because the `=` works both ways; if you change the one on the left, the one on the right also changes; but here, the dic() method stops changes from working both ways; so get rid of self.values and start using EntryAutoPerson.values instead.
+            
+
+# def prepend_match(self, evt):
+    # content = self.get()
+    # if content in self.values:
+        # idx = self.values.index(content)
+        # del self.values[idx]
+        # self.values.insert(0, content)
 
     def deselect(self, evt):
         '''
@@ -4306,7 +4314,7 @@ def redraw_person_tab(
         conn.commit()
         cur.close()
         conn.close()
-    unbind_widgets(findings_table)
+    unbind_widgets(findings_table) # do not delete
     redraw_current_person_area(
         current_person, main_window, current_name, current_file, current_dir)
     redraw_events_table(findings_table)
@@ -4360,7 +4368,9 @@ def redraw_families_table(evt, current_person, main_window):
     main_window.nukefam_table.parent_types = []
     main_window.nukefam_table.nukefam_containers = []
 
-    main_window.nukefam_table.family_data = initialize_family_data_dict()
+    main_window.nukefam_table.parents_data = initialize_parents_data()
+    # main_window.nukefam_table.family_data = initialize_family_data_dict()
+    main_window.nukefam_table.progeny_data = {}
 
     if evt: # user pressed CTRL+S for example
         main_window.nukefam_table.make_nukefam_inputs(
@@ -4373,7 +4383,6 @@ def redraw_events_table(findings_table):
         for widg in lst[1]:
             if widg.winfo_subclass() == 'EntryAuto':
                 widg.delete(0, 'end')
-                # pass
             elif widg.winfo_subclass() == 'LabelButtonText':
                 widg.config(text='')
             widg.grid_forget()
@@ -4397,24 +4406,41 @@ def fix_tab_traversal(families_table, findings_table):
     for table in (families_table, findings_table):
         table.lift()
 
-def initialize_family_data_dict():
-    """ This is mainly used in families.py but also used here in redraw.py
+def initialize_parents_data():
+    """ This is mainly used in families.py but also used here
         for redrawing the person tab when changes are made by the user. Imports
         go from here to families.py.
     """
-    family_data = [
+
+
+    parents_data = [
+        # [
         [
-            [
-                {'finding': None, 'sorter': [0, 0, 0]}, 
-                {'id': None, 'name': '', 'kin_type_id': 2, 
-                    'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
-                {'id': None, 'name': '', 'kin_type_id': 1, 
-                    'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
-            ],
+            {'finding': None, 'sorter': [0, 0, 0]}, 
+            {'id': None, 'name': '', 'kin_type_id': 2, 
+                'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
+            {'id': None, 'name': '', 'kin_type_id': 1, 
+                'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
         ],
-        {},
+        # ],
+        # {},
     ]
-    return family_data
+    return parents_data
+
+
+    # family_data = [
+        # [
+            # [
+                # {'finding': None, 'sorter': [0, 0, 0]}, 
+                # {'id': None, 'name': '', 'kin_type_id': 2, 
+                    # 'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
+                # {'id': None, 'name': '', 'kin_type_id': 1, 
+                    # 'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
+            # ],
+        # ],
+        # {},
+    # ]
+    # return family_data
 
 # from utes.py
 
