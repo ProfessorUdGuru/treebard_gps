@@ -58,7 +58,6 @@ from dev_tools import looky, seeline
 
 
 
-
 date_prefs = get_date_formats()
 
 HEADS = (
@@ -85,419 +84,29 @@ def delete_couple_finding(finding_id):
     conn = sqlite3.connect(current_file)
     conn.execute('PRAGMA foreign_keys = 1')
     cur = conn.cursor()
-    delete_generic_finding(finding_id, conn, cur) #1
-    cur.execute(update_finding_ages_kintypes_null, (finding_id,)) #2
+    delete_generic_finding(finding_id, conn, cur) 
+    cur.execute(update_finding_ages_kintypes_null, (finding_id,)) 
     conn.commit()
     cur.close()
     conn.close()
-
-def get_current_person():
-    current_file = get_current_file()
-    if current_file is not None:
-        current_file = get_current_file()[0]
-    else:
-        return
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(select_current_person_id)
-    current_person = cur.fetchone()[0]
-    cur.close()
-    conn.close()
-    return current_person
-
-def update_particulars(input_string, finding):
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    conn.execute('PRAGMA foreign_keys = 1')
-    cur = conn.cursor()
-    cur.execute(
-        update_finding_particulars, 
-        (input_string, finding))
-    conn.commit()
-    cur.close()
-    conn.close()
-
-def get_all_event_types():
-    current_file, current_dir = get_current_file()
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(select_all_event_types)
-    event_types = [i[0] for i in cur.fetchall()]
-    cur.close()
-    conn.close()
-    return event_types
-
-def get_after_death_event_types():
-    current_file, current_dir = get_current_file()
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(select_event_type_after_death)
-    after_death_event_types = [i[0] for i in cur.fetchall()]
-    cur.close()
-    conn.close()
-    return after_death_event_types 
-
-def get_couple_kin_types():
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(select_all_kin_type_ids_couple)
-    couple_kin_type_ids = [i[0] for i in cur.fetchall()]
-    cur.close()
-    conn.close()
-    return couple_kin_type_ids
-
-def get_couple_event_types():
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(select_all_event_types_couple)
-    couple_event_types = [i[0] for i in cur.fetchall()]
-    cur.close()
-    conn.close()
-    return couple_event_types
-
-def get_place_string(finding_id, cur):
-    cur.execute(select_finding_places_nesting, finding_id)
-    place = cur.fetchone()
-    place_string = ", ".join([i for i in place if i])
-    if place_string == "unknown": place_string = ""
-    return place_string
-
-def get_generic_findings(
-        dkt, cur, finding_id, findings_data, 
-        current_person, non_empty_roles, non_empty_notes):
-    cur.execute(select_findings_details_generic, finding_id)
-    generic_details = [i for i in cur.fetchone()]
-    date_prefs = get_date_formats(tree_is_open=1)
-    dkt["date"] = format_stored_date(generic_details[3], date_prefs=date_prefs)
-    dkt["event"], dkt["particulars"], dkt["age"] = generic_details[0:3]
-    dkt["sorter"] = split_sorter(generic_details[4])
-
-    place = get_place_string(finding_id, cur)
-    dkt["place"] = place
-
-    if finding_id[0] in non_empty_roles:
-        get_role_findings(dkt, finding_id[0], cur, current_person)
-
-    if finding_id[0] in non_empty_notes:
-        get_note_findings(dkt, finding_id[0], cur, current_person)
-
-    cur.execute(select_count_finding_id_sources, finding_id)
-    source_count = cur.fetchone()[0]
-    dkt["source_count"] = source_count
-
-    findings_data[finding_id[0]] = dkt
-
-def get_couple_findings(
-        cur, current_person, rowtotype, findings_data, 
-        non_empty_roles, non_empty_notes, person_autofill_values):
-
-    couple_kin_type_ids = get_couple_kin_types()
-    curr_per_kin_types = tuple([current_person] + couple_kin_type_ids)
-
-    sql =   '''
-                SELECT finding_id 
-                FROM finding
-                WHERE person_id1 = ?
-                    AND kin_type_id1 in ({})
-            '''.format(
-                ','.join('?' * (len(curr_per_kin_types) - 1)))
-    cur.execute(sql, curr_per_kin_types)
-    couple_findings1 = [i[0] for i in cur.fetchall()]
-    sql =   '''
-                SELECT finding_id 
-                FROM finding
-                WHERE person_id2 = ?
-                    AND kin_type_id2 in ({})
-            '''.format(
-                ','.join('?' * (len(curr_per_kin_types) - 1)))
-    cur.execute(sql, curr_per_kin_types)
-    couple_findings2 = [i[0] for i in cur.fetchall()]
-    couple_findings = couple_findings1 + couple_findings2
-    for finding_id in couple_findings:
-        finding_id = (finding_id,)
-        dkt = dict(rowtotype)
-        cur.execute(select_findings_details_couple, finding_id)
-        gotgot = cur.fetchone()
-        if gotgot:
-            name = ""
-            if gotgot[0] == current_person:
-                iD = gotgot[3]
-                if iD:
-                    name = person_autofill_values[iD][0]["name"] 
-                dkt["age"] = gotgot[1]
-                dkt["kin_type"] = gotgot[2]
-                dkt["partner_id"] = iD
-                dkt["partner_kin_type"] = gotgot[5]
-                dkt["partner_name"] = name
-            elif gotgot[3] == current_person:
-                iD = gotgot[0]
-                if iD:
-                    name = person_autofill_values[iD][0]["name"] 
-                dkt["age"] = gotgot[4]
-                dkt["kin_type"] = gotgot[5]
-                dkt["partner_id"] = iD
-                dkt["partner_kin_type"] = gotgot[2]
-                dkt["partner_name"] = name
-
-        cur.execute(select_findings_details_couple_generic, finding_id)
-        couple_generics = list(cur.fetchone())
-        date_prefs = get_date_formats(tree_is_open=1)
-        couple_generics[1] = format_stored_date(
-            couple_generics[1], date_prefs=date_prefs)
-        place = get_place_string(finding_id, cur)
-        dkt["place"] = place
-        sorter = split_sorter(couple_generics[2])
-        couple_generic_details = [
-            couple_generics[0], 
-            couple_generics[1], 
-            sorter,  
-            couple_generics[3]]
-
-        if finding_id[0] in non_empty_roles:
-            get_role_findings(dkt, finding_id[0], cur, current_person)
-
-        if finding_id[0] in non_empty_notes:
-            get_note_findings(dkt, finding_id[0], cur, current_person)
-
-        cur.execute(select_count_finding_id_sources, finding_id)
-        source_count = cur.fetchone()[0]
-        dkt["source_count"] = source_count
-
-        dkt["event"], dkt["date"], dkt["sorter"], dkt["particulars"] = couple_generic_details
-        findings_data[finding_id[0]] = dkt 
-
-def make_parent_kintips(dkt, current_person, cur, person_autofill_values):
-    cur.execute(select_finding_id_birth, (current_person,))
-    birth_id = cur.fetchone()
-    parents = (None, None)
-    if birth_id:
-        cur.execute(select_finding_couple_details_include_nulls, birth_id)
-        parents = cur.fetchone()
-    if parents is None:
-        return
-    else:
-        parents = list(parents)
-    pa_id = None
-    ma_id = None
-    pa_name = None
-    ma_name = None
-    if "father" in parents:
-        if parents.index("father") == 3:
-            parents = [parents[2], parents[3], parents[0], parents[1]]
-    if "mother" in parents:
-        if parents.index("mother") == 1:
-            parents = [parents[2], parents[3], parents[0], parents[1]]
-    pa_id = parents[0]
-    if pa_id:
-        pa_name = person_autofill_values[pa_id][0]["name"]
-    ma_id = parents[2]
-    if ma_id:
-        ma_name = person_autofill_values[ma_id][0]["name"]
-    dkt["father_id"] = pa_id
-    dkt["mother_id"] = ma_id
-    dkt["father_name"] = pa_name
-    dkt["mother_name"] = ma_name
-
-def make_alt_parent_kintips(
-        dkt, current_person, cur, finding_id, person_autofill_values,  
-        adoption=None, fosterage=None, guardianship=None):
-
-    if adoption:
-        query = select_finding_id_adoption
-    elif fosterage:
-        query = select_finding_id_fosterage
-    elif guardianship:
-        query = select_finding_id_guardianship
-    cur.execute(query, (current_person,))
-    event_id = cur.fetchall()
-    parents = None
-    if event_id is None:
-        return
-    elif finding_id in event_id:
-        cur.execute(select_finding_couple_details_by_finding, finding_id)
-        parents = cur.fetchone()
-    if not parents:
-        pass
-    else:
-        key1 = parents[1].replace(" ", "_")
-        key2 = parents[3].replace(" ", "_")
-        key1a = "{}_id1".format(key1)
-        key1b = "{}_name1".format(key1)
-        key2a = "{}_id2".format(key2)
-        key2b = "{}_name2".format(key2)
-        parent1 = None
-        parent2 = None
-        parent1_id = parents[0]
-        parent2_id = parents[2]
-        if parent1_id:
-            parent1 = person_autofill_values[parent1_id][0]["name"]
-        if parent2_id:
-            parent2 = person_autofill_values[parent2_id][0]["name"]
-
-        dkt[key1a] = parent1_id
-        dkt[key1b] = parent1
-        dkt[key2a] = parent2_id
-        dkt[key2b] = parent2
-
-def autocreate_parent_findings(
-    dkt, cur, current_person, findings_data, finding_id, person_autofill_values):
-    """ Get birth & alt_birth findings to autocreate rows when parent is current 
-        person. """
-
-    def get_event_type_string(iD):
-        cur.execute(select_finding_event_type, (iD,))
-        event_type_id = cur.fetchone()[0]
-        conversion = {
-            1: "offspring", 83: "adopted a child", 95: "fostered a child", 
-            48: "acted as guardian"}
-        for k,v in conversion.items():
-            if event_type_id == k:
-                event_type = v
-        return event_type
-
-    cur.execute(select_finding_id_age1_alt_parents, (current_person,))
-    offspring1 = [list(i) for i in cur.fetchall()]
-
-    cur.execute(select_finding_id_age2_alt_parents, (current_person,))
-    offspring2 = [list(i) for i in cur.fetchall()]
-
-    offspring = offspring1 + offspring2
-
-    for child in offspring:
-        finding = child[0]
-        cur.execute(select_person, (finding,))
-        child_id = cur.fetchone()
-        if child_id:
-            child.append(child_id[0])
-
-    for child in offspring:
-        offspring_event_id, parent_age, child_id = child
-        cur.execute(
-            select_finding_details_offspring_alt_parentage, 
-            (child_id, offspring_event_id))     
-        offspring_details = cur.fetchone()
-        event_type = get_event_type_string(offspring_event_id)
-
-        child_name = person_autofill_values[child_id][0]["name"]
-
-        sorter = split_sorter(offspring_details[1])
-        date_prefs = get_date_formats(tree_is_open=1)
-        date = format_stored_date(offspring_details[0], date_prefs=date_prefs)
-
-        particulars = offspring_details[2]
-        place = get_place_string((offspring_event_id,), cur)
-
-        cur.execute(select_count_finding_id_sources, (offspring_event_id,))
-        source_count = cur.fetchone()[0]      
-        findings_data[offspring_event_id] = {}
-        findings_data[offspring_event_id]["event"] = event_type
-        findings_data[offspring_event_id]["date"] = date
-        findings_data[offspring_event_id]["place"] = place
-        findings_data[offspring_event_id]["particulars"] = particulars
-        findings_data[offspring_event_id]["age"] = parent_age
-        findings_data[offspring_event_id]["source_count"] = source_count
-        findings_data[offspring_event_id]["child_id"] = child_id
-        findings_data[offspring_event_id]["child_name"] = child_name
-        findings_data[offspring_event_id]["sorter"] = sorter
-
-    event_type = dkt["event"]
-    if event_type == "birth":
-        make_parent_kintips(dkt, current_person, cur, person_autofill_values)
-    elif event_type == "adoption":
-        make_alt_parent_kintips(dkt, current_person, cur, finding_id, person_autofill_values, adoption=True)
-    elif event_type == "fosterage":
-        make_alt_parent_kintips(dkt, current_person, cur, finding_id, person_autofill_values, fosterage=True)
-    elif event_type == "guardianship":
-        make_alt_parent_kintips(dkt, current_person, cur, finding_id, person_autofill_values, guardianship=True)
-
-def get_role_findings(
-    dkt, finding_id, cur, current_person, findings_data=None):
-    current_roles = []
-    current_roles.append(finding_id)
-    if findings_data is None:
-        dkt["roles"] = current_roles
-    else: 
-        findings_data[finding_id]["roles"] = current_roles
-
-def get_note_findings(
-    dkt, finding_id, cur, current_person, findings_data=None):
-    current_notes = []
-    current_notes.append(finding_id)
-    if findings_data is None:
-        dkt["notes"] = current_notes
-    else:
-        findings_data[finding_id]["notes"] = current_notes
-
-def get_findings():
-    findings_data = {}
-    current_person = get_current_person()
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-
-    rowtotype = {
-        "event": "", "date": "", "place": "", "particulars": "", "age": ""}
-
-    cur.execute(select_all_findings_current_person, (current_person,))
-    generic_finding_ids = cur.fetchall()
-    cur.execute(select_all_findings_roles_ids_distinct)
-    non_empty_roles = [i[0] for i in cur.fetchall()]
-
-    cur.execute(select_all_findings_notes_ids)
-    non_empty_notes = [i[0] for i in cur.fetchall()]
-
-    person_autofill_values = make_all_names_dict_for_person_select()  
-    for finding_id in generic_finding_ids:
-        dkt = dict(rowtotype)
-        
-        get_generic_findings(
-            dkt, cur, finding_id, findings_data, 
-            current_person, non_empty_roles, non_empty_notes)     
-
-        if dkt["event"] == "birth":
-            autocreate_parent_findings(
-                dkt, cur, current_person, findings_data, finding_id, 
-                person_autofill_values)
-        elif dkt["event"] == "adoption":
-            autocreate_parent_findings(
-                dkt, cur, current_person, findings_data, finding_id, 
-                person_autofill_values)
-        elif dkt["event"] == "fosterage":
-            autocreate_parent_findings(
-                dkt, cur, current_person, findings_data, finding_id, 
-                person_autofill_values)
-        elif dkt["event"] == "guardianship":
-            autocreate_parent_findings(
-                dkt, cur, current_person, findings_data, finding_id, 
-                person_autofill_values)
-
-    get_couple_findings(
-        cur, current_person, rowtotype, findings_data, 
-        non_empty_roles, non_empty_notes, person_autofill_values)
-
-    cur.close()
-    conn.close()  
-    return findings_data, non_empty_roles, non_empty_notes 
 
 formats = make_formats_dict() 
 
 class EventsTable(Frame):
 
     def __init__(
-            self, master, root, treebard, main, 
+            self, master, root, treebard, main, current_person,
             person_autofill_values, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
         self.root = root
         self.treebard = treebard
         self.main_window = main
+        self.current_person = current_person
         self.person_autofill_values = person_autofill_values
 
         self.main_canvas = main.master
 
-        self.current_person = get_current_person()
         current_name = self.person_autofill_values[self.current_person][0]["name"]
         self.inwidg = None
         self.headers = []
@@ -515,28 +124,22 @@ class EventsTable(Frame):
         self.screen_height = self.winfo_screenheight()
         self.column_padding = 2
         self.new_row = 0
-        event_types = get_all_event_types()
+        event_types = self.get_all_event_types()
         self.event_autofill_values = EntryAuto.create_lists(event_types)
-        self.couple_event_types = get_couple_event_types()
-        self.after_death_events = get_after_death_event_types()
+        self.couple_event_types = self.get_couple_event_types()
+        self.after_death_events = self.get_after_death_event_types()
         if self.after_death_events is None:
             return
         self.events_only_even_without_dates = [
             "birth", "death"] + self.after_death_events
         self.root.bind(
             "<Control-S>", 
-            lambda evt, 
-                main_window=self.main_window, 
-                curr_per=self.current_person,
-                curr_name=current_name: redraw_person_tab(
-                    evt, main_window, curr_per, curr_name))
+            lambda evt, main_window=self.main_window: redraw_person_tab(
+                evt, main_window))
         self.root.bind(
             "<Control-s>", 
-            lambda evt, 
-                main_window=self.main_window, 
-                curr_per=self.current_person,
-                curr_name=current_name: redraw_person_tab(
-                    evt, main_window, curr_per, curr_name))
+            lambda evt, main_window=self.main_window: redraw_person_tab(
+                evt, main_window))
 
         self.place_strings = make_all_nestings(select_all_place_ids)
 
@@ -590,7 +193,6 @@ class EventsTable(Frame):
             widg.insert(0, initial)
 
         def proceed(initial_value):
-            current_person = self.current_person
             conn = sqlite3.connect(current_file)
             conn.execute('PRAGMA foreign_keys = 1')
             cur = conn.cursor()
@@ -696,7 +298,7 @@ class EventsTable(Frame):
                 else:
                     print("line", looky(seeline()).lineno, "case not handled:")
             initval = self.initial
-            event_types = get_all_event_types()
+            event_types = self.get_all_event_types()
             self.final = self.final.strip().lower()
             if (self.initial == 'offspring' and len(self.final) != 0):
                 msg = open_message(
@@ -796,7 +398,7 @@ class EventsTable(Frame):
         elif col_num == 2:
             update_place()
         elif col_num == 3:
-            update_particulars(self.final, self.finding)
+            self.update_particulars(self.final, self.finding)
         elif col_num == 4:
             couple = False
             offspring_event = False
@@ -877,7 +479,7 @@ class EventsTable(Frame):
             command=self.make_new_event)
 
     def set_cell_content(self):
-        self.findings_data, current_roles, current_notes = get_findings()
+        self.findings_data, current_roles, current_notes = self.get_findings()
         copy = dict(self.findings_data)
         self.attributes = {}
         finding_ids = list(self.findings_data.keys())
@@ -1373,7 +975,380 @@ class EventsTable(Frame):
         cur.close()
         conn.close()
 
-short_values = ['red', 'white', 'blue', 'black', 'rust', 'pink', 'steelblue']
+    def update_particulars(self, input_string, finding):
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        conn.execute('PRAGMA foreign_keys = 1')
+        cur = conn.cursor()
+        cur.execute(
+            update_finding_particulars, 
+            (input_string, finding))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+    def get_all_event_types(self):
+        current_file, current_dir = get_current_file()
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_all_event_types)
+        event_types = [i[0] for i in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return event_types
+
+    def get_after_death_event_types(self):
+        current_file, current_dir = get_current_file()
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_event_type_after_death)
+        after_death_event_types = [i[0] for i in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return after_death_event_types 
+
+    def get_couple_kin_types(self):
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_all_kin_type_ids_couple)
+        couple_kin_type_ids = [i[0] for i in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return couple_kin_type_ids
+
+    def get_couple_event_types(self):
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        cur.execute(select_all_event_types_couple)
+        couple_event_types = [i[0] for i in cur.fetchall()]
+        cur.close()
+        conn.close()
+        return couple_event_types
+
+    def get_place_string(self, finding_id, cur):
+        cur.execute(select_finding_places_nesting, finding_id)
+        place = cur.fetchone()
+        place_string = ", ".join([i for i in place if i])
+        if place_string == "unknown": place_string = ""
+        return place_string
+
+    def get_generic_findings(
+            self, dkt, cur, finding_id, findings_data, 
+            non_empty_roles, non_empty_notes):
+        cur.execute(select_findings_details_generic, finding_id)
+        generic_details = [i for i in cur.fetchone()]
+        date_prefs = get_date_formats(tree_is_open=1)
+        dkt["date"] = format_stored_date(generic_details[3], date_prefs=date_prefs)
+        dkt["event"], dkt["particulars"], dkt["age"] = generic_details[0:3]
+        dkt["sorter"] = split_sorter(generic_details[4])
+
+        place = self.get_place_string(finding_id, cur)
+        dkt["place"] = place
+
+        if finding_id[0] in non_empty_roles:
+            self.get_role_findings(dkt, finding_id[0], cur)
+
+        if finding_id[0] in non_empty_notes:
+            self.get_note_findings(dkt, finding_id[0], cur)
+
+        cur.execute(select_count_finding_id_sources, finding_id)
+        source_count = cur.fetchone()[0]
+        dkt["source_count"] = source_count
+
+        findings_data[finding_id[0]] = dkt
+
+    def get_couple_findings(
+            self, cur, rowtotype, findings_data, 
+            non_empty_roles, non_empty_notes, person_autofill_values):
+
+        couple_kin_type_ids = self.get_couple_kin_types()
+        curr_per_kin_types = tuple([self.current_person] + couple_kin_type_ids)
+
+        sql =   '''
+                    SELECT finding_id 
+                    FROM finding
+                    WHERE person_id1 = ?
+                        AND kin_type_id1 in ({})
+                '''.format(
+                    ','.join('?' * (len(curr_per_kin_types) - 1)))
+        cur.execute(sql, curr_per_kin_types)
+        couple_findings1 = [i[0] for i in cur.fetchall()]
+        sql =   '''
+                    SELECT finding_id 
+                    FROM finding
+                    WHERE person_id2 = ?
+                        AND kin_type_id2 in ({})
+                '''.format(
+                    ','.join('?' * (len(curr_per_kin_types) - 1)))
+        cur.execute(sql, curr_per_kin_types)
+        couple_findings2 = [i[0] for i in cur.fetchall()]
+        couple_findings = couple_findings1 + couple_findings2
+        for finding_id in couple_findings:
+            finding_id = (finding_id,)
+            dkt = dict(rowtotype)
+            cur.execute(select_findings_details_couple, finding_id)
+            gotgot = cur.fetchone()
+            if gotgot:
+                name = ""
+                if gotgot[0] == self.current_person:
+                    iD = gotgot[3]
+                    if iD:
+                        name = person_autofill_values[iD][0]["name"] 
+                    dkt["age"] = gotgot[1]
+                    dkt["kin_type"] = gotgot[2]
+                    dkt["partner_id"] = iD
+                    dkt["partner_kin_type"] = gotgot[5]
+                    dkt["partner_name"] = name
+                elif gotgot[3] == self.current_person:
+                    iD = gotgot[0]
+                    if iD:
+                        name = person_autofill_values[iD][0]["name"] 
+                    dkt["age"] = gotgot[4]
+                    dkt["kin_type"] = gotgot[5]
+                    dkt["partner_id"] = iD
+                    dkt["partner_kin_type"] = gotgot[2]
+                    dkt["partner_name"] = name
+
+            cur.execute(select_findings_details_couple_generic, finding_id)
+            couple_generics = list(cur.fetchone())
+            date_prefs = get_date_formats(tree_is_open=1)
+            couple_generics[1] = format_stored_date(
+                couple_generics[1], date_prefs=date_prefs)
+            place = self.get_place_string(finding_id, cur)
+            dkt["place"] = place
+            sorter = split_sorter(couple_generics[2])
+            couple_generic_details = [
+                couple_generics[0], 
+                couple_generics[1], 
+                sorter,  
+                couple_generics[3]]
+
+            if finding_id[0] in non_empty_roles:
+                self.get_role_findings(dkt, finding_id[0], cur)
+
+            if finding_id[0] in non_empty_notes:
+                self.get_note_findings(dkt, finding_id[0], cur)
+
+            cur.execute(select_count_finding_id_sources, finding_id)
+            source_count = cur.fetchone()[0]
+            dkt["source_count"] = source_count
+
+            dkt["event"], dkt["date"], dkt["sorter"], dkt["particulars"] = couple_generic_details
+            findings_data[finding_id[0]] = dkt 
+
+    def make_parent_kintips(self, dkt, cur, person_autofill_values):
+        cur.execute(select_finding_id_birth, (self.current_person,))
+        birth_id = cur.fetchone()
+        parents = (None, None)
+        if birth_id:
+            cur.execute(select_finding_couple_details_include_nulls, birth_id)
+            parents = cur.fetchone()
+        if parents is None:
+            return
+        else:
+            parents = list(parents)
+        pa_id = None
+        ma_id = None
+        pa_name = None
+        ma_name = None
+        if "father" in parents:
+            if parents.index("father") == 3:
+                parents = [parents[2], parents[3], parents[0], parents[1]]
+        if "mother" in parents:
+            if parents.index("mother") == 1:
+                parents = [parents[2], parents[3], parents[0], parents[1]]
+        pa_id = parents[0]
+        if pa_id:
+            pa_name = person_autofill_values[pa_id][0]["name"]
+        ma_id = parents[2]
+        if ma_id:
+            ma_name = person_autofill_values[ma_id][0]["name"]
+        dkt["father_id"] = pa_id
+        dkt["mother_id"] = ma_id
+        dkt["father_name"] = pa_name
+        dkt["mother_name"] = ma_name
+
+    def make_alt_parent_kintips(
+            self, dkt, cur, finding_id, person_autofill_values,  
+            adoption=None, fosterage=None, guardianship=None):
+
+        if adoption:
+            query = select_finding_id_adoption
+        elif fosterage:
+            query = select_finding_id_fosterage
+        elif guardianship:
+            query = select_finding_id_guardianship
+        cur.execute(query, (self.current_person,))
+        event_id = cur.fetchall()
+        parents = None
+        if event_id is None:
+            return
+        elif finding_id in event_id:
+            cur.execute(select_finding_couple_details_by_finding, finding_id)
+            parents = cur.fetchone()
+        if not parents:
+            pass
+        else:
+            key1 = parents[1].replace(" ", "_")
+            key2 = parents[3].replace(" ", "_")
+            key1a = "{}_id1".format(key1)
+            key1b = "{}_name1".format(key1)
+            key2a = "{}_id2".format(key2)
+            key2b = "{}_name2".format(key2)
+            parent1 = None
+            parent2 = None
+            parent1_id = parents[0]
+            parent2_id = parents[2]
+            if parent1_id:
+                parent1 = person_autofill_values[parent1_id][0]["name"]
+            if parent2_id:
+                parent2 = person_autofill_values[parent2_id][0]["name"]
+
+            dkt[key1a] = parent1_id
+            dkt[key1b] = parent1
+            dkt[key2a] = parent2_id
+            dkt[key2b] = parent2
+
+    def autocreate_parent_findings(
+        self, dkt, cur, findings_data, finding_id, person_autofill_values):
+        """ Get birth & alt_birth findings to autocreate rows when parent is current 
+            person. """
+
+        def get_event_type_string(iD):
+            cur.execute(select_finding_event_type, (iD,))
+            event_type_id = cur.fetchone()[0]
+            conversion = {
+                1: "offspring", 83: "adopted a child", 95: "fostered a child", 
+                48: "acted as guardian"}
+            for k,v in conversion.items():
+                if event_type_id == k:
+                    event_type = v
+            return event_type
+
+        cur.execute(select_finding_id_age1_alt_parents, (self.current_person,))
+        offspring1 = [list(i) for i in cur.fetchall()]
+
+        cur.execute(select_finding_id_age2_alt_parents, (self.current_person,))
+        offspring2 = [list(i) for i in cur.fetchall()]
+
+        offspring = offspring1 + offspring2
+
+        for child in offspring:
+            finding = child[0]
+            cur.execute(select_person, (finding,))
+            child_id = cur.fetchone()
+            if child_id:
+                child.append(child_id[0])
+
+        for child in offspring:
+            offspring_event_id, parent_age, child_id = child
+            cur.execute(
+                select_finding_details_offspring_alt_parentage, 
+                (child_id, offspring_event_id))     
+            offspring_details = cur.fetchone()
+            event_type = get_event_type_string(offspring_event_id)
+
+            child_name = person_autofill_values[child_id][0]["name"]
+
+            sorter = split_sorter(offspring_details[1])
+            date_prefs = get_date_formats(tree_is_open=1)
+            date = format_stored_date(offspring_details[0], date_prefs=date_prefs)
+
+            particulars = offspring_details[2]
+            place = self.get_place_string((offspring_event_id,), cur)
+
+            cur.execute(select_count_finding_id_sources, (offspring_event_id,))
+            source_count = cur.fetchone()[0]      
+            findings_data[offspring_event_id] = {}
+            findings_data[offspring_event_id]["event"] = event_type
+            findings_data[offspring_event_id]["date"] = date
+            findings_data[offspring_event_id]["place"] = place
+            findings_data[offspring_event_id]["particulars"] = particulars
+            findings_data[offspring_event_id]["age"] = parent_age
+            findings_data[offspring_event_id]["source_count"] = source_count
+            findings_data[offspring_event_id]["child_id"] = child_id
+            findings_data[offspring_event_id]["child_name"] = child_name
+            findings_data[offspring_event_id]["sorter"] = sorter
+
+        event_type = dkt["event"]
+        if event_type == "birth":
+            self.make_parent_kintips(dkt, cur, person_autofill_values)
+        elif event_type == "adoption":
+            self.make_alt_parent_kintips(dkt, cur, finding_id, person_autofill_values, adoption=True)
+        elif event_type == "fosterage":
+            self.make_alt_parent_kintips(dkt, cur, finding_id, person_autofill_values, fosterage=True)
+        elif event_type == "guardianship":
+            self.make_alt_parent_kintips(dkt, cur, finding_id, person_autofill_values, guardianship=True)
+
+    def get_role_findings(
+        self, dkt, finding_id, cur, findings_data=None):
+        current_roles = []
+        current_roles.append(finding_id)
+        if findings_data is None:
+            dkt["roles"] = current_roles
+        else: 
+            findings_data[finding_id]["roles"] = current_roles
+
+    def get_note_findings(
+        self, dkt, finding_id, cur, findings_data=None):
+        current_notes = []
+        current_notes.append(finding_id)
+        if findings_data is None:
+            dkt["notes"] = current_notes
+        else:
+            findings_data[finding_id]["notes"] = current_notes
+
+    def get_findings(self):
+        findings_data = {}
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+
+        rowtotype = {
+            "event": "", "date": "", "place": "", "particulars": "", "age": ""}
+
+        cur.execute(select_all_findings_current_person, (self.current_person,))
+        generic_finding_ids = cur.fetchall()
+        cur.execute(select_all_findings_roles_ids_distinct)
+        non_empty_roles = [i[0] for i in cur.fetchall()]
+
+        cur.execute(select_all_findings_notes_ids)
+        non_empty_notes = [i[0] for i in cur.fetchall()]
+
+        person_autofill_values = make_all_names_dict_for_person_select()  
+        for finding_id in generic_finding_ids:
+            dkt = dict(rowtotype)
+            
+            self.get_generic_findings(
+                dkt, cur, finding_id, findings_data, 
+                non_empty_roles, non_empty_notes)     
+
+            if dkt["event"] == "birth":
+                self.autocreate_parent_findings(
+                    dkt, cur, findings_data, finding_id, 
+                    person_autofill_values)
+            elif dkt["event"] == "adoption":
+                self.autocreate_parent_findings(
+                    dkt, cur, findings_data, finding_id, 
+                    person_autofill_values)
+            elif dkt["event"] == "fosterage":
+                self.autocreate_parent_findings(
+                    dkt, cur, findings_data, finding_id, 
+                    person_autofill_values)
+            elif dkt["event"] == "guardianship":
+                self.autocreate_parent_findings(
+                    dkt, cur, findings_data, finding_id, 
+                    person_autofill_values)
+
+        self.get_couple_findings(
+            cur, rowtotype, findings_data, 
+            non_empty_roles, non_empty_notes, person_autofill_values)
+
+        cur.close()
+        conn.close()  
+        return findings_data, non_empty_roles, non_empty_notes 
 
 if __name__ == '__main__':
 

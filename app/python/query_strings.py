@@ -768,20 +768,6 @@ select_finding_couple_person2_details = '''
     WHERE person_id2 = ? AND kin_type_id2 = 2
 '''
 
-# select_finding_couple_person1_details = '''
-    # SELECT finding_id, person_id1, kin_type_id1, 
-        # person_id2, kin_type_id2 
-    # FROM finding 
-    # WHERE person_id1 = ? AND kin_type_id1 IN (1, 2)
-# '''
-
-# select_finding_couple_person2_details = '''
-    # SELECT finding_id, person_id1, kin_type_id1, 
-        # person_id2, kin_type_id2 
-    # FROM finding
-    # WHERE person_id2 = ? AND kin_type_id2 IN (1, 2)
-# '''
-
 select_finding_couple_details = '''
     SELECT finding_id, person_id1, kin_type_id1, 
         person_id2, kin_type_id2 
@@ -1047,26 +1033,6 @@ select_opening_settings = '''
     FROM default_format
     WHERE default_format_id = 1
 '''
-
-# select_opening_settings = '''
-    # SELECT 
-        # bg,
-        # highlight_bg,
-        # head_bg, 
-        # fg,
-        # output_font,
-        # input_font, 
-        # font_size,
-        # default_bg,
-        # default_highlight_bg,
-        # default_head_bg, 
-        # default_fg,
-        # default_output_font,
-        # default_input_font, 
-        # default_font_size            
-    # FROM format
-    # WHERE format_id = 1
-# '''
 
 select_opening_settings_on_load = '''
     SELECT 

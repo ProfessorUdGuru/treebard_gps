@@ -171,8 +171,12 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: families_table_finish
+# seems like if there's something in the families table that's highlighted when the new current person grids, tabbing out of the field will cause the error message to open which says you have to add a plus sign if you want to make a new person, as if something had changed in the input but nothing did; try changing the code so that the FocusOut binding isn't made till the input gets the FocusIn event, to see if this self corrects when that is changed. (seems like this highlighting happens only if the mouse is left in the input where the double click took place; if you move the mouse away from the table after double-clicking, then seems like it doesn't happen)
+# give current_person a single non-ambiguous value on load such as treebard.current_person. Call it that and only that, and anyplace it's changed it only changes that.
+# after change to diff curr per by dbl-click, if click ctrl-s the events table/top label but not the fam table changes to curr per that was in effect on load; dbl-click works right but ctrl-s doesn't; PROBLEM IS that current person is being reset to the value stored in the database on ctrl-s after dbl-click has changed curr per
 # change the value of partner_kin_type to a list so mother/foster mother/wife is easy to do in label , see doctring make_pard_dict(), see self.parent_types
-# put a border or Separator under the families table so you can see where it ends, with no y padding
+# read code and simplify anything that's hard to understand
+# break up long methods and don't nest too many functions
 # ctrl-s (or something) in roles dlg causes jeremiah to fill in to edit person field
 # test that update_values still works (make new person)
 # Add Child input

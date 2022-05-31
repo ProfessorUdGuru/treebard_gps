@@ -21,7 +21,8 @@ from files import current_drive, get_current_file
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
     Radiobutton, LabelFrame, Border, TabBook, Scrollbar, fix_tab_traversal,
-    EntryAutoPerson, EntryAutoPersonHilited, FontPicker, redraw_person_tab, open_message)
+    EntryAutoPerson, EntryAutoPersonHilited, FontPicker, redraw_person_tab, 
+    open_message, Separator)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips   
 from families import NuclearFamiliesTable
@@ -61,6 +62,16 @@ PREFS_TABS = (
 
 NUKEFAM_HEADS = ("NAME OF CHILD", "GENDER", "DATE OF BIRTH", "DATE OF DEATH")
 
+def get_current_person():
+    current_file = get_current_file()[0]
+    conn = sqlite3.connect(current_file)
+    cur = conn.cursor()
+    cur.execute(select_current_person_id)
+    current_person = cur.fetchone()[0]
+    cur.close()
+    conn.close()
+    return current_person
+
 from widgets import FrameStay
 class Main(FrameStay):
     def __init__(self, master, root, treebard, *args, **kwargs):
@@ -69,8 +80,8 @@ class Main(FrameStay):
         self.root = root
         self.treebard = treebard
 
-        self.current_person = None
-        self.current_person_name = ""
+        self.current_person = get_current_person()
+        self.current_person_name = "" # could be got from index 2 above
         self.tabbook_x = 300
         self.tabbook_y = 300
         self.SCREEN_SIZE = []
@@ -82,7 +93,6 @@ class Main(FrameStay):
         self.person_autofill_values = make_all_names_dict_for_person_select()
         self.make_widgets()
         self.get_current_values()
-
         self.nukefam_table.make_nukefam_inputs(on_load=True)
 
     def make_scrollbars(self):
@@ -129,7 +139,6 @@ class Main(FrameStay):
             width=36,
             autofill=True)
         self.person_entry.bind("<FocusIn>", get_original, add="+")
-        EntryAutoPerson.person_autofills.append(self.person_entry)
         person_change = Button(
             current_person_area, text="OK", command=self.change_person)
         person_search = Button(
@@ -153,8 +162,8 @@ class Main(FrameStay):
             self.root, 
             self.treebard, 
             self,  
+            self.current_person,
             self.person_autofill_values)
-        self.current_person = self.findings_table.current_person
 
         self.nukefam_table = NuclearFamiliesTable(
             persons_tab,
@@ -167,8 +176,10 @@ class Main(FrameStay):
 
         fix_tab_traversal(self.nukefam_table, self.findings_table) 
 
+        septor = Separator(persons_tab)
+
         current_file, current_dir = get_current_file()
-        print("line", looky(seeline()).lineno, "current_file:", current_file)
+
         # this does not run on redraw_person_tab, just on load
         if len(current_dir) != 0:
             self.show_top_pic(current_file, current_dir, self.current_person)
@@ -249,9 +260,10 @@ class Main(FrameStay):
 
         # children of persons_tab
         self.nukefam_table.grid(column=0, row=0, sticky="news", padx=12, pady=12)
+        septor.grid(column=0, row=1, sticky="we", padx=(12,0))
         self.right_panel.grid(column=1, row=0, sticky='e', padx=12, pady=12)
         self.findings_table.grid(
-            column=0, row=1, columnspan=2, padx=12, pady=12)
+            column=0, row=2, columnspan=2, padx=12, pady=12)
 
         # children of self.nukefam_table gridded in families.py
         persons_tab.columnconfigure(1, weight=1)
@@ -473,7 +485,6 @@ class Main(FrameStay):
             entry.focus_set()
 
         name_data = check_name(ent=self.person_entry)
-        print("line", looky(seeline()).lineno, "name_data:", name_data)
         if name_data is None:
             msg1 = open_message(
                 self, 
@@ -497,9 +508,6 @@ class Main(FrameStay):
         else:
             self.current_person_name = name_data[0]["name"]
             self.current_person = name_data[1]
-            self.current_person_label.config(
-                text="Current Person (ID): {} ({})".format(
-                    self.current_person_name, self.current_person))
 
         self.findings_table.current_person = self.current_person
         redraw_person_tab(
@@ -519,6 +527,7 @@ class Main(FrameStay):
             self.treebard,
             self.SCREEN_SIZE,
             dialog=person_gallery_dlg,
+            current_person=self.current_person,
             current_person_name=self.current_person_name)
 
     def show_top_pic(self, current_file, current_dir, current_person):
@@ -535,9 +544,6 @@ class Main(FrameStay):
         """
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        if current_person is None:
-            cur.execute(select_current_person_id)
-            current_person = cur.fetchone()[0]
         # Due to a possible Pillow glitch, manually changing image names in db might
         #   result in anomalous use of old values. If so, exchange these 2 lines
         #   for the commented line below, then change back. SAVE FOREVER*****

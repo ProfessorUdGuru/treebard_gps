@@ -47,17 +47,17 @@ NAME_SUFFIXES = (
 
 PERSON_DATA = ("name", "name type", "name id", "sort order", "used by", "dupe name")
 
-def get_current_person():
-    current_person_id = 1
-    current_person = ""
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
-    cur = conn.cursor()
-    cur.execute(select_current_person)
-    result = cur.fetchone()
-    cur.close()
-    conn.close()
-    return result
+# def get_current_person():
+    # current_person_id = 1
+    # current_person = ""
+    # current_file = get_current_file()[0]
+    # conn = sqlite3.connect(current_file)
+    # cur = conn.cursor()
+    # cur.execute(select_current_person)
+    # result = cur.fetchone()
+    # cur.close()
+    # conn.close()
+    # return result
 
 def get_name_types():
     current_file = get_current_file()[0]

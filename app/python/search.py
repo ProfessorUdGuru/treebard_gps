@@ -5,7 +5,8 @@ import sqlite3
 from files import app_path, get_current_file
 from widgets import (
     Toplevel, Frame, Button, Entry, LabelH2, Label, LabelH3, LabelSearch,
-    LabelStay, configall, Border, Scrollbar, make_formats_dict, NEUTRAL_COLOR)
+    LabelStay, configall, Border, Scrollbar, make_formats_dict, NEUTRAL_COLOR,
+    redraw_person_tab)
 from right_click_menu import RightClickMenu, make_rc_menus
 from scrolling import MousewheelScrolling, resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
@@ -20,7 +21,6 @@ from query_strings import (
 )
 import dev_tools as dt
 from dev_tools import looky, seeline
-
 
 
 
@@ -40,6 +40,8 @@ NONPRINT_KEYS = (
 def get_matches(search_input):
  
     got = search_input.get()
+    if len(got) < 3:
+        return
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute(
@@ -152,7 +154,7 @@ class PersonSearch(Toplevel):
         buttonbox.grid(column=0, row=3, sticky='e', pady=6)
 
         self.b1.grid(column=0, row=0)
-        b2.grid(column=1, row=0, padx=(2,0))
+        b2.grid(column=1, row=0, padx=(12,0))
 
         self.make_inputs()
         configall(self, self.formats)
@@ -173,7 +175,7 @@ class PersonSearch(Toplevel):
         self.search_dlg_heading.grid(column=0, row=0, pady=(24,0))
 
         instrux = Label(
-            header, text='Search for person by name(s) or id number:')
+            header, text='Search for person by name(s) or ID number:')
         instrux.grid(column=0, row=1, sticky='e', padx=24, pady=12)
 
         self.sent_text = self.entry.get()
@@ -348,7 +350,7 @@ class PersonSearch(Toplevel):
             elif (child.grid_info()['row'] == self.hilit_row and 
                     child.grid_info()['column'] == 1):
                 current_name = child['text'] 
-        # click name or id in table to change current person
+        # click name or ID in table to change current person
         if evt.type == '4':
             if (evt.widget.grid_info()['column'] == 0 and 
                     evt.widget.grid_info()['row'] == self.hilit_row):
@@ -473,7 +475,6 @@ class PersonSearch(Toplevel):
         self.found_person = unique_match[0]
         self.row_list.append(self.found_person)
         self.other_names = unique_match[1]
-        print("line", looky(seeline()).lineno, "self.person_autofill_values:", self.person_autofill_values)
         self.display_name = self.person_autofill_values[self.found_person][0]["name"]
 
         self.row_list.append(self.display_name)
@@ -708,8 +709,8 @@ class PersonSearch(Toplevel):
         self.widget.bind('<Leave>', self.on_leave)
 
     def handle_enter(self, evt):
-        """ Get person id from text in column 0 of pointed row. Find that
-            person id as row[id] in search results dicts. In that dict get
+        """ Get person ID from text in column 0 of pointed row. Find that
+            person ID as row[ID] in search results dicts. In that dict get
             row[other names].
         """
 

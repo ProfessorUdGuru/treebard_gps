@@ -12,7 +12,6 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import sqlite3
 from files import get_current_file, current_drive, app_path
-from persons import get_current_person
 from widgets import (
     Frame, Canvas, Button, Label, Radiobutton, FrameHilited4, make_formats_dict, 
     LabelH3, MessageCopiable, LabelStay, Scrollbar, configall, create_tooltip)
@@ -37,8 +36,8 @@ class Gallery(Frame):
 
     def __init__(
             self, master, tabbook, 
-            graphics_tab,  
-            root, treebard, SCREEN_SIZE, dialog=None,
+            graphics_tab,   
+            root, treebard, SCREEN_SIZE, dialog=None, current_person=None,
             current_person_name=None, current_place_name=None, 
             current_source_name=None, *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
@@ -46,11 +45,11 @@ class Gallery(Frame):
         self.master = master # canvas
         self.tabbook = tabbook
         self.graphics_tab = graphics_tab
-        # self.formats = formats
         self.root = root
         self.treebard = treebard
         self.SCREEN_WIDTH, self.SCREEN_HEIGHT = SCREEN_SIZE
         self.dialog = dialog
+        self.current_person = current_person
 
         self.formats = make_formats_dict()
 
@@ -75,7 +74,7 @@ class Gallery(Frame):
         self.maxwidth = 0
         self.maxheight = 0
 
-        self.current_person = get_current_person()[0]
+        # self.current_person = get_current_person()[0]
 
         pix_data = self.get_current_pix_data()
         if self.dialog:

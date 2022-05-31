@@ -21,7 +21,7 @@ from query_strings import (
     select_person_gender, select_max_name_type_id, insert_name_type_new,
     insert_image_new, select_name_with_id_any, select_birth_names_ids,
     insert_finding_birth_new_person, update_format_font,
-    select_current_person_id, delete_name_person, delete_findings_roles_person,
+    delete_name_person, delete_findings_roles_person,
     select_name_id_by_person_id, delete_links_links_person,
     update_finding_person_1_null, update_finding_person_2_null,
     delete_finding_person, delete_claims_roles_person, delete_person,
@@ -39,12 +39,6 @@ from dev_tools import looky, seeline
 
 
 
-
-
-
-
-
-# formerly in styles.py
 # print('formats is', formats)
 # formats is {'bg': '#34615f', 'highlight_bg': '#4a8a87', 'head_bg': '#486a8c', 'fg': '#b9ddd9', 'output_font': ('courier', 16), 'input_font': ('tahoma', 16), 'heading1': ('courier', 32, 'bold'), 'heading2': ('courier', 24, 'bold'), 'heading3': ('courier', 17, 'bold'), 'heading4': ('courier', 13, 'bold'), 'status': ('tahoma', 13), 'boilerplate': ('tahoma', 10), 'show_font': ('tahoma', 16, 'italic'), 'titlebar_0': ('tahoma', 10, 'bold'), 'titlebar_1': ('tahoma', 14, 'bold'), 'titlebar_2': ('tahoma', 16, 'bold'), 'titlebar_3': ('tahoma', 20, 'bold'), 'titlebar_hilited_0': ('tahoma', 10), 'titlebar_hilited_1': ('tahoma', 14), 'titlebar_hilited_2': ('tahoma', 16), 'titlebar_hilited_3': ('tahoma', 20), 'unshow_font': ('tahoma', 14, 'italic')}
 
@@ -431,8 +425,6 @@ def configall(master, formats):
 
     if root:
         root.config(bg=formats["bg"])
-
-# formerly in widgets.py
 
 NEUTRAL_COLOR = '#878787'
 
@@ -2066,7 +2058,6 @@ class EntryAutoPerson(Entryx):
         and over enough to warrant the effort. After values change, run 
         `update_person_autofill_values()`.        
     """
-    person_autofills = []
     formats = formats
     highlight_bg = formats["highlight_bg"]
     bg = formats["bg"]
@@ -2075,32 +2066,6 @@ class EntryAutoPerson(Entryx):
     insertbackground = formats["fg"]
     selectforeground = formats["fg"]
     selectbackground = formats["head_bg"]
-    
-
-    # def create_lists(all_items):
-        # """ Keeps a temporary list during one app session which will 
-            # prioritize the autofill values with the most recently used values
-            # given priority over the alphabetical list of the values not used in
-            # the current session.
-
-            # The `prepend_match()` method is used in conjunction with this 
-            # to add the most recently used value to the very front of the list.
-
-            # Since this function and the list `all_person_autofills` comprise a 
-            # class-level procedure, values used and moved to the front of the 
-            # list by one input will become available as first match to all the 
-            # other inputs too, until the app is closed. Next time the app opens,
-            # a fresh list of recently-used autofill values will be started.
-        # """
-        # key_list = list(all_items.items())
-        # recent_items = []
-        # all_items_unique = []
-
-        # for item in key_list:
-            # if item not in recent_items:
-                # all_items_unique.append(item)
-        # final_items = dict(recent_items + all_items_unique)
-        # return final_items
 
     def __init__(self, master, autofill=False, values=None, *args, **kwargs):
         Entryx.__init__(self, master, *args, **kwargs)
@@ -2263,35 +2228,6 @@ class EntryAutoPerson(Entryx):
             selected = self.right_id.get()
             return hits[selected]
 
-    # def prepend_match(self, evt):
-        # """ Determine which ID was used to fill in a value. Move the autofill
-            # value corresponding with that ID to the front of the valus list.
-        # """
-        # # content = self.get()
-        # # print("line", looky(seeline()).lineno, "content:", content)
-        # # print("line", looky(seeline()).lineno, "self.values:", self.values)
-        # print("line", looky(seeline()).lineno, "self.current_id:", self.current_id)
-        # if self.current_id in self.values:
-            # key_list = list(self.values.items())
-            # u = 0 
-            # for tup in key_list:
-                # if tup[0] == self.current_id:
-                    # idx = u
-                    # break
-                # u += 1
-            # used = key_list.pop(idx)
-            # key_list.insert(0, used)
-            # EntryAutoPerson.values = dict(key_list)
-# the above line works in event autofill because the `=` works both ways; if you change the one on the left, the one on the right also changes; but here, the dic() method stops changes from working both ways; so get rid of self.values and start using EntryAutoPerson.values instead.
-            
-
-# def prepend_match(self, evt):
-    # content = self.get()
-    # if content in self.values:
-        # idx = self.values.index(content)
-        # del self.values[idx]
-        # self.values.insert(0, content)
-
     def deselect(self, evt):
         '''
             This callback was added because something in the code for this 
@@ -2317,7 +2253,6 @@ class EntryAutoPersonHilited(EntryAutoPerson):
     def unhighlight(self, evt):
         pass
 
-# from custom_combobox_widget.py
 class Combobox(FrameHilited3):
     hive = []
     formats = formats
@@ -2830,8 +2765,6 @@ class ComboArrow(Labelx):
     def unhighlight_arrow(self, evt):
         self.config(bg=ComboArrow.highlight_bg)
 
-# from custom_tabbed_widget.py
-
 '''
     Replaces ttk.Notebook. Tabs can be displayed on the bottom of the main
     frame, instead of the top. 
@@ -3084,8 +3017,6 @@ class TabBook(Framex):
             unkey_combo_lower = '<Alt-KeyRelease-{}>'.format(v[0].lower()) 
             root_window.bind_all(unkey_combo_lower, self.unhighlight_tab)
 
-# from toykinter_widgets.py
-
 class LabelStatusbar(Labelx):
     formats = formats
     bg = formats["bg"]
@@ -3269,8 +3200,6 @@ class Separator(Framex):
             self.line1.config(bg=Separator.color1)
             self.line2.config(bg=Separator.color2)
             self.line3.config(bg=Separator.color3)
-
-# from scrolling.py
 
 '''
 	One purpose of this module is to tell right here how to make a canvas and 
@@ -3606,8 +3535,6 @@ class ScrolledText(Framex):
             command=self.text.yview)
         self.text.configure(yscrollcommand=self.ysb.set, wrap="word")
         self.ysb.grid(column=1, row=0, sticky='ns')
-
-# from dropdown.py
 
 '''
     Replaces Tkinter Menu. Unlike Tkinter's dropdown menu, this widget
@@ -4100,7 +4027,6 @@ class DropdownMenu(FrameHilited2):
             else:
                 close_it()
 
-# from error_messages
 def open_message(master, message, title, buttlab, inwidg=None):
 
     def close():
@@ -4298,10 +4224,11 @@ class FontPicker(Frame):
     def show_font_size(self, evt):
         self.font_size = self.fontSizeVar.get()
 
-# from events_table.py
-
 def redraw_person_tab(
-        evt=None, main_window=None, current_person=None, current_name=None):        
+        evt=None, main_window=None, current_person=None, current_name=None):
+    """ ?Call without current_person parameter unless current_person is being
+        changed.
+    """
     formats = make_formats_dict()
     current_file, current_dir = get_current_file()
     findings_table = main_window.findings_table
@@ -4314,10 +4241,10 @@ def redraw_person_tab(
         conn.commit()
         cur.close()
         conn.close()
-    unbind_widgets(findings_table) # do not delete
+    unbind_widgets(findings_table)
     redraw_current_person_area(
         current_person, main_window, current_name, current_file, current_dir)
-    redraw_events_table(findings_table)
+    redraw_events_table(findings_table, current_person=current_person)
     if current_person:
         redraw_families_table(evt, current_person, main_window)
 
@@ -4350,8 +4277,10 @@ def redraw_current_person_area(
     main_window.show_top_pic(current_file, current_dir, current_person)
     main_window.person_entry.current_id = None
     main_window.current_person_name = current_name
-    main_window.current_person_label.config(
-        text="Current Person (ID): {} ({})".format(current_name, current_person))
+    if current_name:
+        main_window.current_person_label.config(
+            text="Current Person (ID): {} ({})".format(
+                current_name, current_person))
 
 def redraw_families_table(evt, current_person, main_window):
     main_window.findings_table.kin_widths = [0, 0, 0, 0, 0, 0]
@@ -4369,16 +4298,15 @@ def redraw_families_table(evt, current_person, main_window):
     main_window.nukefam_table.nukefam_containers = []
 
     main_window.nukefam_table.parents_data = initialize_parents_data()
-    # main_window.nukefam_table.family_data = initialize_family_data_dict()
     main_window.nukefam_table.progeny_data = {}
 
     if evt: # user pressed CTRL+S for example
-        main_window.nukefam_table.make_nukefam_inputs(
-            current_person=main_window.findings_table.current_person)
-    else: # user pressed OK to change current person for example  
         main_window.nukefam_table.make_nukefam_inputs()
+    else: # user pressed OK to change current person for example 
+        main_window.nukefam_table.current_person = current_person
+        main_window.nukefam_table.make_nukefam_inputs() 
 
-def redraw_events_table(findings_table):
+def redraw_events_table(findings_table, current_person=None):    
     for lst in findings_table.cell_pool:
         for widg in lst[1]:
             if widg.winfo_subclass() == 'EntryAuto':
@@ -4392,6 +4320,8 @@ def redraw_events_table(findings_table):
     findings_table.new_row = 0 
     findings_table.widths = [0, 0, 0, 0, 0]
     findings_table.kin_widths = [0, 0, 0, 0, 0, 0]
+    if current_person:
+        findings_table.current_person = current_person
     findings_table.set_cell_content()
     findings_table.show_table_cells()
 
@@ -4411,41 +4341,20 @@ def initialize_parents_data():
         for redrawing the person tab when changes are made by the user. Imports
         go from here to families.py.
     """
-
-
     parents_data = [
-        # [
         [
-            {'finding': None, 'sorter': [0, 0, 0]}, 
+            {'birth_id': None, 'sorter': [0, 0, 0]},
+            # {'finding': None, 'sorter': [0, 0, 0]}, 
             {'id': None, 'name': '', 'kin_type_id': 2, 
                 'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
             {'id': None, 'name': '', 'kin_type_id': 1, 
                 'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
-        ],
-        # ],
-        # {},
+        ]
     ]
     return parents_data
 
-
-    # family_data = [
-        # [
-            # [
-                # {'finding': None, 'sorter': [0, 0, 0]}, 
-                # {'id': None, 'name': '', 'kin_type_id': 2, 
-                    # 'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
-                # {'id': None, 'name': '', 'kin_type_id': 1, 
-                    # 'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
-            # ],
-        # ],
-        # {},
-    # ]
-    # return family_data
-
-# from utes.py
-
-#   -   -   -   see toykinter_widgets.py for statusbar tooltips   -   -   -   #
-#       which by now are built into the Border class in window_border.py
+#   -   -   -   see also statusbar tooltips   -   -   -   #
+#       which are also built into the Border class in window_border.py
 
 class ToolTip(object):
     '''
