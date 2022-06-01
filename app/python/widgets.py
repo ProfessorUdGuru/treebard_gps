@@ -2053,11 +2053,12 @@ class EntryAutoHilited(EntryAuto):
 """ Based on (but not inherited from) EntryAuto. """
 class EntryAutoPerson(Entryx):
     """ Unlike the EntryAuto class, this one does not prepend the last-used 
-        value to the values list. A lot of time was wasted trying to make this 
+        value to the values list. A lot of time was wasted trying to make that 
         work with a dict, but really the same person name won't be used over 
         and over enough to warrant the effort. After values change, run 
         `update_person_autofill_values()`.        
     """
+    person_autofills = []
     formats = formats
     highlight_bg = formats["highlight_bg"]
     bg = formats["bg"]
@@ -2080,7 +2081,6 @@ class EntryAutoPerson(Entryx):
         if autofill is True:
             self.bind("<KeyPress>", self.detect_pressed)
             self.bind("<KeyRelease>", self.get_typed)
-            # self.bind("<FocusOut>", self.prepend_match, add="+")
             self.bind("<FocusIn>", self.deselect, add="+")
         
         self.config(
@@ -4226,8 +4226,10 @@ class FontPicker(Frame):
 
 def redraw_person_tab(
         evt=None, main_window=None, current_person=None, current_name=None):
-    """ ?Call without current_person parameter unless current_person is being
-        changed.
+    """ Call without current_person parameter unless current_person is being
+        changed. But doesn't do much without the current_person parameter, so
+        maybe supply that value anyway. When supplying current_person, the
+        current_name doesn't automatically have be be supplied too.
     """
     formats = make_formats_dict()
     current_file, current_dir = get_current_file()
@@ -4241,12 +4243,13 @@ def redraw_person_tab(
         conn.commit()
         cur.close()
         conn.close()
-    unbind_widgets(findings_table)
-    redraw_current_person_area(
-        current_person, main_window, current_name, current_file, current_dir)
-    redraw_events_table(findings_table, current_person=current_person)
-    if current_person:
+
+        redraw_current_person_area(
+            current_person, main_window, current_name, current_file, current_dir)
+        unbind_widgets(findings_table)
         redraw_families_table(evt, current_person, main_window)
+
+    redraw_events_table(findings_table, current_person=current_person)
 
     configall(main_window.root, formats)
     resize_scrollbar(main_window.root, main_window.master)

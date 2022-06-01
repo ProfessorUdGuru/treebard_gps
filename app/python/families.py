@@ -26,7 +26,7 @@ from query_strings import (
     update_finding_person_1_null_by_id, update_finding_person_2_null_by_id,
     select_finding_details, update_current_person, update_current_person,
     update_finding_kin_type_2, select_all_event_type_ids_marital,
-    insert_finding_couple, insert_finding_persons, update_person_gender,
+    update_person_gender, update_finding_parents,
     update_finding_date, insert_finding_death, select_kin_types_parental,
     select_finding_couple_details, select_finding_details_sorter,
     select_finding_kin_types, select_finding_couple_person1_details,
@@ -107,6 +107,7 @@ class NuclearFamiliesTable(Frame):
         self.person_inputs = []
 
         self.original = ""
+        self.no_error = False
 
         self.nukefam_containers = []
 
@@ -170,6 +171,7 @@ class NuclearFamiliesTable(Frame):
 
         for ent in (self.pa_input, self.ma_input):
             self.bind_autofill(ent)
+            EntryAutoPerson.person_autofills.append(ent)
 
     def make_new_kin_inputs(self):
         """ Get `self.new_kid_frame` into the correct row by ungridding it and 
@@ -181,6 +183,7 @@ class NuclearFamiliesTable(Frame):
             self.new_kid_frame, width=48, 
             autofill=True, 
             values=self.person_autofill_values)
+        EntryAutoPerson.person_autofills.append(self.new_kid_input)
         childmaker = Button(
             self.new_kid_frame, 
             text="ADD CHILD TO SELECTED PARTNER", 
@@ -202,13 +205,15 @@ class NuclearFamiliesTable(Frame):
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
+        # other_parent_id = None
         for k,v in self.progeny_data.items():
             row = v["inwidg"].grid_info()["row"]
             if self.newkidvar.get() == row:
                 other_parent_id = k
                 break
-
+        print("line", looky(seeline()).lineno, "other_parent_id:", other_parent_id)
         name_data = check_name(ent=self.new_kid_input)
+        print("line", looky(seeline()).lineno, "name_data:", name_data)
         if not name_data:
             msg7 = open_message(
                 self, 
@@ -228,25 +233,47 @@ class NuclearFamiliesTable(Frame):
         else:
             new_child_id = name_data[1]
 
+        pa_id = None
+        ma_id = None
         cur.execute(select_finding_id_birth, (new_child_id,))
-        birth_id = cur.fetchone()[0]
-        if self.progeny_data[other_parent_id]["parent_type"] == "Children's Father":
+        birth_id = cur.fetchone()[0] 
+        if "father" in self.progeny_data[other_parent_id]["parent_type"]:
             ma_id = self.current_person
             pa_id = other_parent_id
-        elif self.progeny_data[other_parent_id]["parent_type"] == "Children's Mother":
+        elif "mother" in self.progeny_data[other_parent_id]["parent_type"]:
             pa_id = self.current_person
             ma_id = other_parent_id
+        else:
+            for pard in (other_parent_id, self.current_person):
+                cur.execute(select_person_gender_by_id, (pard,))
+                gender = cur.fetchone()[0]
+                if gender in ("male", "female"):
+                    if gender == "male":
+                        if pard == other_parent_id:
+                            pa_id = other_parent_id
+                            ma_id = self.current_person
+                        elif pard == self.current_person:
+                            pa_id = self.current_person
+                            ma_id = other_parent_id
+                    elif gender == "female":
+                        if pard == other_parent_id:
+                            pa_id = self.current_person
+                            ma_id = other_parent_id
+                        elif pard == self.current_person:
+                            pa_id = other_parent_id
+                            ma_id = self.current_person                            
+                    break
+                else:
+                    print("line", looky(seeline()).lineno, "gender error have to assign both father & mother roles to persons of unknown gender:", gender)
+             
 
-        cur.execute(insert_finding_persons, (pa_id, ma_id))
-        conn.commit()
-        cur.execute('SELECT seq FROM SQLITE_SEQUENCE WHERE name = "finding"')
-        birth_id = cur.fetchone()[0]
-        cur.execute(insert_finding_couple, (birth_id,))
+        cur.execute(update_finding_parents, (pa_id, ma_id, birth_id))
         conn.commit()
 
+# line 247 case not handled, self.progeny_data[other_parent_id]: {'sorter': [1888, 0, 0], 'partner_name': 'Moira Harding', 'parent_type': "Children's ", 'partner_kin_type': 'Partner', 'inwidg': <widgets.EntryAutoPerson object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame5.pard_5739_5>, 'children': [], 'marital_events': [{'finding': 1389}]}
         cur.close()
         conn.close()
-        redraw_person_tab(main_window=self.treebard.main)
+        redraw_person_tab(main_window=self.treebard.main, current_person=self.current_person)
 
     def get_marital_event_types(self, conn, cur):
 
@@ -314,6 +341,7 @@ class NuclearFamiliesTable(Frame):
                     ent.insert(0, text)
                     ent.grid(column=c, row=r, sticky="w")
                     self.nukefam_inputs.append(ent)
+                    EntryAutoPerson.person_autofills.append(ent)
                     dkt["name_widg"] = ent
                     self.bind_autofill(ent)
                 elif c == 2:
@@ -417,6 +445,7 @@ class NuclearFamiliesTable(Frame):
             pardent.insert(0, name)
             pardent.grid(column=2, row=n, padx=(12,0))
             self.bind_autofill(pardent)
+            EntryAutoPerson.person_autofills.append(pardent)
 
             v["inwidg"] = pardent
             self.nukefam_inputs.append(pardent)
@@ -816,6 +845,7 @@ class NuclearFamiliesTable(Frame):
             for ent in (ent_l, ent_r):
                 self.bind_autofill(ent)
                 self.nukefam_containers.append(ent)
+                EntryAutoPerson.person_autofills.append(ent)
             for lab in (lab_l, lab_r):
                 lab.bind("<Double-Button-1>", self.change_kin_type)
             self.nukefam_containers.extend([lab_l, lab_r])          
@@ -923,7 +953,7 @@ class NuclearFamiliesTable(Frame):
             elif column == 5:
                 self.update_child_death(widg, conn, cur)
             else:
-                print("line", looky(seeline()).lineno, "case not handled:")    
+                print("line", looky(seeline()).lineno, "get_final() case not handled:")    
 
         cur.close()
         conn.close()
@@ -971,15 +1001,19 @@ class NuclearFamiliesTable(Frame):
 
         name_data = check_name(ent=widg)
         if name_data is None:
-            msg4 = open_message(
-                self, 
-                families_msg[1], 
-                "Person Name Unknown", 
-                "OK")
-            msg4[0].grab_set()
-            msg4[2].config(command=lambda entry=widg, msg=msg4: err_done4(
-                entry, msg))
-            return
+            if self.no_error is True:
+                self.no_error = False
+                return
+            else:
+                msg4 = open_message(
+                    self, 
+                    families_msg[1], 
+                    "Person Name Unknown", 
+                    "OK")
+                msg4[0].grab_set()
+                msg4[2].config(command=lambda entry=widg, msg=msg4: err_done4(
+                    entry, msg))
+                return
         elif name_data == "add_new_person":
             new_parent_id = open_new_person_dialog(
                 self, widg, self.root, self.treebard, 
@@ -1460,6 +1494,10 @@ class NuclearFamiliesTable(Frame):
                 s += 1
 
     def change_current_person(self, evt): 
+        """ `self.no_error` prevents an error message from opening due to a 
+            parent input appearing to be empty at a bad time.
+        """
+        self.no_error = True
         current_name = evt.widget.get()
         for tup in self.person_inputs:
             if evt.widget == tup[0]:
@@ -1467,7 +1505,7 @@ class NuclearFamiliesTable(Frame):
                 break
         
         self.current_person = self.treebard.main.current_person = current_person
-
+        self.root.focus_set()
         redraw_person_tab(
             main_window=self.treebard.main,
             current_person=current_person, 
@@ -1574,7 +1612,6 @@ class NuclearFamiliesTable(Frame):
             "Guardian", "Foster Parent" etc.
         """
         def ok_change():
-
             current_file = get_current_file()[0]
             conn = sqlite3.connect(current_file)
             conn.execute('PRAGMA foreign_keys = 1')

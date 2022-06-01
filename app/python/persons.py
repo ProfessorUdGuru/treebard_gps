@@ -47,18 +47,6 @@ NAME_SUFFIXES = (
 
 PERSON_DATA = ("name", "name type", "name id", "sort order", "used by", "dupe name")
 
-# def get_current_person():
-    # current_person_id = 1
-    # current_person = ""
-    # current_file = get_current_file()[0]
-    # conn = sqlite3.connect(current_file)
-    # cur = conn.cursor()
-    # cur.execute(select_current_person)
-    # result = cur.fetchone()
-    # cur.close()
-    # conn.close()
-    # return result
-
 def get_name_types():
     current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
@@ -130,10 +118,9 @@ person_autofill_values = make_all_names_dict_for_person_select()
     
 def update_person_autofill_values():
     people = make_all_names_dict_for_person_select()
-    new_values = EntryAutoPerson.create_lists(people)
-    for ent in EntryAutoPerson.all_person_autofills:
-        ent.values = new_values
-    return new_values
+    for ent in EntryAutoPerson.person_autofills:
+        ent.values = people
+    return people
 
 def validate_id(iD, entry):
     """ Get a name to fill in when ID is input. Unlike name autofill, the best
@@ -179,7 +166,7 @@ def check_name(evt=None, ent=None, label=None):
     elif ent:
         ent = ent
     else:
-        return
+        return None
     filled = ent.get().strip()
     if filled.startswith("#"):
         filled = filled
@@ -189,19 +176,19 @@ def check_name(evt=None, ent=None, label=None):
         filled = ent.filled_name
     ent.original = ""
     if filled == ent.original or filled is None:
-        return
+        return None
     elif filled.startswith("#"):
         name_from_id = validate_id(int(filled.lstrip("#").strip()), ent)
         if name_from_id is None:
-            return 
+            return None 
         else:
-            if label:
-                label.config(text=name_from_id)
+            # if label:
+                # label.config(text=name_from_id)
             ent.delete(0, 'end')
             return name_from_id
     elif filled.startswith("+") or filled.endswith("+"):
         return "add_new_person"
-
+# I think `label` refers to a test process so these references could be deleted.
     dupes = []
     for hit in ent.hits:
         the_one = hit[0]
@@ -211,17 +198,19 @@ def check_name(evt=None, ent=None, label=None):
             dupes.append(hit)
     if len(dupes) > 1:
         right_dupe = ent.open_dupe_dialog(dupes)
-        if label:
-            label.config(text=right_dupe)
+        # if label:
+            # label.config(text=right_dupe)
         return right_dupe
     elif len(ent.hits) > 0: 
-        if label:
-            label.config(text=ent.hits[0])
+        # if label:
+            # label.config(text=ent.hits[0])
+        pass
     else:
-        if label:
-            label.config(text="")
+        # if label:
+            # label.config(text="")
         ent.delete(0, 'end')
     if len(ent.hits) != 0:
+        print("line", looky(seeline()).lineno, "ent.hits[0]:", ent.hits[0])
         return ent.hits[0]
 
 def get_original(evt):

@@ -16,7 +16,7 @@ from error_messages import  open_yes_no_message
 from messages_context_help import new_event_dlg_help_msg
 from persons import (
     make_all_names_dict_for_person_select, check_name, 
-    get_original, update_person_autofill_values)
+    get_original)
 from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places

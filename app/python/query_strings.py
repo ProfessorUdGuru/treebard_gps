@@ -115,11 +115,6 @@ insert_finding_birth = '''
     VALUES (0, 1, ?, 1)
 '''
 
-insert_finding_couple = '''
-    INSERT INTO finding (finding_id, kin_type_id1, kin_type_id2)
-    VALUES (?, 1, 2)
-'''
-
 insert_finding_new = '''
     INSERT INTO finding (event_type_id, person_id)
     VALUES (?, ?)
@@ -159,15 +154,25 @@ insert_finding_new_couple_details = '''
     VALUES (?, ?, ?, 128, ?, ?, 129, ?)
 '''
 
-insert_finding_null_couple = '''
-    INSERT INTO finding ('', null, '', null)
-'''
-
 update_finding_new_places_null = '''
     UPDATE finding 
     SET nest0 = 1
     WHERE finding_id = ?    
 '''
+
+insert_finding_null_couple = '''
+    INSERT INTO finding ('', null, '', null)
+'''
+
+# insert_finding_parents_kintypes = '''
+    # INSERT INTO finding (finding_id, kin_type_id1, kin_type_id2)
+    # VALUES (?, 1, 2)
+# '''
+
+# insert_finding_parents = '''
+    # INSERT INTO finding (person_id1, person_id2, kin_type_id1, kin_type_id2)
+    # VALUES (?, ?, 1, 2)
+# '''
 
 insert_finding_places_new_event = '''
     INSERT INTO finding
@@ -212,11 +217,6 @@ insert_note = '''
 
 insert_person_new = '''
     INSERT INTO person VALUES (?, ?)
-'''
-
-insert_finding_persons = '''
-    INSERT INTO finding (person_id1, person_id2)
-    VALUES (?, ?)
 '''
 
 insert_place_new = '''
@@ -1310,6 +1310,18 @@ update_color_scheme_hide = '''
     WHERE color_scheme_id = ?
 '''
 
+update_current_color_scheme = '''
+    UPDATE current  
+    SET color_scheme_id = ?
+    WHERE current_id = 1
+'''
+
+update_current_color_scheme_default = '''
+    UPDATE current  
+    SET color_scheme_id = 1
+    WHERE current_id = 1
+'''
+
 update_current_person = '''
     UPDATE current
     SET person_id = ?
@@ -1381,7 +1393,31 @@ update_finding_age = '''
     SET age = ? 
     WHERE finding_id = ?
 '''
-#   NEW
+
+update_finding_age1 = '''
+    UPDATE finding
+    SET age1 = ?
+    WHERE finding_id = ?
+'''
+
+update_finding_age1_blank = '''
+    UPDATE finding
+    SET age1 = ""
+    WHERE finding_id = ?
+'''
+
+update_finding_age2 = '''
+    UPDATE finding
+    SET age2 = ?
+    WHERE finding_id = ?
+'''
+
+update_finding_age2_blank = '''
+    UPDATE finding
+    SET age2 = ""
+    WHERE finding_id = ?
+'''
+
 update_finding_ages_kintypes_null = '''
     UPDATE finding
     SET (age1, kin_type_id1, age2, kin_type_id2) = ('', null, '', null)
@@ -1391,6 +1427,24 @@ update_finding_ages_kintypes_null = '''
 update_finding_date = '''
     UPDATE finding
     SET (date, date_sorter) = (?, ?)
+    WHERE finding_id = ?
+'''
+
+update_finding_kin_type_1 = '''
+    UPDATE finding
+    SET kin_type_id1 = ?
+    WHERE finding_id = ?
+'''
+
+update_finding_kin_type_2 = '''
+    UPDATE finding
+    SET kin_type_id2 = ?
+    WHERE finding_id = ?
+'''
+
+update_finding_parents= '''
+    UPDATE finding
+    SET (person_id1, person_id2, kin_type_id1, kin_type_id2) = (?, ?, 1, 2)
     WHERE finding_id = ?
 '''
 
@@ -1411,6 +1465,42 @@ update_finding_person_2_null_by_id = '''
     SET person_id2 = null
     WHERE finding_id = ?
 '''
+
+update_finding_person_1_null = '''
+    UPDATE finding
+    SET person_id1 = null
+    WHERE person_id1 = ?
+'''
+
+update_finding_person_2_null = '''
+    UPDATE finding
+    SET person_id2 = null
+    WHERE person_id2 = ?
+'''
+
+update_finding_person_1 = '''
+    UPDATE finding
+    SET (person_id1, kin_type_id1) = (?, ?)
+    WHERE finding_id = ?
+'''
+
+update_finding_person_2 = '''
+    UPDATE finding
+    SET (person_id2, kin_type_id2) = (?, ?)
+    WHERE finding_id = ?
+'''
+
+# update_finding_person_1 = '''
+    # UPDATE finding
+    # SET (person_id1, kin_type_id1) = (?, 1)
+    # WHERE finding_id = ?
+# '''
+
+# update_finding_person_2 = '''
+    # UPDATE finding
+    # SET (person_id2, kin_type_id2) = (?, 2)
+    # WHERE finding_id = ?
+# '''
 
 update_finding_places = '''
     UPDATE finding
@@ -1439,42 +1529,6 @@ update_findings_notes_order = '''
     WHERE findings_notes_id = ?
 '''
 
-update_finding_age1 = '''
-    UPDATE finding
-    SET age1 = ?
-    WHERE finding_id = ?
-'''
-
-update_finding_age2 = '''
-    UPDATE finding
-    SET age2 = ?
-    WHERE finding_id = ?
-'''
-
-update_finding_age1_blank = '''
-    UPDATE finding
-    SET age1 = ""
-    WHERE finding_id = ?
-'''
-
-update_finding_age2_blank = '''
-    UPDATE finding
-    SET age2 = ""
-    WHERE finding_id = ?
-'''
-
-update_finding_kin_type_1 = '''
-    UPDATE finding
-    SET kin_type_id1 = ?
-    WHERE finding_id = ?
-'''
-
-update_finding_kin_type_2 = '''
-    UPDATE finding
-    SET kin_type_id2 = ?
-    WHERE finding_id = ?
-'''
-
 update_findings_roles_person = '''
     UPDATE findings_roles 
     SET person_id = ? 
@@ -1491,18 +1545,6 @@ update_findings_roles_role_type = '''
     UPDATE findings_roles 
     SET role_type_id = ? 
     WHERE findings_roles_id = ?
-'''
-
-update_current_color_scheme = '''
-    UPDATE current  
-    SET color_scheme_id = ?
-    WHERE current_id = 1
-'''
-
-update_current_color_scheme_default = '''
-    UPDATE current  
-    SET color_scheme_id = 1
-    WHERE current_id = 1
 '''
 
 update_format_font = '''
@@ -1558,42 +1600,6 @@ update_person_gender = '''
     SET gender = ?
     WHERE person_id = ?
 '''
-
-update_finding_person_1_null = '''
-    UPDATE finding
-    SET person_id1 = null
-    WHERE person_id1 = ?
-'''
-
-update_finding_person_2_null = '''
-    UPDATE finding
-    SET person_id2 = null
-    WHERE person_id2 = ?
-'''
-
-update_finding_person_1 = '''
-    UPDATE finding
-    SET (person_id1, kin_type_id1) = (?, ?)
-    WHERE finding_id = ?
-'''
-
-update_finding_person_2 = '''
-    UPDATE finding
-    SET (person_id2, kin_type_id2) = (?, ?)
-    WHERE finding_id = ?
-'''
-
-# update_finding_person_1 = '''
-    # UPDATE finding
-    # SET (person_id1, kin_type_id1) = (?, 1)
-    # WHERE finding_id = ?
-# '''
-
-# update_finding_person_2 = '''
-    # UPDATE finding
-    # SET (person_id2, kin_type_id2) = (?, 2)
-    # WHERE finding_id = ?
-# '''
 
 update_place_hint = '''
     UPDATE place 
