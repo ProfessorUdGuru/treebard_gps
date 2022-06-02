@@ -139,7 +139,7 @@ class Main(FrameStay):
             width=36,
             autofill=True)
         EntryAutoPerson.person_autofills.append(self.person_entry)
-        self.person_entry.bind("<FocusIn>", get_original, add="+")
+        # self.person_entry.bind("<FocusIn>", get_original, add="+")
         person_change = Button(
             current_person_area, text="OK", command=self.change_person)
         person_search = Button(

@@ -4346,11 +4346,10 @@ def initialize_parents_data():
     """
     parents_data = [
         [
-            {'birth_id': None, 'sorter': [0, 0, 0]},
-            # {'finding': None, 'sorter': [0, 0, 0]}, 
-            {'id': None, 'name': '', 'kin_type_id': 2, 
-                'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
+            {'birth_id': None, 'sorter': [0, 0, 0]}, 
             {'id': None, 'name': '', 'kin_type_id': 1, 
+                'kin_type': 'father', 'labwidg': None, 'inwidg': None}, 
+            {'id': None, 'name': '', 'kin_type_id': 2, 
                 'kin_type': 'mother', 'labwidg': None, 'inwidg': None}
         ]
     ]

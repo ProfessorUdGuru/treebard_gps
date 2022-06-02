@@ -20,13 +20,12 @@ from query_strings import (
     select_person_gender_by_id, select_finding_date, select_finding_id_birth,
     select_finding_id_death, select_finding_date_and_sorter,
     update_finding_person_1, update_finding_person_2, select_kin_type_string,
-    update_finding_person_1, update_finding_person_2,
     select_kin_type_alt_parent, update_finding_kin_type_1, 
-    update_finding_age2_blank, update_finding_age1_blank,
+    update_finding_age2_blank, update_finding_age1_blank, update_finding_mother,
     update_finding_person_1_null_by_id, update_finding_person_2_null_by_id,
     select_finding_details, update_current_person, update_current_person,
     update_finding_kin_type_2, select_all_event_type_ids_marital,
-    update_person_gender, update_finding_parents,
+    update_person_gender, update_finding_parents, update_finding_father,
     update_finding_date, insert_finding_death, select_kin_types_parental,
     select_finding_couple_details, select_finding_details_sorter,
     select_finding_kin_types, select_finding_couple_person1_details,
@@ -34,8 +33,8 @@ from query_strings import (
     select_finding_couple_details_alt_parent1, select_finding_death_by_person,
     select_finding_couple_details_alt_parent2, select_finding_event_type,
     select_finding_id_by_person_and_event, select_finding_death_date,
-    select_finding_person_date_by_finding_and_type,
-    select_finding_person_date_alt_parent_event,
+    select_finding_person_date_by_finding_and_type, update_finding_partner2,
+    select_finding_person_date_alt_parent_event, update_finding_partner1,
 
 )
 import dev_tools as dt
@@ -113,6 +112,7 @@ class NuclearFamiliesTable(Frame):
 
         self.cancel_unlink_partner_pressed = False
         self.cancel_link_partner_pressed = False
+        self.new_partner_id = None
 
         self.newkidvar = tk.IntVar()
 
@@ -189,8 +189,7 @@ class NuclearFamiliesTable(Frame):
             text="ADD CHILD TO SELECTED PARTNER", 
             command=self.add_child)
         self.new_kid_input.grid(column=0, row=0)
-        childmaker.grid(column=1, row=0, padx=(6,0), pady=(12,0))        
-        self.bind_autofill(self.new_kid_input)
+        childmaker.grid(column=1, row=0, padx=(6,0), pady=(12,0))    
 
     def add_child(self):
 
@@ -205,15 +204,12 @@ class NuclearFamiliesTable(Frame):
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
-        # other_parent_id = None
         for k,v in self.progeny_data.items():
             row = v["inwidg"].grid_info()["row"]
             if self.newkidvar.get() == row:
                 other_parent_id = k
                 break
-        print("line", looky(seeline()).lineno, "other_parent_id:", other_parent_id)
         name_data = check_name(ent=self.new_kid_input)
-        print("line", looky(seeline()).lineno, "name_data:", name_data)
         if not name_data:
             msg7 = open_message(
                 self, 
@@ -270,7 +266,6 @@ class NuclearFamiliesTable(Frame):
         cur.execute(update_finding_parents, (pa_id, ma_id, birth_id))
         conn.commit()
 
-# line 247 case not handled, self.progeny_data[other_parent_id]: {'sorter': [1888, 0, 0], 'partner_name': 'Moira Harding', 'parent_type': "Children's ", 'partner_kin_type': 'Partner', 'inwidg': <widgets.EntryAutoPerson object .!border.!main.!tabbook.!framehilited2.!frame.!frame.!frame.!nuclearfamiliestable.!canvas.!frame.!frame5.pard_5739_5>, 'children': [], 'marital_events': [{'finding': 1389}]}
         cur.close()
         conn.close()
         redraw_person_tab(main_window=self.treebard.main, current_person=self.current_person)
@@ -490,7 +485,7 @@ class NuclearFamiliesTable(Frame):
             ma_id = mom[0]
             self.parents_data[0][0]["birth_id"] = self.parent_record[0]
         else:
-            self.parents_data[0][0]["birth_id"] = birth_id
+            self.parents_data[0][0]["birth_id"] = None
 
         for person in self.person_autofill_values:
             if person == pa_id:
@@ -499,7 +494,6 @@ class NuclearFamiliesTable(Frame):
         for person in self.person_autofill_values:
             if person == ma_id:
                 ma_name = self.person_autofill_values[ma_id][0]["name"]
-        
         parents = self.parents_data[0]
         parents[1]["id"] = pa_id
         parents[2]["id"] = ma_id
@@ -509,7 +503,6 @@ class NuclearFamiliesTable(Frame):
         parents[2]["inwidg"] = self.ma_input
         self.get_alt_parents(cur)
         self.grid_alt_parents()
-
         cur.close()
         conn.close()
 
@@ -522,7 +515,8 @@ class NuclearFamiliesTable(Frame):
 
         partners1, births = self.query_nukefams_data(conn, cur)
         alt_parentage_events = self.query_alt_nukefams_data(conn, cur)
-        self.arrange_partners_progeny(partners1, births, alt_parentage_events, conn, cur)
+        self.arrange_partners_progeny(
+            partners1, births, alt_parentage_events, conn, cur)
 
         main_sorter = [0, 0, 0]
         for k,v in self.progeny_data.items():
@@ -937,7 +931,7 @@ class NuclearFamiliesTable(Frame):
             self.update_parent(self.final, conn, cur, widg, column, kin_type=kin_type)
         elif widgname.startswith("pard"):
             if column == 2:
-                self.update_partner(self.final, conn, cur, widg)                
+                self.link_partners_dialog(cur, conn, widg)                
             else:
                 print(
                     "line", 
@@ -960,9 +954,9 @@ class NuclearFamiliesTable(Frame):
 
         current_name = self.person_autofill_values[self.current_person][0]["name"]
         redraw_person_tab(
-            main_window=self.treebard.main, )
-            # current_person=self.current_person, 
-            # current_name=current_name)
+            main_window=self.treebard.main, 
+            current_person=self.current_person, 
+            current_name=current_name)
 
     def update_parent(self, final, conn, cur, inwidg, column=None, 
             kin_type=None, alt_parent=None):
@@ -974,14 +968,13 @@ class NuclearFamiliesTable(Frame):
                 cur.execute(update_finding_person_2, (None, None, finding_id))
             conn.commit()
             inwidg.focus_set()
-
-        z = 0
+        
         for lst in self.parents_data:    
             for dkt in lst[1:]:
                 if inwidg == dkt["inwidg"]:
                     finding_id = lst[0]["birth_id"]
                     break
-            z += 1
+            
         if len(self.final) != 0 or len(self.original) == 0:
             self.make_parent(column, finding_id, inwidg, conn, cur)
         elif len(self.final) == 0:
@@ -1025,21 +1018,27 @@ class NuclearFamiliesTable(Frame):
         cur.execute(select_finding_event_type, (finding_id,))
         event_type = cur.fetchone()[0]
         kin_type_id = None
+
         if event_type == 1:
             if column == 1:
-                kin_type_id == 1
+                kin_type_id = 1
             elif column == 3:
-                kin_type_id == 2
+                kin_type_id = 2
         elif event_type == 83:
             kin_type_id = 110 
         elif event_type == 95:
             kin_type_id = 120
         elif event_type == 48:
             kin_type_id = 130
+        else:
+            print("line", looky(seeline()).lineno, "case not handled:")
+
         if column == 1:
             cur.execute(update_finding_person_1, (new_parent_id, kin_type_id, finding_id))
         elif column == 3:
             cur.execute(update_finding_person_2, (new_parent_id, kin_type_id, finding_id))
+        else:
+            print("line", looky(seeline()).lineno, "case not handled:")
         conn.commit()
 
     def link_partners_dialog(self, cur, conn, inwidg):
@@ -1057,9 +1056,7 @@ class NuclearFamiliesTable(Frame):
                 checks["children"][j]["vars"] = dkt["vars"].get()
                 j += 1            
             self.link_partners["children"] = checks["children"]
-
-            self.null_partner_replacer.destroy()
-            
+            self.null_partner_replacer.destroy()          
         def cancel_link_partner():
             self.cancel_link_partner_pressed = True
             self.null_partner_replacer.destroy()
@@ -1091,37 +1088,60 @@ class NuclearFamiliesTable(Frame):
                         conn.commit()
                         cur.execute(update_finding_person_2, (self.new_partner_id, ppid))
                         conn.commit()
-
             if self.cancel_link_partner_pressed is True:
                 return
-
             for dkt in self.link_partners["events"]:
                 if dkt["vars"] == 0:
                     continue
                 elif dkt["vars"] == 1:
-                    link_partner(dkt["finding"])
+                    link_partner(dkt["finding"], inwidg)
             for dkt in self.link_partners["children"]:
                 if dkt["vars"] == 0:
                     continue
                 elif dkt["vars"] == 1:
                     link_offspring(dkt["finding"])
 
-        def link_partner(finding_id):
+        def link_partner(finding_id, inwidg):
+            def err_done5(entry, msg):
+                entry.delete(0, 'end')
+                msg4[0].grab_release()
+                msg5[0].destroy()
+                entry.focus_set()
+
+            name_data = check_name(ent=inwidg)
+            if name_data is None:
+                msg5 = open_message(
+                    self, 
+                    families_msg[1], 
+                    "Person Name Unknown", 
+                    "OK")
+                msg5[0].grab_set()
+                msg5[2].config(command=lambda entry=inwidg, msg=msg5: err_done5(
+                    entry, msg))
+                return
+            elif name_data == "add_new_person":
+                self.new_partner_id = open_new_person_dialog(
+                    self, inwidg, self.root, self.treebard, 
+                    person_autofill_values=self.person_autofill_values)
+                self.person_autofill_values = update_person_autofill_values()
+            else:
+                self.new_partner_id = name_data[1]
+
             cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
             if self.current_person == person_id1:
-                cur.execute(update_finding_person_2, (self.new_partner_id, finding_id))
+                cur.execute(update_finding_partner2, (self.new_partner_id, finding_id))
             elif self.current_person == person_id2:
-                cur.execute(update_finding_person_1, (self.new_partner_id, finding_id))
+                cur.execute(update_finding_partner1, (self.new_partner_id, finding_id))
             conn.commit()
 
         def link_offspring(finding_id):
             cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
             if self.current_person == person_id1:
-                cur.execute(update_finding_person_2, (self.new_partner_id, finding_id))
+                cur.execute(update_finding_mother, (self.new_partner_id, finding_id))
             elif self.current_person == person_id2:
-                cur.execute(update_finding_person_1, (self.new_partner_id, finding_id))
+                cur.execute(update_finding_father, (self.new_partner_id, finding_id))
             conn.commit()
 
         partner_id = None

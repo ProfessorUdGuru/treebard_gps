@@ -172,9 +172,8 @@ if __name__ == '__main__':
 
 # BRANCH: families_table_finish
 # Add Child input
-# when adding child by making new person, the person goes in but the parents are not entered as parents
-# idtips stop working in fam table after adding child to existing partner, also the child is added to db only, the redraw has not been called yet
-# test if add child works with making new person
+# update_partners_child us full of obsolete junk ppid/fpid
+# Make error msg and/or input dlg for when new_kid_input is used in the case where neither parent has any gender and neither parent has any prior kids; see "gender error have to assign both father & mother..." in families.py. Tried to create a test case using #6015 gregory lenny... and #6009 paulette h..., added update_finding_father/mother queries but was confused/in a hurry, forgot this is about partners not mothers fathers, so have to fix db if messed up in findings etc., the current problem is to add gregory to paulette's family table where there's a null partner created by tbard after user created a divorce event. This is so a child can then be added to a genderless couple which will test the case described above wherein an input message will open so user can either provide one parent with a gender or accept that tbard will assign mother and father roles randomly.
 # in get_final call a new method define_input in which the tests in the chart below are represented including a new one DUPE>SAME DUPE DIFFERENT PERSON with flags set and returned so the right code will run in get_final. In a simple way, run a method depending on what define_input returns
 # TESTING NOT DONE TILL EACH OPTION IS xx DOUBLE CHECKED
 # rule: when making a change in the code, reduce any XXs to single x & test everything again

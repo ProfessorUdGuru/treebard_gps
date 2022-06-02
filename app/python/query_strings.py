@@ -1454,6 +1454,18 @@ update_finding_particulars = '''
     WHERE finding_id = ?
 '''
 
+update_finding_partner1 = '''
+    UPDATE finding
+    SET (person_id1, kin_type_id1) = (?, 128)
+    WHERE finding_id = ?
+'''
+
+update_finding_partner2 = '''
+    UPDATE finding
+    SET (person_id2, kin_type_id2) = (?, 129)
+    WHERE finding_id = ?
+'''
+
 update_finding_person_1_null_by_id = '''
     UPDATE finding
     SET person_id2 = null
@@ -1490,17 +1502,17 @@ update_finding_person_2 = '''
     WHERE finding_id = ?
 '''
 
-# update_finding_person_1 = '''
-    # UPDATE finding
-    # SET (person_id1, kin_type_id1) = (?, 1)
-    # WHERE finding_id = ?
-# '''
+update_finding_father = '''
+    UPDATE finding
+    SET (person_id1, kin_type_id1) = (?, 1)
+    WHERE finding_id = ?
+'''
 
-# update_finding_person_2 = '''
-    # UPDATE finding
-    # SET (person_id2, kin_type_id2) = (?, 2)
-    # WHERE finding_id = ?
-# '''
+update_finding_mother = '''
+    UPDATE finding
+    SET (person_id2, kin_type_id2) = (?, 2)
+    WHERE finding_id = ?
+'''
 
 update_finding_places = '''
     UPDATE finding
