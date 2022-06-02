@@ -198,7 +198,7 @@ class NuclearFamiliesTable(Frame):
             msg7[0].grab_release()
             msg7[0].destroy()
             entry.focus_set()
-        
+        print("line", looky(seeline()).lineno, "running add child:")
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -217,7 +217,7 @@ class NuclearFamiliesTable(Frame):
                 "Person Name Unknown", 
                 "OK")
             msg7[0].grab_set()
-            msg7[2].config(command=lambda entry=inwidg, msg=msg7: err_done7(
+            msg7[2].config(command=lambda entry=self.new_kid_input, msg=msg7: err_done7(
                 entry, msg))
             return
 
@@ -260,8 +260,11 @@ class NuclearFamiliesTable(Frame):
                             ma_id = self.current_person                            
                     break
                 else:
-                    print("line", looky(seeline()).lineno, "gender error have to assign both father & mother roles to persons of unknown gender:", gender)
-             
+                    name1 = self.person_autofill_values[self.current_person][0]["name"]
+                    name2 = self.person_autofill_values[other_parent_id][0]["name"]
+                    pa_id, ma_id = self.open_assign_gender_dialog(
+                        (self.current_person, name1), (other_parent_id, name2))  
+                    break
 
         cur.execute(update_finding_parents, (pa_id, ma_id, birth_id))
         conn.commit()
@@ -269,6 +272,65 @@ class NuclearFamiliesTable(Frame):
         cur.close()
         conn.close()
         redraw_person_tab(main_window=self.treebard.main, current_person=self.current_person)
+
+    def open_assign_gender_dialog(self, pard1, pard2):
+
+        def ok_assign_gender():
+            self.new_kid_input.delete(0, "end")
+            assign_gender_dlg.destroy()
+
+        def cancel_assign_gender():
+            nonlocal assign_gender_dlg_cancelled
+            assign_gender_dlg_cancelled = True
+            self.new_kid_input.delete(0, "end")
+            assign_gender_dlg.destroy()
+
+        assign_gender_dlg_cancelled = False
+        self.right_id = tk.IntVar()
+        assign_gender_dlg = Dialogue(self)
+
+        lab = LabelHeader(
+            assign_gender_dlg.window, text="Which partner is which biological parent? If you press CANCEL, parent roles will be assigned randomly.", 
+            justify='left', wraplength=450)
+        lab.grid(column=0, row=0, padx=12, pady=12, ipadx=6, ipady=6)
+
+        radfrm = Frame(assign_gender_dlg.window)
+        radfrm.grid(column=0, row=1)
+        
+        choices = (pard1[0], pard2[0])
+
+        rdo1 = Radiobutton(
+            radfrm, text="{} is father and {} is mother.".format(pard1[1], pard2[1]), 
+            variable=self.right_id, value=pard1[0], anchor="w")
+        rdo1.grid(column=0, row=0, sticky="ew")
+        rdo2 = Radiobutton(
+            radfrm, text="{} is father and {} is mother.".format(pard2[1], pard1[1]), 
+            variable=self.right_id, value=pard2[0], anchor="w")
+        rdo2.grid(column=0, row=1, sticky="ew")
+
+        rdo1.select()
+     
+        buttons = Frame(assign_gender_dlg.window)
+        buttons.grid(column=0, row=2, pady=12, padx=12)
+        assign_gender_ok = Button(buttons, text="OK", command=ok_assign_gender, width=7)
+        assign_gender_ok.grid(column=0, row=0, sticky="e", padx=(0,12))
+        assign_gender_ok.focus_set()
+        assign_gender_cancel = Button(
+            buttons, text="CANCEL", command=cancel_assign_gender, width=7)
+        assign_gender_cancel.grid(column=2, row=0, sticky="e", padx=0)
+
+        assign_gender_dlg.canvas.title_1.config(text="Assign Father or Mother to Partner")
+        assign_gender_dlg.canvas.title_2.config(text="")
+
+        assign_gender_dlg.resize_window()
+        self.wait_window(assign_gender_dlg)
+        if assign_gender_dlg_cancelled is False:
+            pa_id = self.right_id.get()
+            if pa_id == choices[0]:
+                ma_id = choices[1]
+            elif pa_id == choices[1]:
+                ma_id = choices[0]
+            return pa_id, ma_id
 
     def get_marital_event_types(self, conn, cur):
 
@@ -1124,6 +1186,7 @@ class NuclearFamiliesTable(Frame):
                     self, inwidg, self.root, self.treebard, 
                     person_autofill_values=self.person_autofill_values)
                 self.person_autofill_values = update_person_autofill_values()
+                
             else:
                 self.new_partner_id = name_data[1]
 

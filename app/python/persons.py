@@ -210,7 +210,6 @@ def check_name(evt=None, ent=None, label=None):
             # label.config(text="")
         ent.delete(0, 'end')
     if len(ent.hits) != 0:
-        print("line", looky(seeline()).lineno, "ent.hits[0]:", ent.hits[0])
         return ent.hits[0]
 
 def get_original(evt):
