@@ -188,7 +188,7 @@ def check_name(evt=None, ent=None, label=None):
             return name_from_id
     elif filled.startswith("+") or filled.endswith("+"):
         return "add_new_person"
-# I think `label` refers to a test process so these references could be deleted.
+
     dupes = []
     for hit in ent.hits:
         the_one = hit[0]
@@ -221,7 +221,7 @@ def delete_person_from_tree(person_id):
 
     def delete_current_person_dialog():
         print("line", looky(seeline()).lineno, "open dialog to get new curr per user input:")
-   
+    print("line", looky(seeline()).lineno, "person_id:", person_id)
     current_file = get_current_file()[0]
     conn = sqlite3.connect(current_file)
     cur = conn.cursor()
@@ -458,6 +458,7 @@ class PersonAdd(Toplevel):
             person_add_help_msg)
 
         resize_scrolled_content(self, self.canvas, self.window)
+        self.focus_force()
         self.gender_input.entry.focus_set()
 
     def show_sort_order(self, evt=None):

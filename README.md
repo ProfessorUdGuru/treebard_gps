@@ -10,7 +10,7 @@ Once you have the SQLite terminal installed, you can also connect to the databas
 
 The exact commands used to import and export a SQLite database file to a text file and back are shown in treebard_gps/etc/dump_output.txt. The .sql file is a text file so it's humanly readable. It's everything that SQLite needs to recreate the database. But you don't need to humanly read it. Just import it.
 
-To get your copy of the repo to function, import treebard_gps/etc/default_new_tree.sql into treebard_gps/data/settings/default_new_tree.db using the import commands mentioned above. Make two copies of the database using your file manager, one to be called treebard_gps/data/sample_tree/sample_tree.tbd and one to be called treebard_gps/app/default/default_new_tree_untouched.db. If you want an actual populated copy of my current messy real sample_tree.tbd so you can open a tree that has stuff in it, contact me at treebard/proboards.com and I'll send it to you, but if not, the procedure above should get you started so you can enter your own sample data into a blank tree and see how everything works.
+To get your copy of the repo to function, import treebard_gps/etc/default_new_tree.sql into treebard_gps/data/settings/default_new_tree.db using the import commands mentioned above. Make two copies of the database using your file manager, one to be called treebard_gps/data/sample_tree/sample_tree.tbd and one to be called treebard_gps/app/default/default_new_tree_untouched.db. If you want an actual populated copy of my current messy real sample_tree.tbd so you can open a tree that has stuff in it, contact me at https://www.treebard-forum.com and I'll send it to you, but if not, the procedure above should get you started so you can enter your own sample data into a blank tree and see how everything works.
 
 One more import has to be done. Import treebard_gps/etc/treebard.sql to treebard_gps/data/settings/treebard.db.
 
@@ -40,11 +40,11 @@ GPS stands for _Genieware Pattern Simulation_. It originally stood for _genealog
 
 There's a lot left to do. For example, someday I'll use my domain **treebard.com** to publish a manual and tutorial.
 
-For more details see the [forum](https://treebard.proboards.com/thread/22/history-future-treebard-project).
+For more details see the [forum](https://www.treebard-forum.com/forum/the-treebard-philosophy/history-and-future-of-the-treebard-project).
 
 ## We Support Each Other
 
-If you're trying to test what there is so far and want me to support you, post your question at the [informal forum](https://treebard.proboards.com) and I'll see what I can do. Same goes if you just want to give me some advice. (But don't tell me to give up...) If you want to support me, join the forum and send me a personal message. 
+If you're trying to test what there is so far and want me to support you, post your question at the [informal forum](https://www.treebard-forum.com) and I'll see what I can do. Same goes if you just want to give me some advice. (But don't tell me to give up...) If you want to support me, join the forum and send me a personal message. 
 
 ## Contributing is Allowable
 
@@ -52,7 +52,7 @@ I'm not actively looking for a team of coders right now but if such a team were 
 
 ### To ask questions, make suggestions, or request to join the team in any capacity:
 
-* Go to [the Treebard forum](https://treebard.proboards.com)
+* Go to [the Treebard forum](https://www.treebard-forum.com)
 * Join the forum and read some of my rants.
 * Introduce yourself by answering these questions: 
   * How you heard about Treebard.

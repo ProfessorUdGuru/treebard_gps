@@ -147,23 +147,23 @@ class NuclearFamiliesTable(Frame):
     def make_nukefam_widgets_perm(self):
         
         self.pardlabs = []
-        self.parentslab = LabelFrame(self.nukefam_window) 
-        labelwidget = LabelH3(self.parentslab, text="Parents of the Current Person")
+        self.parents_area = LabelFrame(self.nukefam_window) 
+        labelwidget = LabelH3(self.parents_area, text="Parents of the Current Person")
         self.pardlabs.append(labelwidget)
-        self.parentslab.config(labelwidget=labelwidget)
-        palab = Label(self.parentslab, text="Father", anchor="e")
+        self.parents_area.config(labelwidget=labelwidget)
+        palab = Label(self.parents_area, text="Father", anchor="e")
         self.pa_input = EntryAutoPerson(
-            self.parentslab, width=30, autofill=True, cursor="hand2", 
+            self.parents_area, width=30, autofill=True, cursor="hand2", 
             values=self.person_autofill_values, name="pa")
-        malab = Label(self.parentslab, text="Mother", anchor="e")
+        malab = Label(self.parents_area, text="Mother", anchor="e")
         self.ma_input = EntryAutoPerson(
-            self.parentslab, width=30, autofill=True, cursor="hand2",
+            self.parents_area, width=30, autofill=True, cursor="hand2",
             values=self.person_autofill_values, name="ma")
 
         # children of self.nukefam_window
-        self.parentslab.grid(column=0, row=0, sticky="w")
+        self.parents_area.grid(column=0, row=0, sticky="w")
 
-        # children of self.parentslab
+        # children of self.parents_area
         palab.grid(column=0, row=0, sticky="ew", pady=(6,12), padx=12)
         self.pa_input.grid(column=1, row=0, pady=(6,12), padx=(0,0))
         malab.grid(column=2, row=0, sticky="ew", pady=(6,12), padx=12)
@@ -874,9 +874,9 @@ class NuclearFamiliesTable(Frame):
         alt_parent_details = self.parents_data[1:]
         j = 0
         for lst in alt_parent_details:
-            lab_l = Label(self.parentslab, anchor="e")
+            lab_l = Label(self.parents_area, anchor="e")
             ent_l = EntryAutoPerson(
-                self.parentslab, width=30, autofill=True, cursor="hand2", 
+                self.parents_area, width=30, autofill=True, cursor="hand2", 
                 values=self.person_autofill_values,
                 name="altparent_l{}".format(str(j)))
             if lst[1]["kin_type"]:
@@ -886,9 +886,9 @@ class NuclearFamiliesTable(Frame):
             if lst[1]["kin_type"]:
                 lab_l.config(text=lst[1]["kin_type"].title())
 
-            lab_r = Label(self.parentslab, anchor="e")
+            lab_r = Label(self.parents_area, anchor="e")
             ent_r = EntryAutoPerson(
-                self.parentslab, width=30, autofill=True, cursor="hand2", 
+                self.parents_area, width=30, autofill=True, cursor="hand2", 
                 values=self.person_autofill_values,
                 name="altparent_r{}".format(str(j)))
             if lst[2]["kin_type"]:
@@ -908,7 +908,7 @@ class NuclearFamiliesTable(Frame):
             j += 1
 
     def grid_alt_parents(self):
-        """ Grid widgets as children of self.parentslab. """
+        """ Grid widgets as children of self.parents_area. """
         alt_parents = self.parents_data[1:]
         x = 1
         for lst in alt_parents:
@@ -971,13 +971,14 @@ class NuclearFamiliesTable(Frame):
         gridinfo = widg.grid_info()
         column, row = gridinfo["column"], gridinfo["row"]
         widgname = widg.winfo_name()
+        print("line", looky(seeline()).lineno, "widgname:", widgname)
         if widgname == "pa":
             self.update_parent(self.final, conn, cur, widg, column=column, kin_type=1)
         elif widgname == "ma":
             self.update_parent(self.final, conn, cur, widg, column=column, kin_type=2)
         elif widgname.startswith("altparent"):
             labcol = column - 1
-            for child in parent_area.winfo_children():
+            for child in self.parents_area.winfo_children():
                 if child.winfo_class() == "Label" and child.winfo_subclass() == "Label":
                     childgridinfo = child.grid_info()
                     if childgridinfo["column"] == labcol and childgridinfo["row"] == row:
@@ -993,7 +994,10 @@ class NuclearFamiliesTable(Frame):
             self.update_parent(self.final, conn, cur, widg, column, kin_type=kin_type)
         elif widgname.startswith("pard"):
             if column == 2:
-                self.link_partners_dialog(cur, conn, widg)                
+                if len(widg.get()) == 0:
+                    self.unlink_partners_dialog(cur, conn, widg)
+                else:
+                    self.link_partners_dialog(cur, conn, widg)                
             else:
                 print(
                     "line", 
@@ -1013,7 +1017,7 @@ class NuclearFamiliesTable(Frame):
 
         cur.close()
         conn.close()
-
+        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         current_name = self.person_autofill_values[self.current_person][0]["name"]
         redraw_person_tab(
             main_window=self.treebard.main, 
@@ -1124,34 +1128,32 @@ class NuclearFamiliesTable(Frame):
             self.null_partner_replacer.destroy()
             self.cancel_link_partner_pressed = False
         def update_partners_link(inwidg, conn, cur):
-            """ Run after dialog closes. """
-            def update_partners_child(birth_fpid, order, parent_type):
-                cur.execute(select_findings_persons_ppid, (birth_fpid,))
-                ppid = cur.fetchone()[0]
-                if parent_type == "Children's Father":
-                    if order == "1-2":   
-                        cur.execute(update_finding_age2_blank, (birth_fpid,))
-                        conn.commit()
-                        cur.execute(update_finding_person_2, (self.new_partner_id, ppid))
-                        conn.commit()
-                    elif order == "2-1":      
-                        cur.execute(update_finding_age1_blank, (birth_fpid,))
-                        conn.commit()
-                        cur.execute(update_finding_person_1, (self.new_partner_id, ppid))
-                        conn.commit()                    
-                elif parent_type == "Children's Mother":
-                    if order == "1-2":
-                        cur.execute(update_finding_age1_blank, (birth_fpid,))
-                        conn.commit()
-                        cur.execute(update_finding_person_1, (self.new_partner_id, ppid))
-                        conn.commit()
-                    elif order == "2-1":   
-                        cur.execute(update_finding_age2_blank, (birth_fpid,))
-                        conn.commit()
-                        cur.execute(update_finding_person_2, (self.new_partner_id, ppid))
-                        conn.commit()
+            """ Run after user selects which marital events & children to link
+                to the new partner and the dialog closes. 
+            """
             if self.cancel_link_partner_pressed is True:
                 return
+
+
+            name_data = check_name(ent=inwidg)
+            if name_data is None:
+                msg5 = open_message(
+                    self, 
+                    families_msg[1], 
+                    "Person Name Unknown", 
+                    "OK")
+                msg5[0].grab_set()
+                return
+            elif name_data == "add_new_person":
+                self.new_partner_id = open_new_person_dialog(
+                    self, inwidg, self.root, self.treebard, 
+                    person_autofill_values=self.person_autofill_values)
+                self.person_autofill_values = update_person_autofill_values()
+                
+            else:
+                self.new_partner_id = name_data[1]
+
+
             for dkt in self.link_partners["events"]:
                 if dkt["vars"] == 0:
                     continue
@@ -1164,31 +1166,39 @@ class NuclearFamiliesTable(Frame):
                     link_offspring(dkt["finding"])
 
         def link_partner(finding_id, inwidg):
-            def err_done5(entry, msg):
-                entry.delete(0, 'end')
-                msg4[0].grab_release()
-                msg5[0].destroy()
-                entry.focus_set()
-
-            name_data = check_name(ent=inwidg)
-            if name_data is None:
-                msg5 = open_message(
-                    self, 
-                    families_msg[1], 
-                    "Person Name Unknown", 
-                    "OK")
-                msg5[0].grab_set()
-                msg5[2].config(command=lambda entry=inwidg, msg=msg5: err_done5(
-                    entry, msg))
-                return
-            elif name_data == "add_new_person":
-                self.new_partner_id = open_new_person_dialog(
-                    self, inwidg, self.root, self.treebard, 
-                    person_autofill_values=self.person_autofill_values)
-                self.person_autofill_values = update_person_autofill_values()
+            # def err_done5(entry, msg):
+                # """ Can't reference the input widget if there's more than one 
+                    # event being linked to the new person being made the new
+                    # partner to replace a null partner with two or more events.
+                    # The entry is destroyed the first time since the families
+                    # table is redrawn each time, so trying to reference it does
+                    # not work. ALSO can't even use this function since msg4 etc
+                    # no longer exist the second time around.
+                # """
+                # # # # entry.delete(0, 'end')
+                # msg4[0].grab_release()
+                # msg5[0].destroy()
+                # # # # entry.focus_set()
+# there's only one partner being added so this shd not be run in a loop MORNING EYES
+            # name_data = check_name(ent=inwidg)
+            # if name_data is None:
+                # msg5 = open_message(
+                    # self, 
+                    # families_msg[1], 
+                    # "Person Name Unknown", 
+                    # "OK")
+                # msg5[0].grab_set()
+                # # msg5[2].config(command=lambda entry=inwidg, msg=msg5: err_done5(
+                    # # entry, msg))
+                # return
+            # elif name_data == "add_new_person":
+                # self.new_partner_id = open_new_person_dialog(
+                    # self, inwidg, self.root, self.treebard, 
+                    # person_autofill_values=self.person_autofill_values)
+                # self.person_autofill_values = update_person_autofill_values()
                 
-            else:
-                self.new_partner_id = name_data[1]
+            # else:
+                # self.new_partner_id = name_data[1]
 
             cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
