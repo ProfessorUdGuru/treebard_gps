@@ -1406,6 +1406,12 @@ update_finding_age1_blank = '''
     WHERE finding_id = ?
 '''
 
+update_finding_age1_kintype1_null = '''
+    UPDATE finding
+    SET (age1, kin_type_1) = ('', null)
+    WHERE finding_id = ?
+'''
+
 update_finding_age2 = '''
     UPDATE finding
     SET age2 = ?
@@ -1415,6 +1421,12 @@ update_finding_age2 = '''
 update_finding_age2_blank = '''
     UPDATE finding
     SET age2 = ""
+    WHERE finding_id = ?
+'''
+
+update_finding_age2_kintype2_null = '''
+    UPDATE finding
+    SET (age2, kin_type_2) = ('', null)
     WHERE finding_id = ?
 '''
 

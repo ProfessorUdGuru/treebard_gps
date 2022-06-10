@@ -35,6 +35,7 @@ from query_strings import (
     select_finding_id_by_person_and_event, select_finding_death_date,
     select_finding_person_date_by_finding_and_type, update_finding_partner2,
     select_finding_person_date_alt_parent_event, update_finding_partner1,
+    update_finding_age1_kintype1_null, update_finding_age2_kintype2_null
 
 )
 import dev_tools as dt
@@ -112,7 +113,10 @@ class NuclearFamiliesTable(Frame):
 
         self.cancel_unlink_partner_pressed = False
         self.cancel_link_partner_pressed = False
+        self.cancel_unlink_child_pressed = False
         self.new_partner_id = None
+
+        self.parents_of_child_to_unlink = [0, 0]
 
         self.newkidvar = tk.IntVar()
 
@@ -903,7 +907,7 @@ class NuclearFamiliesTable(Frame):
                 self.nukefam_containers.append(ent)
                 EntryAutoPerson.person_autofills.append(ent)
             for lab in (lab_l, lab_r):
-                lab.bind("<Double-Button-1>", self.change_kin_type)
+                lab.bind("<Double-Button-1>", self.change_alt_parent_type)
             self.nukefam_containers.extend([lab_l, lab_r])          
             j += 1
 
@@ -1134,7 +1138,6 @@ class NuclearFamiliesTable(Frame):
             if self.cancel_link_partner_pressed is True:
                 return
 
-
             name_data = check_name(ent=inwidg)
             if name_data is None:
                 msg5 = open_message(
@@ -1153,52 +1156,18 @@ class NuclearFamiliesTable(Frame):
             else:
                 self.new_partner_id = name_data[1]
 
-
             for dkt in self.link_partners["events"]:
                 if dkt["vars"] == 0:
                     continue
                 elif dkt["vars"] == 1:
-                    link_partner(dkt["finding"], inwidg)
+                    link_partner(dkt["birth_id"], inwidg)
             for dkt in self.link_partners["children"]:
                 if dkt["vars"] == 0:
                     continue
                 elif dkt["vars"] == 1:
-                    link_offspring(dkt["finding"])
+                    link_offspring(dkt["birth_id"])
 
         def link_partner(finding_id, inwidg):
-            # def err_done5(entry, msg):
-                # """ Can't reference the input widget if there's more than one 
-                    # event being linked to the new person being made the new
-                    # partner to replace a null partner with two or more events.
-                    # The entry is destroyed the first time since the families
-                    # table is redrawn each time, so trying to reference it does
-                    # not work. ALSO can't even use this function since msg4 etc
-                    # no longer exist the second time around.
-                # """
-                # # # # entry.delete(0, 'end')
-                # msg4[0].grab_release()
-                # msg5[0].destroy()
-                # # # # entry.focus_set()
-# there's only one partner being added so this shd not be run in a loop MORNING EYES
-            # name_data = check_name(ent=inwidg)
-            # if name_data is None:
-                # msg5 = open_message(
-                    # self, 
-                    # families_msg[1], 
-                    # "Person Name Unknown", 
-                    # "OK")
-                # msg5[0].grab_set()
-                # # msg5[2].config(command=lambda entry=inwidg, msg=msg5: err_done5(
-                    # # entry, msg))
-                # return
-            # elif name_data == "add_new_person":
-                # self.new_partner_id = open_new_person_dialog(
-                    # self, inwidg, self.root, self.treebard, 
-                    # person_autofill_values=self.person_autofill_values)
-                # self.person_autofill_values = update_person_autofill_values()
-                
-            # else:
-                # self.new_partner_id = name_data[1]
 
             cur.execute(select_finding_persons, (finding_id,))
             person_id1, person_id2 = cur.fetchone()
@@ -1472,6 +1441,176 @@ class NuclearFamiliesTable(Frame):
         self.root.wait_window(self.partner_unlinker)
         update_partners_unlink(conn, cur)
 
+    def unlink_child(self, orig_child_id, parent_id, conn, cur):
+
+        def ok_unlink_child(): # IS THIS EXTRA?
+            # copy = checks
+            # i = 0
+            # for dkt in copy["events"]:
+                # h = 0
+                # for var in dkt["vars"]:
+                    # got = var.get()
+                    # checks["events"][i]["vars"][h] = got
+                    # h += 1
+                # i += 1            
+            # self.unlink_partners["events"] = checks["events"]
+
+            # copy = checks
+            # j = 0
+            # for dkt in copy["children"]:
+                # h = 0
+                # for var in dkt["vars"]:
+                    # got = var.get()
+                    # checks["children"][j]["vars"][h] = got
+                    # h += 1
+                # j += 1            
+            # self.unlink_partners["children"] = checks["children"]
+
+            for var in vars:
+                var = var.get()
+            print("line", looky(seeline()).lineno, "vars:", vars)
+            self.parents_of_child_to_unlink = vars
+
+            self.child_unlinker.destroy()
+            
+        def cancel_unlink_child():
+            self.cancel_unlink_child_pressed = True
+            self.child_unlinker.destroy()
+            self.cancel_unlink_child_pressed = False
+
+        def update_child_unlink(conn, cur):
+            """ Run after dialog closes. """
+            if self.cancel_unlink_child_pressed is True:
+                return
+            # for dkt in self.unlink_partners["events"]:
+                # finding = dkt["finding"]
+                # if dkt["vars"] == [0, 0]:
+                    # continue
+                # elif dkt["vars"] == [1, 1]:
+                    # delete_couple_finding(finding)
+                # elif dkt["vars"] == [0, 1]:
+                    # unlink_partner(finding, [0, 1])
+                # elif dkt["vars"] == [1, 0]:
+                    # unlink_partner(finding, [1, 0])
+            # for dkt in self.unlink_partners["children"]:
+            # finding = dkt["birth_id"]
+            if self.parents_of_child_to_unlink == [0, 0]:
+                return
+            else:
+                unlink_parents_of_child(conn, cur, birth_id)
+            # elif vars == [1, 1]:
+                # unlink_parents(conn, cur, birth_id)
+            # elif vars == [0, 1]:
+                # unlink_parent1(conn, cur, birth_id, [0, 1])
+            # elif vars == [1, 0]:
+                # unlink_parent2(conn, cur, birth_id, [1, 0])
+        
+        def unlink_parents_of_child(conn, cur, birth_id):
+            # print("line", looky(seeline()).lineno, "vars:", vars)
+            if self.parents_of_child_to_unlink == [1, 1]:
+                cur.execute(update_finding_ages_kintypes_null, (birth_id,))
+                conn.commit()
+            elif self.parents_of_child_to_unlink == [1, 0]:
+                cur.execute(update_finding_age1_kintype1_null, (birth_id,))
+                conn.commit()
+            elif self.parents_of_child_to_unlink == [0, 1]:
+                cur.execute(update_finding_age2_kintype2_null, (birth_id,))
+                conn.commit()
+            else:
+                print("line", looky(seeline()).lineno, "case not handled:")
+
+        cur.execute(select_finding_id_birth, (orig_child_id,))
+        birth_id = cur.fetchone()[0]
+        # cur.execute(update_finding_ages_kintypes_null, (birth_id,)) # UNLINK BOTH PARENTS
+        # conn.commit()
+
+        message = "Unlink child from whom:"
+        self.child_unlinker = Dialogue(self.root)
+        head = LabelHeader(
+            self.child_unlinker.window, text=message, justify='left', wraplength=650)
+        # inputs = Frame(self.child_unlinker.window)
+        self.current_person_name = self.person_autofill_values[self.current_person][0]["name"]
+
+        # text = "{}  #{}:".format(child["name"], child["id"])
+        # kidlab = Label(inputs, text=text, anchor="e")
+        # kidlab.grid(column=0, row=g, sticky="e")
+
+        currperlab = LabelH3(self.child_unlinker.window, text=self.current_person_name)
+        currperlab.grid(column=1, row=5)
+        spacer0 = Label(self.child_unlinker.window, width=3)
+        spacer0.grid(column=2, row=5)
+        print("line", looky(seeline()).lineno, "self.original:", self.original) # GET RID OF that fancy split in other place too that I used as a model for this?
+        pardlab = LabelH3(self.child_unlinker.window, text=self.original.split("(")[0])
+        pardlab.grid(column=3, row=5)
+
+
+        var0 = tk.IntVar()
+        var1 = tk.IntVar()
+        chk0 = Checkbutton(self.child_unlinker.window, variable=var0)
+        chk0.grid(column=1, row=6)
+        chk1 = Checkbutton(self.child_unlinker.window, variable=var1)
+        # child["vars"] = [var0, var1]
+        vars = [var0, var1]
+        chk1.grid(column=3, row=6)
+        chk1.select()
+
+
+        # f = 1
+        # for event in checks["events"]: 
+            # cur.execute(select_finding_details, (event["finding"],))
+            # event_id, event_date, event_type = cur.fetchone()
+            # event_date = format_stored_date(event_date, date_prefs=self.date_prefs)
+            # text = "{} {} (Conclusion #{}):".format(event_date, event_type, event_id)
+            # evtlab = Label(inputs, text=text, anchor="e")
+            # evtlab.grid(column=0, row=f, sticky="e")
+            # var0 = tk.IntVar()
+            # var1 = tk.IntVar()
+            # chk0 = Checkbutton(inputs, variable=var0)
+            # chk0.grid(column=1, row=f)
+            # chk1 = Checkbutton(inputs, variable=var1)
+            # event["vars"] = [var0, var1]
+            # chk1.grid(column=3, row=f)
+            # chk1.select()
+            # f += 1
+
+        # g = f
+        # for child in checks["children"]: 
+            # text = "{}  #{}:".format(child["name"], child["id"])
+            # kidlab = Label(inputs, text=text, anchor="e")
+            # kidlab.grid(column=0, row=g, sticky="e")
+            # var0 = tk.IntVar()
+            # var1 = tk.IntVar()
+            # chk0 = Checkbutton(inputs, variable=var0)
+            # chk0.grid(column=1, row=g)
+            # chk1 = Checkbutton(inputs, variable=var1)
+            # child["vars"] = [var0, var1]
+            # chk1.grid(column=3, row=g)
+            # chk1.select()
+            # g += 1
+
+        buttons = Frame(self.child_unlinker.window)
+        b1 = Button(buttons, text="OK", command=ok_unlink_child)
+        b2 = Button(buttons, text="CANCEL", command=cancel_unlink_child)            
+
+        self.child_unlinker.canvas.title_1.config(
+            text="Unlink Child from Current Person, Partner, or Both")
+        self.child_unlinker.canvas.title_2.config(text="")            
+
+        head.grid(
+            column=0, row=4, sticky='news', padx=12, pady=12,  
+            columnspan=2, ipady=6)
+        # inputs.grid(column=1, row=5, sticky="news", padx=12)
+        buttons.grid(
+            column=1, row=7, sticky="e", padx=12, pady=12, columnspan=2)
+        b1.grid(column=0, row=0, sticky='e', ipadx=3)
+        b2.grid(column=1, row=0, padx=(6,0), sticky='e', ipadx=3)
+
+        self.child_unlinker.resize_window()
+        self.child_unlinker.focus_set()
+
+        self.root.wait_window(self.child_unlinker)
+        update_child_unlink(conn, cur)
+
     def update_child(self, widg, conn, cur):
 
         def do_update(widg, parent_id, child, cur, conn):
@@ -1483,12 +1622,13 @@ class NuclearFamiliesTable(Frame):
             death_date = "-0000-00-00-------"
             birth_date = "-0000-00-00-------"
             sorter = (0,0,0)
-
+# OPEN DIALOG TO UNLINK FROM ONE OR BOTH PARENTS IE CURR PER & PARD
             if len(self.final) == 0:
-                cur.execute(select_finding_id_birth, (orig_child_id,))
-                birth_id = cur.fetchone()[0]
-                cur.execute(update_finding_ages_kintypes_null, (birth_id,))
-                conn.commit()
+                self.unlink_child(orig_child_id, parent_id, conn, cur)
+                # cur.execute(select_finding_id_birth, (orig_child_id,))
+                # birth_id = cur.fetchone()[0]
+                # cur.execute(update_finding_ages_kintypes_null, (birth_id,)) # UNLINK BOTH PARENTS
+                # conn.commit()
                 return
 
             name_data = check_name(ent=widg)
@@ -1700,7 +1840,7 @@ class NuclearFamiliesTable(Frame):
             self.idtip_bindings["on_enter"].append([widg, name_in])
             self.idtip_bindings["on_leave"].append([widg, name_out])  
 
-    def change_kin_type(self, evt):
+    def change_alt_parent_type(self, evt):
         """ Change alt parent kin type on double-click of label such as 
             "Guardian", "Foster Parent" etc.
         """
@@ -1714,6 +1854,7 @@ class NuclearFamiliesTable(Frame):
             gridinfo = widg.grid_info()
             col = gridinfo["column"]
             row = gridinfo["row"]
+
             for tup in names_ids:
                 if tup[0] == new_kin_type:
                     new_id = tup[1]
@@ -1731,13 +1872,23 @@ class NuclearFamiliesTable(Frame):
         def cancel_change():
             frm.destroy()
 
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
-        cur = conn.cursor()
-        cur.execute(select_kin_type_alt_parent)
-        names_ids = cur.fetchall()
-        alt_parent_types = [i[0] for i in names_ids]
+        OK_ALT_PARENT_TYPES = {
+            "adoptive": 
+                [("Adoptive Parent", 110), ("Adoptive Father", 111), ("Adoptive Mother", 112)], 
+            "Foster": 
+                [("Foster Parent", 120), ("Foster Father", 121), ("Foster Mother", 122)], 
+            "Guardian": 
+                [("Guardian", 130), ("Legal Guardian", 131)]}
+
         widg = evt.widget
+        original_text = widg.cget("text")
+        for lst in OK_ALT_PARENT_TYPES.values():
+            for tup in lst:
+                if original_text == tup[0]:
+                    alt_parent_types = [i[0] for i in lst]
+                    names_ids = lst
+                    break
+
         frm = FrameHilited(widg)
         combo = Combobox(frm, self.root, values=alt_parent_types)
         ok_butt = Button(frm, text="OK", command=ok_change, width=7)
@@ -1746,7 +1897,4 @@ class NuclearFamiliesTable(Frame):
         combo.grid(column=0, row=0) 
         ok_butt.grid(column=1, row=0)
         cancel_butt.grid(column=2, row=0)
-
-        cur.close()
-        conn.close()
 
