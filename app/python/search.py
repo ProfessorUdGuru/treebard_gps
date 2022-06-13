@@ -273,6 +273,8 @@ class PersonSearch(Toplevel):
             lab.bind('<Button-1>', self.track_column_state) 
 
     def make_search_dialog_cells(self):
+        if not self.all_matches:
+            return
         self.result_rows = []
         c = 0
         for person_row in self.all_matches:

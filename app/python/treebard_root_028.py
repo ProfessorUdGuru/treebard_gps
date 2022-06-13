@@ -170,38 +170,59 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: families_table_final2
 
-# unlink child dlg ready to test. When tab out, plus sign error opens.
-
-# when dbl click kin type to change alt parent type, the choices in the combobox shd be limited to the right one ie foster for foster, guardian for guardian, adoption for adoption, iow you can't change foster parent to adoptive parent but you can change foster parent to foster mother or foster father; also if dbl click to chg kintype of alt parent, then press CANCEL, the table doesn't return to correct format; maybe the dlg is gridding in the wrong column
-# MAKE A MOVIE OF THESE THINGS BEING TESTED ON THE FAMILIES TABLE
 
 #                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
 #   USING STRING INPUT:
 # NONE>EXISTING              X               X             X               n/a
 # NONE>DUPE                  X               X             X               n/a
 # NONE>NEW                   X               X             X               n/a
-# CHANGE>EXISTING            X               X             X               0
-# CHANGE>DUPE                X               X             X               0
-# CHANGE>NEW                 X               X             X               0
-# UNLINK                     X               X             X               0 
+# CHANGE>EXISTING            X               X             X               X
+# CHANGE>DUPE                X               X             X               X
+# CHANGE>NEW                 X               X             X               X
+# UNLINK                     X               X             X               X 
 #   USING #ID INPUT:
 # NONE>EXISTING              X               X             X               n/a
 # NONE>DUPE                  X               X             X               n/a
 # NONE>NEW                   n/a             n/a           n/a             n/a
-# CHANGE>EXISTING            X               X             X               0
-# CHANGE>DUPE                X               X             X               0
+# CHANGE>EXISTING            X               X             X               X
+# CHANGE>DUPE                X               X             X               X
 # CHANGE>NEW                 n/a             n/a           n/a             n/a
 # UNLINK                     n/a             n/a           n/a             n/a 
 
-# UNLINK child unlinks both parents but without dlg, it shd ask for which parent to unlink
-# NONE>NEW ALT PARENT works but if forget the + the error msg doesn't pop up
-# when add alt parent & tab out, focus goes not to next widg in tab order. What worked for parent fields didn't work here. Is this because the parent fields and alt parent fields aren't made at the same time? Does a tab order method need to be rerun when creating an alt parent field? See also gender field in child row--tab traversal works if just tabbing thru, but after changing something, focus out doesn't go to next widget because of redraw(). So the autofill needs a feature wherein it registers itself as self.current_widget on FocusIn so that redraw() can go like self.current_widget.tkFocusNext().focus_set()(
-# RCM: There are two ways to deal with unknown partners of the current person: unknown name labels and null persons. NOTE: if you don't understand or don't want to read the discussion below, here are your simple instructions: If you are creating a person but don't know the person's name, enter the name as '_____'. There can be any number of separate individuals with the same name. The details: An unknown name label has to contain at least one character. Using letters in unknown name labels is not a good idea. For example, the label 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. The purpose of an unknown name label made with symbols (a name such as '?' or '_____') is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name labels will differentiate the current person's two families. This works since duplicate names are allowed, such as two people that are both temporarily named '_____', and each person will have a unique ID number. It's OK to not use unknown name labels, but in that case, Treebard will lump all children and marital events of the current person's whose partner is null into a single family. If you want to avoid this, use a name such as '?' or '_____' with at least one character and Treebard will give this person a unique ID instead of a null ID. If you use null partners when creating marital events, for example, all the children and marital events for the current person where the current person's partner is left blank will be lumped together into one family. This is easy to change anytime, but most users will probably prefer to differentiate families of unknown partners from the start by using unknown name labels as name placeholders when creating the person. To change from a null partner to unknown name labels, type an unknown name label into an empty partner field. Empty partner fields exist when there are marital events with null partner or children with a null parent. When you tab out of the field, a dialog will open listing all the marital events and children for the current person with a null partner. You can choose which ones to link to the new unnamed person you're creating. This is easier to do than it is to describe. Just try it.
 
-# Test everything on the video tour list before making the video. Mention joyride thru the underworld aka gedcom attempt
-# delete commented code and edit docstrings
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# RCM: There are two ways to deal with unknown partners of the current person: unknown name labels and null persons. NOTE: if you don't understand or don't want to read the discussion below, here are your simple instructions: If you are creating a person but don't know the person's name, enter the name as '_____'. There can be any number of separate individuals with the same name. THE DETAILS: An unknown name label has to contain at least one character. Using letters in unknown name labels is not a good idea. For example, the label 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. One practical purpose of an unknown name label made with symbols (a name such as '?' or '_____') is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name labels will differentiate the current person's two families. This works since duplicate names are allowed, such as two people that are both temporarily named '_____', and each so-named person will have a unique ID number. It's OK to not use unknown name labels, but in that case, Treebard will lump all children and marital events of the current person's whose partner is null into a single family. If you want to avoid this, use a name such as '?' or '_____' and Treebard will give this person a unique ID instead this role being played by nobody with no ID. If you use null partners when creating marital events, for example, all the children and marital events for the current person where the current person's partner is left blank will be lumped together into one family. This is easy to change anytime, but most users will probably prefer to differentiate families of unknown partners from the start by using unknown name labels as name placeholders when creating the person. To change from a null partner to unknown name labels, type an unknown name label into an empty partner field. Empty partner fields exist when there are marital events with null partner or children with a null parent. When you tab out of the field, a dialog will open listing all the marital events and children for the current person with a null partner. You can choose which ones to link to the new unnamed person you're creating. This is easier to do than it is to read about. Just try it.
+
+# BRANCH: conclusions
+# change events_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. In the GUI events become either "conclusions" or "events & attributes". In the code it's either "findings" or "claims". Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, stick to Treebard's core philosophy and differentiate between conclusions and assertions. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs events table > conclusions table. And the first step is to change the name of the module from events_table.py to conclusions_table.py. Remember that conclusions are called findings in the code; "events" are cases where something like an event_type refers equally to assertions and conclusions (claims & findings).
+# export dbs to .sql
+# backup app to external hd
+
+# BRANCH: sources
+# IDEA for copy/pasting citations. This is still tedious and uncertain because you sometimes don't remember what's in a clipboard till you try pasting it. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, like a plus sign, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing individual citations on nearly empty dialogs that you have to sift through looking for the right one, and seeing them all together might be useful for the sake of comparison.
+# Edit official do list and move to directory /etc/, edit ReadMe, re-dump 2 databases to .sql files.
+# Website: change "units of genealogy" to "elements of genealogy", add FAQ to Treebard Topics.
 # export dbs to .sql
 # backup app to external hd
 
@@ -281,18 +302,6 @@ if __name__ == '__main__':
 # in main do list change names.py to persons.py
 # Can't open an empty notes dlg, division by zero error.
 # person search table is messed up. Same person shows for both mother and father. Sorting only works right for ID. Clicking a name to make the person current works but the nukefams table is not redrawn.
-# export dbs to .sql
-# backup app to external hd
-
-# BRANCH: conclusions
-# change events_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. In the GUI events become either "conclusions" or "events & attributes". In the code it's either "findings" or "claims". Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, stick to Treebard's core philosophy and differentiate between conclusions and assertions. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs events table > conclusions table. And the first step is to change the name of the module from events_table.py to conclusions_table.py. Remember that conclusions are called findings in the code; "events" are cases where something like an event_type refers equally to assertions and conclusions (claims & findings).
-# export dbs to .sql
-# backup app to external hd
-
-# BRANCH: sources
-# IDEA for copy/pasting citations. This is still tedious and uncertain because you sometimes don't remember what's in a clipboard till you try pasting it. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, like a plus sign, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing individual citations on nearly empty dialogs that you have to sift through looking for the right one, and seeing them all together might be useful for the sake of comparison.
-# Edit official do list and move to directory /etc/, edit ReadMe, re-dump 2 databases to .sql files.
-# Website: change "units of genealogy" to "elements of genealogy", add FAQ to Treebard Topics.
 # export dbs to .sql
 # backup app to external hd
 

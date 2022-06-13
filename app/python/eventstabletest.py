@@ -1,3 +1,0 @@
-# eventstabletest
-
-currper = 1

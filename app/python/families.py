@@ -1,5 +1,18 @@
 # families.py
 
+""" It took six months to write this module. Don't rewrite it for fun. 
+    It's not fun. Its worst defect now (20220612) is that tab traversal
+    correction after changing something in the families table is a huge
+    hassle, due to the fact that some of the widgets are permanent and 
+    some of the widgets are only created as needed. A whole day was 
+    wasted trying to chase this problem into code hell, but for now
+    the simple solution is to use the mouse to put the cursor back where
+    it's wanted after the obligatory redraw which follows every change to
+    the table. A possible solution is to use a cell pool as in
+    the events table and never destroy anything, just grid_forget() any
+    field that's no longer needed.
+"""
+
 import tkinter as tk
 import sqlite3
 from widgets import (
@@ -16,14 +29,12 @@ from messages import families_msg
 from dates import format_stored_date, get_date_formats, OK_MONTHS, validate_date
 from events_table import delete_couple_finding
 from query_strings import (
-    select_finding_id_birth, update_finding_ages_kintypes_null, select_finding_persons,
-    select_person_gender_by_id, select_finding_date, select_finding_id_birth,
+    select_finding_id_birth, update_finding_ages_kintypes_null,
+    select_person_gender_by_id, select_finding_date, update_finding_kin_type_1,
     select_finding_id_death, select_finding_date_and_sorter,
-    update_finding_person_1, update_finding_person_2, select_kin_type_string,
-    select_kin_type_alt_parent, update_finding_kin_type_1, 
-    update_finding_age2_blank, update_finding_age1_blank, update_finding_mother,
+    update_finding_person_1, update_finding_person_2, select_kin_type_string,   
     update_finding_person_1_null_by_id, update_finding_person_2_null_by_id,
-    select_finding_details, update_current_person, update_current_person,
+    select_finding_details, update_current_person, update_finding_mother, 
     update_finding_kin_type_2, select_all_event_type_ids_marital,
     update_person_gender, update_finding_parents, update_finding_father,
     update_finding_date, insert_finding_death, select_kin_types_parental,
@@ -35,9 +46,9 @@ from query_strings import (
     select_finding_id_by_person_and_event, select_finding_death_date,
     select_finding_person_date_by_finding_and_type, update_finding_partner2,
     select_finding_person_date_alt_parent_event, update_finding_partner1,
-    update_finding_age1_kintype1_null, update_finding_age2_kintype2_null
-
-)
+    update_finding_parent1_null, update_finding_parent2_null,
+    update_finding_parents_new, select_finding_persons,
+    update_finding_parents_null)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -57,9 +68,7 @@ def make_parent_types_dict():
     conn.close()
     return PARENT_TYPES
 
-
 PARENT_TYPES = make_parent_types_dict()
-# line 63 PARENT_TYPES: {1: 'father', 2: 'mother', 110: 'adoptive parent', 111: 'adoptive father', 112: 'adoptive mother', 120: 'foster parent', 121: 'foster father', 122: 'foster mother', 130: 'guardian', 131: 'legal guardian'}
 
 def get_all_marital_event_types(conn, cur):
     cur.execute(select_all_event_type_ids_marital)
@@ -67,20 +76,13 @@ def get_all_marital_event_types(conn, cur):
     return marital_event_types
 
 class NuclearFamiliesTable(Frame):
-    """ In general, `...alt...` in this class refers to alternate parents and
-        families such as relationships created by adoption, fosterage, and
-        guardianship.
+    """ `...alt...` refers to alternate parents such as relationships 
+        created by adoption, fosterage, and guardianship.
     """
     def __init__( 
             self, master, root, treebard, current_person, findings_table, 
             right_panel, person_autofill_values,
             *args, **kwargs):
-        """ This dict has to be recreated in events_table.py which can't import
-            from here:
-
-
-
-        """
         Frame.__init__(self, master, *args, **kwargs)
 
         self.master = master
@@ -121,6 +123,7 @@ class NuclearFamiliesTable(Frame):
         self.newkidvar = tk.IntVar()
 
         self.current_person_name = ""
+        self.current_widget = None
 
         self.make_widgets()
 
@@ -188,12 +191,12 @@ class NuclearFamiliesTable(Frame):
             autofill=True, 
             values=self.person_autofill_values)
         EntryAutoPerson.person_autofills.append(self.new_kid_input)
-        childmaker = Button(
+        self.childmaker = Button(
             self.new_kid_frame, 
             text="ADD CHILD TO SELECTED PARTNER", 
             command=self.add_child)
         self.new_kid_input.grid(column=0, row=0)
-        childmaker.grid(column=1, row=0, padx=(6,0), pady=(12,0))    
+        self.childmaker.grid(column=1, row=0, padx=(6,0), pady=(12,0))    
 
     def add_child(self):
 
@@ -202,7 +205,6 @@ class NuclearFamiliesTable(Frame):
             msg7[0].grab_release()
             msg7[0].destroy()
             entry.focus_set()
-        print("line", looky(seeline()).lineno, "running add child:")
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -702,7 +704,7 @@ class NuclearFamiliesTable(Frame):
         stg = " or ".join(parent_types)
         if pard_id is None:
             partner_name = ""
-            stg = "Parent"
+            stg = "parent"
         else:
             partner_name = self.person_autofill_values[pard_id][0]["name"]
         compound_parent_text = "Children's {}".format(stg)
@@ -844,7 +846,6 @@ class NuclearFamiliesTable(Frame):
         return partners1, births
 
     def query_alt_nukefams_data(self, conn, cur):
-
         cur.execute(
             select_finding_couple_details_alt_parent1, (self.current_person,))
         result1 = cur.fetchall()
@@ -960,7 +961,10 @@ class NuclearFamiliesTable(Frame):
             w += 1
 
     def get_original(self, evt):
-        """ Make sure that everything works right when making new event. """
+        """ Make sure that everything works right when making new event. At
+            one time I had to not bind to FocusOut event till FocusIn event
+            had taken place, but I think I did away with that assuming the 
+            problem had been solved somewhere along the way. """
         self.original = evt.widget.get()
 
     def get_final(self, evt):
@@ -975,7 +979,6 @@ class NuclearFamiliesTable(Frame):
         gridinfo = widg.grid_info()
         column, row = gridinfo["column"], gridinfo["row"]
         widgname = widg.winfo_name()
-        print("line", looky(seeline()).lineno, "widgname:", widgname)
         if widgname == "pa":
             self.update_parent(self.final, conn, cur, widg, column=column, kin_type=1)
         elif widgname == "ma":
@@ -1021,7 +1024,6 @@ class NuclearFamiliesTable(Frame):
 
         cur.close()
         conn.close()
-        print("line", looky(seeline()).lineno, "self.current_person:", self.current_person)
         current_name = self.person_autofill_values[self.current_person][0]["name"]
         redraw_person_tab(
             main_window=self.treebard.main, 
@@ -1160,7 +1162,7 @@ class NuclearFamiliesTable(Frame):
                 if dkt["vars"] == 0:
                     continue
                 elif dkt["vars"] == 1:
-                    link_partner(dkt["birth_id"], inwidg)
+                    link_partner(dkt["finding"], inwidg)
             for dkt in self.link_partners["children"]:
                 if dkt["vars"] == 0:
                     continue
@@ -1443,34 +1445,8 @@ class NuclearFamiliesTable(Frame):
 
     def unlink_child(self, orig_child_id, parent_id, conn, cur):
 
-        def ok_unlink_child(): # IS THIS EXTRA?
-            # copy = checks
-            # i = 0
-            # for dkt in copy["events"]:
-                # h = 0
-                # for var in dkt["vars"]:
-                    # got = var.get()
-                    # checks["events"][i]["vars"][h] = got
-                    # h += 1
-                # i += 1            
-            # self.unlink_partners["events"] = checks["events"]
-
-            # copy = checks
-            # j = 0
-            # for dkt in copy["children"]:
-                # h = 0
-                # for var in dkt["vars"]:
-                    # got = var.get()
-                    # checks["children"][j]["vars"][h] = got
-                    # h += 1
-                # j += 1            
-            # self.unlink_partners["children"] = checks["children"]
-
-            for var in vars:
-                var = var.get()
-            print("line", looky(seeline()).lineno, "vars:", vars)
-            self.parents_of_child_to_unlink = vars
-
+        def ok_unlink_child():
+            self.parents_of_child_to_unlink = [i.get() for i in (var0, var1)]
             self.child_unlinker.destroy()
             
         def cancel_unlink_child():
@@ -1482,111 +1458,51 @@ class NuclearFamiliesTable(Frame):
             """ Run after dialog closes. """
             if self.cancel_unlink_child_pressed is True:
                 return
-            # for dkt in self.unlink_partners["events"]:
-                # finding = dkt["finding"]
-                # if dkt["vars"] == [0, 0]:
-                    # continue
-                # elif dkt["vars"] == [1, 1]:
-                    # delete_couple_finding(finding)
-                # elif dkt["vars"] == [0, 1]:
-                    # unlink_partner(finding, [0, 1])
-                # elif dkt["vars"] == [1, 0]:
-                    # unlink_partner(finding, [1, 0])
-            # for dkt in self.unlink_partners["children"]:
-            # finding = dkt["birth_id"]
             if self.parents_of_child_to_unlink == [0, 0]:
                 return
             else:
                 unlink_parents_of_child(conn, cur, birth_id)
-            # elif vars == [1, 1]:
-                # unlink_parents(conn, cur, birth_id)
-            # elif vars == [0, 1]:
-                # unlink_parent1(conn, cur, birth_id, [0, 1])
-            # elif vars == [1, 0]:
-                # unlink_parent2(conn, cur, birth_id, [1, 0])
         
         def unlink_parents_of_child(conn, cur, birth_id):
-            # print("line", looky(seeline()).lineno, "vars:", vars)
             if self.parents_of_child_to_unlink == [1, 1]:
-                cur.execute(update_finding_ages_kintypes_null, (birth_id,))
+                cur.execute(update_finding_parents_null, (birth_id,))
                 conn.commit()
             elif self.parents_of_child_to_unlink == [1, 0]:
-                cur.execute(update_finding_age1_kintype1_null, (birth_id,))
+                cur.execute(update_finding_parent1_null, (birth_id,))
                 conn.commit()
             elif self.parents_of_child_to_unlink == [0, 1]:
-                cur.execute(update_finding_age2_kintype2_null, (birth_id,))
+                cur.execute(update_finding_parent2_null, (birth_id,))
                 conn.commit()
             else:
                 print("line", looky(seeline()).lineno, "case not handled:")
 
         cur.execute(select_finding_id_birth, (orig_child_id,))
         birth_id = cur.fetchone()[0]
-        # cur.execute(update_finding_ages_kintypes_null, (birth_id,)) # UNLINK BOTH PARENTS
-        # conn.commit()
 
         message = "Unlink child from whom:"
         self.child_unlinker = Dialogue(self.root)
         head = LabelHeader(
-            self.child_unlinker.window, text=message, justify='left', wraplength=650)
-        # inputs = Frame(self.child_unlinker.window)
+            self.child_unlinker.window, text=message, wraplength=650)
         self.current_person_name = self.person_autofill_values[self.current_person][0]["name"]
+        partner_name = "null partner"
+        if parent_id:
+            partner_name = self.person_autofill_values[parent_id][0]["name"]
 
-        # text = "{}  #{}:".format(child["name"], child["id"])
-        # kidlab = Label(inputs, text=text, anchor="e")
-        # kidlab.grid(column=0, row=g, sticky="e")
-
-        currperlab = LabelH3(self.child_unlinker.window, text=self.current_person_name)
-        currperlab.grid(column=1, row=5)
+        currperlab = LabelH3(
+            self.child_unlinker.window, text=self.current_person_name)
+        currperlab.grid(column=1, row=5, padx=(12,0))
         spacer0 = Label(self.child_unlinker.window, width=3)
         spacer0.grid(column=2, row=5)
-        print("line", looky(seeline()).lineno, "self.original:", self.original) # GET RID OF that fancy split in other place too that I used as a model for this?
-        pardlab = LabelH3(self.child_unlinker.window, text=self.original.split("(")[0])
+        pardlab = LabelH3(self.child_unlinker.window, text=partner_name)
         pardlab.grid(column=3, row=5)
-
 
         var0 = tk.IntVar()
         var1 = tk.IntVar()
         chk0 = Checkbutton(self.child_unlinker.window, variable=var0)
         chk0.grid(column=1, row=6)
         chk1 = Checkbutton(self.child_unlinker.window, variable=var1)
-        # child["vars"] = [var0, var1]
-        vars = [var0, var1]
         chk1.grid(column=3, row=6)
         chk1.select()
-
-
-        # f = 1
-        # for event in checks["events"]: 
-            # cur.execute(select_finding_details, (event["finding"],))
-            # event_id, event_date, event_type = cur.fetchone()
-            # event_date = format_stored_date(event_date, date_prefs=self.date_prefs)
-            # text = "{} {} (Conclusion #{}):".format(event_date, event_type, event_id)
-            # evtlab = Label(inputs, text=text, anchor="e")
-            # evtlab.grid(column=0, row=f, sticky="e")
-            # var0 = tk.IntVar()
-            # var1 = tk.IntVar()
-            # chk0 = Checkbutton(inputs, variable=var0)
-            # chk0.grid(column=1, row=f)
-            # chk1 = Checkbutton(inputs, variable=var1)
-            # event["vars"] = [var0, var1]
-            # chk1.grid(column=3, row=f)
-            # chk1.select()
-            # f += 1
-
-        # g = f
-        # for child in checks["children"]: 
-            # text = "{}  #{}:".format(child["name"], child["id"])
-            # kidlab = Label(inputs, text=text, anchor="e")
-            # kidlab.grid(column=0, row=g, sticky="e")
-            # var0 = tk.IntVar()
-            # var1 = tk.IntVar()
-            # chk0 = Checkbutton(inputs, variable=var0)
-            # chk0.grid(column=1, row=g)
-            # chk1 = Checkbutton(inputs, variable=var1)
-            # child["vars"] = [var0, var1]
-            # chk1.grid(column=3, row=g)
-            # chk1.select()
-            # g += 1
 
         buttons = Frame(self.child_unlinker.window)
         b1 = Button(buttons, text="OK", command=ok_unlink_child)
@@ -1597,11 +1513,10 @@ class NuclearFamiliesTable(Frame):
         self.child_unlinker.canvas.title_2.config(text="")            
 
         head.grid(
-            column=0, row=4, sticky='news', padx=12, pady=12,  
-            columnspan=2, ipady=6)
-        # inputs.grid(column=1, row=5, sticky="news", padx=12)
+            column=0, row=4, sticky='ew', padx=12, pady=12,  
+            columnspan=5, ipady=6)
         buttons.grid(
-            column=1, row=7, sticky="e", padx=12, pady=12, columnspan=2)
+            column=3, row=7, sticky="e", padx=12, pady=12, columnspan=2)
         b1.grid(column=0, row=0, sticky='e', ipadx=3)
         b2.grid(column=1, row=0, padx=(6,0), sticky='e', ipadx=3)
 
@@ -1614,21 +1529,15 @@ class NuclearFamiliesTable(Frame):
     def update_child(self, widg, conn, cur):
 
         def do_update(widg, parent_id, child, cur, conn):
-
             orig_child_id = child["id"]
             new_child_id = None 
             birth_id = None
-            gender = "unknown"
+            orig_birth_id = None
             death_date = "-0000-00-00-------"
             birth_date = "-0000-00-00-------"
             sorter = (0,0,0)
-# OPEN DIALOG TO UNLINK FROM ONE OR BOTH PARENTS IE CURR PER & PARD
             if len(self.final) == 0:
                 self.unlink_child(orig_child_id, parent_id, conn, cur)
-                # cur.execute(select_finding_id_birth, (orig_child_id,))
-                # birth_id = cur.fetchone()[0]
-                # cur.execute(update_finding_ages_kintypes_null, (birth_id,)) # UNLINK BOTH PARENTS
-                # conn.commit()
                 return
 
             name_data = check_name(ent=widg)
@@ -1651,8 +1560,6 @@ class NuclearFamiliesTable(Frame):
 
             cur.execute(select_finding_id_birth, (new_child_id,))
             birth_id = cur.fetchone()[0]
-            cur.execute(select_person_gender_by_id, (new_child_id,))
-            gender = cur.fetchone()[0]
             cur.execute(select_finding_id_death, (new_child_id,))
             death_id = cur.fetchone()
             cur.execute(select_finding_date_and_sorter, (birth_id,))
@@ -1662,6 +1569,18 @@ class NuclearFamiliesTable(Frame):
                 death_id = death_id[0]
                 cur.execute(select_finding_date, (death_id,))
                 death_date = cur.fetchone()[0] 
+
+            partner_parent_type = self.progeny_data[parent_id]["parent_type"]
+            if partner_parent_type == "Children's mother":
+                father_id, mother_id = self.current_person, parent_id
+            else:
+                father_id, mother_id = parent_id, self.current_person                
+            cur.execute(update_finding_parents_new, (father_id, mother_id, birth_id))
+            conn.commit()
+            cur.execute(select_finding_id_birth, (orig_child_id,))
+            orig_birth_id = cur.fetchone()[0]
+            cur.execute(update_finding_parents_null, (orig_birth_id,))
+            conn.commit()
 
         for k,v in self.progeny_data.items():
             for child in v["children"]:
@@ -1871,6 +1790,7 @@ class NuclearFamiliesTable(Frame):
 
         def cancel_change():
             frm.destroy()
+            widg.config(width=orig_width)
 
         OK_ALT_PARENT_TYPES = {
             "adoptive": 
@@ -1881,6 +1801,7 @@ class NuclearFamiliesTable(Frame):
                 [("Guardian", 130), ("Legal Guardian", 131)]}
 
         widg = evt.widget
+        orig_width = len(widg.cget("text"))
         original_text = widg.cget("text")
         for lst in OK_ALT_PARENT_TYPES.values():
             for tup in lst:

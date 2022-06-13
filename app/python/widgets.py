@@ -79,24 +79,9 @@ def get_opening_settings():
         font_scheme = list(cur.fetchone()[0:2])
         user_formats = color_scheme + font_scheme
         user_formats.insert(5, INPUT_FONT)
-        # user_formats = color_scheme + [INPUT_FONT] + font_scheme
         cur.close()
         conn.close()
         return user_formats
-
-# # get rid of this when working on types branch
-# def get_current_formats(color_scheme_id):   
-    # current_file = get_current_file()[0]
-    # conn = sqlite3.connect(current_file)
-    # cur = conn.cursor()
-    # cur.execute(select_color_scheme_by_id, (color_scheme_id,))
-    # color_scheme = list(cur.fetchone())
-    # cur.execute(select_format_font_scheme)
-    # font_scheme = list(cur.fetchone()[0:2])
-    # user_formats = color_scheme + [INPUT_FONT] + font_scheme
-    # cur.close()
-    # conn.close()
-    # return user_formats
   
 def make_formats_dict():
     """ To add a style, add a string to the end of keys list
@@ -281,10 +266,6 @@ def configall(master, formats):
     ancestor_list = []
     all_widgets_in_root = get_all_descends(master, ancestor_list)
     for widg in (all_widgets_in_root):
-        # if widg.winfo_class() != "Toplevel": # still using tk.Toplevel for tips 
-            # subclass = widg.winfo_subclass()
-        # else:
-            # subclass = "Toplevel"
         subclass = widg.winfo_subclass()
         if subclass in bg_fg:
             config_bg_fg(widg)  
@@ -1172,22 +1153,7 @@ class Entry(Entryx):
             insertbackground=formats['fg'],
             selectforeground=formats["fg"],
             selectbackground=formats["head_bg"]) 
-            
-
-# class EntryUnhilited(Entryx):
-    # '''
-        # Looks like a Label.
-    # '''
-    # def __init__(self, master, *args, **kwargs):
-        # Entryx.__init__(self, master, *args, **kwargs)
-        
-        # self.config(
-            # bd=0,
-            # bg=formats['bg'], 
-            # fg=formats['fg'], 
-            # font=formats['input_font'], 
-            # insertbackground=formats['fg'])
-
+       
 class Textx(tk.Text):
     def __init__(self, master, *args, **kwargs):
         tk.Text.__init__(self, master, *args, **kwargs)
@@ -4286,28 +4252,41 @@ def redraw_current_person_area(
                 current_name, current_person))
 
 def redraw_families_table(evt, current_person, main_window):
+
+    table = main_window.nukefam_table
+    currwidg = table.current_widget
+    if currwidg:
+        nextwidg = currwidg.tk_focusNext()
+        gridinfo = nextwidg.grid_info()
+        col = gridinfo["column"]
+        row = gridinfo["row"]
+        container = nextwidg.master
+        permcont = container.master
+        grandcol = container.grid_info()["column"]
+        grandrow = container.grid_info()["row"]
+
     main_window.findings_table.kin_widths = [0, 0, 0, 0, 0, 0]
     for ent in main_window.nukefam_table.nukefam_inputs:
         ent.delete(0, "end")
-    main_window.nukefam_table.ma_input.delete(0, "end")
-    main_window.nukefam_table.pa_input.delete(0, "end")
-    main_window.nukefam_table.new_kid_input.delete(0, "end")
-    main_window.nukefam_table.new_kid_frame.grid_forget()
-    main_window.nukefam_table.current_person_alt_parents = []
-    main_window.nukefam_table.compound_parent_type = "Children's"        
-    for widg in main_window.nukefam_table.nukefam_containers: 
-        widg.destroy() 
-    main_window.nukefam_table.parent_types = []
-    main_window.nukefam_table.nukefam_containers = []
+    table.ma_input.delete(0, "end")
+    table.pa_input.delete(0, "end")
+    table.new_kid_input.delete(0, "end")
+    table.new_kid_frame.grid_forget()
+    table.current_person_alt_parents = []
+    table.compound_parent_type = "Children's"
+    for widg in table.nukefam_containers:
+        widg.destroy()
+    table.parent_types = []
+    table.nukefam_containers = []
 
-    main_window.nukefam_table.parents_data = initialize_parents_data()
-    main_window.nukefam_table.progeny_data = {}
+    table.parents_data = initialize_parents_data()
+    table.progeny_data = {}
 
     if evt: # user pressed CTRL+S for example
-        main_window.nukefam_table.make_nukefam_inputs()
+        table.make_nukefam_inputs()
     else: # user pressed OK to change current person for example 
-        main_window.nukefam_table.current_person = current_person
-        main_window.nukefam_table.make_nukefam_inputs() 
+        table.current_person = current_person
+        table.make_nukefam_inputs() 
 
 def redraw_events_table(findings_table, current_person=None):    
     for lst in findings_table.cell_pool:
@@ -4385,7 +4364,6 @@ class ToolTip(object):
         x = x + self.widget.winfo_rootx() + 27
         y = y + cy + self.widget.winfo_rooty() + 27
         self.tipwindow = tw = Toplevel(self.widget)
-        # self.tipwindow = tw = tk.Toplevel(self.widget)
         tw.wm_overrideredirect(1)
         tw.wm_geometry("+%d+%d" % (x, y))
         try:
@@ -4402,10 +4380,6 @@ class ToolTip(object):
             relief='solid', 
             bd=1,
             bg=NEUTRAL_COLOR, fg="white")
-        # label = tk.Label(tw, text=self.text, justify=tk.LEFT,
-                      # background="#ffffe0", relief=tk.SOLID, borderwidth=1,
-                      # font=("tahoma", 10, "normal"),
-                      # fg='black')
         label.pack(ipadx=6)
 
     def hidetip(self):

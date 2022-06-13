@@ -138,8 +138,8 @@ insert_finding_new_couple = '''
 
 insert_finding_new_couple_alt = '''
     INSERT INTO finding (
-        event_type_id, person_id1, person_id2, kin_type_id1, kin_type_id2)
-    VALUES (?, null, null, ?, ?)
+        person_id, event_type_id, person_id1, person_id2, kin_type_id1, kin_type_id2)
+    VALUES (?, ?, null, null, ?, ?)
 '''
 
 insert_findings_notes_new = '''
@@ -163,16 +163,6 @@ update_finding_new_places_null = '''
 insert_finding_null_couple = '''
     INSERT INTO finding ('', null, '', null)
 '''
-
-# insert_finding_parents_kintypes = '''
-    # INSERT INTO finding (finding_id, kin_type_id1, kin_type_id2)
-    # VALUES (?, 1, 2)
-# '''
-
-# insert_finding_parents = '''
-    # INSERT INTO finding (person_id1, person_id2, kin_type_id1, kin_type_id2)
-    # VALUES (?, ?, 1, 2)
-# '''
 
 insert_finding_places_new_event = '''
     INSERT INTO finding
@@ -1131,20 +1121,6 @@ select_finding_couple_details_by_finding = '''
     WHERE finding_id = ?
 '''
 
-
-
-# select_person_ids_kin_types_include_nulls = '''
-    # SELECT person_id1, a.kin_types, person_id2, b.kin_types
-    # FROM findings_persons
-    # LEFT JOIN persons_persons
-        # ON findings_persons.persons_persons_id = persons_persons.persons_persons_id
-    # LEFT JOIN kin_type as a
-        # ON a.kin_type_id = findings_persons.kin_type_id1
-    # LEFT JOIN kin_type as b
-        # ON b.kin_type_id = findings_persons.kin_type_id2
-    # WHERE finding_id = ?
-# '''
-
 select_finding_couple_details_include_nulls = '''
     SELECT r.person_id1, a.kin_types, q.person_id2, b.kin_types
     FROM finding AS q
@@ -1406,11 +1382,6 @@ update_finding_age1_blank = '''
     WHERE finding_id = ?
 '''
 
-update_finding_age1_kintype1_null = '''
-    UPDATE finding
-    SET (age1, kin_type_1) = ('', null)
-    WHERE finding_id = ?
-'''
 
 update_finding_age2 = '''
     UPDATE finding
@@ -1421,12 +1392,6 @@ update_finding_age2 = '''
 update_finding_age2_blank = '''
     UPDATE finding
     SET age2 = ""
-    WHERE finding_id = ?
-'''
-
-update_finding_age2_kintype2_null = '''
-    UPDATE finding
-    SET (age2, kin_type_2) = ('', null)
     WHERE finding_id = ?
 '''
 
@@ -1442,6 +1407,12 @@ update_finding_date = '''
     WHERE finding_id = ?
 '''
 
+update_finding_father = '''
+    UPDATE finding
+    SET (person_id1, kin_type_id1) = (?, 1)
+    WHERE finding_id = ?
+'''
+
 update_finding_kin_type_1 = '''
     UPDATE finding
     SET kin_type_id1 = ?
@@ -1454,9 +1425,40 @@ update_finding_kin_type_2 = '''
     WHERE finding_id = ?
 '''
 
+update_finding_mother = '''
+    UPDATE finding
+    SET (person_id2, kin_type_id2) = (?, 2)
+    WHERE finding_id = ?
+'''
+
+update_finding_parent1_null = '''
+    UPDATE finding
+    SET (age1, kin_type_id1, person_id1) = ('', null, null)
+    WHERE finding_id = ?
+'''
+
+update_finding_parent2_null = '''
+    UPDATE finding
+    SET (age2, kin_type_id2, person_id2) = ('', null, null)
+    WHERE finding_id = ?
+'''
+
 update_finding_parents= '''
     UPDATE finding
     SET (person_id1, person_id2, kin_type_id1, kin_type_id2) = (?, ?, 1, 2)
+    WHERE finding_id = ?
+'''
+update_finding_parents_new = '''
+    UPDATE finding
+    SET (age1, kin_type_id1, person_id1, age2, kin_type_id2, person_id2) =
+        ('', 1, ?, '', 2, ?)
+    WHERE finding_id = ?
+'''
+
+update_finding_parents_null = '''
+    UPDATE finding
+    SET (age1, kin_type_id1, person_id1, age2, kin_type_id2, person_id2)
+        = ('', null, null, '', null, null)
     WHERE finding_id = ?
 '''
 
@@ -1511,18 +1513,6 @@ update_finding_person_1 = '''
 update_finding_person_2 = '''
     UPDATE finding
     SET (person_id2, kin_type_id2) = (?, ?)
-    WHERE finding_id = ?
-'''
-
-update_finding_father = '''
-    UPDATE finding
-    SET (person_id1, kin_type_id1) = (?, 1)
-    WHERE finding_id = ?
-'''
-
-update_finding_mother = '''
-    UPDATE finding
-    SET (person_id2, kin_type_id2) = (?, 2)
     WHERE finding_id = ?
 '''
 

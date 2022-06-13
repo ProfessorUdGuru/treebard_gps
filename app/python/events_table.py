@@ -911,28 +911,29 @@ class EventsTable(Frame):
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
 
-        if self.is_couple_event is False:
+        if self.is_couple_event is False and self.new_alt_parent_event is False:
             cur.execute(
                 insert_finding_new, (self.event_type_id, self.current_person))
+            conn.commit() 
+        elif self.is_couple_event is False and self.new_alt_parent_event is True:
+            if self.event_type_id == 48:
+                unisex_alt_parent = 130
+            elif self.event_type_id == 83:
+                unisex_alt_parent = 110
+            elif self.event_type_id == 95:
+                unisex_alt_parent = 120 
+            cur.execute(
+                insert_finding_new_couple_alt, 
+                (self.current_person, self.event_type_id, unisex_alt_parent, unisex_alt_parent))
             conn.commit()            
+            self.new_alt_parent_event = False 
+        elif self.is_couple_event is True:
+            cur.execute(
+                insert_finding_new_couple, 
+                (self.event_type_id, self.current_person))
+            conn.commit()  
         else:
-            if self.new_alt_parent_event is True:
-                if self.event_type_id == 48:
-                    unisex_alt_parent = 130
-                elif self.event_type_id == 83:
-                    unisex_alt_parent = 110
-                elif self.event_type_id == 95:
-                    unisex_alt_parent = 120 
-                cur.execute(
-                    insert_finding_new_couple_alt, 
-                    (self.event_type_id, unisex_alt_parent, unisex_alt_parent))
-                conn.commit()            
-                self.new_alt_parent_event = False 
-            else:
-                cur.execute(
-                    insert_finding_new_couple, 
-                    (self.event_type_id, self.current_person))
-                conn.commit()  
+            print("line", looky(seeline()).lineno, "case not handled:")
 
         cur.close()
         conn.close()
