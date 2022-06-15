@@ -40,7 +40,7 @@
     called `claims`.
 
     Some elements are pre-loaded with types in primary type tables, while some
-    are completely open-ended so aren't linked to types, such as projects and to-dos which can be linked to each other and anything else, but are not linked to any underlying primary type table. Type tables never have a foreign key in them, but their primary key is always used as a foreign key in other tables. Primary type tables underlie many somewhat primary tables such as the finding table which stores events and attributes. It includes an event_type_id column for foreign keys. The findings_persons table includes foreign key references to finding table IDs and kin type IDs (or "relationships" as they're called in ELEMENTS.)
+    are completely open-ended so aren't linked to types, such as projects and to-dos which can be linked to each other and anything else, but are not linked to any underlying primary type table. Type tables never have a foreign key in them, but their primary key is always used as a foreign key in other tables. Primary type tables underlie many somewhat primary tables such as the finding table which stores events and attributes as findings (conclusions). It includes an event_type_id column for foreign keys. The findings_persons table includes foreign key references to finding table IDs and kin type IDs (or "relationships" as they're called in ELEMENTS.)
 
     Event types are used equally for conclusions and assertions (findings and claims.)
 
@@ -56,4 +56,4 @@
 '''
 
 ELEMENTS = (
-    "persons", "places", "assertions", "events", "attributes", "citations", "names", "sources", "projects", "to-dos", "contacts", "images", "notes", "repositories", "reports", "charts", "media", "relationships", "roles")
+    "persons", "places", "assertions", "conclusions", "citations", "names", "sources", "projects", "to-dos", "contacts", "images", "notes", "repositories", "reports", "charts", "media", "relationships", "roles")

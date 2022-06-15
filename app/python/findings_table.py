@@ -13,14 +13,14 @@ from toykinter_widgets import run_statusbar_tooltips
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
 from nested_place_strings import make_all_nestings
 from error_messages import  open_yes_no_message
-from messages_context_help import new_event_dlg_help_msg
+# from messages_context_help import new_event_dlg_help_msg
 from persons import (
     make_all_names_dict_for_person_select, check_name, 
     get_original)
 from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places
-from messages import events_msg
+from messages import findings_msg
 from utes import split_sorter
     
 from query_strings import (
@@ -92,7 +92,7 @@ def delete_couple_finding(finding_id):
 
 formats = make_formats_dict() 
 
-class EventsTable(Frame):
+class FindingsTable(Frame):
 
     def __init__(
             self, master, root, treebard, main, current_person,
@@ -173,14 +173,14 @@ class EventsTable(Frame):
         
             self.update_db(widg, col_num)
 
-    def delete_event(self, finding_id, widg, initial):
+    def delete_finding(self, finding_id, widg, initial):
 
-        def ok_delete_event():
+        def ok_delete_finding():
             msg[0].destroy()
             self.focus_set()
             proceed(initial_value)
 
-        def cancel_delete_event():
+        def cancel_delete_finding():
             msg[0].destroy()
             widg.insert(0, initial)
             widg.focus_set()
@@ -220,7 +220,7 @@ class EventsTable(Frame):
         if event_type == 1:
             msg1 = open_message(
                 self, 
-                events_msg[9], 
+                findings_msg[9], 
                 "Birth Events Undeletable Error", 
                 "OK")
             msg1[0].grab_set()
@@ -229,12 +229,12 @@ class EventsTable(Frame):
 
         msg = open_yes_no_message(
             self, 
-            events_msg[4], 
-            "Delete Event Confirmation", 
+            findings_msg[4], 
+            "Delete Conclusion Confirmation", 
             "OK", "CANCEL")
         msg[0].grab_set()
-        msg[2].config(command=ok_delete_event)
-        msg[3].config(command=cancel_delete_event)
+        msg[2].config(command=ok_delete_finding)
+        msg[3].config(command=cancel_delete_finding)
 
         initial_value = self.initial
         cur.close()
@@ -284,7 +284,7 @@ class EventsTable(Frame):
                 if couple_event_old != couple_event_new:
                     msg4 = open_message(
                         self, 
-                        events_msg[3], 
+                        findings_msg[3], 
                         "Incompatible Event Type Error", 
                         "OK")
                     msg4[0].grab_set()
@@ -303,7 +303,7 @@ class EventsTable(Frame):
             if (self.initial == 'offspring' and len(self.final) != 0):
                 msg = open_message(
                     self, 
-                    events_msg[2], 
+                    findings_msg[2], 
                     "Offspring Event Edit Error", 
                     "OK")
                 msg[0].grab_set()
@@ -313,7 +313,7 @@ class EventsTable(Frame):
             if self.final == 'offspring':
                 msg = open_message(
                     self, 
-                    events_msg[6], 
+                    findings_msg[6], 
                     "Change to Offspring Event Error", 
                     "OK")
                 msg[0].grab_set()
@@ -324,11 +324,11 @@ class EventsTable(Frame):
                 update_to_existing_type()
             elif len(self.final) == 0:
                 initial = self.initial
-                self.delete_event(self.finding, widg, initial)
+                self.delete_finding(self.finding, widg, initial)
             else:
                 msg = open_message(
                     self.root, 
-                    events_msg[8], 
+                    findings_msg[8], 
                     "Unknown Event Type", 
                     "OK") 
                 msg[0].grab_set()
@@ -467,16 +467,16 @@ class EventsTable(Frame):
                         font=formats['heading3'])
                 row.append(cell)
             self.table_cells.append(row)
-        self.new_event_frame = Frame(self)
-        self.event_input = EntryAutoHilited(
-            self.new_event_frame,
+        self.new_finding_frame = Frame(self)
+        self.finding_input = EntryAutoHilited(
+            self.new_finding_frame,
             width=32, 
             autofill=True, 
             values=self.event_autofill_values)
-        self.add_event_button = Button(
-            self.new_event_frame, 
-            text="NEW EVENT OR ATTRIBUTE", 
-            command=self.make_new_event)
+        self.add_finding_button = Button(
+            self.new_finding_frame, 
+            text="NEW CONCLUSION", 
+            command=self.make_new_conclusion)
 
     def set_cell_content(self):
         self.findings_data, current_roles, current_notes = self.get_findings()
@@ -727,10 +727,10 @@ class EventsTable(Frame):
             self.grid_rowconfigure(row_num, weight=0)
         self.new_row = row_num + 1
 
-        self.new_event_frame.grid(
+        self.new_finding_frame.grid(
             column=0, row=self.new_row, pady=6, columnspan=5, sticky='ew')
-        self.event_input.grid(column=0, row=0, padx=(0,12), sticky='w')
-        self.add_event_button.grid(
+        self.finding_input.grid(column=0, row=0, padx=(0,12), sticky='w')
+        self.add_finding_button.grid(
             column=1, row=0, sticky='w')
 
     def show_kintip(self, kin_type, name):
@@ -844,63 +844,63 @@ class EventsTable(Frame):
         sorter = ",".join(sorter)
         return sorter
 
-    def count_birth_death_events(self, new_event):
+    def count_birth_death_events(self, new_conclusion):
         too_many = False
         current_file = get_current_file()[0]
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
         cur.execute(select_findings_for_person, (self.current_person,))
         all_events = [i[0] for i in cur.fetchall()]
-        if new_event in all_events:
+        if new_conclusion in all_events:
             too_many = True
         cur.close()
         conn.close()
         return too_many
 
-    def make_new_event(self):
+    def make_new_conclusion(self):
         """ Disallow creation of second birth or death event or types 
             that don't exist yet.
         """
 
         def err_done6():
-            self.event_input.delete(0, 'end')
+            self.finding_input.delete(0, 'end')
             msg[0].destroy()
             self.focus_set()
 
         too_many = False
-        new_event = self.event_input.get().strip().lower()
-        if new_event in ("birth", "death"):
-            too_many = self.count_birth_death_events(new_event)
+        new_conclusion = self.finding_input.get().strip().lower()
+        if new_conclusion in ("birth", "death"):
+            too_many = self.count_birth_death_events(new_conclusion)
         if too_many is True: 
             msg = open_message(
                 self, 
-                events_msg[5], 
-                "Multiple Birth or Death Events", 
+                findings_msg[5], 
+                "Multiple Birth or Death Conclusions", 
                 "OK")
             msg[0].grab_set()
             msg[2].config(command=err_done6)
             return
 
-        self.new_event = new_event
+        self.new_conclusion = new_conclusion
 
-        self.get_new_event_data()
+        self.get_new_finding_data()
         if self.unknown_event_type is False:
             if self.is_couple_event is False:
-                if self.new_event == "offspring":
+                if self.new_conclusion == "offspring":
                     msg = open_message(
                         self.root, 
-                        events_msg[7], 
+                        findings_msg[7], 
                         "Offspring Event Creation Error", 
                         "OK") 
                     msg[0].grab_set()
                     return 
-                elif self.new_event in ("adoption", "fosterage", "guardianship"):
+                elif self.new_conclusion in ("adoption", "fosterage", "guardianship"):
                     self.new_alt_parent_event = True
 
-        self.add_event()
-        self.event_input.delete(0, 'end')
+        self.add_finding()
+        self.finding_input.delete(0, 'end')
 
-    def add_event(self):
+    def add_finding(self):
         """ Unlike parents in a birth event, it doesn't matter which
             partner in a couple event is person_id1 or person_id2 in
             the finding table of the database, because only one of the
@@ -943,19 +943,19 @@ class EventsTable(Frame):
             current_person=self.current_person, 
             current_name=current_name)
 
-    def get_new_event_data(self):
+    def get_new_finding_data(self):
 
         def err_done2():
             self.destroy()
             msg[0].destroy()
-            self.event_input.focus_set()
-            self.event_input.delete(0, 'end')
+            self.finding_input.focus_set()
+            self.finding_input.delete(0, 'end')
 
         current_file = get_current_file()[0]
         conn =  sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        cur.execute(select_event_type_id, (self.new_event,))
+        cur.execute(select_event_type_id, (self.new_conclusion,))
         result = cur.fetchone()
         if result is not None:
             self.event_type_id, is_couple_event = result
@@ -967,7 +967,7 @@ class EventsTable(Frame):
             self.unknown_event_type = True
             msg = open_message(
                 self.root, 
-                events_msg[8], 
+                findings_msg[8], 
                 "Unknown Event Type", 
                 "OK") 
             msg[0].grab_set()

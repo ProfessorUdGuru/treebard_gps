@@ -757,7 +757,7 @@ def make_date_string(final):
         link, prefix2, year2, month2, day2, suffix2)
 
 def format_stored_date(stored_date, date_prefs=date_prefs):
-    ''' Also used in events_table.py and main.py. '''
+    ''' Also used in findings_table.py and main.py. '''
 
     if stored_date == "-0000-00-00-------":
         return ""

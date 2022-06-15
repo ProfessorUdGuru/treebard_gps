@@ -1,18 +1,5 @@
 # main.py
 
-'''
-    Dev Terminology:
-    "brood": the children of a specific biological mother and father, without
-        regard for whether or not the two people are married to each other. 
-    "nuke": nuclear family, from the perspective of the current person only, so
-        this includes his two biological parents, a person with whom he/she has
-        bred, and the brood of that coupling. Don't use words like "spouse", 
-        which assume that a brood's parents are married to each other. Treebard
-        has kin types and there may come a time (reports?) where it will be
-        appropriate to use kin types which the user specifies, such as
-        "spouse", "fiancee", etc.
-    
-'''
 
 import tkinter as tk
 import sqlite3
@@ -26,7 +13,7 @@ from widgets import (
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips   
 from families import NuclearFamiliesTable
-from events_table import EventsTable
+from findings_table import FindingsTable
 from dates import DatePreferences, OK_MONTHS, get_date_formats
 from gallery import Gallery
 from colorizer import Colorizer
@@ -158,7 +145,7 @@ class Main(FrameStay):
             self.right_panel.store['images'],
             command=self.open_person_gallery)
 
-        self.findings_table = EventsTable(
+        self.findings_table = FindingsTable(
             persons_tab, 
             self.root, 
             self.treebard, 
@@ -308,12 +295,12 @@ class Main(FrameStay):
                 "Current Person Main Image",
                 "The current person's main image can be clicked to open a "
                     "gallery  of all that person's linked images."),
-            (self.findings_table.event_input,
-                "New Event or Attribute Input",
-                "Input for new events or attributes including new event types."),
-            (self.findings_table.add_event_button,
-                "New Event or Attribute Input Button",
-                "Press to submit new event or attribute indicated to the left."),
+            (self.findings_table.finding_input,
+                "New Conclusion Input",
+                "Input for new conclusions including new event types."),
+            (self.findings_table.add_finding_button,
+                "New Conclusion Input Button",
+                "Press to submit new conclusion indicated to the left."),
             (self.fontpicker.output_sample,
                 "",
                 "Sample of selected font."),
@@ -360,7 +347,7 @@ class Main(FrameStay):
                 "Type hex color string or double-click to open color chooser."),
             (self.findings_table.headers[0],
                 "",
-                "Press delete key to delete this event."),
+                "Press delete key to delete this conclusion row."),
             (self.findings_table.headers[1],
                 "",
                 "Enter simple or compound date in free order with text for "
@@ -381,11 +368,11 @@ class Main(FrameStay):
                 "Create, add and edit roles adjunct to this event."),
             (self.findings_table.headers[6],
                 "",
-                "Create, add and edit notes regarding this event."),
+                "Create, add and edit notes regarding this conclusion."),
             (self.findings_table.headers[7],
                 "",
                 "View and edit sources, citations and assertions linked to "
-                    "this event."), 
+                    "this conclusion."), 
             (self.date_options.test_frm, 
                 "", 
                 "Use top area to test input; bottom area for display settings."),
@@ -431,7 +418,7 @@ class Main(FrameStay):
 
         rcm_widgets = (
             self.person_entry, person_change, person_search, 
-            self.top_pic_button, self.findings_table.event_input, 
+            self.top_pic_button, self.findings_table.finding_input, 
             self.fontpicker.font_sizer, self.fontpicker.cbo.entry, 
             self.fontpicker.apply_button,            
             colorizer.header, colorizer.current_display, 

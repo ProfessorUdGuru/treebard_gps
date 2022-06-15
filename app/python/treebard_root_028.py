@@ -28,7 +28,7 @@ IMPORTS STRUCTURE:
                |  |    |   |
                |  |    |   places
                |  |    |       |
-               |  |  events_table                              
+               |  |  findings_table                              
                |  |  |   |         
                |  main   |                                  
                |    |    |                           
@@ -170,60 +170,14 @@ if __name__ == '__main__':
 
 # DO LIST
 
-
-
-#                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
-#   USING STRING INPUT:
-# NONE>EXISTING              X               X             X               n/a
-# NONE>DUPE                  X               X             X               n/a
-# NONE>NEW                   X               X             X               n/a
-# CHANGE>EXISTING            X               X             X               X
-# CHANGE>DUPE                X               X             X               X
-# CHANGE>NEW                 X               X             X               X
-# UNLINK                     X               X             X               X 
-#   USING #ID INPUT:
-# NONE>EXISTING              X               X             X               n/a
-# NONE>DUPE                  X               X             X               n/a
-# NONE>NEW                   n/a             n/a           n/a             n/a
-# CHANGE>EXISTING            X               X             X               X
-# CHANGE>DUPE                X               X             X               X
-# CHANGE>NEW                 n/a             n/a           n/a             n/a
-# UNLINK                     n/a             n/a           n/a             n/a 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# RCM: There are two ways to deal with unknown partners of the current person: unknown name labels and null persons. NOTE: if you don't understand or don't want to read the discussion below, here are your simple instructions: If you are creating a person but don't know the person's name, enter the name as '_____'. There can be any number of separate individuals with the same name. THE DETAILS: An unknown name label has to contain at least one character. Using letters in unknown name labels is not a good idea. For example, the label 'unknown name' could be mistaken for a person's name by a genealogist who is not fluent in English. One practical purpose of an unknown name label made with symbols (a name such as '?' or '_____') is to differentiate two families. If it's known that the current person has children with two unknown partners and it's known that the two partners are not the same person, unknown name labels will differentiate the current person's two families. This works since duplicate names are allowed, such as two people that are both temporarily named '_____', and each so-named person will have a unique ID number. It's OK to not use unknown name labels, but in that case, Treebard will lump all children and marital events of the current person's whose partner is null into a single family. If you want to avoid this, use a name such as '?' or '_____' and Treebard will give this person a unique ID instead this role being played by nobody with no ID. If you use null partners when creating marital events, for example, all the children and marital events for the current person where the current person's partner is left blank will be lumped together into one family. This is easy to change anytime, but most users will probably prefer to differentiate families of unknown partners from the start by using unknown name labels as name placeholders when creating the person. To change from a null partner to unknown name labels, type an unknown name label into an empty partner field. Empty partner fields exist when there are marital events with null partner or children with a null parent. When you tab out of the field, a dialog will open listing all the marital events and children for the current person with a null partner. You can choose which ones to link to the new unnamed person you're creating. This is easier to do than it is to read about. Just try it.
-
-# BRANCH: conclusions
-# change events_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. In the GUI events become either "conclusions" or "events & attributes". In the code it's either "findings" or "claims". Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, stick to Treebard's core philosophy and differentiate between conclusions and assertions. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs events table > conclusions table. And the first step is to change the name of the module from events_table.py to conclusions_table.py. Remember that conclusions are called findings in the code; "events" are cases where something like an event_type refers equally to assertions and conclusions (claims & findings).
+# BRANCH: assertions_dialog
+# change findings_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. In the GUI events become either "conclusions" or "events & attributes". In the code it's either "findings" or "claims". Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, stick to Treebard's core philosophy and differentiate between conclusions and assertions. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs findings table > conclusions table. And the first step is to change the name of the module from findings_table.py to conclusions_table.py. Remember that conclusions are called findings in the code; "events" are cases where something like an event_type refers equally to assertions and conclusions (claims & findings).
 # export dbs to .sql
 # backup app to external hd
 
-# BRANCH: sources
 # IDEA for copy/pasting citations. This is still tedious and uncertain because you sometimes don't remember what's in a clipboard till you try pasting it. Since the assertions are shown in a table, have a thing like the fill/drag icon that comes up on a spreadsheet when you point to the SE corner of a cell. The icon turns into a different icon, like a plus sign, and if you click down and drag at that point, the contents of the citation are pasted till you stop dragging. Should also work without the mouse, using arrow keys. If this idea isn't practical, it still leads to the notion of a tabular display of citations which would make copy & paste very easy instead of showing individual citations on nearly empty dialogs that you have to sift through looking for the right one, and seeing them all together might be useful for the sake of comparison.
-# Edit official do list and move to directory /etc/, edit ReadMe, re-dump 2 databases to .sql files.
-# Website: change "units of genealogy" to "elements of genealogy", add FAQ to Treebard Topics.
-# export dbs to .sql
+# Edit official do list and move to directory /etc/, edit ReadMe
+# export new version of all dbs to .sql
 # backup app to external hd
 
 # BRANCH: autofills
@@ -234,10 +188,11 @@ if __name__ == '__main__':
 # when adding a new person, the name becomes instantly available to autofills but id # doesn't till reloading app
 
 # BRANCH: cleanup
+# get rid of all references to self.att and attributes table; new_event_dlg which no longer exists, etc.
 # move queries to module and delete import strings for unused queries
 # rename queries not named acc to standard eg select_person_id_finding
 # Did I forget to replace open_input_message and open_input_message2 with InputMessage? See opening.py, files.py, dropdown.py, I thought the new class was supposed to replace all these as was done apparently already in dates.py. I thought the new class was made so these three overlapping large functions could be deleted from messages.py 
-# if add existing place string to place in occupation event, it does not persist to db
+# if add existing place string to place in occupation finding, it does not persist to db
 # colorizer: if click copy then immed click apply, error (pass? return?) Happens bec no scheme, so deal with if no scheme hilit, apply should do nothing
 # find all the usages of queries that have to be run twice to deal with columns that can be used either of 2 ways such as parent_id1/parent_id2 and rewrite the code so that the whole record is gotten once with select * (or as much as will be needed) and parse the record with python, assign values according to obvious correspondences
 # delete unused imports all modules
@@ -247,12 +202,13 @@ if __name__ == '__main__':
     like this.
 """
 # Get rid of the quote marks in the rcm messages, just use one long line per message.
+# get rid of title case for Official Treebard Features and Widgets ie change to 'conclusions table' but still use title case in titles eg rcm dialogs and status bar message
 # alphabetize query strings after standardizing names
 # export dbs to .sql
 
 # BRANCH: dates
-# clarify_year might not working in dates.py, there is a chain of error messages, sometimes it has to be OK'd twice, and make sure it doesn't run on CANCEL and original value is returned to the input (InputMessage works now in notes.py and families.py for a model). Currently cancel seems to be deleting the date which moves the event to the attributes table. The second time it sort of works but deletes the number that's not a year. It also doesn't display AD on years less than 4 digits long. Also it should not open for two same numbers input eg 12 ap 12 which has only one right answer, 12 Apr 0012.
-# when changing date format, then go to events table and ctrl_s, the dates in the events table reformat to the new format but the dates in the families table don't.
+# clarify_year might not working in dates.py, there is a chain of error messages, sometimes it has to be OK'd twice, and make sure it doesn't run on CANCEL and original value is returned to the input (InputMessage works now in notes.py and families.py for a model). Currently cancel seems to be deleting the date. The second time it sort of works but deletes the number that's not a year. It also doesn't display AD on years less than 4 digits long. Also it should not open for two same numbers input eg 12 ap 12 which has only one right answer, 12 Apr 0012.
+# when changing date format, then go to findings table and ctrl_s, the dates in the findings table reformat to the new format but the dates in the families table don't.
 # export dbs to .sql
 # backup app to external hd
 
@@ -284,17 +240,17 @@ if __name__ == '__main__':
 # add another label in each row of roles dialog to show id of role person in case of dupe names
 # put a separator btwn events and attributes
 # in each tab of each tabbook, use Map event to focus one of the widgets on that tab when that tab is switched to, see colorizer arrow_in_first() as an example
-# Refactor gallery so all work the same in a dialog opened by clicking a main image in a tab. Also I found out when I deleted all the padding that there's no scridth. There should be nothing in any tab that's ever bigger than the persons tab events table. Then the tabs could be used for what they're needed for, like searching and getting details about links and stuff, instead of looking at pictures that don't fit in the tab anyway. Also: # remove Gallery from tuple `widgets.bgOnly` when moved to dialog
+# Refactor gallery so all work the same in a dialog opened by clicking a main image in a tab. Also I found out when I deleted all the padding that there's no scridth. There should be nothing in any tab that's ever bigger than the persons tab findings table. Then the tabs could be used for what they're needed for, like searching and getting details about links and stuff, instead of looking at pictures that don't fit in the tab anyway. Also: # remove Gallery from tuple `widgets.bgOnly` when moved to dialog
 # In main.py make_widgets() should be broken up into smaller funx eg make_family_table() etc. after restructing gallery into 3 dialogs.
 # fix redraw() so top pic changes on ctrl-s if the main pic was changed w/ radio in gallery
 # Get rid of all calls to title() in dropdown.py and just give the values with caps as they should be shown, for example title() is changing GEDCOM to Gedcom in File menu.
 # In the File menu items add an item "Restore Sample Tree to Original State" and have it grayed out if the sample tree is not actually open.
 # Add to Search dlg: checkbox "Speed Up Search" with tooltip "Search will begin after three characters are typed. Don't select this for number searches." Select it by default. BETTER: use a spinner so user can say exactly how many chars he wants to type before the search begins.
 # All dialogs: run the custom dialog closing code when clicking X on title bar.
-# Add to do list for new_event dialog: add person search button.
+# Add to do list for new_finding dialog: add person search button.
 # In notes dialog, if a non-unique topic is entered, there should be an error message, currently there's a SQLite error which locks the database.
 # center content in prefs tabs
-# notes dialog: can't create a first note when none exist yet for a conclusion because of division by zero error in size_toc(); 20220220 mini-effort to fix this had consequences undealt-with; also re: autocreated kin events like adoption, fosterage, offspring, guardianship: make it possible to add/access/edit roles & notes on offspring/alt_parentage event rows of the events table; SEE "non_empty_roles, non_empty_notes"
+# notes dialog: can't create a first note when none exist yet for a conclusion because of division by zero error in size_toc(); 20220220 mini-effort to fix this had consequences undealt-with; also re: autocreated kin findings like adoption, fosterage, offspring, guardianship: make it possible to add/access/edit roles & notes on offspring/alt_parentage finding rows of the findings table; SEE "non_empty_roles, non_empty_notes"
 # get rid of checkbutton stuff in InputMessage and also radiobutton stuff if not used anywhere
 # change default image system instead of prepending 0_ to image names, have a boolean col in image table for the 5 default image male, female, unisex, place, source, and prepend these to the list when sorting; also the hard-coded string `0_default_image_unisex.jpg` needs to be a variable defined by a query instead of being hard-coded in gallery.py and persons.py
 # place new/dupes dlg, if CANCEL pressed the orig content is filled in but not if dlg closed with X button

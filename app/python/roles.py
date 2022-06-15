@@ -119,7 +119,7 @@ class RolesDialog(Toplevel):
         visited = (
             (self.header_msg, 
                 '', 
-                'Event-type, date, place & particulars of this event if known.'),
+                'Event-type, date, place & particulars of this conclusion if known.'),
             (self.edit_role_type, 
                 'Edit Role Type Input', 
                 'Existing role type can be changed to a different type.'), 

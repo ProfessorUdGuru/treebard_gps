@@ -9,8 +9,11 @@
     the simple solution is to use the mouse to put the cursor back where
     it's wanted after the obligatory redraw which follows every change to
     the table. A possible solution is to use a cell pool as in
-    the events table and never destroy anything, just grid_forget() any
-    field that's no longer needed.
+    the findings table and never destroy anything, just grid_forget() any
+    field that's no longer needed. BEST SOLUTION might be to redesign the
+    feature so that all the inputs including the parent inputs are equally
+    destroyed on redraw. That way things should work symmetrically and it
+    should be easy to get a simple tab traversal that remains stable.
 """
 
 import tkinter as tk
@@ -27,7 +30,7 @@ from persons import (
     delete_person_from_tree, update_person_autofill_values)
 from messages import families_msg
 from dates import format_stored_date, get_date_formats, OK_MONTHS, validate_date
-from events_table import delete_couple_finding
+from findings_table import delete_couple_finding
 from query_strings import (
     select_finding_id_birth, update_finding_ages_kintypes_null,
     select_person_gender_by_id, select_finding_date, update_finding_kin_type_1,
@@ -94,8 +97,8 @@ class NuclearFamiliesTable(Frame):
         self.person_autofill_values = person_autofill_values
 
         self.date_prefs = get_date_formats(tree_is_open=1)
-        self.unlink_partners = {"events": [], "children": []}
-        self.link_partners = {"events": [], "children": []}
+        self.unlink_partners = {"marital_findings": [], "children": []}
+        self.link_partners = {"marital_findings": [], "children": []}
         self.parent_types = [] # See docstring in `make_pard_dict()`
 
         self.parents_data = initialize_parents_data()
@@ -354,8 +357,8 @@ class NuclearFamiliesTable(Frame):
             '''.format(",".join(["?"] * qlen))
 
         cur.execute(sql, marital_event_types)
-        marital_events_current_person = [list(i) for i in cur.fetchall()]
-        return marital_events_current_person
+        marital_findings_current_person = [list(i) for i in cur.fetchall()]
+        return marital_findings_current_person
 
     def make_nukefam_inputs(self, on_load=False):
         """ Run in main.py on_load=True and in redraw_families_table() 
@@ -582,9 +585,9 @@ class NuclearFamiliesTable(Frame):
         self.make_parents_dict()
 
         partners1, births = self.query_nukefams_data(conn, cur)
-        alt_parentage_events = self.query_alt_nukefams_data(conn, cur)
+        alt_parentage_findings = self.query_alt_nukefams_data(conn, cur)
         self.arrange_partners_progeny(
-            partners1, births, alt_parentage_events, conn, cur)
+            partners1, births, alt_parentage_findings, conn, cur)
 
         main_sorter = [0, 0, 0]
         for k,v in self.progeny_data.items():
@@ -602,24 +605,24 @@ class NuclearFamiliesTable(Frame):
         conn.close()
 
     def arrange_partners_progeny(
-            self, partners1, births, alt_parentage_events, conn, cur):
+            self, partners1, births, alt_parentage_findings, conn, cur):
         """ Updating person_autofill_values is necessary since 
             `redraw_families_table()` destroys partner and child frames
             and alt parent inputs.
         """
-        births = births + alt_parentage_events
+        births = births + alt_parentage_findings
         progeny = {}
         all_partners = [] 
-        event_pards = []
+        marital_finding_pards = []
         offspring_pards = []
         if partners1:
             partners = [tup for tup in partners1 if self.current_person in tup]
             for tup in partners:
                 for num in tup:
                     if num != self.current_person:
-                        event_pards.append(num)
+                        marital_finding_pards.append(num)
                         all_partners.append(num)
-            event_pards = list(set(event_pards))
+            marital_finding_pards = list(set(marital_finding_pards))
         for tup in births:
             if tup[1] != self.current_person:
                 pard_id = tup[1]              
@@ -632,18 +635,18 @@ class NuclearFamiliesTable(Frame):
             if pard_id in offspring_pards:
                 if offspring_pards.count(pard_id) > 1:
                     compound_parent_type = True
-                if pard_id in event_pards:
-                    nested = {'offspring': True, 'events': True}
-                elif pard_id not in event_pards:
-                    nested = {'offspring': True, 'events': False}
-            elif pard_id not in offspring_pards and pard_id in event_pards:
-                nested = {'offspring': False, 'events': True}
+                if pard_id in marital_finding_pards:
+                    nested = {'offspring': True, 'marital_findings': True}
+                elif pard_id not in marital_finding_pards:
+                    nested = {'offspring': True, 'marital_findings': False}
+            elif pard_id not in offspring_pards and pard_id in marital_finding_pards:
+                nested = {'offspring': False, 'marital_findings': True}
             progeny[pard_id] = nested
         for pard_id in progeny:
             progeny_blank = {
                 "sorter": [], "partner_name": "", "parent_type": None,
                 "partner_kin_type": "", "inwidg": None, "children": [],
-                "marital_events": []}
+                "marital_findings": []}
             self.progeny_data[pard_id] = progeny_blank
         self.collect_couple_events(cur, conn)
         for k,v in progeny.items():
@@ -669,7 +672,7 @@ class NuclearFamiliesTable(Frame):
                         if pard_id == pardner:
                             self.progeny_data[pardner]["children"].append(
                                 {"birth_id": tup[0], "order": order})
-            elif v["events"] is True and v["offspring"] is False:
+            elif v["marital_findings"] is True and v["offspring"] is False:
                 self.make_pard_dict(pardner, "", cur)
 
         for pard_id in progeny:
@@ -713,15 +716,15 @@ class NuclearFamiliesTable(Frame):
         self.progeny_data[pard_id]["partner_name"] = partner_name 
 
     def collect_couple_events(self, cur, conn):
-        marital_events = self.get_marital_event_types(conn, cur) 
-        for lst in marital_events:
+        marital_findings = self.get_marital_event_types(conn, cur) 
+        for lst in marital_findings:
             if lst[1] == self.current_person:
                 del lst[1:3]
             elif lst[3] == self.current_person:
                 del lst[3:5]            
 
         self.sorters = []
-        for lst in marital_events:
+        for lst in marital_findings:
             self.save_marital_events(lst, cur)
 
         self.sorters = sorted(self.sorters, key=lambda i: i[1])
@@ -743,7 +746,7 @@ class NuclearFamiliesTable(Frame):
                 if kin_type in ("generic_partner1", "generic_partner2"):
                     kin_type = "Partner"
                 v["partner_kin_type"] = kin_type
-                v["marital_events"].append({"finding": lst[0]})
+                v["marital_findings"].append({"finding": lst[0]})
 
     def make_sorter(self, date):
         sorter = [0,0,0]
@@ -864,16 +867,16 @@ class NuclearFamiliesTable(Frame):
     def get_alt_parents(self, cur):
         """ Get adoptive parents, foster parents & guardians. """
         cur.execute(select_finding_details_sorter, (self.current_person,))
-        alt_parent_events = cur.fetchall()
-        if alt_parent_events is None:
+        alt_parent_findings = cur.fetchall()
+        if alt_parent_findings is None:
             return
         r = 0
-        for event in alt_parent_events:
-            event = list(event)
-            event[1] = [int(i) for i in event[1].split(",")]
-            alt_parent_events[r] = event
+        for finding in alt_parent_findings:
+            finding = list(finding)
+            finding[1] = [int(i) for i in finding[1].split(",")]
+            alt_parent_findings[r] = finding
             r += 1
-        self.alt_parent_events = sorted(alt_parent_events, key=lambda i: i[1])
+        self.alt_parent_findings = sorted(alt_parent_findings, key=lambda i: i[1])
 
         self.make_alt_parents_dict(cur)
         alt_parent_details = self.parents_data[1:]
@@ -927,7 +930,7 @@ class NuclearFamiliesTable(Frame):
             x += 1
 
     def make_alt_parents_dict(self, cur):
-        for finding in self.alt_parent_events:
+        for finding in self.alt_parent_findings:
             parent_couple = [ 
                 {'birth_id': finding[0], 'sorter': finding[1]}, 
                 {'id': None, 'name': '', 'kin_type_id': None, 'kin_type': '', 
@@ -961,7 +964,7 @@ class NuclearFamiliesTable(Frame):
             w += 1
 
     def get_original(self, evt):
-        """ Make sure that everything works right when making new event. At
+        """ Make sure that everything works right when making new conclusion. At
             one time I had to not bind to FocusOut event till FocusIn event
             had taken place, but I think I did away with that assuming the 
             problem had been solved somewhere along the way. """
@@ -1117,10 +1120,10 @@ class NuclearFamiliesTable(Frame):
         def ok_link_partner(checks):
             copy = checks
             i = 0
-            for dkt in copy["events"]:
-                checks["events"][i]["vars"] = dkt["vars"].get()
+            for dkt in copy["marital_findings"]:
+                checks["marital_findings"][i]["vars"] = dkt["vars"].get()
                 i += 1            
-            self.link_partners["events"] = checks["events"]
+            self.link_partners["marital_findings"] = checks["marital_findings"]
 
             copy = checks
             j = 0
@@ -1134,7 +1137,7 @@ class NuclearFamiliesTable(Frame):
             self.null_partner_replacer.destroy()
             self.cancel_link_partner_pressed = False
         def update_partners_link(inwidg, conn, cur):
-            """ Run after user selects which marital events & children to link
+            """ Run after user selects which marital_findings & children to link
                 to the new partner and the dialog closes. 
             """
             if self.cancel_link_partner_pressed is True:
@@ -1158,7 +1161,7 @@ class NuclearFamiliesTable(Frame):
             else:
                 self.new_partner_id = name_data[1]
 
-            for dkt in self.link_partners["events"]:
+            for dkt in self.link_partners["marital_findings"]:
                 if dkt["vars"] == 0:
                     continue
                 elif dkt["vars"] == 1:
@@ -1189,18 +1192,18 @@ class NuclearFamiliesTable(Frame):
             conn.commit()
 
         partner_id = None
-        checks = {"events": [], "children": []}
+        checks = {"marital_findings": [], "children": []}
         for k,v in self.progeny_data.items():
             if v["inwidg"] == inwidg:
                 partner_id = k
                 break
 
-        for event in self.progeny_data[partner_id]["marital_events"]:
-            checks["events"].append(event)
+        for finding in self.progeny_data[partner_id]["marital_findings"]:
+            checks["marital_findings"].append(finding)
         for child in self.progeny_data[partner_id]["children"]:
             checks["children"].append(child)
 
-        message = "Select which events & children to link to added partner:"
+        message = "Select which marital_findings & children to link to added partner:"
         self.null_partner_replacer = Dialogue(self.root)
         
         head = LabelHeader(
@@ -1208,17 +1211,17 @@ class NuclearFamiliesTable(Frame):
         inputs = Frame(self.null_partner_replacer.window)
 
         s = 1
-        for event in checks["events"]: 
-            cur.execute(select_finding_details, (event["finding"],))
-            event_id, event_date, event_type = cur.fetchone()
-            event_date = format_stored_date(
-                event_date, date_prefs=self.date_prefs)
+        for finding in checks["marital_findings"]: 
+            cur.execute(select_finding_details, (finding["finding"],))
+            finding_id, finding_date, event_type = cur.fetchone()
+            finding_date = format_stored_date(
+                finding_date, date_prefs=self.date_prefs)
             text = "{} {} (Conclusion #{})".format(
-                event_date, event_type, event_id)
+                finding_date, event_type, finding_id)
             var = tk.IntVar()
             chk = Checkbutton(inputs, variable=var)
             chk.grid(column=0, row=s)
-            event["vars"] = var
+            finding["vars"] = var
             evtlab = Label(inputs, text=text, anchor="w")
             evtlab.grid(column=1, row=s, sticky="we")
             s += 1
@@ -1246,7 +1249,7 @@ class NuclearFamiliesTable(Frame):
             buttons, text="CANCEL", command=cancel_link_partner) 
 
         self.null_partner_replacer.canvas.title_1.config(
-            text="Select Children & Marital Events to Link to Added Partner")
+            text="Select Children & Marital Conclusions to Link to Added Partner")
         self.null_partner_replacer.canvas.title_2.config(text="") 
         
         head.grid(
@@ -1273,14 +1276,14 @@ class NuclearFamiliesTable(Frame):
         def ok_unlink_partner(checks):
             copy = checks
             i = 0
-            for dkt in copy["events"]:
+            for dkt in copy["marital_findings"]:
                 h = 0
                 for var in dkt["vars"]:
                     got = var.get()
-                    checks["events"][i]["vars"][h] = got
+                    checks["marital_findings"][i]["vars"][h] = got
                     h += 1
                 i += 1            
-            self.unlink_partners["events"] = checks["events"]
+            self.unlink_partners["marital_findings"] = checks["marital_findings"]
 
             copy = checks
             j = 0
@@ -1304,7 +1307,7 @@ class NuclearFamiliesTable(Frame):
             """ Run after dialog closes. """
             if self.cancel_unlink_partner_pressed is True:
                 return
-            for dkt in self.unlink_partners["events"]:
+            for dkt in self.unlink_partners["marital_findings"]:
                 finding = dkt["finding"]
                 if dkt["vars"] == [0, 0]:
                     continue
@@ -1362,18 +1365,18 @@ class NuclearFamiliesTable(Frame):
             conn.commit()
 
         partner_id = None
-        checks = {"events": [], "children": []}
+        checks = {"marital_findings": [], "children": []}
         for k,v in self.progeny_data.items():
             if v["inwidg"] == widg:
                 partner_id = k
                 break
 
-        for event in self.progeny_data[partner_id]["marital_events"]:
-            checks["events"].append(event)
+        for finding in self.progeny_data[partner_id]["marital_findings"]:
+            checks["marital_findings"].append(finding)
         for child in self.progeny_data[partner_id]["children"]:
             checks["children"].append(child)
             
-        message = "Select which events/children to unlink from whom:"
+        message = "Select which marital_findings/children to unlink from whom:"
         self.partner_unlinker = Dialogue(self.root)
         head = LabelHeader(
             self.partner_unlinker.window, text=message, justify='left', wraplength=650)
@@ -1386,11 +1389,11 @@ class NuclearFamiliesTable(Frame):
         pardlab = LabelH3(inputs, text=self.original.split("(")[0])
         pardlab.grid(column=3, row=0)
         f = 1
-        for event in checks["events"]: 
-            cur.execute(select_finding_details, (event["finding"],))
-            event_id, event_date, event_type = cur.fetchone()
-            event_date = format_stored_date(event_date, date_prefs=self.date_prefs)
-            text = "{} {} (Conclusion #{}):".format(event_date, event_type, event_id)
+        for finding in checks["marital_findings"]: 
+            cur.execute(select_finding_details, (finding["finding"],))
+            finding_id, finding_date, event_type = cur.fetchone()
+            finding_date = format_stored_date(finding_date, date_prefs=self.date_prefs)
+            text = "{} {} (Conclusion #{}):".format(finding_date, event_type, finding_id)
             evtlab = Label(inputs, text=text, anchor="e")
             evtlab.grid(column=0, row=f, sticky="e")
             var0 = tk.IntVar()
@@ -1398,7 +1401,7 @@ class NuclearFamiliesTable(Frame):
             chk0 = Checkbutton(inputs, variable=var0)
             chk0.grid(column=1, row=f)
             chk1 = Checkbutton(inputs, variable=var1)
-            event["vars"] = [var0, var1]
+            finding["vars"] = [var0, var1]
             chk1.grid(column=3, row=f)
             chk1.select()
             f += 1
@@ -1425,7 +1428,7 @@ class NuclearFamiliesTable(Frame):
             buttons, text="CANCEL", command=cancel_unlink_partner)            
 
         self.partner_unlinker.canvas.title_1.config(
-            text="Unlink Partner from Current Person's Marital Events")
+            text="Unlink Partner from Current Person's Marital Conclusions")
         self.partner_unlinker.canvas.title_2.config(text="")            
 
         head.grid(
@@ -1664,7 +1667,7 @@ class NuclearFamiliesTable(Frame):
             current_name=current_name)
 
     def show_idtip(self, iD, name_type):
-        """ Based on show_kintip() in events_table.py. """
+        """ Based on show_kintip() in findings table.py. """
         maxvert = self.winfo_screenheight()
         if self.idtip or not self.idtip_text:
             return

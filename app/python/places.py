@@ -528,7 +528,7 @@ class ValidatePlace():
             seen.add(val)
         self.input_to_db()
 
-    def input_new_event(self):
+    def input_new_finding(self):
         return self.place_dicts
 
     def input_to_db(self):
@@ -541,9 +541,9 @@ class ValidatePlace():
         all_finding_ids = [i[0] for i in cur.fetchall()]
 
         if self.finding not in all_finding_ids:
-            # If it's a new event, there's no finding_id yet, all the
-            #   database input is handled in the new events procedure.
-            self.input_new_event()
+            # If it's a new finding, there's no finding_id yet, all the
+            #   database input is handled in the new findings procedure.
+            self.input_new_finding()
             return
 
         ids = []

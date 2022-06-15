@@ -100,7 +100,7 @@ class PersonSearch(Toplevel):
 
         self.ma_id = None
         self.pa_id = None
-        self.offspring_event = None
+        self.offspring_finding = None
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
@@ -498,10 +498,10 @@ class PersonSearch(Toplevel):
     def make_sorters(self):
         ''' 
             self.ma_id & self.pa_id don't exist yet at this point and 
-            if there is no birth/offspring event they won't. 
+            if there is no birth/offspring finding they won't. 
         '''
         self.row_list[6] = self.get_sort_names(self.row_list[0])
-        if self.offspring_event:
+        if self.offspring_finding:
             self.row_list[10] = self.make_sorter_for_formatted_dates(
                 self.row_list)        
             self.row_list[11] = self.make_sorter_for_formatted_dates(
@@ -518,7 +518,7 @@ class PersonSearch(Toplevel):
         '''
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        cur.execute(select_finding_sorter, (self.offspring_event,))
+        cur.execute(select_finding_sorter, (self.offspring_finding,))
         sorter = cur.fetchone()
         if sorter:
             sorter = sorter[0].split(",")
@@ -581,7 +581,7 @@ class PersonSearch(Toplevel):
         storable_date = birth_date[1]
         self.birth_date = [storable_date, format_stored_date(storable_date)]
         self.row_list[2] = self.birth_date
-        self.offspring_event = birth_date[0]
+        self.offspring_finding = birth_date[0]
         self.get_ma()
         self.get_pa()
 
@@ -592,7 +592,7 @@ class PersonSearch(Toplevel):
         name = None
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
-        cur.execute(select_finding_mother, (self.offspring_event,))
+        cur.execute(select_finding_mother, (self.offspring_finding,))
         mom = cur.fetchone()
         if mom:
             self.ma_id = mom[0]
@@ -613,7 +613,7 @@ class PersonSearch(Toplevel):
         conn = sqlite3.connect(current_file)
         cur = conn.cursor()
 
-        cur.execute(select_finding_father, (self.offspring_event,))
+        cur.execute(select_finding_father, (self.offspring_finding,))
         pop = cur.fetchone()
         if pop:
             self.pa_id = pop[0]
@@ -663,7 +663,7 @@ class PersonSearch(Toplevel):
             get "Alice". The nametip will show that Alice's nickname is 
             Daisy.
 
-            See kintips in events_table.py for a similar hover tip that looks
+            See kintips in findings_table.py for a similar hover tip that looks
             the same and has slightly simpler code. A class could be made by
             comparing them and parameterizing the differences.
         '''     

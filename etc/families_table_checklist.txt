@@ -1,0 +1,20 @@
+families_table_checklist
+
+
+#                         PARENTS       ALT PARENTS    PARTNERS        CHILDREN
+#   USING STRING INPUT:
+# NONE>EXISTING              X               X             X               n/a
+# NONE>DUPE                  X               X             X               n/a
+# NONE>NEW                   X               X             X               n/a
+# CHANGE>EXISTING            X               X             X               X
+# CHANGE>DUPE                X               X             X               X
+# CHANGE>NEW                 X               X             X               X
+# UNLINK                     X               X             X               X 
+#   USING #ID INPUT:
+# NONE>EXISTING              X               X             X               n/a
+# NONE>DUPE                  X               X             X               n/a
+# NONE>NEW                   n/a             n/a           n/a             n/a
+# CHANGE>EXISTING            X               X             X               X
+# CHANGE>DUPE                X               X             X               X
+# CHANGE>NEW                 n/a             n/a           n/a             n/a
+# UNLINK                     n/a             n/a           n/a             n/a 

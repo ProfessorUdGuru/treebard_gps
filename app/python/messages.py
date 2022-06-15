@@ -19,19 +19,19 @@ main_msg = (
         "be moved automatically to the end of the name. ",
 )
 
-events_msg = (
+findings_msg = (
     "The same person was used twice.",
     "A second person must be entered for a couple event.",
     "Offspring events can't be changed to other event types. You "
-        "can delete the event and make a new event.",
+        "can delete the conclusion and make a new conclusion.",
     "A couple event can't be changed to a non-couple event, or "
         "vice-versa. For example, a marriage can be changed to "
         "a wedding but a death can't be changed to a divorce. "
         "Delete unwanted events and create new ones to "
         "replace them if they're incompatible in this way. To "
-        "delete an event, delete the event type in the first column.",
-    "An event is about to be deleted. This can't be undone. For "
-        "couple events, the event will be deleted for both partners. To "
+        "delete a conclusion, delete the event type in the first column.",
+    "A conclusion is about to be deleted. This can't be undone. For "
+        "couple events, the conclusion will be deleted for both partners. To "
         "delete only one of the partners from a couple event, delete the "
         "partner's name from the family table instead. To delete an offspring "
         "event, delete the child's name from the current person's family table. "
@@ -41,11 +41,11 @@ events_msg = (
         "hypothetical birth or death events, add them as assertions "
         "instead of conclusions. The events table is for conclusions, "
         "but assertions can be added freely by clicking the SOURCES "
-        "button at the end of the birth or death event row or by "
+        "button at the end of the birth or death conclusion row or by "
         "going directly to the assertions tab if you prefer to make "
         "no conclusions at this time.",
     "A non-offspring event can't be changed to an offspring event. "
-        "You can delete the event and make a new event.",
+        "You can delete the conclusion and make a new conclusion.",
     "Offspring events can't be created directly. Create a new person "
         "and give them parents, and the parents' offspring events "
         "will be created automatically.",

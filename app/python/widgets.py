@@ -1901,7 +1901,7 @@ class EntryAuto(Entryx):
 
     def create_lists(all_items):
         """ This is made to use a simple list, it won't work for
-            person autofills. It works for events and places. It works in 
+            person autofills. It works for event types and places. It works in 
             conjunction with self.prepend_match().
         """
         recent_items = []
@@ -3622,8 +3622,8 @@ class DropdownMenu(FrameHilited2):
                     lambda evt, name="add person": placeholder(evt, name), ""),
                 ("add place", 
                     lambda evt, name="add place": placeholder(evt, name), ""),
-                ("add event",
-                    lambda evt, name="add event": placeholder(evt, name), ""),
+                ("add conclusion",
+                    lambda evt, name="add conclusion": placeholder(evt, name), ""),
                 ("add assertion", 
                     lambda evt, name="add assertion": placeholder(evt, name), ""),
                 ("add source",  
@@ -4215,7 +4215,7 @@ def redraw_person_tab(
         unbind_widgets(findings_table)
         redraw_families_table(evt, current_person, main_window)
 
-    redraw_events_table(findings_table, current_person=current_person)
+    redraw_findings_table(findings_table, current_person=current_person)
 
     configall(main_window.root, formats)
     resize_scrollbar(main_window.root, main_window.master)
@@ -4288,7 +4288,7 @@ def redraw_families_table(evt, current_person, main_window):
         table.current_person = current_person
         table.make_nukefam_inputs() 
 
-def redraw_events_table(findings_table, current_person=None):    
+def redraw_findings_table(findings_table, current_person=None):    
     for lst in findings_table.cell_pool:
         for widg in lst[1]:
             if widg.winfo_subclass() == 'EntryAuto':
@@ -4296,8 +4296,8 @@ def redraw_events_table(findings_table, current_person=None):
             elif widg.winfo_subclass() == 'LabelButtonText':
                 widg.config(text='')
             widg.grid_forget()
-    findings_table.event_input.grid_forget()
-    findings_table.add_event_button.grid_forget()
+    findings_table.finding_input.grid_forget()
+    findings_table.add_finding_button.grid_forget()
 
     findings_table.new_row = 0 
     findings_table.widths = [0, 0, 0, 0, 0]
@@ -4461,7 +4461,7 @@ troughColorHilite = ("Scale", )
 bgOnly = (
     "Frame", "Canvas", "FrameHilited6", "FontPicker",
     "Dialogue", "TabBook", "PersonSearch", "EditRow",
-    "Gallery", "StatusbarTooltips", "EventsTable",
+    "Gallery", "StatusbarTooltips", "FindingsTable",
     "Main", "DatePreferences", "GedcomExceptions", "ScrolledText")
 
 if __name__ == "__main__":
