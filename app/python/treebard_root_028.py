@@ -170,8 +170,9 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: assertions_dialog
-# change findings_table column 1 to CONCLUSIONS instead of events and fix the code everywhere to make this work right. In the GUI events become either "conclusions" or "events & attributes". In the code it's either "findings" or "claims". Should be easy, no restructuring involved. Events is wrong since it's now events & attributes and since there are also events & attributes in the assertions/sources dialog, stick to Treebard's core philosophy and differentiate between conclusions and assertions. Better to never use terms like events & attributes in a conspicuous place like the first row of the conclusions table. Also change everywhere including docs findings table > conclusions table. And the first step is to change the name of the module from findings_table.py to conclusions_table.py. Remember that conclusions are called findings in the code; "events" are cases where something like an event_type refers equally to assertions and conclusions (claims & findings).
+# BRANCH: assertions_dialog 
+# move make new name row to top
+# name tab missing a sort-order input, add in loop for each name; demo the LabelMovable but argue it shd be replaced with a simple typable entry instead of a bunch of tricky labels, then resdesign this feature with a button that says "Alphabetize as:" followed by an entry that gets autofilled in a default way e.g. "Mouse, Mickey" on button press. Then add sorter.get() to the db to replace the fake value
 # export dbs to .sql
 # backup app to external hd
 

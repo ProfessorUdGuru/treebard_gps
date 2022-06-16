@@ -385,8 +385,8 @@ class PersonAdd(Toplevel):
         lab4 = Label(self.window, text='Full Name:')
         self.name_input = Entry(self.window, width=65)
         self.name_input.bind("<FocusOut>", self.show_sort_order)
-
-        self.how = LabelH3(
+# ******
+        how = LabelH3(
             self.window, 
             justify="left",
             text="Alphabetize name: with AUTOSORT or OK button in focus...\n"
@@ -418,10 +418,10 @@ class PersonAdd(Toplevel):
         lab4.grid(column=2, row=4)
         self.name_input.grid(column=3, row=4, padx=12, pady=12)
 
-        self.how.grid(column=1, row=5, padx=6, pady=6, columnspan=4, sticky='w')
+        how.grid(column=1, row=5, padx=6, pady=6, columnspan=4, sticky='w')
         autosort.grid(column=1, row=6, padx=6, pady=6, sticky='w')
         self.order_frm.grid(column=2, row=6, columnspan=4, pady=24, sticky='w')
-
+# *********
         visited = (
             (self.gender_input, 
                 "Gender Input", 

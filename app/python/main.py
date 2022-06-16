@@ -9,7 +9,7 @@ from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
     Radiobutton, LabelFrame, Border, TabBook, Scrollbar, fix_tab_traversal,
     EntryAutoPerson, EntryAutoPersonHilited, FontPicker, redraw_person_tab, 
-    open_message, Separator)
+    open_message, Separator, Entry, Checkbutton, Combobox)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips   
 from families import NuclearFamiliesTable
@@ -26,9 +26,10 @@ from persons import (
 from search import PersonSearch
 from query_strings import (
     select_images_elements_main_image, select_current_person_id,
-    select_finding_id_birth, select_person_gender_by_id,
+    select_finding_id_birth, select_person_gender_by_id, update_name_names_types,
     select_person_id_finding, select_date_finding, select_finding_event_type,
-    select_finding_id_death)
+    select_finding_id_death, select_name_all_current, select_all_name_types,
+    select_name_type_id_by_string, insert_name_and_type)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -102,6 +103,10 @@ class Main(FrameStay):
         self.hsb.grid(column=1, row=5, sticky='ew')
 
     def make_widgets(self):
+
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
 
         self.make_scrollbars()
 
@@ -190,6 +195,43 @@ class Main(FrameStay):
             self.SCREEN_SIZE,
             current_source_name="1900 US Census")
 
+        lab665 = LabelH3(self.names_tab, text="Change Current Person Name")
+        all_names = self.get_current_person_names(conn, cur)
+        frm = Frame(self.names_tab)
+
+        self.namevars = {}
+
+        for idx, tup in enumerate(all_names):
+            cur.execute(select_all_name_types)
+            name_types = [" ".join(i) for i in cur.fetchall()]
+            var = tk.IntVar()
+            name_id, name, name_type = tup
+            chk = Checkbutton(frm, variable=var)
+            lab = Label(
+                frm,
+                anchor="e",
+                text="Change name '{}' (name type '{}') to:".format(
+                    name, name_type))
+            ent = Entry(frm, width=40)
+            cbo = Combobox(frm, self.root, values=name_types)
+            self.namevars[name_id] = [var, ent, cbo]
+
+            chk.grid(column=0, row=idx, padx=(12,0))
+            lab.grid(column=1, row=idx, sticky="ew")
+            ent.grid(column=2, row=idx, padx=(6,0))
+            cbo.grid(column=3, row=idx, padx=(12,0))
+
+        lab472 = Label(
+            self.names_tab, 
+            text="Make new name for the current person:", anchor="e")
+        self.new_name_input = Entry(self.names_tab, width=40)
+
+        self.new_name_type_cbo = Combobox(self.names_tab, self.root, values=name_types)
+
+        butt = Button(
+            self.names_tab, text="OK", width=8, 
+            command=self.update_name)
+
         options_tabs = TabBook(
             prefs_tab, root=self.root, tabs=PREFS_TABS, 
             side="se", selected='general', case='upper', miny=0.5, minx=0.66)
@@ -263,6 +305,12 @@ class Main(FrameStay):
         source_gallery.grid(column=0, row=0)
 
         # children of self.names_tab
+        lab665.grid(column=0, row=0, padx=12, pady=12)
+        frm.grid(column=0, row=1, columnspan=3)
+        lab472.grid(column=0, row=2, sticky="e", pady=12)
+        self.new_name_input.grid(column=1, row=2, sticky="w", padx=(6,0))
+        self.new_name_type_cbo.grid(column=2, row=2, padx=12)
+        butt.grid(column=1, row=3, pady=12)
 
         # children of preferences tab
         options_tabs.grid(column=0, row=0, sticky="news", padx=12, pady=12)
@@ -446,6 +494,9 @@ class Main(FrameStay):
                 
         make_rc_menus(rcm_widgets, self.rc_menu, main_help_msg)
 
+        cur.close()
+        conn.close()
+
     def get_current_values(self):
         self.current_person_name = self.person_autofill_values[self.current_person][0]["name"]       
         self.current_person_label.config(
@@ -552,6 +603,53 @@ class Main(FrameStay):
 
             self.tabbook_x = top.width
             self.tabbook_y = top.height
+
+    def get_current_person_names(self, conn, cur):
+
+        cur.execute(select_name_all_current, (self.current_person,))
+        all_names = cur.fetchall()
+
+        return all_names
+
+    def update_name(self):
+
+        current_file = get_current_file()[0]
+        conn = sqlite3.connect(current_file)
+        cur = conn.cursor()
+        for k,v in self.namevars.items():
+            if v[0].get() == 1:
+                ent, cbo = v[1:]
+                name = ent.get()
+                name_id = k
+                name_type = cbo.entry.get()
+                cur.execute(select_name_type_id_by_string, (name_type,))
+                name_type_id = cur.fetchone()[0]
+                cur.execute(update_name_names_types, (name, name_type_id, name_id))
+                conn.commit()
+                ent.delete(0, "end")
+                cbo.entry.delete(0, "end")
+
+        new_name = self.new_name_input.get()
+        name_type = self.new_name_type_cbo.get()
+        if len(new_name) == 0 or len(name_type) == 0:
+            cur.close()
+            conn.close()
+            return
+        fake_sort_order = "Hickok, Gardner D."
+        cur.execute(select_name_type_id_by_string, (name_type,))
+        name_type_id = cur.fetchone()[0]
+        cur.execute(
+            insert_name_and_type, (
+                new_name, name_type_id, self.current_person, fake_sort_order))
+        conn.commit()
+        self.new_name_input.delete(0, 'end')
+        self.new_name_type_cbo.delete(0, 'end')
+
+
+        cur.close()
+        conn.close()
+            
+        
 
 
 

@@ -17,6 +17,7 @@ from error_messages import  open_yes_no_message
 from persons import (
     make_all_names_dict_for_person_select, check_name, 
     get_original)
+from assertions import AssertionsDialog
 from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace, get_all_places_places
@@ -582,6 +583,9 @@ class FindingsTable(Frame):
                     text = self.findings_data[finding_id][HEADS[c]]
                 elif c == 7:
                     text = self.findings_data[finding_id]["source_count"]
+                    # print("line", looky(seeline()).lineno, "text:", text)
+                    # print("line", looky(seeline()).lineno, "widg:", widg)
+                    widg.bind("<Button-1>", lambda evt, finding=finding_id, text=text, widg=widg: self.open_assertions_dialog(finding, text, widg))
                 else:
                     text = "     "
                     if c == 5 and self.findings_data[finding_id].get("roles"):
@@ -732,6 +736,10 @@ class FindingsTable(Frame):
         self.finding_input.grid(column=0, row=0, padx=(0,12), sticky='w')
         self.add_finding_button.grid(
             column=1, row=0, sticky='w')
+
+    def open_assertions_dialog(self, finding_id, text, widg):
+        self.assertions_dialog = AssertionsDialog(
+            self.master, self.treebard, finding_id, text, widg)
 
     def show_kintip(self, kin_type, name):
         """ Based on show_kintip() in search.py. """

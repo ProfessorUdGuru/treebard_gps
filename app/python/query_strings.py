@@ -200,6 +200,11 @@ insert_name_type_new = '''
     VALUES (?, ?)
 '''
 
+insert_name_and_type = '''
+    INSERT INTO name (names, name_type_id, person_id, sort_order)
+    VALUES (?, ?, ?, ?)
+'''
+
 insert_note = '''
     INSERT INTO note 
     VALUES (null, ?, 0, ?)
@@ -953,12 +958,26 @@ select_name_type_id = '''
     WHERE name_types = ?
 '''
 
+select_name_all_current = '''
+    SELECT name_id, names, name_types
+    FROM name
+        JOIN name_type
+            ON name.name_type_id = name_type.name_type_id
+    WHERE person_id = ?
+'''
+
 select_name_with_id = '''
     SELECT names 
     FROM name JOIN person 
         ON name.person_id = person.person_id 
     WHERE name_type_id = 1
         AND name.person_id = ?
+'''
+
+select_name_type_id_by_string = '''
+    SELECT name_type_id
+    FROM name_type
+    WHERE name_types = ?
 '''
 
 select_name_type_sorter_with_id = '''
@@ -1589,6 +1608,12 @@ update_kin_type_kin_code = '''
     UPDATE kin_type 
     SET kin_code = ? 
     WHERE kin_type_id = ?
+'''
+
+update_name_names_types = '''
+    UPDATE name
+    SET (names, name_type_id) = (?, ?)
+    WHERE name_id = ?
 '''
 
 update_note_edit = '''
