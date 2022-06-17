@@ -1610,9 +1610,9 @@ update_kin_type_kin_code = '''
     WHERE kin_type_id = ?
 '''
 
-update_name_names_types = '''
+update_name_type_sorter = '''
     UPDATE name
-    SET (names, name_type_id) = (?, ?)
+    SET (names, name_type_id, sort_order) = (?, ?, ?)
     WHERE name_id = ?
 '''
 

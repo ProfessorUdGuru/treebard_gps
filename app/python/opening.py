@@ -51,7 +51,7 @@ class SplashScreen(Toplevel):
 
         center_dialog(self)
 
-        self.after(1000, self.destroy)
+        self.after(100, self.destroy)
         self.master.wait_window(self)
         self.master.overrideredirect(0)
         self.master.deiconify()

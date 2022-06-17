@@ -171,8 +171,8 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: assertions_dialog 
-# move make new name row to top
-# name tab missing a sort-order input, add in loop for each name; demo the LabelMovable but argue it shd be replaced with a simple typable entry instead of a bunch of tricky labels, then resdesign this feature with a button that says "Alphabetize as:" followed by an entry that gets autofilled in a default way e.g. "Mouse, Mickey" on button press. Then add sorter.get() to the db to replace the fake value
+# names tab: do something about design flaw wherein user will always forget to click the checkbutton; fix it so that if an edit is intended but the name entry is blank on pressing OK, the name record will be deleted from the name table (but not the person or his other names); prevent user from creating a new name type or else add code to make the new type go in and give it a hierarchy
+# get rid of LabelMovable in add person dialog, use the new way as done in the names tab
 # export dbs to .sql
 # backup app to external hd
 

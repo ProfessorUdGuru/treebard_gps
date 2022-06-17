@@ -26,7 +26,7 @@ from persons import (
 from search import PersonSearch
 from query_strings import (
     select_images_elements_main_image, select_current_person_id,
-    select_finding_id_birth, select_person_gender_by_id, update_name_names_types,
+    select_finding_id_birth, select_person_gender_by_id, update_name_type_sorter,
     select_person_id_finding, select_date_finding, select_finding_event_type,
     select_finding_id_death, select_name_all_current, select_all_name_types,
     select_name_type_id_by_string, insert_name_and_type)
@@ -131,7 +131,6 @@ class Main(FrameStay):
             width=36,
             autofill=True)
         EntryAutoPerson.person_autofills.append(self.person_entry)
-        # self.person_entry.bind("<FocusIn>", get_original, add="+")
         person_change = Button(
             current_person_area, text="OK", command=self.change_person)
         person_search = Button(
@@ -196,14 +195,30 @@ class Main(FrameStay):
             current_source_name="1900 US Census")
 
         lab665 = LabelH3(self.names_tab, text="Change Current Person Name")
+
+        lab472 = Label(
+            self.names_tab, 
+            text="Make new name for the current person:", anchor="e")
+        self.new_name_input = Entry(self.names_tab, width=25)
+        cur.execute(select_all_name_types)
+        name_types = [" ".join(i) for i in cur.fetchall()]
+        self.new_name_type_cbo = Combobox(self.names_tab, self.root, values=name_types)
+        self.new_name_sort_order = Entry(self.names_tab, width=25) # FIX TAB ORDER
+        sortbutt = Button(
+            self.names_tab, text="Alphabetize as:", 
+            command=lambda ent=self.new_name_input, sortent=self.new_name_sort_order: self.make_default_sort_order(ent, sortent))
+
+        for child in (
+                self.new_name_input, self.new_name_type_cbo, 
+                sortbutt, self.new_name_sort_order):
+            child.lift()
+
         all_names = self.get_current_person_names(conn, cur)
         frm = Frame(self.names_tab)
 
         self.namevars = {}
 
         for idx, tup in enumerate(all_names):
-            cur.execute(select_all_name_types)
-            name_types = [" ".join(i) for i in cur.fetchall()]
             var = tk.IntVar()
             name_id, name, name_type = tup
             chk = Checkbutton(frm, variable=var)
@@ -212,21 +227,23 @@ class Main(FrameStay):
                 anchor="e",
                 text="Change name '{}' (name type '{}') to:".format(
                     name, name_type))
-            ent = Entry(frm, width=40)
+            ent = Entry(frm, width=25)
             cbo = Combobox(frm, self.root, values=name_types)
-            self.namevars[name_id] = [var, ent, cbo]
+            sortent = Entry(frm, width=25) # FIX TAB ORDER
+            self.namevars[name_id] = [var, ent, cbo, sortent]
+            bqw = Button(
+                frm, text="Alphabetize as:", 
+                command=lambda ent=ent, sortent=sortent: self.make_default_sort_order(ent, sortent))
 
             chk.grid(column=0, row=idx, padx=(12,0))
             lab.grid(column=1, row=idx, sticky="ew")
             ent.grid(column=2, row=idx, padx=(6,0))
             cbo.grid(column=3, row=idx, padx=(12,0))
+            bqw.grid(column=4, row=idx, padx=(12,0))
+            sortent.grid(column=5, row=idx, padx=12)
 
-        lab472 = Label(
-            self.names_tab, 
-            text="Make new name for the current person:", anchor="e")
-        self.new_name_input = Entry(self.names_tab, width=40)
-
-        self.new_name_type_cbo = Combobox(self.names_tab, self.root, values=name_types)
+            for child in (ent, cbo, bqw, sortent):
+                child.lift()
 
         butt = Button(
             self.names_tab, text="OK", width=8, 
@@ -306,10 +323,12 @@ class Main(FrameStay):
 
         # children of self.names_tab
         lab665.grid(column=0, row=0, padx=12, pady=12)
-        frm.grid(column=0, row=1, columnspan=3)
-        lab472.grid(column=0, row=2, sticky="e", pady=12)
-        self.new_name_input.grid(column=1, row=2, sticky="w", padx=(6,0))
-        self.new_name_type_cbo.grid(column=2, row=2, padx=12)
+        lab472.grid(column=0, row=1, sticky="e", padx=(12,0), pady=12)
+        self.new_name_input.grid(column=1, row=1, sticky="w", padx=(6,0))
+        self.new_name_type_cbo.grid(column=2, row=1, padx=(12,0))
+        sortbutt.grid(column=3, row=1, padx=(12,0))
+        self.new_name_sort_order.grid(column=4, row=1, padx=12)
+        frm.grid(column=0, row=2, columnspan=5)
         butt.grid(column=1, row=3, pady=12)
 
         # children of preferences tab
@@ -618,37 +637,49 @@ class Main(FrameStay):
         cur = conn.cursor()
         for k,v in self.namevars.items():
             if v[0].get() == 1:
-                ent, cbo = v[1:]
+                ent, cbo, sortent = v[1:]
+                print("line", looky(seeline()).lineno, "ent, cbo, sortent:", ent, cbo, sortent)
                 name = ent.get()
                 name_id = k
                 name_type = cbo.entry.get()
+                sorter = sortent.get()
                 cur.execute(select_name_type_id_by_string, (name_type,))
                 name_type_id = cur.fetchone()[0]
-                cur.execute(update_name_names_types, (name, name_type_id, name_id))
+                cur.execute(update_name_type_sorter, (name, name_type_id, sorter, name_id))
                 conn.commit()
                 ent.delete(0, "end")
                 cbo.entry.delete(0, "end")
+                sortent.delete(0, "end")
 
         new_name = self.new_name_input.get()
-        name_type = self.new_name_type_cbo.get()
+        name_type = self.new_name_type_cbo.entry.get()
         if len(new_name) == 0 or len(name_type) == 0:
             cur.close()
             conn.close()
             return
-        fake_sort_order = "Hickok, Gardner D."
         cur.execute(select_name_type_id_by_string, (name_type,))
         name_type_id = cur.fetchone()[0]
         cur.execute(
             insert_name_and_type, (
-                new_name, name_type_id, self.current_person, fake_sort_order))
+                new_name, name_type_id, 
+                self.current_person, 
+                self.new_name_sort_order.get()))
         conn.commit()
         self.new_name_input.delete(0, 'end')
-        self.new_name_type_cbo.delete(0, 'end')
-
+        self.new_name_type_cbo.entry.delete(0, 'end')
+        self.new_name_sort_order.delete(0, "end")
 
         cur.close()
         conn.close()
-            
+
+    def make_default_sort_order(self, ent, sortent):
+        new_name = ent.get().split()
+        last = new_name.pop()
+        last = "{},".format(last)
+        new_name.insert(0, last)
+        new_name = " ".join(new_name)
+        sortent.delete(0, "end")        
+        sortent.insert(0, new_name)  
         
 
 
