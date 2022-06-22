@@ -638,7 +638,6 @@ class Main(FrameStay):
         for k,v in self.namevars.items():
             if v[0].get() == 1:
                 ent, cbo, sortent = v[1:]
-                print("line", looky(seeline()).lineno, "ent, cbo, sortent:", ent, cbo, sortent)
                 name = ent.get()
                 name_id = k
                 name_type = cbo.entry.get()

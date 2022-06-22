@@ -5,7 +5,7 @@ import sqlite3
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, LabelHeader, 
     Entry, ButtonQuiet, configall, Border, Scrollbar, open_message,
-    EntryAuto, Separator, make_formats_dict)
+    EntryAuto, Separator, make_formats_dict, TabBook)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from scrolling import resize_scrolled_content
@@ -16,6 +16,8 @@ from dev_tools import looky, seeline
 
 
 
+TABS = (("name", "N"), ("date", "D"), ("place", "P"), ("particulars", "R"), ("age", "A"))
+msg = "Each row of the conclusions table on the current person tab has a source button that you can press to open this dialog. Each value in the findings row that you clicked has a corresponding tab in this dialog where you can view prior assertions that support these conclusions. You can also add more citations and sources here to back up conclusions on the table. You can also enter assertions on the assertions tab without linking them to any conclusion yet. There's also a conclusion table in the names tab."
 
 class AssertionsDialog():
     def __init__(self, master, treebard, finding_id, text, widg):
@@ -25,7 +27,6 @@ class AssertionsDialog():
         self.finding_id = finding_id
         self.source_count = text
         self.inwidg = widg
-
         self.formats = make_formats_dict()
 
         self.rc_menu = RightClickMenu(self.master, treebard=self.treebard)
@@ -85,7 +86,6 @@ class AssertionsDialog():
             yscrollcommand=self.window.vsb.set)
         self.window.vsb.grid(column=2, row=4, sticky='ns')
         self.window.hsb.grid(column=1, row=5, sticky='ew')
-
         buttonbox = Frame(self.window)
         b1 = Button(buttonbox, text="OK", width=7, command=ok)
         b2 = Button(buttonbox, text="CANCEL", width=7, command=cancel)
@@ -105,11 +105,27 @@ class AssertionsDialog():
         self.window.columnconfigure(1, weight=1)
         self.window.rowconfigure(1, weight=1)
         lab = LabelHeader(
-            self.window, text=self.finding_id, justify='left', wraplength=600)
+            self.window, text=msg, justify='left', wraplength=600)
         lab.grid(column=1, row=1, sticky='news', ipady=6, ipadx=6)
 
     def make_inputs(self):
         print("line", looky(seeline()).lineno, "self.source_count, self.inwidg, self.finding_id:", self.source_count, self.inwidg, self.finding_id)
+
+
+        self.assertion_tabs = TabBook(
+            self.window, root=self.master, tabs=TABS, selected="name",
+            minx=0.25, miny=0.33)
+
+
+
+
+
+        self.assertion_tabs.grid(column=1, row=2, padx=12, pady=12)
+        
+# master, root=None, side='nw', bd=0, tabwidth=13, 
+            # selected='', tabs=[],  minx=0.90, miny=0.85, case='title', 
+            # takefocus=1,
+
 
 
 
@@ -128,5 +144,4 @@ repository
 links_links           
 contact                                
 source
-sources_repositories
 '''  
