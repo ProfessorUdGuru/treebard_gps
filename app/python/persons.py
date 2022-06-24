@@ -26,9 +26,9 @@ from query_strings import (
     select_current_person_id, delete_name_person, delete_findings_roles_person,
     select_name_id_by_person_id, delete_links_links_person, delete_links_links_name,
     update_finding_person_1_null, update_finding_person_2_null,
-    delete_finding_person, delete_claims_roles_person, delete_person,
-    update_claims_persons_1_null, update_claims_persons_2_null,
-    delete_images_elements_person, delete_claim_person, select_name_sorter,
+    delete_finding_person, delete_assertions_roles_person, delete_person,
+    update_assertions_persons_1_null, update_assertions_persons_2_null,
+    delete_images_elements_person, delete_assertion_person, select_name_sorter,
     select_name_type_sorter_with_id, select_all_names, 
     select_name_type_hierarchy, select_all_names_all_details_order_hierarchy)
 import dev_tools as dt
@@ -252,18 +252,18 @@ def delete_person_from_tree(person_id):
     # finding
     cur.execute(delete_finding_person, (person_id,))
     conn.commit()
-    # claims_roles 
-    cur.execute(delete_claims_roles_person, (person_id,))
+    # assertions_roles 
+    cur.execute(delete_assertions_roles_person, (person_id,))
     conn.commit()
     # # # # # DO NOT DELETE; the db table doesn't exist yet
-    # # # # claims_persons.person_id1
-    # # # cur.execute(update_claims_persons_1_null, (person_id,))
+    # # # # assertions_persons.person_id1
+    # # # cur.execute(update_assertions_persons_1_null, (person_id,))
     # # # conn.commit()
-    # # # # claims_persons.person_id2
-    # # # cur.execute(update_claims_persons_2_null, (person_id,))
+    # # # # assertions_persons.person_id2
+    # # # cur.execute(update_assertions_persons_2_null, (person_id,))
     # # # conn.commit()
-    # claim
-    cur.execute(delete_claim_person, (person_id,))
+    # assertion
+    cur.execute(delete_assertion_person, (person_id,))
     conn.commit()
     # images_elements
     cur.execute(delete_images_elements_person, (person_id,))

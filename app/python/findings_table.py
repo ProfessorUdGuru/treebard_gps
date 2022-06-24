@@ -43,7 +43,7 @@ from query_strings import (
     insert_event_type_new, select_max_event_type_id, delete_finding,
     update_finding_ages_kintypes_null, select_finding_id_guardianship, 
     delete_findings_roles_finding, delete_findings_notes_finding,         
-    select_findings_for_person, delete_claims_findings, 
+    select_findings_for_person, delete_assertions_findings, 
     select_event_type_after_death, select_event_type_after_death_bool,
     insert_finding_birth, update_finding_age2, select_person,   
     select_finding_persons, update_finding_date,
@@ -70,7 +70,7 @@ def delete_generic_finding(finding_id, conn, cur):
     conn.commit()
     cur.execute(delete_findings_notes_finding, (finding_id,))
     conn.commit()
-    cur.execute(delete_claims_findings, (finding_id,))
+    cur.execute(delete_assertions_findings, (finding_id,))
     conn.commit()
     cur.execute(delete_finding, (finding_id,))
     conn.commit()

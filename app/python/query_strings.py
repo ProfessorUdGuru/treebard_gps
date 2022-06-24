@@ -11,20 +11,35 @@ from dev_tools import looky, seeline
 	where they are used.
 '''
 
-delete_claims_findings = '''
-    DELETE FROM claims_findings
+# delete_assertions_findings = '''
+    # DELETE FROM assertions_findings
+    # WHERE finding_id = ?
+# '''
+
+delete_assertions_findings = '''
+    DELETE FROM links_links
     WHERE finding_id = ?
 '''
 
-delete_claim_person = '''
-    DELETE FROM claim
+delete_assertion_person = '''
+    DELETE FROM assertion
     WHERE person_id = ?
 '''
 
-delete_claims_roles_person = '''
-    DELETE FROM claims_roles
+delete_assertions_roles_person = '''
+    DELETE FROM links_links
     WHERE person_id = ?
 '''
+
+# delete_assertion_person = '''
+    # DELETE FROM assertion
+    # WHERE person_id = ?
+# '''
+
+# delete_assertions_roles_person = '''
+    # DELETE FROM assertions_roles
+    # WHERE person_id = ?
+# '''
 
 delete_color_scheme = '''
     DELETE FROM color_scheme 
@@ -421,10 +436,17 @@ select_color_scheme_current_id = '''
     WHERE current_id = 1
 '''
 
+# select_count_finding_id_sources = '''
+    # SELECT COUNT(finding_id) 
+        # FROM assertions_findings 
+        # WHERE finding_id = ?
+# '''
+
 select_count_finding_id_sources = '''
     SELECT COUNT(finding_id) 
-        FROM claims_findings 
+        FROM links_links 
         WHERE finding_id = ?
+            AND assertion_id is not null
 '''
 
 select_count_findings_roles = '''
@@ -1257,17 +1279,17 @@ select_app_setting_openpic_dir = '''
     WHERE app_setting_id = 1
 '''
 
-update_claims_persons_1_null = '''
-    UPDATE claims_persons
-    SET person_id1 = null
-    WHERE person_id1 = ?
-'''
+# update_assertions_persons_1_null = '''
+    # UPDATE assertions_persons
+    # SET person_id1 = null
+    # WHERE person_id1 = ?
+# '''
 
-update_claims_persons_2_null = '''
-    UPDATE claims_persons
-    SET person_id2 = null
-    WHERE person_id2 = ?
-'''
+# update_assertions_persons_2_null = '''
+    # UPDATE assertions_persons
+    # SET person_id2 = null
+    # WHERE person_id2 = ?
+# '''
 
 update_closing_state_openpic = '''
     UPDATE closing_state

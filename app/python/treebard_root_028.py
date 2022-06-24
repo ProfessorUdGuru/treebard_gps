@@ -171,15 +171,14 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: assertions_dialog 
-
+# upload 3 movies
+# look at SOURCES button code see if it works in sample tree and gregory
+# look for references to citation_id and finding_id that shd refer to assertion table instead of what they're doing now if anything.
+# have to manually input place for brownville??? 
+# row for 2 diff patents in claim table, maybe invention has to be changed to patent granted ?
+# columns: name | source | citation | surety
+# tabs: date | place | particulars | age
 # accelerators not working on tabbook
-# finding_id missing from claim table 3 dbs ??? But wait: there's a claims_findings table, that's why finding_id is missing from claim so ????? is it 1:1 and if not why not
-# citation_id NOT missing from claim table bec it's not 1:1 rel; it's m:m
-# claim table also had a bunch of junk in it which suggests that it is not the new corrected version or else I never corrected it; look up default_new_tree and see if it's right, compare to sample_tree to see if claim was fixed there, etc, fix all and start next movie with making row for 2 diff patents in claim table, maybe invention has to be changed to patent granted ?
-# drop table sources_repositories fix all three dbs
-# the default_new_tree has got a bunch of rows in claim table that shouldn't be there
-# have to manually input place for brownville
-# need a way to link conclusion to assertions; claims_findings is wrong, the table shd be deleted but check to see if it's used for any code eg to get a value for the SOURCES button text
 # call num or URL where does it go
 # add 2 patents & 1 article to db claims sources citations repo so something will display
 # instead of event type in col 1, you could use event type or name (name? Name type?)
@@ -187,10 +186,11 @@ if __name__ == '__main__':
 # column w/ input for citation
 # column w/ input for name; new name will go into db for curr per
 # column for repo; repo & src linked in links_links
-# notes, roles buttons same as conclu table
+# notes, roles buttons same as date place particulars age
 # make assertions tab but it's for assertions that aren't linked to conclusions
 # default person #1 needs a default picture and age for birth evt doesn't say 0
-# remove repositories from dlg title
+# check to make sure person #1 doesn't have a person_id1 = 1
+# remove repositories and input #1 from dlg title
 
 
 

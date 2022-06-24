@@ -114,7 +114,7 @@ class AssertionsDialog():
 
         self.assertion_tabs = TabBook(
             self.window, root=self.master, tabs=TABS, selected="name",
-            minx=0.25, miny=0.33)
+            minx=0.33, miny=0.33)
 
 
 
@@ -135,11 +135,7 @@ finding
 person
 citation
 place
-claim                      
-claims_citations                      
-claims_findings                       
-claims_notes                
-claims_roles
+assertion
 repository
 links_links           
 contact                                

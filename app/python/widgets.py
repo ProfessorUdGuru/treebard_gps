@@ -24,9 +24,9 @@ from query_strings import (
     delete_name_person, delete_findings_roles_person,
     select_name_id_by_person_id, delete_links_links_person,
     update_finding_person_1_null, update_finding_person_2_null,
-    delete_finding_person, delete_claims_roles_person, delete_person,
-    update_claims_persons_1_null, update_claims_persons_2_null,
-    delete_images_elements_person, delete_claim_person, select_name_sorter,
+    delete_finding_person, delete_assertions_roles_person, delete_person,
+    update_assertions_persons_1_null, update_assertions_persons_2_null,
+    delete_images_elements_person, delete_assertion_person, select_name_sorter,
     select_name_type_sorter_with_id, select_all_names, update_current_person,
     select_name_type_hierarchy, select_opening_settings,
     select_closing_state_recent_files, update_closing_state_recent_files) 

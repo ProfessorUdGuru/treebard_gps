@@ -36,8 +36,7 @@
     can become events by having a date added and events can be changed to
     attributes by having the date removed or added optionally to a 
     `particulars` or `note` column where it won't be officially recognized as 
-    a date. In the code, conclusions are called `findings` and assertions are
-    called `claims`.
+    a date. In the code, collections of conclusions are called findings (such as a finding row in the conclusions table; conclusions are single conclusions such as "he was born in a manger" or "he was born" or "he was born on Christmas"; assertions are statements made by a source about a conclusion.
 
     Some elements are pre-loaded with types in primary type tables, while some
     are completely open-ended so aren't linked to types, such as projects and to-dos which can be linked to each other and anything else, but are not linked to any underlying primary type table. Type tables never have a foreign key in them, but their primary key is always used as a foreign key in other tables. Primary type tables underlie many somewhat primary tables such as the finding table which stores events and attributes as findings (conclusions). It includes an event_type_id column for foreign keys. The findings_persons table includes foreign key references to finding table IDs and kin type IDs (or "relationships" as they're called in ELEMENTS.)
