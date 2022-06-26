@@ -170,27 +170,25 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: assertions_dialog 
-# upload 3 movies
-# look at SOURCES button code see if it works in sample tree and gregory
-# look for references to citation_id and finding_id that shd refer to assertion table instead of what they're doing now if anything.
-# have to manually input place for brownville??? 
-# row for 2 diff patents in claim table, maybe invention has to be changed to patent granted ?
-# columns: name | source | citation | surety
-# tabs: date | place | particulars | age
+# BRANCH: assertions_dialog
+# columns: detail | name | source | citation | surety | repo(hover source)
+# tabs: date | place | particulars | agethe name tab in the main tabbook will have a list of each name with its corresponding assertions; adding a name in the names tab you have to also add an assertion (all names have to be sourced?)
+# look for references to finding_id that shd refer to assertion table instead of what they're doing now if anything.
+# have to manually input place for brownville to assertion table but first have to create the place w/ GUI (doesn't work--fix that first)
+# row for 2 diff patents in claim table, maybe invention has to be changed to patent granted and patent applied for to get rid of extremely vague date?
 # accelerators not working on tabbook
 # call num or URL where does it go
 # add 2 patents & 1 article to db claims sources citations repo so something will display
-# instead of event type in col 1, you could use event type or name (name? Name type?)
 # column w/ input for source
 # column w/ input for citation
-# column w/ input for name; new name will go into db for curr per
 # column for repo; repo & src linked in links_links
-# notes, roles buttons same as date place particulars age
+# notes, roles buttons same as date place particulars age??? ROLES movie: why is there no db table for roles? The feature was developed as part of the development of the conclusions table, and it was apparent at that time that the role didn't exist outside of its context. Without reference to an event e.g. wedding, the adjunct role flower girl doesn't exist. So roles were created in the m-m table findings_roles. This is probably wrong because the role's existence should probably be postulated in an abstract sense in a table called role so it has a pk. A role is not a m-m phenomenon. A role has one person and one role type in it, so it shd be in a table of its own on a single row. There's also the ability to create the link between the person and the role type id in links_links. The decision about what to do has to be made when it comes time to get roles referenced in the assertions table, so that whatever decision is made will take the whole picture into account. 
 # make assertions tab but it's for assertions that aren't linked to conclusions
 # default person #1 needs a default picture and age for birth evt doesn't say 0
-# check to make sure person #1 doesn't have a person_id1 = 1
+# check to make sure person #1 doesn't have a person_id1 = 1 by making na new tree and checking the finding table in db
 # remove repositories and input #1 from dlg title
+# adding date with new conclusion gets None for date_prefs ~line 764
+# when a new tree is made, it should have a default date format row in the date_format table DONE BUT CHECK BY making a new tree then see if u can make a new conclusion and add a date to it. BUT FIRST I think I fixed it wrong in default_new_tree and then copied it to _untouched, to wit, I think I put 'bef' in the bef_aft col and I think it shd have been 'bef_aft'.
 
 
 
@@ -207,6 +205,7 @@ if __name__ == '__main__':
 # BRANCH: names_tab
 # names tab: do something about design flaw wherein user will always forget to click the checkbutton; fix it so that if an edit is intended but the name entry is blank on pressing OK, the name record will be deleted from the name table (but not the person or his other names); prevent user from creating a new name type or else add code to make the new type go in and give it a hierarchy
 # get rid of LabelMovable in add person dialog, use the new way as done in the names tab
+# changing color scheme doesn't work right (till reload) after 1) opening one tree and 2) changing to a different tree using Recent Files dropdown item.
 # export new version of all dbs to .sql
 # backup app to external hd
 

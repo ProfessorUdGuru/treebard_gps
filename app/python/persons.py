@@ -27,7 +27,6 @@ from query_strings import (
     select_name_id_by_person_id, delete_links_links_person, delete_links_links_name,
     update_finding_person_1_null, update_finding_person_2_null,
     delete_finding_person, delete_assertions_roles_person, delete_person,
-    update_assertions_persons_1_null, update_assertions_persons_2_null,
     delete_images_elements_person, delete_assertion_person, select_name_sorter,
     select_name_type_sorter_with_id, select_all_names, 
     select_name_type_hierarchy, select_all_names_all_details_order_hierarchy)

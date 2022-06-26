@@ -16,7 +16,7 @@ from dev_tools import looky, seeline
 
 
 
-TABS = (("name", "N"), ("date", "D"), ("place", "P"), ("particulars", "R"), ("age", "A"))
+TABS = (("date", "D"), ("place", "P"), ("particulars", "R"), ("age", "A"))
 msg = "Each row of the conclusions table on the current person tab has a source button that you can press to open this dialog. Each value in the findings row that you clicked has a corresponding tab in this dialog where you can view prior assertions that support these conclusions. You can also add more citations and sources here to back up conclusions on the table. You can also enter assertions on the assertions tab without linking them to any conclusion yet. There's also a conclusion table in the names tab."
 
 class AssertionsDialog():
@@ -113,7 +113,7 @@ class AssertionsDialog():
 
 
         self.assertion_tabs = TabBook(
-            self.window, root=self.master, tabs=TABS, selected="name",
+            self.window, root=self.master, tabs=TABS, selected="date",
             minx=0.33, miny=0.33)
 
 

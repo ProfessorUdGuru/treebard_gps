@@ -13,7 +13,6 @@ from toykinter_widgets import run_statusbar_tooltips
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
 from nested_place_strings import make_all_nestings
 from error_messages import  open_yes_no_message
-# from messages_context_help import new_event_dlg_help_msg
 from persons import (
     make_all_names_dict_for_person_select, check_name, 
     get_original)
@@ -31,7 +30,7 @@ from query_strings import (
     select_findings_details_couple, select_findings_details_couple_generic,
     select_finding_id_birth, select_finding_couple_details_by_finding,
     select_person_id_birth, select_all_findings_notes_ids,
-    select_all_findings_roles_ids_distinct,      
+    select_all_findings_roles_ids_distinct, insert_finding_places_new,      
     select_count_finding_id_sources, select_finding_event_type,  
     update_finding_particulars, select_all_kin_ids_types_couple,
     update_finding_age, update_current_person, select_all_place_ids,
@@ -46,7 +45,7 @@ from query_strings import (
     select_findings_for_person, delete_assertions_findings, 
     select_event_type_after_death, select_event_type_after_death_bool,
     insert_finding_birth, update_finding_age2, select_person,   
-    select_finding_persons, update_finding_date,
+    select_finding_persons, update_finding_date, 
     select_finding_id_adoption, select_finding_id_fosterage,
     select_finding_id_age1_alt_parents, select_finding_id_age2_alt_parents,
     select_person_id_alt_parentage, select_kin_type_string, 
@@ -942,6 +941,12 @@ class FindingsTable(Frame):
             conn.commit()  
         else:
             print("line", looky(seeline()).lineno, "case not handled:")
+# this if/else added 20220625
+        if len(self.place_string) == 0:
+            cur.execute(insert_finding_places_new, (self.new_finding,))
+            conn.commit()
+        else:
+            self.update_db_place(conn, cur)
 
         cur.close()
         conn.close()

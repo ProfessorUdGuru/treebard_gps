@@ -120,6 +120,9 @@ class NewPlaceDialog():
             lab.grid(column=1, row=1, sticky='news', ipady=6, ipadx=6)
 
         def ok():
+            print("line", looky(seeline()).lineno, "self.do_on_ok:", self.do_on_ok)
+            print("line", looky(seeline()).lineno, "self.error:", self.error)
+            print("line", looky(seeline()).lineno, "self.place_input:", self.place_input)
             if self.do_on_ok:
                 self.do_on_ok()
             if self.error is False:
@@ -526,9 +529,15 @@ class ValidatePlace():
                 self.new_place_dialog.error = True
                 return
             seen.add(val)
+        print("line", looky(seeline()).lineno, "RUNNING:")
         self.input_to_db()
 
     def input_new_finding(self):
+        """ DON'T DELETE: This appeared 20220615 but I have no clue where it
+        came from or what it's supposed to do or how or why. The ability to add
+        a new place to a finding no longer exists.
+        """
+        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
         return self.place_dicts
 
     def input_to_db(self):
@@ -536,10 +545,11 @@ class ValidatePlace():
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-
-        cur.execute(select_all_finding_places_findings)
+# FIRST CLUE: "...finding_places..."
+        cur.execute(select_all_finding_places_findings) # HERE'S THE PROBLEM
         all_finding_ids = [i[0] for i in cur.fetchall()]
-
+        print("line", looky(seeline()).lineno, "self.finding:", self.finding)
+        print("line", looky(seeline()).lineno, "all_finding_ids:", all_finding_ids)
         if self.finding not in all_finding_ids:
             # If it's a new finding, there's no finding_id yet, all the
             #   database input is handled in the new findings procedure.
@@ -555,8 +565,9 @@ class ValidatePlace():
         ids.append(self.finding)
 
         places_places = get_all_places_places()
-
+        print("line", looky(seeline()).lineno, "places_places:", places_places)
         last = len(self.place_dicts) - 1
+        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
         q = 0
         for dkt in self.place_dicts:
             child = dkt["id"]
@@ -565,6 +576,7 @@ class ValidatePlace():
             else:
                 parent = None
             if child == dkt["temp_id"]:
+                print("line", looky(seeline()).lineno, "RUNNING:", RUNNING)
                 cur.execute(insert_place_new, (child, dkt["input"]))
                 conn.commit()
                 cur.execute(insert_places_places_new, (child, parent))
