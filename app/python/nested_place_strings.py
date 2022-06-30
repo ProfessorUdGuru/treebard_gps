@@ -12,7 +12,6 @@ from files import get_current_file
 from widgets import Entry, Button
 from query_strings import (
    select_place_id2, select_count_place_id, select_place, select_all_place_ids)
-# from styles import config_generic    
 import dev_tools as dt
 from dev_tools import looky, seeline
 

@@ -170,6 +170,15 @@ if __name__ == '__main__':
 
 # DO LIST
 
+# BRANCH: places_rewrite
+# get rid of the guessed temp_id and use real temp_ids, save them in the dict and do everything else the same, except on CANCEL delete them all from the db; can still use max to decide which is the last real id and delete if > max on CANCEL
+# during rewrite try to ignore places_places and just use the new tables to get all the same stuff
+# make new treebard_untouched.db which has only the default place #1 in its place and nested_place tables
+# get rid of places_places and the recursive query stuff and nested_place_strings.py?, rewrite everything except the new and duplicate places dialog, remove nests from finding table FIGURE OUT HOW TO USE place_period without having it to refer to a pair as in places_places or was that even valid to begin with, maybe need a note instead as it's not a simple case of some time period, esp when considering that a time period might not properly refer to 1) a child/parent nested pair or 2) any particular chain of nested places; probably leave this for a note linked to a place or a place nest at the user's discretion NOW I DON'T NEED PLACES PLACES? find out what it's good for
+# First step is the one I've been putting off the longest: moving places to a global database so the user doesn't have to repeatedly input the same places if he has more than one tree. I haven't done much of this sort of thing. I used to do more of it, but simplified. I can see one problem already. Not really a problem, but deleting a place will not be allowed if any tree is using the place. 
+# make the delete types dialog with cols defined by nests or types and the rows defined by trees and the cells have checkbuttons
+# fix blank finding, assertion, place, and nested_place tables in default_new_tree, _untouched, and gregory_family_tree ; drop type and place tables from gregory & make .sql flat files
+
 # BRANCH: assertions_dialog
 # columns: detail | name | source | citation | surety | repo(hover source)
 # tabs: date | place | particulars | agethe name tab in the main tabbook will have a list of each name with its corresponding assertions; adding a name in the names tab you have to also add an assertion (all names have to be sourced?)
@@ -251,6 +260,7 @@ if __name__ == '__main__':
 # backup app to external hd
 
 # BRANCH: types
+# Create a delete type dialog that opens up if you try to delete a type or a place. Assuming that all types and places have already been moved to treebard.db and dropped from the individual tree tables. See https://treebard.proboards.com/thread/154/creating-deleting-types-places for the details.
 # This started when I found I'd failed to stop using the formats table for default_formats, led to the realization that the formats table needs to go away, led to a grand new structure using the fact that I now have a global db again so might as well use it. Below it says to store an fk for color scheme but to do that right, color scheme table needs to be moved to treebard.db. So will keep using formats for fonts and current color scheme only till I get to this branch, since I have no other place to put them.
 # get rid of get_current_formats() in styles.py
 # get rid of tree_is_open column in treebard.db, see get_opening_settings() in styles.py which now has a get_opening_settings_default() which is not being used instead of the boolean which was not being used anymore. It should be used to open the bare app w/out a tree but apparently this is already being done somehow, not shure why it's working, whether I planned it that way or it just happened by accident. Look in opening.py and trace the code flow to see what's going on. Right now it's opening in the sample_tree current color scheme but not sure why.

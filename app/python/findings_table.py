@@ -19,7 +19,7 @@ from persons import (
 from assertions import AssertionsDialog
 from roles import RolesDialog
 from notes import NotesDialog
-from places import ValidatePlace, get_all_places_places
+from places import ValidatePlace
 from messages import findings_msg
 from utes import split_sorter
     
@@ -37,8 +37,7 @@ from query_strings import (
     select_all_event_types, select_event_type_id, insert_finding_new,
     insert_finding_new_couple, insert_finding_new_couple_details,
     update_finding_age1, insert_place_new, insert_finding_new_couple_alt, 
-    select_event_type_couple_bool, insert_kin_type_new, update_event_types,    
-    insert_places_places_new, insert_finding_places_new_event,
+    select_event_type_couple_bool, insert_kin_type_new, update_event_types, 
     insert_event_type_new, select_max_event_type_id, delete_finding,
     update_finding_ages_kintypes_null, select_finding_id_guardianship, 
     delete_findings_roles_finding, delete_findings_notes_finding,         

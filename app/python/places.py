@@ -39,7 +39,7 @@ from query_strings import (
     update_place_hint, select_place_id2, 
     select_max_place_id, select_place_id1, update_finding_places,
     insert_places_places_new, select_all_place_ids, 
-    select_places_places_id, select_all_finding_places_findings)
+    select_all_finding_places_findings)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -537,7 +537,6 @@ class ValidatePlace():
         came from or what it's supposed to do or how or why. The ability to add
         a new place to a finding no longer exists.
         """
-        print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
         return self.place_dicts
 
     def input_to_db(self):
@@ -545,11 +544,8 @@ class ValidatePlace():
         conn = sqlite3.connect(current_file)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-# FIRST CLUE: "...finding_places..."
-        cur.execute(select_all_finding_places_findings) # HERE'S THE PROBLEM
+        cur.execute(select_all_finding_places_findings)
         all_finding_ids = [i[0] for i in cur.fetchall()]
-        print("line", looky(seeline()).lineno, "self.finding:", self.finding)
-        print("line", looky(seeline()).lineno, "all_finding_ids:", all_finding_ids)
         if self.finding not in all_finding_ids:
             # If it's a new finding, there's no finding_id yet, all the
             #   database input is handled in the new findings procedure.
@@ -565,7 +561,6 @@ class ValidatePlace():
         ids.append(self.finding)
 
         places_places = get_all_places_places()
-        print("line", looky(seeline()).lineno, "places_places:", places_places)
         last = len(self.place_dicts) - 1
         print("line", looky(seeline()).lineno, "self.place_dicts:", self.place_dicts)
         q = 0
@@ -576,7 +571,6 @@ class ValidatePlace():
             else:
                 parent = None
             if child == dkt["temp_id"]:
-                print("line", looky(seeline()).lineno, "RUNNING:", RUNNING)
                 cur.execute(insert_place_new, (child, dkt["input"]))
                 conn.commit()
                 cur.execute(insert_places_places_new, (child, parent))
