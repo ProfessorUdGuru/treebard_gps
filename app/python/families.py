@@ -24,7 +24,7 @@ from widgets import (
     Scrollbar, EntryAutoPerson, EntryAutoPersonHilited, open_message, 
     make_formats_dict, Toplevel, NEUTRAL_COLOR, configall,
     initialize_parents_data, redraw_person_tab)
-from files import get_current_file
+from files import get_current_file, global_db_path
 from persons import (
     open_new_person_dialog, make_all_names_dict_for_person_select, check_name,
     delete_person_from_tree, update_person_autofill_values)
@@ -58,15 +58,17 @@ from dev_tools import looky, seeline
 
 
 def make_parent_types_dict():
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
+    tree = get_current_file()[0]
+    # conn = sqlite3.connect(current_file)
+    conn = sqlite3.connect(global_db_path)
     cur = conn.cursor()
-
+    cur.execute("ATTACH ? AS tree", (tree,))
     cur.execute(select_kin_types_parental)
     parentTypes = cur.fetchall()    
     PARENT_TYPES = {}
     for tup in parentTypes:
         PARENT_TYPES[tup[0]] = tup[1]
+    cur.execute("DETACH tree")
     cur.close()
     conn.close()
     return PARENT_TYPES
@@ -534,9 +536,10 @@ class NuclearFamiliesTable(Frame):
 
     def make_parents_dict(self, ma_id=None, pa_id=None):
 
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
+        tree = get_current_file()[0]
+        conn = sqlite3.connect(global_db_path)
         cur = conn.cursor()
+        cur.execute("ATTACH ? AS tree", (tree,))
         cur.execute(select_finding_id_birth, (self.current_person,))
         birth_id = cur.fetchone()[0]
         cur.execute(select_finding_couple_details, (birth_id,))
@@ -574,14 +577,16 @@ class NuclearFamiliesTable(Frame):
         parents[2]["inwidg"] = self.ma_input
         self.get_alt_parents(cur)
         self.grid_alt_parents()
+
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()
 
     def make_nukefam_dicts(self):        
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
+        tree = get_current_file()[0]
+        conn = sqlite3.connect(global_db_path)
         cur = conn.cursor()
-
+        cur.execute("ATTACH ? AS tree", (tree,))
         self.make_parents_dict()
 
         partners1, births = self.query_nukefams_data(conn, cur)
@@ -601,6 +606,7 @@ class NuclearFamiliesTable(Frame):
         self.progeny_data = dict(
             sorted(
                 self.progeny_data.items(), key=lambda i: i[1]["sorter"]))
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()
 

@@ -12,7 +12,7 @@ from toykinter_widgets import run_statusbar_tooltips
 from scrolling import resize_scrolled_content
 from error_messages import open_yes_no_message, InputMessage
 from messages_context_help import notes_dlg_help_msg, links_dlg_help_msg
-from places import make_all_nestings    
+# from places import make_all_nestings # DO NOT DELETE--IT'S JUST OLD & OBSOLETE   
 from messages import notes_msg
 from utes import center_dialog, OK_PRINT_KEYS
 from files import get_current_file
@@ -244,7 +244,7 @@ class NotesDialog(Toplevel):
             self.toc_canvas.yview_moveto(0.0)
         self.display_note()
 
-    def add_links(self):
+    def add_links(self): # THIS IS ANCIENT--HASN'T BEEN TESTED/UPDATED IN FOREVER--CURRENTLY TURNED OFF
         '''
             This dialog is modal so all the possible value lists for the 
             Combobox don't have to be refreshed before the autofill entry

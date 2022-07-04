@@ -171,13 +171,18 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: places_rewrite
-# get rid of the guessed temp_id and use real temp_ids, save them in the dict and do everything else the same, except on CANCEL delete them all from the db; can still use max to decide which is the last real id and delete if > max on CANCEL
+
+# First ADD THE NEW PLACE TO THE PLACES LIST. Then make it not go to db on X or CANCEL. Then make X work on escape, and OK work on Enter. Then make an existing place go in that has autofilled into conclusions table. Then test update_nested_place.
+# 1) get rid of place_dict completely, 2) instead of 2 lists new_places/existing_places, make one list self.new_nesting, just insert each value by idx as they are found, while also populating self.new_places in case of cancel; 3) don't do it on press OK bec the OK button only exists on the dupe dialog, have to do it on focus out so do all dupes first, and if cancel pressed, delete new places from db, but if no dlg or cancel not pressed, input new nesting at last; dupes dlg has to list all dupes if more than one so one OK or CANCEL either inputs all choices to self.new_nesting or deleted all new_places from db; then if not returned by CANCEL, the focus out will carry out the input to db of the new_nesting
+# autofill works for changing empty place on conclusions table to existing place, no errors, but it doesn't go into db
+# in the label or title of dupes dlg highlight or capitalize the current place being questioned, that's the only thing you have to do about inner dupes ie "Maine, MAINE, Massachusetts, USA"
+# REDO make_new_places; to get rid of the guessed temp_id and use real temp_ids, save them in the dict and do everything else the same, except on CANCEL delete them all from the db; can still use max to decide which is the last real id and delete if > max on CANCEL; place dlg has to be modal
 # during rewrite try to ignore places_places and just use the new tables to get all the same stuff
 # make new treebard_untouched.db which has only the default place #1 in its place and nested_place tables
 # get rid of places_places and the recursive query stuff and nested_place_strings.py?, rewrite everything except the new and duplicate places dialog, remove nests from finding table FIGURE OUT HOW TO USE place_period without having it to refer to a pair as in places_places or was that even valid to begin with, maybe need a note instead as it's not a simple case of some time period, esp when considering that a time period might not properly refer to 1) a child/parent nested pair or 2) any particular chain of nested places; probably leave this for a note linked to a place or a place nest at the user's discretion NOW I DON'T NEED PLACES PLACES? find out what it's good for
 # First step is the one I've been putting off the longest: moving places to a global database so the user doesn't have to repeatedly input the same places if he has more than one tree. I haven't done much of this sort of thing. I used to do more of it, but simplified. I can see one problem already. Not really a problem, but deleting a place will not be allowed if any tree is using the place. 
 # make the delete types dialog with cols defined by nests or types and the rows defined by trees and the cells have checkbuttons
-# fix blank finding, assertion, place, and nested_place tables in default_new_tree, _untouched, and gregory_family_tree ; drop type and place tables from gregory & make .sql flat files
+# fix blank finding, assertion, place, and nested_place tables in treebard.db, default_new_tree, _untouchedx2, and gregory_family_tree ; drop type and place tables from gregory/default/untouched & make .sql flat files
 
 # BRANCH: assertions_dialog
 # columns: detail | name | source | citation | surety | repo(hover source)
@@ -191,6 +196,7 @@ if __name__ == '__main__':
 # column w/ input for source
 # column w/ input for citation
 # column for repo; repo & src linked in links_links
+# out of date, place, particulars, age, only one input can have content, so on focus out, if content has been added and original was len=0, (etc thru the conditions) make it impossible to continue if the restrictions are not met
 # notes, roles buttons same as date place particulars age??? ROLES movie: why is there no db table for roles? The feature was developed as part of the development of the conclusions table, and it was apparent at that time that the role didn't exist outside of its context. Without reference to an event e.g. wedding, the adjunct role flower girl doesn't exist. So roles were created in the m-m table findings_roles. This is probably wrong because the role's existence should probably be postulated in an abstract sense in a table called role so it has a pk. A role is not a m-m phenomenon. A role has one person and one role type in it, so it shd be in a table of its own on a single row. There's also the ability to create the link between the person and the role type id in links_links. The decision about what to do has to be made when it comes time to get roles referenced in the assertions table, so that whatever decision is made will take the whole picture into account. 
 # make assertions tab but it's for assertions that aren't linked to conclusions
 # default person #1 needs a default picture and age for birth evt doesn't say 0

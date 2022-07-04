@@ -9,7 +9,7 @@ from widgets import (
     Frame, Canvas, Button, LabelH3, Label, FrameStay, LabelStay, Entry,
     FrameHilited2, get_all_descends, configall, Scrollbar,
     make_formats_dict, ALL_WIDGET_CLASSES, open_message)
-from files import get_current_file
+from files import get_current_file, global_db_path
 from messages import colorizer_msg
 from messages_context_help import color_preferences_swatches_help_msg
 from query_strings import (
@@ -22,7 +22,7 @@ from dev_tools import looky, seeline
 
 
 
-current_file = get_current_file()[0]
+tree = get_current_file()[0]
 formats = make_formats_dict()
 class Colorizer(Frame):
     '''
@@ -202,7 +202,7 @@ class Colorizer(Frame):
             widg.bind("<space>", self.open_color_chooser)
 
     def get_current_scheme_id(self):
-        conn = sqlite3.connect(current_file)
+        conn = sqlite3.connect(tree)
         cur = conn.cursor()
         cur.execute(select_color_scheme_current_id)
         self.currently_applied_color_scheme = cur.fetchone()[0]
@@ -210,10 +210,12 @@ class Colorizer(Frame):
         conn.close()
 
     def make_schemes_dict(self):
-        conn = sqlite3.connect(current_file)
+        conn = sqlite3.connect(global_db_path)
         cur = conn.cursor()
+        cur.execute("ATTACH ? AS tree", (tree,))
         cur.execute(select_all_color_schemes_unhidden)
         self.unhidden_color_schemes = cur.fetchall()
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()
 

@@ -2,7 +2,7 @@
 
 import tkinter as tk
 import sqlite3
-from files import get_current_file
+from files import get_current_file, global_db_path
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton, configall,
     LabelH3, Button, Entry, LabelHeader, Separator, open_message, Scrollbar,
@@ -11,7 +11,6 @@ from widgets import (
 from scrolling import resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
 from dates import validate_date, format_stored_date, OK_MONTHS, get_date_formats
-from nested_place_strings import make_all_nestings
 from error_messages import  open_yes_no_message
 from persons import (
     make_all_names_dict_for_person_select, check_name, 
@@ -19,18 +18,18 @@ from persons import (
 from assertions import AssertionsDialog
 from roles import RolesDialog
 from notes import NotesDialog
-from places import ValidatePlace
+from places import ValidatePlace, get_all_place_strings
 from messages import findings_msg
 from utes import split_sorter
     
 from query_strings import (
-    select_finding_places_nesting, select_current_person_id, 
+    select_finding_nested_place, select_current_person_id, 
     select_all_event_types_couple, select_all_kin_type_ids_couple,
     select_all_findings_current_person, select_findings_details_generic,
     select_findings_details_couple, select_findings_details_couple_generic,
     select_finding_id_birth, select_finding_couple_details_by_finding,
     select_person_id_birth, select_all_findings_notes_ids,
-    select_all_findings_roles_ids_distinct, insert_finding_places_new,      
+    select_all_findings_roles_ids_distinct, 
     select_count_finding_id_sources, select_finding_event_type,  
     update_finding_particulars, select_all_kin_ids_types_couple,
     update_finding_age, update_current_person, select_all_place_ids,
@@ -140,8 +139,8 @@ class FindingsTable(Frame):
             lambda evt, main_window=self.main_window: redraw_person_tab(
                 evt, main_window))
 
-        self.place_strings = make_all_nestings(select_all_place_ids)
-
+        # self.place_strings = get_all_place_strings()
+        # print("line", looky(seeline()).lineno, "self.place_strings:", self.place_strings)
         self.is_couple_event = False
         self.new_alt_parent_event = False
         self.unknown_event_type = False
@@ -425,7 +424,9 @@ class FindingsTable(Frame):
             symmetrical for all the text columns, with autofill defaulting to 
             False except for the places column.
         '''
-        self.place_autofill_values = EntryAuto.create_lists(self.place_strings)
+
+        place_strings = get_all_place_strings()
+        place_autofill_values = EntryAuto.create_lists(place_strings)
         self.table_cells = []
         for i in range(int(qty/8)):
             row = []
@@ -440,7 +441,8 @@ class FindingsTable(Frame):
                         cell = EntryAuto(
                             self, width=0, 
                             autofill=True, 
-                            values=self.place_autofill_values)
+                            values=place_autofill_values)
+                        EntryAuto.place_autofills.append(cell)
                     else:                        
                         cell = EntryAuto(self, width=0,)
                     cell.initial = ''
@@ -940,12 +942,12 @@ class FindingsTable(Frame):
             conn.commit()  
         else:
             print("line", looky(seeline()).lineno, "case not handled:")
-# this if/else added 20220625
-        if len(self.place_string) == 0:
-            cur.execute(insert_finding_places_new, (self.new_finding,))
-            conn.commit()
-        else:
-            self.update_db_place(conn, cur)
+# this if/else added 20220625, not finished, commented 20220629
+        # if len(self.place_string) == 0:
+            # cur.execute(insert_finding_places_new, (self.new_finding,))
+            # conn.commit()
+        # else:
+            # self.update_db_place(conn, cur)
 
         cur.close()
         conn.close()
@@ -963,10 +965,11 @@ class FindingsTable(Frame):
             self.finding_input.focus_set()
             self.finding_input.delete(0, 'end')
 
-        current_file = get_current_file()[0]
-        conn =  sqlite3.connect(current_file)
+        tree = get_current_file()[0]
+        conn =  sqlite3.connect(global_db_path)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
+        cur.execute("ATTACH ? AS tree", (tree,))
         cur.execute(select_event_type_id, (self.new_conclusion,))
         result = cur.fetchone()
         if result is not None:
@@ -985,6 +988,8 @@ class FindingsTable(Frame):
             msg[0].grab_set()
             msg[2].config(command=err_done2)
             return 
+
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()
 
@@ -1001,50 +1006,63 @@ class FindingsTable(Frame):
         conn.close()
 
     def get_all_event_types(self):
-        current_file, current_dir = get_current_file()
-        conn = sqlite3.connect(current_file)
+        tree, current_dir = get_current_file()
+        conn = sqlite3.connect(global_db_path)
         cur = conn.cursor()
+        cur.execute("ATTACH ? AS tree", (tree,))
         cur.execute(select_all_event_types)
         event_types = [i[0] for i in cur.fetchall()]
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()
         return event_types
 
     def get_after_death_event_types(self):
-        current_file, current_dir = get_current_file()
-        conn = sqlite3.connect(current_file)
+        tree, current_dir = get_current_file()
+        conn = sqlite3.connect(global_db_path)
         cur = conn.cursor()
+        cur.execute("ATTACH ? AS tree", (tree,))
         cur.execute(select_event_type_after_death)
         after_death_event_types = [i[0] for i in cur.fetchall()]
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()
         return after_death_event_types 
 
     def get_couple_kin_types(self):
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
+        tree = get_current_file()[0]
+        conn = sqlite3.connect(global_db_path)
         cur = conn.cursor()
+        cur.execute("ATTACH ? AS tree", (tree,))
         cur.execute(select_all_kin_type_ids_couple)
         couple_kin_type_ids = [i[0] for i in cur.fetchall()]
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()
         return couple_kin_type_ids
 
     def get_couple_event_types(self):
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
+        tree = get_current_file()[0]
+        conn = sqlite3.connect(global_db_path)
         cur = conn.cursor()
+        cur.execute("ATTACH ? AS tree", (tree,))
         cur.execute(select_all_event_types_couple)
         couple_event_types = [i[0] for i in cur.fetchall()]
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()
         return couple_event_types
 
     def get_place_string(self, finding_id, cur):
-        cur.execute(select_finding_places_nesting, finding_id)
-        place = cur.fetchone()
-        place_string = ", ".join([i for i in place if i])
-        if place_string == "unknown": place_string = ""
+        place_string = ""
+        cur.execute(select_finding_nested_place, finding_id)
+        # place = cur.fetchone()
+        result = cur.fetchone()
+        if result:
+            place_string = ", ".join([i for i in result if i])
+        # place_string = ", ".join([i for i in place if i])
+        # if place_string == "unknown": place_string = ""
+        # print("line", looky(seeline()).lineno, "place_string:", place_string)
         return place_string
 
     def get_generic_findings(
@@ -1315,9 +1333,10 @@ class FindingsTable(Frame):
 
     def get_findings(self):
         findings_data = {}
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
+        tree = get_current_file()[0]
+        conn = sqlite3.connect(global_db_path)
         cur = conn.cursor()
+        cur.execute("ATTACH ? AS tree", (tree,))
 
         rowtotype = {
             "event": "", "date": "", "place": "", "particulars": "", "age": ""}
@@ -1359,6 +1378,7 @@ class FindingsTable(Frame):
             cur, rowtotype, findings_data, 
             non_empty_roles, non_empty_notes, person_autofill_values)
 
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()  
         return findings_data, non_empty_roles, non_empty_notes 

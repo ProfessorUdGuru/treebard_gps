@@ -64,7 +64,7 @@ def get_current_file():
     '''
     prior_file = get_prior_file()
     if prior_file is None:
-        return
+        return None
     if prior_file == 'default_new_tree.db':
         current_file = prior_file
         current_dir = '{}treebard_gps/data/settings'.format(current_drive)

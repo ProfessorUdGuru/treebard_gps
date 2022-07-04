@@ -2,7 +2,7 @@
 
 import tkinter as tk
 import sqlite3
-from files import get_current_file
+from files import get_current_file, global_db_path
 from widgets import (
     Frame, Label, Button, LabelMovable, LabelH3, Entry, Toplevel, Border, 
     Dialogue, Entryx, Radiobutton, LabelHeader, configall, 
@@ -61,10 +61,10 @@ def get_name_types():
 def make_all_names_dict_for_person_select():
     """ Make a name dict for use in all name autofills.
     """
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
+    tree = get_current_file()[0]
+    conn = sqlite3.connect(global_db_path)
     cur = conn.cursor()
-
+    cur.execute("ATTACH ? AS tree", (tree,))
     cur.execute(select_all_names_all_details_order_hierarchy)
     results = cur.fetchall()
     person_ids = [i[0] for i in results]
@@ -74,6 +74,7 @@ def make_all_names_dict_for_person_select():
     for tup in values:
         indict = dict(zip(PERSON_DATA, tup))
         inner_dict.append(indict)
+    cur.execute("DETACH tree")
     cur.close()
     conn.close() 
 

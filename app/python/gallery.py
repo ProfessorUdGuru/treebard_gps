@@ -11,7 +11,7 @@
 import tkinter as tk
 from PIL import Image, ImageTk
 import sqlite3
-from files import get_current_file, current_drive, app_path
+from files import get_current_file, current_drive, app_path, global_db_path
 from widgets import (
     Frame, Canvas, Button, Label, Radiobutton, FrameHilited4, make_formats_dict, 
     LabelH3, MessageCopiable, LabelStay, Scrollbar, configall, create_tooltip)
@@ -55,7 +55,7 @@ class Gallery(Frame):
 
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
 
-        self.current_file, self.current_dir = get_current_file()
+        self.tree, self.current_dir = get_current_file()
 
         self.main_pic = "0_default_image_unisex.jpg"
         self.caption_text = ""
@@ -460,8 +460,9 @@ class Gallery(Frame):
     def get_current_pix_data(self):
         
         self.image_dir = self.current_dir
-        conn = sqlite3.connect(self.current_file)
+        conn = sqlite3.connect(global_db_path)
         cur = conn.cursor()
+        cur.execute("ATTACH ? AS tree", (self.tree,))
         if self.master.winfo_name() == 'placetab':
             cur.execute(select_all_place_images)
         elif self.master.winfo_name() == 'sourcetab':
@@ -544,7 +545,7 @@ class Gallery(Frame):
     def set_main_pic(self, val): 
 
         radio_value = (val,)
-        conn = sqlite3.connect(self.current_file)
+        conn = sqlite3.connect(self.tree)
         conn.execute("PRAGMA foreign_keys = 1")
         cur = conn.cursor()
         cur.execute(select_current_person_id)
@@ -555,7 +556,7 @@ class Gallery(Frame):
         cur.execute(update_images_elements_zero, curr_per)
         conn.commit()
         cur.execute(update_images_elements_one, radio_value)
-
         conn.commit()
+        cur.execute("DETACH self.tree")
         cur.close()
         conn.close() 

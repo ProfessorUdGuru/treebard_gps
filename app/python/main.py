@@ -4,7 +4,7 @@
 import tkinter as tk
 import sqlite3
 from PIL import Image, ImageTk
-from files import current_drive, get_current_file
+from files import current_drive, get_current_file, global_db_path
 from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
     Radiobutton, LabelFrame, Border, TabBook, Scrollbar, fix_tab_traversal,
@@ -104,9 +104,10 @@ class Main(FrameStay):
 
     def make_widgets(self):
 
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
+        tree = get_current_file()[0]
+        conn = sqlite3.connect(global_db_path)
         cur = conn.cursor()
+        cur.execute("ATTACH ? AS tree", (tree,))
 
         self.make_scrollbars()
 
@@ -513,6 +514,7 @@ class Main(FrameStay):
                 
         make_rc_menus(rcm_widgets, self.rc_menu, main_help_msg)
 
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()
 

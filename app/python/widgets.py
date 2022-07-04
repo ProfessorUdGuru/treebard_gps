@@ -56,18 +56,21 @@ def get_all_descends (ancestor, deep_list):
 
 def get_opening_settings():
     """ If the tree is brand new, get treebard's default color scheme. """
-    current_file = get_current_file()[0]
-    conn = sqlite3.connect(current_file)
+    tree = get_current_file()[0]
+    conn = sqlite3.connect(global_db_path)
+    # conn = sqlite3.connect(current_file)
     cur = conn.cursor()
+    cur.execute("ATTACH ? AS tree", (tree,))
     cur.execute(select_color_scheme_current_id)
     color_scheme_id = cur.fetchone()
     if color_scheme_id is None:
-        cur.close()
-        conn.close()
-        conn = sqlite3.connect(global_db_path)
-        cur = conn.cursor()
+        # cur.close()
+        # conn.close()
+        # conn = sqlite3.connect(global_db_path)
+        # cur = conn.cursor()
         cur.execute(select_opening_settings)
         default_formats = list(cur.fetchone())
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()
         return default_formats
@@ -78,9 +81,38 @@ def get_opening_settings():
         font_scheme = list(cur.fetchone()[0:2])
         user_formats = color_scheme + font_scheme
         user_formats.insert(5, INPUT_FONT)
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()
         return user_formats
+
+# def get_opening_settings():
+    # """ If the tree is brand new, get treebard's default color scheme. """
+    # current_file = get_current_file()[0]
+    # conn = sqlite3.connect(current_file)
+    # cur = conn.cursor()
+    # cur.execute(select_color_scheme_current_id)
+    # color_scheme_id = cur.fetchone()
+    # if color_scheme_id is None:
+        # cur.close()
+        # conn.close()
+        # conn = sqlite3.connect(global_db_path)
+        # cur = conn.cursor()
+        # cur.execute(select_opening_settings)
+        # default_formats = list(cur.fetchone())
+        # cur.close()
+        # conn.close()
+        # return default_formats
+    # else:
+        # cur.execute(select_color_scheme_by_id, color_scheme_id)
+        # color_scheme = list(cur.fetchone())
+        # cur.execute(select_format_font_scheme)
+        # font_scheme = list(cur.fetchone()[0:2])
+        # user_formats = color_scheme + font_scheme
+        # user_formats.insert(5, INPUT_FONT)
+        # cur.close()
+        # conn.close()
+        # return user_formats
   
 def make_formats_dict():
     """ To add a style, add a string to the end of keys list
@@ -1889,7 +1921,7 @@ class EntryAuto(Entryx):
         string being autofilled until the typing/autofilling is done and
         focus is out of the widget. See EntryAutoPerson.
     '''
-
+    place_autofills = []
     formats = formats
     bg = formats["bg"]
     fg = formats["fg"]
@@ -1905,7 +1937,6 @@ class EntryAuto(Entryx):
         """
         recent_items = []
         all_items_unique = []
-
         for item in all_items:
             if item not in recent_items:
                 all_items_unique.append(item)
@@ -1958,7 +1989,7 @@ class EntryAuto(Entryx):
         if self.autofill is False:
             return
         key = evt.keysym
-        # prevent CTRL+S from filling anything in; also keeps the first
+        # prevent CTRL+S from filling anything in; also keeps the 
         #   typed character from filling anything in if it's an "s"; sorry.
         if key in ("s", "S"):
             return
@@ -1984,9 +2015,10 @@ class EntryAuto(Entryx):
     def show_hits(self, hits, pos):
         cursor = pos + 1
         if len(hits) != 0:
+            self.autofilled = hits[0]
             self.delete(0, 'end')
-            self.insert(0, hits[0])
-            self.icursor(cursor)
+            self.insert(0, self.autofilled)
+            self.icursor(cursor)            
 
     def prepend_match(self, evt):
         content = self.get()
