@@ -113,9 +113,10 @@ class ValidatePlace():
                 else:
                     new_nesting.append((name, place_id[0], idx))
         self.new_nesting = sorted(new_nesting, key=lambda u: u[2])
-        if self.cancelled is False:            
-            print("line", looky(seeline()).lineno, "self.new_nesting:", self.new_nesting)
+        if self.cancelled is False: 
             self.update_place(cur, conn)
+        else:
+            pass
         cur.execute("DETACH tree")
         cur.close()
         conn.close()
@@ -147,7 +148,6 @@ class ValidatePlace():
         self.make_widgets()
         self.make_inputs(name, idx, cur)
         self.root.wait_window(self.duplicate_places_dlg)
-        print("line", looky(seeline()).lineno, "self.dupevar.get():", self.dupevar.get())
         return self.dupevar.get()
 
     def make_inputs(self, name, idx, cur):
@@ -252,55 +252,10 @@ class ValidatePlace():
             cur.execute(update_finding_nested_place, (new_nesting_id, self.finding))
             conn.commit()
 
-        place_autofill_values = update_place_autofill_values()
-
-        # place_strings = get_all_place_strings()
-        # print("line", looky(seeline()).lineno, "place_strings:", place_strings)
-        # self.place_autofill_values = EntryAuto.create_lists(place_strings)        
+        place_autofill_values = update_place_autofill_values()     
 
     def delete_temp_ids(self, num):
         print("line", looky(seeline()).lineno, "num:", num)
-
-    # def input_to_db(self):
-        # tree = get_current_file()[0]
-        # conn = sqlite3.connect(global_db_path)
-        # conn.execute('PRAGMA foreign_keys = 1')
-        # cur = conn.cursor()
-        # cur.execute("ATTACH ? AS tree", (tree,))
-
-        # cur.execute(select_all_nested_places)
-        # all_finding_ids = [i[0] for i in cur.fetchall()]
-
-        
-
-        # # ids = []
-        # # for dkt in self.place_dict:            
-            # # ids.append(dkt["id"])
-        # # qty = len(self.place_dict)
-        # # nulls = 9 - qty
-        # # ids = ids + [None] * nulls
-        # # ids.append(self.finding)
-
-        # # last = len(self.place_dict) - 1
-        # # print("line", looky(seeline()).lineno, "self.place_dict:", self.place_dict)
-        # # q = 0
-        # # for dkt in self.place_dict:
-            # # child = dkt["id"]
-            # # if q < last:
-                # # parent = self.place_dict[q+1]["id"]
-            # # else:
-                # # parent = None
-            # # q += 1
-
-        # place_strings = get_all_place_strings()
-
-        # cur.execute(update_finding_places, tuple(ids))
-        # # conn.commit()   # do not delete
-        # place_strings.insert(0, self.final)
-            
-        # cur.execute("DETACH tree")
-        # cur.close()
-        # conn.close()
 
 
 

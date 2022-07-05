@@ -1735,8 +1735,9 @@ class Border(Canvas):
         self.changing_values = pass_values()
 
     def stop_edge_sizer(self, evt):
-
         values = self.changing_values
+        if values is None:
+            return
         resizee = values[0]
         init_geometry = values[1]
         click_down_x = values[2]
@@ -1914,7 +1915,8 @@ class Dialogue(Toplevel):
 class EntryAuto(Entryx):
     '''
         To use this class, after instantiating it, you have to call 
-        EntryAuto.create_lists(all_items). Other than getting all_items
+        EntryAuto.create_lists(all_items). When adding a new place, run e.g.
+        `update_place_autofill_values()`. Other than getting all_items
         (e.g. from a database query), the class is self-contained. 
 
         To extend this class, rule number 1 is don't try doing logic on a

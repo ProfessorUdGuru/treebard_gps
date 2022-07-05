@@ -409,11 +409,21 @@ select_all_places = '''
     FROM place
 '''
 
-# select_all_places_places = '''
-    # SELECT place_id1, place_id2
-    # FROM places_places
-# '''
-# copied from select_finding_places_nesting NOT FINISHED? 20220629
+select_all_place_string_ids = '''
+    SELECT a.place_id, b.place_id, c.place_id, d.place_id, 
+        e.place_id, f.place_id, g.place_id, h.place_id, i.place_id
+    FROM nested_place
+        LEFT JOIN place a ON a.place_id = nest0
+        LEFT JOIN place b ON b.place_id = nest1
+        LEFT JOIN place c ON c.place_id = nest2
+        LEFT JOIN place d ON d.place_id = nest3
+        LEFT JOIN place e ON e.place_id = nest4
+        LEFT JOIN place f ON f.place_id = nest5
+        LEFT JOIN place g ON g.place_id = nest6
+        LEFT JOIN place h ON h.place_id = nest7
+        LEFT JOIN place i ON i.place_id = nest8  
+    WHERE nest0 != 1
+'''
 
 select_all_place_strings = '''
     SELECT a.places, b.places, c.places, d.places, 
@@ -1673,16 +1683,9 @@ update_finding_places = '''
 
 update_finding_places_null = '''
     UPDATE finding
-    SET nested_place_id = null
+    SET nested_place_id = 1
     WHERE finding_id = ?    
 '''
-
-# update_finding_places_null = '''
-    # UPDATE finding
-    # SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
-        # = (1, null, null, null, null, null, null, null, null)
-    # WHERE finding_id = ?    
-# '''
 
 update_findings_notes = '''
     UPDATE findings_notes 
