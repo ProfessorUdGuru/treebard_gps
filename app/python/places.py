@@ -16,13 +16,10 @@ from messages_context_help import (
 from messages import places_err
 from utes import center_dialog
 from query_strings import (
-    select_place_id_hint, insert_place_new, update_finding_places_null,     
-    select_place_hint, select_all_places, update_nested_place,
-    update_place_hint, select_place_id2, select_all_place_strings,
-    select_max_place_id, select_place_id1, update_finding_places,
-    insert_places_places_new, select_all_place_ids, insert_nested_place,
-    select_all_nested_places, select_place_id, insert_place_name,
-    select_all_place_names, select_nested_place_inclusion,
+    update_finding_nested_place_unknown, update_nested_place,
+    select_all_nested_place_strings, select_all_place_ids, insert_nested_place,
+    select_max_place_id, select_place_id_with_name, insert_place_new,     
+    select_all_place_names, select_nested_place_inclusion, insert_place_name,
     select_finding_nested_place_id, update_finding_nested_place)
 import dev_tools as dt
 from dev_tools import looky, seeline
@@ -31,21 +28,49 @@ from dev_tools import looky, seeline
 
 
 
+def make_place_master_list():
 
-def get_all_place_strings():
-    all_place_strings = []
+    place_data = []
+
     conn = sqlite3.connect(global_db_path)
     cur = conn.cursor()
-    cur.execute(select_all_place_strings)
-    tups = cur.fetchall()
-    for tup in tups:
-        all_place_strings.append(", ".join([i for i in tup if i]))
+
+
+
+    cur.execute(select_all_place_names)
+    all_place_names = [i[0] for i in cur.fetchall()]
+    dupe_names = set()
+    for name in all_place_names:
+        if all_place_names.count(name) > 1:
+            dupe_names.add(name)
+
+
+    nestings = get_all_place_strings()
+    for tup in nestings:
+        nesting, nesting_id = tup
+        # Expand dict if more data is needed.
+        dkt = {nesting: {"nested_place_id": nesting_id}}
+        place_data.append(dkt)
+
     cur.close()
     conn.close()
-    return all_place_strings
+    return place_data, [i[0] for i in nestings], dupe_names
+
+def get_all_place_strings():
+    """ Call this only inside make_place_master_list(). """
+    nestings = []
+    conn = sqlite3.connect(global_db_path)
+    cur = conn.cursor()
+    cur.execute(select_all_nested_place_strings)
+    tups = cur.fetchall()
+    for tup in tups:
+        nestings.append((", ".join([i for i in tup[0:9] if i]), tup[9]))
+    cur.close()
+    conn.close()
+    return nestings
 
 def update_place_autofill_values():
-    places = get_all_place_strings()
+    places = make_place_master_list()[1]
     for ent in EntryAuto.place_autofills:
         ent.values = places
     return places
@@ -69,8 +94,7 @@ class ValidatePlace():
         self.formats = make_formats_dict()
 
         self.place_list = []
-        self.dupe_names = set()
-
+        self.place_data, self.nestings, self.dupe_names = make_place_master_list()
         self.new_nesting = []
         self.cancelled = True
         self.new_places = []
@@ -85,27 +109,25 @@ class ValidatePlace():
         cur = conn.cursor()
         cur.execute("ATTACH ? AS tree", (tree,))
         if len(self.final) == 0 and len(self.initial) != 0:
-            cur.execute(update_finding_places_null, (self.finding,))
+            cur.execute(update_finding_nested_place_unknown, (self.finding,))
             conn.commit()
             return
-
-        cur.execute(select_all_place_names)
-        all_place_names = [i[0] for i in cur.fetchall()]
-        for name in all_place_names:
-            if all_place_names.count(name) > 1:
-                self.dupe_names.add(name)
         self.place_list = self.final.split(",")
         self.place_list = [self.place_list[i].strip() for i in range(
             len(self.place_list))]
 
         new_nesting = []
-        for idx, name in enumerate(self.place_list):
+        for idx, name in enumerate(self.place_list, 1):
             if name in self.dupe_names and self.inwidg.autofilled != self.final:
-                choice = self.open_dupe_place_dlg(name, idx, cur)
-                place_id = self.dupe_ids[choice]
+                choice = self.open_dupe_place_dlg(name, cur)
+                print("line", looky(seeline()).lineno, "choice:", choice)
+                if choice > 0:
+                    place_id = self.dupe_ids[choice]
+                else:
+                    name, place_id = self.make_new_place(name)
                 new_nesting.append((name, place_id, idx))
             else:
-                cur.execute(select_place_id, (name,))
+                cur.execute(select_place_id_with_name, (name,))
                 place_id = cur.fetchone()
                 if place_id is None:
                     name, place_id = self.make_new_place(name)
@@ -127,30 +149,32 @@ class ValidatePlace():
         cur = conn.cursor()
         cur.execute(select_max_place_id)
         self.max_id = cur.fetchone()[0] # ******revert on CANCEL by deleting > this
-        cur.execute(insert_place_name, (name,))
+        cur.execute(insert_place_new)
         conn.commit()
         cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'place'")
         temp_id = cur.fetchone()[0] 
+        cur.execute(insert_place_name, (name, temp_id))
+        conn.commit()
         self.new_places.append(temp_id)
         cur.close()
         conn.close()
         return name, temp_id
 
-    def open_dupe_place_dlg(self, name, idx, cur):
+    def open_dupe_place_dlg(self, name, cur):
         self.duplicate_places_dlg = Toplevel(self.root)
         self.duplicate_places_dlg.geometry("+120+24")
         self.duplicate_places_dlg.columnconfigure(1, weight=1)
         self.duplicate_places_dlg.rowconfigure(4, weight=1)
         self.dupe_nest = name
-        cur.execute(select_place_id, (name,))
+        cur.execute(select_place_id_with_name, (name,))
         self.dupe_ids = [i[0] for i in cur.fetchall()]
         self.rc_menu = RightClickMenu(self.root, treebard=self.treebard)
         self.make_widgets()
-        self.make_inputs(name, idx, cur)
+        self.make_inputs(name, cur)
         self.root.wait_window(self.duplicate_places_dlg)
         return self.dupevar.get()
 
-    def make_inputs(self, name, idx, cur):
+    def make_inputs(self, name, cur):
 
         def show_examples(num, frm):
             cur.execute(select_nested_place_inclusion, tuple([num]*9,))
@@ -163,7 +187,15 @@ class ValidatePlace():
                 lab.grid(column=0, row=indx+1, sticky="ew", padx=(24,0))
 
         self.dupevar = tk.IntVar()
-        row = 0
+        radnew = Radiobutton(
+            self.radframe,
+            text="New place named {}".format(name),
+            variable=self.dupevar,
+            value=0)
+        radnew.grid(column=0, row=0, sticky="w", padx=12, pady=(0,12))
+        radnew.select()
+        print("line", looky(seeline()).lineno, "self.dupe_ids:", self.dupe_ids)
+        row = 1
         for num in self.dupe_ids:
             frm = Frame(self.radframe)
             rad = Radiobutton(
@@ -174,8 +206,6 @@ class ValidatePlace():
             frm.grid(column=0, row=row, padx=12, pady=(0,12), sticky="ew")
             rad.grid(column=0, row=0, sticky="w")
             show_examples(num, frm)
-            if row == 0:
-                rad.select()
             row += 1
         self.resize_window()
 
@@ -211,6 +241,7 @@ class ValidatePlace():
         buttonbox = Frame(self.window)
         b1 = Button(buttonbox, text="OK", width=7, command=ok)
         b2 = Button(buttonbox, text="CANCEL", width=7, command=cancel)
+        b1.focus_set()
 
         # children of self.window
         lab.grid(

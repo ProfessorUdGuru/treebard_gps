@@ -17,7 +17,7 @@ from query_strings import (
     select_current_person, select_name_with_id, select_all_names_ids,
     select_all_person_ids, select_image_id, select_max_person_id,    
     insert_images_elements, select_name_type_id, insert_name, 
-    select_all_images, select_all_name_types, insert_person_new,
+    select_all_images, select_all_name_types, 
     select_person_gender, select_max_name_type_id, insert_name_type_new,
     insert_image_new, select_name_with_id_any, select_birth_names_ids,
     insert_finding_birth_new_person, update_format_font,

@@ -18,7 +18,7 @@ from persons import (
 from assertions import AssertionsDialog
 from roles import RolesDialog
 from notes import NotesDialog
-from places import ValidatePlace, get_all_place_strings
+from places import ValidatePlace, make_place_master_list
 from messages import findings_msg
 from utes import split_sorter
     
@@ -35,7 +35,7 @@ from query_strings import (
     update_finding_age, update_current_person, select_all_place_ids,
     select_all_event_types, select_event_type_id, insert_finding_new,
     insert_finding_new_couple, insert_finding_new_couple_details,
-    update_finding_age1, insert_place_new, insert_finding_new_couple_alt, 
+    update_finding_age1, insert_finding_new_couple_alt, 
     select_event_type_couple_bool, insert_kin_type_new, update_event_types, 
     insert_event_type_new, select_max_event_type_id, delete_finding,
     update_finding_ages_kintypes_null, select_finding_id_guardianship, 
@@ -425,7 +425,9 @@ class FindingsTable(Frame):
             False except for the places column.
         '''
 
-        place_strings = get_all_place_strings()
+        # place_strings = get_all_place_strings()[0]
+        place_strings = make_place_master_list()[1]
+        # print("line", looky(seeline()).lineno, "place_strings:", place_strings)
         place_autofill_values = EntryAuto.create_lists(place_strings)
         self.table_cells = []
         for i in range(int(qty/8)):

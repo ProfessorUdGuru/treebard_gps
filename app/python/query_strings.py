@@ -11,11 +11,6 @@ from dev_tools import looky, seeline
 	where they are used.
 '''
 
-# delete_assertions_findings = '''
-    # DELETE FROM assertions_findings
-    # WHERE finding_id = ?
-# '''
-
 delete_assertions_findings = '''
     DELETE FROM links_links
     WHERE finding_id = ?
@@ -30,16 +25,6 @@ delete_assertions_roles_person = '''
     DELETE FROM links_links
     WHERE person_id = ?
 '''
-
-# delete_assertion_person = '''
-    # DELETE FROM assertion
-    # WHERE person_id = ?
-# '''
-
-# delete_assertions_roles_person = '''
-    # DELETE FROM assertions_roles
-    # WHERE person_id = ?
-# '''
 
 delete_color_scheme = '''
     DELETE FROM color_scheme 
@@ -169,21 +154,9 @@ insert_finding_new_couple_details = '''
     VALUES (?, ?, ?, 128, ?, ?, 129, ?)
 '''
 
-update_finding_new_places_null = '''
-    UPDATE finding 
-    SET nest0 = 1
-    WHERE finding_id = ?    
-'''
-
 insert_finding_null_couple = '''
     INSERT INTO finding ('', null, '', null)
 '''
-
-insert_finding_places_new_event = '''
-    INSERT INTO finding
-       (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8, finding_id)
-    VALUES ({})
-'''.format(','.join(['?'] * 10))
 
 insert_findings_roles = '''
     INSERT INTO findings_roles 
@@ -231,23 +204,24 @@ insert_note = '''
 '''
 
 insert_person_new = '''
-    INSERT INTO person VALUES (?, ?)
-'''
-
-insert_place_name = '''
-    INSERT INTO place (places)
-    VALUES (?)
+    INSERT INTO person 
+    VALUES (?, ?)
 '''
 
 insert_place_new = '''
-    INSERT INTO place (place_id, places)
-    VALUES (?, ?)
+    INSERT INTO place (place_id)
+    VALUES (null)
 '''
 
-insert_places_places_new = '''
-    INSERT INTO places_places (place_id1, place_id2)
-    VALUES (?, ?)
+insert_place_name = '''
+    INSERT INTO place_name (place_names, place_id, main_place_name)
+    VALUES (?, ?, 1)
 '''
+
+# insert_place_new = '''
+    # INSERT INTO place (places)
+    # VALUES (?)
+# '''
 
 insert_role_type = '''
     INSERT INTO role_type VALUES (null, ?, 0, 0)
@@ -287,22 +261,6 @@ select_all_event_type_ids_marital = '''
     FROM event_type
     WHERE marital = 1
 '''
-
-select_all_nested_places = '''
-    SELECT finding_id 
-    FROM finding
-        JOIN nested_place
-            ON finding.nested_place_id = nested_place.nested_place_id
-    
-'''
-
-# select_all_nested_places = '''
-    # SELECT finding_id 
-    # FROM finding
-        # JOIN nested_place
-            # ON finding.nested_place_id = nested_place.nested_place_id
-    # WHERE nest0 != 1
-# '''
 
 select_all_findings_current_person = '''
     SELECT finding_id
@@ -364,11 +322,6 @@ select_birth_names_ids = '''
     WHERE name_type_id = 1 
 '''
 
-select_all_nested_pairs = '''
-    SELECT place_id1, place_id2   
-    FROM places_places
-'''
-
 select_all_person_ids = '''
     SELECT person_id FROM person
 '''
@@ -388,25 +341,38 @@ select_all_place_ids = '''
     FROM place
 '''
 
+# select_all_place_images = '''
+    # SELECT images, caption, main_image, places
+    # FROM images_elements
+        # JOIN place
+            # ON images_elements.place_id = place.place_id 
+        # JOIN current
+            # ON current.place_id = place.place_id
+        # JOIN image
+            # ON image.image_id = images_elements.image_id 
+# '''
+
 select_all_place_images = '''
-    SELECT images, caption, main_image, places
+    SELECT images, caption, main_image, place_names
     FROM images_elements
         JOIN place
             ON images_elements.place_id = place.place_id 
+        JOIN place_name
+            ON place.place_id = place_name.place_id
         JOIN current
             ON current.place_id = place.place_id
         JOIN image
             ON image.image_id = images_elements.image_id 
 '''
 
-select_all_place_names = '''
-    SELECT places
-    FROM place
-'''
+# select_all_place_names = '''
+    # SELECT place_names, place_id
+    # FROM place_name
+# '''
 
-select_all_places = '''
-    SELECT places
-    FROM place
+select_all_place_names = '''
+    SELECT place_names
+    FROM place_name
 '''
 
 select_all_place_string_ids = '''
@@ -425,35 +391,37 @@ select_all_place_string_ids = '''
     WHERE nest0 != 1
 '''
 
-select_all_place_strings = '''
-    SELECT a.places, b.places, c.places, d.places, 
-        e.places, f.places, g.places, h.places, i.places
+select_all_nested_place_strings = '''
+    SELECT a.place_names, b.place_names, c.place_names, d.place_names, 
+        e.place_names, f.place_names, g.place_names, h.place_names, i.place_names, 
+        nested_place_id
     FROM nested_place
-        LEFT JOIN place a ON a.place_id = nest0
-        LEFT JOIN place b ON b.place_id = nest1
-        LEFT JOIN place c ON c.place_id = nest2
-        LEFT JOIN place d ON d.place_id = nest3
-        LEFT JOIN place e ON e.place_id = nest4
-        LEFT JOIN place f ON f.place_id = nest5
-        LEFT JOIN place g ON g.place_id = nest6
-        LEFT JOIN place h ON h.place_id = nest7
-        LEFT JOIN place i ON i.place_id = nest8  
+        LEFT JOIN place_name a ON a.place_id = nest0
+        LEFT JOIN place_name b ON b.place_id = nest1
+        LEFT JOIN place_name c ON c.place_id = nest2
+        LEFT JOIN place_name d ON d.place_id = nest3
+        LEFT JOIN place_name e ON e.place_id = nest4
+        LEFT JOIN place_name f ON f.place_id = nest5
+        LEFT JOIN place_name g ON g.place_id = nest6
+        LEFT JOIN place_name h ON h.place_id = nest7
+        LEFT JOIN place_name i ON i.place_id = nest8  
     WHERE nest0 != 1
 '''
 
-# select_all_place_strings = '''
+# select_all_nested_place_strings = '''
     # SELECT a.places, b.places, c.places, d.places, 
         # e.places, f.places, g.places, h.places, i.places
-    # FROM finding
-    # LEFT JOIN place a ON a.place_id = nest0
-    # LEFT JOIN place b ON b.place_id = nest1
-    # LEFT JOIN place c ON c.place_id = nest2
-    # LEFT JOIN place d ON d.place_id = nest3
-    # LEFT JOIN place e ON e.place_id = nest4
-    # LEFT JOIN place f ON f.place_id = nest5
-    # LEFT JOIN place g ON g.place_id = nest6
-    # LEFT JOIN place h ON h.place_id = nest7
-    # LEFT JOIN place i ON i.place_id = nest8  
+    # FROM nested_place
+        # LEFT JOIN place a ON a.place_id = nest0
+        # LEFT JOIN place b ON b.place_id = nest1
+        # LEFT JOIN place c ON c.place_id = nest2
+        # LEFT JOIN place d ON d.place_id = nest3
+        # LEFT JOIN place e ON e.place_id = nest4
+        # LEFT JOIN place f ON f.place_id = nest5
+        # LEFT JOIN place g ON g.place_id = nest6
+        # LEFT JOIN place h ON h.place_id = nest7
+        # LEFT JOIN place i ON i.place_id = nest8  
+    # WHERE nest0 != 1
 # '''
 
 select_all_source_images = '''
@@ -499,12 +467,6 @@ select_color_scheme_current_id = '''
     WHERE current_id = 1
 '''
 
-# select_count_finding_id_sources = '''
-    # SELECT COUNT(finding_id) 
-        # FROM assertions_findings 
-        # WHERE finding_id = ?
-# '''
-
 select_count_finding_id_sources = '''
     SELECT COUNT(finding_id) 
         FROM links_links 
@@ -516,12 +478,6 @@ select_count_findings_roles = '''
     SELECT COUNT (findings_roles_id)
     FROM findings_roles
     WHERE finding_id = ?
-'''
-
-select_count_places = '''
-    SELECT COUNT (places)
-    FROM place
-    WHERE places = ?
 '''
 
 select_count_place_id = '''
@@ -812,44 +768,46 @@ select_finding_persons = '''
 '''
 
 select_finding_nested_place = '''
-    SELECT a.places, b.places, c.places, d.places, 
-        e.places, f.places, g.places, h.places, i.places
+    SELECT a.place_names, b.place_names, c.place_names, d.place_names, 
+        e.place_names, f.place_names, g.place_names, h.place_names, i.place_names
     FROM finding
         LEFT JOIN nested_place ON finding.nested_place_id = nested_place.nested_place_id
-        LEFT JOIN place a ON a.place_id = nest0
-        LEFT JOIN place b ON b.place_id = nest1
-        LEFT JOIN place c ON c.place_id = nest2
-        LEFT JOIN place d ON d.place_id = nest3
-        LEFT JOIN place e ON e.place_id = nest4
-        LEFT JOIN place f ON f.place_id = nest5
-        LEFT JOIN place g ON g.place_id = nest6
-        LEFT JOIN place h ON h.place_id = nest7
-        LEFT JOIN place i ON i.place_id = nest8             
+        LEFT JOIN place_name a ON a.place_id = nest0
+        LEFT JOIN place_name b ON b.place_id = nest1
+        LEFT JOIN place_name c ON c.place_id = nest2
+        LEFT JOIN place_name d ON d.place_id = nest3
+        LEFT JOIN place_name e ON e.place_id = nest4
+        LEFT JOIN place_name f ON f.place_id = nest5
+        LEFT JOIN place_name g ON g.place_id = nest6
+        LEFT JOIN place_name h ON h.place_id = nest7
+        LEFT JOIN place_name i ON i.place_id = nest8             
     WHERE finding_id = ? 
         AND nest0 != 1
 '''
+
+# select_finding_nested_place = '''
+    # SELECT a.places, b.places, c.places, d.places, 
+        # e.places, f.places, g.places, h.places, i.places
+    # FROM finding
+        # LEFT JOIN nested_place ON finding.nested_place_id = nested_place.nested_place_id
+        # LEFT JOIN place a ON a.place_id = nest0
+        # LEFT JOIN place b ON b.place_id = nest1
+        # LEFT JOIN place c ON c.place_id = nest2
+        # LEFT JOIN place d ON d.place_id = nest3
+        # LEFT JOIN place e ON e.place_id = nest4
+        # LEFT JOIN place f ON f.place_id = nest5
+        # LEFT JOIN place g ON g.place_id = nest6
+        # LEFT JOIN place h ON h.place_id = nest7
+        # LEFT JOIN place i ON i.place_id = nest8             
+    # WHERE finding_id = ? 
+        # AND nest0 != 1
+# '''
 
 select_finding_nested_place_id = '''
     SELECT nested_place_id
     FROM finding 
     WHERE finding_id = ?
 '''
-
-# select_finding_places_nesting = '''
-    # SELECT a.places, b.places, c.places, d.places, 
-        # e.places, f.places, g.places, h.places, i.places
-    # FROM finding
-    # LEFT JOIN place a ON a.place_id = nest0
-    # LEFT JOIN place b ON b.place_id = nest1
-    # LEFT JOIN place c ON c.place_id = nest2
-    # LEFT JOIN place d ON d.place_id = nest3
-    # LEFT JOIN place e ON e.place_id = nest4
-    # LEFT JOIN place f ON f.place_id = nest5
-    # LEFT JOIN place g ON g.place_id = nest6
-    # LEFT JOIN place h ON h.place_id = nest7
-    # LEFT JOIN place i ON i.place_id = nest8             
-    # WHERE finding_id = ? 
-# '''
 
 select_finding_sorter = '''
     SELECT date_sorter
@@ -1158,25 +1116,36 @@ select_name_with_id_any = '''
 '''
 
 select_nested_place_inclusion = '''
-    SELECT a.places, b.places, c.places, d.places, 
-        e.places, f.places, g.places, h.places, i.places
+    SELECT a.place_names, b.place_names, c.place_names, d.place_names, 
+        e.place_names, f.place_names, g.place_names, h.place_names, i.place_names
     FROM nested_place
-        LEFT JOIN place as a ON a.place_id = nest0
-        LEFT JOIN place as b ON b.place_id = nest1
-        LEFT JOIN place as c ON c.place_id = nest2
-        LEFT JOIN place as d ON d.place_id = nest3
-        LEFT JOIN place as e ON e.place_id = nest4
-        LEFT JOIN place as f ON f.place_id = nest5
-        LEFT JOIN place as g ON g.place_id = nest6
-        LEFT JOIN place as h ON h.place_id = nest7
-        LEFT JOIN place as i ON i.place_id = nest8
+        LEFT JOIN place_name as a ON a.place_id = nest0
+        LEFT JOIN place_name as b ON b.place_id = nest1
+        LEFT JOIN place_name as c ON c.place_id = nest2
+        LEFT JOIN place_name as d ON d.place_id = nest3
+        LEFT JOIN place_name as e ON e.place_id = nest4
+        LEFT JOIN place_name as f ON f.place_id = nest5
+        LEFT JOIN place_name as g ON g.place_id = nest6
+        LEFT JOIN place_name as h ON h.place_id = nest7
+        LEFT JOIN place_name as i ON i.place_id = nest8
 
     WHERE nest0 = ? or nest1 = ? or nest2 = ? or nest3 = ? or nest4 = ? or nest5 = ? or nest6 = ? or nest7 = ? or nest8 = ?
 '''
 
 # select_nested_place_inclusion = '''
-    # SELECT nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8
+    # SELECT a.places, b.places, c.places, d.places, 
+        # e.places, f.places, g.places, h.places, i.places
     # FROM nested_place
+        # LEFT JOIN place as a ON a.place_id = nest0
+        # LEFT JOIN place as b ON b.place_id = nest1
+        # LEFT JOIN place as c ON c.place_id = nest2
+        # LEFT JOIN place as d ON d.place_id = nest3
+        # LEFT JOIN place as e ON e.place_id = nest4
+        # LEFT JOIN place as f ON f.place_id = nest5
+        # LEFT JOIN place as g ON g.place_id = nest6
+        # LEFT JOIN place as h ON h.place_id = nest7
+        # LEFT JOIN place as i ON i.place_id = nest8
+
     # WHERE nest0 = ? or nest1 = ? or nest2 = ? or nest3 = ? or nest4 = ? or nest5 = ? or nest6 = ? or nest7 = ? or nest8 = ?
 # '''
 
@@ -1304,55 +1273,21 @@ select_person_id_finding = '''
     WHERE finding_id = ?
 '''
 
-select_place = '''
-    SELECT places 
-    FROM place 
-    WHERE place_id = ?
-'''
+select_place_data = '''
+    SELECT 
+'''    
 
-select_place_id = '''
+select_place_id_with_name = '''
     SELECT place_id
-    FROM place
-    WHERE places = ?
+    FROM place_name
+    WHERE place_names = ?
 '''
 
-select_place_id_hint = '''
-    SELECT place_id, hint
-    FROM place
-    WHERE places = ?
-'''
-
-select_place_id1 = '''
-    SELECT place_id1 
-    FROM places_places 
-    WHERE place_id2 = ?
-'''
-
-select_place_id2 = '''
-    SELECT place_id2
-    FROM places_places
-    WHERE place_id1 = ?
-'''
-
-select_place_hint = '''
-    SELECT hint
-    FROM place
-    WHERE place_id = ?
-'''
-
-select_places_places_id = '''
-    SELECT places_places_id
-    FROM places_places
-    WHERE place_id1 = ?
-        AND (place_id2 = ? OR place_id2 is null)
-'''
-
-select_related_places = '''
-    SELECT nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8
-    FROM nested_places
-    WHERE nest0 = ? OR nest1 = ? OR nest2 = ? OR nest3 = ? OR nest4 = ? 
-        OR nest5 = ? OR nest6 = ? OR nest7 = ? OR nest8 = ?
-'''
+# select_place_id_with_name = '''
+    # SELECT place_id
+    # FROM place
+    # WHERE places = ?
+# '''
 
 select_roles = '''
     SELECT 
@@ -1382,18 +1317,6 @@ select_app_setting_openpic_dir = '''
     FROM app_setting
     WHERE app_setting_id = 1
 '''
-
-# update_assertions_persons_1_null = '''
-    # UPDATE assertions_persons
-    # SET person_id1 = null
-    # WHERE person_id1 = ?
-# '''
-
-# update_assertions_persons_2_null = '''
-    # UPDATE assertions_persons
-    # SET person_id2 = null
-    # WHERE person_id2 = ?
-# '''
 
 update_closing_state_openpic = '''
     UPDATE closing_state
@@ -1667,21 +1590,14 @@ update_finding_person_2 = '''
     WHERE finding_id = ?
 '''
 
-update_finding_places = '''
+update_nested_place_finding = '''
     UPDATE nested_place
     SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
         = ({}) 
     WHERE nested_place_id = (SELECT finding.nested_place_id FROM finding WHERE finding_id = ?)
 '''.format(','.join(['?'] * 9))
 
-# update_finding_places = '''
-    # UPDATE finding
-    # SET (nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8)
-        # = ({}) 
-    # WHERE finding_id = ?
-# '''.format(','.join(['?'] * 9))
-
-update_finding_places_null = '''
+update_finding_nested_place_unknown = '''
     UPDATE finding
     SET nested_place_id = 1
     WHERE finding_id = ?    
@@ -1783,12 +1699,6 @@ update_person_gender = '''
     UPDATE person
     SET gender = ?
     WHERE person_id = ?
-'''
-
-update_place_hint = '''
-    UPDATE place 
-    SET hint = ?
-    WHERE place_id = ?
 '''
 
 
