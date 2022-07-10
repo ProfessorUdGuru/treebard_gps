@@ -1115,6 +1115,12 @@ select_name_with_id_any = '''
     WHERE name.person_id = ?
 '''
 
+select_nested_place_ids = '''
+    SELECT nest0, nest1, nest2, nest3, nest4, nest5, nest6, nest7, nest8
+    FROM nested_place
+    WHERE nested_place_id = ?
+'''
+
 select_nested_place_inclusion = '''
     SELECT a.place_names, b.place_names, c.place_names, d.place_names, 
         e.place_names, f.place_names, g.place_names, h.place_names, i.place_names

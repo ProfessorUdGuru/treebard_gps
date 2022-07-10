@@ -171,26 +171,17 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: places_rewrite
-# input place if autofilled include newly created
-# see line 144 new_nesting shd have 3 tups in it not just [('Paris', 729, 0)] for Paris, Ontario, Canada, what do the other cases do to get all the tups in, not just the dupes or whatever SEE line 150 case not handles, maybe move the front case back to where it used to be see commented last case from before
-# Dupes dlg for Paris TX has wrong examples in top radio area, this happens when a nested place is added by autofilling an existing place. tHE top radio's place_id (30) is going into nest0 every time. hAVE TO APPEND nested_place_id to end of each string but without messing up autofill values so just make a parallel list of IDS as needed when autofilling only so the correct id for the dupes can be gotten by matching positions in the mirrored lists of names vs ids
-# dlg is only showing possibilities when the place is already in the db. Need a NEW PLACE CALLED PARIS extra radiobutton.
-# Finding rows ?are being populated with nested_place_id which is not deleted on CANCEL (or on unsuccessful OK).
-# OK works for new nesting w/ existing places.
-# Autofill works for existing places incl. just-made.
-# CANCEL and X both work.
-# test new nesting w/ new place
-# Then make an existing place go in that has autofilled into conclusions table. Then test update_nested_place. Then make X work on escape, and OK work on Enter.
-# Put the scrollbars back and don't center it.
-# 1) get rid of place_dict completely, 2) instead of 2 lists new_places/existing_places, make one list self.new_nesting, just insert each value by idx as they are found, while also populating self.new_places in case of cancel; 3) don't do it on press OK bec the OK button only exists on the dupe dialog, have to do it on focus out so do all dupes first, and if cancel pressed, delete new places from db, but if no dlg or cancel not pressed, input new nesting at last; dupes dlg has to list all dupes if more than one so one OK or CANCEL either inputs all choices to self.new_nesting or deleted all new_places from db; then if not returned by CANCEL, the focus out will carry out the input to db of the new_nesting
-# autofill works for changing empty place on conclusions table to existing place, no errors, but it doesn't go into db
-# in the label or title of dupes dlg highlight or capitalize the current place being questioned, that's the only thing you have to do about inner dupes ie "Maine, MAINE, Massachusetts, USA"
-# REDO make_new_places; to get rid of the guessed temp_id and use real temp_ids, save them in the dict and do everything else the same, except on CANCEL delete them all from the db; can still use max to decide which is the last real id and delete if > max on CANCEL; place dlg has to be modal
-# during rewrite try to ignore places_places and just use the new tables to get all the same stuff
-# make new treebard_untouched.db which has only the default place #1 in its place and nested_place tables
-# get rid of places_places and the recursive query stuff and nested_place_strings.py?, rewrite everything except the new and duplicate places dialog, remove nests from finding table FIGURE OUT HOW TO USE place_period without having it to refer to a pair as in places_places or was that even valid to begin with, maybe need a note instead as it's not a simple case of some time period, esp when considering that a time period might not properly refer to 1) a child/parent nested pair or 2) any particular chain of nested places; probably leave this for a note linked to a place or a place nest at the user's discretion NOW I DON'T NEED PLACES PLACES? find out what it's good for
-# First step is the one I've been putting off the longest: moving places to a global database so the user doesn't have to repeatedly input the same places if he has more than one tree. I haven't done much of this sort of thing. I used to do more of it, but simplified. I can see one problem already. Not really a problem, but deleting a place will not be allowed if any tree is using the place. 
-# make the delete types dialog with cols defined by nests or types and the rows defined by trees and the cells have checkbuttons
+# just-used nesting doesn't go to front of hits list
+# clicking X to cancel adding "Paris, Iowa, USA" doesn't cancel; does delete_temp_ids() do anything? see max_id
+# place funx works for...
+    # creating a new place "Paris, Maine, USA" in which paris was the only new nest and the string already existed only as a dupe
+    # "PJC, Paris, Indiana, USA" where the first place didn't exist at all
+    # cancel
+    # unlink by deleting place from conclusions table
+    # autofill existing nest
+    # making a new nesting w/ existing nests w/out dialog
+
+# Then make X work on escape, and OK work on Enter.
 # narrow/emptyish place col in conclusions table shd get bigger (which they do by default) as autofill tries values on each char typed, but shd not get smaller again till focus out, then if applicable shrink down to fit content. Stop flashing big/small/big/small while typing.
 # fix blank finding, assertion, place, and nested_place tables in treebard.db, default_new_tree, _untouchedx2, and gregory_family_tree ; drop type and place tables from gregory/default/untouched & make .sql flat files
 
@@ -276,6 +267,7 @@ if __name__ == '__main__':
 # backup app to external hd
 
 # BRANCH: types
+# make the delete types dialog with cols defined by nests or types and the rows defined by trees and the cells have checkbuttons, shd also work for places?
 # Create a delete type dialog that opens up if you try to delete a type or a place. Assuming that all types and places have already been moved to treebard.db and dropped from the individual tree tables. See https://treebard.proboards.com/thread/154/creating-deleting-types-places for the details.
 # This started when I found I'd failed to stop using the formats table for default_formats, led to the realization that the formats table needs to go away, led to a grand new structure using the fact that I now have a global db again so might as well use it. Below it says to store an fk for color scheme but to do that right, color scheme table needs to be moved to treebard.db. So will keep using formats for fonts and current color scheme only till I get to this branch, since I have no other place to put them.
 # get rid of get_current_formats() in styles.py

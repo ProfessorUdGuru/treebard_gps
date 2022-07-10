@@ -856,9 +856,10 @@ class FindingsTable(Frame):
 
     def count_birth_death_events(self, new_conclusion):
         too_many = False
-        current_file = get_current_file()[0]
-        conn = sqlite3.connect(current_file)
+        tree = get_current_file()[0]
+        conn = sqlite3.connect(global_db_path)
         cur = conn.cursor()
+        cur.execute("ATTACH ? AS tree", (tree,))
         cur.execute(select_findings_for_person, (self.current_person,))
         all_events = [i[0] for i in cur.fetchall()]
         if new_conclusion in all_events:
