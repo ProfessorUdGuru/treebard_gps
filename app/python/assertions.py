@@ -5,7 +5,7 @@ import sqlite3
 from widgets import (
     Toplevel, Frame, Button, Label, RadiobuttonBig, LabelHeader, 
     Entry, ButtonQuiet, configall, Border, Scrollbar, open_message,
-    EntryAuto, Separator, make_formats_dict, TabBook)
+    Separator, make_formats_dict, TabBook)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from scrolling import resize_scrolled_content

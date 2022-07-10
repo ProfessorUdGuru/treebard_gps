@@ -6,7 +6,7 @@ from files import get_current_file, global_db_path
 from widgets import (
     Frame, LabelDots, LabelButtonText, Toplevel, Label, Radiobutton, configall,
     LabelH3, Button, Entry, LabelHeader, Separator, open_message, Scrollbar,
-    LabelStay, make_formats_dict, EntryAuto, EntryAutoHilited, NEUTRAL_COLOR,
+    LabelStay, make_formats_dict, EntryAuto, EntryAutoPlace, EntryAutoHilited, NEUTRAL_COLOR,
     redraw_person_tab)
 from scrolling import resize_scrolled_content
 from toykinter_widgets import run_statusbar_tooltips
@@ -440,11 +440,11 @@ class FindingsTable(Frame):
                             autofill=True, 
                             values=self.event_autofill_values)
                     elif j == 2:
-                        cell = EntryAuto(
+                        cell = EntryAutoPlace(
                             self, width=0, 
                             autofill=True, 
                             values=place_autofill_values)
-                        EntryAuto.place_autofills.append(cell)
+                        EntryAutoPlace.place_autofills.append(cell)
                     else:                        
                         cell = EntryAuto(self, width=0,)
                     cell.initial = ''
@@ -1392,9 +1392,9 @@ if __name__ == '__main__':
     root.geometry('+800+300')
 
     strings = make_all_nestings(select_all_place_ids)
-    place_autofill_values = EntryAuto.create_lists(strings)
+    place_autofill_values = EntryAutoPlace.create_lists(strings)
 
-    auto = EntryAuto(
+    auto = EntryAutoPlace(
         root, width=50, autofill=True, values=place_autofill_values)
 
     auto.focus_set()   

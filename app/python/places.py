@@ -5,7 +5,7 @@ import sqlite3
 from widgets import (
     Toplevel, Frame, Button, Label, Radiobutton, LabelHeader, 
     Entry, ButtonQuiet, configall, Border, Scrollbar, open_message,
-    EntryAuto, Separator, make_formats_dict)
+    EntryAutoPlace, Separator, make_formats_dict)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips
 from scrolling import resize_scrolled_content
@@ -43,6 +43,7 @@ def make_place_master_list():
             dupe_names.add(name)
 
     nestings = get_all_place_strings()
+    nestings = sorted(nestings, key=lambda f: f[0])
     for tup in nestings:
         nesting, nesting_id = tup
         # Expand dict if more data is needed.
@@ -51,6 +52,7 @@ def make_place_master_list():
 
     cur.close()
     conn.close()
+    # print("line", looky(seeline()).lineno, "nestings:", nestings)
     return place_data, [i[0] for i in nestings], dupe_names
 
 def get_all_place_strings():
@@ -68,8 +70,10 @@ def get_all_place_strings():
 
 def update_place_autofill_values():
     places = make_place_master_list()[1]
-    for ent in EntryAuto.place_autofills:
+    for ent in EntryAutoPlace.place_autofills:
+        # print("line", looky(seeline()).lineno, "ent:", ent)
         ent.values = places
+    EntryAutoPlace.place_autofill_values = places
     return places
 
 class ValidatePlace():
@@ -95,6 +99,8 @@ class ValidatePlace():
         self.new_nesting = []
         self.cancelled = True
         self.new_places = []
+
+        # self.inwidg.bind("<FocusOut>", update_place_autofill_values, add="+")
 
         self.validate_place()
 
@@ -212,7 +218,6 @@ class ValidatePlace():
         resize_scrolled_content(self.canvas.master, self.canvas, self.window)
 
     def validate_place(self):
-
         tree = get_current_file()[0]
         conn = sqlite3.connect(global_db_path)
         conn.execute('PRAGMA foreign_keys = 1')
@@ -262,7 +267,8 @@ class ValidatePlace():
             print("line", looky(seeline()).lineno, "self.cancelled:", self.cancelled)
         cur.execute("DETACH tree")
         cur.close()
-        conn.close()
+        conn.close() 
+        EntryAutoPlace.prepend_match(self.inwidg)# make sure this isn't going into event type values too, if it does then place needs its own subclass like person has
 
     def make_new_place(self, name):
         conn = sqlite3.connect(global_db_path)
@@ -293,16 +299,6 @@ class ValidatePlace():
         self.root.wait_window(self.duplicate_places_dlg)
         return self.dupevar.get()
 
-    def resize_window(self):
-        """ Added to requested width and height 
-            are allowances for widgets not in self.window such as borders, 
-            title bar, and status bar.
-        """
-        self.root.update_idletasks()    
-        width = self.window.winfo_reqwidth() + 6
-        height = self.window.winfo_reqheight() + 42
-        self.duplicate_places_dlg.geometry("{}x{}".format(width, height))
-
     def update_place(self, cur, conn, autofill_nested_place_id=None):
         nested_ids = [i[1] for i in self.new_nesting]
         cur.execute(select_finding_nested_place_id, (self.finding,))
@@ -324,7 +320,8 @@ class ValidatePlace():
             cur.execute(update_finding_nested_place, (new_nesting_id, self.finding))
             conn.commit()
 
-        place_autofill_values = update_place_autofill_values()     
+        place_autofill_values = update_place_autofill_values() 
+        
 
     def delete_temp_ids(self, num):
         print("line", looky(seeline()).lineno, "num:", num)

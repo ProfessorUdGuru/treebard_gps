@@ -356,7 +356,7 @@ def configall(master, formats):
                 LabelStatusbar.status = formats["status"]
             config_bg_fg_fontStatus(widg)
 
-        elif subclass in ("EntryAutoPerson", "EntryAuto"):
+        elif subclass in ("EntryAutoPerson", "EntryAuto", "EntryAutoPlace"):
             EntryAutoPerson.highlight_bg = formats["highlight_bg"]
             EntryAutoPerson.bg = formats["bg"]
             EntryAutoPerson.fg=formats["fg"]
@@ -1911,6 +1911,156 @@ class Dialogue(Toplevel):
 
         configall(self, self.formats)
         self.deiconify()
+
+class EntryAutoPlace(Entryx):
+    '''
+        To use this class, after instantiating it, you have to call 
+        EntryAutoPlace.create_lists(all_items). When adding a new place, run e.g.
+        `update_place_autofill_values()`. Other than getting all_items
+        (e.g. from a database query), the class is self-contained. 
+
+        To extend this class, rule number 1 is don't try doing logic on a
+        string being autofilled until the typing/autofilling is done and
+        focus is out of the widget. See EntryAutoPerson.
+    '''
+    place_autofills = []
+    place_autofill_values = []
+    formats = formats
+    bg = formats["bg"]
+    fg = formats["fg"]
+    insertbackground = formats["fg"]
+    selectbackground = formats["head_bg"]
+    selectforeground = formats["fg"]
+    font = formats["input_font"]
+
+    def create_lists(all_items):
+        """ This is made to use a simple list, it won't work for
+            person autofills. It works for event types and places. It works in 
+            conjunction with EntryAutoPlace.prepend_match().
+        """
+        recent_items = []
+        all_items_unique = []
+        for item in all_items:
+            if item not in recent_items:
+                all_items_unique.append(item)
+        final_items = recent_items + all_items_unique
+        return final_items
+
+    def prepend_match(widg):
+        content = widg.get()
+        print("line", looky(seeline()).lineno, "content:", content)
+        print("line", looky(seeline()).lineno, "EntryAutoPlace.place_autofill_values:", EntryAutoPlace.place_autofill_values)
+        if content in EntryAutoPlace.place_autofill_values:
+            idx = EntryAutoPlace.place_autofill_values.index(content)
+            x = EntryAutoPlace.place_autofill_values.pop(idx)
+            print("line", looky(seeline()).lineno, "x:", x)
+            EntryAutoPlace.place_autofill_values.insert(0, x)
+        print("line", looky(seeline()).lineno, "EntryAutoPlace.place_autofill_values:", EntryAutoPlace.place_autofill_values)
+        
+
+    def __init__(self, master, autofill=False, values=None, *args, **kwargs):
+        Entryx.__init__(self, master, *args, **kwargs)
+        self.master = master
+        self.autofill = autofill
+        self.values = values
+
+        self.config(
+            bd=0,
+            bg=formats['bg'], 
+            fg=formats['fg'], 
+            font=formats['input_font'], 
+            insertbackground=formats['fg'],
+            selectbackground=formats["head_bg"],
+            selectforeground=formats["fg"])
+
+        if autofill is True:
+            self.bind("<KeyPress>", self.detect_pressed)
+            self.bind("<KeyRelease>", self.get_typed)
+            # self.bind("<FocusOut>", self.prepend_match, add="+")
+            self.bind("<FocusIn>", self.deselect, add="+")
+
+    def detect_pressed(self, evt):
+        '''
+            runs on every key press
+        '''
+        if self.autofill is False:
+            return
+        key = evt.keysym
+        if len(key) == 1:
+            self.pos = self.index('insert')
+            keep = self.get()[0:self.pos]
+            self.delete(0, 'end')
+            self.insert(0, keep)
+
+    def get_typed(self, evt):
+        '''
+            Run on every key release; filters out most non-alpha-numeric 
+            keys; runs the functions not triggered by events.
+        '''
+        def do_it():
+            hits = self.match_string()
+            self.show_hits(hits, self.pos)
+
+        if self.autofill is False:
+            return
+        key = evt.keysym
+        # prevent CTRL+S from filling anything in; also keeps the 
+        #   typed character from filling anything in if it's an "s"; sorry.
+        if key in ("s", "S"):
+            return
+        # allow alphanumeric characters
+        if len(key) == 1:
+            do_it()
+        # allow hyphens and apostrophes
+        elif key in ('minus', 'quoteright'):
+            do_it()
+        # look for other chars that should be allowed in nested names
+        else:
+            pass
+
+    def match_string(self):
+        hits = []
+        got = self.get()
+        use_list = self.values
+        for item in use_list:
+            if item.lower().startswith(got.lower()):
+                hits.append(item)
+        return hits
+
+    def show_hits(self, hits, pos):
+        cursor = pos + 1
+        if len(hits) != 0:
+            self.autofilled = hits[0]
+            self.delete(0, 'end')
+            self.insert(0, self.autofilled)
+            self.icursor(cursor)            
+
+    # def prepend_match(self, evt):
+        # content = self.get()
+        # if content in self.values:
+            # idx = self.values.index(content)
+            # print("line", looky(seeline()).lineno, "self.values:", self.values)
+            # print("line", looky(seeline()).lineno, "idx:", idx)
+            # del self.values[idx]
+            # print("line", looky(seeline()).lineno, "content:", content)
+            # self.values.insert(0, content)
+            # print("line", looky(seeline()).lineno, "self.values:", self.values)
+        
+    def deselect(self, evt):
+        '''
+            This callback was added because something in the code for this 
+            widget caused the built-in replacement of selected text with 
+            typed text to stop working. So if you tabbed into an autofill entry
+            that already had text in it, the text was all selected as expected 
+            but if you typed, the typing was added to the end of the existing 
+            text instead of replacing it, which is unexpected. Instead of 
+            finding out why this is happening, I added this callback so that 
+            tabbing into a filled-out autofill will not select its text. This 
+            might be better since the value in the field is not often changed 
+            and should not be easy to change by mistake.
+        '''
+        self.select_clear()
+
 
 class EntryAuto(Entryx):
     '''
@@ -4324,7 +4474,7 @@ def redraw_families_table(evt, current_person, main_window):
 def redraw_findings_table(findings_table, current_person=None):    
     for lst in findings_table.cell_pool:
         for widg in lst[1]:
-            if widg.winfo_subclass() == 'EntryAuto':
+            if widg.winfo_subclass() in ('EntryAutoPlace', 'EntryAuto'):
                 widg.delete(0, 'end')
             elif widg.winfo_subclass() == 'LabelButtonText':
                 widg.config(text='')
