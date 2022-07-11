@@ -28,53 +28,7 @@ from dev_tools import looky, seeline
 
 
 
-def make_place_master_list():
 
-    place_data = []
-
-    conn = sqlite3.connect(global_db_path)
-    cur = conn.cursor()
-
-    cur.execute(select_all_place_names)
-    all_place_names = [i[0] for i in cur.fetchall()]
-    dupe_names = set()
-    for name in all_place_names:
-        if all_place_names.count(name) > 1:
-            dupe_names.add(name)
-
-    nestings = get_all_place_strings()
-    nestings = sorted(nestings, key=lambda f: f[0])
-    for tup in nestings:
-        nesting, nesting_id = tup
-        # Expand dict if more data is needed.
-        dkt = {nesting: {"nested_place_id": nesting_id}}
-        place_data.append(dkt)
-
-    cur.close()
-    conn.close()
-    # print("line", looky(seeline()).lineno, "nestings:", nestings)
-    return place_data, [i[0] for i in nestings], dupe_names
-
-def get_all_place_strings():
-    """ Call this only inside make_place_master_list(). """
-    nestings = []
-    conn = sqlite3.connect(global_db_path)
-    cur = conn.cursor()
-    cur.execute(select_all_nested_place_strings)
-    tups = cur.fetchall()
-    for tup in tups:
-        nestings.append((", ".join([i for i in tup[0:9] if i]), tup[9]))
-    cur.close()
-    conn.close()
-    return nestings
-
-def update_place_autofill_values():
-    places = make_place_master_list()[1]
-    for ent in EntryAutoPlace.place_autofills:
-        # print("line", looky(seeline()).lineno, "ent:", ent)
-        ent.values = places
-    EntryAutoPlace.place_autofill_values = places
-    return places
 
 class ValidatePlace():
     """ Duplicate places have to be checked by user dialog. Existing places
@@ -95,12 +49,11 @@ class ValidatePlace():
         self.formats = make_formats_dict()
 
         self.place_list = []
-        self.place_data, self.nestings, self.dupe_names = make_place_master_list()
+        self.place_data, self.nestings, self.dupe_names = EntryAutoPlace.get_place_values()
+
         self.new_nesting = []
         self.cancelled = True
         self.new_places = []
-
-        # self.inwidg.bind("<FocusOut>", update_place_autofill_values, add="+")
 
         self.validate_place()
 
@@ -268,7 +221,14 @@ class ValidatePlace():
         cur.execute("DETACH tree")
         cur.close()
         conn.close() 
-        EntryAutoPlace.prepend_match(self.inwidg)# make sure this isn't going into event type values too, if it does then place needs its own subclass like person has
+        self.prepend_match(self.inwidg)
+
+    def prepend_match(self, widg):
+        content = widg.get().strip()
+        if content in EntryAutoPlace.place_autofill_values:
+            idx = EntryAutoPlace.place_autofill_values.index(content)
+            x = EntryAutoPlace.place_autofill_values.pop(idx)
+            EntryAutoPlace.place_autofill_values.insert(0, x)
 
     def make_new_place(self, name):
         conn = sqlite3.connect(global_db_path)
@@ -320,8 +280,7 @@ class ValidatePlace():
             cur.execute(update_finding_nested_place, (new_nesting_id, self.finding))
             conn.commit()
 
-        place_autofill_values = update_place_autofill_values() 
-        
+        EntryAutoPlace.get_place_values()        
 
     def delete_temp_ids(self, num):
         print("line", looky(seeline()).lineno, "num:", num)

@@ -18,7 +18,8 @@ from persons import (
 from assertions import AssertionsDialog
 from roles import RolesDialog
 from notes import NotesDialog
-from places import ValidatePlace, make_place_master_list
+from places import ValidatePlace
+# from places import ValidatePlace, make_place_master_list
 from messages import findings_msg
 from utes import split_sorter
     
@@ -426,9 +427,9 @@ class FindingsTable(Frame):
         '''
 
         # place_strings = get_all_place_strings()[0]
-        place_strings = make_place_master_list()[1]
+        # place_strings = make_place_master_list()[1]
         # print("line", looky(seeline()).lineno, "place_strings:", place_strings)
-        place_autofill_values = EntryAuto.create_lists(place_strings)
+        # place_autofill_values = EntryAutoPlace.create_lists(place_strings)
         self.table_cells = []
         for i in range(int(qty/8)):
             row = []
@@ -443,8 +444,9 @@ class FindingsTable(Frame):
                         cell = EntryAutoPlace(
                             self, width=0, 
                             autofill=True, 
-                            values=place_autofill_values)
-                        EntryAutoPlace.place_autofills.append(cell)
+                            # values=place_autofill_values
+)
+                        # EntryAutoPlace.place_autofills.append(cell)
                     else:                        
                         cell = EntryAuto(self, width=0,)
                     cell.initial = ''
@@ -1386,25 +1388,25 @@ class FindingsTable(Frame):
         conn.close()  
         return findings_data, non_empty_roles, non_empty_notes 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
-    root = tk.Tk()
-    root.geometry('+800+300')
+    # root = tk.Tk()
+    # root.geometry('+800+300')
 
-    strings = make_all_nestings(select_all_place_ids)
-    place_autofill_values = EntryAutoPlace.create_lists(strings)
+    # strings = make_all_nestings(select_all_place_ids)
+    # place_autofill_values = EntryAutoPlace.create_lists(strings)
 
-    auto = EntryAutoPlace(
-        root, width=50, autofill=True, values=place_autofill_values)
+    # auto = EntryAutoPlace(
+        # root, width=50, autofill=True, values=place_autofill_values)
 
-    auto.focus_set()   
+    # auto.focus_set()   
 
-    move = tk.Entry(root)
+    # move = tk.Entry(root)
 
-    auto.grid()
-    move.grid()
+    # auto.grid()
+    # move.grid()
 
-    root.mainloop()
+    # root.mainloop()
 
 
 

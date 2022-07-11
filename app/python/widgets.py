@@ -17,7 +17,7 @@ from query_strings import (
     select_current_person, select_name_with_id, select_all_names_ids,
     select_all_person_ids, select_image_id, select_max_person_id,    
     insert_images_elements, select_name_type_id, insert_name, 
-    select_all_images, select_all_name_types, 
+    select_all_images, select_all_name_types, select_all_place_names,
     select_person_gender, select_max_name_type_id, insert_name_type_new,
     insert_image_new, select_name_with_id_any, select_birth_names_ids,
     insert_finding_birth_new_person, update_format_font,
@@ -28,7 +28,8 @@ from query_strings import (
     delete_images_elements_person, delete_assertion_person, select_name_sorter,
     select_name_type_sorter_with_id, select_all_names, update_current_person,
     select_name_type_hierarchy, select_opening_settings,
-    select_closing_state_recent_files, update_closing_state_recent_files) 
+    select_closing_state_recent_files, update_closing_state_recent_files,
+    select_all_nested_place_strings, )
 from messages_context_help import person_add_help_msg
 from messages import persons_msg, opening_msg
 from images import get_all_pics 
@@ -1914,17 +1915,13 @@ class Dialogue(Toplevel):
 
 class EntryAutoPlace(Entryx):
     '''
-        To use this class, after instantiating it, you have to call 
-        EntryAutoPlace.create_lists(all_items). When adding a new place, run e.g.
-        `update_place_autofill_values()`. Other than getting all_items
-        (e.g. from a database query), the class is self-contained. 
-
-        To extend this class, rule number 1 is don't try doing logic on a
-        string being autofilled until the typing/autofilling is done and
-        focus is out of the widget. See EntryAutoPerson.
+        This is the most recent of the EntryAuto-influenced widgets. The goal 
+        was to have everything completely self-contained so the developer would
+        only have to construct the widget, nothing else.
     '''
-    place_autofills = []
+
     place_autofill_values = []
+    used_place_autofill_values = []
     formats = formats
     bg = formats["bg"]
     fg = formats["fg"]
@@ -1933,36 +1930,49 @@ class EntryAutoPlace(Entryx):
     selectforeground = formats["fg"]
     font = formats["input_font"]
 
-    def create_lists(all_items):
-        """ This is made to use a simple list, it won't work for
-            person autofills. It works for event types and places. It works in 
-            conjunction with EntryAutoPlace.prepend_match().
-        """
-        recent_items = []
-        all_items_unique = []
-        for item in all_items:
-            if item not in recent_items:
-                all_items_unique.append(item)
-        final_items = recent_items + all_items_unique
-        return final_items
+    def get_place_values():
 
-    def prepend_match(widg):
-        content = widg.get()
-        print("line", looky(seeline()).lineno, "content:", content)
-        print("line", looky(seeline()).lineno, "EntryAutoPlace.place_autofill_values:", EntryAutoPlace.place_autofill_values)
-        if content in EntryAutoPlace.place_autofill_values:
-            idx = EntryAutoPlace.place_autofill_values.index(content)
-            x = EntryAutoPlace.place_autofill_values.pop(idx)
-            print("line", looky(seeline()).lineno, "x:", x)
-            EntryAutoPlace.place_autofill_values.insert(0, x)
-        print("line", looky(seeline()).lineno, "EntryAutoPlace.place_autofill_values:", EntryAutoPlace.place_autofill_values)
-        
+        place_data = []
+        dupe_names = set()
+        nestings = []
 
-    def __init__(self, master, autofill=False, values=None, *args, **kwargs):
+        conn = sqlite3.connect(global_db_path)
+        cur = conn.cursor()
+
+        if len(EntryAutoPlace.place_autofill_values) == 0:
+            cur.execute(select_all_place_names)
+            all_place_names = [i[0] for i in cur.fetchall()]
+            # dupe_names = set()
+            for name in all_place_names:
+                if all_place_names.count(name) > 1:
+                    dupe_names.add(name)
+
+            # nestings = []
+            cur.execute(select_all_nested_place_strings)
+            tups = cur.fetchall()
+            for tup in tups:
+                nestings.append((", ".join([i for i in tup[0:9] if i]), tup[9]))
+
+            nestings = sorted(nestings, key=lambda f: f[0])
+            for tup in nestings:
+                nesting, nesting_id = tup
+                # Add key:value pairs to dkt if more data needed.
+                dkt = {nesting: {"nested_place_id": nesting_id}}
+                place_data.append(dkt)
+
+            nestings = [i[0] for i in nestings]
+            EntryAutoPlace.place_autofill_values = nestings
+
+        cur.close()
+        conn.close()
+
+        return place_data, nestings, dupe_names        
+
+    def __init__(self, master, autofill=False, *args, **kwargs):
         Entryx.__init__(self, master, *args, **kwargs)
         self.master = master
         self.autofill = autofill
-        self.values = values
+        self.values = EntryAutoPlace.get_place_values()[1]
 
         self.config(
             bd=0,
@@ -2021,7 +2031,8 @@ class EntryAutoPlace(Entryx):
     def match_string(self):
         hits = []
         got = self.get()
-        use_list = self.values
+        use_list = EntryAutoPlace.place_autofill_values
+        # use_list = self.values
         for item in use_list:
             if item.lower().startswith(got.lower()):
                 hits.append(item)
@@ -2084,7 +2095,7 @@ class EntryAuto(Entryx):
 
     def create_lists(all_items):
         """ This is made to use a simple list, it won't work for
-            person autofills. It works for event types and places. It works in 
+            person autofills. It works for event types. It works in 
             conjunction with self.prepend_match().
         """
         recent_items = []
@@ -4380,6 +4391,8 @@ def redraw_person_tab(
         maybe supply that value anyway. When supplying current_person, the
         current_name doesn't automatically have be be supplied too.
     """
+    # old_place_list = list(EntryAutoPlace.place_autofill_values)
+    # print("line", looky(seeline()).lineno, "old_place_list[0:3]:", old_place_list[0:3])
     formats = make_formats_dict()
     current_file, current_dir = get_current_file()
     findings_table = main_window.findings_table
@@ -4400,8 +4413,12 @@ def redraw_person_tab(
 
     redraw_findings_table(findings_table, current_person=current_person)
 
+    # EntryAutoPlace.place_autofill_values = old_place_list
+    # print("line", looky(seeline()).lineno, "old_place_list[0:3]:", old_place_list[0:3])
+    # print("line", looky(seeline()).lineno, "EntryAutoPlace.place_autofill_values[0:3]:", EntryAutoPlace.place_autofill_values[0:3])
+
     configall(main_window.root, formats)
-    resize_scrollbar(main_window.root, main_window.master)
+    resize_scrollbar(main_window.root, main_window.master)    
 
 def unbind_widgets(findings_table):
     for k,v in findings_table.kintip_bindings.items():

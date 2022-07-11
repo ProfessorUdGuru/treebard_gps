@@ -171,8 +171,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: places_rewrite
-# In EntryAutoPlace, Combine prepend_match() and update_place_value_autofills() into create_lists(), combine all list-making and list-editing into one class-level method that works on focus out if content has changed and returns if not. evt=None so the same method can be called in init.
-# just-used nesting doesn't go to front of hits list; make values a class-level variable WORKING BUT STILL CLEANING OUT EACH TIME AND ONLY PUTTING ONE (MOST recently used item) at front, instead of all recently used
+
 # clicking X to cancel adding "Paris, Iowa, USA" doesn't cancel; does delete_temp_ids() do anything? see max_id
 # place funx works for...
     # creating a new place "Paris, Maine, USA" in which paris was the only new nest and the string already existed only as a dupe
