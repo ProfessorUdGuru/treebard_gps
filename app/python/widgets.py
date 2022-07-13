@@ -1914,12 +1914,7 @@ class Dialogue(Toplevel):
         self.deiconify()
 
 class EntryAutoPlace(Entryx):
-    '''
-        This is the most recent of the EntryAuto-influenced widgets. The goal 
-        was to have everything completely self-contained so the developer would
-        only have to construct the widget, nothing else.
-    '''
-
+    ''' This is the most recent and best of the autofill widgets. '''
     place_autofill_values = []
     used_place_autofill_values = []
     formats = formats
@@ -1936,43 +1931,42 @@ class EntryAutoPlace(Entryx):
         dupe_names = set()
         nestings = []
 
+        tree = get_current_file()[0]
         conn = sqlite3.connect(global_db_path)
         cur = conn.cursor()
+        cur.execute("ATTACH ? AS tree", (tree,))
 
-        if len(EntryAutoPlace.place_autofill_values) == 0:
-            cur.execute(select_all_place_names)
-            all_place_names = [i[0] for i in cur.fetchall()]
-            # dupe_names = set()
-            for name in all_place_names:
-                if all_place_names.count(name) > 1:
-                    dupe_names.add(name)
+        cur.execute(select_all_place_names)
+        all_place_names = [i[0] for i in cur.fetchall()]
+        for name in all_place_names:
+            if all_place_names.count(name) > 1:
+                dupe_names.add(name)
 
-            # nestings = []
+        if len(EntryAutoPlace.place_autofill_values) == 0:            
             cur.execute(select_all_nested_place_strings)
             tups = cur.fetchall()
             for tup in tups:
-                nestings.append((", ".join([i for i in tup[0:9] if i]), tup[9]))
-
+                nestings.append((", ".join([i for i in tup[0:9] if i != "unknown"]), tup[9]))
             nestings = sorted(nestings, key=lambda f: f[0])
             for tup in nestings:
                 nesting, nesting_id = tup
-                # Add key:value pairs to dkt if more data needed.
                 dkt = {nesting: {"nested_place_id": nesting_id}}
                 place_data.append(dkt)
-
+        
             nestings = [i[0] for i in nestings]
             EntryAutoPlace.place_autofill_values = nestings
-
+        print("line", looky(seeline()).lineno, "nestings:", nestings) # RUNNING MANY TIMES
+        cur.execute("DETACH tree")
         cur.close()
         conn.close()
 
         return place_data, nestings, dupe_names        
 
-    def __init__(self, master, autofill=False, *args, **kwargs):
+    def __init__(self, master, autofill=False, values=[], *args, **kwargs):
         Entryx.__init__(self, master, *args, **kwargs)
         self.master = master
         self.autofill = autofill
-        self.values = EntryAutoPlace.get_place_values()[1]
+        self.values = values
 
         self.config(
             bd=0,
@@ -1986,7 +1980,6 @@ class EntryAutoPlace(Entryx):
         if autofill is True:
             self.bind("<KeyPress>", self.detect_pressed)
             self.bind("<KeyRelease>", self.get_typed)
-            # self.bind("<FocusOut>", self.prepend_match, add="+")
             self.bind("<FocusIn>", self.deselect, add="+")
 
     def detect_pressed(self, evt):
@@ -2014,8 +2007,8 @@ class EntryAutoPlace(Entryx):
         if self.autofill is False:
             return
         key = evt.keysym
-        # prevent CTRL+S from filling anything in; also keeps the 
-        #   typed character from filling anything in if it's an "s"; sorry.
+        # Prevent CTRL+S from filling anything in; unfortunately it also keeps
+        #   the typed character from filling anything in if it's an "s"; sorry.
         if key in ("s", "S"):
             return
         # allow alphanumeric characters
@@ -2032,7 +2025,6 @@ class EntryAutoPlace(Entryx):
         hits = []
         got = self.get()
         use_list = EntryAutoPlace.place_autofill_values
-        # use_list = self.values
         for item in use_list:
             if item.lower().startswith(got.lower()):
                 hits.append(item)
@@ -2044,18 +2036,7 @@ class EntryAutoPlace(Entryx):
             self.autofilled = hits[0]
             self.delete(0, 'end')
             self.insert(0, self.autofilled)
-            self.icursor(cursor)            
-
-    # def prepend_match(self, evt):
-        # content = self.get()
-        # if content in self.values:
-            # idx = self.values.index(content)
-            # print("line", looky(seeline()).lineno, "self.values:", self.values)
-            # print("line", looky(seeline()).lineno, "idx:", idx)
-            # del self.values[idx]
-            # print("line", looky(seeline()).lineno, "content:", content)
-            # self.values.insert(0, content)
-            # print("line", looky(seeline()).lineno, "self.values:", self.values)
+            self.icursor(cursor)    
         
     def deselect(self, evt):
         '''

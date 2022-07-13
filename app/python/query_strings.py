@@ -379,15 +379,15 @@ select_all_place_string_ids = '''
     SELECT a.place_id, b.place_id, c.place_id, d.place_id, 
         e.place_id, f.place_id, g.place_id, h.place_id, i.place_id
     FROM nested_place
-        LEFT JOIN place a ON a.place_id = nest0
-        LEFT JOIN place b ON b.place_id = nest1
-        LEFT JOIN place c ON c.place_id = nest2
-        LEFT JOIN place d ON d.place_id = nest3
-        LEFT JOIN place e ON e.place_id = nest4
-        LEFT JOIN place f ON f.place_id = nest5
-        LEFT JOIN place g ON g.place_id = nest6
-        LEFT JOIN place h ON h.place_id = nest7
-        LEFT JOIN place i ON i.place_id = nest8  
+        JOIN place a ON a.place_id = nest0
+        JOIN place b ON b.place_id = nest1
+        JOIN place c ON c.place_id = nest2
+        JOIN place d ON d.place_id = nest3
+        JOIN place e ON e.place_id = nest4
+        JOIN place f ON f.place_id = nest5
+        JOIN place g ON g.place_id = nest6
+        JOIN place h ON h.place_id = nest7
+        JOIN place i ON i.place_id = nest8  
     WHERE nest0 != 1
 '''
 
@@ -396,31 +396,32 @@ select_all_nested_place_strings = '''
         e.place_names, f.place_names, g.place_names, h.place_names, i.place_names, 
         nested_place_id
     FROM nested_place
-        LEFT JOIN place_name a ON a.place_id = nest0
-        LEFT JOIN place_name b ON b.place_id = nest1
-        LEFT JOIN place_name c ON c.place_id = nest2
-        LEFT JOIN place_name d ON d.place_id = nest3
-        LEFT JOIN place_name e ON e.place_id = nest4
-        LEFT JOIN place_name f ON f.place_id = nest5
-        LEFT JOIN place_name g ON g.place_id = nest6
-        LEFT JOIN place_name h ON h.place_id = nest7
-        LEFT JOIN place_name i ON i.place_id = nest8  
-    WHERE nest0 != 1
+        JOIN place_name a ON a.place_id = nest0
+        JOIN place_name b ON b.place_id = nest1
+        JOIN place_name c ON c.place_id = nest2
+        JOIN place_name d ON d.place_id = nest3
+        JOIN place_name e ON e.place_id = nest4
+        JOIN place_name f ON f.place_id = nest5
+        JOIN place_name g ON g.place_id = nest6
+        JOIN place_name h ON h.place_id = nest7
+        JOIN place_name i ON i.place_id = nest8  
+    WHERE nest0 != 1 or nest1 != 1 or nest2 != 1 or nest3 != 1 or nest4 != 1 or nest5 != 1 or nest6 != 1 or nest7 != 1 or nest8 != 1
 '''
 
 # select_all_nested_place_strings = '''
-    # SELECT a.places, b.places, c.places, d.places, 
-        # e.places, f.places, g.places, h.places, i.places
+    # SELECT a.place_names, b.place_names, c.place_names, d.place_names, 
+        # e.place_names, f.place_names, g.place_names, h.place_names, i.place_names, 
+        # nested_place_id
     # FROM nested_place
-        # LEFT JOIN place a ON a.place_id = nest0
-        # LEFT JOIN place b ON b.place_id = nest1
-        # LEFT JOIN place c ON c.place_id = nest2
-        # LEFT JOIN place d ON d.place_id = nest3
-        # LEFT JOIN place e ON e.place_id = nest4
-        # LEFT JOIN place f ON f.place_id = nest5
-        # LEFT JOIN place g ON g.place_id = nest6
-        # LEFT JOIN place h ON h.place_id = nest7
-        # LEFT JOIN place i ON i.place_id = nest8  
+        # LEFT JOIN place_name a ON a.place_id = nest0
+        # LEFT JOIN place_name b ON b.place_id = nest1
+        # LEFT JOIN place_name c ON c.place_id = nest2
+        # LEFT JOIN place_name d ON d.place_id = nest3
+        # LEFT JOIN place_name e ON e.place_id = nest4
+        # LEFT JOIN place_name f ON f.place_id = nest5
+        # LEFT JOIN place_name g ON g.place_id = nest6
+        # LEFT JOIN place_name h ON h.place_id = nest7
+        # LEFT JOIN place_name i ON i.place_id = nest8  
     # WHERE nest0 != 1
 # '''
 
@@ -767,41 +768,41 @@ select_finding_persons = '''
     WHERE finding_id = ?
 '''
 
+# select_finding_nested_place = '''
+    # SELECT a.place_names, b.place_names, c.place_names, d.place_names, 
+        # e.place_names, f.place_names, g.place_names, h.place_names, i.place_names
+    # FROM finding
+        # LEFT JOIN nested_place ON finding.nested_place_id = nested_place.nested_place_id
+        # LEFT JOIN place_name a ON a.place_id = nest0
+        # LEFT JOIN place_name b ON b.place_id = nest1
+        # LEFT JOIN place_name c ON c.place_id = nest2
+        # LEFT JOIN place_name d ON d.place_id = nest3
+        # LEFT JOIN place_name e ON e.place_id = nest4
+        # LEFT JOIN place_name f ON f.place_id = nest5
+        # LEFT JOIN place_name g ON g.place_id = nest6
+        # LEFT JOIN place_name h ON h.place_id = nest7
+        # LEFT JOIN place_name i ON i.place_id = nest8             
+    # WHERE finding_id = ? 
+        # AND (nest0 != 1 and nest1 != 1 and nest2 != 1 and nest3 != 1 and nest4 != 1 and nest5 != 1 and nest6 != 1 and nest7 != 1 and nest8 != 1)
+# '''
+
 select_finding_nested_place = '''
     SELECT a.place_names, b.place_names, c.place_names, d.place_names, 
         e.place_names, f.place_names, g.place_names, h.place_names, i.place_names
     FROM finding
-        LEFT JOIN nested_place ON finding.nested_place_id = nested_place.nested_place_id
-        LEFT JOIN place_name a ON a.place_id = nest0
-        LEFT JOIN place_name b ON b.place_id = nest1
-        LEFT JOIN place_name c ON c.place_id = nest2
-        LEFT JOIN place_name d ON d.place_id = nest3
-        LEFT JOIN place_name e ON e.place_id = nest4
-        LEFT JOIN place_name f ON f.place_id = nest5
-        LEFT JOIN place_name g ON g.place_id = nest6
-        LEFT JOIN place_name h ON h.place_id = nest7
-        LEFT JOIN place_name i ON i.place_id = nest8             
+        JOIN nested_place ON finding.nested_place_id = nested_place.nested_place_id
+        JOIN place_name a ON a.place_id = nest0
+        JOIN place_name b ON b.place_id = nest1
+        JOIN place_name c ON c.place_id = nest2
+        JOIN place_name d ON d.place_id = nest3
+        JOIN place_name e ON e.place_id = nest4
+        JOIN place_name f ON f.place_id = nest5
+        JOIN place_name g ON g.place_id = nest6
+        JOIN place_name h ON h.place_id = nest7
+        JOIN place_name i ON i.place_id = nest8             
     WHERE finding_id = ? 
         AND nest0 != 1
 '''
-
-# select_finding_nested_place = '''
-    # SELECT a.places, b.places, c.places, d.places, 
-        # e.places, f.places, g.places, h.places, i.places
-    # FROM finding
-        # LEFT JOIN nested_place ON finding.nested_place_id = nested_place.nested_place_id
-        # LEFT JOIN place a ON a.place_id = nest0
-        # LEFT JOIN place b ON b.place_id = nest1
-        # LEFT JOIN place c ON c.place_id = nest2
-        # LEFT JOIN place d ON d.place_id = nest3
-        # LEFT JOIN place e ON e.place_id = nest4
-        # LEFT JOIN place f ON f.place_id = nest5
-        # LEFT JOIN place g ON g.place_id = nest6
-        # LEFT JOIN place h ON h.place_id = nest7
-        # LEFT JOIN place i ON i.place_id = nest8             
-    # WHERE finding_id = ? 
-        # AND nest0 != 1
-# '''
 
 select_finding_nested_place_id = '''
     SELECT nested_place_id
@@ -1125,15 +1126,15 @@ select_nested_place_inclusion = '''
     SELECT a.place_names, b.place_names, c.place_names, d.place_names, 
         e.place_names, f.place_names, g.place_names, h.place_names, i.place_names
     FROM nested_place
-        LEFT JOIN place_name as a ON a.place_id = nest0
-        LEFT JOIN place_name as b ON b.place_id = nest1
-        LEFT JOIN place_name as c ON c.place_id = nest2
-        LEFT JOIN place_name as d ON d.place_id = nest3
-        LEFT JOIN place_name as e ON e.place_id = nest4
-        LEFT JOIN place_name as f ON f.place_id = nest5
-        LEFT JOIN place_name as g ON g.place_id = nest6
-        LEFT JOIN place_name as h ON h.place_id = nest7
-        LEFT JOIN place_name as i ON i.place_id = nest8
+        JOIN place_name as a ON a.place_id = nest0
+        JOIN place_name as b ON b.place_id = nest1
+        JOIN place_name as c ON c.place_id = nest2
+        JOIN place_name as d ON d.place_id = nest3
+        JOIN place_name as e ON e.place_id = nest4
+        JOIN place_name as f ON f.place_id = nest5
+        JOIN place_name as g ON g.place_id = nest6
+        JOIN place_name as h ON h.place_id = nest7
+        JOIN place_name as i ON i.place_id = nest8
 
     WHERE nest0 = ? or nest1 = ? or nest2 = ? or nest3 = ? or nest4 = ? or nest5 = ? or nest6 = ? or nest7 = ? or nest8 = ?
 '''

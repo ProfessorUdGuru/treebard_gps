@@ -9,7 +9,7 @@ from widgets import (
     Frame, LabelH2, LabelH3, Label, Button, Canvas, ButtonBigPic, Toplevel, 
     Radiobutton, LabelFrame, Border, TabBook, Scrollbar, fix_tab_traversal,
     EntryAutoPerson, EntryAutoPersonHilited, FontPicker, redraw_person_tab, 
-    open_message, Separator, Entry, Checkbutton, Combobox)
+    open_message, Separator, Entry, Checkbutton, Combobox, EntryAutoPlace)
 from right_click_menu import RightClickMenu, make_rc_menus
 from toykinter_widgets import run_statusbar_tooltips   
 from families import NuclearFamiliesTable
@@ -70,6 +70,9 @@ class Main(FrameStay):
 
         self.current_person = get_current_person()
         self.current_person_name = "" # could be got from index 2 above
+
+        self.place_data, self.nestings, self.dupe_places = EntryAutoPlace.get_place_values()
+
         self.tabbook_x = 300
         self.tabbook_y = 300
         self.SCREEN_SIZE = []
@@ -156,7 +159,10 @@ class Main(FrameStay):
             self.treebard, 
             self,  
             self.current_person,
-            self.person_autofill_values)
+            self.person_autofill_values,
+            self.place_data, 
+            self.nestings, 
+            self.dupe_places)
 
         self.nukefam_table = NuclearFamiliesTable(
             persons_tab,

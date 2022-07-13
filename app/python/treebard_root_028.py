@@ -9,8 +9,8 @@ from files import app_path, global_db_path, current_drive, open_tree
 from opening import SplashScreen
 from main import Main
 from widgets import (
-    Button, Frame, ButtonPlain, configall, make_formats_dict, Border,DropdownMenu, 
-    create_tooltip, placeholder)
+    Button, Frame, ButtonPlain, configall, make_formats_dict, Border, DropdownMenu, 
+    create_tooltip, placeholder, EntryAutoPlace)
 from scrolling import MousewheelScrolling 
 from dates import get_date_formats
 from query_strings import (
@@ -171,11 +171,18 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: places_rewrite
+# PLACE AUTOFILL VALUES SHD NOT BE CREATED IN WIDGETS.PY. MAYBE IN ROOT. IT COULD BE NEEDED ANYWHERE ANYTIME, IT HAS NOTHING TO DO WITH WIDGETS.PY.
+# prepend_match stopped working
+# self.inwidg.autofilled is useless since it takes on a value when there's a hit eg when inputting paris, Kenosha... it took on a value paris, kentucky... even though the value was not accepted.
+# probably the -1 thing shd actually be understood since using it to fix one thing probably broke something else
+# a lot of garbage is going into nested_place table, duplicate nestings being inserted to nested_place instead of the existing nesting being detected and used.
+# doesn't work: 
+    # inputting "Paris, Kenosha County, Wisconsin, USA" correctly created the new county and state, correctly used the existing nation, but used the first Paris (place_id 30) instead of opening the dupe places dlg.
+    # "PJC, Paris, Indiana, USA" where the first place didn't exist at all, everything works except the first Paris id (30) is put in, instead of the dupes opening so the user can select 34.
 
 # clicking X to cancel adding "Paris, Iowa, USA" doesn't cancel; does delete_temp_ids() do anything? see max_id
 # place funx works for...
-    # creating a new place "Paris, Maine, USA" in which paris was the only new nest and the string already existed only as a dupe
-    # "PJC, Paris, Indiana, USA" where the first place didn't exist at all
+    # creating a new place "Paris, Maine, USA" in which paris was the only new nest and the string "Paris" already existed only as a dupe/different place
     # cancel
     # unlink by deleting place from conclusions table
     # autofill existing nest
@@ -183,7 +190,8 @@ if __name__ == '__main__':
 
 # Then make X work on escape, and OK work on Enter.
 # narrow/emptyish place col in conclusions table shd get bigger (which they do by default) as autofill tries values on each char typed, but shd not get smaller again till focus out, then if applicable shrink down to fit content. Stop flashing big/small/big/small while typing.
-# fix blank finding, assertion, place, and nested_place tables in treebard.db, default_new_tree, _untouchedx2, and gregory_family_tree ; drop type and place tables from gregory/default/untouched & make .sql flat files
+# fix blank finding, assertion, place, and nested_place tables in treebard.db, default_new_tree, _untouchedx2, and gregory_family_tree ; drop type and place tables from gregory/default/untouched & make .sql flat files 
+# add to main do list: make a tool for importing (merging) all places from tree to tree
 
 # BRANCH: assertions_dialog
 # columns: detail | name | source | citation | surety | repo(hover source)

@@ -19,7 +19,6 @@ from assertions import AssertionsDialog
 from roles import RolesDialog
 from notes import NotesDialog
 from places import ValidatePlace
-# from places import ValidatePlace, make_place_master_list
 from messages import findings_msg
 from utes import split_sorter
     
@@ -95,7 +94,8 @@ class FindingsTable(Frame):
 
     def __init__(
             self, master, root, treebard, main, current_person,
-            person_autofill_values, *args, **kwargs):
+            person_autofill_values, place_data, nestings, dupe_places, 
+            *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
         self.root = root
@@ -103,6 +103,9 @@ class FindingsTable(Frame):
         self.main_window = main
         self.current_person = current_person
         self.person_autofill_values = person_autofill_values
+        self.place_data = place_data
+        self.place_autofill_values = nestings
+        self.dupe_places = dupe_places
 
         self.main_canvas = main.master
 
@@ -140,8 +143,6 @@ class FindingsTable(Frame):
             lambda evt, main_window=self.main_window: redraw_person_tab(
                 evt, main_window))
 
-        # self.place_strings = get_all_place_strings()
-        # print("line", looky(seeline()).lineno, "self.place_strings:", self.place_strings)
         self.is_couple_event = False
         self.new_alt_parent_event = False
         self.unknown_event_type = False
@@ -364,7 +365,10 @@ class FindingsTable(Frame):
                 self.inwidg,
                 self.initial,
                 self.final,
-                self.finding)
+                self.finding,
+                self.place_data,
+                self.place_autofill_values,
+                self.dupe_places)
 
         def update_age(offspring_event, row):
             if (event_string == "birth" and 
@@ -426,10 +430,6 @@ class FindingsTable(Frame):
             False except for the places column.
         '''
 
-        # place_strings = get_all_place_strings()[0]
-        # place_strings = make_place_master_list()[1]
-        # print("line", looky(seeline()).lineno, "place_strings:", place_strings)
-        # place_autofill_values = EntryAutoPlace.create_lists(place_strings)
         self.table_cells = []
         for i in range(int(qty/8)):
             row = []
@@ -443,10 +443,8 @@ class FindingsTable(Frame):
                     elif j == 2:
                         cell = EntryAutoPlace(
                             self, width=0, 
-                            autofill=True, 
-                            # values=place_autofill_values
-)
-                        # EntryAutoPlace.place_autofills.append(cell)
+                            autofill=True,
+                            values=EntryAutoPlace.place_autofill_values)
                     else:                        
                         cell = EntryAuto(self, width=0,)
                     cell.initial = ''
@@ -1061,13 +1059,9 @@ class FindingsTable(Frame):
     def get_place_string(self, finding_id, cur):
         place_string = ""
         cur.execute(select_finding_nested_place, finding_id)
-        # place = cur.fetchone()
         result = cur.fetchone()
         if result:
-            place_string = ", ".join([i for i in result if i])
-        # place_string = ", ".join([i for i in place if i])
-        # if place_string == "unknown": place_string = ""
-        # print("line", looky(seeline()).lineno, "place_string:", place_string)
+            place_string = ", ".join([i for i in result if i != "unknown"])
         return place_string
 
     def get_generic_findings(
