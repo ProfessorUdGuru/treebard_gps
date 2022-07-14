@@ -135,13 +135,13 @@ class FindingsTable(Frame):
         self.events_only_even_without_dates = [
             "birth", "death"] + self.after_death_events
         self.root.bind(
-            "<Control-S>", 
+            "<Control-F5>", 
             lambda evt, main_window=self.main_window: redraw_person_tab(
                 evt, main_window))
-        self.root.bind(
-            "<Control-s>", 
-            lambda evt, main_window=self.main_window: redraw_person_tab(
-                evt, main_window))
+        # self.root.bind(
+            # "<Control-f5>", 
+            # lambda evt, main_window=self.main_window: redraw_person_tab(
+                # evt, main_window))
 
         self.is_couple_event = False
         self.new_alt_parent_event = False

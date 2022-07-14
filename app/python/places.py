@@ -47,16 +47,15 @@ class ValidatePlace():
         self.final = final
         self.finding = finding
         self.place_data = place_data
-        self.nestings = nestings, 
+        self.nestings = nestings
         self.dupe_names = dupe_names
 
         self.formats = make_formats_dict()
 
         self.place_list = []
-        # self.place_data, self.nestings, self.dupe_names = EntryAutoPlace.get_place_values()
 
         self.new_nesting = []
-        self.cancelled = True
+        self.cancelled = False
         self.new_places = []
 
         self.validate_place()
@@ -64,12 +63,12 @@ class ValidatePlace():
     def make_widgets(self):
 
         def ok():
-            self.cancelled = False
             self.duplicate_places_dlg.destroy()
             self.inwidg.delete(0, 'end')
             self.inwidg.insert(0, self.final)
 
         def cancel():
+            self.cancelled = True
             for num in self.new_places:
                 self.delete_temp_ids(num)
             self.duplicate_places_dlg.destroy()
@@ -147,7 +146,7 @@ class ValidatePlace():
             inclusions = [list(i) for i in cur.fetchall()]
             copy = inclusions
             for indx, lst in enumerate(copy):
-                lst = [i for i in lst if i]
+                lst = [i for i in lst if i != "unknown"]
                 inclusions[indx] = lst
                 lab = Label(frm, text=", ".join(inclusions[indx]), anchor="w")
                 lab.grid(column=0, row=indx+1, sticky="ew", padx=(24,0))
@@ -180,52 +179,68 @@ class ValidatePlace():
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         cur.execute("ATTACH ? AS tree", (tree,))
-        if len(self.final) == 0 and len(self.initial) != 0:
+        lenstart = len(self.initial)
+        lenfinal = len(self.final)
+        if lenstart != 0 and lenfinal == 0:
             cur.execute(update_finding_nested_place_unknown, (self.finding,))
             conn.commit()
             return
+        elif lenstart > 0 and lenfinal > 0:
+            if self.final != self.initial:
+                self.dispatch_tasks(cur, conn)
+        elif lenstart == 0 and lenfinal > 0:
+            self.dispatch_tasks(cur, conn)
+
+    def dispatch_tasks(self, cur, conn):
+
         self.place_list = self.final.split(",")
         self.place_list = [self.place_list[i].strip() for i in range(
             len(self.place_list))]
         autofill_nested_place_id = None
-
         new_nesting = []
         for idx, name in enumerate(self.place_list, 1):
-            print("line", looky(seeline()).lineno, "self.dupe_names:", self.dupe_names)
-            print("line", looky(seeline()).lineno, "self.inwidg.autofilled:", self.inwidg.autofilled)
-            print("line", looky(seeline()).lineno, "self.final:", self.final)
             if name in self.dupe_names and self.inwidg.autofilled != self.final:
                 choice = self.open_dupe_place_dlg(name, cur)
-                print("line", looky(seeline()).lineno, "choice:", choice)
                 if choice > 0:
                     place_id = self.dupe_ids[choice-1]
-                    print("line", looky(seeline()).lineno, "place_id:", place_id)
                 else:
                     name, place_id = self.make_new_place(name)
                 new_nesting.append((name, place_id, idx))
-            else:
+            elif name not in self.dupe_names:
                 cur.execute(select_place_id_with_name, (name,))
-                place_id = [i[0] for i in cur.fetchall()] 
-                print("line", looky(seeline()).lineno, "place_id:", place_id)
-                if len(place_id) == 0:
-                    name, place_id = self.make_new_place(name)
-                    new_nesting.append((name, place_id, idx))
-                else:
-                    print("line", looky(seeline()).lineno, "place_id:", place_id)
+                place_id = [i[0] for i in cur.fetchall()]
+
+                if self.inwidg.autofilled == self.final:
                     place_id = place_id[0]
-                    print("line", looky(seeline()).lineno, "self.place_data:", self.place_data)
                     for dkt in self.place_data:
                         for k,v in dkt.items():
-                            print("line", looky(seeline()).lineno, "k, self.final:", k, self.final)
                             if k == self.final:
                                 autofill_nested_place_id = v["nested_place_id"]
-                                print("line", looky(seeline()).lineno, "autofill_nested_place_id:", autofill_nested_place_id)
                                 cur.execute(select_nested_place_ids, (autofill_nested_place_id,))
                                 nesting = cur.fetchone()
                                 place_id = nesting[idx-1]
+                                break
                     new_nesting.append((name, place_id, idx))
-                    self.cancelled = False
-        print("line", looky(seeline()).lineno, "new_nesting:", new_nesting)
+                elif len(place_id) == 0:
+                    name, place_id = self.make_new_place(name)
+                    new_nesting.append((name, place_id, idx))
+                elif len(place_id) == 1:
+                    new_nesting.append((name, place_id[0], idx))
+                elif self.inwidg.autofilled == self.final:
+                    place_id = place_id[0]
+                    for dkt in self.place_data:
+                        for k,v in dkt.items():
+                            if k == self.final:
+                                autofill_nested_place_id = v["nested_place_id"]
+                                cur.execute(select_nested_place_ids, (autofill_nested_place_id,))
+                                nesting = cur.fetchone()
+                                place_id = nesting[idx-1]
+                                break
+                    new_nesting.append((name, place_id, idx))
+                else:
+                    print("line", looky(seeline()).lineno, "case not handled:")
+            else:
+                print("line", looky(seeline()).lineno, "case not handled:")
         self.new_nesting = sorted(new_nesting, key=lambda u: u[2])
         if self.cancelled is False and autofill_nested_place_id is None:
             self.update_place(cur, conn)
@@ -237,6 +252,7 @@ class ValidatePlace():
         cur.close()
         conn.close() 
         self.prepend_match(self.inwidg)
+        self.inwidg.autofilled = None
 
     def prepend_match(self, widg):
         content = widg.get().strip()
@@ -246,7 +262,8 @@ class ValidatePlace():
             EntryAutoPlace.place_autofill_values.insert(0, x)
 
     def make_new_place(self, name):
-        conn = sqlite3.connect(global_db_path)
+        tree = get_current_file()[0]
+        conn = sqlite3.connect(tree)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
         cur.execute(select_max_place_id)
@@ -276,34 +293,25 @@ class ValidatePlace():
 
     def update_place(self, cur, conn, autofill_nested_place_id=None):
         nested_ids = [i[1] for i in self.new_nesting]
-        print("line", looky(seeline()).lineno, "self.finding:", self.finding)
         cur.execute(select_finding_nested_place_id, (self.finding,))
         nested_place_id = cur.fetchone()
         length = len(self.new_nesting)
         self.new_nesting = nested_ids + [1] * (9 - length) + [nested_place_id[0]]
-        # self.new_nesting = nested_ids + [None] * (9 - length) + [nested_place_id[0]] 
-        if nested_place_id and nested_place_id[0] != 1:
-            print("line", looky(seeline()).lineno, "nested_place_id:", nested_place_id)
-            print("line", looky(seeline()).lineno, "autofill_nested_place_id:", autofill_nested_place_id)
-            cur.execute(update_nested_place, tuple(self.new_nesting))
-            conn.commit()
-        elif autofill_nested_place_id and nested_place_id and nested_place_id[0] == 1:
-            print("line", looky(seeline()).lineno, "nested_place_id:", nested_place_id)
-            print("line", looky(seeline()).lineno, "autofill_nested_place_id:", autofill_nested_place_id)
+        if autofill_nested_place_id and nested_place_id:
             cur.execute(update_finding_nested_place, (
                 autofill_nested_place_id, self.finding))
             conn.commit()
-        else: # THIS IS RUNNING WHEN A NESTED PLACE ALREADY EXISTS
-            print("line", looky(seeline()).lineno, "nested_place_id:", nested_place_id)
-            print("line", looky(seeline()).lineno, "autofill_nested_place_id:", autofill_nested_place_id)
+        else: 
             cur.execute(insert_nested_place, tuple(self.new_nesting[0:9]))
             conn.commit()
-            cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'nested_place'")
-            new_nesting_id = cur.fetchone()[0]
-            cur.execute(update_finding_nested_place, (new_nesting_id, self.finding))
-            conn.commit()
+            new_nesting_id = cur.lastrowid
+            if new_nesting_id:
+                cur.execute(update_finding_nested_place, (new_nesting_id, self.finding))
+                conn.commit()
+            else:
+                print("line", looky(seeline()).lineno, "new_nesting_id:", new_nesting_id)
 
-        EntryAutoPlace.get_place_values()        
+        EntryAutoPlace.place_data, EntryAutoPlace.place_autofill_values, EntryAutoPlace.dupe_names = EntryAutoPlace.get_place_values(new_place=True)
 
     def delete_temp_ids(self, num):
         print("line", looky(seeline()).lineno, "num:", num)

@@ -171,8 +171,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: places_rewrite
-# PLACE AUTOFILL VALUES SHD NOT BE CREATED IN WIDGETS.PY. MAYBE IN ROOT. IT COULD BE NEEDED ANYWHERE ANYTIME, IT HAS NOTHING TO DO WITH WIDGETS.PY.
-# prepend_match stopped working
+# CANCEL and X buttons don't work; GUI works (on CANCEL anyway) but the stuff goes into db anyway, so maybe the temp_ids have to be deleted from the 3 tables or something.
 # self.inwidg.autofilled is useless since it takes on a value when there's a hit eg when inputting paris, Kenosha... it took on a value paris, kentucky... even though the value was not accepted.
 # probably the -1 thing shd actually be understood since using it to fix one thing probably broke something else
 # a lot of garbage is going into nested_place table, duplicate nestings being inserted to nested_place instead of the existing nesting being detected and used.
@@ -190,6 +189,8 @@ if __name__ == '__main__':
 
 # Then make X work on escape, and OK work on Enter.
 # narrow/emptyish place col in conclusions table shd get bigger (which they do by default) as autofill tries values on each char typed, but shd not get smaller again till focus out, then if applicable shrink down to fit content. Stop flashing big/small/big/small while typing.
+# CTRL-S has been changed to CTRL+F5 for redraw, but if cursor is in a place input, when you type CTRL+S it fills in with Arapahoe... Also replace all SAVE command buttons and icons with REDRAW instead.
+# get rid of all SELECT seq FROM SQLITE_SEQUENCE WHERE name = ... in the app and then remove all the AUTOINCREMENT keywords from all tables
 # fix blank finding, assertion, place, and nested_place tables in treebard.db, default_new_tree, _untouchedx2, and gregory_family_tree ; drop type and place tables from gregory/default/untouched & make .sql flat files 
 # add to main do list: make a tool for importing (merging) all places from tree to tree
 

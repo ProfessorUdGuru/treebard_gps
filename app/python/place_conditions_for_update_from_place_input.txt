@@ -1,0 +1,126 @@
+place_conditions_for_update_from_place_input
+
+goal: Separate each condition into its own method. When everything works, parameterize only where it would obviously be better to do so without making the code unreadable.
+
+CONDITIONS
+
+on FocusIn			on FocusOut					reaction
+
+LEVEL ONE
+input is empty		input is filled out			go to level three
+input is empty		input is empty				do nothing
+input is filled out	input is empty				unlink place from finding
+input is filled out	input is filled out			go to level two				
+
+LEVEL TWO
+content = A			content = A					do nothing
+content = A			content = B					go to level three
+
+					LEVEL THREE
+					nesting exists				autofilled content goes direct to db, just update finding row with nested_place_id
+					nests all new, no dupes		insert place/place_name row for each nest, insert one nested_place row, update finding row
+					exists/new, no dupes		insert place/place_name row for new nests, insert one nested_place row, update finding row
+					there are dupe(s)			get all IDs from dupe dialog(s) opening
+
+
+
+With many improvements and simplifications done to the places code in general, the conditions part of the code which determines what to update and when to update it is still hard to finish. It's at the point now where fixing one thing breaks another, but it's not a lot of code, only about 300 lines, so finishing should be a simple matter of properly defining what all the conditions are. In order to make it possible to fix the responses to each condition at the same time, I would like to isolate each condition by having it run its own method.
+
+The testing takes place on focus in and focus out to any input field in the place column on the GUI's conclusions table. In the code, each row in this table is called a "finding" while cells in each row are called "conclusions".
+
+CONDITIONS
+
+[table][tbody]
+[tr]
+[td style="padding: 3px;"]on FocusIn[/td]
+[td style="padding: 3px;"]on FocusOut[/td]
+[td style="padding: 3px;"]reaction[/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"][/td]
+[td style="padding: 3px;"][/td]
+[td style="padding: 3px;"][/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"]LEVEL ONE[/td]
+[td style="padding: 3px;"][/td]
+[td style="padding: 3px;"][/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"]input is empty[/td]
+[td style="padding: 3px;"]input is filled out[/td]
+[td style="padding: 3px;"]go to level three[/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"]input is empty[/td]
+[td style="padding: 3px;"]input is empty[/td]
+[td style="padding: 3px;"]do nothing[/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"]input is filled out[/td]
+[td style="padding: 3px;"]input is empty[/td]
+[td style="padding: 3px;"]unlink place from finding[/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"]input is filled out[/td]
+[td style="padding: 3px;"]input is filled out[/td]
+[td style="padding: 3px;"]go to level two[/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"][/td]
+[td style="padding: 3px;"][/td]
+[td style="padding: 3px;"][/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"]LEVEL TWO[/td]
+[td style="padding: 3px;"][/td]
+[td style="padding: 3px;"][/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"]content = A[/td]
+[td style="padding: 3px;"]content = A[/td]
+[td style="padding: 3px;"]do nothing[/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"]content = A[/td]
+[td style="padding: 3px;"]content = B[/td]
+[td style="padding: 3px;"]go to level three[/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"]Row 17 column 1[/td]
+[td style="padding: 3px;"]Row 17 column 2[/td]
+[td style="padding: 3px;"]Row 17 column 3[/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"][/td]
+[td style="padding: 3px;"]LEVEL THREE[/td]
+[td style="padding: 3px;"][/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"][/td]
+[td style="padding: 3px;"]nesting exists[/td]
+[td style="padding: 3px;"]autofilled content goes direct to db, just update finding row with nested_place_id[/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"][/td]
+[td style="padding: 3px;"]nests all new, no dupes[/td]
+[td style="padding: 3px;"]insert place/place_name row for each nest, insert one nested_place row, update finding row[/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"][/td]
+[td style="padding: 3px;"]exists/new, no dupes[/td]
+[td style="padding: 3px;"]insert place/place_name row for new nests, insert one nested_place row, update finding row[/td]
+[/tr]
+[tr]
+[td style="padding: 3px;"][/td]
+[td style="padding: 3px;"]there are dupe(s)[/td]
+[td style="padding: 3px;"]get all IDs from dupe dialog(s) opening[/td]
+[/tr]
+[/tbody][/table]
+					
+
+
+
+
+			
+

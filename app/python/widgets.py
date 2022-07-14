@@ -1916,7 +1916,8 @@ class Dialogue(Toplevel):
 class EntryAutoPlace(Entryx):
     ''' This is the most recent and best of the autofill widgets. '''
     place_autofill_values = []
-    used_place_autofill_values = []
+    place_data = []
+    dupe_names = set()
     formats = formats
     bg = formats["bg"]
     fg = formats["fg"]
@@ -1925,10 +1926,7 @@ class EntryAutoPlace(Entryx):
     selectforeground = formats["fg"]
     font = formats["input_font"]
 
-    def get_place_values():
-
-        place_data = []
-        dupe_names = set()
+    def get_place_values(new_place=False):
         nestings = []
 
         tree = get_current_file()[0]
@@ -1940,9 +1938,9 @@ class EntryAutoPlace(Entryx):
         all_place_names = [i[0] for i in cur.fetchall()]
         for name in all_place_names:
             if all_place_names.count(name) > 1:
-                dupe_names.add(name)
+                EntryAutoPlace.dupe_names.add(name)
 
-        if len(EntryAutoPlace.place_autofill_values) == 0:            
+        if new_place or len(EntryAutoPlace.place_autofill_values) == 0:            
             cur.execute(select_all_nested_place_strings)
             tups = cur.fetchall()
             for tup in tups:
@@ -1951,22 +1949,23 @@ class EntryAutoPlace(Entryx):
             for tup in nestings:
                 nesting, nesting_id = tup
                 dkt = {nesting: {"nested_place_id": nesting_id}}
-                place_data.append(dkt)
+                EntryAutoPlace.place_data.append(dkt)
         
             nestings = [i[0] for i in nestings]
             EntryAutoPlace.place_autofill_values = nestings
-        print("line", looky(seeline()).lineno, "nestings:", nestings) # RUNNING MANY TIMES
         cur.execute("DETACH tree")
         cur.close()
         conn.close()
-
-        return place_data, nestings, dupe_names        
+        print("line", looky(seeline()).lineno, "nestings:", nestings)
+        return EntryAutoPlace.place_data, nestings, EntryAutoPlace.dupe_names        
 
     def __init__(self, master, autofill=False, values=[], *args, **kwargs):
         Entryx.__init__(self, master, *args, **kwargs)
         self.master = master
         self.autofill = autofill
         self.values = values
+
+        self.autofilled = None
 
         self.config(
             bd=0,
@@ -2007,10 +2006,6 @@ class EntryAutoPlace(Entryx):
         if self.autofill is False:
             return
         key = evt.keysym
-        # Prevent CTRL+S from filling anything in; unfortunately it also keeps
-        #   the typed character from filling anything in if it's an "s"; sorry.
-        if key in ("s", "S"):
-            return
         # allow alphanumeric characters
         if len(key) == 1:
             do_it()
