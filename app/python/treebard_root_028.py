@@ -171,21 +171,7 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: places_rewrite
-# CANCEL and X buttons don't work; GUI works (on CANCEL anyway) but the stuff goes into db anyway, so maybe the temp_ids have to be deleted from the 3 tables or something.
-# self.inwidg.autofilled is useless since it takes on a value when there's a hit eg when inputting paris, Kenosha... it took on a value paris, kentucky... even though the value was not accepted.
-# probably the -1 thing shd actually be understood since using it to fix one thing probably broke something else
-# a lot of garbage is going into nested_place table, duplicate nestings being inserted to nested_place instead of the existing nesting being detected and used.
-# doesn't work: 
-    # inputting "Paris, Kenosha County, Wisconsin, USA" correctly created the new county and state, correctly used the existing nation, but used the first Paris (place_id 30) instead of opening the dupe places dlg.
-    # "PJC, Paris, Indiana, USA" where the first place didn't exist at all, everything works except the first Paris id (30) is put in, instead of the dupes opening so the user can select 34.
-
-# clicking X to cancel adding "Paris, Iowa, USA" doesn't cancel; does delete_temp_ids() do anything? see max_id
-# place funx works for...
-    # creating a new place "Paris, Maine, USA" in which paris was the only new nest and the string "Paris" already existed only as a dupe/different place
-    # cancel
-    # unlink by deleting place from conclusions table
-    # autofill existing nest
-    # making a new nesting w/ existing nests w/out dialog
+# CANCEL WORKS but X button doesn't work, no errors; PROBLEM is that the new places aren't made till dlg closes so:
 
 # Then make X work on escape, and OK work on Enter.
 # narrow/emptyish place col in conclusions table shd get bigger (which they do by default) as autofill tries values on each char typed, but shd not get smaller again till focus out, then if applicable shrink down to fit content. Stop flashing big/small/big/small while typing.

@@ -93,6 +93,16 @@ delete_person = '''
     WHERE person_id = ?
 '''
 
+delete_place = '''
+    DELETE FROM place
+    WHERE place_id = ?
+'''
+
+delete_place_name = '''
+    DELETE FROM place_name
+    WHERE place_id = ?
+'''
+
 insert_color_scheme = '''
     INSERT INTO color_scheme 
     VALUES (null, ?, ?, ?, ?, 0, 0)

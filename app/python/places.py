@@ -21,7 +21,7 @@ from query_strings import (
     select_max_place_id, select_place_id_with_name, insert_place_new,     
     select_all_place_names, select_nested_place_inclusion, insert_place_name,
     select_finding_nested_place_id, update_finding_nested_place,
-    select_nested_place_ids)
+    select_nested_place_ids, delete_place, delete_place_name)
 import dev_tools as dt
 from dev_tools import looky, seeline
 
@@ -67,18 +67,32 @@ class ValidatePlace():
             self.inwidg.delete(0, 'end')
             self.inwidg.insert(0, self.final)
 
-        def cancel():
+        def cancel(evt=None):
             self.cancelled = True
-            for num in self.new_places:
-                self.delete_temp_ids(num)
+            # if len(self.new_places) > 0:
+                # tree = get_current_file()[0]
+                # conn = sqlite3.connect(tree)
+                # conn.execute('PRAGMA foreign_keys = 1')
+                # cur = conn.cursor()
+                
+                # for num in self.new_places:
+                    # print("line", looky(seeline()).lineno, "num:", num)
+                    # cur.execute(delete_place_name, (num,))
+                    # conn.commit()
+                    # cur.execute(delete_place, (num,))
+                    # conn.commit()
+                # cur.close()
+                # conn.close()
             self.duplicate_places_dlg.destroy()
             self.inwidg.delete(0, 'end')
             self.inwidg.insert(0, self.initial)
+
 
         self.duplicate_places_dlg.columnconfigure(1, weight=1)
         self.canvas = Border(self.duplicate_places_dlg, self.root)            
         self.canvas.title_1.config(text="Duplicate Place Dialog")
         self.canvas.title_2.config(text="input: {}".format(self.final))
+        self.canvas.quitt.bind("<Button-1>", self.delete_temp_ids, add="+")
 
         self.window = Frame(self.canvas)
         self.canvas.create_window(0, 0, anchor='nw', window=self.window)
@@ -246,8 +260,18 @@ class ValidatePlace():
             self.update_place(cur, conn)
         elif self.cancelled is False and autofill_nested_place_id:
             self.update_place(cur, conn, autofill_nested_place_id=autofill_nested_place_id)        
-        else:
+        elif self.cancelled is True:
             print("line", looky(seeline()).lineno, "self.cancelled:", self.cancelled)
+            # if len(self.new_places) > 0:                
+                # for num in self.new_places:
+                    # print("line", looky(seeline()).lineno, "num:", num)
+                    # cur.execute(delete_place_name, (num,))
+                    # conn.commit()
+                    # cur.execute(delete_place, (num,))
+                    # conn.commit()
+            self.delete_temp_ids()
+        else:
+            print("line", looky(seeline()).lineno, "case not handled:")
         cur.execute("DETACH tree")
         cur.close()
         conn.close() 
@@ -266,15 +290,17 @@ class ValidatePlace():
         conn = sqlite3.connect(tree)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        cur.execute(select_max_place_id)
-        self.max_id = cur.fetchone()[0] # ******revert on CANCEL by deleting > this
+        # cur.execute(select_max_place_id)
+        # self.max_id = cur.fetchone()[0] # ******revert on CANCEL by deleting > this
         cur.execute(insert_place_new)
         conn.commit()
         cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'place'")
         temp_id = cur.fetchone()[0] 
+        print("line", looky(seeline()).lineno, "temp_id:", temp_id)
         cur.execute(insert_place_name, (name, temp_id))
         conn.commit()
         self.new_places.append(temp_id)
+        print("line", looky(seeline()).lineno, "self.new_places:", self.new_places)
         cur.close()
         conn.close()
         return name, temp_id
@@ -313,8 +339,20 @@ class ValidatePlace():
 
         EntryAutoPlace.place_data, EntryAutoPlace.place_autofill_values, EntryAutoPlace.dupe_names = EntryAutoPlace.get_place_values(new_place=True)
 
-    def delete_temp_ids(self, num):
-        print("line", looky(seeline()).lineno, "num:", num)
+    def delete_temp_ids(self, evt=None):
+        if len(self.new_places) > 0:                
+            for num in self.new_places:
+                tree = get_current_file()[0]
+                conn = sqlite3.connect(tree)
+                conn.execute('PRAGMA foreign_keys = 1')
+                cur = conn.cursor()
+                print("line", looky(seeline()).lineno, "num:", num)
+                cur.execute(delete_place_name, (num,))
+                conn.commit()
+                cur.execute(delete_place, (num,))
+                conn.commit()
+            cur.close()
+            conn.close()
 
 
 

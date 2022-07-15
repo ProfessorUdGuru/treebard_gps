@@ -86,34 +86,6 @@ def get_opening_settings():
         cur.close()
         conn.close()
         return user_formats
-
-# def get_opening_settings():
-    # """ If the tree is brand new, get treebard's default color scheme. """
-    # current_file = get_current_file()[0]
-    # conn = sqlite3.connect(current_file)
-    # cur = conn.cursor()
-    # cur.execute(select_color_scheme_current_id)
-    # color_scheme_id = cur.fetchone()
-    # if color_scheme_id is None:
-        # cur.close()
-        # conn.close()
-        # conn = sqlite3.connect(global_db_path)
-        # cur = conn.cursor()
-        # cur.execute(select_opening_settings)
-        # default_formats = list(cur.fetchone())
-        # cur.close()
-        # conn.close()
-        # return default_formats
-    # else:
-        # cur.execute(select_color_scheme_by_id, color_scheme_id)
-        # color_scheme = list(cur.fetchone())
-        # cur.execute(select_format_font_scheme)
-        # font_scheme = list(cur.fetchone()[0:2])
-        # user_formats = color_scheme + font_scheme
-        # user_formats.insert(5, INPUT_FONT)
-        # cur.close()
-        # conn.close()
-        # return user_formats
   
 def make_formats_dict():
     """ To add a style, add a string to the end of keys list
@@ -1396,8 +1368,6 @@ class CanvasHilited(Canvasx):
         Canvasx.__init__(self, master, *args, **kwargs)
 
         self.config(bg=formats['highlight_bg'], bd=0, highlightthickness=0)
-
-# from window_border.py
 
 def close(evt):
     dlg = evt.widget.winfo_toplevel()
