@@ -1887,7 +1887,7 @@ class EntryAutoPlace(Entryx):
     ''' This is the most recent and best of the autofill widgets. '''
     place_autofill_values = []
     place_data = []
-    dupe_names = set()
+    existing_place_names = set()
     formats = formats
     bg = formats["bg"]
     fg = formats["fg"]
@@ -1905,10 +1905,11 @@ class EntryAutoPlace(Entryx):
         cur.execute("ATTACH ? AS tree", (tree,))
 
         cur.execute(select_all_place_names)
-        all_place_names = [i[0] for i in cur.fetchall()]
-        for name in all_place_names:
-            if all_place_names.count(name) > 1:
-                EntryAutoPlace.dupe_names.add(name)
+        EntryAutoPlace.existing_place_names = set([i[0] for i in cur.fetchall()])
+        # all_place_names = [i[0] for i in cur.fetchall()]
+        # for name in all_place_names:
+            # if all_place_names.count(name) > 1: #NOTHING WILL EVER GO IN........................
+                # EntryAutoPlace.existing_place_names.add(name)
 
         if new_place or len(EntryAutoPlace.place_autofill_values) == 0:            
             cur.execute(select_all_nested_place_strings)
@@ -1926,8 +1927,7 @@ class EntryAutoPlace(Entryx):
         cur.execute("DETACH tree")
         cur.close()
         conn.close()
-        print("line", looky(seeline()).lineno, "nestings:", nestings)
-        return EntryAutoPlace.place_data, nestings, EntryAutoPlace.dupe_names        
+        return EntryAutoPlace.place_data, nestings, EntryAutoPlace.existing_place_names        
 
     def __init__(self, master, autofill=False, values=[], *args, **kwargs):
         Entryx.__init__(self, master, *args, **kwargs)
