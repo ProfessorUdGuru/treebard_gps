@@ -94,7 +94,8 @@ class FindingsTable(Frame):
 
     def __init__(
             self, master, root, treebard, main, current_person,
-            person_autofill_values, place_data, nestings, dupe_places, 
+            person_autofill_values, place_data, 
+            # person_autofill_values, place_data, nestings, existing_place_names, 
             *args, **kwargs):
         Frame.__init__(self, master, *args, **kwargs)
         self.master = master
@@ -104,8 +105,8 @@ class FindingsTable(Frame):
         self.current_person = current_person
         self.person_autofill_values = person_autofill_values
         self.place_data = place_data
-        self.place_autofill_values = nestings
-        self.dupe_places = dupe_places
+        # self.place_autofill_values = nestings
+        # self.existing_place_names = existing_place_names
 
         self.main_canvas = main.master
 
@@ -367,8 +368,9 @@ class FindingsTable(Frame):
                 self.final,
                 self.finding,
                 self.place_data,
-                self.place_autofill_values,
-                self.dupe_places)
+                # self.place_autofill_values,
+                # self.existing_place_names
+)
 
         def update_age(offspring_event, row):
             if (event_string == "birth" and 
@@ -1381,26 +1383,6 @@ class FindingsTable(Frame):
         cur.close()
         conn.close()  
         return findings_data, non_empty_roles, non_empty_notes 
-
-# if __name__ == '__main__':
-
-    # root = tk.Tk()
-    # root.geometry('+800+300')
-
-    # strings = make_all_nestings(select_all_place_ids)
-    # place_autofill_values = EntryAutoPlace.create_lists(strings)
-
-    # auto = EntryAutoPlace(
-        # root, width=50, autofill=True, values=place_autofill_values)
-
-    # auto.focus_set()   
-
-    # move = tk.Entry(root)
-
-    # auto.grid()
-    # move.grid()
-
-    # root.mainloop()
 
 
 

@@ -39,16 +39,14 @@ class ValidatePlace():
 
     def __init__(
             self, root, treebard, inwidg, initial, final, finding,
-            place_data, nestings, existing_place_names): 
+            place_data): 
         self.root = root
         self.treebard = treebard
         self.inwidg = inwidg
         self.initial = initial
         self.final = final
         self.finding = finding
-        self.place_data = place_data
-        self.nestings = nestings
-        self.existing_place_names = existing_place_names
+        self.place_data = place_data 
 
         self.formats = make_formats_dict()
 
@@ -174,10 +172,9 @@ class ValidatePlace():
 
     def validate_place(self):
         tree = get_current_file()[0]
-        conn = sqlite3.connect(global_db_path)
+        conn = sqlite3.connect(tree)
         conn.execute('PRAGMA foreign_keys = 1')
         cur = conn.cursor()
-        cur.execute("ATTACH ? AS tree", (tree,))
         lenstart = len(self.initial)
         lenfinal = len(self.final)
         if lenstart != 0 and lenfinal == 0:
@@ -190,10 +187,13 @@ class ValidatePlace():
         elif lenstart == 0 and lenfinal > 0:
             self.dispatch_tasks(cur, conn)
 
+        cur.close()
+        conn.close() 
+
     def dispatch_tasks(self, cur, conn):
 
         if self.final in EntryAutoPlace.place_autofill_values:
-            for dkt in self.place_data:
+            for dkt in EntryAutoPlace.place_data:
                 for k,v in dkt.items():
                     if k == self.final: 
                         autofill_nested_place_id = v["nested_place_id"]
@@ -201,23 +201,22 @@ class ValidatePlace():
                         nesting = cur.fetchone()[0]
                         break
             self.update_place(cur, conn, autofill_nested_place_id=autofill_nested_place_id)
-            EntryAutoPlace.place_data, EntryAutoPlace.place_autofill_values, EntryAutoPlace.existing_place_names = EntryAutoPlace.get_place_values(new_place=True)
+            EntryAutoPlace.place_data = EntryAutoPlace.get_place_values(new_place=True)
+            self.prepend_match(self.inwidg)
             return
-
         new_nesting = []
         self.place_list = self.final.split(",")
         self.place_list = [self.place_list[i].strip() for i in range(
             len(self.place_list))]
         for idx, name in enumerate(self.place_list, 1):
-            if name not in self.existing_place_names:
+            if name not in EntryAutoPlace.existing_place_names:
                 name, place_id = self.make_new_place(name)
+                print("line", looky(seeline()).lineno, "name, place_id:", name, place_id)
                 new_nesting.append((name, place_id, idx))
             else:
                 cur.execute(select_place_id_with_name, (name,))
                 place_id = [i[0] for i in cur.fetchall()]
-                if len(place_id) == 1:
-                    new_nesting.append((name, place_id[0], idx))
-                elif len(place_id) > 1:
+                if len(place_id) > 0:
                     choice = self.open_dupe_place_dlg(name, cur)
                     if choice > 0:
                         place_id = self.dupe_ids[choice-1]
@@ -232,11 +231,7 @@ class ValidatePlace():
             self.cancelled = True
             self.delete_temp_ids()
 
-        EntryAutoPlace.place_data, EntryAutoPlace.place_autofill_values, EntryAutoPlace.existing_place_names = EntryAutoPlace.get_place_values(new_place=True)
-
-        cur.execute("DETACH tree")
-        cur.close()
-        conn.close() 
+        EntryAutoPlace.place_data = EntryAutoPlace.get_place_values(new_place=True)
         self.prepend_match(self.inwidg)
 
     def prepend_match(self, widg):
@@ -294,8 +289,6 @@ class ValidatePlace():
             else:
                 print("line", looky(seeline()).lineno, "new_nesting_id:", new_nesting_id)
 
-        # EntryAutoPlace.place_data, EntryAutoPlace.place_autofill_values, EntryAutoPlace.existing_place_names = EntryAutoPlace.get_place_values(new_place=True)
-
     def delete_temp_ids(self, evt=None):
         if len(self.new_places) > 0:                
             for num in self.new_places:
@@ -303,7 +296,6 @@ class ValidatePlace():
                 conn = sqlite3.connect(tree)
                 conn.execute('PRAGMA foreign_keys = 1')
                 cur = conn.cursor()
-                print("line", looky(seeline()).lineno, "num:", num)
                 cur.execute(delete_place_name, (num,))
                 conn.commit()
                 cur.execute(delete_place, (num,))

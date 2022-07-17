@@ -1898,36 +1898,33 @@ class EntryAutoPlace(Entryx):
 
     def get_place_values(new_place=False):
         nestings = []
-
+        # nests = []
         tree = get_current_file()[0]
-        conn = sqlite3.connect(global_db_path)
+        conn = sqlite3.connect(tree)
         cur = conn.cursor()
-        cur.execute("ATTACH ? AS tree", (tree,))
 
         cur.execute(select_all_place_names)
         EntryAutoPlace.existing_place_names = set([i[0] for i in cur.fetchall()])
-        # all_place_names = [i[0] for i in cur.fetchall()]
-        # for name in all_place_names:
-            # if all_place_names.count(name) > 1: #NOTHING WILL EVER GO IN........................
-                # EntryAutoPlace.existing_place_names.add(name)
 
         if new_place or len(EntryAutoPlace.place_autofill_values) == 0:            
             cur.execute(select_all_nested_place_strings)
             tups = cur.fetchall()
             for tup in tups:
                 nestings.append((", ".join([i for i in tup[0:9] if i != "unknown"]), tup[9]))
+                # for stg in tup[0:9]:
+                    # nests.append(stg)
             nestings = sorted(nestings, key=lambda f: f[0])
             for tup in nestings:
                 nesting, nesting_id = tup
                 dkt = {nesting: {"nested_place_id": nesting_id}}
                 EntryAutoPlace.place_data.append(dkt)
         
-            nestings = [i[0] for i in nestings]
-            EntryAutoPlace.place_autofill_values = nestings
-        cur.execute("DETACH tree")
+            # nestings = [i[0] for i in nestings]
+            EntryAutoPlace.place_autofill_values = [i[0] for i in nestings]
+            # EntryAutoPlace.existing_place_names = set(nests)
         cur.close()
         conn.close()
-        return EntryAutoPlace.place_data, nestings, EntryAutoPlace.existing_place_names        
+        return EntryAutoPlace.place_data        
 
     def __init__(self, master, autofill=False, values=[], *args, **kwargs):
         Entryx.__init__(self, master, *args, **kwargs)

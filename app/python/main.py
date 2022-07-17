@@ -71,7 +71,8 @@ class Main(FrameStay):
         self.current_person = get_current_person()
         self.current_person_name = "" # could be got from index 2 above
 
-        self.place_data, self.nestings, self.dupe_places = EntryAutoPlace.get_place_values()
+        self.place_data = EntryAutoPlace.get_place_values()
+        # self.place_data, self.nestings, self.existing_place_names = EntryAutoPlace.get_place_values()
 
         self.tabbook_x = 300
         self.tabbook_y = 300
@@ -160,9 +161,7 @@ class Main(FrameStay):
             self,  
             self.current_person,
             self.person_autofill_values,
-            self.place_data, 
-            self.nestings, 
-            self.dupe_places)
+            self.place_data)
 
         self.nukefam_table = NuclearFamiliesTable(
             persons_tab,
