@@ -22,7 +22,7 @@ from query_strings import (
     select_all_images, select_all_name_types, insert_person_new,
     select_person_gender, select_max_name_type_id, insert_name_type_new,
     insert_image_new, select_name_with_id_any, select_birth_names_ids,
-    insert_finding_birth_new_person,
+    insert_finding_birth_new_person, update_findings_roles_person,
     select_current_person_id, delete_name_person, delete_findings_roles_person,
     select_name_id_by_person_id, delete_links_links_person, delete_links_links_name,
     update_finding_person_1_null, update_finding_person_2_null,

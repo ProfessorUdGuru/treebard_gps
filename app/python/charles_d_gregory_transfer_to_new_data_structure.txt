@@ -1,0 +1,56 @@
+charles_d_gregory_transfer_to_new_data_structure
+
+C:\Users\Lutherman>sqlite3 d:/treebard_gps/data/charles_d._gregory_family_tree/charles_d._gregory_family_tree.tbd
+SQLite version 3.34.0 2020-12-01 16:14:00
+Enter ".help" for usage hints.
+sqlite> .tables
+assertion        finding          media_type       report_type
+chart_type       findings_notes   name             repository
+citation         findings_roles   name_type        role_type
+color_scheme     format           note             setting
+contact          image            person           source
+current          images_elements  place            to_do
+date_change      kin_type         places_places
+date_format      links_links      project
+event_type       media            report
+
+sqlite> select * from assertion;
+assertion_id|citation_id|finding_id|event_type_id|date|particulars|age|name_id|surety|nest0|nest1|nest2|nest3|nest4|nest5|nest6|nest7|nest8
+1|1||9|-0000-00-00-------|Toy||1|3.0|1||||||||
+9|1||9|bef-1933-09-26-------|||1|3.0|1||||||||
+
+sqlite> select * from finding;
+finding_id|date|particulars|age|person_id|event_type_id|date_sorter|age1|kin_type_id1|age2|kin_type_id2|person_id1|person_id2|nest0|nest1|nest2|nest3|nest4|nest5|nest6|nest7|nest8
+1|-0000-00-00-------|||1|1|0, 0, 0|||||||1||||||||
+3|bef-1933-s-26-------|||1|9|1933,9,26|||||||1||||||||
+
+sqlite> select * from links_links;
+links_links_id|person_id|places_places_id|name_id|source_id|citation_id|finding_id|assertion_id|project_id|to_do_id|contact_id|image_id|note_id|role_id|repository_id|report_id|INTEGER|chart_id|media_id|role_type_id
+1||||1||||||||||1|||||
+
+sqlite> select * from citation;
+citation_id|source_id|citations
+1|1|Design Patent 91191, filed Sept. 26, 1933, granted Dec. 19, 1933
+2|1|U.S. Patent 1959469, filed December 19, 1933, granted May 22, 1934
+3|2|South Plains Man Perfects Revolutionary Motor, August 2, 1936, page seven
+
+sqlite> select * from current;
+current_id|place_id|person_id|citation_id|color_scheme_id
+1||1||1
+
+sqlite> select * from name;
+name_id|person_id|names|name_type_id|sort_order|used_by
+1|1|Charles D. Gregory|2|Gregory, Charles D.|
+
+sqlite> select * from person;
+PERSON_ID|gender
+1|unknown
+
+sqlite> select * from place;
+place_id|places|latitude|longitude|cartesian_coordinates|township|range|section|legal_subdivision|hint
+1|unknown||||||||
+
+sqlite> select * from source;
+source_id|sources|source_type
+1|U.S. Patent|
+2|Amarillo News and Globe|

@@ -171,16 +171,12 @@ if __name__ == '__main__':
 # DO LIST
 
 # BRANCH: places_rewrite
-# Then make X work on escape, and OK work on Enter.
-# narrow/emptyish place col in conclusions table shd get bigger (which they do by default) as autofill tries values on each char typed, but shd not get smaller again till focus out, then if applicable shrink down to fit content. Stop flashing big/small/big/small while typing.
-# CTRL-S has been changed to CTRL+F5 for redraw, but if cursor is in a place input, when you type CTRL+S it fills in with Arapahoe... Also replace all SAVE command buttons and icons with REDRAW instead.
-# get rid of all SELECT seq FROM SQLITE_SEQUENCE WHERE name = ... in the app and then remove all the AUTOINCREMENT keywords from all tables
-# fix blank finding, assertion, place, and nested_place tables in treebard.db, default_new_tree, _untouchedx2, and gregory_family_tree ; drop type and place tables from gregory/default/untouched & make .sql flat files 
-# add to main do list: make a tool for importing (merging) all places from tree to tree
+# Using the GUI create Charles D. Gregory Family Tree, making sure that the period is stripped off the D. ; add stuff from .txt to gregory manually;
+# make .sql flat files, save to external hard drive, push to github
 
 # BRANCH: assertions_dialog
 # columns: detail | name | source | citation | surety | repo(hover source)
-# tabs: date | place | particulars | agethe name tab in the main tabbook will have a list of each name with its corresponding assertions; adding a name in the names tab you have to also add an assertion (all names have to be sourced?)
+# tabs: date | place | particulars | age the name tab in the main tabbook will have a list of each name with its corresponding assertions; adding a name in the names tab you have to also add an assertion (all names have to be sourced?)
 # look for references to finding_id that shd refer to assertion table instead of what they're doing now if anything.
 # have to manually input place for brownville to assertion table but first have to create the place w/ GUI (doesn't work--fix that first)
 # row for 2 diff patents in claim table, maybe invention has to be changed to patent granted and patent applied for to get rid of extremely vague date?
@@ -198,15 +194,6 @@ if __name__ == '__main__':
 # remove repositories and input #1 from dlg title
 # adding date with new conclusion gets None for date_prefs ~line 764
 # when a new tree is made, it should have a default date format row in the date_format table DONE BUT CHECK BY making a new tree then see if u can make a new conclusion and add a date to it. BUT FIRST I think I fixed it wrong in default_new_tree and then copied it to _untouched, to wit, I think I put 'bef' in the bef_aft col and I think it shd have been 'bef_aft'.
-
-
-
-
-
-
-
-
-
 # Edit official do list and move to directory /etc/, edit ReadMe
 # export dbs to .sql
 # backup app to external hd
@@ -277,6 +264,7 @@ if __name__ == '__main__':
 # backup app to external hd
 
 # BRANCH: dialogs
+# note_topic_order in links_links isn't going to work right because a given note might have different order when linked to findings vs when linked to something else, so there might have to be a separate table note_topic_order with various link types and order and note ids in it, and it shd be removed from links_links
 # add another label in each row of roles dialog to show id of role person in case of dupe names
 # put a separator btwn events and attributes
 # in each tab of each tabbook, use Map event to focus one of the widgets on that tab when that tab is switched to, see colorizer arrow_in_first() as an example
@@ -324,6 +312,8 @@ if __name__ == '__main__':
 # website topics: add a button at bottom to view all topics on one page, then create the page and upload it, with all topics on one page, this is so search engines will find the text, otherwise it's buried in javascript and can't be searched
 # NUKEFAM TABLE on person tab: unhide kintype IDs 3, 26, 27, 28 and make them work same as 1 & 2
 # Files: when new empty tree is made, "name unknown" is a person in the db autofill list should not include this, search should not include this.
+# make a tool for importing (merging) all places from tree to tree
+
 
 # DEV DOCS:
 # Files: remember to close the root with the X on the title bar or the close button. If you close the app by closing the X on the terminal, set_closing() will not run.

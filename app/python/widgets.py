@@ -12,20 +12,18 @@ from files import (
 from scrolling import resize_scrolled_content
 from utes import center_dialog
 from query_strings import ( 
-    select_color_scheme_current_id, select_color_scheme_by_id,
+    select_color_scheme_current_id, select_color_scheme_by_id, insert_name, 
     select_format_font_scheme, select_format_font_size, delete_links_links_name,
     select_current_person, select_name_with_id, select_all_names_ids,
-    select_all_person_ids, select_image_id, select_max_person_id,    
-    insert_images_elements, select_name_type_id, insert_name, 
+    select_all_person_ids, select_image_id, select_max_person_id,        
     select_all_images, select_all_name_types, select_all_place_names,
     select_person_gender, select_max_name_type_id, insert_name_type_new,
     insert_image_new, select_name_with_id_any, select_birth_names_ids,
     insert_finding_birth_new_person, update_format_font,
-    delete_name_person, delete_findings_roles_person,
-    select_name_id_by_person_id, delete_links_links_person,
+    delete_name_person, select_name_id_by_person_id, delete_links_links_person,
     update_finding_person_1_null, update_finding_person_2_null,
     delete_finding_person, delete_assertions_roles_person, delete_person,
-    delete_images_elements_person, delete_assertion_person, select_name_sorter,
+    delete_assertion_person, select_name_sorter, select_name_type_id,
     select_name_type_sorter_with_id, select_all_names, update_current_person,
     select_name_type_hierarchy, select_opening_settings,
     select_closing_state_recent_files, update_closing_state_recent_files,
@@ -59,16 +57,11 @@ def get_opening_settings():
     """ If the tree is brand new, get treebard's default color scheme. """
     tree = get_current_file()[0]
     conn = sqlite3.connect(global_db_path)
-    # conn = sqlite3.connect(current_file)
     cur = conn.cursor()
     cur.execute("ATTACH ? AS tree", (tree,))
     cur.execute(select_color_scheme_current_id)
     color_scheme_id = cur.fetchone()
     if color_scheme_id is None:
-        # cur.close()
-        # conn.close()
-        # conn = sqlite3.connect(global_db_path)
-        # cur = conn.cursor()
         cur.execute(select_opening_settings)
         default_formats = list(cur.fetchone())
         cur.execute("DETACH tree")
@@ -1401,8 +1394,7 @@ class Border(Canvas):
             its host toplevel as parent. Setting font size should change the 
             size of fonts, title bar, and max/min/quit buttons. The settings 
             are 3, 4, 7, or 11 pixels. The size shown is linked to changes in 
-            font size (in progress--user still has to switch to person tab and
-            redraw() to see change).
+            font size.
 
             The hard part to remember when using this is that the parts of the
             border including the canvas itself (`self` in the class) are gridded
@@ -1898,7 +1890,6 @@ class EntryAutoPlace(Entryx):
 
     def get_place_values(new_place=False):
         nestings = []
-        # nests = []
         tree = get_current_file()[0]
         conn = sqlite3.connect(tree)
         cur = conn.cursor()
@@ -1911,17 +1902,13 @@ class EntryAutoPlace(Entryx):
             tups = cur.fetchall()
             for tup in tups:
                 nestings.append((", ".join([i for i in tup[0:9] if i != "unknown"]), tup[9]))
-                # for stg in tup[0:9]:
-                    # nests.append(stg)
             nestings = sorted(nestings, key=lambda f: f[0])
             for tup in nestings:
                 nesting, nesting_id = tup
                 dkt = {nesting: {"nested_place_id": nesting_id}}
                 EntryAutoPlace.place_data.append(dkt)
         
-            # nestings = [i[0] for i in nestings]
             EntryAutoPlace.place_autofill_values = [i[0] for i in nestings]
-            # EntryAutoPlace.existing_place_names = set(nests)
         cur.close()
         conn.close()
         return EntryAutoPlace.place_data        
@@ -1947,6 +1934,8 @@ class EntryAutoPlace(Entryx):
             self.bind("<KeyPress>", self.detect_pressed)
             self.bind("<KeyRelease>", self.get_typed)
             self.bind("<FocusIn>", self.deselect, add="+")
+
+        self.bind("<FocusOut>", self.get_small, add="+")
 
     def detect_pressed(self, evt):
         '''
@@ -1993,6 +1982,7 @@ class EntryAutoPlace(Entryx):
         return hits
 
     def show_hits(self, hits, pos):
+        self.config(width = 45)
         cursor = pos + 1
         if len(hits) != 0:
             self.autofilled = hits[0]
@@ -2015,6 +2005,12 @@ class EntryAutoPlace(Entryx):
         '''
         self.select_clear()
 
+    def get_small(self, evt):
+        """ On autofill the widget gets big so it doesn't change size each time
+            there's a match during the autofill search. On focus out, this sets
+            it back to fit its final contents.
+        """
+        self.config(width=0)
 
 class EntryAuto(Entryx):
     '''
@@ -3738,7 +3734,7 @@ class DropdownMenu(FrameHilited2):
                     "n"),
                 ("open", lambda evt, tbard=self.treebard: handle_open_event(
                     evt, tbard), "..."),
-                ("save", lambda evt, name="save (redraw)": placeholder(evt, name), "s"),
+                ("redraw", lambda evt, name="redraw": placeholder(evt, name), "F5"),
                 ("save as", lambda evt, root=self.root: save_as(evt, root), "CAs"),
                 ("save copy as", lambda evt: save_copy_as(), "t"),
                 ("rename", lambda evt, root=self.root: rename_tree(evt, root), "h"),
@@ -4334,8 +4330,6 @@ def redraw_person_tab(
         maybe supply that value anyway. When supplying current_person, the
         current_name doesn't automatically have be be supplied too.
     """
-    # old_place_list = list(EntryAutoPlace.place_autofill_values)
-    # print("line", looky(seeline()).lineno, "old_place_list[0:3]:", old_place_list[0:3])
     formats = make_formats_dict()
     current_file, current_dir = get_current_file()
     findings_table = main_window.findings_table
@@ -4355,10 +4349,6 @@ def redraw_person_tab(
         redraw_families_table(evt, current_person, main_window)
 
     redraw_findings_table(findings_table, current_person=current_person)
-
-    # EntryAutoPlace.place_autofill_values = old_place_list
-    # print("line", looky(seeline()).lineno, "old_place_list[0:3]:", old_place_list[0:3])
-    # print("line", looky(seeline()).lineno, "EntryAutoPlace.place_autofill_values[0:3]:", EntryAutoPlace.place_autofill_values[0:3])
 
     configall(main_window.root, formats)
     resize_scrollbar(main_window.root, main_window.master)    

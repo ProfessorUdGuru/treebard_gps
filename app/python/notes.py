@@ -735,8 +735,9 @@ class NotesDialog(Toplevel):
         cur = conn.cursor()
         cur.execute(insert_note, (new_note, new_topic))
         conn.commit()
-        cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'note'")
-        new_note_id = cur.fetchone()[0]
+        # cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'note'")
+        # new_note_id = cur.fetchone()[0]
+        new_note_id = cur.lastrowid
         reorder_notes()
         cur.execute(insert_findings_notes_new, (self.finding, new_note_id))
         conn.commit()

@@ -191,7 +191,8 @@ def make_tree(
 
     new_tree_name = open_input_message(
         root, opening_msg[1], "Give the Tree a Unique Title", "OK", "CANCEL")
-    current_dir = new_tree_name.lower().replace(" ", "_").strip()
+    current_dir = new_tree_name.lower().replace(" ", "_").replace(".", "").strip()
+    # current_dir = new_tree_name.lower().replace(" ", "_").strip()
     if len(current_dir) == 0:
         return
     new_path = new_file_path

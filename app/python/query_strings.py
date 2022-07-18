@@ -42,36 +42,60 @@ delete_finding_person = '''
     DELETE FROM finding
     WHERE person_id = ?
 '''
-
+# CHANGE THIS TO WORK WITH links_links
 delete_findings_notes_linked = '''
-    DELETE FROM findings_notes
-    WHERE findings_notes_id = ?
+    DELETE FROM links_links
+    WHERE links_links_id = ?
 '''
 
+# delete_findings_notes_linked = '''
+    # DELETE FROM findings_notes
+    # WHERE findings_notes_id = ?
+# '''
+# CHANGE THIS TO WORK WITH links_links
 delete_findings_notes_finding = '''
-    DELETE FROM findings_notes
-    WHERE finding_id = ?
+    DELETE FROM links_links
+    WHERE finding_id = ?    
+        AND note_id is not null
 '''
-
+# delete_findings_notes_finding = '''
+    # DELETE FROM findings_notes
+    # WHERE finding_id = ?
+# '''
+# CHANGE THIS TO WORK WITH links_links
 delete_findings_roles_finding = '''
-    DELETE FROM findings_roles
+    DELETE FROM links_links
     WHERE finding_id = ?
+        AND role_id is not null
 ''' 
-
+# delete_findings_roles_finding = '''
+    # DELETE FROM findings_roles
+    # WHERE finding_id = ?
+# ''' 
+# CHANGE THIS TO WORK WITH links_links
 delete_findings_role = '''
-    DELETE FROM findings_roles 
-    WHERE findings_roles_id = ?
+    DELETE FROM links_links 
+    WHERE links_links_id = ?
 '''
 
+# delete_findings_role = '''
+    # DELETE FROM findings_roles 
+    # WHERE findings_roles_id = ?
+# '''
+# CHANGE THIS TO WORK WITH links_links
 delete_findings_roles_person = '''
-    DELETE FROM findings_roles
+    DELETE FROM links_links
     WHERE person_id = ?
 '''
-
+# CHANGE THIS TO WORK WITH links_links
 delete_images_elements_person = '''
-    DELETE FROM images_elements
+    DELETE FROM links_links
     WHERE person_id = ?
 '''
+# delete_images_elements_person = '''
+    # DELETE FROM images_elements
+    # WHERE person_id = ?
+# '''
 
 delete_links_links_name = '''
     DELETE FROM links_links
@@ -151,11 +175,15 @@ insert_finding_new_couple_alt = '''
         person_id, event_type_id, person_id1, person_id2, kin_type_id1, kin_type_id2)
     VALUES (?, ?, null, null, ?, ?)
 '''
-
+# CHANGE THIS TO WORK WITH links_links
 insert_findings_notes_new = '''
-    INSERT INTO findings_notes 
-    VALUES (null, ?, ?, 0)
+    INSERT INTO links_links (finding_id, note_id, note_topic_order) 
+    VALUES (?, ?, 0)
 '''
+# insert_findings_notes_new = '''
+    # INSERT INTO findings_notes 
+    # VALUES (null, ?, ?, 0)
+# '''
 # null event_type_id not allowed
 insert_finding_new_couple_details = '''
     INSERT INTO finding (
@@ -167,21 +195,29 @@ insert_finding_new_couple_details = '''
 insert_finding_null_couple = '''
     INSERT INTO finding ('', null, '', null)
 '''
-
+# CHANGE THIS TO WORK WITH links_links
 insert_findings_roles = '''
-    INSERT INTO findings_roles 
-    VALUES (null, ?, ?, ?)
+    INSERT INTO links_links (finding_id, role_type_id, person_id)
+    VALUES (?, ?, ?)
 '''
+# insert_findings_roles = '''
+    # INSERT INTO findings_roles 
+    # VALUES (null, ?, ?, ?)
+# '''
 
 insert_image_new = '''
     INSERT INTO image
     VALUES (null, ?, '')
 '''
-
+# CHANGE THIS TO WORK WITH links_links
 insert_images_elements = '''
-    INSERT INTO images_elements (image_id, main_image, person_id) 
+    INSERT INTO links_links (image_id, main_image, person_id) 
     VALUES (?, 1, ?) 
 '''
+# insert_images_elements = '''
+    # INSERT INTO images_elements (image_id, main_image, person_id) 
+    # VALUES (?, 1, ?) 
+# '''
 
 insert_kin_type_new = '''
     INSERT INTO kin_type (kin_types, kin_code)
@@ -228,11 +264,6 @@ insert_place_name = '''
     VALUES (?, ?, 1)
 '''
 
-# insert_place_new = '''
-    # INSERT INTO place (places)
-    # VALUES (?)
-# '''
-
 insert_role_type = '''
     INSERT INTO role_type VALUES (null, ?, 0, 0)
 '''
@@ -277,21 +308,26 @@ select_all_findings_current_person = '''
     FROM finding
     WHERE person_id = ?
 '''
-
-select_all_findings_roles_ids = '''
-    SELECT finding_id
-    FROM findings_roles
-'''
-
+# CHANGE THIS TO WORK WITH links_links
 select_all_findings_roles_ids_distinct = '''
     SELECT DISTINCT finding_id
-    FROM findings_roles
+    FROM links_links
+    WHERE role_id IS NOT null
 '''
-
+# select_all_findings_roles_ids_distinct = '''
+    # SELECT DISTINCT finding_id
+    # FROM findings_roles
+# '''
+# CHANGE THIS TO WORK WITH links_links
 select_all_findings_notes_ids = '''
     SELECT finding_id
-    FROM findings_notes
+    FROM links_links
+    WHERE note_id IS NOT null
 '''
+# select_all_findings_notes_ids = '''
+    # SELECT finding_id
+    # FROM findings_notes
+# '''
 
 select_all_images = '''
     SELECT images FROM image
@@ -335,49 +371,54 @@ select_birth_names_ids = '''
 select_all_person_ids = '''
     SELECT person_id FROM person
 '''
-
+# CHANGE THIS TO WORK WITH links_links
 select_all_person_images = '''
     SELECT DISTINCT images, caption, main_image
-    FROM images_elements
+    FROM links_links
         JOIN person
-            ON images_elements.person_id = person.person_id
+            ON links_links.person_id = person.person_id
         JOIN image
-            ON image.image_id = images_elements.image_id 
-    WHERE images_elements.person_id = ?
+            ON image.image_id = links_links.image_id 
+    WHERE links_links.person_id = ?
 '''
+# select_all_person_images = '''
+    # SELECT DISTINCT images, caption, main_image
+    # FROM images_elements
+        # JOIN person
+            # ON images_elements.person_id = person.person_id
+        # JOIN image
+            # ON image.image_id = images_elements.image_id 
+    # WHERE images_elements.person_id = ?
+# '''
 
 select_all_place_ids = '''
     SELECT place_id
     FROM place
 '''
-
-# select_all_place_images = '''
-    # SELECT images, caption, main_image, places
-    # FROM images_elements
-        # JOIN place
-            # ON images_elements.place_id = place.place_id 
-        # JOIN current
-            # ON current.place_id = place.place_id
-        # JOIN image
-            # ON image.image_id = images_elements.image_id 
-# '''
-
+# CHANGE THIS TO WORK WITH links_links
 select_all_place_images = '''
     SELECT images, caption, main_image, place_names
-    FROM images_elements
+    FROM links_links
         JOIN place
-            ON images_elements.place_id = place.place_id 
+            ON links_links.place_id = place.place_id 
         JOIN place_name
             ON place.place_id = place_name.place_id
         JOIN current
             ON current.place_id = place.place_id
         JOIN image
-            ON image.image_id = images_elements.image_id 
+            ON image.image_id = links_links.image_id 
 '''
-
-# select_all_place_names = '''
-    # SELECT place_names, place_id
-    # FROM place_name
+# select_all_place_images = '''
+    # SELECT images, caption, main_image, place_names
+    # FROM images_elements
+        # JOIN place
+            # ON images_elements.place_id = place.place_id 
+        # JOIN place_name
+            # ON place.place_id = place_name.place_id
+        # JOIN current
+            # ON current.place_id = place.place_id
+        # JOIN image
+            # ON image.image_id = images_elements.image_id 
 # '''
 
 select_all_place_names = '''
@@ -417,36 +458,31 @@ select_all_nested_place_strings = '''
         JOIN place_name i ON i.place_id = nest8  
     WHERE nest0 != 1 or nest1 != 1 or nest2 != 1 or nest3 != 1 or nest4 != 1 or nest5 != 1 or nest6 != 1 or nest7 != 1 or nest8 != 1
 '''
-
-# select_all_nested_place_strings = '''
-    # SELECT a.place_names, b.place_names, c.place_names, d.place_names, 
-        # e.place_names, f.place_names, g.place_names, h.place_names, i.place_names, 
-        # nested_place_id
-    # FROM nested_place
-        # LEFT JOIN place_name a ON a.place_id = nest0
-        # LEFT JOIN place_name b ON b.place_id = nest1
-        # LEFT JOIN place_name c ON c.place_id = nest2
-        # LEFT JOIN place_name d ON d.place_id = nest3
-        # LEFT JOIN place_name e ON e.place_id = nest4
-        # LEFT JOIN place_name f ON f.place_id = nest5
-        # LEFT JOIN place_name g ON g.place_id = nest6
-        # LEFT JOIN place_name h ON h.place_id = nest7
-        # LEFT JOIN place_name i ON i.place_id = nest8  
-    # WHERE nest0 != 1
-# '''
-
+# CHANGE THIS TO WORK WITH links_links
 select_all_source_images = '''
     SELECT images, caption, main_image, sources, citations
-    FROM images_elements
+    FROM links_links
         JOIN source
             ON citation.source_id = source.source_id
         JOIN citation
-            ON images_elements.citation_id = citation.citation_id
+            ON links_links.citation_id = citation.citation_id
         JOIN current
             ON current.citation_id = citation.citation_id
         JOIN image
-            ON image.image_id = images_elements.image_id 
+            ON image.image_id = links_links.image_id 
 '''
+# select_all_source_images = '''
+    # SELECT images, caption, main_image, sources, citations
+    # FROM images_elements
+        # JOIN source
+            # ON citation.source_id = source.source_id
+        # JOIN citation
+            # ON images_elements.citation_id = citation.citation_id
+        # JOIN current
+            # ON current.citation_id = citation.citation_id
+        # JOIN image
+            # ON image.image_id = images_elements.image_id 
+# '''
 
 select_closing_state_openpic = '''
     SELECT openpic
@@ -484,34 +520,23 @@ select_count_finding_id_sources = '''
         WHERE finding_id = ?
             AND assertion_id is not null
 '''
-
+# CHANGE THIS TO WORK WITH links_links
 select_count_findings_roles = '''
-    SELECT COUNT (findings_roles_id)
-    FROM findings_roles
+    SELECT COUNT (links_links_id)
+    FROM links_links
     WHERE finding_id = ?
+        AND role_id IS NOT null
 '''
+# select_count_findings_roles = '''
+    # SELECT COUNT (findings_roles_id)
+    # FROM findings_roles
+    # WHERE finding_id = ?
+# '''
 
 select_count_place_id = '''
     SELECT COUNT (place_id) 
     FROM place WHERE place_id = ?
 '''
-
-select_couple_event_roles = '''    
-        SELECT 
-            findings_roles.finding_id,
-            findings_roles.role_type_id,
-            findings_roles.person_id
-        FROM
-            finding
-            JOIN findings_roles
-                ON findings_roles.finding_id = finding.finding_id 
-            JOIN person
-                ON person.person_id = findings_roles.person_id
-            JOIN role_type
-                ON role_type.role_type_id = 
-                    findings_roles.role_type_id                      
-        WHERE findings_roles.finding_id IN ({})       
-    '''
 
 select_current_person = '''
     SELECT current.person_id, names 
@@ -526,15 +551,22 @@ select_current_person_id = '''
     SELECT person_id 
     FROM current 
     WHERE current_id = 1'''
-
+# CHANGE THIS TO WORK WITH links_links
 select_current_person_image = '''
     SELECT images 
     FROM image 
-        JOIN images_elements 
-            ON image.image_id = images_elements.image_id 
+        JOIN links_links 
+            ON image.image_id = links_links.image_id 
     WHERE main_image = 1 
-        AND images_elements.person_id = ?
+        AND links_links.person_id = ?
 '''
+# select_current_person_image = '''
+    # SELECT images 
+    # FROM image 
+        # JOIN images_elements 
+            # ON image.image_id = images_elements.image_id 
+    # WHERE main_image = 1 
+# '''        
 
 select_default_date_format = '''
     SELECT default_date_formats, default_abt, default_est, default_cal,
@@ -778,24 +810,6 @@ select_finding_persons = '''
     WHERE finding_id = ?
 '''
 
-# select_finding_nested_place = '''
-    # SELECT a.place_names, b.place_names, c.place_names, d.place_names, 
-        # e.place_names, f.place_names, g.place_names, h.place_names, i.place_names
-    # FROM finding
-        # LEFT JOIN nested_place ON finding.nested_place_id = nested_place.nested_place_id
-        # LEFT JOIN place_name a ON a.place_id = nest0
-        # LEFT JOIN place_name b ON b.place_id = nest1
-        # LEFT JOIN place_name c ON c.place_id = nest2
-        # LEFT JOIN place_name d ON d.place_id = nest3
-        # LEFT JOIN place_name e ON e.place_id = nest4
-        # LEFT JOIN place_name f ON f.place_id = nest5
-        # LEFT JOIN place_name g ON g.place_id = nest6
-        # LEFT JOIN place_name h ON h.place_id = nest7
-        # LEFT JOIN place_name i ON i.place_id = nest8             
-    # WHERE finding_id = ? 
-        # AND (nest0 != 1 and nest1 != 1 and nest2 != 1 and nest3 != 1 and nest4 != 1 and nest5 != 1 and nest6 != 1 and nest7 != 1 and nest8 != 1)
-# '''
-
 select_finding_nested_place = '''
     SELECT a.place_names, b.place_names, c.place_names, d.place_names, 
         e.place_names, f.place_names, g.place_names, h.place_names, i.place_names
@@ -868,12 +882,18 @@ select_findings_for_person = '''
         ON finding.event_type_id = event_type.event_type_id
     WHERE person_id = ?
 '''
-
+# CHANGE THIS TO WORK WITH links_links
 select_findings_notes_order = '''
-    SELECT topic_order, findings_notes_id
-    FROM findings_notes
+    SELECT note_topic_order, links_links_id
+    FROM links_links
     WHERE finding_id = ?
+        AND note_id IS NOT null
 '''
+# select_findings_notes_order = '''
+    # SELECT topic_order, findings_notes_id
+    # FROM findings_notes
+    # WHERE finding_id = ?
+# '''
 
 select_finding_couple_person1_details = '''
     SELECT finding_id, person_id1, kin_type_id1, 
@@ -912,37 +932,6 @@ select_finding_couple_details_alt_parent2 = '''
         110, 111, 112, 120, 121, 122, 130, 131)
 '''
 
-select_findings_roles_generic = '''
-    SELECT 
-        finding.finding_id,
-        findings_roles.role_type_id,
-        findings_roles.person_id
-    FROM
-        finding
-        JOIN findings_roles
-            ON findings_roles.finding_id = finding.finding_id 
-        JOIN person
-            ON person.person_id = findings_roles.person_id
-        JOIN role_type
-            ON role_type.role_type_id = findings_roles.role_type_id 
-    WHERE finding.person_id = ?
-'''
-
-select_findings_roles_generic_finding = '''
-    SELECT 
-        findings_roles.role_type_id,
-        findings_roles.person_id        
-    FROM
-        finding
-        JOIN findings_roles
-            ON findings_roles.finding_id = finding.finding_id 
-        JOIN person
-            ON person.person_id = findings_roles.person_id
-        JOIN role_type
-            ON role_type.role_type_id = findings_roles.role_type_id 
-    WHERE findings_roles.finding_id = ?
-'''
-
 select_default_format_font_size = '''
     SELECT default_font_size
     FROM default_format
@@ -964,17 +953,27 @@ select_format_font_scheme = '''
 select_image_id = '''
     SELECT image_id FROM image WHERE images = ?
 '''
-
+# CHANGE THIS TO WORK WITH links_links
 select_images_elements_main_image = '''
     SELECT images
-    FROM images_elements
+    FROM links_links
         JOIN person
-            ON images_elements.person_id = person.person_id 
+            ON links_links.person_id = person.person_id 
         JOIN image
-            ON image.image_id = images_elements.image_id 
-    WHERE images_elements.main_image = 1
-        AND images_elements.person_id = ?
+            ON image.image_id = links_links.image_id 
+    WHERE main_image = 1
+        AND links_links.person_id = ?
 '''
+# select_images_elements_main_image = '''
+    # SELECT images
+    # FROM images_elements
+        # JOIN person
+            # ON images_elements.person_id = person.person_id 
+        # JOIN image
+            # ON image.image_id = images_elements.image_id 
+    # WHERE images_elements.main_image = 1
+        # AND images_elements.person_id = ?
+# '''
 
 select_kin_type_alt_parent = '''
     SELECT kin_types, kin_type_id
@@ -1149,32 +1148,33 @@ select_nested_place_inclusion = '''
     WHERE nest0 = ? or nest1 = ? or nest2 = ? or nest3 = ? or nest4 = ? or nest5 = ? or nest6 = ? or nest7 = ? or nest8 = ?
 '''
 
-# select_nested_place_inclusion = '''
-    # SELECT a.places, b.places, c.places, d.places, 
-        # e.places, f.places, g.places, h.places, i.places
-    # FROM nested_place
-        # LEFT JOIN place as a ON a.place_id = nest0
-        # LEFT JOIN place as b ON b.place_id = nest1
-        # LEFT JOIN place as c ON c.place_id = nest2
-        # LEFT JOIN place as d ON d.place_id = nest3
-        # LEFT JOIN place as e ON e.place_id = nest4
-        # LEFT JOIN place as f ON f.place_id = nest5
-        # LEFT JOIN place as g ON g.place_id = nest6
-        # LEFT JOIN place as h ON h.place_id = nest7
-        # LEFT JOIN place as i ON i.place_id = nest8
-
-    # WHERE nest0 = ? or nest1 = ? or nest2 = ? or nest3 = ? or nest4 = ? or nest5 = ? or nest6 = ? or nest7 = ? or nest8 = ?
-# '''
-
+# CHANGE THIS TO WORK WITH links_links
 select_notes_linked = '''
-    SELECT findings_notes_id
-    FROM findings_notes
+    SELECT links_links_id
+    FROM links_links
     JOIN note
-        ON note.note_id = findings_notes.note_id
+        ON note.note_id = links_links.note_id
     WHERE topic = ?
-        AND finding_id = ?
+        AND links_links.finding_id = ?
 '''
 
+# select_notes_linked = '''
+    # SELECT findings_notes_id
+    # FROM findings_notes
+    # JOIN note
+        # ON note.note_id = findings_notes.note_id
+    # WHERE topic = ?
+        # AND finding_id = ?
+# '''
+# CHANGE THIS TO WORK WITH links_links
+select_notes_per_finding = '''
+    SELECT topic, notes
+    FROM note 
+    JOIN links_links
+        ON links_links.note_id = note.note_id
+    WHERE finding_id = ?
+    ORDER BY note_topic_order
+'''
 select_notes_per_finding = '''
     SELECT topic, notes
     FROM note 
@@ -1299,24 +1299,29 @@ select_place_id_with_name = '''
     FROM place_name
     WHERE place_names = ?
 '''
-
-# select_place_id_with_name = '''
-    # SELECT place_id
-    # FROM place
-    # WHERE places = ?
-# '''
-
+# CHANGE THIS TO WORK WITH links_links
 select_roles = '''
     SELECT 
-        findings_roles_id, 
+        links_links_id, 
         role_types, 
         person_id, 
-        findings_roles.role_type_id 
+        links_links.role_type_id 
     FROM role_type 
-        JOIN findings_roles 
-            ON role_type.role_type_id = findings_roles.role_type_id 
+        JOIN links_links 
+            ON role_type.role_type_id = links_links.role_type_id 
     WHERE finding_id = ?
 ''' 
+# select_roles = '''
+    # SELECT 
+        # findings_roles_id, 
+        # role_types, 
+        # person_id, 
+        # findings_roles.role_type_id 
+    # FROM role_type 
+        # JOIN findings_roles 
+            # ON role_type.role_type_id = findings_roles.role_type_id 
+    # WHERE finding_id = ?
+# ''' 
 
 select_role_types = '''
     SELECT role_types 
@@ -1619,53 +1624,74 @@ update_finding_nested_place_unknown = '''
     SET nested_place_id = 1
     WHERE finding_id = ?    
 '''
-
+# CHANGE THIS TO WORK WITH links_links
 update_findings_notes = '''
-    UPDATE findings_notes 
-    SET order_subtopic = ? 
+    UPDATE links_links 
+    SET note_topic_order = ? 
     WHERE finding_id = ?
         AND note_id = ? 
 '''
-
+# update_findings_notes = '''
+    # UPDATE findings_notes 
+    # SET order_subtopic = ? 
+    # WHERE finding_id = ?
+        # AND note_id = ? 
+# '''
+# CHANGE THIS TO WORK WITH links_links
 update_findings_notes_order = '''
-    UPDATE findings_notes
-    SET topic_order = ?
-    WHERE findings_notes_id = ?
+    UPDATE links_links
+    SET note_topic_order = ?
+    WHERE links_links_id = ?
 '''
-
+# update_findings_notes_order = '''
+    # UPDATE findings_notes
+    # SET topic_order = ?
+    # WHERE findings_notes_id = ?
+# '''
+# CHANGE THIS TO WORK WITH links_links
 update_findings_roles_person = '''
-    UPDATE findings_roles 
+    UPDATE links_links 
     SET person_id = ? 
-    WHERE findings_roles_id = ?
+    WHERE links_links_id = ?
 '''
-
-update_findings_roles_null_person = '''
-    UPDATE findings_roles 
-    SET person_id = null 
-    WHERE findings_roles_id = ?
-'''
-
+# update_findings_roles_person = '''
+    # UPDATE findings_roles 
+    # SET person_id = ? 
+    # WHERE findings_roles_id = ?
+# '''
+# CHANGE THIS TO WORK WITH links_links
 update_findings_roles_role_type = '''
-    UPDATE findings_roles 
+    UPDATE links_links 
     SET role_type_id = ? 
-    WHERE findings_roles_id = ?
+    WHERE links_links_id = ?
 '''
+# update_findings_roles_role_type = '''
+    # UPDATE findings_roles 
+    # SET role_type_id = ? 
+    # WHERE findings_roles_id = ?
+# '''
 
 update_format_font = '''
     UPDATE format
     SET (output_font, font_size) = (?, ?)
     WHERE format_id = 1
 '''
-
+# CHANGE THIS TO WORK WITH links_links
 update_images_elements_zero = '''
-    UPDATE images_elements 
+    UPDATE links_links 
     SET main_image = 0 
     WHERE main_image = 1 
-        AND images_elements.person_id = ?
+        AND links_links.person_id = ?
 '''
-
+# update_images_elements_zero = '''
+    # UPDATE images_elements 
+    # SET main_image = 0 
+    # WHERE main_image = 1 
+        # AND images_elements.person_id = ?
+# '''
+# CHANGE THIS TO WORK WITH links_links
 update_images_elements_one = '''
-    UPDATE images_elements 
+    UPDATE links_links 
     SET main_image = 1
     WHERE image_id = (
         SELECT image_id 
@@ -1674,6 +1700,16 @@ update_images_elements_one = '''
         (SELECT current.person_id 
         FROM current WHERE current_id = 1)
 '''
+# update_images_elements_one = '''
+    # UPDATE images_elements 
+    # SET main_image = 1
+    # WHERE image_id = (
+        # SELECT image_id 
+        # FROM image WHERE images = ?)
+    # AND person_id = 
+        # (SELECT current.person_id 
+        # FROM current WHERE current_id = 1)
+# '''
 
 update_kin_type_kin_code = '''
     UPDATE kin_type 

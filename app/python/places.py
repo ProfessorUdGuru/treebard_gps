@@ -75,7 +75,7 @@ class ValidatePlace():
         self.canvas = Border(self.duplicate_places_dlg, self.root)            
         self.canvas.title_1.config(text="Duplicate Place Dialog")
         self.canvas.title_2.config(text="input: {}".format(self.final))
-        self.canvas.quitt.bind("<Button-1>", self.delete_temp_ids, add="+")
+        self.canvas.quitt.bind("<Button-1>", self.delete_temp_ids, add="+")        
 
         self.window = Frame(self.canvas)
         self.canvas.create_window(0, 0, anchor='nw', window=self.window)
@@ -248,8 +248,9 @@ class ValidatePlace():
         cur = conn.cursor()
         cur.execute(insert_place_new)
         conn.commit()
-        cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'place'")
-        temp_id = cur.fetchone()[0] 
+        # cur.execute("SELECT seq FROM SQLITE_SEQUENCE WHERE name = 'place'")
+        # temp_id = cur.fetchone()[0] 
+        temp_id = cur.lastrowid
         cur.execute(insert_place_name, (name, temp_id))
         conn.commit()
         self.new_places.append(temp_id)
@@ -286,8 +287,6 @@ class ValidatePlace():
             if new_nesting_id:
                 cur.execute(update_finding_nested_place, (new_nesting_id, self.finding))
                 conn.commit()
-            else:
-                print("line", looky(seeline()).lineno, "new_nesting_id:", new_nesting_id)
 
     def delete_temp_ids(self, evt=None):
         if len(self.new_places) > 0:                
@@ -305,6 +304,9 @@ class ValidatePlace():
             self.duplicate_places_dlg.destroy()
             self.inwidg.delete(0, 'end')
             self.inwidg.insert(0, self.initial)
+
+
+
 
 
 
