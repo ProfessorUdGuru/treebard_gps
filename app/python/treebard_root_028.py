@@ -170,9 +170,7 @@ if __name__ == '__main__':
 
 # DO LIST
 
-# BRANCH: places_rewrite
-# Using the GUI create Charles D. Gregory Family Tree, making sure that the period is stripped off the D. ; add stuff from .txt to gregory manually;
-# make .sql flat files, save to external hard drive, push to github
+
 
 # BRANCH: assertions_dialog
 # columns: detail | name | source | citation | surety | repo(hover source)
@@ -190,7 +188,7 @@ if __name__ == '__main__':
 # notes, roles buttons same as date place particulars age??? ROLES movie: why is there no db table for roles? The feature was developed as part of the development of the conclusions table, and it was apparent at that time that the role didn't exist outside of its context. Without reference to an event e.g. wedding, the adjunct role flower girl doesn't exist. So roles were created in the m-m table findings_roles. This is probably wrong because the role's existence should probably be postulated in an abstract sense in a table called role so it has a pk. A role is not a m-m phenomenon. A role has one person and one role type in it, so it shd be in a table of its own on a single row. There's also the ability to create the link between the person and the role type id in links_links. The decision about what to do has to be made when it comes time to get roles referenced in the assertions table, so that whatever decision is made will take the whole picture into account. 
 # make assertions tab but it's for assertions that aren't linked to conclusions
 # default person #1 needs a default picture and age for birth evt doesn't say 0
-# check to make sure person #1 doesn't have a person_id1 = 1 by making na new tree and checking the finding table in db
+# check to make sure person #1 doesn't have a person_id1 = 1 by making a new tree and checking the finding table in db
 # remove repositories and input #1 from dlg title
 # adding date with new conclusion gets None for date_prefs ~line 764
 # when a new tree is made, it should have a default date format row in the date_format table DONE BUT CHECK BY making a new tree then see if u can make a new conclusion and add a date to it. BUT FIRST I think I fixed it wrong in default_new_tree and then copied it to _untouched, to wit, I think I put 'bef' in the bef_aft col and I think it shd have been 'bef_aft'.
@@ -213,6 +211,7 @@ if __name__ == '__main__':
 # when adding a new person, the name becomes instantly available to autofills but id # doesn't till reloading app
 
 # BRANCH: cleanup
+# when current tree is changed with Recent Trees menu item, the mousewheel scrolling doesn't work for the families table
 # get rid of all references to self.att and attributes table; new_event_dlg which no longer exists, etc.
 # move queries to module and delete import strings for unused queries
 # rename queries not named acc to standard eg select_person_id_finding

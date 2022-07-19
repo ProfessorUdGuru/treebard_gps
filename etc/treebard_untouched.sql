@@ -1,7 +1,7 @@
 PRAGMA foreign_keys=OFF;
 BEGIN TRANSACTION;
 CREATE TABLE closing_state (closing_state_id INTEGER PRIMARY KEY AUTOINCREMENT, prior_tree TEXT DEFAULT null, openpic TEXT NOT NULL DEFAULT 'tree_of_life_lib_o_congress.jpg', tree_is_open BOOLEAN NOT NULL DEFAULT 0, recent_files TEXT DEFAULT "");
-INSERT INTO closing_state VALUES(1,'sample_tree.tbd','two_big_trees_johannes_plenio.jpg',1,'Sample Tree_+_Charles D. Gregory Family Tree');
+INSERT INTO closing_state VALUES(1,'sample_tree.tbd','tree_from_below_lerkrat_tangsri.jpg',1,'Sample Tree_+_Charles D. Gregory Family Tree');
 CREATE TABLE app_setting (app_setting_id INTEGER PRIMARY KEY AUTOINCREMENT, openpic_dir TEXT, default_openpic_dir TEXT NOT NULL DEFAULT 'images/openpic');
 INSERT INTO app_setting VALUES(1,NULL,'images/openpic');
 CREATE TABLE default_format (default_format_id INTEGER PRIMARY KEY AUTOINCREMENT, default_bg TEXT, default_highlight_bg TEXT, default_head_bg TEXT, default_fg TEXT, default_output_font TEXT, default_input_font TEXT, default_font_size INTEGER);

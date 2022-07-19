@@ -185,14 +185,15 @@ def make_tree(
         The user can still keep copies of his files anywhere but I think to be 
         portable, everything the program needs has to be kept in one folder.
         So at this time, Treebard creates the program files and folder based on
-        a title suggested by the user when he makes a new tree.
-
+        a title suggested by the user when he makes a new tree. 
     '''
 
     new_tree_name = open_input_message(
         root, opening_msg[1], "Give the Tree a Unique Title", "OK", "CANCEL")
-    current_dir = new_tree_name.lower().replace(" ", "_").replace(".", "").strip()
-    # current_dir = new_tree_name.lower().replace(" ", "_").strip()
+    current_dir_with_dots = new_tree_name.lower().replace(" ", "_").strip()
+    # current_dir = current_dir_with_dots.replace(".", "")
+    # current_dir = new_tree_name.lower().replace(" ", "_").replace(".", "").strip()
+    current_dir = new_tree_name.lower().replace(" ", "_").strip()
     if len(current_dir) == 0:
         return
     new_path = new_file_path
@@ -213,6 +214,8 @@ def make_tree(
     root.focus_set()
     treebard.make_main_window()
     tree_title = current_file.replace("_", " ").rstrip(".tbd")
+    # tree_title = current_dir_with_dots.replace("_", " ")
+    print("line", looky(seeline()).lineno, "tree_title:", tree_title)
     tree_title = titlize(tree_title)
     filter_tree_title(tree_title) 
 

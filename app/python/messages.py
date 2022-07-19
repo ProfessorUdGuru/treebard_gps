@@ -137,8 +137,8 @@ opening_msg = (
         "folder and name. Any file changes should be made from within Treebard "
         "using Treebard's tools.",
     "Treebard will use your title as the tree's display title. "
-        "Treebard will save 'Smith Family Tree' as a database file at `{current "
-        "drive}/treebard_gps/data/smith_family_tree/smith_family_tree.tbd`",
+        "Treebard will save 'Marge M. Smith Family Tree' as a database file at `{current "
+        "drive}/treebard_gps/data/marge_m_smith_family_tree/marge_m_smith_family_tree.tbd`",
     "This feature is not complete. Please visit https://treebard.proboards.com if "
         "you would like to assist or advise regarding development of this feature.",
 )
